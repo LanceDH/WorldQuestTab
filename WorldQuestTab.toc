@@ -1,0 +1,7 @@
+﻿## Interface: 70000
+## Title: WorldQuestTab
+## Notes: Create a new quest tab to help keeping track of world quests.
+## Author: LanceDH
+## Version: 1.0
+WorldQuestTab.xml
+WorldQuestTab.lua

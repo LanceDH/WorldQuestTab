@@ -1,7 +1,0 @@
-﻿## Interface: 70000
-## Title: BetterWorldQuests
-## Notes: Create a better overview of world quests.
-## Author: LanceDH
-## Version: 1.0
-BetterWorldQuests.xml
-BetterWorldQuests.lua
