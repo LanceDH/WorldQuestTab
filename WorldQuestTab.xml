@@ -427,18 +427,19 @@
 					</OnClick>	
 				</Scripts>						
 			</Button>
+			<Frame name="$parentFilterDropDown" inherits="Lib_UIDropDownMenuTemplate" />
 			
-			<Button name="$parentSortButton" inherits="UIDropDownMenuTemplate" text="testing">
+			<Button name="$parentSortButton" inherits="Lib_UIDropDownMenuTemplate" text="testing">
 				<Size x="93" y="22"/>
 				<Anchors>
 					<Anchor point="RIGHT" relativeTo="BWQ_WorldQuestFrameFilterButton" relativePoint="LEFT" x="10" y="-1"/>
 				</Anchors>
 				<Scripts>
 					<OnClick> 
+						PlaySound("igMainMenuOptionCheckBoxOn");
 					</OnClick>	
 				</Scripts>						
 			</Button>
-			<Frame name="$parentFilterDropDown" inherits="Lib_UIDropDownMenuTemplate" />
 		</Frames>
 		<Scripts>
 			<OnLoad>
