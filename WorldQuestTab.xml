@@ -2,12 +2,16 @@
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ../../FrameXML/UI.xsd">
 
+	<Script file="Libs\LibStub\LibStub.lua"/>
+	<Include file="libs\AceAddon-3.0\AceAddon-3.0.xml"/>
+	<Include file="libs\AceDB-3.0\AceDB-3.0.xml"/>
+	 
 	<Include file="libs\DropDownMenu\UIDropDownMenuTemplates.xml"/>
 	<Script file="Libs\DropDownMenu\UIDropDownMenu.lua"/>
 	 
 	<FontFamily name="BWQ_NumberFontOutline" virtual="true">
 		<Member alphabet="roman">
-			<Font font="Fonts\FRIZQT__.TTF" height="9" outline="NORMAL">
+			<Font font="Fonts\FRIZQT__.TTF" height="10" outline="NORMAL">
 				<Shadow>
 					<Offset>
 						<AbsDimension x="1" y="-1"/>
@@ -17,7 +21,7 @@
 			</Font>
 		</Member>
 		<Member alphabet="korean">
-			<Font font="Fonts\2002.TTF" height="10" outline="NORMAL">
+			<Font font="Fonts\2002.TTF" height="11" outline="NORMAL">
 				<Shadow>
 					<Offset>
 						<AbsDimension x="1" y="-1"/>
@@ -27,7 +31,7 @@
 			</Font>
 		</Member>
 		<Member alphabet="simplifiedchinese">
-			<Font font="Fonts\ARKai_T.ttf" height="14" outline="NORMAL">
+			<Font font="Fonts\ARKai_T.ttf" height="15" outline="NORMAL">
 				<Shadow>
 					<Offset>
 						<AbsDimension x="1" y="-1"/>
@@ -37,7 +41,7 @@
 			</Font>
 		</Member>
 		<Member alphabet="traditionalchinese">
-			<Font font="Fonts\blei00d.TTF" height="14" outline="NORMAL">
+			<Font font="Fonts\blei00d.TTF" height="15" outline="NORMAL">
 				<Shadow>
 					<Offset>
 						<AbsDimension x="1" y="-1"/>
@@ -47,7 +51,7 @@
 			</Font>
 		</Member>
 		<Member alphabet="russian">
-			<Font font="Fonts\FRIZQT___CYR.TTF" height="9" outline="NORMAL">
+			<Font font="Fonts\FRIZQT___CYR.TTF" height="10" outline="NORMAL">
 				<Shadow>
 					<Offset>
 						<AbsDimension x="1" y="-1"/>
@@ -107,47 +111,15 @@
 		</Scripts>
 	</Button>
 	 
-	 <Button name="BWQ_QuestTemplate" hidden="true" inherits="SecureFrameTemplate" virtual="true" >
+	<Button name="BWQ_QuestTemplate" hidden="true" inherits="SecureFrameTemplate" virtual="true" >
 		<Size>
 			<AbsDimension x="260" y="38"/>
 		</Size>
-		<Layers>
-			<Layer level="ARTWORK">
-				<Texture parentKey="trackedBorder" atlas="PetList-ButtonSelect" hidden="true"/>
-				<FontString parentKey="title" inherits="GameFontNormalLeft" maxLines="1">
-					<Size x="165" y="0"/>
-					<Anchors>
-						<Anchor point="TOPLEFT" x="57" y="-6"/>
-					</Anchors>
-					<Color r="1" g="0.82" b="0" a="1"/>
-				</FontString>
-				<FontString parentKey="time" inherits="GameFontNormalSmall" maxLines="1" justifyH="LEFT">
-					<Size x="60" y="0"/>
-					<Anchors>
-						<Anchor point="BOTTOMLEFT" x="60" y="6"/>
-					</Anchors>
-					<Color r="0.75" g="0.61" b="0"/>
-				</FontString>
-				<FontString parentKey="extra" inherits="GameFontNormalSmall" maxLines="1" justifyH="LEFT">
-					<Size x="95" y="0"/>
-					<Anchors>
-						<Anchor point="BOTTOMLEFT" x="58" y="6"/>
-						<Anchor point="LEFT" relativeKey="$parent.time" relativePoint="RIGHT" x="6"/>
-					</Anchors>
-					<Color r="0.8" g="0.8" b="0.8"/>
-				</FontString>
-			</Layer>
-		</Layers>
-		
-		<HighlightTexture atlas="PetList-ButtonHighlight">
-			<Color r="1" g="1" b="1" a="1"/>
-		</HighlightTexture>
-		
 		<Frames>
 			<Frame parentKey="type" hidden="true">
 				<Size x="28" y="28" />
 				<Anchors>
-					<Anchor point="TOPLEFT" x="1" y="-6"/>
+					<Anchor point="TOPLEFT" x="0" y="-6"/>
 				</Anchors>
 				<Layers>
 					<Layer level="BACKGROUND" textureSubLevel="-1">
@@ -179,13 +151,18 @@
 			</Frame>
 		
 			<Frame parentKey="faction">
-				<Size x="20" y="20" />
+				<Size x="28" y="28" />
 				<Anchors>
-					<Anchor point="LEFT" relativeKey="$parent.type" relativePoint="RIGHT" x="1"/>
+					<Anchor point="LEFT" relativeKey="$parent.type" relativePoint="RIGHT" x="-1"/>
 				</Anchors>
 				<Layers>
 					<Layer level="ARTWORK">
-						<Texture parentKey="icon"/>
+						<Texture parentKey="icon">
+							<Anchors>
+								<Anchor point="TOPLEFT" x="4" y="-4"/>
+								<Anchor point="BOTTOMRIGHT" x="-4" y="4"/>
+							</Anchors>
+						</Texture>
 					</Layer>
 				</Layers>
 				<Scripts>
@@ -213,12 +190,12 @@
 					<Layer level="ARTWORK">
 						<FontString parentKey="amount" inherits="BWQ_NumberFontOutline" maxLines="1" justifyH="RIGHT">
 							<Anchors>
-								<Anchor point="BOTTOMRIGHT" x="1" y="1"/>
+								<Anchor point="BOTTOMRIGHT" x="3" y="0"/>
 							</Anchors>
 							<Color r="1" g="1" b="1"/>
 						</FontString>
 					</Layer>
-					<Layer level="OVERLAY">
+					<Layer level="BORDER">
 						<Texture parentKey="iconBorder" file="Interface\Common\WhiteIconFrame" hidden="false">
 							<Size x="29" y="29"/>
 							<Anchors>
@@ -230,12 +207,48 @@
 			</Frame>
 		</Frames>
 		
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture parentKey="trackedBorder" atlas="PetList-ButtonSelect" hidden="true"/>
+				<FontString parentKey="title" inherits="GameFontNormalLeft" maxLines="1">
+					<Size x="165" y="0"/>
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.faction" relativePoint="RIGHT" x="5" y="3"/>
+						<Anchor point="RIGHT" relativeKey="$parent.reward" relativePoint="LEFT" x="-5"/>
+						<!-- <Anchor point="TOPLEFT" x="57" y="-6"/> -->
+					</Anchors>
+					<Color r="1" g="0.82" b="0" a="1"/>
+				</FontString>
+				<FontString parentKey="time" inherits="GameFontNormalSmall" maxLines="1" justifyH="LEFT">
+					<Size x="60" y="0"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.title" relativePoint="BOTTOMLEFT" x="5" y="-4"/>
+						<!-- <Anchor point="BOTTOMLEFT" x="60" y="6"/> -->
+					</Anchors>
+					<Color r="0.75" g="0.61" b="0"/>
+				</FontString>
+				<FontString parentKey="extra" inherits="GameFontNormalSmall" maxLines="1" justifyH="LEFT">
+					<Size x="95" y="0"/>
+					<Anchors>
+						<!-- <Anchor point="BOTTOMLEFT" x="58" y="6"/> -->
+						<Anchor point="LEFT" relativeKey="$parent.time" relativePoint="RIGHT" x="6"/>
+					</Anchors>
+					<Color r="0.8" g="0.8" b="0.8"/>
+				</FontString>
+			</Layer>
+		</Layers>
+		
+		<HighlightTexture atlas="PetList-ButtonHighlight">
+			<Color r="1" g="1" b="1" a="1"/>
+		</HighlightTexture>
+		
 		<Scripts>
 			<OnClick>
-				BWQ_Quest_OnClick(self);
+				BWQ_Quest_OnClick(self, button);
 			</OnClick>
 			<OnLoad>
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
+				self:EnableKeyboard(false);
 			</OnLoad>
 			<OnEnter>
 				BWQ_Quest_OnEnter(self);
@@ -243,11 +256,23 @@
 			<OnLeave>
 				WorldMapTooltip:Hide();
 				BWQ_PoISelectIndicator:Hide();
+				BWQ_MapZoneHightlight:Hide();
+				WorldMapFrameAreaLabel:SetText("")
 			</OnLeave>
+			<OnUpdate>
+				if not self:IsMouseOver() then return; end
+				if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
+					GameTooltip_ShowCompareItem(WorldMapTooltip.ItemTooltip.Tooltip, WorldMapTooltip.BackdropFrame);
+				else
+					for i, tooltip in ipairs(WorldMapTooltip.ItemTooltip.Tooltip.shoppingTooltips) do
+						tooltip:Hide();
+					end
+				end
+			</OnUpdate>
 		</Scripts>
 	</Button>
 	 
-	<Frame name="BWQ_WorldQuestFrame" parent="QuestMapFrame" inherits="SecureFrameTemplate" enableMouse="true" hidden="true">
+	<Frame name="BWQ_WorldQuestFrame" parent="QuestMapFrame" inherits="SecureFrameTemplate" enableMouse="true" hidden="false">
 		<Size x="287" y="464"/>
 		<Anchors>
 			<Anchor point="TOPLEFT"/>
@@ -264,7 +289,7 @@
 			</Layers>
 		<Frames>
 			<Frame parentKey="filterBar">
-				<Size x="259" y="15"/>
+				<Size x="259" y="0.1"/>
 				<Anchors>
 					<Anchor point="TOPRIGHT" x="-26" y="-1"/>
 				</Anchors>
@@ -282,7 +307,7 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<Button name="$parentClearButton" parentKey="clearButton" hidden="false">
+					<Button name="$parentClearButton" parentKey="clearButton" hidden="true">
 						<Size x="17" y="17"/>
 						<Anchors>
 							<Anchor point="RIGHT"/>
@@ -368,7 +393,7 @@
 					</Slider>
 				</Frames>
 			</ScrollFrame>
-			<Frame parentKey="blocker" enableMouse="true" hidden="true">
+			<Frame parentKey="blocker" enableMouse="false" hidden="true">
 				<Anchors>
 					<Anchor point="TOPLEFT"/>
 					<Anchor point="BOTTOMRIGHT"/>
@@ -486,4 +511,21 @@
 			</Layer>
 		</Layers>
 	</Frame>
+	<Frame name="BWQ_MapZoneHightlight" parent="WorldMapDetailFrame">
+		<Size x="128" y="128"/>
+		<Anchors>
+			<Anchor point="CENTER"/>
+		</Anchors>
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture parentKey="texture" file="Interface/Worldmap/Azsuna/AzsunaHighlight" alphaMode="ADD">
+					<Anchors>
+						<Anchor point="TOPLEFT"/>
+						<Anchor point="BOTTOMRIGHT"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+	</Frame>
+	<Frame name="BWQ_TrackDropDown" inherits="Lib_UIDropDownMenuTemplate" enableMouse="true" hidden="true"/>
  </Ui>
