@@ -45,7 +45,9 @@ local _defaults = {
 		showFactionIcon = true;
 		saveFilters = false;
 		filterPoI = false;
-		defaultPoI = false;
+		--defaultPoI = false;
+		showPinReward = true;
+		showPinTime = true;
 		sortBy = 1;
 		filters = {
 				[1] = {["name"] = "Faction"
@@ -87,48 +89,59 @@ function BWQ:ScrollFrameSetEnabled(enabled)
 	end
 end
 
-function BWQ_Tab_Onclick(self)
+function BWQ_Tab_Onclick(self, button)
+	if(button == "RightButton") then
+		BWQ:UpdateQuestList();
+	end
+
 	--if InCombatLockdown() then return end
 	id = self and self:GetID() or nil;
+	--print(self, id)
 	
 	BWQ_TabNormal:SetAlpha(1);
 	BWQ_TabWorld:SetAlpha(1);
 	-- because being able to hide shit in combat would be too usefull
+	if not InCombatLockdown() then
 	BWQ_TabNormal:SetFrameLevel(BWQ_TabNormal:GetParent():GetFrameLevel()+(self == BWQ_TabNormal and 1 or 0));
 	BWQ_TabWorld:SetFrameLevel(BWQ_TabWorld:GetParent():GetFrameLevel()+(self == BWQ_TabWorld and 1 or 0));
  
 	BWQ_WorldQuestFrameFilterButton:SetFrameLevel(BWQ_WorldQuestFrameFilterButton:GetParent():GetFrameLevel());
 	BWQ_WorldQuestFrameSortButton:SetFrameLevel(BWQ_WorldQuestFrameSortButton:GetParent():GetFrameLevel());
 	
-	if id == 1 then
+	BWQ_WorldQuestFrame:SetFrameLevel(BWQ_WorldQuestFrame:GetParent():GetFrameLevel()-2);
+	end
+	
+	
+	if (not QuestScrollFrame.Contents:IsShown() and not QuestMapFrame.DetailsFrame:IsShown()) or id == 1 then
 		BWQ_WorldQuestFrame:SetAlpha(0);
-		ShowUIPanel(QuestScrollFrame);
 		BWQ_TabNormal.Highlight:Show();
 		BWQ_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
 		BWQ_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
+		ShowUIPanel(QuestScrollFrame);
 		if not InCombatLockdown() then
 			BWQ:ScrollFrameSetEnabled(false)
 		end
 	elseif id == 2 then
 		BWQ_TabWorld.Highlight:Show();
-		HideUIPanel(QuestScrollFrame);
 		BWQ_WorldQuestFrame:SetAlpha(1);
 		BWQ_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
 		BWQ_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
+		HideUIPanel(QuestScrollFrame);
 		if not InCombatLockdown() then
+			BWQ_WorldQuestFrame:SetFrameLevel(BWQ_WorldQuestFrame:GetParent():GetFrameLevel()+2);
 			BWQ:ScrollFrameSetEnabled(true)
 		end
-	else
+	elseif id == 3 then
 		BWQ_WorldQuestFrame:SetAlpha(0);
 		BWQ_TabNormal:SetAlpha(0);
 		BWQ_TabWorld:SetAlpha(0);
+		HideUIPanel(QuestScrollFrame);
 		BWQ_TabNormal:SetFrameLevel(BWQ_TabNormal:GetParent():GetFrameLevel()-1);
 		BWQ_TabWorld:SetFrameLevel(BWQ_TabWorld:GetParent():GetFrameLevel()-1);
-		HideUIPanel(QuestScrollFrame);
 		BWQ_WorldQuestFrameFilterButton:SetFrameLevel(0);
 		BWQ_WorldQuestFrameSortButton:SetFrameLevel(0);
 	end
-	
+
 	BWQ_WorldQuestFrame.selectedTab = self;
 end
 
@@ -763,17 +776,6 @@ function BWQ:FilterMapPoI()
 
 	while(PoI) do
 		if (PoI.worldQuest) then
-		
-			if (PoI.BWQRing) then
-				PoI.BWQRing:SetAlpha(BWQ.settings.defaultPoI and 0 or 1);
-				PoI.BWQRing2:SetAlpha(BWQ.settings.defaultPoI and 0 or 1);
-			end
-			
-			if (PoI.BWQText) then
-				PoI.BWQText:SetAlpha(BWQ.settings.defaultPoI and 0 or 1);
-				PoI.BWQBG:SetAlpha(BWQ.settings.defaultPoI and 0 or 0.75);
-			end
-		
 			quest = GetQuestFromList(PoI.questID);
 			if (quest) then
 				if (BWQ.settings.filterPoI and not quest.passedFilter) then
@@ -781,69 +783,82 @@ function BWQ:FilterMapPoI()
 				else
 					PoI:Show();
 				end
-				if (not BWQ.settings.defaultPoI) then
-					PoI.Texture:SetWidth(18);
-					PoI.Texture:SetHeight(18);
-					SetPortraitToTexture(PoI.Texture, quest.rewardTexture)
-					PoI:SetNormalTexture(nil);
-					PoI:SetPushedTexture(nil);
-					--PoI:SetHighlightTexture(nil);
-					if (not PoI.BWQRing) then
-						PoI.BWQRing = PoI:CreateTexture(nil)
-						PoI.BWQRing:SetWidth(22);
-						PoI.BWQRing:SetHeight(22);
-						PoI.BWQRing:SetDrawLayer("OVERLAY", 4)
-						PoI.BWQRing:SetPoint("CENTER", PoI, "CENTER", 0, -1)
-						PoI.BWQRing:SetTexture("Interface/PLAYERFRAME/UI-PlayerFrame-Deathknight-Ring")
-						PoI.BWQRing:SetTexCoord(0, 1, 0, 1)
-						PoI.BWQRing:SetVertexColor(0.85, 0.65, 0.13) 
+				
+				if (not PoI.BWQRing) then
+					PoI.BWQRing = PoI:CreateTexture(nil)
+					PoI.BWQRing:SetWidth(22);
+					PoI.BWQRing:SetHeight(22);
+					PoI.BWQRing:SetDrawLayer("OVERLAY", 4)
+					PoI.BWQRing:SetPoint("CENTER", PoI, "CENTER", 0, -1)
+					PoI.BWQRing:SetTexture("Interface/PLAYERFRAME/UI-PlayerFrame-Deathknight-Ring")
+					PoI.BWQRing:SetTexCoord(0, 1, 0, 1)
+					PoI.BWQRing:SetVertexColor(0.85, 0.65, 0.13) 
+					
+					PoI.BWQRing2 = PoI:CreateTexture(nil)
+					PoI.BWQRing2:SetWidth(21);
+					PoI.BWQRing2:SetHeight(21);
+					PoI.BWQRing2:SetAlpha(0.5);
+					PoI.BWQRing2:SetDrawLayer("OVERLAY", 5)
+					PoI.BWQRing2:SetPoint("CENTER", PoI, "CENTER", 0, 0)
+					PoI.BWQRing2:SetTexture("Interface/Artifacts/Artifacts")
+					PoI.BWQRing2:SetTexCoord(0.873046875, 0.939453125, 0.4580078125, 0.525390625)
+					PoI.BWQRing2:SetBlendMode("ADD")
+					PoI.BWQRing2:SetVertexColor(0, 0.5, 0) 
+				end
+				
+				if (not PoI.BWQText) then
+					PoI.BWQText = PoI:CreateFontString(nil, nil, "BWQ_NumberFontOutline")
+					PoI.BWQText:SetPoint("TOP", PoI, "BOTTOM", 1, 3)
+					PoI.BWQText:SetHeight(18);
+					PoI.BWQText:SetWidth(30);
+					PoI.BWQText:SetDrawLayer("OVERLAY", 7)
+					PoI.BWQText:SetJustifyV("MIDDLE")
+					
+					PoI.BWQBG = PoI:CreateTexture("")
+					PoI.BWQBG:SetWidth(22);
+					PoI.BWQBG:SetAlpha(0.75);
+					PoI.BWQBG:SetDrawLayer("ARTWORK", 3)
+					PoI.BWQBG:SetPoint("TOP", PoI, "CENTER", 0, 0)
+					PoI.BWQBG:SetHeight(20);
+					--PoI.BWQBG:SetPoint("BOTTOM", PoI.BWQText, "BOTTOM", 0, 4)
+					PoI.BWQBG:SetTexture("Interface/COMMON/NameShadow")
+					PoI.BWQBG:SetTexCoord(0.05, 0.95, 0.8, 0)
+				end
+			
+				if (PoI.BWQRing) then
+					PoI.BWQRing:SetAlpha(BWQ.settings.showPinReward and 1 or 0);
+					PoI.BWQRing2:SetAlpha(BWQ.settings.showPinReward and 1 or 0);
+					if (BWQ.settings.showPinReward) then
+						PoI.Texture:SetWidth(18);
+						PoI.Texture:SetHeight(18);
+						SetPortraitToTexture(PoI.Texture, quest.rewardTexture)
+						PoI:SetNormalTexture(nil);
+						PoI:SetPushedTexture(nil);
+						--PoI:SetHighlightTexture(nil);
+						PoI.BWQRing:Show();
 						
-						PoI.BWQRing2 = PoI:CreateTexture(nil)
-						PoI.BWQRing2:SetWidth(21);
-						PoI.BWQRing2:SetHeight(21);
-						PoI.BWQRing2:SetAlpha(0.5);
-						PoI.BWQRing2:SetDrawLayer("OVERLAY", 5)
-						PoI.BWQRing2:SetPoint("CENTER", PoI, "CENTER", 0, 0)
-						PoI.BWQRing2:SetTexture("Interface/Artifacts/Artifacts")
-						PoI.BWQRing2:SetTexCoord(0.873046875, 0.939453125, 0.4580078125, 0.525390625)
-						PoI.BWQRing2:SetBlendMode("ADD")
-						PoI.BWQRing2:SetVertexColor(0, 0.5, 0) 
-					end
-					
-					if (not PoI.BWQText) then
-						PoI.BWQText = PoI:CreateFontString(nil, nil, "BWQ_NumberFontOutline")
-						PoI.BWQText:SetPoint("TOP", PoI, "BOTTOM", 1, 3)
-						PoI.BWQText:SetHeight(18);
-						PoI.BWQText:SetWidth(30);
-						PoI.BWQText:SetDrawLayer("OVERLAY", 7)
-						PoI.BWQText:SetJustifyV("MIDDLE")
+						-- Give AP items a green ring
+						if (quest.rewardType == BWQ_REWARDTYPE_ARTIFACT) then
+							PoI.BWQRing2:Show()
+						else
+							PoI.BWQRing2:Hide()
+						end
 						
-						PoI.BWQBG = PoI:CreateTexture("")
-						PoI.BWQBG:SetWidth(22);
-						PoI.BWQBG:SetAlpha(0.75);
-						PoI.BWQBG:SetDrawLayer("ARTWORK", 3)
-						PoI.BWQBG:SetPoint("TOP", PoI, "CENTER", 0, 0)
-						PoI.BWQBG:SetHeight(20);
-						--PoI.BWQBG:SetPoint("BOTTOM", PoI.BWQText, "BOTTOM", 0, 4)
-						PoI.BWQBG:SetTexture("Interface/COMMON/NameShadow")
-						PoI.BWQBG:SetTexCoord(0.05, 0.95, 0.8, 0)
+						-- Darken ring for emmisary to better display their glow
+						if (_G["WorldMapFrameTaskPOI"..index.."CriteriaMatchGlow"]:IsShown()) then
+							PoI.BWQRing:SetVertexColor(0.65, 0.50, 0.05) 
+						else
+							PoI.BWQRing:SetVertexColor(0.85, 0.65, 0.13) 
+						end
 					end
-					
-					PoI.BWQText:SetText(quest.timeStringShort)
-					PoI.BWQText:SetVertexColor(quest.color.r, quest.color.g, quest.color.b) 
-					
-					-- Give AP items a green ring
-					if (quest.rewardType == BWQ_REWARDTYPE_ARTIFACT) then
-						PoI.BWQRing2:Show()
-					else
-						PoI.BWQRing2:Hide()
-					end
-					
-					-- Darken ring for emmisary to better display their glow
-					if (_G["WorldMapFrameTaskPOI"..index.."CriteriaMatchGlow"]:IsShown()) then
-						PoI.BWQRing:SetVertexColor(0.65, 0.50, 0.05) 
-					else
-						PoI.BWQRing:SetVertexColor(0.85, 0.65, 0.13) 
+				end
+				
+				if (PoI.BWQText) then
+					PoI.BWQText:SetAlpha((BWQ.settings.showPinTime and quest.timeStringShort ~= "")and 1 or 0);
+					PoI.BWQBG:SetAlpha((BWQ.settings.showPinTime and quest.timeStringShort ~= "") and 0.75 or 0);
+					if(BWQ.settings.showPinTime) then
+						PoI.BWQText:SetText(quest.timeStringShort)
+						PoI.BWQText:SetVertexColor(quest.color.r, quest.color.g, quest.color.b) 
 					end
 				end
 			end
@@ -872,6 +887,7 @@ function BWQ:UpdateQuestList()
 	local filteredOut = 0;
 	local isFiltering = BWQ:IsFiltering()
 	local quest = nil;
+	local questsById = nil
 	
 	for i=#list, 1, -1 do
 		list[i].id = -1;
@@ -879,23 +895,29 @@ function BWQ:UpdateQuestList()
 	end
 	
 	if isQuestZone then
-		for k, info in ipairs(C_TaskQuest.GetQuestsForPlayerByMapID(mapAreaID)) do
-			--if not isFiltering or BWQ:PassesAllFilters(info) then
-				quest = AddQuestToList(list, info, mapAreaID);
-				if quest and isFiltering and not BWQ:PassesAllFilters(info) then
-					quest.passedFilter = false;
-				end
-			--end
-		end
-	else
-		for k, zoneId in ipairs(_legionZoneIds) do
-			for k2, info in ipairs(C_TaskQuest.GetQuestsForPlayerByMapID(zoneId)) do
+		questsById = C_TaskQuest.GetQuestsForPlayerByMapID(mapAreaID);
+		if questsById and type(questsById) == "table" then
+			for k, info in ipairs(questsById) do
 				--if not isFiltering or BWQ:PassesAllFilters(info) then
-					quest = AddQuestToList(list, info, zoneId);
+					quest = AddQuestToList(list, info, mapAreaID);
 					if quest and isFiltering and not BWQ:PassesAllFilters(info) then
 						quest.passedFilter = false;
 					end
 				--end
+			end
+		end
+	else
+		for k, zoneId in ipairs(_legionZoneIds) do
+			questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId);
+			if questsById and type(questsById) == "table" then
+				for k2, info in ipairs(questsById) do
+					--if not isFiltering or BWQ:PassesAllFilters(info) then
+						quest = AddQuestToList(list, info, zoneId);
+						if quest and isFiltering and not BWQ:PassesAllFilters(info) then
+							quest.passedFilter = false;
+						end
+					--end
+				end
 			end
 		end
 		if #list == 0 then
@@ -1046,7 +1068,7 @@ function BWQ:DisplayQuestList()
 	addon.events.noIssue = true;
 	addon.events.updatePeriod = rewardMissing and 0.1 or 60;
 	
-	BWQ_Tab_Onclick(BWQ_WorldQuestFrame.selectedTab)
+	--BWQ_Tab_Onclick(BWQ_WorldQuestFrame.selectedTab)
 end
 
 function BWQ:SetAllFilterTo(id, value)
@@ -1141,12 +1163,28 @@ function BWQ:InitFilter(self, level)
 				info.checked = function() return BWQ.settings.filterPoI end;
 				Lib_UIDropDownMenu_AddButton(info, level);
 				
-				info.text = "Default map pins";
+				-- info.text = "Default map pins";
+				-- info.func = function(_, _, _, value)
+						-- BWQ.settings.defaultPoI = value;
+						-- WorldMap_UpdateQuestBonusObjectives();
+					-- end
+				-- info.checked = function() return BWQ.settings.defaultPoI end;
+				-- Lib_UIDropDownMenu_AddButton(info, level);
+				
+				info.text = "Map pin rewards";
 				info.func = function(_, _, _, value)
-						BWQ.settings.defaultPoI = value;
+						BWQ.settings.showPinReward = value;
 						WorldMap_UpdateQuestBonusObjectives();
 					end
-				info.checked = function() return BWQ.settings.defaultPoI end;
+				info.checked = function() return BWQ.settings.showPinReward end;
+				Lib_UIDropDownMenu_AddButton(info, level);
+				
+				info.text = "Map pin time";
+				info.func = function(_, _, _, value)
+						BWQ.settings.showPinTime = value;
+						WorldMap_UpdateQuestBonusObjectives();
+					end
+				info.checked = function() return BWQ.settings.showPinTime end;
 				Lib_UIDropDownMenu_AddButton(info, level);
 				
 				info.text = "Show Type";
@@ -1286,12 +1324,15 @@ function BWQ:OnEnable()
 		end)
 	-- Hide things when looking at quest details
 	hooksecurefunc("QuestMapFrame_ShowQuestDetails", function()
-			BWQ_Tab_Onclick(nil);
+			BWQ_Tab_Onclick(BWQ_TabDetails);
 		end)
 	-- Show quest tab when leaving quest details
 	hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
 			BWQ_Tab_Onclick(BWQ_TabNormal);
 		end)
+	
+	QuestScrollFrame:SetScript("OnShow", function() BWQ_Tab_Onclick(BWQ_TabNormal); end)
+	--hooksecurefunc(QuestScrollFrame, "OnShow", function() print("t") end)
 		
 	-- Scripts
 	BWQ_WorldQuestFrame:SetScript("OnShow", function() 
@@ -1343,7 +1384,7 @@ addon.events:RegisterEvent("PLAYER_REGEN_ENABLED");
 addon.events:RegisterEvent("QUEST_TURNED_IN");
 addon.events:RegisterEvent("ADDON_LOADED");
 addon.events:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
-addon.events:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else print(event) end end)
+addon.events:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else print("BWQ missing function for: " .. event) end end)
 addon.events.updatePeriod = 60;
 addon.events.time = 0;
 addon.events:SetScript("OnUpdate", function(self, elapsed) 
@@ -1384,6 +1425,7 @@ function addon.events:PLAYER_REGEN_ENABLED(loaded_addon)
 	if BWQ_WorldQuestFrame:GetAlpha() == 1 then
 		BWQ:ScrollFrameSetEnabled(true)
 	end
+	BWQ_Tab_Onclick(BWQ_WorldQuestFrame.selectedTab);
 	BWQ:UpdateQuestList();
 end
 
@@ -1402,9 +1444,10 @@ end
 -- Slash
 ----------
 
-SLASH_BWQSLASH1 = '/bwq';
+SLASH_BWQSLASH1 = '/wqt';
 local function slashcmd(msg, editbox)
-	
+	BWQ_Tab_Onclick(BWQ_WorldQuestFrame.selectedTab);
+	BWQ:UpdateQuestList();
 end
 SlashCmdList["BWQSLASH"] = slashcmd
 

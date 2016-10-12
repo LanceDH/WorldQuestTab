@@ -120,11 +120,14 @@
 		</Layers>
 		<Scripts>
 			<OnClick>
-				BWQ_Tab_Onclick(self);
+				BWQ_Tab_Onclick(self, button);
 			</OnClick>
 			<OnLeave>
 				GameTooltip:Hide();
 			</OnLeave>
+			<OnLoad>
+				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
+			</OnLoad>
 		</Scripts>
 	</Button>
 	 
@@ -564,6 +567,7 @@
 				self:SetFrameLevel(self:GetParent():GetFrameLevel());
 				self.Icon:SetTexture("Interface/MINIMAP/TRACKING/OBJECTICONS");
 				self.Icon:SetTexCoord(0.125, 0.25, 0.5, 1);
+				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 			</OnLoad>
 		</Scripts>
 	</Button>
@@ -575,8 +579,14 @@
 			<OnLoad>
 				self:SetFrameLevel(self:GetParent():GetFrameLevel());
 				self.Icon:SetTexture("Interface/Worldmap/UI-World-Icon");
+				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 			</OnLoad>
 		</Scripts>
+	</Button>
+	<Button name="BWQ_TabDetails" inherits="BWQ_TabTemplate" parent="QuestMapFrame" enableMouse="false" id="3" hidden="true">
+		<Anchors>
+			<Anchor point="LEFT" relativeTo="BWQ_TabWorld" relativePoint="RIGHT"/>
+		</Anchors>
 	</Button>
 	<Frame name="BWQ_PoISelectIndicator" hidden="true">
 		<Size x="32" y="32"/>
