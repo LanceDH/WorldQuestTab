@@ -486,6 +486,10 @@ local function GetQuestTimeString(questId)
 	-- for some reason using a single match makes t always 4 while the match works fine outside this function
 	local t = string.match(timeString, '(%d+)');
 	local s = string.match(timeString, '(%a)');
+	-- Attempt Russian
+	if t and not s then
+		s = string.match(timeString, ' (.[\128-\191]*)');
+	end
 	if t and s then
 		timeStringShort = t..s;
 	end
