@@ -4,13 +4,14 @@ local BWQ = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 
 -- 1007 Broken Isles
 local _legionZoneIds = {1014, 1015, 1033, 1017, 1024, 1018, 1096};
+
 local _zoneCoords = {
-		 [1015] = {["x"] = 177, ["y"] = 437} -- Azsuna
-		,[1033] = {["x"] = 241, ["y"] = 477} -- Suramar
-		,[1017] = {["x"] = 303, ["y"] = 520} -- Stormheim
-		,[1024] = {["x"] = 243, ["y"] = 560} -- Highmountain
-		,[1018] = {["x"] = 177, ["y"] = 522} -- Val'sharah
-		,[1096] = {["x"] = 260, ["y"] = 345} -- Eye of Azshara
+		 [1015] = {["x"] = 0.33, ["y"] = 0.58} -- Azsuna
+		,[1033] = {["x"] = 0.46, ["y"] = 0.45} -- Suramar
+		,[1017] = {["x"] = 0.60, ["y"] = 0.33} -- Stormheim
+		,[1024] = {["x"] = 0.46, ["y"] = 0.23} -- Highmountain
+		,[1018] = {["x"] = 0.34, ["y"] = 0.33} -- Val'sharah
+		,[1096] = {["x"] = 0.46, ["y"] = 0.84} -- Eye of Azshara
 	}
 
 local _completedQuest = false;
@@ -257,17 +258,9 @@ end
 
 function BWQ:ShowWorldmapHighlight(zoneId)
 	if GetCurrentMapAreaID() ~= 1007 or not _zoneCoords[zoneId] then return; end
-	local x, y = _zoneCoords[zoneId].x, _zoneCoords[zoneId].y;
-	local highlight = BWQ_MapZoneHightlight
-	
-	x = x / WorldMapButton:GetEffectiveScale();
-	y = y / WorldMapButton:GetEffectiveScale();
-
-	local centerX, centerY = WorldMapButton:GetCenter();
+	local adjustedX, adjustedY = _zoneCoords[zoneId].x, _zoneCoords[zoneId].y;
 	local width = WorldMapButton:GetWidth();
 	local height = WorldMapButton:GetHeight();
-	local adjustedY = (centerY + (height/2) - y ) / height;
-	local adjustedX = (x - (centerX - (width/2))) / width;
 	
 	local name, fileName, texPercentageX, texPercentageY, textureX, textureY, scrollChildX, scrollChildY, minLevel, maxLevel, petMinLevel, petMaxLevel = UpdateMapHighlight( adjustedX, adjustedY );
 	
@@ -283,7 +276,7 @@ function BWQ:ShowWorldmapHighlight(zoneId)
 			BWQ_MapZoneHightlight:SetHeight(textureY);
 			BWQ_MapZoneHightlight:SetPoint("TOPLEFT", "WorldMapDetailFrame", "TOPLEFT", scrollChildX, scrollChildY);
 			BWQ_MapZoneHightlight:Show();
-			WorldMapFrameAreaLabel:SetText(GetMapNameByID(zoneId))
+			WorldMapFrameAreaLabel:SetText(name)
 		end
 	end
 end
