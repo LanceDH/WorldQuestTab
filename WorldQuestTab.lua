@@ -103,13 +103,13 @@ function BWQ_Tab_Onclick(self, button)
 	BWQ_TabWorld:SetAlpha(1);
 	-- because being able to hide shit in combat would be too usefull
 	if not InCombatLockdown() then
-	BWQ_TabNormal:SetFrameLevel(BWQ_TabNormal:GetParent():GetFrameLevel()+(self == BWQ_TabNormal and 1 or 0));
-	BWQ_TabWorld:SetFrameLevel(BWQ_TabWorld:GetParent():GetFrameLevel()+(self == BWQ_TabWorld and 1 or 0));
- 
-	BWQ_WorldQuestFrameFilterButton:SetFrameLevel(BWQ_WorldQuestFrameFilterButton:GetParent():GetFrameLevel());
-	BWQ_WorldQuestFrameSortButton:SetFrameLevel(BWQ_WorldQuestFrameSortButton:GetParent():GetFrameLevel());
-	
-	BWQ_WorldQuestFrame:SetFrameLevel(BWQ_WorldQuestFrame:GetParent():GetFrameLevel()-2);
+		BWQ_TabNormal:SetFrameLevel(BWQ_TabNormal:GetParent():GetFrameLevel()+(self == BWQ_TabNormal and 1 or 0));
+		BWQ_TabWorld:SetFrameLevel(BWQ_TabWorld:GetParent():GetFrameLevel()+(self == BWQ_TabWorld and 1 or 0));
+	 
+		BWQ_WorldQuestFrameFilterButton:SetFrameLevel(BWQ_WorldQuestFrameFilterButton:GetParent():GetFrameLevel());
+		BWQ_WorldQuestFrameSortButton:SetFrameLevel(BWQ_WorldQuestFrameSortButton:GetParent():GetFrameLevel());
+		
+		BWQ_WorldQuestFrame:SetFrameLevel(0);
 	end
 	
 	
@@ -1327,8 +1327,15 @@ function BWQ:OnEnable()
 	hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
 			BWQ_Tab_Onclick(BWQ_TabNormal);
 		end)
-	
+		
 	QuestScrollFrame:SetScript("OnShow", function() BWQ_Tab_Onclick(BWQ_TabNormal); end)
+	
+	
+	QuestScrollFrame:SetScript("OnShow", function() 
+			if(BWQ_WorldQuestFrame.selectedTab:GetID() ~= 2) then
+				BWQ_Tab_Onclick(BWQ_TabNormal); 
+			end
+		end)
 	--hooksecurefunc(QuestScrollFrame, "OnShow", function() print("t") end)
 		
 	-- Scripts
