@@ -19,6 +19,7 @@ local _questTitle = "Uniting the Isles"
 local _questList = {};
 local _questPool = {};
 local _questDisplayList = {};
+local _questsMissingReward = {};
 local _sortOptions = {[1] = "Time", [2] = "Faction", [3] = "Type", [4] = "Zone", [5] = "Name", [6] = "Reward"}
 local _artifactSpells = {
 		 "Empowering" -- ENG
@@ -77,6 +78,10 @@ local BWQ_ORANGE_FONT_COLOR = CreateColor(1, 0.6, 0);
 local BWQ_GREEN_FONT_COLOR = CreateColor(0, 0.75, 0);
 local BWQ_BLUE_FONT_COLOR = CreateColor(0.1, 0.68, 1);
 local BWQ_LISTITTEM_HEIGHT = 32;
+local BWQ_REFRESH_DEFAULT = 60;
+local BWQ_REFRESH_FAST = 0.5;
+local BWQ_REFRESH_LIMIT = 10;
+local BWQ_REFRESH_FAIL = "[WQT] No reward info more than " .. BWQ_REFRESH_LIMIT .. " times in a row. Ending fast refresh."
 
 ------------------------------------------------------------
 
@@ -97,7 +102,7 @@ function BWQ_Tab_Onclick(self, button)
 
 	--if InCombatLockdown() then return end
 	id = self and self:GetID() or nil;
-	--print(self, id)
+	BWQ_WorldQuestFrame.selectedTab = self;
 	
 	BWQ_TabNormal:SetAlpha(1);
 	BWQ_TabWorld:SetAlpha(1);
@@ -129,7 +134,7 @@ function BWQ_Tab_Onclick(self, button)
 		BWQ_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
 		HideUIPanel(QuestScrollFrame);
 		if not InCombatLockdown() then
-			BWQ_WorldQuestFrame:SetFrameLevel(BWQ_WorldQuestFrame:GetParent():GetFrameLevel()+2);
+			BWQ_WorldQuestFrame:SetFrameLevel(BWQ_WorldQuestFrame:GetParent():GetFrameLevel()+3);
 			BWQ:ScrollFrameSetEnabled(true)
 		end
 	elseif id == 3 then
@@ -142,8 +147,6 @@ function BWQ_Tab_Onclick(self, button)
 		BWQ_WorldQuestFrameFilterButton:SetFrameLevel(0);
 		BWQ_WorldQuestFrameSortButton:SetFrameLevel(0);
 	end
-
-	BWQ_WorldQuestFrame.selectedTab = self;
 end
 
 function BWQ_Quest_OnClick(self, button)
@@ -283,13 +286,15 @@ end
 
 local function GetAbreviatedNumber(number)
 	if type(number) ~= "number" then return "NaN" end;
-	if (number >= 1000) then
+	if (number >= 1000 and number < 10000) then
 		local rest = number - floor(number/1000)*1000
 		if rest < 100 then
 			return floor(number / 1000) .. "k";
 		else
 			return floor(number / 100)/10 .. "k";
 		end
+	elseif (number >= 10000) then
+		return floor(number / 1000) .. "k";
 	end
 
 	return number 
@@ -773,6 +778,9 @@ function BWQ:FilterMapPoI()
 
 	while(PoI) do
 		if (PoI.worldQuest) then
+			if #_questList == 0 then
+				BWQ:UpdateQuestList(true);
+			end
 			quest = GetQuestFromList(PoI.questID);
 			if (quest) then
 				if (BWQ.settings.filterPoI and not quest.passedFilter) then
@@ -865,8 +873,8 @@ function BWQ:FilterMapPoI()
 	end
 end
 
-function BWQ:UpdateQuestList()
-	if (InCombatLockdown() or not WorldMapFrame:IsShown() or not BWQ_WorldQuestFrame:IsShown()) then return end
+function BWQ:UpdateQuestList(skipPins)
+	if (InCombatLockdown() or not WorldMapFrame:IsShown()) then return end
 	
 	if UnitLevel("player") < 110 then
 		ShowOverlayMessage(BWQ_UNLOCK_110);
@@ -939,7 +947,9 @@ function BWQ:UpdateQuestList()
 	
 	self.time = 0;
 	BWQ:DisplayQuestList();
-	BWQ:FilterMapPoI();
+	if(not skipPins) then
+		BWQ:FilterMapPoI();
+	end
 	
 	if isFiltering then
 		BWQ:UpdateFilterDisplay()
@@ -962,6 +972,18 @@ local function PopulateDisplayList()
 	end
 end
 
+function BWQ:UpdateMissingRewards()
+	if #_questsMissingReward == 0 then return; end
+	local q;
+	for i = #_questsMissingReward, 1, -1 do
+		q = _questsMissingReward[i]
+		if q.rewardTexture == "" then
+			BWQ:SetQuestReward(q)
+		end
+		table.remove(_questsMissingReward, i);
+	end
+end
+
 function BWQ:DisplayQuestList()
 	if InCombatLockdown() or UnitLevel("player") < 110 or not WorldMapFrame:IsShown() or not BWQ_WorldQuestFrame:IsShown() then return end
 	local scrollFrame = BWQ_QuestScrollFrame;
@@ -978,9 +1000,11 @@ function BWQ:DisplayQuestList()
 	local filteredSkipped = 0;
 	
 	-- In case an error happens during the update, pevent OnUpdate
-	-- Big issue if it happens when the update interval is 0.1
+	-- Big issue if it happens when fast updating
 	addon.events.noIssue = false;
 	HideOverlayMessage();
+	
+	BWQ:UpdateMissingRewards();
 	
 	for i=1, #buttons do
 		local button = buttons[i];
@@ -1035,6 +1059,7 @@ function BWQ:DisplayQuestList()
 			else
 				rewardMissing = true;
 				button.reward.icon:SetTexture("Interface/ICONS/INV_Misc_QuestionMark");
+				table.insert(_questsMissingReward, q)
 			end
 			
 
@@ -1063,7 +1088,7 @@ function BWQ:DisplayQuestList()
 	HybridScrollFrame_Update(BWQ_QuestScrollFrame, #list * BWQ_LISTITTEM_HEIGHT, scrollFrame:GetHeight());
 	
 	addon.events.noIssue = true;
-	addon.events.updatePeriod = rewardMissing and 0.1 or 60;
+	addon.events.updatePeriod = rewardMissing and BWQ_REFRESH_FAST or BWQ_REFRESH_DEFAULT;
 	
 	--BWQ_Tab_Onclick(BWQ_WorldQuestFrame.selectedTab)
 end
@@ -1332,11 +1357,12 @@ function BWQ:OnEnable()
 	
 	
 	QuestScrollFrame:SetScript("OnShow", function() 
-			if(BWQ_WorldQuestFrame.selectedTab:GetID() ~= 2) then
+			if(BWQ_WorldQuestFrame.selectedTab:GetID() == 2) then
+				BWQ_Tab_Onclick(BWQ_TabWorld); 
+			else
 				BWQ_Tab_Onclick(BWQ_TabNormal); 
 			end
 		end)
-	--hooksecurefunc(QuestScrollFrame, "OnShow", function() print("t") end)
 		
 	-- Scripts
 	BWQ_WorldQuestFrame:SetScript("OnShow", function() 
@@ -1389,19 +1415,25 @@ addon.events:RegisterEvent("QUEST_TURNED_IN");
 addon.events:RegisterEvent("ADDON_LOADED");
 addon.events:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
 addon.events:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else print("BWQ missing function for: " .. event) end end)
-addon.events.updatePeriod = 60;
+addon.events.updatePeriod = BWQ_REFRESH_DEFAULT;
 addon.events.time = 0;
 addon.events:SetScript("OnUpdate", function(self, elapsed) 
 		self.time = self.time + elapsed;
-		if addon.events.updatePeriod ~= 60 then 
-			missing = missing + elapsed
-		elseif missing ~= 0 then
-			missing = 0;
+		if addon.events.updatePeriod == BWQ_REFRESH_FAST and self.time >= self.updatePeriod then 
+			self.time = 0;
+			BWQ:DisplayQuestList()
+			missing = missing + 1
+			if missing >= BWQ_REFRESH_LIMIT then
+				--print(BWQ_REFRESH_FAIL)
+				addon.events.updatePeriod = BWQ_REFRESH_DEFAULT
+				missing = 0;
+			end
 		end
 		
-		if addon.events.noIssue and self.time >= self.updatePeriod then
+		if addon.events.noIssue and addon.events.updatePeriod == BWQ_REFRESH_FDEFAULT and self.time >= self.updatePeriod then
 			BWQ:UpdateQuestList();
 			self.time = 0;
+			missing = 0;
 		end
 	end)
 

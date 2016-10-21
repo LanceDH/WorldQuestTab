@@ -9,7 +9,7 @@
 	<Include file="libs\DropDownMenu\UIDropDownMenuTemplates.xml"/>
 	<Script file="Libs\DropDownMenu\UIDropDownMenu.lua"/>
 	 
-	 <!--
+	 <!-- 
 	 <Frame name="BWQ_DebugLine" parentArray="DependencyLines" virtual="true">
 		<Layers>
 			<Layer level="OVERLAY" textureSubLevel="-3">
