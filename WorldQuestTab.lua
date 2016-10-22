@@ -732,7 +732,7 @@ end
 
 function BWQ:PassesRewardFilter(questId, rewardType)
 
-	if(rewardType == 0) then return true end;
+	if(rewardType == 0) then return false end;
 	local flags = BWQ.settings.filters[3].flags
 	-- Armor
 	if id and flags["Armor"] and rewardType == BWQ_REWARDTYPE_ARMOR then
