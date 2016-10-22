@@ -1123,7 +1123,7 @@ function BWQ:DisplayQuestList()
 	end
 	
 	for k, quest in ipairs(_questList) do
-		if quest.rewardType == 0 then
+		if quest.rewardTexture == BWQ_QUESTIONMARK then
 			rewardMissing = true;
 			table.insert(_questsMissingReward, quest)
 		end
