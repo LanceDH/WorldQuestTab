@@ -25,7 +25,7 @@
 		</Layers>
 	</Frame>
 	-->
-	 
+	
 	<FontFamily name="BWQ_NumberFontOutline" virtual="true">
 		<Member alphabet="roman">
 			<Font font="Fonts\FRIZQT__.TTF" height="10" outline="NORMAL">

@@ -215,6 +215,8 @@ function BWQ_Quest_OnEnter(self)
 	
 	if self.info.rewardTexture == BWQ_QUESTIONMARK then
 		BWQ:SetQuestReward(self.info)
+		BWQ:UpdateQuestList();
+		return;
 	end
 	self.reward.icon:SetTexture(self.info.rewardTexture);
 
@@ -732,6 +734,7 @@ end
 
 function BWQ:PassesRewardFilter(questId, rewardType)
 
+	if(addon.events.missing >= BWQ_REFRESH_LIMIT-1 and rewardType == 0) then return true end;
 	if(rewardType == 0) then return false end;
 	local flags = BWQ.settings.filters[3].flags
 	-- Armor
@@ -1457,8 +1460,6 @@ function BWQ:OnEnable()
 	
 	BWQ_Tab_Onclick(self.settings.defaultTab and BWQ_TabWorld or BWQ_TabNormal)
 end
-
-local missing = 0;
 		
 addon.events = CreateFrame("FRAME", "BWQ_EventFrame"); 
 addon.events:RegisterEvent("WORLD_MAP_UPDATE");
@@ -1470,23 +1471,24 @@ addon.events:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
 addon.events:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else print("BWQ missing function for: " .. event) end end)
 addon.events.updatePeriod = BWQ_REFRESH_DEFAULT;
 addon.events.time = 0;
+addon.events.missing = 0;
 addon.events:SetScript("OnUpdate", function(self, elapsed) 
 		self.time = self.time + elapsed;
 		if addon.events.updatePeriod == BWQ_REFRESH_FAST and self.time >= self.updatePeriod then 
 			self.time = 0;
 			BWQ:DisplayQuestList()
-			missing = missing + 1
-			if missing >= BWQ_REFRESH_LIMIT then
+			addon.events.missing = addon.events.missing + 1
+			if addon.events.missing >= BWQ_REFRESH_LIMIT then
 				--print(BWQ_REFRESH_FAIL)
 				addon.events.updatePeriod = BWQ_REFRESH_DEFAULT
-				missing = 0;
+				addon.events.missing = 0;
 			end
 		end
 		
-		if addon.events.noIssue and addon.events.updatePeriod == BWQ_REFRESH_FDEFAULT and self.time >= self.updatePeriod then
+		if addon.events.noIssue and addon.events.updatePeriod == BWQ_REFRESH_DEFAULT and self.time >= self.updatePeriod then
 			BWQ:UpdateQuestList();
 			self.time = 0;
-			missing = 0;
+			addon.events.missing = 0;
 		end
 	end)
 
