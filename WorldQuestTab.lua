@@ -2,6 +2,30 @@
 
 local BWQ = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 
+local BWQ_REWARDTYPE_ITEM = 3;
+local BWQ_REWARDTYPE_GOLD = 4;
+local BWQ_REWARDTYPE_CURRENCY = 5;
+local BWQ_REWARDTYPE_ARMOR = 1;
+local BWQ_REWARDTYPE_ARTIFACT = 2;
+local BWQ_COMBATLOCK = "Disabled during combat.";
+local BWQ_NOT_HERE = "You can't view world quests here.";
+local BWQ_FILTERS = "Filters: %s";
+local BWQ_SORT_BY = "By %s";
+local BWQ_UNLOCK_110 = "Unlocked at\nlevel 110."
+local BWQ_UNLOCK_QUEST = "Complete quest:\n%s";
+local BWQ_WHITE_FONT_COLOR = CreateColor(0.8, 0.8, 0.8);
+local BWQ_ORANGE_FONT_COLOR = CreateColor(1, 0.6, 0);
+local BWQ_GREEN_FONT_COLOR = CreateColor(0, 0.75, 0);
+local BWQ_BLUE_FONT_COLOR = CreateColor(0.1, 0.68, 1);
+local BWQ_LISTITTEM_HEIGHT = 32;
+local BWQ_REFRESH_DEFAULT = 60;
+local BWQ_REFRESH_FAST = 0.5;
+local BWQ_REFRESH_LIMIT = 5;
+local BWQ_REFRESH_FAIL = "[WQT] No reward info more than " .. BWQ_REFRESH_LIMIT .. " times in a row. Ending fast refresh."
+local BWQ_OPTIONS_INFO = "[WQT] Options can be found under the filter button."
+local BWQ_QUESTIONMARK = "Interface/ICONS/INV_Misc_QuestionMark";
+local BWQ_NO_FACTION = "No Faction";
+
 -- 1007 Broken Isles
 local _legionZoneIds = {1014, 1015, 1033, 1017, 1024, 1018, 1096};
 
@@ -54,7 +78,7 @@ local _defaults = {
 		filters = {
 				[1] = {["name"] = "Faction"
 				, ["flags"] = {[GetFactionInfoByID(1859)] = false, [GetFactionInfoByID(1894)] = false, [GetFactionInfoByID(1828)] = false, [GetFactionInfoByID(1883)] = false
-								, [GetFactionInfoByID(1948)] = false, [GetFactionInfoByID(1900)] = false, [GetFactionInfoByID(1090)] = false}}
+								, [GetFactionInfoByID(1948)] = false, [GetFactionInfoByID(1900)] = false, [GetFactionInfoByID(1090)] = false, [BWQ_NO_FACTION] = false}}
 				,[2] = {["name"] = "Type"
 						, ["flags"] = {["Default"] = false, ["Elite"] = false, ["PvP"] = false, ["Petbattle"] = false, ["Dungeon"] = false, ["Profession"] = false, ["Emissary"] = false}}
 				,[3] = {["name"] = "Reward"
@@ -64,27 +88,7 @@ local _defaults = {
 }
 local functionCalls = {};
 
-local BWQ_REWARDTYPE_ITEM = 3;
-local BWQ_REWARDTYPE_GOLD = 4;
-local BWQ_REWARDTYPE_CURRENCY = 5;
-local BWQ_REWARDTYPE_ARMOR = 1;
-local BWQ_REWARDTYPE_ARTIFACT = 2;
-local BWQ_COMBATLOCK = "Disabled during combat.";
-local BWQ_NOT_HERE = "You can't view world quests here.";
-local BWQ_FILTERS = "Filters: %s";
-local BWQ_SORT_BY = "By %s";
-local BWQ_UNLOCK_110 = "Unlocked at\nlevel 110."
-local BWQ_UNLOCK_QUEST = "Complete quest:\n%s";
-local BWQ_WHITE_FONT_COLOR = CreateColor(0.8, 0.8, 0.8);
-local BWQ_ORANGE_FONT_COLOR = CreateColor(1, 0.6, 0);
-local BWQ_GREEN_FONT_COLOR = CreateColor(0, 0.75, 0);
-local BWQ_BLUE_FONT_COLOR = CreateColor(0.1, 0.68, 1);
-local BWQ_LISTITTEM_HEIGHT = 32;
-local BWQ_REFRESH_DEFAULT = 60;
-local BWQ_REFRESH_FAST = 0.5;
-local BWQ_REFRESH_LIMIT = 5;
-local BWQ_REFRESH_FAIL = "[WQT] No reward info more than " .. BWQ_REFRESH_LIMIT .. " times in a row. Ending fast refresh."
-local BWQ_QUESTIONMARK = "Interface/ICONS/INV_Misc_QuestionMark";
+
 
 ------------------------------------------------------------
 
@@ -184,7 +188,7 @@ end
 
 function BWQ_Quest_OnEnter(self)
 	WorldMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	
+
 	if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
 		GameTooltip_ShowCompareItem(WorldMapTooltip.ItemTooltip.Tooltip, WorldMapTooltip.BackdropFrame);
 	else
@@ -215,26 +219,29 @@ function BWQ_Quest_OnEnter(self)
 	
 	if self.info.rewardTexture == BWQ_QUESTIONMARK then
 		BWQ:SetQuestReward(self.info)
+		BWQ:UpdateQuestList();
+		return;
 	end
 	self.reward.icon:SetTexture(self.info.rewardTexture);
 
 	local title, factionID, capped = C_TaskQuest.GetQuestInfoByQuestID(self.questId);
-		local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(self.questId);
-		local color = WORLD_QUEST_QUALITY_COLORS[rarity];
-		WorldMapTooltip:SetText(title, color.r, color.g, color.b);
 
-		if ( factionID ) then
-			local factionName = GetFactionInfoByID(factionID);
-			if ( factionName ) then
-				if (capped) then
-					WorldMapTooltip:AddLine(factionName, GRAY_FONT_COLOR:GetRGB());
-				else
-					WorldMapTooltip:AddLine(factionName);
-				end
+	
+	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(self.questId);
+	local color = WORLD_QUEST_QUALITY_COLORS[rarity];
+	WorldMapTooltip:SetText(title, color.r, color.g, color.b);
+	if ( factionID ) then
+		local factionName = GetFactionInfoByID(factionID);
+		if ( factionName ) then
+			if (capped) then
+				WorldMapTooltip:AddLine(factionName, GRAY_FONT_COLOR:GetRGB());
+			else
+				WorldMapTooltip:AddLine(factionName);
 			end
 		end
+	end
 
-		WorldMap_AddQuestTimeToTooltip(self.questId);
+	WorldMap_AddQuestTimeToTooltip(self.questId);
 
 	for objectiveIndex = 1, self.numObjectives do
 		local objectiveText, objectiveType, finished = GetQuestObjectiveInfo(self.questId, objectiveIndex, false);
@@ -250,7 +257,6 @@ function BWQ_Quest_OnEnter(self)
 		WorldMapTaskTooltipStatusBar.Bar:SetValue(percent);
 		WorldMapTaskTooltipStatusBar.Bar.Label:SetFormattedText(PERCENTAGE_STRING, percent);
 	end
-
 	WorldMap_AddQuestRewardsToTooltip(self.questId);
 	
 	-- Add debug lines
@@ -259,7 +265,7 @@ function BWQ_Quest_OnEnter(self)
 	-- end
 	
 	WorldMapTooltip:Show();
-	
+
 	BWQ:ShowWorldmapHighlight(self.info.zoneId);
 end
 
@@ -381,6 +387,9 @@ local function GetSortedFilterOrder(filterId)
 		table.insert(tbl, k);
 	end
 	table.sort(tbl, function(a, b) 
+				if(a == BWQ_NO_FACTION or b == BWQ_NO_FACTION)then
+					return a ~= BWQ_NO_FACTION and b == BWQ_NO_FACTION;
+				end
 				return a < b; 
 			end)
 	return tbl;
@@ -517,12 +526,11 @@ function BWQ:SetQuestReward(info)
 		_, texture, numItems, quality = GetQuestLogRewardInfo(1, info.id);
 		local itemId = select(6, GetQuestLogRewardInfo(1, info.id))
 		if itemId and IsArtifactItem(itemId) then
-			WorldMap_AddQuestRewardsToTooltip(info.id);
-			local text = WorldMapTooltipTooltipTextLeft4:GetText();
+			EmbeddedItemTooltip_SetItemByQuestReward(BWQ_Tooltip.ItemTooltip, 1, info.id)
+			local text = BWQ_TooltipTooltipTextLeft4:GetText();
 			text = text:gsub(",", "");
 			numItems = tonumber(string.match(text, '%d+'));
 			rewardType = BWQ_REWARDTYPE_ARTIFACT;
-			WorldMapTooltip:Hide();
 		elseif itemId and select(9, GetItemInfo(itemId)) ~= "" then
 			rewardType = BWQ_REWARDTYPE_ARMOR;
 		else
@@ -549,7 +557,7 @@ local function AddQuestToList(list, qInfo, zoneId)
 	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(qInfo.questId);
 	local minutes, timeString, color, timeStringShort = GetQuestTimeString(qInfo.questId);
 	if minutes == 0 then return end;
-	local faction = factionId and GetFactionInfoByID(factionId) or "";
+	local faction = factionId and GetFactionInfoByID(factionId) or BWQ_NO_FACTION;
 	
 	local info = GetOrCreateQuestInfo();
 	info.id = qInfo.questId;
@@ -676,19 +684,6 @@ function BWQ:isUsingFilterNr(id)
 end
 
 function BWQ:PassesAllFilters(quest)
-
-
-	-- local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(qInfo.questId);
-	-- local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(qInfo.questId);
-	-- local faction = factionId and GetFactionInfoByID(factionId) or "";
-	
-	-- if BWQ:isUsingFilterNr(1) and not BWQ:PassesFactionFilter(faction ,factionId) then return false; end
-	-- if BWQ:isUsingFilterNr(2) and not BWQ:PassesTypeFilter(worldQuestType, isElite, qInfo.questId) then return false; end
-	-- if BWQ:isUsingFilterNr(3) and not BWQ:PassesRewardFilter(qInfo.questId, q.rewardType) then return false; end
-	
-	-- local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(quest.id);
-	-- local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(quest.id);
-	-- local faction = factionId and GetFactionInfoByID(factionId) or "";
 	
 	if BWQ:isUsingFilterNr(1) and not BWQ:PassesFactionFilter(quest) then return false; end
 	if BWQ:isUsingFilterNr(2) and not BWQ:PassesTypeFilter(quest.type, quest.isElite, quest.id) then return false; end
@@ -732,6 +727,7 @@ end
 
 function BWQ:PassesRewardFilter(questId, rewardType)
 
+	if(addon.events.missing >= BWQ_REFRESH_LIMIT-1 and rewardType == 0) then return true end;
 	if(rewardType == 0) then return false end;
 	local flags = BWQ.settings.filters[3].flags
 	-- Armor
@@ -750,33 +746,6 @@ function BWQ:PassesRewardFilter(questId, rewardType)
 	if  flags["Gold"] and rewardType == BWQ_REWARDTYPE_GOLD then return true; end
 	-- Resources
 	if  flags["Resources"] and rewardType == BWQ_REWARDTYPE_CURRENCY then return true; end
-
-	--[[
-	local flags = BWQ.settings.filters[3].flags
-	-- Item
-	if (flags["Armor"] or flags["Artifact"] or flags["Item"]) and GetNumQuestLogRewards(questId) > 0 then
-		
-		local id = select(6, GetQuestLogRewardInfo(1, questId))
-		if not id then return false end
-		local link = select(2, GetItemInfo(id));
-		-- Armor
-		if id and flags["Armor"] and select(9, GetItemInfo(id)) ~= "" then
-			return true;
-		end
-		-- Item
-		if id and flags["Item"] and select(9, GetItemInfo(id)) == "" and not IsArtifactItem(id) then
-			return true;
-		end
-		-- Artifact power
-		if id and flags["Artifact"] and IsArtifactItem(id) then
-			return true;
-		end
-	end
-	-- Gold, check item rewards because some have 2g rewards we don't care about
-	if  flags["Gold"] and GetQuestLogRewardMoney(questId) > 0 and GetNumQuestLogRewards(questId) == 0 then return true; end
-	-- Resources
-	if  flags["Resources"] and GetNumQuestLogRewardCurrencies(questId) > 0 then return true; end
-	]]--
 end
 
 function BWQ:UpdateFilterDisplay()
@@ -1029,6 +998,7 @@ end
 function BWQ:DisplayQuestList()
 
 	if InCombatLockdown() or UnitLevel("player") < 110 or not WorldMapFrame:IsShown() or not BWQ_WorldQuestFrame:IsShown() then return end
+	
 	local scrollFrame = BWQ_QuestScrollFrame;
 	local offset = HybridScrollFrame_GetOffset(scrollFrame);
 	local buttons = scrollFrame.buttons;
@@ -1395,7 +1365,6 @@ function BWQ:OnEnable()
 	-- Redo PoI filter when they update
 	hooksecurefunc("WorldMap_UpdateQuestBonusObjectives", function()
 			BWQ:FilterMapPoI()
-			--print("update")
 		end)
 	-- Hide things when looking at quest details
 	hooksecurefunc("QuestMapFrame_ShowQuestDetails", function()
@@ -1456,9 +1425,8 @@ function BWQ:OnEnable()
 	_completedQuest = GetQuestsCompleted()[43341];
 	
 	BWQ_Tab_Onclick(self.settings.defaultTab and BWQ_TabWorld or BWQ_TabNormal)
+	
 end
-
-local missing = 0;
 		
 addon.events = CreateFrame("FRAME", "BWQ_EventFrame"); 
 addon.events:RegisterEvent("WORLD_MAP_UPDATE");
@@ -1470,23 +1438,23 @@ addon.events:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
 addon.events:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else print("BWQ missing function for: " .. event) end end)
 addon.events.updatePeriod = BWQ_REFRESH_DEFAULT;
 addon.events.time = 0;
+addon.events.missing = 0;
 addon.events:SetScript("OnUpdate", function(self, elapsed) 
 		self.time = self.time + elapsed;
 		if addon.events.updatePeriod == BWQ_REFRESH_FAST and self.time >= self.updatePeriod then 
 			self.time = 0;
 			BWQ:DisplayQuestList()
-			missing = missing + 1
-			if missing >= BWQ_REFRESH_LIMIT then
-				--print(BWQ_REFRESH_FAIL)
+			addon.events.missing = addon.events.missing + 1
+			if addon.events.missing >= BWQ_REFRESH_LIMIT then
 				addon.events.updatePeriod = BWQ_REFRESH_DEFAULT
-				missing = 0;
+				addon.events.missing = 0;
 			end
 		end
 		
-		if addon.events.noIssue and addon.events.updatePeriod == BWQ_REFRESH_FDEFAULT and self.time >= self.updatePeriod then
+		if addon.events.noIssue and addon.events.updatePeriod == BWQ_REFRESH_DEFAULT and self.time >= self.updatePeriod then
 			BWQ:UpdateQuestList();
 			self.time = 0;
-			missing = 0;
+			addon.events.missing = 0;
 		end
 	end)
 
@@ -1499,7 +1467,7 @@ end
 	
 function addon.events:WORLD_MAP_UPDATE(loaded_addon)
 	local mapAreaID = GetCurrentMapAreaID();
-	if not InCombatLockdown() then -- and addon.lastMapId ~= mapAreaID then
+	if not InCombatLockdown() and addon.lastMapId ~= mapAreaID then
 		BWQ:UpdateQuestList();
 		addon.lastMapId = mapAreaID;
 	end
@@ -1534,13 +1502,15 @@ end
 ----------
 
 SLASH_BWQSLASH1 = '/wqt';
+SLASH_BWQSLASH2 = '/worldquesttab';
 local function slashcmd(msg, editbox)
-	BWQ_Tab_Onclick(BWQ_WorldQuestFrame.selectedTab);
-	BWQ:UpdateQuestList();
-	
-	-- for k, v in pairs(functionCalls)do
-		-- print(k, v);
-	-- end
+	if msg == "options" then
+		print(BWQ_OPTIONS_INFO);
+	else
+		BWQ_Tab_Onclick(BWQ_WorldQuestFrame.selectedTab);
+		BWQ:UpdateQuestList();
+	end
+
 end
 SlashCmdList["BWQSLASH"] = slashcmd
 

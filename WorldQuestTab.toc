@@ -1,8 +1,8 @@
-﻿## Interface: 70000
+﻿## Interface: 70100
 ## Title: WorldQuestTab
 ## Notes: Creates a new quest tab to keep track of world quests.
 ## Author: LanceDH
-## Version: 7.0.07α3
+## Version: 7.1.02
 ## SavedVariables: BWQDB
 WorldQuestTab.xml
 WorldQuestTab.lua
