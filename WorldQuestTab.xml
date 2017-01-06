@@ -8,19 +8,12 @@
 	 
 	<Include file="libs\DropDownMenu\UIDropDownMenuTemplates.xml"/>
 	<Script file="Libs\DropDownMenu\UIDropDownMenu.lua"/>
-	 
-	 <!-- 
-	 <Frame name="BWQ_DebugLine" parentArray="DependencyLines" virtual="true">
+	
+	<!--
+	<Frame name="BWQ_DebugLine" parentArray="DependencyLines" virtual="true">
 		<Layers>
-			<Layer level="OVERLAY" textureSubLevel="-3">
-				<Line parentKey="Background" file="Interface/Artifacts/_Artifacts-DependencyBar-BG" thickness="12" horizTile="true" alpha="0" />
-			</Layer>
 			<Layer level="OVERLAY" textureSubLevel="-2">
 				<Line parentKey="Fill" file="Interface/Artifacts/_Artifacts-DependencyBar-Fill" thickness="4" horizTile="true" alpha="1" />
-			</Layer>
-			<Layer level="OVERLAY" textureSubLevel="-1">
-				<Line parentKey="FillScroll1" file="Interface/Artifacts/_Artifacts-DependencyBar-FillScroll1" thickness="12" horizTile="true" alphaMode="ADD" alpha="0" />
-				<Line parentKey="FillScroll2" file="Interface/Artifacts/_Artifacts-DependencyBar-FillScroll2" thickness="12" horizTile="true" alphaMode="ADD" alpha="0" />
 			</Layer>
 		</Layers>
 	</Frame>

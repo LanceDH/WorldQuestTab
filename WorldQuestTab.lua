@@ -2,11 +2,13 @@
 
 local BWQ = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 
-local BWQ_REWARDTYPE_ITEM = 3;
-local BWQ_REWARDTYPE_GOLD = 4;
-local BWQ_REWARDTYPE_CURRENCY = 5;
 local BWQ_REWARDTYPE_ARMOR = 1;
-local BWQ_REWARDTYPE_ARTIFACT = 2;
+local BWQ_REWARDTYPE_RELIC = 2;
+local BWQ_REWARDTYPE_ARTIFACT = 3;
+local BWQ_REWARDTYPE_ITEM = 4;
+local BWQ_REWARDTYPE_GOLD = 5;
+local BWQ_REWARDTYPE_CURRENCY = 6;
+
 local BWQ_COMBATLOCK = "Disabled during combat.";
 local BWQ_NOT_HERE = "You can't view world quests here.";
 local BWQ_FILTERS = "Filters: %s";
@@ -25,6 +27,7 @@ local BWQ_REFRESH_FAIL = "[WQT] No reward info more than " .. BWQ_REFRESH_LIMIT 
 local BWQ_OPTIONS_INFO = "[WQT] Options can be found under the filter button."
 local BWQ_QUESTIONMARK = "Interface/ICONS/INV_Misc_QuestionMark";
 local BWQ_NO_FACTION = "No Faction";
+local BWQ_ARTIFACT_R, BWQ_ARTIFACT_G, BWQ_ARTIFACT_B = GetItemQualityColor(6);
 
 -- 1007 Broken Isles
 local _legionZoneIds = {1014, 1015, 1033, 1017, 1024, 1018, 1096};
@@ -53,6 +56,8 @@ local _artifactSpells = {
 		,"Renforcement" -- FR
 		,"Potenziamento" -- IT
 		,"Усиление" -- RU
+		,"强化" -- CN
+		,"강화" -- KR
 	}
 local _factionIcons = {
 	 [1894] = "Interface/ICONS/INV_LegionCircle_Faction_Warden"
@@ -71,6 +76,7 @@ local _defaults = {
 		showFactionIcon = true;
 		saveFilters = false;
 		filterPoI = false;
+		bigPoI = false;
 		--defaultPoI = false;
 		showPinReward = true;
 		showPinTime = true;
@@ -82,7 +88,7 @@ local _defaults = {
 				,[2] = {["name"] = "Type"
 						, ["flags"] = {["Default"] = false, ["Elite"] = false, ["PvP"] = false, ["Petbattle"] = false, ["Dungeon"] = false, ["Profession"] = false, ["Emissary"] = false}}
 				,[3] = {["name"] = "Reward"
-						, ["flags"] = {["Item"] = false, ["Armor"] = false, ["Gold"] = false, ["Resources"] = false, ["Artifact"] = false, }}
+						, ["flags"] = {["Item"] = false, ["Armor"] = false, ["Gold"] = false, ["Resources"] = false, ["Artifact"] = false, ["Relic"] = false, }}
 			}
 	}
 }
@@ -326,6 +332,17 @@ local function IsArtifactItem(itemId)
 	return false;
 end
 
+local function IsRelicItem(itemId)
+	-- Wouldn't mind having a way to get non-localized item classes
+	EmbeddedItemTooltip_SetItemByID(BWQ_Tooltip.ItemTooltip, itemId)
+	if (not BWQ_TooltipTooltipTextLeft4:GetText()) then return false; end
+	local r, g, b = BWQ_TooltipTooltipTextLeft4:GetTextColor();
+	local difR = BWQ_ARTIFACT_R - r
+	local difG = BWQ_ARTIFACT_R - r
+	local difB = BWQ_ARTIFACT_R - r
+	return (difR <= 0.001 and difG <= 0.001 and difB <= 0.001 and difR >= -0.001 and difG >= -0.001 and difB >= -0.001)
+end
+
 local function ShowOverlayMessage(message)
 	local scrollFrame = BWQ_QuestScrollFrame;
 	local buttons = scrollFrame.buttons;
@@ -374,7 +391,8 @@ local function GetOrCreateQuestInfo()
 	local info = {["id"] = -1, ["title"] = "", ["timeString"] = "", ["timeStringShort"] = "", ["color"] = BWQ_WHITE_FONT_COLOR, ["minutes"] = 0
 					, ["faction"] = 0, ["type"] = 0, ["rarity"] = 0, ["isElite"] = false, ["tradeskill"] = 0
 					, ["numObjectives"] = 0, ["numItems"] = 0, ["rewardTexture"] = "", ["rewardQuality"] = 1
-					, ["rewardType"] = 0};
+					, ["rewardType"] = 0, ["isCriteria"] = false}; 
+					
 	table.insert(_questPool, info);
 	
 	return info
@@ -504,6 +522,8 @@ local function GetQuestTimeString(questId)
 			color = BWQ_BLUE_FONT_COLOR;
 		end
 	end
+	-- start with default, for CN and KR
+	timeStringShort = timeString;
 	-- for some reason using a single match makes t always 4 while the match works fine outside this function
 	local t = string.match(timeString, '(%d+)');
 	local s = string.match(timeString, '(%a)');
@@ -529,10 +549,16 @@ function BWQ:SetQuestReward(info)
 			EmbeddedItemTooltip_SetItemByQuestReward(BWQ_Tooltip.ItemTooltip, 1, info.id)
 			local text = BWQ_TooltipTooltipTextLeft4:GetText();
 			text = text:gsub(",", "");
+			text = text:gsub("%.", "");
 			numItems = tonumber(string.match(text, '%d+'));
 			rewardType = BWQ_REWARDTYPE_ARTIFACT;
 		elseif itemId and select(9, GetItemInfo(itemId)) ~= "" then
 			rewardType = BWQ_REWARDTYPE_ARMOR;
+		elseif itemId and IsRelicItem(itemId) then
+			EmbeddedItemTooltip_SetItemByQuestReward(BWQ_Tooltip.ItemTooltip, 1, info.id)
+			local text = BWQ_TooltipTooltipTextLeft5:GetText();
+			numItems = text and tonumber(string.match(text, '%d+'));
+			rewardType = BWQ_REWARDTYPE_RELIC;	
 		else
 			rewardType = BWQ_REWARDTYPE_ITEM;
 		end
@@ -575,6 +601,7 @@ local function AddQuestToList(list, qInfo, zoneId)
 	info.tradeskill = tradeskillLineIndex;
 	info.numObjectives = qInfo.numObjectives;
 	info.passedFilter = true;
+	info.isCriteria = WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(qInfo.questId);
 	BWQ:SetQuestReward(info)
 	table.insert(list, info)
 	
@@ -734,6 +761,10 @@ function BWQ:PassesRewardFilter(questId, rewardType)
 	if id and flags["Armor"] and rewardType == BWQ_REWARDTYPE_ARMOR then
 		return true;
 	end
+	-- Relic
+	if id and flags["Relic"] and rewardType == BWQ_REWARDTYPE_RELIC then
+		return true;
+	end
 	-- Item
 	if id and flags["Item"] and rewardType == BWQ_REWARDTYPE_ITEM then
 		return true;
@@ -776,6 +807,12 @@ function BWQ:FilterMapPoI()
 		if (PoI.worldQuest) then
 			quest = GetQuestFromList(PoI.questID);
 			if (quest) then
+				if (BWQ.settings.bigPoI) then
+					PoI:SetWidth(25);
+					PoI:SetHeight(25);
+				end
+				local bw = PoI:GetWidth();
+				local bh = PoI:GetHeight();
 				if (BWQ.settings.filterPoI and not quest.passedFilter) then
 					PoI:Hide();
 				else
@@ -784,8 +821,7 @@ function BWQ:FilterMapPoI()
 				
 				if (not PoI.BWQRing) then
 					PoI.BWQRing = PoI:CreateTexture(nil)
-					PoI.BWQRing:SetWidth(22);
-					PoI.BWQRing:SetHeight(22);
+					
 					PoI.BWQRing:SetDrawLayer("OVERLAY", 4)
 					PoI.BWQRing:SetPoint("CENTER", PoI, "CENTER", 0, -1)
 					PoI.BWQRing:SetTexture("Interface/PLAYERFRAME/UI-PlayerFrame-Deathknight-Ring")
@@ -793,8 +829,7 @@ function BWQ:FilterMapPoI()
 					PoI.BWQRing:SetVertexColor(0.85, 0.65, 0.13) 
 					
 					PoI.BWQRing2 = PoI:CreateTexture(nil)
-					PoI.BWQRing2:SetWidth(21);
-					PoI.BWQRing2:SetHeight(21);
+					
 					PoI.BWQRing2:SetAlpha(0.5);
 					PoI.BWQRing2:SetDrawLayer("OVERLAY", 5)
 					PoI.BWQRing2:SetPoint("CENTER", PoI, "CENTER", 0, 0)
@@ -802,21 +837,33 @@ function BWQ:FilterMapPoI()
 					PoI.BWQRing2:SetTexCoord(0.873046875, 0.939453125, 0.4580078125, 0.525390625)
 					PoI.BWQRing2:SetBlendMode("ADD")
 					PoI.BWQRing2:SetVertexColor(0, 0.5, 0) 
+					
+					
+					PoI.BWQGlow = PoI:CreateTexture(nil)
+					
+					PoI.BWQGlow:SetAlpha(0.5);
+					PoI.BWQGlow:SetDrawLayer("ARTWORK", -1)
+					PoI.BWQGlow:SetPoint("CENTER", PoI, "CENTER", 0, 0)
+					PoI.BWQGlow:SetTexture("Interface/Worldmap/QuestPoiGlow")
+					PoI.BWQGlow:SetTexCoord(0.15, 0.85, 0.15, 0.85)
+					PoI.BWQGlow:SetBlendMode("ADD")
+					--PoI.BWQGlow:SetVertexColor(0, 0.5, 0) 
 				end
 				
 				if (not PoI.BWQText) then
 					PoI.BWQText = PoI:CreateFontString(nil, nil, "BWQ_NumberFontOutline")
 					PoI.BWQText:SetPoint("TOP", PoI, "BOTTOM", 1, 3)
 					PoI.BWQText:SetHeight(18);
-					PoI.BWQText:SetWidth(30);
+					--PoI.BWQText:SetWidth(30);
 					PoI.BWQText:SetDrawLayer("OVERLAY", 7)
 					PoI.BWQText:SetJustifyV("MIDDLE")
 					
 					PoI.BWQBG = PoI:CreateTexture("")
-					PoI.BWQBG:SetWidth(22);
+					--PoI.BWQBG:SetWidth(22);
 					PoI.BWQBG:SetAlpha(0.75);
 					PoI.BWQBG:SetDrawLayer("ARTWORK", 3)
-					PoI.BWQBG:SetPoint("TOP", PoI, "CENTER", 0, 0)
+					PoI.BWQBG:SetPoint("LEFT", PoI.BWQText, "LEFT", 0, 4)
+					PoI.BWQBG:SetPoint("RIGHT", PoI.BWQText, "RIGHT", 0, 4)
 					PoI.BWQBG:SetHeight(20);
 					--PoI.BWQBG:SetPoint("BOTTOM", PoI.BWQText, "BOTTOM", 0, 4)
 					PoI.BWQBG:SetTexture("Interface/COMMON/NameShadow")
@@ -825,29 +872,64 @@ function BWQ:FilterMapPoI()
 			
 				if (PoI.BWQRing) then
 					PoI.BWQRing:SetAlpha(BWQ.settings.showPinReward and 1 or 0);
+					PoI.BWQRing:SetWidth(bw+3);
+					PoI.BWQRing:SetHeight(bh+3);
 					PoI.BWQRing2:SetAlpha(BWQ.settings.showPinReward and 1 or 0);
+					PoI.BWQRing2:SetWidth(bw+2);
+					PoI.BWQRing2:SetHeight(bh+2);
+					-- With big PoI we need this because we can't scale the default stuff ("curse you atlas")
+					PoI.BWQGlow:SetAlpha((BWQ.settings.bigPoI and not quest.isElite and WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(quest.id)) and 0.75 or 0);
+					PoI.BWQGlow:SetWidth(bw+12);
+					PoI.BWQGlow:SetHeight(bh+12);
+					
 					if (BWQ.settings.showPinReward) then
-						PoI.Texture:SetWidth(18);
-						PoI.Texture:SetHeight(18);
+						PoI.Texture:SetWidth(bw-2);
+						PoI.Texture:SetHeight(bh-2);
 						SetPortraitToTexture(PoI.Texture, quest.rewardTexture)
 						PoI:SetNormalTexture(nil);
 						PoI:SetPushedTexture(nil);
 						--PoI:SetHighlightTexture(nil);
-						PoI.BWQRing:Show();
+						PoI.BWQRing:SetAlpha(1);
+						
+						PoI.BWQRing2:SetAlpha(0);
 						
 						-- Give AP items a green ring
 						if (quest.rewardType == BWQ_REWARDTYPE_ARTIFACT) then
-							PoI.BWQRing2:Show()
-						else
-							PoI.BWQRing2:Hide()
+							PoI.BWQRing2:SetAlpha(1);
+							PoI.BWQRing2:SetVertexColor(0, 0.5, 0) 
+						end
+						
+						if (quest.rewardType == BWQ_REWARDTYPE_GOLD) then
+							PoI.BWQRing2:SetAlpha(1);
+							PoI.BWQRing2:SetVertexColor(0.6, 0.45, 0) 
+						end
+						
+						if (quest.rewardType == BWQ_REWARDTYPE_CURRENCY) then
+							PoI.BWQRing2:SetAlpha(1);
+							PoI.BWQRing2:SetVertexColor(0.3, 0.2, 0.04) 
+						end
+						
+						if (quest.rewardType == BWQ_REWARDTYPE_ITEM) then
+							PoI.BWQRing2:SetAlpha(1);
+							PoI.BWQRing2:SetVertexColor(0.5, 0.5, 0.5) 
+						end
+						
+						if (quest.rewardType == BWQ_REWARDTYPE_ARMOR) then
+							PoI.BWQRing2:SetAlpha(1);
+							PoI.BWQRing2:SetVertexColor(0.35, 0.1, 0.45) 
+						end
+						
+						if (quest.rewardType == BWQ_REWARDTYPE_RELIC) then
+							PoI.BWQRing2:SetAlpha(1);
+							PoI.BWQRing2:SetVertexColor(0.1, 0.4, 0.8) 
 						end
 						
 						-- Darken ring for emmisary to better display their glow
-						if (_G["WorldMapFrameTaskPOI"..index.."CriteriaMatchGlow"]:IsShown()) then
-							PoI.BWQRing:SetVertexColor(0.65, 0.50, 0.05) 
-						else
-							PoI.BWQRing:SetVertexColor(0.85, 0.65, 0.13) 
-						end
+						-- if (_G["WorldMapFrameTaskPOI"..index.."CriteriaMatchGlow"]:IsShown()) then
+							-- PoI.BWQRing:SetVertexColor(0.65, 0.50, 0.05) 
+						-- else
+							-- PoI.BWQRing:SetVertexColor(0.85, 0.65, 0.13) 
+						-- end
 					end
 				end
 				
@@ -867,7 +949,6 @@ function BWQ:FilterMapPoI()
 end
 
 function BWQ:ApplySort()
-
 	local list = _questList;
 	local sortOption = Lib_UIDropDownMenu_GetSelectedValue(BWQ_WorldQuestFrameSortButton);
 	if sortOption == 2 then -- faction
@@ -991,12 +1072,9 @@ function BWQ:UpdateMissingRewards()
 		end
 		table.remove(_questsMissingReward, i);
 	end
-	
-	BWQ:ApplySort();
 end
 
 function BWQ:DisplayQuestList()
-
 	if InCombatLockdown() or UnitLevel("player") < 110 or not WorldMapFrame:IsShown() or not BWQ_WorldQuestFrame:IsShown() then return end
 	
 	local scrollFrame = BWQ_QuestScrollFrame;
@@ -1005,6 +1083,7 @@ function BWQ:DisplayQuestList()
 	if buttons == nil then return; end
 	
 	BWQ:UpdateMissingRewards();
+	BWQ:ApplySort();
 	PopulateDisplayList()
 	local list = _questDisplayList;
 	local mapAreaID = GetCurrentMapAreaID();
@@ -1056,7 +1135,6 @@ function BWQ:DisplayQuestList()
 			end
 			
 			if BWQ.settings.showTypeIcon then
-				
 				DisplayQuestType(button.type, q)
 			else
 				button.type:Hide()
@@ -1071,13 +1149,18 @@ function BWQ:DisplayQuestList()
 			button.reward.icon:SetTexture(q.rewardTexture);
 
 			if q.numItems and q.numItems > 1 then
-				button.reward.amount:SetText(GetAbreviatedNumber(q.numItems) );
+				if q.rewardType == BWQ_REWARDTYPE_RELIC then
+					button.reward.amount:SetText("+" .. q.numItems);
+				else
+					button.reward.amount:SetText(GetAbreviatedNumber(q.numItems));
+				end
 				button.reward.amount:Show();
 				if q.rewardType == BWQ_REWARDTYPE_ARTIFACT then
 					r, g, b = GetItemQualityColor(2);
 				else
 					r, g, b = 1, 1, 1;
 				end
+				
 				button.reward.amount:SetVertexColor(r, g, b);
 			end
 			
@@ -1180,7 +1263,11 @@ function BWQ:InitFilter(self, level)
 			end
 			if LIB_UIDROPDOWNMENU_MENU_VALUE == 0 then
 				info.notCheckable = false;
+				info.tooltipWhileDisabled = true;
+				info.tooltipOnButton = true;
+				
 				info.text = "Default Tab";
+				info.tooltipTitle = "Set WQT as the default tab when you log in.\nDoes not apply to characters below lvl 110.";
 				info.func = function(_, _, _, value)
 						BWQ.settings.defaultTab = value;
 						--BWQ:UpdateQuestList();
@@ -1188,7 +1275,8 @@ function BWQ:InitFilter(self, level)
 				info.checked = function() return BWQ.settings.defaultTab end;
 				Lib_UIDropDownMenu_AddButton(info, level);			
 				
-				info.text = "Save Filters";
+				info.text = "Save Filters/Sort";
+				info.tooltipTitle = "Save filter and sort settings\nbetween sessions and reloads.";
 				info.func = function(_, _, _, value)
 						BWQ.settings.saveFilters = value;
 					end
@@ -1196,6 +1284,7 @@ function BWQ:InitFilter(self, level)
 				Lib_UIDropDownMenu_AddButton(info, level);	
 				
 				info.text = "Filter map pins";
+				info.tooltipTitle = "Applies filters to\npins on the map.";
 				info.func = function(_, _, _, value)
 						BWQ.settings.filterPoI = value;
 						WorldMap_UpdateQuestBonusObjectives();
@@ -1203,15 +1292,17 @@ function BWQ:InitFilter(self, level)
 				info.checked = function() return BWQ.settings.filterPoI end;
 				Lib_UIDropDownMenu_AddButton(info, level);
 				
-				-- info.text = "Default map pins";
-				-- info.func = function(_, _, _, value)
-						-- BWQ.settings.defaultPoI = value;
-						-- WorldMap_UpdateQuestBonusObjectives();
-					-- end
-				-- info.checked = function() return BWQ.settings.defaultPoI end;
-				-- Lib_UIDropDownMenu_AddButton(info, level);
+				info.text = "Bigger map pins";
+				info.tooltipTitle = "Slightly increase map\npin size for visability.";
+				info.func = function(_, _, _, value)
+						BWQ.settings.bigPoI = value;
+						WorldMap_UpdateQuestBonusObjectives();
+					end
+				info.checked = function() return BWQ.settings.bigPoI end;
+				Lib_UIDropDownMenu_AddButton(info, level);
 				
 				info.text = "Map pin rewards";
+				info.tooltipTitle = "Show quest reward icons on map\npins with a color coded ring.";
 				info.func = function(_, _, _, value)
 						BWQ.settings.showPinReward = value;
 						WorldMap_UpdateQuestBonusObjectives();
@@ -1220,6 +1311,7 @@ function BWQ:InitFilter(self, level)
 				Lib_UIDropDownMenu_AddButton(info, level);
 				
 				info.text = "Map pin time";
+				info.tooltipTitle = "Add time left to map pins.";
 				info.func = function(_, _, _, value)
 						BWQ.settings.showPinTime = value;
 						WorldMap_UpdateQuestBonusObjectives();
@@ -1228,6 +1320,7 @@ function BWQ:InitFilter(self, level)
 				Lib_UIDropDownMenu_AddButton(info, level);
 				
 				info.text = "Show Type";
+				info.tooltipTitle = "Show type icon\nin the quest list.";
 				info.func = function(_, _, _, value)
 						BWQ.settings.showTypeIcon = value;
 						BWQ:UpdateQuestList();
@@ -1236,6 +1329,7 @@ function BWQ:InitFilter(self, level)
 				Lib_UIDropDownMenu_AddButton(info, level);		
 				
 				info.text = "Show Faction";
+				info.tooltipTitle = "Show faction icon\nin the quest list.";
 				info.func = function(_, _, _, value)
 						BWQ.settings.showFactionIcon = value;
 						BWQ:UpdateQuestList();
@@ -1273,7 +1367,6 @@ end
 
 function BWQ:Sort_OnClick(self, category)
 
-	
 	local dropdown = BWQ_WorldQuestFrameSortButton;
 	if ( category and dropdown.active ~= category ) then
 		Lib_CloseDropDownMenus();
@@ -1359,7 +1452,7 @@ function BWQ:OnEnable()
 	
 	-- Hooks
 	-- Update emissary glow in list
-	hooksecurefunc(WorldMapFrame.UIElementsFrame.BountyBoard, "SetSelectedBountyIndex", function() BWQ:DisplayQuestList(); end)
+	hooksecurefunc(WorldMapFrame.UIElementsFrame.BountyBoard, "SetSelectedBountyIndex", function() BWQ:DisplayQuestList(); BWQ:FilterMapPoI(); end)
 	-- Update update select borders
 	hooksecurefunc("TaskPOI_OnClick", function() BWQ:DisplayQuestList() end)
 	-- Redo PoI filter when they update
@@ -1424,7 +1517,7 @@ function BWQ:OnEnable()
 	
 	_completedQuest = GetQuestsCompleted()[43341];
 	
-	BWQ_Tab_Onclick(self.settings.defaultTab and BWQ_TabWorld or BWQ_TabNormal)
+	BWQ_Tab_Onclick((UnitLevel("player") >= 110 and self.settings.defaultTab) and BWQ_TabWorld or BWQ_TabNormal)
 	
 end
 		
@@ -1520,6 +1613,7 @@ SlashCmdList["BWQSLASH"] = slashcmd
 -- Remember to uncomment line template in xml
 --------
 
+
 -- local l_debug = CreateFrame("frame", addonName .. "Debug", UIParent);
 
 -- local function GetDebugLine(lineIndex)
@@ -1565,7 +1659,7 @@ SlashCmdList["BWQSLASH"] = slashcmd
 -- l_debug.text:SetText("0000")
 -- l_debug.text:SetJustifyH("left")
 -- l_debug.time = 0;
--- l_debug.interval = 0.1;
+-- l_debug.interval = 0.2;
 -- l_debug.history = {}
 -- l_debug:SetScript("OnUpdate", function(self,elapsed) 
 		-- self.time = self.time + elapsed;
@@ -1577,8 +1671,11 @@ SlashCmdList["BWQSLASH"] = slashcmd
 				-- table.remove(self.history, 1)
 			-- end
 			-- ShowDebugHistory()
+
 		-- end
 	-- end)
 -- l_debug:Show()
+
+
 
 
