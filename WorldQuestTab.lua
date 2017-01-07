@@ -833,9 +833,10 @@ function BWQ:FilterMapPoI()
 					PoI.BWQRing2:SetAlpha(0.5);
 					PoI.BWQRing2:SetDrawLayer("OVERLAY", 5)
 					PoI.BWQRing2:SetPoint("CENTER", PoI, "CENTER", 0, 0)
-					PoI.BWQRing2:SetTexture("Interface/Artifacts/Artifacts")
-					PoI.BWQRing2:SetTexCoord(0.873046875, 0.939453125, 0.4580078125, 0.525390625)
-					PoI.BWQRing2:SetBlendMode("ADD")
+					PoI.BWQRing2:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRing")
+					--PoI.BWQRing2:SetTexture("Interface/Artifacts/Artifacts")
+					--PoI.BWQRing2:SetTexCoord(0.873046875, 0.939453125, 0.4580078125, 0.525390625)
+					--PoI.BWQRing2:SetBlendMode("ADD")
 					PoI.BWQRing2:SetVertexColor(0, 0.5, 0) 
 					
 					
@@ -860,7 +861,7 @@ function BWQ:FilterMapPoI()
 					
 					PoI.BWQBG = PoI:CreateTexture("")
 					--PoI.BWQBG:SetWidth(22);
-					PoI.BWQBG:SetAlpha(0.75);
+					PoI.BWQBG:SetAlpha(0.65);
 					PoI.BWQBG:SetDrawLayer("ARTWORK", 3)
 					PoI.BWQBG:SetPoint("LEFT", PoI.BWQText, "LEFT", 0, 4)
 					PoI.BWQBG:SetPoint("RIGHT", PoI.BWQText, "RIGHT", 0, 4)
@@ -896,32 +897,32 @@ function BWQ:FilterMapPoI()
 						-- Give AP items a green ring
 						if (quest.rewardType == BWQ_REWARDTYPE_ARTIFACT) then
 							PoI.BWQRing2:SetAlpha(1);
-							PoI.BWQRing2:SetVertexColor(0, 0.5, 0) 
+							PoI.BWQRing2:SetVertexColor(0, 0.75, 0) 
 						end
 						
 						if (quest.rewardType == BWQ_REWARDTYPE_GOLD) then
 							PoI.BWQRing2:SetAlpha(1);
-							PoI.BWQRing2:SetVertexColor(0.6, 0.45, 0) 
+							PoI.BWQRing2:SetVertexColor(0.85, 0.7, 0) 
 						end
 						
 						if (quest.rewardType == BWQ_REWARDTYPE_CURRENCY) then
 							PoI.BWQRing2:SetAlpha(1);
-							PoI.BWQRing2:SetVertexColor(0.3, 0.2, 0.04) 
+							PoI.BWQRing2:SetVertexColor(0.6, 0.4, 0.1) 
 						end
 						
 						if (quest.rewardType == BWQ_REWARDTYPE_ITEM) then
 							PoI.BWQRing2:SetAlpha(1);
-							PoI.BWQRing2:SetVertexColor(0.5, 0.5, 0.5) 
+							PoI.BWQRing2:SetVertexColor(0.85, 0.85, 0.85) 
 						end
 						
 						if (quest.rewardType == BWQ_REWARDTYPE_ARMOR) then
 							PoI.BWQRing2:SetAlpha(1);
-							PoI.BWQRing2:SetVertexColor(0.35, 0.1, 0.45) 
+							PoI.BWQRing2:SetVertexColor(0.7, 0.2, 0.9) 
 						end
 						
 						if (quest.rewardType == BWQ_REWARDTYPE_RELIC) then
 							PoI.BWQRing2:SetAlpha(1);
-							PoI.BWQRing2:SetVertexColor(0.1, 0.4, 0.8) 
+							PoI.BWQRing2:SetVertexColor(0.3, 0.7, 1) 
 						end
 						
 						-- Darken ring for emmisary to better display their glow
@@ -935,7 +936,7 @@ function BWQ:FilterMapPoI()
 				
 				if (PoI.BWQText) then
 					PoI.BWQText:SetAlpha((BWQ.settings.showPinTime and quest.timeStringShort ~= "")and 1 or 0);
-					PoI.BWQBG:SetAlpha((BWQ.settings.showPinTime and quest.timeStringShort ~= "") and 0.75 or 0);
+					PoI.BWQBG:SetAlpha((BWQ.settings.showPinTime and quest.timeStringShort ~= "") and 0.65 or 0);
 					if(BWQ.settings.showPinTime) then
 						PoI.BWQText:SetText(quest.timeStringShort)
 						PoI.BWQText:SetVertexColor(quest.color.r, quest.color.g, quest.color.b) 
