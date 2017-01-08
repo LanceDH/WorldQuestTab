@@ -1088,10 +1088,12 @@ end
 
 function Lib_UIDropDownMenu_DisableButton(level, id)
 	_G["Lib_DropDownList"..level.."Button"..id]:Disable();
+	_G["Lib_DropDownList"..level.."Button"..id.."InvisibleButton"]:Show();
 end
 
 function Lib_UIDropDownMenu_EnableButton(level, id)
 	_G["Lib_DropDownList"..level.."Button"..id]:Enable();
+	_G["Lib_DropDownList"..level.."Button"..id.."InvisibleButton"]:Hide();
 end
 
 function Lib_UIDropDownMenu_SetButtonText(level, id, text, colorCode)
