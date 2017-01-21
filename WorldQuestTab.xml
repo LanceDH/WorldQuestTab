@@ -350,14 +350,14 @@
 		</Anchors>
 		<Layers>
 			<Layer level="BACKGROUND">
-					<Texture parentKey="Background" atlas="QuestLogBackground" useAtlasSize="true">
-						<Size x="287" y="464"/>
-						<Anchors>
-							<Anchor point="TOPLEFT" x="2" y="-1"/>
-						</Anchors>
-					</Texture>
-				</Layer>
-			</Layers>
+				<Texture parentKey="Background" atlas="QuestLogBackground" useAtlasSize="true">
+					<Size x="287" y="464"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" x="2" y="-1"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
 		<Frames>
 			<Frame parentKey="filterBar">
 				<Size x="259" y="0.1"/>
@@ -578,7 +578,7 @@
 	<Frame name="BWQ_PoISelectIndicator" hidden="true">
 		<Size x="32" y="32"/>
 		<Layers>
-			<Layer level="ART">
+			<Layer level="ARTWORK">
 				<Texture parentKey="ping" file="Interface\Addons\WorldQuestTab\Images\PoIPing">
 					<Size x="25" y="25"/>
 					<Anchors>

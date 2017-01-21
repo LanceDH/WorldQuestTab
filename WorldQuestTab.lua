@@ -13,8 +13,6 @@ local BWQ_COMBATLOCK = "Disabled during combat.";
 local BWQ_NOT_HERE = "You can't view world quests here.";
 local BWQ_FILTERS = "Filters: %s";
 local BWQ_SORT_BY = "By %s";
-local BWQ_UNLOCK_110 = "Unlocked at\nlevel 110."
-local BWQ_UNLOCK_QUEST = "Complete quest:\n%s";
 local BWQ_WHITE_FONT_COLOR = CreateColor(0.8, 0.8, 0.8);
 local BWQ_ORANGE_FONT_COLOR = CreateColor(1, 0.6, 0);
 local BWQ_GREEN_FONT_COLOR = CreateColor(0, 0.75, 0);
@@ -32,22 +30,28 @@ local BWQ_REFRESH_LIMIT = 5;
 local BWQ_REFRESH_FAIL = "[WQT] No reward info more than " .. BWQ_REFRESH_LIMIT .. " times in a row. Ending fast refresh."
 local BWQ_OPTIONS_INFO = "[WQT] Options can be found under the filter button."
 local BWQ_QUESTIONMARK = "Interface/ICONS/INV_Misc_QuestionMark";
+local BWQ_FACTIONUNKNOWN = "Interface/addons/WorldQuestTab/Images/FactionUnknown";
 local BWQ_NO_FACTION = "No Faction";
 local BWQ_ARTIFACT_R, BWQ_ARTIFACT_G, BWQ_ARTIFACT_B = GetItemQualityColor(6);
 
--- 1007 Broken Isles
-local _legionZoneIds = {1014, 1015, 1033, 1017, 1024, 1018, 1096, 1021};
+local _continentIds = {[-1] = {1014, 1015, 1033, 1017, 1024, 1018, 1096, 1021, 261}
+		,[1007] = {1014, 1015, 1033, 1017, 1024, 1018, 1096, 1021}
+		,[13]	= {261}
+		}
 
 local _zoneCoords = {
+		-- Legion
 		 [1015] = {["x"] = 0.33, ["y"] = 0.58} -- Azsuna
 		,[1033] = {["x"] = 0.46, ["y"] = 0.45} -- Suramar
 		,[1017] = {["x"] = 0.60, ["y"] = 0.33} -- Stormheim
 		,[1024] = {["x"] = 0.46, ["y"] = 0.23} -- Highmountain
 		,[1018] = {["x"] = 0.34, ["y"] = 0.33} -- Val'sharah
 		,[1096] = {["x"] = 0.46, ["y"] = 0.84} -- Eye of Azshara
+		
+		--Kalimdor
+		,[261] = {["x"] = 0.42, ["y"] = 0.82} -- Silithus
 	}
-
-local _completedQuest = false;
+	
 local _questTitle = "Uniting the Isles"
 local _questList = {};
 local _questPool = {};
@@ -73,6 +77,8 @@ local _factionIcons = {
 	,[1828] = "Interface/ICONS/INV_LegionCircle_Faction_HightmountainTribes"
 	,[1883] = "Interface/ICONS/INV_LegionCircle_Faction_DreamWeavers"
 	,[1090] = "Interface/ICONS/INV_LegionCircle_Faction_KirinTor"
+	,[609] = "Interface/Addons/WorldQuestTab/Images/Faction609" --Cenarion Circle
+	,[910] = "Interface/Addons/WorldQuestTab/Images/Faction910" -- Brood of Nozdormu
 }
 local _filterOrders = {}
 local _defaults = {
@@ -282,8 +288,10 @@ function BWQ_Quest_OnEnter(self)
 end
 
 function BWQ:ShowWorldmapHighlight(zoneId)
+	local areaId = GetCurrentMapAreaID();
 
-	if GetCurrentMapAreaID() ~= 1007 or not _zoneCoords[zoneId] then return; end
+	if (areaId ~= 1007 and areaId ~= 13) or not _zoneCoords[zoneId] then return; end;
+
 	local adjustedX, adjustedY = _zoneCoords[zoneId].x, _zoneCoords[zoneId].y;
 	local width = WorldMapButton:GetWidth();
 	local height = WorldMapButton:GetHeight();
@@ -381,10 +389,16 @@ local function HideOverlayMessage()
 end
 
 local function ZoneHasSpecificQuests(zoneId)
-	for k, v in ipairs(_legionZoneIds) do
-		if v == zoneId then return true; end
+	for k, zones in pairs(_continentIds) do
+		for k, v in ipairs(zones) do
+			if v == zoneId then return true; end
+		end
 	end
 	return false;
+end
+
+local function GetContinentZones(zoneId)
+	return _continentIds[zoneId];
 end
 
 local function GetOrCreateQuestInfo()
@@ -946,20 +960,11 @@ function BWQ:UpdateQuestList(skipPins)
 
 	if (InCombatLockdown() or not WorldMapFrame:IsShown()) then return end
 	
-	if UnitLevel("player") < 110 then
-		ShowOverlayMessage(BWQ_UNLOCK_110);
-		return;
-	end
-	
-	if not _completedQuest then
-		ShowOverlayMessage(string.format(BWQ_UNLOCK_QUEST, _questTitle));
-		return;
-	end
-	
 	local mapAreaID = GetCurrentMapAreaID();
 	local list = _questList;
 	
-	local isQuestZone = ZoneHasSpecificQuests(mapAreaID);
+	local isContinent = GetContinentZones(mapAreaID);
+	--local isQuestZone = ZoneHasSpecificQuests(mapAreaID);
 	local filteredOut = 0;
 	local isFiltering = BWQ:IsFiltering()
 	local quest = nil;
@@ -970,20 +975,8 @@ function BWQ:UpdateQuestList(skipPins)
 		table.remove(list, i);
 	end
 	
-	if isQuestZone then
-		questsById = C_TaskQuest.GetQuestsForPlayerByMapID(mapAreaID);
-		if questsById and type(questsById) == "table" then
-			for k, info in ipairs(questsById) do
-				--if not isFiltering or BWQ:PassesAllFilters(info) then
-					quest = AddQuestToList(list, info, mapAreaID);
-					if quest and isFiltering and not BWQ:PassesAllFilters(quest) then
-						quest.passedFilter = false;
-					end
-				--end
-			end
-		end
-	else
-		for k, zoneId in ipairs(_legionZoneIds) do
+	if isContinent then
+		for k, zoneId in ipairs(isContinent) do
 			questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId);
 			if questsById and type(questsById) == "table" then
 				for k2, info in ipairs(questsById) do
@@ -996,6 +989,20 @@ function BWQ:UpdateQuestList(skipPins)
 				end
 			end
 		end
+	else
+		questsById = C_TaskQuest.GetQuestsForPlayerByMapID(mapAreaID);
+		if questsById and type(questsById) == "table" then
+			for k, info in ipairs(questsById) do
+				--if not isFiltering or BWQ:PassesAllFilters(info) then
+					quest = AddQuestToList(list, info, mapAreaID);
+					if quest and isFiltering and not BWQ:PassesAllFilters(quest) then
+						quest.passedFilter = false;
+					end
+				--end
+			end
+		end
+	
+		
 		-- if #list == 0 then
 			-- ShowOverlayMessage(BWQ_NOT_HERE);
 		-- end
@@ -1052,7 +1059,7 @@ function BWQ:UpdateMissingRewards()
 end
 
 function BWQ:DisplayQuestList()
-	if InCombatLockdown() or UnitLevel("player") < 110 or not WorldMapFrame:IsShown() or not BWQ_WorldQuestFrame:IsShown() then return end
+	if InCombatLockdown() or not WorldMapFrame:IsShown() or not BWQ_WorldQuestFrame:IsShown() then return end
 	
 	local scrollFrame = BWQ_QuestScrollFrame;
 	local offset = HybridScrollFrame_GetOffset(scrollFrame);
@@ -1064,7 +1071,7 @@ function BWQ:DisplayQuestList()
 	PopulateDisplayList()
 	local list = _questDisplayList;
 	local mapAreaID = GetCurrentMapAreaID();
-	local isQuestZone = ZoneHasSpecificQuests(mapAreaID);
+	local isContinent = GetContinentZones(mapAreaID);
 	local rewardMissing = false;
 	local r, g, b = 1, 1, 1;
 	local filteredSkipped = 0;
@@ -1087,8 +1094,7 @@ function BWQ:DisplayQuestList()
 			button.title:SetText(q.title);
 			button.time:SetTextColor(q.color.r, q.color.g, q.color.b, 1);
 			button.time:SetText(q.timeString);
-			--button.time:SetText("          -");
-			button.extra:SetText(isQuestZone and "" or GetMapNameByID(q.zoneId));
+			button.extra:SetText(isContinent and GetMapNameByID(q.zoneId) or "");
 			
 			button.title:ClearAllPoints()
 			button.title:SetPoint("RIGHT", button.reward, "LEFT", -5, 0);
@@ -1102,7 +1108,7 @@ function BWQ:DisplayQuestList()
 			
 			if BWQ.settings.showFactionIcon then
 				button.faction:Show();
-				button.faction.icon:SetTexture(_factionIcons[q.factionId] or "");
+				button.faction.icon:SetTexture(q.factionId and (_factionIcons[q.factionId] or BWQ_FACTIONUNKNOWN) or "");
 				button.faction:SetWidth(button.faction:GetHeight());
 			else
 				button.faction:Hide();
@@ -1164,10 +1170,10 @@ function BWQ:DisplayQuestList()
 	
 	BWQ:FilterMapPoI()
 	
-	-- If we are in a zone with no WQ, let us know
-	if not BWQ:IsWQMap(mapAreaID) then
-		ShowOverlayMessage(BWQ_NOT_HERE);
-		-- Don't return, we actually want to update the list to clear it
+	if (#list == 0) then
+		BWQ_WorldQuestFrame.Background:SetAtlas("NoQuestsBackground", true);
+	else
+		BWQ_WorldQuestFrame.Background:SetAtlas("QuestLogBackground", true);
 	end
 	
 end
@@ -1503,8 +1509,6 @@ function BWQ:OnEnable()
 		_questTitle = "Unire le Isole";
 	end
 	
-	_completedQuest = GetQuestsCompleted()[43341];
-	
 	BWQ_Tab_Onclick((UnitLevel("player") >= 110 and self.settings.defaultTab) and BWQ_TabWorld or BWQ_TabNormal)
 	
 end
@@ -1568,9 +1572,6 @@ function addon.events:PLAYER_REGEN_ENABLED(loaded_addon)
 end
 
 function addon.events:QUEST_TURNED_IN(loaded_addon)
-	if(not _completedQuest and UnitLevel("player") == 110) then
-		_completedQuest = GetQuestsCompleted()[43341];
-	end
 	BWQ:UpdateQuestList();
 end
 
@@ -1590,6 +1591,20 @@ local function slashcmd(msg, editbox)
 	else
 		BWQ_Tab_Onclick(BWQ_WorldQuestFrame.selectedTab);
 		BWQ:UpdateQuestList();
+		
+		-- local x, y = GetCursorPosition();
+		-- if ( WorldMapScrollFrame.panning ) then
+			-- WorldMapScrollFrame_OnPan(x, y);
+		-- end
+		-- x = x / WorldMapButton:GetEffectiveScale();
+		-- y = y / WorldMapButton:GetEffectiveScale();
+
+		-- local centerX, centerY = WorldMapButton:GetCenter();
+		-- local width = WorldMapButton:GetWidth();
+		-- local height = WorldMapButton:GetHeight();
+		-- local adjustedY = (centerY + (height/2) - y ) / height;
+		-- local adjustedX = (x - (centerX - (width/2))) / width;
+		-- print(adjustedX, adjustedY)
 	end
 
 end
