@@ -129,6 +129,11 @@ function BWQ_Tab_Onclick(self, button)
 
 	--if InCombatLockdown() then return end
 	id = self and self:GetID() or nil;
+	
+	if BWQ_WorldQuestFrame.selectedTab ~= self then
+		Lib_HideDropDownMenu(1);
+	end
+	
 	BWQ_WorldQuestFrame.selectedTab = self;
 	
 	BWQ_TabNormal:SetAlpha(1);
@@ -1387,6 +1392,14 @@ function BWQ:InitTrackDropDown(self, level)
 	local info = Lib_UIDropDownMenu_CreateInfo();
 	info.notCheckable = true;	
 
+	if ObjectiveTracker_Util_ShouldAddDropdownEntryForQuestGroupSearch(questId) then
+		info.text = OBJECTIVES_FIND_GROUP;
+		info.func = function()
+			LFGListUtil_FindQuestGroup(questId);
+		end
+		Lib_UIDropDownMenu_AddButton(info, level);
+	end
+	
 	if isTracked then
 		info.text = UNTRACK_QUEST;
 		info.func = function(_, _, _, value)
@@ -1560,6 +1573,7 @@ end
 function addon.events:WORLD_MAP_UPDATE(loaded_addon)
 	local mapAreaID = GetCurrentMapAreaID();
 	if not InCombatLockdown() and addon.lastMapId ~= mapAreaID then
+		Lib_HideDropDownMenu(1);
 		BWQ:UpdateQuestList();
 		addon.lastMapId = mapAreaID;
 	end
@@ -1568,6 +1582,7 @@ end
 function addon.events:PLAYER_REGEN_DISABLED(loaded_addon)
 	BWQ:ScrollFrameSetEnabled(false)
 	ShowOverlayMessage(BWQ_COMBATLOCK);
+	Lib_HideDropDownMenu(1);
 end
 
 function addon.events:PLAYER_REGEN_ENABLED(loaded_addon)
