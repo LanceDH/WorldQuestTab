@@ -32,6 +32,7 @@ local BWQ_OPTIONS_INFO = "[WQT] Options can be found under the filter button."
 local BWQ_QUESTIONMARK = "Interface/ICONS/INV_Misc_QuestionMark";
 local BWQ_FACTIONUNKNOWN = "Interface/addons/WorldQuestTab/Images/FactionUnknown";
 local BWQ_NO_FACTION = "No Faction";
+local BWQ_OTHER_FACTION = "Other";
 local BWQ_ARTIFACT_R, BWQ_ARTIFACT_G, BWQ_ARTIFACT_B = GetItemQualityColor(6);
 
 local _continentIds = {[-1] = {1014, 1015, 1033, 1017, 1024, 1018, 1096, 1021, 261}
@@ -96,7 +97,7 @@ local _defaults = {
 		filters = {
 				[1] = {["name"] = "Faction"
 				, ["flags"] = {[GetFactionInfoByID(1859)] = false, [GetFactionInfoByID(1894)] = false, [GetFactionInfoByID(1828)] = false, [GetFactionInfoByID(1883)] = false
-								, [GetFactionInfoByID(1948)] = false, [GetFactionInfoByID(1900)] = false, [GetFactionInfoByID(1090)] = false, [BWQ_NO_FACTION] = false}}
+								, [GetFactionInfoByID(1948)] = false, [GetFactionInfoByID(1900)] = false, [GetFactionInfoByID(1090)] = false, [BWQ_OTHER_FACTION] = false, [BWQ_NO_FACTION] = false}}
 				,[2] = {["name"] = "Type"
 						, ["flags"] = {["Default"] = false, ["Elite"] = false, ["PvP"] = false, ["Petbattle"] = false, ["Dungeon"] = false, ["Profession"] = false, ["Emissary"] = false}}
 				,[3] = {["name"] = "Reward"
@@ -134,8 +135,8 @@ function BWQ_Tab_Onclick(self, button)
 	BWQ_TabWorld:SetAlpha(1);
 	-- because being able to hide shit in combat would be too usefull
 	if not InCombatLockdown() then
-		BWQ_TabNormal:SetFrameLevel(BWQ_TabNormal:GetParent():GetFrameLevel()+(self == BWQ_TabNormal and 1 or 0));
-		BWQ_TabWorld:SetFrameLevel(BWQ_TabWorld:GetParent():GetFrameLevel()+(self == BWQ_TabWorld and 1 or 0));
+		BWQ_TabNormal:SetFrameLevel(BWQ_TabNormal:GetParent():GetFrameLevel()+(self == BWQ_TabNormal and 2 or 1));
+		BWQ_TabWorld:SetFrameLevel(BWQ_TabWorld:GetParent():GetFrameLevel()+(self == BWQ_TabWorld and 2 or 1));
 	 
 		BWQ_WorldQuestFrameFilterButton:SetFrameLevel(BWQ_WorldQuestFrameFilterButton:GetParent():GetFrameLevel());
 		BWQ_WorldQuestFrameSortButton:SetFrameLevel(BWQ_WorldQuestFrameSortButton:GetParent():GetFrameLevel());
@@ -427,6 +428,9 @@ local function GetSortedFilterOrder(filterId)
 	table.sort(tbl, function(a, b) 
 				if(a == BWQ_NO_FACTION or b == BWQ_NO_FACTION)then
 					return a ~= BWQ_NO_FACTION and b == BWQ_NO_FACTION;
+				end
+				if(a == BWQ_OTHER_FACTION or b == BWQ_OTHER_FACTION)then
+					return a ~= BWQ_OTHER_FACTION and b == BWQ_OTHER_FACTION;
 				end
 				return a < b; 
 			end)
@@ -755,6 +759,7 @@ function BWQ:PassesFactionFilter(quest)
 	-- Factions (1)
 	local flags = BWQ.settings.filters[1].flags
 	if flags[quest.faction] ~= nil and flags[quest.faction] then return true; end
+	if quest.faction ~= BWQ_NO_FACTION and flags[quest.faction] == nil and flags[BWQ_OTHER_FACTION] then return true; end
 	return false;
 end
 
@@ -1170,7 +1175,9 @@ function BWQ:DisplayQuestList()
 	
 	BWQ:FilterMapPoI()
 	
-	if (#list == 0) then
+	if (IsAddOnLoaded("Aurora")) then
+		BWQ_WorldQuestFrame.Background:SetAlpha(0);
+	elseif (#list == 0) then
 		BWQ_WorldQuestFrame.Background:SetAtlas("NoQuestsBackground", true);
 	else
 		BWQ_WorldQuestFrame.Background:SetAtlas("QuestLogBackground", true);
@@ -1406,7 +1413,7 @@ function BWQ:OnInitialize()
 	self.settings = self.db.global;
 end
 
-function BWQ:OnEnable()
+function BWQ:OnEnable() 
 
 	BWQ_TabNormal.Highlight:Show();
 	BWQ_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);

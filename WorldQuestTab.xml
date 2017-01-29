@@ -547,7 +547,7 @@
 	
 	<Button name="BWQ_TabNormal" inherits="BWQ_TabTemplate" parent="QuestMapFrame" enableMouse="true" id="1">
 		<Anchors>
-			<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" y="0"/>
+			<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="3" y="0"/>
 		</Anchors>
 		<Scripts>
 			<OnLoad>
