@@ -9,7 +9,9 @@
 	<Include file="libs\DropDownMenu\UIDropDownMenuTemplates.xml"/>
 	<Script file="Libs\DropDownMenu\UIDropDownMenu.lua"/>
 	
-	<!--
+	<Script file="Locals.lua"/>
+	<Script file="WorldQuestTab.lua"/>
+
 	<Frame name="BWQ_DebugLine" parentArray="DependencyLines" virtual="true">
 		<Layers>
 			<Layer level="OVERLAY" textureSubLevel="-2">
@@ -17,7 +19,7 @@
 			</Layer>
 		</Layers>
 	</Frame>
-	-->
+
 	
 	<FontFamily name="BWQ_NumberFontOutline" virtual="true">
 		<Member alphabet="roman">
@@ -62,6 +64,59 @@
 		</Member>
 		<Member alphabet="russian">
 			<Font font="Fonts\FRIZQT___CYR.TTF" height="10" outline="NORMAL">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+	</FontFamily>
+	
+	<FontFamily name="BWQ_NumberFontOutlineBig" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.TTF" height="25" outline="NORMAL">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\2002.TTF" height="27" outline="NORMAL">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="37" outline="NORMAL">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.TTF" height="37" outline="NORMAL">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\FRIZQT___CYR.TTF" height="25" outline="NORMAL">
 				<Shadow>
 					<Offset>
 						<AbsDimension x="1" y="-1"/>
@@ -525,12 +580,15 @@
 			</Button>
 			<Frame name="$parentFilterDropDown" inherits="Lib_UIDropDownMenuTemplate" />
 			
-			<Button name="$parentSortButton" inherits="Lib_UIDropDownMenuTemplate" text="testing">
+			<Button name="$parentSortButton" inherits="Lib_UIDropDownMenuTemplate" text="">
 				<Size x="93" y="22"/>
 				<Anchors>
 					<Anchor point="RIGHT" relativeTo="BWQ_WorldQuestFrameFilterButton" relativePoint="LEFT" x="10" y="-1"/>
 				</Anchors>
 				<Scripts>
+					<OnLoad>
+						self:EnableMouse(false);
+					</OnLoad>
 					<OnClick> 
 						PlaySound("igMainMenuOptionCheckBoxOn");
 					</OnClick>	
@@ -556,6 +614,11 @@
 				self.Icon:SetTexCoord(0.125, 0.25, 0.5, 1);
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 			</OnLoad>
+			<OnEnter>
+				GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
+				GameTooltip:SetText(BWQ_TAB_NORMAL, nil, nil, nil, nil, true);
+				GameTooltip:Show();
+			</OnEnter>
 		</Scripts>
 	</Button>
 	<Button name="BWQ_TabWorld" inherits="BWQ_TabTemplate" parent="QuestMapFrame" enableMouse="true" id="2">
@@ -568,6 +631,11 @@
 				self.Icon:SetTexture("Interface/Worldmap/UI-World-Icon");
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 			</OnLoad>
+			<OnEnter>
+				GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
+				GameTooltip:SetText(BWQ_TAB_WORLD, nil, nil, nil, nil, true);
+				GameTooltip:Show();
+			</OnEnter>
 		</Scripts>
 	</Button>
 	<Button name="BWQ_TabDetails" inherits="BWQ_TabTemplate" parent="QuestMapFrame" enableMouse="false" id="3" hidden="true">

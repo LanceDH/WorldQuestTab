@@ -2,6 +2,11 @@
 
 local BWQ = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 
+local _L = addon.L
+
+BWQ_TAB_NORMAL = _L["QUESTLOG"];
+BWQ_TAB_WORLD = _L["WORLDQUEST"];
+
 local BWQ_REWARDTYPE_ARMOR = 1;
 local BWQ_REWARDTYPE_RELIC = 2;
 local BWQ_REWARDTYPE_ARTIFACT = 3;
@@ -9,10 +14,6 @@ local BWQ_REWARDTYPE_ITEM = 4;
 local BWQ_REWARDTYPE_GOLD = 5;
 local BWQ_REWARDTYPE_CURRENCY = 6;
 
-local BWQ_COMBATLOCK = "Disabled during combat.";
-local BWQ_NOT_HERE = "You can't view world quests here.";
-local BWQ_FILTERS = "Filters: %s";
-local BWQ_SORT_BY = "By %s";
 local BWQ_WHITE_FONT_COLOR = CreateColor(0.8, 0.8, 0.8);
 local BWQ_ORANGE_FONT_COLOR = CreateColor(1, 0.6, 0);
 local BWQ_GREEN_FONT_COLOR = CreateColor(0, 0.75, 0);
@@ -23,17 +24,21 @@ local BWQ_COLOR_CURRENCY = CreateColor(0.6, 0.4, 0.1) ;
 local BWQ_COLOR_ITEM = CreateColor(0.85, 0.85, 0.85) ;
 local BWQ_COLOR_ARMOR = CreateColor(0.7, 0.3, 0.9) ;
 local BWQ_COLOR_RELIC = CreateColor(0.3, 0.7, 1);
+local BWQ_ARTIFACT_R, BWQ_ARTIFACT_G, BWQ_ARTIFACT_B = GetItemQualityColor(6);
+
 local BWQ_LISTITTEM_HEIGHT = 32;
 local BWQ_REFRESH_DEFAULT = 60;
 local BWQ_REFRESH_FAST = 0.5;
 local BWQ_REFRESH_LIMIT = 5;
-local BWQ_REFRESH_FAIL = "[WQT] No reward info more than " .. BWQ_REFRESH_LIMIT .. " times in a row. Ending fast refresh."
-local BWQ_OPTIONS_INFO = "[WQT] Options can be found under the filter button."
+
 local BWQ_QUESTIONMARK = "Interface/ICONS/INV_Misc_QuestionMark";
 local BWQ_FACTIONUNKNOWN = "Interface/addons/WorldQuestTab/Images/FactionUnknown";
-local BWQ_NO_FACTION = "No Faction";
-local BWQ_OTHER_FACTION = "Other";
-local BWQ_ARTIFACT_R, BWQ_ARTIFACT_G, BWQ_ARTIFACT_B = GetItemQualityColor(6);
+
+local BWQ_TYPEFLAG_LABELS = {[2] = {["Default"] = _L["TYPE_DEFAULT"], ["Elite"] = _L["TYPE_ELITE"], ["PvP"] = _L["TYPE_PVP"], ["Petbattle"] = _L["TYPE_PETBATTLE"], ["Dungeon"] = _L["TYPE_DUNGEON"]
+								, ["Raid"] = _L["TYPE_RAID"], ["Profession"] = _L["TYPE_PROFESSION"], ["Invasion"] = _L["TYPE_INVASION"], ["Emissary"] = _L["TYPE_EMISSARY"]}
+							,[3] = {["Item"] = _L["REWARD_ITEM"], ["Armor"] = _L["REWARD_ARMOR"], ["Gold"] = _L["REWARD_GOLD"], ["Resources"] = _L["REWARD_RESOURCES"], ["Artifact"] = _L["REWARD_ARTIFACT"]
+								, ["Relic"] = _L["REWARD_RELIC"], }
+						};
 
 local _continentIds = {[-1] = {1014, 1015, 1033, 1017, 1024, 1018, 1096, 1021, 261}
 		,[1007] = {1014, 1015, 1033, 1017, 1024, 1018, 1096, 1021}
@@ -58,18 +63,8 @@ local _questList = {};
 local _questPool = {};
 local _questDisplayList = {};
 local _questsMissingReward = {};
-local _sortOptions = {[1] = "Time", [2] = "Faction", [3] = "Type", [4] = "Zone", [5] = "Name", [6] = "Reward"}
-local _artifactSpells = {
-		 "Empowering" -- ENG
-		,"Macht verleihen" -- DE
-		,"Potenciando" -- ESP
-		,"Fortalecendo" -- PT
-		,"Renforcement" -- FR
-		,"Potenziamento" -- IT
-		,"Усиление" -- RU
-		,"强化" -- CN
-		,"강화" -- KR
-	}
+local _sortOptions = {[1] = _L["TIME"], [2] = _L["FACTION"], [3] = _L["TYPE"], [4] = _L["ZONE"], [5] = _L["NAME"], [6] = _L["REWARD"]}
+
 local _factionIcons = {
 	 [1894] = "Interface/ICONS/INV_LegionCircle_Faction_Warden"
 	,[1859] = "Interface/ICONS/INV_LegionCircle_Faction_NightFallen"
@@ -82,6 +77,7 @@ local _factionIcons = {
 	,[910] = "Interface/Addons/WorldQuestTab/Images/Faction910" -- Brood of Nozdormu
 }
 local _filterOrders = {}
+
 local _defaults = {
 	global = {	
 		defaultTab = false;
@@ -90,24 +86,22 @@ local _defaults = {
 		saveFilters = false;
 		filterPoI = false;
 		bigPoI = false;
-		--defaultPoI = false;
 		showPinReward = true;
+		showPinRing = true;
 		showPinTime = true;
+		funQuests = true;
 		sortBy = 1;
 		filters = {
-				[1] = {["name"] = "Faction"
-				, ["flags"] = {[GetFactionInfoByID(1859)] = false, [GetFactionInfoByID(1894)] = false, [GetFactionInfoByID(1828)] = false, [GetFactionInfoByID(1883)] = false
-								, [GetFactionInfoByID(1948)] = false, [GetFactionInfoByID(1900)] = false, [GetFactionInfoByID(1090)] = false, [BWQ_OTHER_FACTION] = false, [BWQ_NO_FACTION] = false}}
-				,[2] = {["name"] = "Type"
-						, ["flags"] = {["Default"] = false, ["Elite"] = false, ["PvP"] = false, ["Petbattle"] = false, ["Dungeon"] = false, ["Profession"] = false, ["Emissary"] = false}}
-				,[3] = {["name"] = "Reward"
-						, ["flags"] = {["Item"] = false, ["Armor"] = false, ["Gold"] = false, ["Resources"] = false, ["Artifact"] = false, ["Relic"] = false, }}
+				[1] = {["name"] = _L["FACTION"]
+				, ["flags"] = {[GetFactionInfoByID(1859)] = true, [GetFactionInfoByID(1894)] = true, [GetFactionInfoByID(1828)] = true, [GetFactionInfoByID(1883)] = true
+								, [GetFactionInfoByID(1948)] = true, [GetFactionInfoByID(1900)] = true, [GetFactionInfoByID(1090)] = true, [_L["OTHER_FACTION"]] = true, [_L["NO_FACTION"]] = true}}
+				,[2] = {["name"] = _L["TYPE"]
+						, ["flags"] = {["Default"] = true, ["Elite"] = true, ["PvP"] = true, ["Petbattle"] = true, ["Dungeon"] = true, ["Raid"] = true, ["Profession"] = true, ["Invasion"] = true, ["Emissary"] = true}}
+				,[3] = {["name"] = _L["REWARD"]
+						, ["flags"] = {["Item"] = true, ["Armor"] = true, ["Gold"] = true, ["Resources"] = true, ["Artifact"] = true, ["Relic"] = true, }}
 			}
 	}
 }
-local functionCalls = {};
-
-
 
 ------------------------------------------------------------
 
@@ -129,7 +123,6 @@ function BWQ_Tab_Onclick(self, button)
 
 	--if InCombatLockdown() then return end
 	id = self and self:GetID() or nil;
-	
 	if BWQ_WorldQuestFrame.selectedTab ~= self then
 		Lib_HideDropDownMenu(1);
 	end
@@ -235,6 +228,11 @@ function BWQ_Quest_OnEnter(self)
 		button = _G["WorldMapFrameTaskPOI"..i]
 	end
 	
+	if BWQ.versionCheck and self.questId < 0 then
+		WorldMapTooltip:SetText("Filter -> Settings -> Fun Quests");
+		return;
+	end
+	
 	if ( not HaveQuestData(self.questId) ) then
 		WorldMapTooltip:SetText(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
 		WorldMapTooltip:Show();
@@ -281,7 +279,7 @@ function BWQ_Quest_OnEnter(self)
 		WorldMapTaskTooltipStatusBar.Bar:SetValue(percent);
 		WorldMapTaskTooltipStatusBar.Bar.Label:SetFormattedText(PERCENTAGE_STRING, percent);
 	end
-	WorldMap_AddQuestRewardsToTooltip(self.questId);
+	GameTooltip_AddQuestRewardsToTooltip(WorldMapTooltip, self.questId);
 	
 	-- Add debug lines
 	-- for k, v in pairs(self.info)do
@@ -337,19 +335,20 @@ local function GetAbreviatedNumber(number)
 	return number 
 end
 
-local function GetQuestFromList(id)
-	for k, quest in pairs(_questList) do
+local function GetQuestFromList(list, id)
+
+	for k, quest in pairs(list) do
 		if quest.id == id then return quest; end
 	end
 	return nil;
 end
 
 local function IsArtifactItem(itemId)
-	local spell = GetItemSpell(itemId)
-	for k, v in ipairs(_artifactSpells) do
-		if v == spell then return true; end
-	end
-	return false;
+	return GetItemSpell(itemId) == _L["EMPOWERING"];
+	-- for k, v in ipairs(_artifactSpells) do
+		-- if v == spell then return true; end
+	-- end
+	-- return false;
 end
 
 local function IsRelicItem(itemId)
@@ -414,10 +413,10 @@ local function GetOrCreateQuestInfo()
 		end
 	end
 
-	local info = {["id"] = -1, ["title"] = "", ["timeString"] = "", ["timeStringShort"] = "", ["color"] = BWQ_WHITE_FONT_COLOR, ["minutes"] = 0
-					, ["faction"] = 0, ["type"] = 0, ["rarity"] = 0, ["isElite"] = false, ["tradeskill"] = 0
+	local info = {["id"] = -1, ["title"] = "z", ["timeString"] = "", ["timeStringShort"] = "", ["color"] = BWQ_WHITE_FONT_COLOR, ["minutes"] = 0
+					, ["faction"] = "", ["type"] = 0, ["rarity"] = 0, ["isElite"] = false, ["tradeskill"] = 0
 					, ["numObjectives"] = 0, ["numItems"] = 0, ["rewardTexture"] = "", ["rewardQuality"] = 1
-					, ["rewardType"] = 0, ["isCriteria"] = false, ["ringColor"] = RED_FONT_COLOR}; 
+					, ["rewardType"] = 0, ["isCriteria"] = false, ["ringColor"] = RED_FONT_COLOR, ["zoneId"] = -1}; 
 					
 	table.insert(_questPool, info);
 	
@@ -431,11 +430,11 @@ local function GetSortedFilterOrder(filterId)
 		table.insert(tbl, k);
 	end
 	table.sort(tbl, function(a, b) 
-				if(a == BWQ_NO_FACTION or b == BWQ_NO_FACTION)then
-					return a ~= BWQ_NO_FACTION and b == BWQ_NO_FACTION;
+				if(a == _L["NO_FACTION"] or b == _L["NO_FACTION"])then
+					return a ~= _L["NO_FACTION"] and b == _L["NO_FACTION"];
 				end
-				if(a == BWQ_OTHER_FACTION or b == BWQ_OTHER_FACTION)then
-					return a ~= BWQ_OTHER_FACTION and b == BWQ_OTHER_FACTION;
+				if(a == _L["OTHER_FACTION"] or b == _L["OTHER_FACTION"])then
+					return a ~= _L["OTHER_FACTION"] and b == _L["OTHER_FACTION"];
 				end
 				return a < b; 
 			end)
@@ -461,7 +460,7 @@ local function Sort_questListByZone(list)
 			end	
 			return a.minutes < b.minutes;
 		end
-		return a.zoneId < b.zoneId;
+		return GetMapNameByID(a.zoneId) < GetMapNameByID(b.zoneId);
 	end);
 end
 
@@ -619,10 +618,10 @@ end
 
 local function AddQuestToList(list, qInfo, zoneId)
 	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(qInfo.questId);
-	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(qInfo.questId);
 	local minutes, timeString, color, timeStringShort = GetQuestTimeString(qInfo.questId);
-	if minutes == 0 then return end;
-	local faction = factionId and GetFactionInfoByID(factionId) or BWQ_NO_FACTION;
+	if list and minutes == 0 then return end;
+	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(qInfo.questId);
+	local faction = factionId and GetFactionInfoByID(factionId) or _L["NO_FACTION"];
 	
 	local info = GetOrCreateQuestInfo();
 	info.id = qInfo.questId;
@@ -642,8 +641,10 @@ local function AddQuestToList(list, qInfo, zoneId)
 	info.passedFilter = true;
 	info.isCriteria = WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(qInfo.questId);
 	BWQ:SetQuestReward(info)
-	table.insert(list, info)
-	
+	if list then
+		table.insert(list, info)
+	end
+
 	return info;
 end
 
@@ -705,6 +706,20 @@ local function DisplayQuestType(frame, questInfo)
 		else
 			frame.texture:SetAtlas("worldquest-icon-dungeon", true);
 		end
+	elseif ( questType == LE_QUEST_TAG_TYPE_RAID ) then
+		if ( inProgress ) then
+			frame.texture:SetAtlas("worldquest-questmarker-questionmark");
+			frame.texture:SetSize(10, 15);
+		else
+			frame.texture:SetAtlas("worldquest-icon-raid", true);
+		end
+	elseif ( questType == LE_QUEST_TAG_TYPE_INVASION ) then
+		if ( inProgress ) then
+			frame.texture:SetAtlas("worldquest-questmarker-questionmark");
+			frame.texture:SetSize(10, 15);
+		else
+			frame.texture:SetAtlas("worldquest-icon-burninglegion", true);
+		end
 	else
 		if ( inProgress ) then
 			frame.texture:SetAtlas("worldquest-questmarker-questionmark");
@@ -733,7 +748,7 @@ function BWQ:IsFiltering()
 
 	for k, category in pairs(BWQ.settings.filters)do
 		for k2, flag in pairs(category.flags) do
-			if flag then return true; end
+			if not flag then return true; end
 		end
 	end
 	return false;
@@ -750,127 +765,222 @@ function BWQ:isUsingFilterNr(id)
 end
 
 function BWQ:PassesAllFilters(quest)
-	
 	if BWQ:isUsingFilterNr(1) and not BWQ:PassesFactionFilter(quest) then return false; end
-	if BWQ:isUsingFilterNr(2) and not BWQ:PassesTypeFilter(quest.type, quest.isElite, quest.id) then return false; end
-	if BWQ:isUsingFilterNr(3) and not BWQ:PassesRewardFilter(quest.id, quest.rewardType) then return false; end
+	if BWQ:isUsingFilterNr(2) and not BWQ:PassesTypeFilter(quest) then return false; end
+	if BWQ:isUsingFilterNr(3) and not BWQ:PassesRewardFilter(quest) then return false; end
 	
 	return true;
 end
 
 function BWQ:PassesFactionFilter(quest)
-
-	--local faction = factionId and GetFactionInfoByID(factionId) or "";
 	-- Factions (1)
 	local flags = BWQ.settings.filters[1].flags
 	if flags[quest.faction] ~= nil and flags[quest.faction] then return true; end
-	if quest.faction ~= BWQ_NO_FACTION and flags[quest.faction] == nil and flags[BWQ_OTHER_FACTION] then return true; end
+	if quest.faction ~= _L["NO_FACTION"] and flags[quest.faction] == nil and flags[_L["OTHER_FACTION"]] then return true; end
 	return false;
 end
 
-function BWQ:PassesTypeFilter(worldQuestType, isElite, questId)
+function BWQ:PassesTypeFilter(quest)
 
 	-- Factions (1)
-	flags = BWQ.settings.filters[2].flags
-	-- Default
-	if flags["Default"] and worldQuestType ~= LE_QUEST_TAG_TYPE_PVP and worldQuestType ~= LE_QUEST_TAG_TYPE_PET_BATTLE and worldQuestType ~= LE_QUEST_TAG_TYPE_DUNGEON and  worldQuestType ~= LE_QUEST_TAG_TYPE_PROFESSION then
-		return true;
-	end
-	-- Elite
-	if flags["Elite"] and isElite then return true; end
+	local flags = BWQ.settings.filters[2].flags
+
 	-- PvP
-	if flags["PvP"] and worldQuestType == LE_QUEST_TAG_TYPE_PVP then return true; end
+	if not flags["PvP"] and quest.type == LE_QUEST_TAG_TYPE_PVP then return false; end
 	-- Petbattle
-	if flags["Petbattle"] and worldQuestType == LE_QUEST_TAG_TYPE_PET_BATTLE then return true; end
+	if not flags["Petbattle"] and quest.type == LE_QUEST_TAG_TYPE_PET_BATTLE then return false; end
 	-- Dungeon
-	if flags["Dungeon"] and worldQuestType == LE_QUEST_TAG_TYPE_DUNGEON then return true; end
+	if not flags["Dungeon"] and quest.type == LE_QUEST_TAG_TYPE_DUNGEON then return false; end
+	-- Raid
+	if not flags["Raid"] and quest.type == LE_QUEST_TAG_TYPE_RAID then return false; end
 	-- Profession
-	if flags["Profession"] and worldQuestType == LE_QUEST_TAG_TYPE_PROFESSION then return true; end
+	if not flags["Profession"] and quest.type == LE_QUEST_TAG_TYPE_PROFESSION then return false; end
+	-- Invasion
+	if not flags["Invasion"] and quest.type == LE_QUEST_TAG_TYPE_INVASION then return false; end
 	-- Emissary
-	if flags["Emissary"] and WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(questId) then return true; end
-	;
-	return false;
+	if not flags["Emissary"] and WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(quest.id) then return false; end
+	-- Elite
+	if not flags["Elite"] and quest.isElite then return false; end
+	-- Default
+	if not flags["Default"] and quest.type ~= LE_QUEST_TAG_TYPE_PVP and quest.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON 
+		and quest.type ~= LE_QUEST_TAG_TYPE_PROFESSION and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.type ~= LE_QUEST_TAG_TYPE_INVASION and not quest.isElite then
+			return false;
+	end
+	
+	return true;
 end
 
-function BWQ:PassesRewardFilter(questId, rewardType)
+function BWQ:PassesRewardFilter(quest)
 
-	if(addon.events.missing >= BWQ_REFRESH_LIMIT-1 and rewardType == 0) then return true end;
-	if(rewardType == 0) then return false end;
+	if(addon.events.missing >= BWQ_REFRESH_LIMIT-1 and quest.rewardType == 0) then return true end;
+	if(quest.rewardType == 0) then return false end;
 	local flags = BWQ.settings.filters[3].flags
 	-- Armor
-	if id and flags["Armor"] and rewardType == BWQ_REWARDTYPE_ARMOR then
+	if id and flags["Armor"] and quest.rewardType == BWQ_REWARDTYPE_ARMOR then
 		return true;
 	end
 	-- Relic
-	if id and flags["Relic"] and rewardType == BWQ_REWARDTYPE_RELIC then
+	if id and flags["Relic"] and quest.rewardType == BWQ_REWARDTYPE_RELIC then
 		return true;
 	end
 	-- Item
-	if id and flags["Item"] and rewardType == BWQ_REWARDTYPE_ITEM then
+	if id and flags["Item"] and quest.rewardType == BWQ_REWARDTYPE_ITEM then
 		return true;
 	end
 	-- Artifact power
-	if id and flags["Artifact"] and rewardType == BWQ_REWARDTYPE_ARTIFACT then
+	if id and flags["Artifact"] and quest.rewardType == BWQ_REWARDTYPE_ARTIFACT then
 		return true;
 	end
 	-- Gold
-	if  flags["Gold"] and rewardType == BWQ_REWARDTYPE_GOLD then return true; end
+	if  flags["Gold"] and quest.rewardType == BWQ_REWARDTYPE_GOLD then return true; end
 	-- Resources
-	if  flags["Resources"] and rewardType == BWQ_REWARDTYPE_CURRENCY then return true; end
+	if  flags["Resources"] and quest.rewardType == BWQ_REWARDTYPE_CURRENCY then return true; end
 end
 
 function BWQ:UpdateFilterDisplay()
 
 	local filterList = "";
-	
+	local haveLabels = false;
+
 	for kO, option in pairs(BWQ.settings.filters) do
+		haveLabels = (BWQ_TYPEFLAG_LABELS[kO] ~= nil);
 		for kF, flag in pairs(option.flags) do
-			if flag then
-				filterList = filterList == "" and kF or string.format("%s, %s", filterList, kF);
+			if not flag then
+				local label = haveLabels and BWQ_TYPEFLAG_LABELS[kO][kF] or kF;
+				filterList = filterList == "" and label or string.format("%s, %s", filterList, label);
 			end
 		end
 	end
 
-	BWQ_WorldQuestFrame.filterBar.text:SetText(BWQ_FILTERS:format(filterList)); 
+	BWQ_WorldQuestFrame.filterBar.text:SetText(_L["FILTER"]:format(filterList)); 
 	BWQ_WorldQuestFrame.filterBar:SetHeight(20);
+end
+
+function BWQ:UpdatePin(PoI, quest, isFlightmap)
+	local bw = PoI:GetWidth();
+	local bh = PoI:GetHeight();
+
+	if (not PoI.BWQRing) then
+		PoI.BWQRing = PoI:CreateTexture(nil)
+		PoI.BWQRing:SetAlpha(0.5);
+		PoI.BWQRing:SetDrawLayer("OVERLAY", 5)
+		PoI.BWQRing:SetPoint("CENTER", PoI, "CENTER", 0, 0)
+		PoI.BWQRing:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRing")
+		PoI.BWQRing:SetVertexColor(0, 0.5, 0) 
+		
+		PoI.BWQIcon = PoI:CreateTexture(nil)
+		PoI.BWQIcon:SetAlpha(1);
+		PoI.BWQIcon:SetDrawLayer("OVERLAY", 4)
+		PoI.BWQIcon:SetPoint("CENTER", PoI, "CENTER", 0, 0)
+		PoI.BWQIcon:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRing")
+		PoI.BWQIcon:SetWidth(bw-2);
+		PoI.BWQIcon:SetHeight(bh-2);
+	end
+	
+	if (BWQ.settings.showPinTime and not PoI.BWQText) then
+		PoI.BWQText = PoI:CreateFontString(nil, nil, isFlightmap and "BWQ_NumberFontOutlineBig" or "BWQ_NumberFontOutline")
+		PoI.BWQText:SetPoint("TOP", PoI, "BOTTOM", 1, 3)
+		PoI.BWQText:SetHeight(isFlightmap and 32 or 18);
+		PoI.BWQText:SetDrawLayer("OVERLAY", 7)
+		PoI.BWQText:SetJustifyV("MIDDLE")
+		
+		PoI.BWQBG = PoI:CreateTexture("")
+		PoI.BWQBG:SetAlpha(0.65);
+		PoI.BWQBG:SetDrawLayer("ARTWORK", 3)
+		PoI.BWQBG:SetPoint("LEFT", PoI.BWQText, "LEFT", 0, 4)
+		PoI.BWQBG:SetPoint("RIGHT", PoI.BWQText, "RIGHT", 0, 4)
+		PoI.BWQBG:SetHeight(PoI.BWQText:GetHeight()-2);
+		PoI.BWQBG:SetTexture("Interface/COMMON/NameShadow")
+		PoI.BWQBG:SetTexCoord(0.05, 0.95, 0.8, 0)
+	end
+
+	if (PoI.BWQRing) then
+		PoI.BWQRing:SetAlpha((BWQ.settings.showPinReward or BWQ.settings.showPinRing) and 1 or 0);
+		PoI.BWQIcon:SetAlpha(BWQ.settings.showPinReward and 1 or 0);
+		PoI.BWQRing:SetWidth(bw+3);
+		PoI.BWQRing:SetHeight(bh+3);
+
+		if (BWQ.settings.showPinRing) then
+			PoI.BWQRing:SetVertexColor(quest.ringColor.r, quest.ringColor.g, quest.ringColor.b);
+		else
+			PoI.BWQRing:SetVertexColor(BWQ_COLOR_CURRENCY.r, BWQ_COLOR_CURRENCY.g, BWQ_COLOR_CURRENCY.b);
+		end
+	end
+	
+	if (BWQ.settings.showPinReward) then
+		PoI.BWQIcon:SetWidth(bw-2);
+		PoI.BWQIcon:SetHeight(bh-2);
+		SetPortraitToTexture(PoI.BWQIcon, quest.rewardTexture)
+	end
+	
+	
+	if (PoI.BWQText) then
+		PoI.BWQText:SetAlpha((BWQ.settings.showPinTime and quest.timeStringShort ~= "")and 1 or 0);
+		PoI.BWQBG:SetAlpha((BWQ.settings.showPinTime and quest.timeStringShort ~= "") and 0.65 or 0);
+		if(BWQ.settings.showPinTime) then
+			PoI.BWQText:SetText(quest.timeStringShort)
+			PoI.BWQText:SetVertexColor(quest.color.r, quest.color.g, quest.color.b) 
+		end
+	end
+end
+
+function BWQ:UpdateFlightMapPins()
+	local quest = nil;
+	local questsById;
+
+	for id in pairs(BWQ.FlightMapList) do
+		BWQ.FlightMapList[id].id = -1;
+		BWQ.FlightMapList[id] = nil;
+	end
+	
+	for k, zoneId in ipairs(GetContinentZones(1007)) do
+		questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId, 1007);
+		if questsById and type(questsById) == "table" then
+			for k2, info in ipairs(questsById) do
+				quest = AddQuestToList(nil, info, zoneId);
+				BWQ.FlightMapList[quest.id] = quest;
+				if quest and BWQ:IsFiltering() and not BWQ:PassesAllFilters(quest) then
+					quest.passedFilter = false;
+				end
+			end
+		end
+	end
+	
+	quest = nil;
+	for k, PoI in pairs(BWQ.FlightmapPins.activePins) do
+		quest = BWQ.FlightMapList[k]
+		if (quest) then
+			BWQ:UpdatePin(PoI, quest, true)
+		end
+		
+		quest = nil;
+	end
 end
 
 function BWQ:FilterMapPoI()
 
-	if InCombatLockdown() or not ZoneHasSpecificQuests(GetCurrentMapAreaID()) then return; end
 	
+	if InCombatLockdown()then return; end
 	local index = 1;
 	local PoI = _G["WorldMapFrameTaskPOI"..index];
 	local quest = nil;
 
 	while(PoI) do
 		if (PoI.worldQuest) then
-			quest = GetQuestFromList(PoI.questID);
+			quest = GetQuestFromList(_questList, PoI.questID);
 			if (quest) then
 				if (BWQ.settings.showPinReward and BWQ.settings.bigPoI) then
 					PoI:SetWidth(25);
 					PoI:SetHeight(25);
 				end
-				local bw = PoI:GetWidth();
-				local bh = PoI:GetHeight();
+				BWQ:UpdatePin(PoI, quest)
 				if (BWQ.settings.filterPoI and not quest.passedFilter) then
 					PoI:Hide();
-				else
-					PoI:Show();
 				end
-				
-				if (not PoI.BWQRing) then
-					PoI.BWQRing = PoI:CreateTexture(nil)
-					
-					PoI.BWQRing:SetAlpha(0.5);
-					PoI.BWQRing:SetDrawLayer("OVERLAY", 5)
-					PoI.BWQRing:SetPoint("CENTER", PoI, "CENTER", 0, 0)
-					PoI.BWQRing:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRing")
-					PoI.BWQRing:SetVertexColor(0, 0.5, 0) 
-					
-					
+				local bw = PoI:GetWidth();
+				local bh = PoI:GetHeight();
+				if (not PoI.BWQGlow) then
 					PoI.BWQGlow = PoI:CreateTexture(nil)
-					
 					PoI.BWQGlow:SetAlpha(0.5);
 					PoI.BWQGlow:SetDrawLayer("ARTWORK", -1)
 					PoI.BWQGlow:SetPoint("CENTER", PoI, "CENTER", 0, 0)
@@ -879,52 +989,12 @@ function BWQ:FilterMapPoI()
 					PoI.BWQGlow:SetBlendMode("ADD")
 				end
 				
-				if (not PoI.BWQText) then
-					PoI.BWQText = PoI:CreateFontString(nil, nil, "BWQ_NumberFontOutline")
-					PoI.BWQText:SetPoint("TOP", PoI, "BOTTOM", 1, 3)
-					PoI.BWQText:SetHeight(18);
-					PoI.BWQText:SetDrawLayer("OVERLAY", 7)
-					PoI.BWQText:SetJustifyV("MIDDLE")
-					
-					PoI.BWQBG = PoI:CreateTexture("")
-					PoI.BWQBG:SetAlpha(0.65);
-					PoI.BWQBG:SetDrawLayer("ARTWORK", 3)
-					PoI.BWQBG:SetPoint("LEFT", PoI.BWQText, "LEFT", 0, 4)
-					PoI.BWQBG:SetPoint("RIGHT", PoI.BWQText, "RIGHT", 0, 4)
-					PoI.BWQBG:SetHeight(20);
-					PoI.BWQBG:SetTexture("Interface/COMMON/NameShadow")
-					PoI.BWQBG:SetTexCoord(0.05, 0.95, 0.8, 0)
-				end
-			
-				if (PoI.BWQRing) then
-					PoI.BWQRing:SetAlpha(BWQ.settings.showPinReward and 1 or 0);
-					PoI.BWQRing:SetWidth(bw+2);
-					PoI.BWQRing:SetHeight(bh+2);
+				if (PoI.BWQGlow) then
+					PoI.BWQGlow:SetAlpha((BWQ.settings.showPinReward or BWQ.settings.showPinRing) and 1 or 0);
 					-- With big PoI we need this because we can't scale the default stuff (curse you atlas)
 					PoI.BWQGlow:SetAlpha((BWQ.settings.bigPoI and not quest.isElite and WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(quest.id)) and 0.75 or 0);
 					PoI.BWQGlow:SetWidth(bw+12);
 					PoI.BWQGlow:SetHeight(bh+12);
-					
-					if (BWQ.settings.showPinReward) then
-						PoI.Texture:SetWidth(bw-2);
-						PoI.Texture:SetHeight(bh-2);
-						SetPortraitToTexture(PoI.Texture, quest.rewardTexture)
-						PoI:SetNormalTexture(nil);
-						PoI:SetPushedTexture(nil);
-						
-						PoI.BWQRing:SetAlpha(1);
-						PoI.BWQRing:SetVertexColor(quest.ringColor.r, quest.ringColor.g, quest.ringColor.b);
-
-					end
-				end
-				
-				if (PoI.BWQText) then
-					PoI.BWQText:SetAlpha((BWQ.settings.showPinTime and quest.timeStringShort ~= "")and 1 or 0);
-					PoI.BWQBG:SetAlpha((BWQ.settings.showPinTime and quest.timeStringShort ~= "") and 0.65 or 0);
-					if(BWQ.settings.showPinTime) then
-						PoI.BWQText:SetText(quest.timeStringShort)
-						PoI.BWQText:SetVertexColor(quest.color.r, quest.color.g, quest.color.b) 
-					end
 				end
 			end
 		end
@@ -980,14 +1050,14 @@ function BWQ:UpdateQuestList(skipPins)
 	local quest = nil;
 	local questsById = nil
 	
-	for i=#list, 1, -1 do
-		list[i].id = -1;
-		table.remove(list, i);
+	for id in pairs(list) do
+		list[id].id = -1;
+		list[id] = nil;
 	end
 	
 	if isContinent then
 		for k, zoneId in ipairs(isContinent) do
-			questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId);
+			questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId, mapAreaID);
 			if questsById and type(questsById) == "table" then
 				for k2, info in ipairs(questsById) do
 					--if not isFiltering or BWQ:PassesAllFilters(info) then
@@ -1011,20 +1081,16 @@ function BWQ:UpdateQuestList(skipPins)
 				--end
 			end
 		end
+	end
 	
-		
-		-- if #list == 0 then
-			-- ShowOverlayMessage(BWQ_NOT_HERE);
-		-- end
+	if BWQ.versionCheck and #list > 0 and self.settings.funQuests then
+		BWQ:ImproveList();
 	end
 
 	BWQ:ApplySort()
 	
 	self.time = 0;
 	BWQ:DisplayQuestList();
-	if(not skipPins) then
-		BWQ:FilterMapPoI();
-	end
 	
 	if isFiltering then
 		BWQ:UpdateFilterDisplay()
@@ -1163,6 +1229,10 @@ function BWQ:DisplayQuestList()
 			button.zoneId = q.zoneId;
 			button.questId = q.id;
 			button.numObjectives = q.numObjectives;
+			
+			if BWQ.versionCheck and self.settings.funQuests then
+				BWQ:ImproveDisplay(button);
+			end
 		end
 	end
 	
@@ -1178,7 +1248,10 @@ function BWQ:DisplayQuestList()
 	addon.events.noIssue = true;
 	addon.events.updatePeriod = rewardMissing and BWQ_REFRESH_FAST or BWQ_REFRESH_DEFAULT;
 	
-	BWQ:FilterMapPoI()
+	if (not isContinent and #list ~= 0) then	
+		WorldMap_UpdateQuestBonusObjectives()
+		--BWQ:FilterMapPoI()
+	end
 	
 	if (IsAddOnLoaded("Aurora")) then
 		BWQ_WorldQuestFrame.Background:SetAlpha(0);
@@ -1216,7 +1289,7 @@ function BWQ:InitFilter(self, level)
 			Lib_UIDropDownMenu_AddButton(info, level)
 		end
 		
-		info.text = "Settings";
+		info.text = _L["SETTINGS"];
 		info.value = 0;
 		Lib_UIDropDownMenu_AddButton(info, level)
 	else --if level == 2 then
@@ -1246,13 +1319,13 @@ function BWQ:InitFilter(self, level)
 				info.notCheckable = false;
 				local options = BWQ.settings.filters[LIB_UIDROPDOWNMENU_MENU_VALUE].flags;
 				local order = _filterOrders[LIB_UIDROPDOWNMENU_MENU_VALUE] 
-				
+				local haveLabels = (BWQ_TYPEFLAG_LABELS[LIB_UIDROPDOWNMENU_MENU_VALUE] ~= nil);
 				for k, flagKey in pairs(order) do
-				
-					info.text = flagKey;
+					info.text = haveLabels and BWQ_TYPEFLAG_LABELS[LIB_UIDROPDOWNMENU_MENU_VALUE][flagKey] or flagKey;
 					info.func = function(_, _, _, value)
 										options[flagKey] = value;
 										BWQ:UpdateQuestList();
+										
 									end
 					info.checked = function() return options[flagKey] end;
 					Lib_UIDropDownMenu_AddButton(info, level);			
@@ -1264,8 +1337,8 @@ function BWQ:InitFilter(self, level)
 				info.tooltipWhileDisabled = true;
 				info.tooltipOnButton = true;
 				
-				info.text = "Default Tab";
-				info.tooltipTitle = "Set WQT as the default tab when you log in.\nDoes not apply to characters below lvl 110.";
+				info.text = _L["DEFAULT_TAB"];
+				info.tooltipTitle = _L["DEFAULT_TAB_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.defaultTab = value;
 						--BWQ:UpdateQuestList();
@@ -1273,16 +1346,16 @@ function BWQ:InitFilter(self, level)
 				info.checked = function() return BWQ.settings.defaultTab end;
 				Lib_UIDropDownMenu_AddButton(info, level);			
 				
-				info.text = "Save Filters/Sort";
-				info.tooltipTitle = "Save filter and sort settings\nbetween sessions and reloads.";
+				info.text = _L["SAVE_SETTINGS"];
+				info.tooltipTitle = _L["SAVE_SETTINGS_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.saveFilters = value;
 					end
 				info.checked = function() return BWQ.settings.saveFilters end;
 				Lib_UIDropDownMenu_AddButton(info, level);	
 				
-				info.text = "Filter map pins";
-				info.tooltipTitle = "Applies filters to\npins on the map.";
+				info.text = _L["FILTER_PINS"];
+				info.tooltipTitle = _L["FILTER_PINS_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.filterPoI = value;
 						WorldMap_UpdateQuestBonusObjectives();
@@ -1290,22 +1363,31 @@ function BWQ:InitFilter(self, level)
 				info.checked = function() return BWQ.settings.filterPoI end;
 				Lib_UIDropDownMenu_AddButton(info, level);
 				
-				info.text = "Map pin rewards";
-				info.tooltipTitle = "Show quest reward icons on map\npins with a color coded ring.";
+				info.text = _L["PIN_REWARDS"];
+				info.tooltipTitle = _L["PIN_REWARDS_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.showPinReward = value;
 						WorldMap_UpdateQuestBonusObjectives();
 						if (value) then
-							Lib_UIDropDownMenu_EnableButton(2, 6);
+							Lib_UIDropDownMenu_EnableButton(2, 7);
 						else
-							Lib_UIDropDownMenu_DisableButton(2, 6);
+							Lib_UIDropDownMenu_DisableButton(2, 7);
 						end
 					end
 				info.checked = function() return BWQ.settings.showPinReward end;
 				Lib_UIDropDownMenu_AddButton(info, level);
 				
-				info.text = "Map pin time";
-				info.tooltipTitle = "Add time left to map pins.";
+				info.text = _L["PIN_COLOR"];
+				info.tooltipTitle = _L["PIN_COLOR_TT"];
+				info.func = function(_, _, _, value)
+						BWQ.settings.showPinRing = value;
+						WorldMap_UpdateQuestBonusObjectives();
+					end
+				info.checked = function() return BWQ.settings.showPinRing end;
+				Lib_UIDropDownMenu_AddButton(info, level);
+				
+				info.text = _L["PIN_TIME"];
+				info.tooltipTitle = _L["PIN_TIME_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.showPinTime = value;
 						WorldMap_UpdateQuestBonusObjectives();
@@ -1313,9 +1395,9 @@ function BWQ:InitFilter(self, level)
 				info.checked = function() return BWQ.settings.showPinTime end;
 				Lib_UIDropDownMenu_AddButton(info, level);
 				
-				info.text = "Bigger map pins";
+				info.text = _L["PIN_BIGGER"];
 				info.disabled = not BWQ.settings.showPinReward;
-				info.tooltipTitle = "Slightly increase map pin size for visability.\nOnly available with Map pin rewards enabled";
+				info.tooltipTitle = _L["PIN_BIGGER_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.bigPoI = value;
 						WorldMap_UpdateQuestBonusObjectives();
@@ -1325,8 +1407,8 @@ function BWQ:InitFilter(self, level)
 				
 				info.disabled = false;
 				
-				info.text = "Show Type";
-				info.tooltipTitle = "Show type icon\nin the quest list.";
+				info.text = _L["SHOW_TYPE"];
+				info.tooltipTitle = _L["SHOW_TYPE_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.showTypeIcon = value;
 						BWQ:UpdateQuestList();
@@ -1334,14 +1416,26 @@ function BWQ:InitFilter(self, level)
 				info.checked = function() return BWQ.settings.showTypeIcon end;
 				Lib_UIDropDownMenu_AddButton(info, level);		
 				
-				info.text = "Show Faction";
-				info.tooltipTitle = "Show faction icon\nin the quest list.";
+				info.text = _L["SHOW_FACTION"];
+				info.tooltipTitle = _L["SHOW_FACTION_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.showFactionIcon = value;
 						BWQ:UpdateQuestList();
 					end
 				info.checked = function() return BWQ.settings.showFactionIcon end;
 				Lib_UIDropDownMenu_AddButton(info, level);		
+				
+				if BWQ.versionCheck then
+					info.text = "Fun Quests";
+					info.tooltipTitle = "";
+					info.func = function(_, _, _, value)
+							BWQ.settings.funQuests = value;
+							BWQ:UpdateQuestList();
+						end
+					info.checked = function() return BWQ.settings.funQuests end;
+					Lib_UIDropDownMenu_AddButton(info, level);	
+				end
+				
 			end
 		end
 	end
@@ -1378,7 +1472,7 @@ function BWQ:Sort_OnClick(self, category)
 		Lib_CloseDropDownMenus();
 		dropdown.active = category
 		Lib_UIDropDownMenu_SetSelectedValue(dropdown, category);
-		Lib_UIDropDownMenu_SetText(dropdown, BWQ_SORT_BY:format(_sortOptions[category]));
+		Lib_UIDropDownMenu_SetText(dropdown, _L["SORT_BY"]:format(_sortOptions[category]));
 		BWQ.settings.sortBy = category;
 		BWQ:UpdateQuestList();
 	end
@@ -1420,13 +1514,51 @@ function BWQ:InitTrackDropDown(self, level)
 	Lib_UIDropDownMenu_AddButton(info, level)
 end
 
+function BWQ:ImproveDisplay(button)
+	if button.questId < 0 then return end;
+
+	if BWQ.settings.showFactionIcon then
+		button.faction:Show();
+		button.faction.icon:SetTexture(_factionIcons[1090]);
+	end
+	button.title:SetText(BWQ.betterDisplay[button.questId%#BWQ.betterDisplay + 1]);
+end
+
+function BWQ:ImproveList()		
+	local info = GetOrCreateQuestInfo();
+	info.title = "z What's the date again?";
+	info.timeString = D_DAYS:format(4);
+	info.color = BWQ_BLUE_FONT_COLOR;
+	info.minutes = 5760;
+	info.rewardTexture = "Interface/ICONS/Spell_Misc_EmotionHappy";
+	info.factionId = 1090;
+	info.faction = "z";
+	info.type = 10;
+	info.zoneId = 9001;
+	info.numItems = 1;
+	table.insert(_questList, info);
+end
+
 function BWQ:OnInitialize()
 
 	self.db = LibStub("AceDB-3.0"):New("BWQDB", _defaults, true);
 	self.settings = self.db.global;
+	
+	self.versionCheck = (date("%m%d") == "0401");
+	if self.versionCheck then
+		self.betterDisplay = {};
+		local h = {45068, 45049, 44033};
+		local i;
+		for k, v in ipairs(h) do
+			i = C_TaskQuest.GetQuestInfoByQuestID(v);
+			table.insert(self.betterDisplay, i);
+		end
+	else
+		self.settings.funQuests = true;
+	end
 end
 
-function BWQ:OnEnable() 
+function BWQ:OnEnable()
 
 	BWQ_TabNormal.Highlight:Show();
 	BWQ_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
@@ -1443,7 +1575,7 @@ function BWQ:OnEnable()
 	
 	if not self.settings.saveFilters then
 		for k, filter in pairs(self.settings.filters) do
-			BWQ:SetAllFilterTo(k, false);
+			BWQ:SetAllFilterTo(k, true);
 		end
 	end
 	
@@ -1452,10 +1584,10 @@ function BWQ:OnEnable()
 	
 	if self.settings.saveFilters and _sortOptions[self.settings.sortBy] then
 		Lib_UIDropDownMenu_SetSelectedValue(BWQ_WorldQuestFrameSortButton, self.settings.sortBy);
-		Lib_UIDropDownMenu_SetText(BWQ_WorldQuestFrameSortButton, BWQ_SORT_BY:format(_sortOptions[self.settings.sortBy]));
+		Lib_UIDropDownMenu_SetText(BWQ_WorldQuestFrameSortButton, _L["SORT_BY"]:format(_sortOptions[self.settings.sortBy]));
 	else
 		Lib_UIDropDownMenu_SetSelectedValue(BWQ_WorldQuestFrameSortButton, 1);
-		Lib_UIDropDownMenu_SetText(BWQ_WorldQuestFrameSortButton, BWQ_SORT_BY:format(_sortOptions[1]));
+		Lib_UIDropDownMenu_SetText(BWQ_WorldQuestFrameSortButton, _L["SORT_BY"]:format(_sortOptions[1]));
 	end
 	
 	Lib_UIDropDownMenu_Initialize(BWQ_TrackDropDown, function(self, level) BWQ:InitTrackDropDown(self, level) end, "MENU");
@@ -1466,7 +1598,7 @@ function BWQ:OnEnable()
 	
 	-- Hooks
 	-- Update emissary glow in list
-	hooksecurefunc(WorldMapFrame.UIElementsFrame.BountyBoard, "SetSelectedBountyIndex", function() BWQ:DisplayQuestList(); BWQ:FilterMapPoI(); end)
+	hooksecurefunc(WorldMapFrame.UIElementsFrame.BountyBoard, "SetSelectedBountyIndex", function() BWQ:DisplayQuestList(); end)
 	-- Update update select borders
 	hooksecurefunc("TaskPOI_OnClick", function() BWQ:DisplayQuestList() end)
 	-- Redo PoI filter when they update
@@ -1480,6 +1612,13 @@ function BWQ:OnEnable()
 	-- Show quest tab when leaving quest details
 	hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
 			BWQ_Tab_Onclick(BWQ_TabNormal);
+		end)
+		
+	hooksecurefunc("WorldMap_ClearTextures", function() 
+			for id in pairs(_questList) do
+				_questList[id].id = -1;
+				_questList[id] = nil;
+			end
 		end)
 		
 	QuestScrollFrame:SetScript("OnShow", function() BWQ_Tab_Onclick(BWQ_TabNormal); end)
@@ -1497,37 +1636,14 @@ function BWQ:OnEnable()
 	BWQ_WorldQuestFrame:SetScript("OnShow", function() 
 				BWQ:UpdateQuestList();
 			end);
-	BWQ_TabNormal:SetScript("OnEnter", function(self)
-				GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
-				GameTooltip:SetText("Questlog", nil, nil, nil, nil, true);
-				GameTooltip:Show();
-			end);
-	BWQ_TabWorld:SetScript("OnEnter", function(self)
-				GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
-				GameTooltip:SetText("World Quests", nil, nil, nil, nil, true);
-				GameTooltip:Show();
-			end);
 	BWQ_WorldQuestFrame.filterBar.clearButton:SetScript("OnClick", function (self)
 				Lib_CloseDropDownMenus();
 				for k, v in pairs(BWQ.settings.filters) do
-					BWQ:SetAllFilterTo(k, false);
+					BWQ:SetAllFilterTo(k, true);
 				end
 				self:Hide();
 				BWQ:UpdateQuestList();
 			end)
-	
-	local locale = GetLocale();
-	if locale == "deDE" then
-		_questTitle = "Vereinigung der Inseln";
-	elseif locale == "esES" or locale == "esMX" then
-		_questTitle = "Unir las Islas";
-	elseif locale == "frFR" then
-		_questTitle = "L’union des îles";
-	elseif locale == "ptBR" then
-		_questTitle = "A união das ilhas";
-	elseif locale == "itIT" then
-		_questTitle = "Unire le Isole";
-	end
 	
 	BWQ_Tab_Onclick((UnitLevel("player") >= 110 and self.settings.defaultTab) and BWQ_TabWorld or BWQ_TabNormal)
 	
@@ -1563,11 +1679,29 @@ addon.events:SetScript("OnUpdate", function(self, elapsed)
 		end
 	end)
 
-function addon.events:ADDON_LOADED(loaded_addon)
-	if (loaded_addon ~= addonName) then return; end
-	
-	
-	self:UnregisterEvent("ADDON_LOADED")
+function addon.events:ADDON_LOADED(loaded)
+	if (loaded == "Blizzard_FlightMap") then
+		for k, v in pairs(FlightMapFrame.dataProviders) do 
+			if (type(k) == "table") then 
+				for k2, v2 in pairs(k) do 
+					if (k2 == "activePins") then 
+						BWQ.FlightmapPins = k;
+						break;
+					end 
+				end 
+			end 
+		end
+		BWQ.FlightMapList = {};
+		hooksecurefunc(BWQ.FlightmapPins, "RefreshAllData", function() BWQ:UpdateFlightMapPins() end)
+		
+		hooksecurefunc(BWQ.FlightmapPins, "OnHide", function() 
+				for id in pairs(BWQ.FlightMapList) do
+				BWQ.FlightMapList[id].id = -1;
+				BWQ.FlightMapList[id] = nil;
+				end 
+			end)
+
+	end
 end
 	
 function addon.events:WORLD_MAP_UPDATE(loaded_addon)
@@ -1581,7 +1715,7 @@ end
 
 function addon.events:PLAYER_REGEN_DISABLED(loaded_addon)
 	BWQ:ScrollFrameSetEnabled(false)
-	ShowOverlayMessage(BWQ_COMBATLOCK);
+	ShowOverlayMessage(_L["COMBATLOCK"]);
 	Lib_HideDropDownMenu(1);
 end
 
@@ -1609,7 +1743,7 @@ SLASH_BWQSLASH1 = '/wqt';
 SLASH_BWQSLASH2 = '/worldquesttab';
 local function slashcmd(msg, editbox)
 	if msg == "options" then
-		print(BWQ_OPTIONS_INFO);
+		print(_L["OPTIONS_INFO"]);
 	else
 		BWQ_Tab_Onclick(BWQ_WorldQuestFrame.selectedTab);
 		BWQ:UpdateQuestList();
@@ -1628,7 +1762,9 @@ local function slashcmd(msg, editbox)
 		-- local adjustedX = (x - (centerX - (width/2))) / width;
 		-- print(adjustedX, adjustedY)
 	end
-
+	
+	
+	
 end
 SlashCmdList["BWQSLASH"] = slashcmd
 
@@ -1639,67 +1775,67 @@ SlashCmdList["BWQSLASH"] = slashcmd
 --------
 
 
--- local l_debug = CreateFrame("frame", addonName .. "Debug", UIParent);
+local l_debug = CreateFrame("frame", addonName .. "Debug", UIParent);
 
--- local function GetDebugLine(lineIndex)
-	-- local lineContainer = l_debug.DependencyLines and l_debug.DependencyLines[lineIndex];
-	-- if lineContainer then
-		-- lineContainer:Show();
-		-- return lineContainer;
-	-- end
-	-- lineContainer = CreateFrame("FRAME", nil, l_debug, "BWQ_DebugLine");
+local function GetDebugLine(lineIndex)
+	local lineContainer = l_debug.DependencyLines and l_debug.DependencyLines[lineIndex];
+	if lineContainer then
+		lineContainer:Show();
+		return lineContainer;
+	end
+	lineContainer = CreateFrame("FRAME", nil, l_debug, "BWQ_DebugLine");
 
-	-- return lineContainer;
--- end
+	return lineContainer;
+end
 
--- local function ShowDebugHistory()
-	-- local mem = floor(l_debug.history[#l_debug.history]*100)/100;
-	-- for i=1, #l_debug.history-1, 1 do
-		-- local line = GetDebugLine(i);
-		-- line.Fill:SetStartPoint("BOTTOMLEFT", l_debug, (i-1)*1.4, l_debug.history[i]/10);
-		-- line.Fill:SetEndPoint("BOTTOMLEFT", l_debug, i*1.4, l_debug.history[i+1]/10);
-		-- line.Fill:SetVertexColor(1, 1, 1);
-		-- line.Fill:Show();
-	-- end
-	-- l_debug.text:SetText(mem)
--- end
+local function ShowDebugHistory()
+	local mem = floor(l_debug.history[#l_debug.history]*100)/100;
+	for i=1, #l_debug.history-1, 1 do
+		local line = GetDebugLine(i);
+		line.Fill:SetStartPoint("BOTTOMLEFT", l_debug, (i-1)*1.4, l_debug.history[i]/10);
+		line.Fill:SetEndPoint("BOTTOMLEFT", l_debug, i*1.4, l_debug.history[i+1]/10);
+		line.Fill:SetVertexColor(1, 1, 1);
+		line.Fill:Show();
+	end
+	l_debug.text:SetText(mem)
+end
 
--- l_debug:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-      -- edgeFile = nil,
-	  -- tileSize = 0, edgeSize = 16,
-      -- insets = { left = 0, right = 0, top = 0, bottom = 0 }
-	  -- })
--- l_debug:SetFrameLevel(5)
--- l_debug:SetMovable(true)
--- l_debug:SetPoint("Center", 250, 0)
--- l_debug:RegisterForDrag("LeftButton")
--- l_debug:EnableMouse(true);
--- l_debug:SetScript("OnDragStart", l_debug.StartMoving)
--- l_debug:SetScript("OnDragStop", l_debug.StopMovingOrSizing)
--- l_debug:SetWidth(100)
--- l_debug:SetHeight(100)
--- l_debug:SetClampedToScreen(true)
--- l_debug.text = l_debug:CreateFontString(nil, nil, "GameFontWhiteSmall")
--- l_debug.text:SetPoint("BOTTOMLEFT", 2, 2)
--- l_debug.text:SetText("0000")
--- l_debug.text:SetJustifyH("left")
--- l_debug.time = 0;
--- l_debug.interval = 0.2;
--- l_debug.history = {}
--- l_debug:SetScript("OnUpdate", function(self,elapsed) 
-		-- self.time = self.time + elapsed;
-		-- if(self.time >= self.interval) then
-			-- self.time = self.time - self.interval;
-			-- UpdateAddOnMemoryUsage();
-			-- table.insert(self.history, GetAddOnMemoryUsage(addonName));
-			-- if(#self.history > 50) then
-				-- table.remove(self.history, 1)
-			-- end
-			-- ShowDebugHistory()
+l_debug:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+      edgeFile = nil,
+	  tileSize = 0, edgeSize = 16,
+      insets = { left = 0, right = 0, top = 0, bottom = 0 }
+	  })
+l_debug:SetFrameLevel(5)
+l_debug:SetMovable(true)
+l_debug:SetPoint("Center", 250, 0)
+l_debug:RegisterForDrag("LeftButton")
+l_debug:EnableMouse(true);
+l_debug:SetScript("OnDragStart", l_debug.StartMoving)
+l_debug:SetScript("OnDragStop", l_debug.StopMovingOrSizing)
+l_debug:SetWidth(100)
+l_debug:SetHeight(100)
+l_debug:SetClampedToScreen(true)
+l_debug.text = l_debug:CreateFontString(nil, nil, "GameFontWhiteSmall")
+l_debug.text:SetPoint("BOTTOMLEFT", 2, 2)
+l_debug.text:SetText("0000")
+l_debug.text:SetJustifyH("left")
+l_debug.time = 0;
+l_debug.interval = 0.2;
+l_debug.history = {}
+l_debug:SetScript("OnUpdate", function(self,elapsed) 
+		self.time = self.time + elapsed;
+		if(self.time >= self.interval) then
+			self.time = self.time - self.interval;
+			UpdateAddOnMemoryUsage();
+			table.insert(self.history, GetAddOnMemoryUsage(addonName));
+			if(#self.history > 50) then
+				table.remove(self.history, 1)
+			end
+			ShowDebugHistory()
 
-		-- end
-	-- end)
--- l_debug:Show()
+		end
+	end)
+l_debug:Show()
 
 
 
