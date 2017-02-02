@@ -96,7 +96,7 @@ local _defaults = {
 				, ["flags"] = {[GetFactionInfoByID(1859)] = true, [GetFactionInfoByID(1894)] = true, [GetFactionInfoByID(1828)] = true, [GetFactionInfoByID(1883)] = true
 								, [GetFactionInfoByID(1948)] = true, [GetFactionInfoByID(1900)] = true, [GetFactionInfoByID(1090)] = true, [_L["OTHER_FACTION"]] = true, [_L["NO_FACTION"]] = true}}
 				,[2] = {["name"] = _L["TYPE"]
-						, ["flags"] = {["Default"] = true, ["Elite"] = true, ["PvP"] = true, ["Petbattle"] = true, ["Dungeon"] = true, ["Raid"] = true, ["Profession"] = true, ["Invasion"] = true, ["Emissary"] = true}}
+						, ["flags"] = {["Default"] = true, ["Elite"] = true, ["PvP"] = true, ["Petbattle"] = true, ["Dungeon"] = true, ["Emissary"] = true, ["Profession"] = true }}--, ["Invasion"] = true, ["Raid"] = true}}
 				,[3] = {["name"] = _L["REWARD"]
 						, ["flags"] = {["Item"] = true, ["Armor"] = true, ["Gold"] = true, ["Resources"] = true, ["Artifact"] = true, ["Relic"] = true, }}
 			}
@@ -106,7 +106,6 @@ local _defaults = {
 ------------------------------------------------------------
 
 local function GetCurrentMapAreaIDFixed()
-	-- Fix Azeroth overworld
 	return GetCurrentMapAreaID() < 0 and 0 or GetCurrentMapAreaID();
 end
 
@@ -770,13 +769,14 @@ end
 
 function BWQ:PassesAllFilters(quest)
 	local areaId = GetCurrentMapAreaIDFixed();
-	if (areaId ~= select(2, GetCurrentMapContinent())) then
-		if (quest.zoneId ~= areaId) then return false; end
+	if (areaId ~= select(2, GetCurrentMapContinent()) and quest.zoneId ~= areaId) then
+		return false;
 	end	
 	
 	if BWQ:isUsingFilterNr(1) and not BWQ:PassesFactionFilter(quest) then return false; end
 	if BWQ:isUsingFilterNr(2) and not BWQ:PassesTypeFilter(quest) then return false; end
 	if BWQ:isUsingFilterNr(3) and not BWQ:PassesRewardFilter(quest) then return false; end
+	
 	return true;
 end
 
@@ -793,22 +793,32 @@ function BWQ:PassesTypeFilter(quest)
 	-- Factions (1)
 	local flags = BWQ.settings.filters[2].flags
 
-	-- PvP
-	if not flags["PvP"] and quest.type == LE_QUEST_TAG_TYPE_PVP then return false; end
-	-- Petbattle
-	if not flags["Petbattle"] and quest.type == LE_QUEST_TAG_TYPE_PET_BATTLE then return false; end
-	-- Dungeon
-	if not flags["Dungeon"] and quest.type == LE_QUEST_TAG_TYPE_DUNGEON then return false; end
-	-- Raid
-	if not flags["Raid"] and quest.type == LE_QUEST_TAG_TYPE_RAID then return false; end
-	-- Profession
-	if not flags["Profession"] and quest.type == LE_QUEST_TAG_TYPE_PROFESSION then return false; end
-	-- Invasion
-	if not flags["Invasion"] and quest.type == LE_QUEST_TAG_TYPE_INVASION then return false; end
 	-- Emissary
-	if not flags["Emissary"] and WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(quest.id) then return false; end
+	if WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(quest.id) then 
+		return flags["Emissary"];
+	end
+	-- PvP
+	if quest.type == LE_QUEST_TAG_TYPE_PVP and not flags["PvP"] then
+		return false;
+	-- Petbattle
+	elseif quest.type == LE_QUEST_TAG_TYPE_PET_BATTLE and not flags["Petbattle"] then
+		return false;
+	-- Dungeon
+	elseif quest.type == LE_QUEST_TAG_TYPE_DUNGEON and not flags["Dungeon"] then
+		return false;
+	-- Raid
+	elseif quest.type == LE_QUEST_TAG_TYPE_RAID and not flags["Raid"] then
+		return false;
+	-- Profession
+	elseif quest.type == LE_QUEST_TAG_TYPE_PROFESSION and not flags["Profession"] then
+		return false;
+	-- Invasion
+	elseif quest.type == LE_QUEST_TAG_TYPE_INVASION and not flags["Invasion"] then
+		return false;
+	end
+	
 	-- Elite
-	if not flags["Elite"] and quest.isElite then return false; end
+	if quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON and quest.isElite and not flags["Elite"] then return false; end
 	-- Default
 	if not flags["Default"] and quest.type ~= LE_QUEST_TAG_TYPE_PVP and quest.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON 
 		and quest.type ~= LE_QUEST_TAG_TYPE_PROFESSION and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.type ~= LE_QUEST_TAG_TYPE_INVASION and not quest.isElite then
@@ -972,13 +982,14 @@ function BWQ:FilterMapPoI()
 	local PoI = _G["WorldMapFrameTaskPOI"..index];
 	local quest = nil;
 	local missingQuest = false;
+	local questNum = 1500;
 	
 	while(PoI) do
 		if (PoI.worldQuest) then
 			PoI:Hide();
 			quest = GetQuestFromList(_questList, PoI.questID);
 			if (quest) then
-				
+				PoI:SetFrameLevel(PoI:GetParent():GetFrameLevel() + questNum)
 				if (BWQ.settings.showPinReward and BWQ.settings.bigPoI) then
 					PoI:SetWidth(25);
 					PoI:SetHeight(25);
@@ -1010,6 +1021,7 @@ function BWQ:FilterMapPoI()
 					PoI.BWQGlow:SetWidth(bw+12);
 					PoI.BWQGlow:SetHeight(bh+12);
 				end
+				questNum = questNum + 1;
 			elseif (PoI:IsShown()) then
 				missingQuest = true;
 				break;
