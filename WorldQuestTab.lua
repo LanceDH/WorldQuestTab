@@ -1,4 +1,4 @@
-﻿local addonName, addon= ...
+﻿local addonName, addon = ...
 
 local BWQ = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 
@@ -28,7 +28,7 @@ local BWQ_ARTIFACT_R, BWQ_ARTIFACT_G, BWQ_ARTIFACT_B = GetItemQualityColor(6);
 
 local BWQ_LISTITTEM_HEIGHT = 32;
 local BWQ_REFRESH_DEFAULT = 60;
-local BWQ_REFRESH_FAST = 0.5;
+local BWQ_REFRESH_FAST = 1;
 local BWQ_REFRESH_LIMIT = 5;
 
 local BWQ_QUESTIONMARK = "Interface/ICONS/INV_Misc_QuestionMark";
@@ -40,7 +40,7 @@ local BWQ_TYPEFLAG_LABELS = {[2] = {["Default"] = _L["TYPE_DEFAULT"], ["Elite"] 
 								, ["Relic"] = _L["REWARD_RELIC"], }
 						};
 
-local _continentIds = {[0] = {1014, 1015, 1033, 1017, 1024, 1018, 1096, 1021, 261}
+local _continentIds = {[-1] = {1014, 1015, 1033, 1017, 1024, 1018, 1096, 1021, 261}
 		,[1007] = {1014, 1015, 1033, 1017, 1024, 1018, 1096, 1021}
 		,[13]	= {261}
 		}
@@ -86,6 +86,7 @@ local _defaults = {
 		saveFilters = false;
 		filterPoI = false;
 		bigPoI = false;
+		disablePoI = false;
 		showPinReward = true;
 		showPinRing = true;
 		showPinTime = true;
@@ -105,10 +106,6 @@ local _defaults = {
 
 ------------------------------------------------------------
 
-local function GetCurrentMapAreaIDFixed()
-	return GetCurrentMapAreaID() < 0 and 0 or GetCurrentMapAreaID();
-end
-
 function BWQ:ScrollFrameSetEnabled(enabled)
 
 	BWQ_WorldQuestFrame:EnableMouse(enabled)
@@ -122,9 +119,10 @@ end
 
 function BWQ_Tab_Onclick(self, button)
 	if(button == "RightButton") then
-		BWQ:UpdateQuestList(true);
+		BWQ:UpdateQuestList();
 	end
 
+	--if InCombatLockdown() then return end
 	id = self and self:GetID() or nil;
 	if BWQ_WorldQuestFrame.selectedTab ~= self then
 		Lib_HideDropDownMenu(1);
@@ -162,7 +160,6 @@ function BWQ_Tab_Onclick(self, button)
 		BWQ_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
 		HideUIPanel(QuestScrollFrame);
 		if not InCombatLockdown() then
-			BWQ:UpdateQuestList(true);
 			BWQ_WorldQuestFrame:SetFrameLevel(BWQ_WorldQuestFrame:GetParent():GetFrameLevel()+3);
 			BWQ:ScrollFrameSetEnabled(true)
 		end
@@ -233,7 +230,7 @@ function BWQ_Quest_OnEnter(self)
 	end
 	
 	if BWQ.versionCheck and self.questId < 0 then
-		WorldMapTooltip:SetText("Filter -> Settings -> Fun Quests");
+		WorldMapTooltip:SetText(("%s -> %s -> %s"):format(FILTER, _L["SETTINGS"], "Fun Quests"));
 		return;
 	end
 	
@@ -245,7 +242,7 @@ function BWQ_Quest_OnEnter(self)
 	
 	if self.info.rewardTexture == BWQ_QUESTIONMARK then
 		BWQ:SetQuestReward(self.info)
-		BWQ:UpdateQuestList(true);
+		BWQ:UpdateQuestList();
 		return;
 	end
 	self.reward.icon:SetTexture(self.info.rewardTexture);
@@ -298,7 +295,7 @@ function BWQ_Quest_OnEnter(self)
 end
 
 function BWQ:ShowWorldmapHighlight(zoneId)
-	local areaId = WorldMapFrame.mapID or GetCurrentMapAreaIDFixed();
+	local areaId = GetCurrentMapAreaID();
 
 	if (areaId ~= 1007 and areaId ~= 13) or not _zoneCoords[zoneId] then return; end;
 
@@ -350,7 +347,6 @@ local function GetQuestFromList(list, id)
 end
 
 local function IsArtifactItem(itemId)
-
 	return GetItemSpell(itemId) == _L["EMPOWERING"];
 end
 
@@ -463,7 +459,7 @@ local function Sort_questListByZone(list)
 			end	
 			return a.minutes < b.minutes;
 		end
-		return GetMapNameByID(a.zoneId) < GetMapNameByID(b.zoneId);
+		return (GetMapNameByID(a.zoneId) or "zz") < (GetMapNameByID(b.zoneId) or "zz");
 	end);
 end
 
@@ -748,7 +744,6 @@ local function DisplayQuestType(frame, questInfo)
 end
 
 function BWQ:IsFiltering()
-
 	for k, category in pairs(BWQ.settings.filters)do
 		for k2, flag in pairs(category.flags) do
 			if not flag then return true; end
@@ -758,7 +753,6 @@ function BWQ:IsFiltering()
 end
 
 function BWQ:isUsingFilterNr(id)
-
 	if not BWQ.settings.filters[id] then return false end
 	local flags = BWQ.settings.filters[id].flags;
 	for k, flag in pairs(flags) do
@@ -768,11 +762,8 @@ function BWQ:isUsingFilterNr(id)
 end
 
 function BWQ:PassesAllFilters(quest)
-	local areaId = GetCurrentMapAreaIDFixed();
-	if (areaId ~= select(2, GetCurrentMapContinent()) and quest.zoneId ~= areaId) then
-		return false;
-	end	
-	
+	if quest.id < 0 then return true; end
+
 	if BWQ:isUsingFilterNr(1) and not BWQ:PassesFactionFilter(quest) then return false; end
 	if BWQ:isUsingFilterNr(2) and not BWQ:PassesTypeFilter(quest) then return false; end
 	if BWQ:isUsingFilterNr(3) and not BWQ:PassesRewardFilter(quest) then return false; end
@@ -789,7 +780,6 @@ function BWQ:PassesFactionFilter(quest)
 end
 
 function BWQ:PassesTypeFilter(quest)
-
 	-- Factions (1)
 	local flags = BWQ.settings.filters[2].flags
 
@@ -816,7 +806,6 @@ function BWQ:PassesTypeFilter(quest)
 	elseif quest.type == LE_QUEST_TAG_TYPE_INVASION and not flags["Invasion"] then
 		return false;
 	end
-	
 	-- Elite
 	if quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON and quest.isElite and not flags["Elite"] then return false; end
 	-- Default
@@ -829,8 +818,6 @@ function BWQ:PassesTypeFilter(quest)
 end
 
 function BWQ:PassesRewardFilter(quest)
-
-	if(addon.events.missing >= BWQ_REFRESH_LIMIT-1 and quest.rewardType == 0) then return true end;
 	if(quest.rewardType == 0) then return false end;
 	local flags = BWQ.settings.filters[3].flags
 	-- Armor
@@ -856,7 +843,6 @@ function BWQ:PassesRewardFilter(quest)
 end
 
 function BWQ:UpdateFilterDisplay()
-
 	local filterList = "";
 	local haveLabels = false;
 
@@ -943,6 +929,8 @@ function BWQ:UpdatePin(PoI, quest, isFlightmap)
 end
 
 function BWQ:UpdateFlightMapPins()
+	if BWQ.settings.disablePoI then return; end
+
 	local quest = nil;
 	local questsById;
 
@@ -975,32 +963,60 @@ function BWQ:UpdateFlightMapPins()
 	end
 end
 
-function BWQ:FilterMapPoI()
+function BWQ:CleanMapPins()
+	local index = 1;
+	local PoI = _G["WorldMapFrameTaskPOI"..index];
+	while(PoI) do
+		if(PoI.BWQGlow) then
+			PoI.BWQGlow:SetAlpha(0);
+		end
+		if (PoI.BWQRing) then
+			PoI.BWQRing:SetAlpha(0);
+			PoI.BWQIcon:SetAlpha(0);
+		end
+		if (PoI.BWQText) then
+			PoI.BWQText:SetAlpha(0);
+			PoI.BWQBG:SetAlpha(0);
+		end
+		index = index + 1;
+		PoI = _G["WorldMapFrameTaskPOI"..index];
+	end
 	
-	if (InCombatLockdown() or GetContinentZones(GetCurrentMapAreaIDFixed()))then return; end
+	if (BWQ.FlightMapList) then
+		for k, PoI in pairs(BWQ.FlightmapPins.activePins) do
+			if (PoI.BWQRing) then
+				PoI.BWQRing:SetAlpha(0);
+				PoI.BWQIcon:SetAlpha(0);
+			end
+			if (PoI.BWQText) then
+				PoI.BWQText:SetAlpha(0);
+				PoI.BWQBG:SetAlpha(0);
+			end
+		end
+	end
+end
+
+function BWQ:FilterMapPoI()
+
+	if BWQ.settings.disablePoI or InCombatLockdown()then return; end
 	local index = 1;
 	local PoI = _G["WorldMapFrameTaskPOI"..index];
 	local quest = nil;
 	local missingQuest = false;
-	local questNum = 1500;
+	
+	BWQ:UpdateQuestFilters();
 	
 	while(PoI) do
 		if (PoI.worldQuest) then
-			PoI:Hide();
 			quest = GetQuestFromList(_questList, PoI.questID);
 			if (quest) then
-				PoI:SetFrameLevel(PoI:GetParent():GetFrameLevel() + questNum)
 				if (BWQ.settings.showPinReward and BWQ.settings.bigPoI) then
 					PoI:SetWidth(25);
 					PoI:SetHeight(25);
-				else
-					PoI:SetWidth(20);
-					PoI:SetHeight(20);
 				end
 				BWQ:UpdatePin(PoI, quest)
-				
-				if (GetQuestFromList(_questDisplayList, PoI.questID)) then
-					PoI:Show();
+				if (BWQ.settings.filterPoI and not quest.passedFilter) then
+					PoI:Hide();
 				end
 				local bw = PoI:GetWidth();
 				local bh = PoI:GetHeight();
@@ -1021,7 +1037,6 @@ function BWQ:FilterMapPoI()
 					PoI.BWQGlow:SetWidth(bw+12);
 					PoI.BWQGlow:SetHeight(bh+12);
 				end
-				questNum = questNum + 1;
 			elseif (PoI:IsShown()) then
 				missingQuest = true;
 				break;
@@ -1031,9 +1046,10 @@ function BWQ:FilterMapPoI()
 		PoI = _G["WorldMapFrameTaskPOI"..index];
 	end
 	
-	if(missingQuest and BWQ.noIssues) then
+	
+	if(missingQuest and BWQ.noIssues and not addon.errorTimer) then
 		BWQ.noIssues = false;
-		addon.errorTimer = C_Timer.NewTimer(1, function() BWQ:UpdateQuestList(true) end)
+		addon.errorTimer = C_Timer.NewTimer(1, function() addon.errorTimer = nil; BWQ:UpdateQuestList(true) end)
 	end
 end
 
@@ -1055,52 +1071,65 @@ function BWQ:ApplySort()
 	end
 end
 
-function BWQ:UpdateQuestList(force)
+function BWQ:UpdateQuestList(skipPins)
+
 	if (InCombatLockdown() or not WorldMapFrame:IsShown()) then return end
 	
-	local mapAreaID = GetCurrentMapAreaIDFixed();
+	local mapAreaID = GetCurrentMapAreaID();
 	local list = _questList;
-	local continentID = select(2, GetCurrentMapContinent())
-	-- or continentID == mapAreaID
-	if force or BWQ.CurrentContinent ~= continentID then
-		BWQ.CurrentContinent = continentID;
-		BWQ.noIssues = true
-		local continentZones = GetContinentZones(continentID);
-		local filteredOut = 0;
-		local quest = nil;
-		local questsById = nil
-		
-		for id in pairs(list) do
-			list[id].id = -1;
-			list[id] = nil;
-		end
-		
-		if continentZones then
-			for k, zoneId in ipairs(continentZones) do
-				questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId, continentID);
-				--print(zoneId, #questsById)
-				if questsById and type(questsById) == "table" then
-					for k2, info in ipairs(questsById) do
-						quest = AddQuestToList(list, info, zoneId);
-					end
+	
+	local continentZones = GetContinentZones(mapAreaID);
+	local isFiltering = BWQ:IsFiltering();
+	local quest = nil;
+	local questsById = nil
+	
+	for id in pairs(list) do
+		list[id].id = -1;
+		list[id] = nil;
+	end
+	
+	if continentZones then
+		for k, zoneId in ipairs(continentZones) do
+			questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId, mapAreaID);
+			if questsById and type(questsById) == "table" then
+				for k2, info in ipairs(questsById) do
+					quest = AddQuestToList(list, info, zoneId);
+					-- if quest and isFiltering and not BWQ:PassesAllFilters(quest) then
+						-- quest.passedFilter = false;
+					-- end
 				end
 			end
 		end
-		
-		if BWQ.versionCheck and #list > 0 and self.settings.funQuests then
-			BWQ:ImproveList();
+	else
+		questsById = C_TaskQuest.GetQuestsForPlayerByMapID(mapAreaID);
+		if questsById and type(questsById) == "table" then
+			for k, info in ipairs(questsById) do
+				quest = AddQuestToList(list, info, mapAreaID);
+				-- if quest and isFiltering and not BWQ:PassesAllFilters(quest) then
+						-- quest.passedFilter = false;
+				-- end
+			end
 		end
+	end
 	
-		BWQ:ApplySort()
+	if BWQ.versionCheck and #list > 0 and self.settings.funQuests then
+		BWQ:ImproveList();
+		BWQ:ApplySort();
 	end
 
+	BWQ:ApplySort()
+	
+	self.time = 0;
 	BWQ:DisplayQuestList();
+
+	BWQ.noIssues = true;
 end
 
-local function PopulateDisplayList()
+function BWQ:UpdateQuestFilters()
 	for i=#_questDisplayList, 1, -1 do
 		table.remove(_questDisplayList, i);
 	end
+	
 	for k, quest in ipairs(_questList) do
 		quest.passedFilter = BWQ:PassesAllFilters(quest)
 		if quest.passedFilter then
@@ -1130,17 +1159,20 @@ function BWQ:DisplayQuestList(skipPins)
 	local offset = HybridScrollFrame_GetOffset(scrollFrame);
 	local buttons = scrollFrame.buttons;
 	if buttons == nil then return; end
+	
 	BWQ:UpdateMissingRewards();
 	BWQ:ApplySort();
-	PopulateDisplayList();
-	local isFiltering = BWQ:IsFiltering();
+	BWQ:UpdateQuestFilters()
 	local list = _questDisplayList;
-	local mapAreaID = GetCurrentMapAreaIDFixed();
-	local isContinent = GetContinentZones(mapAreaID);
+	local mapAreaID = GetCurrentMapAreaID();
+	local continentZones = GetContinentZones(mapAreaID);
 	local rewardMissing = false;
 	local r, g, b = 1, 1, 1;
 	local filteredSkipped = 0;
-
+	
+	-- In case an error happens during the update, pevent OnUpdate
+	-- Big issue if it happens when fast updating
+	addon.events.noIssue = false;
 	HideOverlayMessage();
 	
 	for i=1, #buttons do
@@ -1156,7 +1188,7 @@ function BWQ:DisplayQuestList(skipPins)
 			button.title:SetText(q.title);
 			button.time:SetTextColor(q.color.r, q.color.g, q.color.b, 1);
 			button.time:SetText(q.timeString);
-			button.extra:SetText(isContinent and GetMapNameByID(q.zoneId) or "");
+			button.extra:SetText(continentZones and GetMapNameByID(q.zoneId) or "");
 			
 			button.title:ClearAllPoints()
 			button.title:SetPoint("RIGHT", button.reward, "LEFT", -5, 0);
@@ -1231,14 +1263,16 @@ function BWQ:DisplayQuestList(skipPins)
 	
 	HybridScrollFrame_Update(BWQ_QuestScrollFrame, #list * BWQ_LISTITTEM_HEIGHT, scrollFrame:GetHeight());
 	
-	if rewardMissing then
-		addon.errorTimer = C_Timer.NewTimer(BWQ_REFRESH_FAST, function() BWQ:UpdateQuestList(true) end);
+	if rewardMissing and not addon.errorTimer then
+		addon.errorTimer = C_Timer.NewTimer(BWQ_REFRESH_FAST, function() addon.errorTimer = nil; BWQ:UpdateQuestList(true) end);
 	end
 	
-	if (not skipPins and not isContinent and #list ~= 0) then	
+	if (not skipPins and not continentZones and #list ~= 0) then	
+		--WorldMap_UpdateQuestBonusObjectives()
 		BWQ:FilterMapPoI()
 	end
-
+	
+	local isFiltering = BWQ:IsFiltering();
 	if isFiltering then
 		BWQ:UpdateFilterDisplay()
 	else
@@ -1255,7 +1289,6 @@ function BWQ:DisplayQuestList(skipPins)
 		BWQ_WorldQuestFrame.Background:SetAtlas("QuestLogBackground", true);
 	end
 	
-
 end
 
 function BWQ:SetAllFilterTo(id, value)
@@ -1300,7 +1333,6 @@ function BWQ:InitFilter(self, level)
 								BWQ:SetAllFilterTo(LIB_UIDROPDOWNMENU_MENU_VALUE, true);
 								Lib_UIDropDownMenu_Refresh(self, 1, 2);
 								BWQ:DisplayQuestList();
-								--BWQ:UpdateQuestList();
 							end
 				Lib_UIDropDownMenu_AddButton(info, level)
 				
@@ -1320,6 +1352,9 @@ function BWQ:InitFilter(self, level)
 					info.text = haveLabels and BWQ_TYPEFLAG_LABELS[LIB_UIDROPDOWNMENU_MENU_VALUE][flagKey] or flagKey;
 					info.func = function(_, _, _, value)
 										options[flagKey] = value;
+										if (value) then
+											WorldMap_UpdateQuestBonusObjectives();
+										end
 										BWQ:DisplayQuestList();
 									end
 					info.checked = function() return options[flagKey] end;
@@ -1336,10 +1371,11 @@ function BWQ:InitFilter(self, level)
 				info.tooltipTitle = _L["DEFAULT_TAB_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.defaultTab = value;
+
 					end
 				info.checked = function() return BWQ.settings.defaultTab end;
 				Lib_UIDropDownMenu_AddButton(info, level);			
-				
+
 				info.text = _L["SAVE_SETTINGS"];
 				info.tooltipTitle = _L["SAVE_SETTINGS_TT"];
 				info.func = function(_, _, _, value)
@@ -1348,31 +1384,58 @@ function BWQ:InitFilter(self, level)
 				info.checked = function() return BWQ.settings.saveFilters end;
 				Lib_UIDropDownMenu_AddButton(info, level);	
 				
+				info.text = _L["PIN_DISABLE"];
+				info.tooltipTitle = _L["PIN_DISABLE_TT"];
+				info.func = function(_, _, _, value)
+						BWQ.settings.disablePoI = value;
+						if (value) then
+							BWQ:CleanMapPins()
+							WorldMap_UpdateQuestBonusObjectives();
+							for i = 4, 8 do
+								Lib_UIDropDownMenu_DisableButton(2, i);
+							end
+						else
+							BWQ:FilterMapPoI();
+							for i = 4, 7 do
+								Lib_UIDropDownMenu_EnableButton(2, i);
+							end
+							if (BWQ.settings.showPinReward) then
+								Lib_UIDropDownMenu_EnableButton(2, 8);
+							else
+								Lib_UIDropDownMenu_DisableButton(2, 8);
+							end
+						end
+					end
+				info.checked = function() return BWQ.settings.disablePoI end;
+				Lib_UIDropDownMenu_AddButton(info, level);
+				
 				info.text = _L["FILTER_PINS"];
+				info.disabled = BWQ.settings.disablePoI;
 				info.tooltipTitle = _L["FILTER_PINS_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.filterPoI = value;
 						BWQ:FilterMapPoI();
-						--WorldMap_UpdateQuestBonusObjectives();
 					end
 				info.checked = function() return BWQ.settings.filterPoI end;
 				Lib_UIDropDownMenu_AddButton(info, level);
 				
 				info.text = _L["PIN_REWARDS"];
+				info.disabled = BWQ.settings.disablePoI;
 				info.tooltipTitle = _L["PIN_REWARDS_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.showPinReward = value;
-						BWQ:FilterMapPoI();
+						WorldMap_UpdateQuestBonusObjectives();
 						if (value) then
-							Lib_UIDropDownMenu_EnableButton(2, 7);
+							Lib_UIDropDownMenu_EnableButton(2, 8);
 						else
-							Lib_UIDropDownMenu_DisableButton(2, 7);
+							Lib_UIDropDownMenu_DisableButton(2, 8);
 						end
 					end
 				info.checked = function() return BWQ.settings.showPinReward end;
 				Lib_UIDropDownMenu_AddButton(info, level);
 				
 				info.text = _L["PIN_COLOR"];
+				info.disabled = BWQ.settings.disablePoI;
 				info.tooltipTitle = _L["PIN_COLOR_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.showPinRing = value;
@@ -1382,6 +1445,7 @@ function BWQ:InitFilter(self, level)
 				Lib_UIDropDownMenu_AddButton(info, level);
 				
 				info.text = _L["PIN_TIME"];
+				info.disabled = BWQ.settings.disablePoI;
 				info.tooltipTitle = _L["PIN_TIME_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.showPinTime = value;
@@ -1391,11 +1455,11 @@ function BWQ:InitFilter(self, level)
 				Lib_UIDropDownMenu_AddButton(info, level);
 				
 				info.text = _L["PIN_BIGGER"];
-				info.disabled = not BWQ.settings.showPinReward;
+				info.disabled = not BWQ.settings.showPinReward or BWQ.settings.disablePoI;
 				info.tooltipTitle = _L["PIN_BIGGER_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.bigPoI = value;
-						BWQ:FilterMapPoI();
+						WorldMap_UpdateQuestBonusObjectives();
 					end
 				info.checked = function() return BWQ.settings.bigPoI end;
 				Lib_UIDropDownMenu_AddButton(info, level);
@@ -1406,7 +1470,7 @@ function BWQ:InitFilter(self, level)
 				info.tooltipTitle = _L["SHOW_TYPE_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.showTypeIcon = value;
-						BWQ:DisplayQuestList();
+						BWQ:UpdateQuestList();
 					end
 				info.checked = function() return BWQ.settings.showTypeIcon end;
 				Lib_UIDropDownMenu_AddButton(info, level);		
@@ -1415,7 +1479,7 @@ function BWQ:InitFilter(self, level)
 				info.tooltipTitle = _L["SHOW_FACTION_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.showFactionIcon = value;
-						BWQ:DisplayQuestList();
+						BWQ:UpdateQuestList();
 					end
 				info.checked = function() return BWQ.settings.showFactionIcon end;
 				Lib_UIDropDownMenu_AddButton(info, level);		
@@ -1467,9 +1531,9 @@ function BWQ:Sort_OnClick(self, category)
 		Lib_CloseDropDownMenus();
 		dropdown.active = category
 		Lib_UIDropDownMenu_SetSelectedValue(dropdown, category);
-		Lib_UIDropDownMenu_SetText(dropdown, _L["SORT_BY"]:format(_sortOptions[category]));
+		Lib_UIDropDownMenu_SetText(dropdown, _sortOptions[category]);
 		BWQ.settings.sortBy = category;
-		BWQ:DisplayQuestList();
+		BWQ:UpdateQuestList();
 	end
 end
 
@@ -1531,6 +1595,8 @@ function BWQ:ImproveList()
 	info.type = 10;
 	info.zoneId = 9001;
 	info.numItems = 1;
+	info.rarity = LE_WORLD_QUEST_QUALITY_EPIC;
+	info.isElite = true;
 	table.insert(_questList, info);
 end
 
@@ -1579,10 +1645,10 @@ function BWQ:OnEnable()
 	
 	if self.settings.saveFilters and _sortOptions[self.settings.sortBy] then
 		Lib_UIDropDownMenu_SetSelectedValue(BWQ_WorldQuestFrameSortButton, self.settings.sortBy);
-		Lib_UIDropDownMenu_SetText(BWQ_WorldQuestFrameSortButton, _L["SORT_BY"]:format(_sortOptions[self.settings.sortBy]));
+		Lib_UIDropDownMenu_SetText(BWQ_WorldQuestFrameSortButton, _sortOptions[self.settings.sortBy]);
 	else
 		Lib_UIDropDownMenu_SetSelectedValue(BWQ_WorldQuestFrameSortButton, 1);
-		Lib_UIDropDownMenu_SetText(BWQ_WorldQuestFrameSortButton, _L["SORT_BY"]:format(_sortOptions[1]));
+		Lib_UIDropDownMenu_SetText(BWQ_WorldQuestFrameSortButton, _sortOptions[1]);
 	end
 	
 	Lib_UIDropDownMenu_Initialize(BWQ_TrackDropDown, function(self, level) BWQ:InitTrackDropDown(self, level) end, "MENU");
@@ -1627,14 +1693,17 @@ function BWQ:OnEnable()
 			end
 		end)
 		
+	-- Scripts
+	BWQ_WorldQuestFrame:SetScript("OnShow", function() 
+				BWQ:UpdateQuestList();
+			end);
 	BWQ_WorldQuestFrame.filterBar.clearButton:SetScript("OnClick", function (self)
 				Lib_CloseDropDownMenus();
 				for k, v in pairs(BWQ.settings.filters) do
 					BWQ:SetAllFilterTo(k, true);
 				end
 				self:Hide();
-				WorldMap_UpdateQuestBonusObjectives();
-				BWQ:DisplayQuestList();
+				BWQ:UpdateQuestList();
 			end)
 	
 	BWQ_Tab_Onclick((UnitLevel("player") >= 110 and self.settings.defaultTab) and BWQ_TabWorld or BWQ_TabNormal)
@@ -1650,8 +1719,6 @@ addon.events:RegisterEvent("ADDON_LOADED");
 addon.events:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
 addon.events:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else print("BWQ missing function for: " .. event) end end)
 addon.events.updatePeriod = BWQ_REFRESH_DEFAULT;
-addon.events.time = 0;
-addon.events.missing = 0;
 addon.ticker = C_Timer.NewTicker(BWQ_REFRESH_DEFAULT, function() BWQ:UpdateQuestList(true); end)
 
 function addon.events:ADDON_LOADED(loaded)
@@ -1675,14 +1742,16 @@ function addon.events:ADDON_LOADED(loaded)
 				BWQ.FlightMapList[id] = nil;
 				end 
 			end)
+
 	end
 end
 	
 function addon.events:WORLD_MAP_UPDATE(loaded_addon)
-	if not InCombatLockdown() and BWQ.lastMapId ~= WorldMapFrame.mapID then
+	local mapAreaID = GetCurrentMapAreaID();
+	if not InCombatLockdown() and addon.lastMapId ~= mapAreaID then
 		Lib_HideDropDownMenu(1);
 		BWQ:UpdateQuestList();
-		BWQ.lastMapId = WorldMapFrame.mapID;
+		addon.lastMapId = mapAreaID;
 	end
 end
 
@@ -1697,11 +1766,11 @@ function addon.events:PLAYER_REGEN_ENABLED(loaded_addon)
 		BWQ:ScrollFrameSetEnabled(true)
 	end
 	BWQ_Tab_Onclick(BWQ_WorldQuestFrame.selectedTab);
-	BWQ:UpdateQuestList(true);
+	BWQ:UpdateQuestList();
 end
 
 function addon.events:QUEST_TURNED_IN(loaded_addon)
-	BWQ:UpdateQuestList(true);
+	BWQ:UpdateQuestList();
 end
 
 function addon.events:QUEST_WATCH_LIST_CHANGED(loaded_addon)
@@ -1770,7 +1839,7 @@ SlashCmdList["BWQSLASH"] = slashcmd
 		-- line.Fill:SetVertexColor(1, 1, 1);
 		-- line.Fill:Show();
 	-- end
-	-- l_debug.text:SetText(mem .. "\n" .. #_questList.. "\n" .. #_questDisplayList)
+	-- l_debug.text:SetText(mem)
 -- end
 
 -- l_debug:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
