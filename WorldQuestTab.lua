@@ -29,7 +29,6 @@ local BWQ_ARTIFACT_R, BWQ_ARTIFACT_G, BWQ_ARTIFACT_B = GetItemQualityColor(6);
 local BWQ_LISTITTEM_HEIGHT = 32;
 local BWQ_REFRESH_DEFAULT = 60;
 local BWQ_REFRESH_FAST = 1;
-local BWQ_REFRESH_LIMIT = 5;
 
 local BWQ_QUESTIONMARK = "Interface/ICONS/INV_Misc_QuestionMark";
 local BWQ_FACTIONUNKNOWN = "Interface/addons/WorldQuestTab/Images/FactionUnknown";
@@ -53,6 +52,7 @@ local _zoneCoords = {
 		,[1024] = {["x"] = 0.46, ["y"] = 0.23} -- Highmountain
 		,[1018] = {["x"] = 0.34, ["y"] = 0.33} -- Val'sharah
 		,[1096] = {["x"] = 0.46, ["y"] = 0.84} -- Eye of Azshara
+		,[1021] = {["x"] = 0.54, ["y"] = 0.68} -- Broken Shore
 		
 		--Kalimdor
 		,[261] = {["x"] = 0.42, ["y"] = 0.82} -- Silithus
@@ -73,8 +73,9 @@ local _factionIcons = {
 	,[1828] = "Interface/ICONS/INV_LegionCircle_Faction_HightmountainTribes"
 	,[1883] = "Interface/ICONS/INV_LegionCircle_Faction_DreamWeavers"
 	,[1090] = "Interface/ICONS/INV_LegionCircle_Faction_KirinTor"
-	,[609] = "Interface/Addons/WorldQuestTab/Images/Faction609" --Cenarion Circle
-	,[910] = "Interface/Addons/WorldQuestTab/Images/Faction910" -- Brood of Nozdormu
+	,[609] = "Interface/Addons/WorldQuestTab/Images/Faction609" -- Cenarion Circle - Call of the Scarab
+	,[910] = "Interface/Addons/WorldQuestTab/Images/Faction910" -- Brood of Nozdormu - Call of the Scarab
+	,[2045] = "Interface/Addons/WorldQuestTab/Images/Faction2045" -- Armies of Legionfall 7.2 Legionfall
 }
 local _filterOrders = {}
 
@@ -95,9 +96,9 @@ local _defaults = {
 		filters = {
 				[1] = {["name"] = _L["FACTION"]
 				, ["flags"] = {[GetFactionInfoByID(1859)] = true, [GetFactionInfoByID(1894)] = true, [GetFactionInfoByID(1828)] = true, [GetFactionInfoByID(1883)] = true
-								, [GetFactionInfoByID(1948)] = true, [GetFactionInfoByID(1900)] = true, [GetFactionInfoByID(1090)] = true, [_L["OTHER_FACTION"]] = true, [_L["NO_FACTION"]] = true}}
+								, [GetFactionInfoByID(1948)] = true, [GetFactionInfoByID(1900)] = true, [GetFactionInfoByID(1090)] = true, [GetFactionInfoByID(2045)] = true, [_L["OTHER_FACTION"]] = true, [_L["NO_FACTION"]] = true}}
 				,[2] = {["name"] = _L["TYPE"]
-						, ["flags"] = {["Default"] = true, ["Elite"] = true, ["PvP"] = true, ["Petbattle"] = true, ["Dungeon"] = true, ["Emissary"] = true, ["Profession"] = true }}--, ["Invasion"] = true, ["Raid"] = true}}
+						, ["flags"] = {["Default"] = true, ["Elite"] = true, ["PvP"] = true, ["Petbattle"] = true, ["Dungeon"] = true, ["Raid"] = true, ["Profession"] = true, ["Invasion"] = true, ["Emissary"] = true}}
 				,[3] = {["name"] = _L["REWARD"]
 						, ["flags"] = {["Item"] = true, ["Armor"] = true, ["Gold"] = true, ["Resources"] = true, ["Artifact"] = true, ["Relic"] = true, }}
 			}
@@ -132,7 +133,7 @@ function BWQ_Tab_Onclick(self, button)
 	
 	BWQ_TabNormal:SetAlpha(1);
 	BWQ_TabWorld:SetAlpha(1);
-	-- because being hiding stuff in combat doesn't work
+	-- because hiding stuff in combat doesn't work
 	if not InCombatLockdown() then
 		BWQ_TabNormal:SetFrameLevel(BWQ_TabNormal:GetParent():GetFrameLevel()+(self == BWQ_TabNormal and 2 or 1));
 		BWQ_TabWorld:SetFrameLevel(BWQ_TabWorld:GetParent():GetFrameLevel()+(self == BWQ_TabWorld and 2 or 1));
@@ -280,9 +281,9 @@ function BWQ_Quest_OnEnter(self)
 		WorldMapTaskTooltipStatusBar.Bar:SetValue(percent);
 		WorldMapTaskTooltipStatusBar.Bar.Label:SetFormattedText(PERCENTAGE_STRING, percent);
 	end
-	WorldMap_AddQuestRewardsToTooltip(self.questId)
+	-- WorldMap_AddQuestRewardsToTooltip(self.questId)
 	-- For 7.2
-	-- GameTooltip_AddQuestRewardsToTooltip(WorldMapTooltip, self.questId);
+	GameTooltip_AddQuestRewardsToTooltip(WorldMapTooltip, self.questId);
 	
 	-- Add debug lines
 	-- for k, v in pairs(self.info)do
