@@ -914,11 +914,12 @@ function BWQ:UpdatePin(PoI, quest, isFlightmap)
 		PoI.BWQIcon:SetHeight(bh-2);
 		
 		PoI.BWQGlow = PoI:CreateTexture(nil)
-		PoI.BWQGlow:SetAlpha(0.5);
 		PoI.BWQGlow:SetDrawLayer("OVERLAY", 3)
 		PoI.BWQGlow:SetPoint("CENTER", PoI, "CENTER", 0, 1)
-		PoI.BWQGlow:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIGlow")
-		PoI.BWQGlow:SetBlendMode("ADD")
+		--PoI.BWQGlow:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIGlow")
+		PoI.BWQGlow:SetTexture("Interface/QUESTFRAME/WorldQuest")
+		PoI.BWQGlow:SetTexCoord(0.546875, 0.619140625, 0.6875, 0.9765625)
+		PoI.BWQGlow:SetBlendMode("BLEND")
 	end
 	
 	if (BWQ.settings.showPinTime and not PoI.BWQText) then
@@ -943,9 +944,19 @@ function BWQ:UpdatePin(PoI, quest, isFlightmap)
 		PoI.BWQIcon:SetAlpha(BWQ.settings.showPinReward and 1 or 0);
 		PoI.BWQRing:SetWidth(bw+4);
 		PoI.BWQRing:SetHeight(bh+4);
-		PoI.BWQGlow:SetAlpha(BWQ.settings.showPinReward and (quest.isCriteria and 1 or 0) or 0);
-		PoI.BWQGlow:SetWidth(bw+12);
-		PoI.BWQGlow:SetHeight(bh+12);
+		PoI.BWQGlow:SetAlpha(BWQ.settings.showPinReward and (quest.isCriteria and (quest.isElite and 0.65 or 1) or 0) or 0);
+		
+		if (not isFlightmap and quest.isElite) then
+			PoI.BWQGlow:SetWidth(bw+36);
+			PoI.BWQGlow:SetHeight(bh+36);
+			PoI.BWQGlow:SetTexture("Interface/QUESTFRAME/WorldQuest")
+			PoI.BWQGlow:SetTexCoord(0, 0.09765625, 0.546875, 0.953125)
+		else
+			PoI.BWQGlow:SetWidth(bw+27);
+			PoI.BWQGlow:SetHeight(bh+27);
+			PoI.BWQGlow:SetTexture("Interface/QUESTFRAME/WorldQuest")
+			PoI.BWQGlow:SetTexCoord(0.546875, 0.619140625, 0.6875, 0.9765625)
+		end
 
 		if (BWQ.settings.showPinRing) then
 			PoI.BWQRing:SetVertexColor(quest.ringColor.r, quest.ringColor.g, quest.ringColor.b);
@@ -1000,6 +1011,19 @@ function BWQ:UpdateFlightMapPins()
 		quest = BWQ.FlightMapList[k]
 		if (quest) then
 			BWQ:UpdatePin(PoI, quest, true)
+		end
+		
+		
+		if (quest.isElite) then
+			PoI.BWQGlow:SetWidth(PoI:GetWidth()+61);
+			PoI.BWQGlow:SetHeight(PoI:GetHeight()+61);
+			PoI.BWQGlow:SetTexture("Interface/QUESTFRAME/WorldQuest")
+			PoI.BWQGlow:SetTexCoord(0, 0.09765625, 0.546875, 0.953125)
+		else
+			PoI.BWQGlow:SetWidth(PoI:GetWidth()+50);
+			PoI.BWQGlow:SetHeight(PoI:GetHeight()+50);
+			PoI.BWQGlow:SetTexture("Interface/QUESTFRAME/WorldQuest")
+			PoI.BWQGlow:SetTexCoord(0.546875, 0.619140625, 0.6875, 0.9765625)
 		end
 		
 		quest = nil;
