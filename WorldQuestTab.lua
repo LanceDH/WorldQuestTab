@@ -24,6 +24,7 @@ local BWQ_COLOR_CURRENCY = CreateColor(0.6, 0.4, 0.1) ;
 local BWQ_COLOR_ITEM = CreateColor(0.85, 0.85, 0.85) ;
 local BWQ_COLOR_ARMOR = CreateColor(0.7, 0.3, 0.9) ;
 local BWQ_COLOR_RELIC = CreateColor(0.3, 0.7, 1);
+local BWQ_COLOR_MISSING = CreateColor(0.7, 0.1, 0.1);
 local BWQ_ARTIFACT_R, BWQ_ARTIFACT_G, BWQ_ARTIFACT_B = GetItemQualityColor(6);
 
 local BWQ_LISTITTEM_HEIGHT = 32;
@@ -34,7 +35,7 @@ local BWQ_QUESTIONMARK = "Interface/ICONS/INV_Misc_QuestionMark";
 local BWQ_FACTIONUNKNOWN = "Interface/addons/WorldQuestTab/Images/FactionUnknown";
 
 local BWQ_TYPEFLAG_LABELS = {[2] = {["Default"] = _L["TYPE_DEFAULT"], ["Elite"] = _L["TYPE_ELITE"], ["PvP"] = _L["TYPE_PVP"], ["Petbattle"] = _L["TYPE_PETBATTLE"], ["Dungeon"] = _L["TYPE_DUNGEON"]
-								, ["Raid"] = _L["TYPE_RAID"], ["Profession"] = _L["TYPE_PROFESSION"], ["Invasion"] = _L["TYPE_INVASION"], ["Emissary"] = _L["TYPE_EMISSARY"]}
+								, ["Raid"] = _L["TYPE_RAID"], ["Profession"] = _L["TYPE_PROFESSION"], ["Invasion"] = _L["TYPE_INVASION"]}--, ["Emissary"] = _L["TYPE_EMISSARY"]}
 							,[3] = {["Item"] = _L["REWARD_ITEM"], ["Armor"] = _L["REWARD_ARMOR"], ["Gold"] = _L["REWARD_GOLD"], ["Resources"] = _L["REWARD_RESOURCES"], ["Artifact"] = _L["REWARD_ARTIFACT"]
 								, ["Relic"] = _L["REWARD_RELIC"], }
 						};
@@ -93,14 +94,15 @@ local _defaults = {
 		showPinTime = true;
 		funQuests = true;
 		sortBy = 1;
+		emissaryOnly = false;
 		filters = {
 				[1] = {["name"] = _L["FACTION"]
-				, ["flags"] = {[GetFactionInfoByID(1859)] = true, [GetFactionInfoByID(1894)] = true, [GetFactionInfoByID(1828)] = true, [GetFactionInfoByID(1883)] = true
-								, [GetFactionInfoByID(1948)] = true, [GetFactionInfoByID(1900)] = true, [GetFactionInfoByID(1090)] = true, [GetFactionInfoByID(2045)] = true, [_L["OTHER_FACTION"]] = true, [_L["NO_FACTION"]] = true}}
+				, ["flags"] = {[GetFactionInfoByID(1859)] = false, [GetFactionInfoByID(1894)] = false, [GetFactionInfoByID(1828)] = false, [GetFactionInfoByID(1883)] = false
+								, [GetFactionInfoByID(1948)] = false, [GetFactionInfoByID(1900)] = false, [GetFactionInfoByID(1090)] = false, [GetFactionInfoByID(2045)] = false, [_L["OTHER_FACTION"]] = false, [_L["NO_FACTION"]] = false}}
 				,[2] = {["name"] = _L["TYPE"]
-						, ["flags"] = {["Default"] = true, ["Elite"] = true, ["PvP"] = true, ["Petbattle"] = true, ["Dungeon"] = true, ["Raid"] = true, ["Profession"] = true, ["Invasion"] = true, ["Emissary"] = true}}
+						, ["flags"] = {["Default"] = false, ["Elite"] = false, ["PvP"] = false, ["Petbattle"] = false, ["Dungeon"] = false, ["Raid"] = false, ["Profession"] = false, ["Invasion"] = false}}--, ["Emissary"] = false}}
 				,[3] = {["name"] = _L["REWARD"]
-						, ["flags"] = {["Item"] = true, ["Armor"] = true, ["Gold"] = true, ["Resources"] = true, ["Artifact"] = true, ["Relic"] = true, }}
+						, ["flags"] = {["Item"] = false, ["Armor"] = false, ["Gold"] = false, ["Resources"] = false, ["Artifact"] = false, ["Relic"] = false, }}
 			}
 	}
 }
@@ -206,6 +208,7 @@ function BWQ_Quest_OnClick(self, button)
 end
 
 function BWQ_Quest_OnEnter(self)
+
 	WorldMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
 
 	if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
@@ -243,8 +246,10 @@ function BWQ_Quest_OnEnter(self)
 	
 	if self.info.rewardTexture == BWQ_QUESTIONMARK then
 		BWQ:SetQuestReward(self.info)
-		BWQ:UpdateQuestList();
-		return;
+		if not addon.errorTimer then -- prevent mass update
+			BWQ:UpdateQuestList();
+		end
+		WorldMapTooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
 	end
 	self.reward.icon:SetTexture(self.info.rewardTexture);
 
@@ -281,9 +286,12 @@ function BWQ_Quest_OnEnter(self)
 		WorldMapTaskTooltipStatusBar.Bar:SetValue(percent);
 		WorldMapTaskTooltipStatusBar.Bar.Label:SetFormattedText(PERCENTAGE_STRING, percent);
 	end
-	-- WorldMap_AddQuestRewardsToTooltip(self.questId)
-	-- For 7.2
 	GameTooltip_AddQuestRewardsToTooltip(WorldMapTooltip, self.questId);
+	
+	if self.info.rewardTexture == BWQ_QUESTIONMARK then
+		-- If still missing after retrying to add reward, just give the player an idea
+		WorldMapTooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
+	end
 	
 	-- Add debug lines
 	-- for k, v in pairs(self.info)do
@@ -416,7 +424,7 @@ local function GetOrCreateQuestInfo()
 	local info = {["id"] = -1, ["title"] = "z", ["timeString"] = "", ["timeStringShort"] = "", ["color"] = BWQ_WHITE_FONT_COLOR, ["minutes"] = 0
 					, ["faction"] = "", ["type"] = 0, ["rarity"] = 0, ["isElite"] = false, ["tradeskill"] = 0
 					, ["numObjectives"] = 0, ["numItems"] = 0, ["rewardTexture"] = "", ["rewardQuality"] = 1
-					, ["rewardType"] = 0, ["isCriteria"] = false, ["ringColor"] = RED_FONT_COLOR, ["zoneId"] = -1}; 
+					, ["rewardType"] = 0, ["isCriteria"] = false, ["ringColor"] = BWQ_COLOR_MISSING, ["zoneId"] = -1}; 
 					
 	table.insert(_questPool, info);
 	
@@ -568,7 +576,7 @@ end
 
 function BWQ:SetQuestReward(info)
 
-	local _, texture, numItems, quality, rewardType, color = nil, "", 0, 1, 0, RED_FONT_COLOR;
+	local _, texture, numItems, quality, rewardType, color = nil, "", 0, 1, 0, BWQ_COLOR_MISSING;
 	
 	if GetNumQuestLogRewards(info.id) > 0 then
 		_, texture, numItems, quality = GetQuestLogRewardInfo(1, info.id);
@@ -619,7 +627,7 @@ end
 local function AddQuestToList(list, qInfo, zoneId)
 	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(qInfo.questId);
 	local minutes, timeString, color, timeStringShort = GetQuestTimeString(qInfo.questId);
-	if list and minutes == 0 then return end;
+	--if list and minutes == 0 then return end;
 	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(qInfo.questId);
 	local faction = factionId and GetFactionInfoByID(factionId) or _L["NO_FACTION"];
 	
@@ -641,6 +649,7 @@ local function AddQuestToList(list, qInfo, zoneId)
 	info.passedFilter = true;
 	info.isCriteria = WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(qInfo.questId);
 	BWQ:SetQuestReward(info)
+	-- if info.ringColor == BWQ_COLOR_MISSING then return end
 	if list then
 		table.insert(list, info)
 	end
@@ -745,9 +754,10 @@ local function DisplayQuestType(frame, questInfo)
 end
 
 function BWQ:IsFiltering()
+	if BWQ.settings.emissaryOnly then return true; end
 	for k, category in pairs(BWQ.settings.filters)do
 		for k2, flag in pairs(category.flags) do
-			if not flag then return true; end
+			if flag then return true; end
 		end
 	end
 	return false;
@@ -757,19 +767,26 @@ function BWQ:isUsingFilterNr(id)
 	if not BWQ.settings.filters[id] then return false end
 	local flags = BWQ.settings.filters[id].flags;
 	for k, flag in pairs(flags) do
-		if not flag then return true; end
+		if flag then return true; end
 	end
 	return false;
 end
 
 function BWQ:PassesAllFilters(quest)
+	if quest.minutes == 0 then return false; end
 	if quest.id < 0 then return true; end
-
-	if BWQ:isUsingFilterNr(1) and not BWQ:PassesFactionFilter(quest) then return false; end
-	if BWQ:isUsingFilterNr(2) and not BWQ:PassesTypeFilter(quest) then return false; end
-	if BWQ:isUsingFilterNr(3) and not BWQ:PassesRewardFilter(quest) then return false; end
 	
-	return true;
+	if not BWQ:IsFiltering() then return true; end
+
+	if BWQ.settings.emissaryOnly then 
+		return WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(quest.id);
+	end
+	
+	if BWQ:isUsingFilterNr(1) and BWQ:PassesFactionFilter(quest) then return true; end
+	if BWQ:isUsingFilterNr(2) and BWQ:PassesTypeFilter(quest) then return true; end
+	if BWQ:isUsingFilterNr(3) and BWQ:PassesRewardFilter(quest) then return true; end
+	
+	return false;
 end
 
 function BWQ:PassesFactionFilter(quest)
@@ -785,9 +802,9 @@ function BWQ:PassesTypeFilter(quest)
 	local flags = BWQ.settings.filters[2].flags
 
 	-- Emissary
-	if WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(quest.id) then 
-		return flags["Emissary"];
-	end
+	-- if WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(quest.id) then 
+		-- return flags["Emissary"];
+	-- end
 	-- PvP
 	if quest.type == LE_QUEST_TAG_TYPE_PVP and not flags["PvP"] then
 		return false;
@@ -808,7 +825,7 @@ function BWQ:PassesTypeFilter(quest)
 		return false;
 	end
 	-- Elite
-	if quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON and quest.isElite and not flags["Elite"] then return false; end
+	if quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.isElite and not flags["Elite"] then return false; end
 	-- Default
 	if not flags["Default"] and quest.type ~= LE_QUEST_TAG_TYPE_PVP and quest.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON 
 		and quest.type ~= LE_QUEST_TAG_TYPE_PROFESSION and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.type ~= LE_QUEST_TAG_TYPE_INVASION and not quest.isElite then
@@ -844,13 +861,29 @@ function BWQ:PassesRewardFilter(quest)
 end
 
 function BWQ:UpdateFilterDisplay()
-	local filterList = "";
-	local haveLabels = false;
+	local isFiltering = BWQ:IsFiltering();
+	BWQ_WorldQuestFrame.filterBar.clearButton:SetShown(isFiltering);
+	-- If we're not filtering, we 'hide' everything
+	if not isFiltering then
+		BWQ_WorldQuestFrame.filterBar.text:SetText(""); 
+		BWQ_WorldQuestFrame.filterBar:SetHeight(0.1);
+		return;
+	end
 
+	local filterList = "";
+	-- If we are filtering, 'show' things
+	BWQ_WorldQuestFrame.filterBar:SetHeight(20);
+	-- Emissary has priority
+	if (BWQ.settings.emissaryOnly) then
+		filterList = _L["TYPE_EMISSARY"];	
+	end
+	
+	local haveLabels = false;
+	
 	for kO, option in pairs(BWQ.settings.filters) do
 		haveLabels = (BWQ_TYPEFLAG_LABELS[kO] ~= nil);
 		for kF, flag in pairs(option.flags) do
-			if not flag then
+			if flag then
 				local label = haveLabels and BWQ_TYPEFLAG_LABELS[kO][kF] or kF;
 				filterList = filterList == "" and label or string.format("%s, %s", filterList, label);
 			end
@@ -858,7 +891,6 @@ function BWQ:UpdateFilterDisplay()
 	end
 
 	BWQ_WorldQuestFrame.filterBar.text:SetText(_L["FILTER"]:format(filterList)); 
-	BWQ_WorldQuestFrame.filterBar:SetHeight(20);
 end
 
 function BWQ:UpdatePin(PoI, quest, isFlightmap)
@@ -869,17 +901,24 @@ function BWQ:UpdatePin(PoI, quest, isFlightmap)
 		PoI.BWQRing = PoI:CreateTexture(nil)
 		PoI.BWQRing:SetAlpha(0.5);
 		PoI.BWQRing:SetDrawLayer("OVERLAY", 5)
-		PoI.BWQRing:SetPoint("CENTER", PoI, "CENTER", 0, 0)
+		PoI.BWQRing:SetPoint("CENTER", PoI, "CENTER", 0, 1)
 		PoI.BWQRing:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRing")
 		PoI.BWQRing:SetVertexColor(0, 0.5, 0) 
 		
 		PoI.BWQIcon = PoI:CreateTexture(nil)
 		PoI.BWQIcon:SetAlpha(1);
 		PoI.BWQIcon:SetDrawLayer("OVERLAY", 4)
-		PoI.BWQIcon:SetPoint("CENTER", PoI, "CENTER", 0, 0)
-		PoI.BWQIcon:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRing")
+		PoI.BWQIcon:SetPoint("CENTER", PoI, "CENTER", 0, 1)
+		PoI.BWQIcon:SetTexture(BWQ_QUESTIONMARK)
 		PoI.BWQIcon:SetWidth(bw-2);
 		PoI.BWQIcon:SetHeight(bh-2);
+		
+		PoI.BWQGlow = PoI:CreateTexture(nil)
+		PoI.BWQGlow:SetAlpha(0.5);
+		PoI.BWQGlow:SetDrawLayer("OVERLAY", 3)
+		PoI.BWQGlow:SetPoint("CENTER", PoI, "CENTER", 0, 1)
+		PoI.BWQGlow:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIGlow")
+		PoI.BWQGlow:SetBlendMode("ADD")
 	end
 	
 	if (BWQ.settings.showPinTime and not PoI.BWQText) then
@@ -902,8 +941,11 @@ function BWQ:UpdatePin(PoI, quest, isFlightmap)
 	if (PoI.BWQRing) then
 		PoI.BWQRing:SetAlpha((BWQ.settings.showPinReward or BWQ.settings.showPinRing) and 1 or 0);
 		PoI.BWQIcon:SetAlpha(BWQ.settings.showPinReward and 1 or 0);
-		PoI.BWQRing:SetWidth(bw+3);
-		PoI.BWQRing:SetHeight(bh+3);
+		PoI.BWQRing:SetWidth(bw+4);
+		PoI.BWQRing:SetHeight(bh+4);
+		PoI.BWQGlow:SetAlpha(BWQ.settings.showPinReward and (quest.isCriteria and 1 or 0) or 0);
+		PoI.BWQGlow:SetWidth(bw+12);
+		PoI.BWQGlow:SetHeight(bh+12);
 
 		if (BWQ.settings.showPinRing) then
 			PoI.BWQRing:SetVertexColor(quest.ringColor.r, quest.ringColor.g, quest.ringColor.b);
@@ -1021,33 +1063,13 @@ function BWQ:FilterMapPoI()
 				end
 				local bw = PoI:GetWidth();
 				local bh = PoI:GetHeight();
-				if (not PoI.BWQGlow) then
-					PoI.BWQGlow = PoI:CreateTexture(nil)
-					PoI.BWQGlow:SetAlpha(0.5);
-					PoI.BWQGlow:SetDrawLayer("ARTWORK", -1)
-					PoI.BWQGlow:SetPoint("CENTER", PoI, "CENTER", 0, 0)
-					PoI.BWQGlow:SetTexture("Interface/Worldmap/QuestPoiGlow")
-					PoI.BWQGlow:SetTexCoord(0.15, 0.85, 0.15, 0.85)
-					PoI.BWQGlow:SetBlendMode("ADD")
-				end
-				
-				if (PoI.BWQGlow) then
-					PoI.BWQGlow:SetAlpha((BWQ.settings.showPinReward or BWQ.settings.showPinRing) and 1 or 0);
-					-- With big PoI we need this because we can't scale the default stuff (curse you atlas)
-					PoI.BWQGlow:SetAlpha((BWQ.settings.bigPoI and not quest.isElite and WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(quest.id)) and 0.75 or 0);
-					PoI.BWQGlow:SetWidth(bw+12);
-					PoI.BWQGlow:SetHeight(bh+12);
-				end
 			elseif (PoI:IsShown()) then
 				missingQuest = true;
-				break;
 			end
 		end
 		index = index + 1;
 		PoI = _G["WorldMapFrameTaskPOI"..index];
 	end
-	
-	
 	if(missingQuest and BWQ.noIssues and not addon.errorTimer) then
 		BWQ.noIssues = false;
 		addon.errorTimer = C_Timer.NewTimer(1, function() addon.errorTimer = nil; BWQ:UpdateQuestList(true) end)
@@ -1073,19 +1095,18 @@ function BWQ:ApplySort()
 end
 
 function BWQ:UpdateQuestList(skipPins)
-
 	if (InCombatLockdown() or not WorldMapFrame:IsShown()) then return end
 	
 	local mapAreaID = GetCurrentMapAreaID();
 	local list = _questList;
 	
 	local continentZones = GetContinentZones(mapAreaID);
-	local isFiltering = BWQ:IsFiltering();
 	local quest = nil;
 	local questsById = nil
 	
 	for id in pairs(list) do
 		list[id].id = -1;
+		list[id].rewardTexture = "";
 		list[id] = nil;
 	end
 	
@@ -1095,9 +1116,6 @@ function BWQ:UpdateQuestList(skipPins)
 			if questsById and type(questsById) == "table" then
 				for k2, info in ipairs(questsById) do
 					quest = AddQuestToList(list, info, zoneId);
-					-- if quest and isFiltering and not BWQ:PassesAllFilters(quest) then
-						-- quest.passedFilter = false;
-					-- end
 				end
 			end
 		end
@@ -1106,9 +1124,6 @@ function BWQ:UpdateQuestList(skipPins)
 		if questsById and type(questsById) == "table" then
 			for k, info in ipairs(questsById) do
 				quest = AddQuestToList(list, info, mapAreaID);
-				-- if quest and isFiltering and not BWQ:PassesAllFilters(quest) then
-						-- quest.passedFilter = false;
-				-- end
 			end
 		end
 	end
@@ -1155,7 +1170,7 @@ end
 
 function BWQ:DisplayQuestList(skipPins)
 	if InCombatLockdown() or not WorldMapFrame:IsShown() or not BWQ_WorldQuestFrame:IsShown() then return end
-	
+
 	local scrollFrame = BWQ_QuestScrollFrame;
 	local offset = HybridScrollFrame_GetOffset(scrollFrame);
 	local buttons = scrollFrame.buttons;
@@ -1255,7 +1270,7 @@ function BWQ:DisplayQuestList(skipPins)
 		end
 	end
 	
-	for k, quest in ipairs(_questList) do
+	for k, quest in ipairs(list) do
 		if quest.rewardTexture == BWQ_QUESTIONMARK then
 			rewardMissing = true;
 			table.insert(_questsMissingReward, quest)
@@ -1273,14 +1288,7 @@ function BWQ:DisplayQuestList(skipPins)
 		BWQ:FilterMapPoI()
 	end
 	
-	local isFiltering = BWQ:IsFiltering();
-	if isFiltering then
-		BWQ:UpdateFilterDisplay()
-	else
-		BWQ_WorldQuestFrame.filterBar.text:SetText(""); 
-		BWQ_WorldQuestFrame.filterBar:SetHeight(0.1);
-	end
-	BWQ_WorldQuestFrame.filterBar.clearButton:SetShown(isFiltering);
+	BWQ:UpdateFilterDisplay()
 	
 	if (IsAddOnLoaded("Aurora")) then
 		BWQ_WorldQuestFrame.Background:SetAlpha(0);
@@ -1309,6 +1317,17 @@ function BWQ:InitFilter(self, level)
 		info.checked = 	nil;
 		info.isNotRadio = nil;
 		info.func =  nil;
+		info.hasArrow = false;
+		info.notCheckable = false;
+		
+		info.text = _L["TYPE_EMISSARY"];
+		info.func = function(_, _, _, value)
+				BWQ.settings.emissaryOnly = value;
+				BWQ:DisplayQuestList();
+			end
+		info.checked = function() return BWQ.settings.emissaryOnly end;
+		Lib_UIDropDownMenu_AddButton(info, level);			
+		
 		info.hasArrow = true;
 		info.notCheckable = true;
 		
@@ -1700,8 +1719,9 @@ function BWQ:OnEnable()
 			end);
 	BWQ_WorldQuestFrame.filterBar.clearButton:SetScript("OnClick", function (self)
 				Lib_CloseDropDownMenus();
+				BWQ.settings.emissaryOnly = false;
 				for k, v in pairs(BWQ.settings.filters) do
-					BWQ:SetAllFilterTo(k, true);
+					BWQ:SetAllFilterTo(k, false);
 				end
 				self:Hide();
 				BWQ:UpdateQuestList();
@@ -1750,6 +1770,7 @@ end
 function addon.events:WORLD_MAP_UPDATE(loaded_addon)
 	local mapAreaID = GetCurrentMapAreaID();
 	if not InCombatLockdown() and addon.lastMapId ~= mapAreaID then
+
 		Lib_HideDropDownMenu(1);
 		BWQ:UpdateQuestList();
 		addon.lastMapId = mapAreaID;
@@ -1879,7 +1900,3 @@ SlashCmdList["BWQSLASH"] = slashcmd
 		-- end
 	-- end)
 -- l_debug:Show()
-
-
-
-

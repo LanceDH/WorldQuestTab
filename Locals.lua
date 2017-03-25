@@ -102,7 +102,63 @@ L["EMPOWERING"]		= "Potenciando";
 end
 
 if locale == "ptBR" then
-L["EMPOWERING"]		= "Fortalecendo";
+L["COMBATLOCK"] = "Desativado durante combate."
+L["DEFAULT_TAB"] = "Aba Padrão"
+L["DEFAULT_TAB_TT"] = [=[Definir o WQT como aba padrão quando você logar.
+ Isso não se aplica a personagens abaixo do nível 110.]=]
+L["EMPOWERING"] = "Fortalecendo"
+L["FACTION"] = "Facção"
+L["FILTER"] = "Filtro: %s"
+L["FILTER_PINS"] = "Filtrar marcações no mapa"
+L["FILTER_PINS_TT"] = [=[Aplica filtros às
+marcações no mapa.]=]
+L["NAME"] = "Nome"
+L["NO_FACTION"] = "Sem Facção"
+L["OPTIONS_INFO"] = "As opções [WQT] podem ser encontradas abaixo do botão de filtro."
+L["OTHER_FACTION"] = "Outro"
+L["PIN_BIGGER"] = "Marcações maiores no mapa"
+L["PIN_BIGGER_TT"] = [=[Aumente a visibilidade da marcação no mapa.
+Disponível apenas com as marcações de recompensas ativa]=]
+L["PIN_COLOR"] = "Cor do anel da marcação"
+L["PIN_COLOR_TT"] = [=[Exibe um anel colorido envolta das marcações
+dependendo do tipo de recompensa.]=]
+L["PIN_DISABLE"] = "Desativa mudanças na marcação"
+L["PIN_DISABLE_TT"] = "Prevenir WQT fazer mudanças nas marcações do mapa."
+L["PIN_REWARDS"] = "Marcadores de recompensas"
+L["PIN_REWARDS_TT"] = "Exibe ícone de recompensas da missão nos marcadores."
+L["PIN_TIME"] = "Tempo do marcador"
+L["PIN_TIME_TT"] = "Adicionar tempo restante nos marcadores."
+L["QUESTLOG"] = "Log de Missões"
+L["REWARD"] = "Recompensa"
+L["REWARD_ARMOR"] = "Armadura"
+L["REWARD_ARTIFACT"] = "Artefato"
+L["REWARD_GOLD"] = "Ouro"
+L["REWARD_ITEM"] = "Item"
+L["REWARD_RELIC"] = "Relíquia"
+L["REWARD_RESOURCES"] = "Recursos"
+L["SAVE_SETTINGS"] = "Salvar/Organizar Filtros"
+L["SAVE_SETTINGS_TT"] = [=[Salva configurações de filtro e ordenação
+entre sessões e recarregamentos.]=]
+L["SETTINGS"] = "Configurações"
+L["SHOW_FACTION"] = "Exibir Facção"
+L["SHOW_FACTION_TT"] = [=[Exibir ícone da facção
+na lista de missões.]=]
+L["SHOW_TYPE"] = "Exibir Tipo"
+L["SHOW_TYPE_TT"] = [=[Exibe o ícone do tipo
+na lista de missões.]=]
+L["TIME"] = "Tempo"
+L["TYPE"] = "Tipo"
+L["TYPE_DEFAULT"] = "Padrão"
+L["TYPE_DUNGEON"] = "Masmorra"
+L["TYPE_ELITE"] = "Elite"
+L["TYPE_EMISSARY"] = "Emissário"
+L["TYPE_INVASION"] = "Invasão"
+L["TYPE_PETBATTLE"] = "Batalha de mascote"
+L["TYPE_PROFESSION"] = "Profissão"
+L["TYPE_PVP"] = "JxJ"
+L["TYPE_RAID"] = "Raid"
+L["WORLDQUEST"] = "Missões Mundiais"
+L["ZONE"] = "Zona"
 end
 
 if locale == "frFR" then
@@ -160,9 +216,9 @@ L["DEFAULT_TAB_TT"] = [=[Установить WQT как панель по ум�
 Не применяется к персонажам ниже 110 уровня.]=]
 L["EMPOWERING"] = "Усиление"
 L["FACTION"] = "Фракция"
+L["FILTER"] = "Фильтр: %s"
 L["FILTER_PINS"] = "Фильтр меток"
 L["FILTER_PINS_TT"] = "Применить фильтры к меткaм на карте"
-L["FILTER"] = "Фильтры: %s"
 L["NAME"] = "Назвaние"
 L["NO_FACTION"] = "Без фрaкции"
 L["OPTIONS_INFO"] = "[WQT] Опции нaходятся под кнопкой фильтров."
@@ -172,6 +228,8 @@ L["PIN_BIGGER_TT"] = [=[Слегка увеличить метки на кaрт�
 Доступно только при включенных метках на карте.]=]
 L["PIN_COLOR"] = "Цвет метки"
 L["PIN_COLOR_TT"] = "Показать цветное кольцо вокруг метки в зависимости от типа награды."
+L["PIN_DISABLE"] = "Отключить изменение меток"
+L["PIN_DISABLE_TT"] = "Запретить WQT изменять метки на карте."
 L["PIN_REWARDS"] = "Нагрaды на метках"
 L["PIN_REWARDS_TT"] = "Показать награды на метках"
 L["PIN_TIME"] = "Время на метках"
@@ -215,9 +273,9 @@ L["DEFAULT_TAB_TT"] = [=[设置WQT作为你登录后的默认选项卡。
 不会对110级以下的角色生效。]=]
 L["EMPOWERING"] = "强化"
 L["FACTION"] = "阵营"
+L["FILTER"] = "过滤： %s"
 L["FILTER_PINS"] = "过滤地图显示"
 L["FILTER_PINS_TT"] = "在地图上显示过滤后的任务信息。"
-L["FILTER"] = "过滤：%s"
 L["NAME"] = "名称"
 L["NO_FACTION"] = "无阵营"
 L["OPTIONS_INFO"] = "[WQT] 配置选项可以在过滤器菜单中找到。"
@@ -266,8 +324,9 @@ L["DEFAULT_TAB_TT"] = [=[將WQT設定為預設啟用標籤。
 這不適用於等級110以下角色。]=]
 L["EMPOWERING"] = "强化"
 L["FACTION"] = "陣營"
-L["FILTER_PINS"] = "過濾地圖顯示"
 L["FILTER"] = "過濾: %s"
+L["FILTER_PINS"] = "過濾地圖顯示"
+L["FILTER_PINS_TT"] = "將過濾套用到地圖上的任務點"
 L["NAME"] = "名稱"
 L["NO_FACTION"] = "無陣營"
 L["OPTIONS_INFO"] = "[WQT]設定選項可以在過濾按鍵下找到"
@@ -277,6 +336,8 @@ L["PIN_BIGGER_TT"] = [=[增加地圖示大小以提高可見性
 僅於啟用地圖上顯示獎勵圖示時有效]=]
 L["PIN_COLOR"] = "依獎勵著色圖示週邊"
 L["PIN_COLOR_TT"] = "根據獎勵類型在圖示周圍著色顯示"
+L["PIN_DISABLE"] = "停用任務點更改"
+L["PIN_DISABLE_TT"] = "防止世界任務追蹤更改地圖任務點。"
 L["PIN_REWARDS"] = "地圖上顯示獎勵圖示"
 L["PIN_REWARDS_TT"] = "在圖示上顯示任務獎勵圖示"
 L["PIN_TIME"] = "地圖上顯示剩餘時間"
@@ -290,6 +351,7 @@ L["REWARD_ITEM"] = "物品"
 L["REWARD_RELIC"] = "聖物"
 L["REWARD_RESOURCES"] = "大廳資源"
 L["SAVE_SETTINGS"] = "儲存過濾/排序"
+L["SAVE_SETTINGS_TT"] = "在每次登入與重載間儲存過濾與排序設置。"
 L["SETTINGS"] = "設定"
 L["SHOW_FACTION"] = "顯示陣營"
 L["SHOW_FACTION_TT"] = "在任務清單顯示陣營圖示"
@@ -308,6 +370,7 @@ L["TYPE_PVP"] = "PvP"
 L["TYPE_RAID"] = "團隊"
 L["WORLDQUEST"] = "世界任務"
 L["ZONE"] = "地區"
+
 end
 
 if locale == "koKO" then
