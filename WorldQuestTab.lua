@@ -340,8 +340,17 @@ local function GetAbreviatedNumber(number)
 		else
 			return floor(number / 100)/10 .. "k";
 		end
-	elseif (number >= 10000) then
+	elseif (number >= 10000 and number < 1000000) then
 		return floor(number / 1000) .. "k";
+	elseif (number >= 1000000 and number < 10000000) then
+		local rest = number - floor(number/1000000)*1000000
+		if rest < 100000 then
+			return floor(number / 1000000) .. "m";
+		else
+			return floor(number / 100000)/10 .. "m";
+		end
+	elseif (number >= 10000000) then
+		return floor(number / 1000000) .. "m";
 	end
 
 	return number 
@@ -606,16 +615,17 @@ function BWQ:SetQuestReward(info)
 			rewardType = BWQ_REWARDTYPE_ITEM;
 			color = BWQ_COLOR_ITEM;
 		end
-	elseif GetNumQuestLogRewardCurrencies(info.id) > 0 then
-		_, texture, numItems = GetQuestLogRewardCurrencyInfo(1, info.id)
-		rewardType = BWQ_REWARDTYPE_CURRENCY;
-		color = BWQ_COLOR_CURRENCY;
-	-- Check gold last because of <2g rewards
 	elseif GetQuestLogRewardMoney(info.id) > 0 then
 		numItems = floor(abs(GetQuestLogRewardMoney(info.id) / 10000))
 		texture = "Interface/ICONS/INV_Misc_Coin_01";
 		rewardType = BWQ_REWARDTYPE_GOLD;
 		color = BWQ_COLOR_GOLD;
+	elseif GetNumQuestLogRewardCurrencies(info.id) > 0 then
+		_, texture, numItems = GetQuestLogRewardCurrencyInfo(1, info.id)
+		rewardType = BWQ_REWARDTYPE_CURRENCY;
+		color = BWQ_COLOR_CURRENCY;
+	-- Check gold last because of <2g rewards
+	
 	end
 	info.rewardQuality = quality or 1;
 	info.rewardTexture = texture ~= "" and texture or BWQ_QUESTIONMARK;
@@ -1152,7 +1162,8 @@ function BWQ:UpdateQuestList(skipPins)
 		end
 	end
 	
-	if BWQ.versionCheck and #list > 0 and self.settings.funQuests then
+	BWQ:UpdateQuestFilters();
+	if BWQ.versionCheck and #_questDisplayList > 0 and self.settings.funQuests then
 		BWQ:ImproveList();
 		BWQ:ApplySort();
 	end
@@ -1652,7 +1663,7 @@ function BWQ:OnInitialize()
 	self.versionCheck = (date("%m%d") == "0401");
 	if self.versionCheck then
 		self.betterDisplay = {};
-		local h = {45068, 45049, 44033};
+		local h = {44033, 45049, 045068};
 		local i;
 		for k, v in ipairs(h) do
 			i = C_TaskQuest.GetQuestInfoByQuestID(v);
