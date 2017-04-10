@@ -349,8 +349,17 @@ local function GetAbreviatedNumber(number)
 		else
 			return floor(number / 100000)/10 .. "m";
 		end
-	elseif (number >= 10000000) then
+	elseif (number >= 10000000 and number < 1000000000) then
 		return floor(number / 1000000) .. "m";
+	elseif (number >= 1000000000 and number < 10000000000) then
+		local rest = number - floor(number/1000000000)*1000000000
+		if rest < 100000000 then
+			return floor(number / 1000000000) .. "b";
+		else
+			return floor(number / 100000000)/10 .. "b";
+		end
+	elseif (number >= 10000000) then
+		return floor(number / 1000000000) .. "b";
 	end
 
 	return number 
@@ -369,14 +378,9 @@ local function IsArtifactItem(itemId)
 end
 
 local function IsRelicItem(itemId)
-	-- Wouldn't mind having a way to get non-localized item classes
-	EmbeddedItemTooltip_SetItemByID(BWQ_Tooltip.ItemTooltip, itemId)
-	if (not BWQ_TooltipTooltipTextLeft4:GetText()) then return false; end
-	local r, g, b = BWQ_TooltipTooltipTextLeft4:GetTextColor();
-	local difR = BWQ_ARTIFACT_R - r
-	local difG = BWQ_ARTIFACT_G - g
-	local difB = BWQ_ARTIFACT_B - b
-	return (difR <= 0.001 and difG <= 0.001 and difB <= 0.001 and difR >= -0.001 and difG >= -0.001 and difB >= -0.001)
+	local itemClassID, itemSubClassID = select(12, GetItemInfo(itemId));
+	
+	return (itemClassID == 3 and itemSubClassID == 11);
 end
 
 local function ShowOverlayMessage(message)
@@ -593,9 +597,16 @@ function BWQ:SetQuestReward(info)
 		if itemId and IsArtifactItem(itemId) then
 			EmbeddedItemTooltip_SetItemByQuestReward(BWQ_Tooltip.ItemTooltip, 1, info.id)
 			local text = BWQ_TooltipTooltipTextLeft4:GetText();
-			text = text:gsub(",", "");
-			text = text:gsub("%.", "");
-			numItems = tonumber(string.match(text, '%d+'));
+			numItems = tonumber(string.match(text:gsub("%p", ""), '%d+'));
+			if (text:find(SECOND_NUMBER)) then -- Million
+				local int, dec=text:match("(%d+)%.?%,?(%d*)");
+				int = tonumber(int .. dec); 
+				numItems = int/(10^dec:len()) * 1000000;
+			elseif (text:find(THIRD_NUMBER)) then -- Billion just in case
+				local int, dec=text:match("(%d+)%.?%,?(%d*)");
+				int = tonumber(int .. dec); 
+				numItems = int/(10^dec:len()) * 1000000000;
+			end
 			rewardType = BWQ_REWARDTYPE_ARTIFACT;
 			color = BWQ_COLOR_ARTIFACT;
 		elseif itemId and select(9, GetItemInfo(itemId)) ~= "" then
@@ -624,8 +635,6 @@ function BWQ:SetQuestReward(info)
 		_, texture, numItems = GetQuestLogRewardCurrencyInfo(1, info.id)
 		rewardType = BWQ_REWARDTYPE_CURRENCY;
 		color = BWQ_COLOR_CURRENCY;
-	-- Check gold last because of <2g rewards
-	
 	end
 	info.rewardQuality = quality or 1;
 	info.rewardTexture = texture ~= "" and texture or BWQ_QUESTIONMARK;
@@ -1074,8 +1083,11 @@ function BWQ:CleanMapPins()
 end
 
 function BWQ:FilterMapPoI()
-
-	if BWQ.settings.disablePoI or InCombatLockdown()then return; end
+	if BWQ.settings.disablePoI then return; end
+	if InCombatLockdown() then
+		
+		return;
+	end
 	local index = 1;
 	local PoI = _G["WorldMapFrameTaskPOI"..index];
 	local quest = nil;

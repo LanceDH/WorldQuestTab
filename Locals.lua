@@ -87,6 +87,7 @@ L["SHOW_FACTION"] = "Zeige Fraktion"
 L["SHOW_FACTION_TT"] = "Zeige Fraktionsicon in der Questliste."
 L["TIME"] = "Zeit"
 L["TYPE_DEFAULT"] = "Standard"
+L["TYPE_DUNGEON"] = "Dungeon"
 L["TYPE_ELITE"] = "Elite"
 L["TYPE_INVASION"] = "Invasion"
 L["TYPE_PETBATTLE"] = "Haustierkampf"
@@ -374,7 +375,63 @@ L["ZONE"] = "地區"
 end
 
 if locale == "koKO" then
-L["EMPOWERING"]		= "강화";
+L["COMBATLOCK"] = "전투 중엔 비활성됩니다."
+L["DEFAULT_TAB"] = "기본 탭"
+L["DEFAULT_TAB_TT"] = [=[로그인 했을 때 WQT를 기본 탭으로 설정합니다.
+110 레벨 미만의 캐릭터엔 적용하지 않습니다.]=]
+L["EMPOWERING"] = "강화"
+L["FACTION"] = "평판 진영"
+L["FILTER"] = "필터: %s"
+L["FILTER_PINS"] = "지도 표시 필터"
+L["FILTER_PINS_TT"] = [=[지도 상의 표시에
+필터를 적용합니다.]=]
+L["NAME"] = "이름"
+L["NO_FACTION"] = "진영 없음"
+L["OPTIONS_INFO"] = "[WQT] 필터 버튼 아래에서 옵션을 찾을 수 있습니다."
+L["OTHER_FACTION"] = "기타"
+L["PIN_BIGGER"] = "큰 지도 표시"
+L["PIN_BIGGER_TT"] = [=[가시성을 위해 지도 표시 크기를 약간 키웁니다.
+보상이 활성화된 지도 표시에만 사용할 수 있습니다]=]
+L["PIN_COLOR"] = "지도 표시 색상화"
+L["PIN_COLOR_TT"] = [=[보상 유형에 따라 표시 주변에
+색상화된 원을 표시합니다.]=]
+L["PIN_DISABLE"] = "표시 변경 비활성화"
+L["PIN_DISABLE_TT"] = "WQT가 지도 표시를 변경하지 못하게 막습니다."
+L["PIN_REWARDS"] = "보상 지도 표시"
+L["PIN_REWARDS_TT"] = "지도 표시에 퀘스트 보상 아이콘을 표시합니다."
+L["PIN_TIME"] = "시간 지도 표시"
+L["PIN_TIME_TT"] = "지도 표시에 남은 시간을 추가합니다."
+L["QUESTLOG"] = "퀘스트 기록"
+L["REWARD"] = "보상"
+L["REWARD_ARMOR"] = "방어구"
+L["REWARD_ARTIFACT"] = "유물력"
+L["REWARD_GOLD"] = "골드"
+L["REWARD_ITEM"] = "아이템"
+L["REWARD_RELIC"] = "성물"
+L["REWARD_RESOURCES"] = "자원"
+L["SAVE_SETTINGS"] = "필터/정렬 저장"
+L["SAVE_SETTINGS_TT"] = [=[세션과 다시 불러오기 간에
+필터와 정렬 설정을 저장합니다.]=]
+L["SETTINGS"] = "설정"
+L["SHOW_FACTION"] = "진영 표시"
+L["SHOW_FACTION_TT"] = [=[퀘스트 목록에
+진영 아이콘을 표시합니다.]=]
+L["SHOW_TYPE"] = "유형 표시"
+L["SHOW_TYPE_TT"] = [=[퀘스트 목록에
+유형 아이콘을 표시합니다.]=]
+L["TIME"] = "시간"
+L["TYPE"] = "유형"
+L["TYPE_DEFAULT"] = "기본"
+L["TYPE_DUNGEON"] = "던전"
+L["TYPE_ELITE"] = "정예"
+L["TYPE_EMISSARY"] = "사절"
+L["TYPE_INVASION"] = "침략"
+L["TYPE_PETBATTLE"] = "애완동물 대전"
+L["TYPE_PROFESSION"] = "전문 기술"
+L["TYPE_PVP"] = "PvP"
+L["TYPE_RAID"] = "공격대"
+L["WORLDQUEST"] = "전역 퀘스트"
+L["ZONE"] = "지역"
 end
 
 addon.L = L;
