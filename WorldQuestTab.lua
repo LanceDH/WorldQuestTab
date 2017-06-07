@@ -13,6 +13,9 @@ local BWQ_REWARDTYPE_ARTIFACT = 3;
 local BWQ_REWARDTYPE_ITEM = 4;
 local BWQ_REWARDTYPE_GOLD = 5;
 local BWQ_REWARDTYPE_CURRENCY = 6;
+local BWQ_REWARDTYPE_HONOR = 7;
+local BWQ_REWARDTYPE_XP = 8;
+local BWQ_REWARDTYPE_NONE = 9;
 
 local BWQ_WHITE_FONT_COLOR = CreateColor(0.8, 0.8, 0.8);
 local BWQ_ORANGE_FONT_COLOR = CreateColor(1, 0.6, 0);
@@ -25,6 +28,8 @@ local BWQ_COLOR_ITEM = CreateColor(0.85, 0.85, 0.85) ;
 local BWQ_COLOR_ARMOR = CreateColor(0.7, 0.3, 0.9) ;
 local BWQ_COLOR_RELIC = CreateColor(0.3, 0.7, 1);
 local BWQ_COLOR_MISSING = CreateColor(0.7, 0.1, 0.1);
+local BWQ_COLOR_EXPERIENCE = CreateColor(0.7, 0.1, 0.1);
+local BWQ_COLOR_HONOR = CreateColor(0.9, 0.26, 0);
 local BWQ_ARTIFACT_R, BWQ_ARTIFACT_G, BWQ_ARTIFACT_B = GetItemQualityColor(6);
 
 local BWQ_LISTITTEM_HEIGHT = 32;
@@ -32,6 +37,8 @@ local BWQ_REFRESH_DEFAULT = 60;
 local BWQ_REFRESH_FAST = 1;
 
 local BWQ_QUESTIONMARK = "Interface/ICONS/INV_Misc_QuestionMark";
+local BWQ_EXPERIENCE = "Interface/ICONS/XP_ICON";
+local BWQ_HONOR = "Interface/ICONS/Achievement_LegionPVPTier4";
 local BWQ_FACTIONUNKNOWN = "Interface/addons/WorldQuestTab/Images/FactionUnknown";
 
 local BWQ_TYPEFLAG_LABELS = {[2] = {["Default"] = _L["TYPE_DEFAULT"], ["Elite"] = _L["TYPE_ELITE"], ["PvP"] = _L["TYPE_PVP"], ["Petbattle"] = _L["TYPE_PETBATTLE"], ["Dungeon"] = _L["TYPE_DUNGEON"]
@@ -41,9 +48,14 @@ local BWQ_TYPEFLAG_LABELS = {[2] = {["Default"] = _L["TYPE_DEFAULT"], ["Elite"] 
 						};
 
 local _continentIds = {[-1] = {1014, 1015, 1033, 1017, 1024, 1018, 1096, 1021, 261}
-		,[1007] = {1014, 1015, 1033, 1017, 1024, 1018, 1096, 1021}
-		,[13]	= {261}
-		}
+		,[1007] = {1014, 1015, 1033, 1017, 1024, 1018, 1096, 1021} -- Broken Isles
+		,[13]	= {261, 61, 720, 161, 201, 121, 141, 607, 9, 101, 81, 11, 4, 43, 42, 181, 606, 182, 241, 281, 41, 464, 476} -- Kalimdor
+		,[14]	= {673, 37, 19, 14, 32, 34, 39, 30, 36, 29, 28, 17, 27, 35, 700, 40, 16, 26, 24, 684, 21, 20, 22, 23, 463, 462, 499} -- Eastern Kingdoms
+		,[466]	= {473, 478, 477, 465, 466, 475, 479} -- Outland
+		,[485]	= {486, 493, 492, 488, 495, 496, 490, 491} -- Northrend
+		,[862]	= {951, 806, 857, 807, 858, 811, 809, 929, 810, 928} -- Pandaria
+		,[962]	= {950, 941, 949, 946, 948, 947, 945, 978} -- Draenor
+	}
 
 local _zoneCoords = {
 		-- Legion
@@ -56,14 +68,104 @@ local _zoneCoords = {
 		,[1021] = {["x"] = 0.54, ["y"] = 0.68} -- Broken Shore
 		
 		--Kalimdor
-		,[261] = {["x"] = 0.42, ["y"] = 0.82} -- Silithus
+		,[261] 	= {["x"] = 0.42, ["y"] = 0.82} -- Silithus
+		,[61]	= {["x"] = 0.5, ["y"] = 0.72} -- Thousand Needles
+		,[720]	= {["x"] = 0.47, ["y"] = 0.91} -- Uldum
+		,[161]	= {["x"] = 0.55, ["y"] = 0.84} -- Tanaris
+		,[201]	= {["x"] = 0.5, ["y"] = 0.81} -- Ungoro
+		,[121]	= {["x"] = 0.43, ["y"] = 0.7} -- Feralas
+		,[141]	= {["x"] = 0.55, ["y"] = 0.67} -- Dustwallow
+		,[607]	= {["x"] = 0.51, ["y"] = 0.67} -- S Barrens
+		,[9]	= {["x"] = 0.47, ["y"] = 0.6} -- Mulgore
+		,[101]	= {["x"] = 0.41, ["y"] = 0.57} -- Desolace
+		,[81]	= {["x"] = 0.43, ["y"] = 0.46} -- Stonetalon
+		,[11]	= {["x"] = 0.52, ["y"] = 0.5} -- N Barrens
+		,[4]	= {["x"] = 0.58, ["y"] = 0.5} -- Durotar
+		,[43]	= {["x"] = 0.49, ["y"] = 0.41} -- Stonetalon
+		,[42]	= {["x"] = 0.46, ["y"] = 0.23} -- Dakshore
+		,[181]	= {["x"] = 0.59, ["y"] = 0.37} -- Azshara
+		,[606]	= {["x"] = 0.54, ["y"] = 0.32} -- Hyjal
+		,[182]	= {["x"] = 0.49, ["y"] = 0.25} -- Felwood
+		,[241]	= {["x"] = 0.53, ["y"] = 0.19} -- Moonglade
+		,[281]	= {["x"] = 0.58, ["y"] = 0.23} -- Winterspring
+		,[41]	= {["x"] = 0.42, ["y"] = 0.1} -- Teldrassil
+		,[464]	= {["x"] = 0.33, ["y"] = 0.27} -- Azuremyst
+		,[476]	= {["x"] = 0.3, ["y"] = 0.18} -- Bloodmyst
+		
+		-- Eastern Kingdoms
+		,[673]	= {["x"] = 0.47, ["y"] = 0.87} -- Cape of STV
+		,[37]	= {["x"] = 0.47, ["y"] = 0.87} -- N STV
+		,[19]	= {["x"] = 0.54, ["y"] = 0.89} -- Blasted Lands
+		,[14]	= {["x"] = 0.54, ["y"] = 0.78} -- Swamp of Sorrow
+		,[32]	= {["x"] = 0.49, ["y"] = 0.79} -- Deadwind
+		,[34]	= {["x"] = 0.45, ["y"] = 0.8} -- Duskwood
+		,[39]	= {["x"] = 0.4, ["y"] = 0.79} -- Westfall
+		,[30]	= {["x"] = 0.47, ["y"] = 0.75} -- Elwynn
+		,[36]	= {["x"] = 0.51, ["y"] = 0.75} -- Redridge
+		,[29]	= {["x"] = 0.49, ["y"] = 0.7} -- Burning Steppes
+		,[28]	= {["x"] = 0.47, ["y"] = 0.65} -- Searing Gorge
+		,[17]	= {["x"] = 0.52, ["y"] = 0.65} -- Badlands
+		,[27]	= {["x"] = 0.44, ["y"] = 0.61} -- Dun Morogh
+		,[35]	= {["x"] = 0.52, ["y"] = 0.6} -- Loch Modan
+		,[700]	= {["x"] = 0.56, ["y"] = 0.55} -- Twilight Highlands
+		,[40]	= {["x"] = 0.5, ["y"] = 0.53} -- Wetlands
+		,[16]	= {["x"] = 0.51, ["y"] = 0.46} -- Arathi Highlands
+		,[26]	= {["x"] = 0.57, ["y"] = 0.4} -- Hinterlands
+		,[24]	= {["x"] = 0.46, ["y"] = 0.4} -- Hillsbrad
+		,[684]	= {["x"] = 0.4, ["y"] = 0.48} -- Ruins of Gilneas
+		,[21]	= {["x"] = 0.41, ["y"] = 0.39} -- Silverpine
+		,[20]	= {["x"] = 0.39, ["y"] = 0.32} -- Tirisfall
+		,[22]	= {["x"] = 0.49, ["y"] = 0.31} -- W Plaugelands
+		,[23]	= {["x"] = 0.54, ["y"] = 0.32} -- E Plaguelands
+		,[463]	= {["x"] = 0.56, ["y"] = 0.23} -- Ghostlands
+		,[462]	= {["x"] = 0.54, ["y"] = 0.18} -- Eversong
+		,[499]	= {["x"] = 0.55, ["y"] = 0.05} -- Quel'Danas
+		
+		-- Outland
+		,[473]	= {["x"] = 0.74, ["y"] = 0.8} -- Shadowmoon Valley
+		,[478]	= {["x"] = 0.45, ["y"] = 0.77} -- Terrokar
+		,[477]	= {["x"] = 0.3, ["y"] = 0.65} -- Nagrand
+		,[465]	= {["x"] = 0.52, ["y"] = 0.51} -- Hellfire
+		,[466]	= {["x"] = 0.33, ["y"] = 0.47} -- Zangarmarsh
+		,[475]	= {["x"] = 0.36, ["y"] = 0.23} -- Blade's Edge
+		,[479]	= {["x"] = 0.57, ["y"] = 0.2} -- Netherstorm
+		
+		-- Northrend
+		,[486]	= {["x"] = 0.22, ["y"] = 0.59} -- Borean Tundra
+		,[493]	= {["x"] = 0.25, ["y"] = 0.41} -- Sholazar Basin
+		,[492]	= {["x"] = 0.41, ["y"] = 0.26} -- Icecrown
+		,[488]	= {["x"] = 0.47, ["y"] = 0.55} -- Crystalsong
+		,[495]	= {["x"] = 0.61, ["y"] = 0.21} -- Stormpeaks
+		,[496]	= {["x"] = 0.77, ["y"] = 0.32} -- Zul'Drak
+		,[490]	= {["x"] = 0.71, ["y"] = 0.53} -- Grizzly Hillsbrad
+		,[491]	= {["x"] = 0.78, ["y"] = 0.74} -- Howling Fjord
+		
+		-- Pandaria
+		,[951]	= {["x"] = 0.9, ["y"] = 0.68} -- Timeless Isles
+		,[806]	= {["x"] = 0.67, ["y"] = 0.52} -- Jade Forest
+		,[857]	= {["x"] = 0.53, ["y"] = 0.75} -- Karasang
+		,[807]	= {["x"] = 0.51, ["y"] = 0.65} -- Four Winds
+		,[858]	= {["x"] = 0.35, ["y"] = 0.62} -- Dread Waste
+		,[811]	= {["x"] = 0.5, ["y"] = 0.52} -- Eternal Blossom
+		,[809]	= {["x"] = 0.45, ["y"] = 0.35} -- Kun-lai Summit
+		,[929]	= {["x"] = 0.48, ["y"] = 0.05} -- Isle of Giants
+		,[810]	= {["x"] = 0.32, ["y"] = 0.45} -- Townlong Steppes
+		,[928]	= {["x"] = 0.2, ["y"] = 0.11} -- Isle of Thunder
+		
+		-- Draenor
+		,[950]	= {["x"] = 0.24, ["y"] = 0.49} -- Nagrand
+		,[941]	= {["x"] = 0.34, ["y"] = 0.29} -- Frostridge
+		,[949]	= {["x"] = 0.49, ["y"] = 0.21} -- Gorgrond
+		,[946]	= {["x"] = 0.43, ["y"] = 0.56} -- Talador
+		,[948]	= {["x"] = 0.46, ["y"] = 0.73} -- Spired of Arak
+		,[947]	= {["x"] = 0.58, ["y"] = 0.67} -- Shadowmoon
+		,[945]	= {["x"] = 0.58, ["y"] = 0.47} -- Tanaan Jungle
+		,[978]	= {["x"] = 0.73, ["y"] = 0.43} -- Ashran
 	}
 	
-local _questTitle = "Uniting the Isles"
 local _questList = {};
 local _questPool = {};
 local _questDisplayList = {};
-local _questsMissingReward = {};
 local _sortOptions = {[1] = _L["TIME"], [2] = _L["FACTION"], [3] = _L["TYPE"], [4] = _L["ZONE"], [5] = _L["NAME"], [6] = _L["REWARD"]}
 
 local _factionIcons = {
@@ -77,6 +179,9 @@ local _factionIcons = {
 	,[609] = "Interface/Addons/WorldQuestTab/Images/Faction609" -- Cenarion Circle - Call of the Scarab
 	,[910] = "Interface/Addons/WorldQuestTab/Images/Faction910" -- Brood of Nozdormu - Call of the Scarab
 	,[2045] = "Interface/Addons/WorldQuestTab/Images/Faction2045" -- Armies of Legionfall 7.2 Legionfall
+	,[1515] = "Interface/Addons/WorldQuestTab/Images/Faction1515" -- Dreanor Arakkoa Outcasts
+	,[1681] = "Interface/Addons/WorldQuestTab/Images/Faction1681" -- Dreanor Vol'jin's Spear
+	,[1731] = "Interface/Addons/WorldQuestTab/Images/Faction1731" -- Dreanor Council of Exarchs
 }
 local _filterOrders = {}
 
@@ -103,7 +208,7 @@ local _defaults = {
 				,[2] = {["name"] = _L["TYPE"]
 						, ["flags"] = {["Default"] = false, ["Elite"] = false, ["PvP"] = false, ["Petbattle"] = false, ["Dungeon"] = false, ["Raid"] = false, ["Profession"] = false, ["Invasion"] = false}}--, ["Emissary"] = false}}
 				,[3] = {["name"] = _L["REWARD"]
-						, ["flags"] = {["Item"] = false, ["Armor"] = false, ["Gold"] = false, ["Resources"] = false, ["Artifact"] = false, ["Relic"] = false, }}
+						, ["flags"] = {["Item"] = false, ["Armor"] = false, ["Gold"] = false, ["Resources"] = false, ["Artifact"] = false, ["Relic"] = false, ["None"] = false, ["Experience"] = false, ["Honor"] = false}}
 			}
 	}
 }
@@ -146,8 +251,7 @@ function BWQ_Tab_Onclick(self, button)
 		
 		BWQ_WorldQuestFrame:SetFrameLevel(0);
 	end
-	
-	
+
 	if (not QuestScrollFrame.Contents:IsShown() and not QuestMapFrame.DetailsFrame:IsShown()) or id == 1 then
 		BWQ_WorldQuestFrame:SetAlpha(0);
 		BWQ_TabNormal.Highlight:Show();
@@ -245,20 +349,13 @@ function BWQ_Quest_OnEnter(self)
 		return;
 	end
 	
-	if self.info.rewardTexture == BWQ_QUESTIONMARK then
-		BWQ:SetQuestReward(self.info)
-		if not addon.errorTimer then -- prevent mass update
-			BWQ:UpdateQuestList();
-		end
-		WorldMapTooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
-	end
 	self.reward.icon:SetTexture(self.info.rewardTexture);
 
 	local title, factionID, capped = C_TaskQuest.GetQuestInfoByQuestID(self.questId);
 
 	
 	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(self.questId);
-	local color = WORLD_QUEST_QUALITY_COLORS[rarity];
+	local color = WORLD_QUEST_QUALITY_COLORS[rarity or 1];
 	WorldMapTooltip:SetText(title, color.r, color.g, color.b);
 	if ( factionID ) then
 		local factionName = GetFactionInfoByID(factionID);
@@ -287,16 +384,19 @@ function BWQ_Quest_OnEnter(self)
 		WorldMapTaskTooltipStatusBar.Bar:SetValue(percent);
 		WorldMapTaskTooltipStatusBar.Bar.Label:SetFormattedText(PERCENTAGE_STRING, percent);
 	end
-	GameTooltip_AddQuestRewardsToTooltip(WorldMapTooltip, self.questId);
 	
-	if self.info.rewardTexture == BWQ_QUESTIONMARK then
-		-- If still missing after retrying to add reward, just give the player an idea
-		WorldMapTooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
+	if self.info.rewardTexture ~= "" then
+		GameTooltip_AddQuestRewardsToTooltip(WorldMapTooltip, self.questId);
+		
+		if self.info.rewardTexture == BWQ_QUESTIONMARK then
+			-- If still missing after retrying to add reward, just give the player an idea
+			WorldMapTooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
+		end
 	end
 	
 	-- Add debug lines
 	-- for k, v in pairs(self.info)do
-		-- WorldMapTooltip:AddDoubleLine(k, type(v) == "boolean" and (v and "true" or "false") or v);
+		-- WorldMapTooltip:AddDoubleLine(k, tostring(v));
 	-- end
 	
 	WorldMapTooltip:Show();
@@ -307,7 +407,7 @@ end
 function BWQ:ShowWorldmapHighlight(zoneId)
 	local areaId = GetCurrentMapAreaID();
 
-	if (areaId ~= 1007 and areaId ~= 13) or not _zoneCoords[zoneId] then return; end;
+	if (areaId < 1) or not _zoneCoords[zoneId] then return; end;
 
 	local adjustedX, adjustedY = _zoneCoords[zoneId].x, _zoneCoords[zoneId].y;
 	local width = WorldMapButton:GetWidth();
@@ -413,15 +513,6 @@ local function HideOverlayMessage()
 	for k, button in ipairs(buttons) do
 		button:Enable();
 	end
-end
-
-local function ZoneHasSpecificQuests(zoneId)
-	for k, zones in pairs(_continentIds) do
-		for k, v in ipairs(zones) do
-			if v == zoneId then return true; end
-		end
-	end
-	return false;
 end
 
 local function GetContinentZones(zoneId)
@@ -588,9 +679,9 @@ local function GetQuestTimeString(questId)
 	return timeLeftMinutes, timeString, color, timeStringShort;
 end
 
-function BWQ:SetQuestReward(info)
+function BWQ:SetQuestReward(info, haveData)
 
-	local _, texture, numItems, quality, rewardType, color = nil, "", 0, 1, 0, BWQ_COLOR_MISSING;
+	local _, texture, numItems, quality, rewardType, color = nil, nil, 0, 1, 0, BWQ_COLOR_MISSING;
 	
 	if GetNumQuestLogRewards(info.id) > 0 then
 		_, texture, numItems, quality = GetQuestLogRewardInfo(1, info.id);
@@ -627,6 +718,11 @@ function BWQ:SetQuestReward(info)
 			rewardType = BWQ_REWARDTYPE_ITEM;
 			color = BWQ_COLOR_ITEM;
 		end
+	elseif GetQuestLogRewardHonor(info.id) > 0 then
+		numItems = GetQuestLogRewardHonor(info.id);
+		texture = BWQ_HONOR;
+		color = BWQ_COLOR_HONOR;
+		rewardType = BWQ_REWARDTYPE_HONOR;
 	elseif GetQuestLogRewardMoney(info.id) > 0 then
 		numItems = floor(abs(GetQuestLogRewardMoney(info.id) / 10000))
 		texture = "Interface/ICONS/INV_Misc_Coin_01";
@@ -636,22 +732,35 @@ function BWQ:SetQuestReward(info)
 		_, texture, numItems = GetQuestLogRewardCurrencyInfo(1, info.id)
 		rewardType = BWQ_REWARDTYPE_CURRENCY;
 		color = BWQ_COLOR_CURRENCY;
+	elseif haveData and GetQuestLogRewardXP(info.id) > 0 then
+		numItems = GetQuestLogRewardXP(info.id);
+		texture = BWQ_EXPERIENCE;
+		color = BWQ_COLOR_ITEM;
+		rewardType = BWQ_REWARDTYPE_XP;
+	elseif GetNumQuestLogRewards(info.id) == 0 and haveData then
+		texture = "";
+		color = BWQ_COLOR_ITEM;
+		rewardType = BWQ_REWARDTYPE_NONE;
+	else 
+		
 	end
+	
 	info.rewardQuality = quality or 1;
-	info.rewardTexture = texture ~= "" and texture or BWQ_QUESTIONMARK;
+	info.rewardTexture = texture or BWQ_QUESTIONMARK;
 	info.numItems = numItems or 0;
 	info.rewardType = rewardType or 0;
 	info.ringColor = color;
 end
 
 local function AddQuestToList(list, qInfo, zoneId)
+	local haveData = HaveQuestRewardData(qInfo.questId);
 	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(qInfo.questId);
 	local minutes, timeString, color, timeStringShort = GetQuestTimeString(qInfo.questId);
 	--if list and minutes == 0 then return end;
 	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(qInfo.questId);
 	local faction = factionId and GetFactionInfoByID(factionId) or _L["NO_FACTION"];
-	
 	local info = GetOrCreateQuestInfo();
+	
 	info.id = qInfo.questId;
 	info.mapX = qInfo.x;
 	info.mapY = qInfo.y;
@@ -663,7 +772,7 @@ local function AddQuestToList(list, qInfo, zoneId)
 	info.minutes = minutes;
 	info.faction = faction;
 	info.factionId = factionId;
-	info.type = worldQuestType;
+	info.type = worldQuestType or -1;
 	info.rarity = rarity;
 	info.isElite = isElite;
 	info.zoneId = zoneId;
@@ -671,11 +780,15 @@ local function AddQuestToList(list, qInfo, zoneId)
 	info.numObjectives = qInfo.numObjectives;
 	info.passedFilter = true;
 	info.isCriteria = WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(qInfo.questId);
-	BWQ:SetQuestReward(info)
-	-- if info.ringColor == BWQ_COLOR_MISSING then return end
-	if list then
+	BWQ:SetQuestReward(info, haveData);
+	if (list and not (info.type == -1 and info.numItems == 0)) then
 		table.insert(list, info)
 	end
+
+	if not haveData then
+		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
+		return nil;
+	end;
 
 	return info;
 end
@@ -695,7 +808,7 @@ local function DisplayQuestType(frame, questInfo)
 		frame.elite:Hide();
 	end
 	
-	if rarity == LE_WORLD_QUEST_QUALITY_COMMON then
+	if not rarity or rarity == LE_WORLD_QUEST_QUALITY_COMMON then
 		frame.bg:SetTexture("Interface/WorldMap/UI-QuestPoi-NumberIcons");
 		frame.bg:SetTexCoord(0.875, 1, 0.375, 0.5);
 		frame.bg:SetSize(28, 28);
@@ -796,7 +909,7 @@ function BWQ:isUsingFilterNr(id)
 end
 
 function BWQ:PassesAllFilters(quest)
-	if quest.minutes == 0 then return false; end
+	--if quest.minutes == 0 then return true; end
 	if quest.id < 0 then return true; end
 	
 	if not BWQ:IsFiltering() then return true; end
@@ -877,10 +990,16 @@ function BWQ:PassesRewardFilter(quest)
 	if id and flags["Artifact"] and quest.rewardType == BWQ_REWARDTYPE_ARTIFACT then
 		return true;
 	end
+	-- Honor
+	if  flags["Honor"] and quest.rewardType == BWQ_REWARDTYPE_HONOR then return true; end
 	-- Gold
 	if  flags["Gold"] and quest.rewardType == BWQ_REWARDTYPE_GOLD then return true; end
 	-- Resources
 	if  flags["Resources"] and quest.rewardType == BWQ_REWARDTYPE_CURRENCY then return true; end
+	-- Experience
+	if  flags["Experience"] and quest.rewardType == BWQ_REWARDTYPE_XP then return true; end
+	-- No item reward
+	if  flags["None"] and quest.rewardType == BWQ_REWARDTYPE_NONE then return true; end
 end
 
 function BWQ:UpdateFilterDisplay()
@@ -988,7 +1107,9 @@ function BWQ:UpdatePin(PoI, quest, isFlightmap)
 		end
 	end
 	
-	if (BWQ.settings.showPinReward) then
+	PoI.BWQIcon:SetAlpha(0);
+	if (BWQ.settings.showPinReward and quest.rewardTexture ~= "") then
+		PoI.BWQIcon:SetAlpha(1);
 		PoI.BWQIcon:SetWidth(bw-2);
 		PoI.BWQIcon:SetHeight(bh-2);
 		SetPortraitToTexture(PoI.BWQIcon, quest.rewardTexture)
@@ -1007,9 +1128,9 @@ end
 
 function BWQ:UpdateFlightMapPins()
 	if BWQ.settings.disablePoI then return; end
-
 	local quest = nil;
 	local questsById;
+	local missingRewardData = false;
 
 	for id in pairs(BWQ.FlightMapList) do
 		BWQ.FlightMapList[id].id = -1;
@@ -1021,12 +1142,21 @@ function BWQ:UpdateFlightMapPins()
 		if questsById and type(questsById) == "table" then
 			for k2, info in ipairs(questsById) do
 				quest = AddQuestToList(nil, info, zoneId);
-				BWQ.FlightMapList[quest.id] = quest;
-				if quest and BWQ:IsFiltering() and not BWQ:PassesAllFilters(quest) then
-					quest.passedFilter = false;
+				if quest then
+					BWQ.FlightMapList[quest.id] = quest;
+					if BWQ:IsFiltering() and not BWQ:PassesAllFilters(quest) then
+						quest.passedFilter = false;
+					end
+				else 
+					missingRewardData = true;
 				end
 			end
 		end
+	end
+	
+	-- If nothing is missing, we can stop updating until we open the map the next time
+	if not missingRewardData then
+		BWQ.UpdateFlightMap = false
 	end
 	
 	quest = nil;
@@ -1034,21 +1164,19 @@ function BWQ:UpdateFlightMapPins()
 		quest = BWQ.FlightMapList[k]
 		if (quest) then
 			BWQ:UpdatePin(PoI, quest, true)
+			if (quest.isElite) then
+				PoI.BWQGlow:SetWidth(PoI:GetWidth()+61);
+				PoI.BWQGlow:SetHeight(PoI:GetHeight()+61);
+				PoI.BWQGlow:SetTexture("Interface/QUESTFRAME/WorldQuest")
+				PoI.BWQGlow:SetTexCoord(0, 0.09765625, 0.546875, 0.953125)
+			else
+				PoI.BWQGlow:SetWidth(PoI:GetWidth()+50);
+				PoI.BWQGlow:SetHeight(PoI:GetHeight()+50);
+				PoI.BWQGlow:SetTexture("Interface/QUESTFRAME/WorldQuest")
+				PoI.BWQGlow:SetTexCoord(0.546875, 0.619140625, 0.6875, 0.9765625)
+			end
 		end
-		
-		
-		if (quest.isElite) then
-			PoI.BWQGlow:SetWidth(PoI:GetWidth()+61);
-			PoI.BWQGlow:SetHeight(PoI:GetHeight()+61);
-			PoI.BWQGlow:SetTexture("Interface/QUESTFRAME/WorldQuest")
-			PoI.BWQGlow:SetTexCoord(0, 0.09765625, 0.546875, 0.953125)
-		else
-			PoI.BWQGlow:SetWidth(PoI:GetWidth()+50);
-			PoI.BWQGlow:SetHeight(PoI:GetHeight()+50);
-			PoI.BWQGlow:SetTexture("Interface/QUESTFRAME/WorldQuest")
-			PoI.BWQGlow:SetTexCoord(0.546875, 0.619140625, 0.6875, 0.9765625)
-		end
-		
+
 		quest = nil;
 	end
 end
@@ -1095,34 +1223,27 @@ function BWQ:FilterMapPoI()
 	local index = 1;
 	local PoI = _G["WorldMapFrameTaskPOI"..index];
 	local quest = nil;
-	local missingQuest = false;
 	
+	
+
 	BWQ:UpdateQuestFilters();
 	
 	while(PoI) do
-		if (PoI.worldQuest) then
-			quest = GetQuestFromList(_questList, PoI.questID);
-			if (quest) then
-				if (BWQ.settings.showPinReward and BWQ.settings.bigPoI) then
-					PoI:SetWidth(25);
-					PoI:SetHeight(25);
-				end
-				BWQ:UpdatePin(PoI, quest)
-				if (BWQ.settings.filterPoI and not quest.passedFilter) then
-					PoI:Hide();
-				end
-				local bw = PoI:GetWidth();
-				local bh = PoI:GetHeight();
-			elseif (PoI:IsShown()) then
-				missingQuest = true;
+		quest = GetQuestFromList(_questList, PoI.questID);
+		if (quest) then
+			if (BWQ.settings.showPinReward and BWQ.settings.bigPoI) then
+				PoI:SetWidth(25);
+				PoI:SetHeight(25);
 			end
+			BWQ:UpdatePin(PoI, quest)
+			if (BWQ.settings.filterPoI and not quest.passedFilter) then
+				PoI:Hide();
+			end
+			local bw = PoI:GetWidth();
+			local bh = PoI:GetHeight();
 		end
 		index = index + 1;
 		PoI = _G["WorldMapFrameTaskPOI"..index];
-	end
-	if(missingQuest and BWQ.noIssues and not addon.errorTimer) then
-		BWQ.noIssues = false;
-		addon.errorTimer = C_Timer.NewTimer(1, function() addon.errorTimer = nil; BWQ:UpdateQuestList(true) end)
 	end
 end
 
@@ -1153,10 +1274,11 @@ function BWQ:UpdateQuestList(skipPins)
 	local continentZones = GetContinentZones(mapAreaID);
 	local quest = nil;
 	local questsById = nil
+	local missingRewardData = false;
 	
 	for id in pairs(list) do
 		list[id].id = -1;
-		list[id].rewardTexture = "";
+		list[id].rewardTexture = nil;
 		list[id] = nil;
 	end
 	
@@ -1166,6 +1288,9 @@ function BWQ:UpdateQuestList(skipPins)
 			if questsById and type(questsById) == "table" then
 				for k2, info in ipairs(questsById) do
 					quest = AddQuestToList(list, info, zoneId);
+					if not quest then 
+						missingRewardData = true
+					end;
 				end
 			end
 		end
@@ -1174,8 +1299,15 @@ function BWQ:UpdateQuestList(skipPins)
 		if questsById and type(questsById) == "table" then
 			for k, info in ipairs(questsById) do
 				quest = AddQuestToList(list, info, mapAreaID);
+				if not quest then
+					missingRewardData = true
+				end;
 			end
 		end
+	end
+	
+	if missingRewardData and not addon.errorTimer then
+		addon.errorTimer = C_Timer.NewTimer(0.5, function() addon.errorTimer = nil; BWQ:UpdateQuestList(true) end);
 	end
 	
 	BWQ:UpdateQuestFilters();
@@ -1205,20 +1337,6 @@ function BWQ:UpdateQuestFilters()
 	end
 end
 
-function BWQ:UpdateMissingRewards()
-
-	if #_questsMissingReward == 0 then return; end
-
-	local q;
-	for i = #_questsMissingReward, 1, -1 do
-		q = _questsMissingReward[i]
-		if q.rewardTexture == BWQ_QUESTIONMARK then
-			BWQ:SetQuestReward(q)
-		end
-		table.remove(_questsMissingReward, i);
-	end
-end
-
 function BWQ:DisplayQuestList(skipPins)
 	if InCombatLockdown() or not WorldMapFrame:IsShown() or not BWQ_WorldQuestFrame:IsShown() then return end
 
@@ -1226,8 +1344,7 @@ function BWQ:DisplayQuestList(skipPins)
 	local offset = HybridScrollFrame_GetOffset(scrollFrame);
 	local buttons = scrollFrame.buttons;
 	if buttons == nil then return; end
-	
-	BWQ:UpdateMissingRewards();
+
 	BWQ:ApplySort();
 	BWQ:UpdateQuestFilters()
 	local list = _questDisplayList;
@@ -1288,6 +1405,10 @@ function BWQ:DisplayQuestList(skipPins)
 			button.reward.icon:Show();
 			r, g, b = GetItemQualityColor(q.rewardQuality);
 			button.reward.iconBorder:SetVertexColor(r, g, b);
+			button.reward:SetAlpha(1);
+			if q.rewardTexture == "" then
+				button.reward:SetAlpha(0);
+			end
 			button.reward.icon:SetTexture(q.rewardTexture);
 
 			if q.numItems and q.numItems > 1 then
@@ -1321,18 +1442,7 @@ function BWQ:DisplayQuestList(skipPins)
 		end
 	end
 	
-	for k, quest in ipairs(list) do
-		if quest.rewardTexture == BWQ_QUESTIONMARK then
-			rewardMissing = true;
-			table.insert(_questsMissingReward, quest)
-		end
-	end
-	
 	HybridScrollFrame_Update(BWQ_QuestScrollFrame, #list * BWQ_LISTITTEM_HEIGHT, scrollFrame:GetHeight());
-	
-	if rewardMissing and not addon.errorTimer then
-		addon.errorTimer = C_Timer.NewTimer(BWQ_REFRESH_FAST, function() addon.errorTimer = nil; BWQ:UpdateQuestList(true) end);
-	end
 	
 	if (not skipPins and not continentZones and #list ~= 0) then	
 		--WorldMap_UpdateQuestBonusObjectives()
@@ -1739,7 +1849,7 @@ function BWQ:OnEnable()
 	
 	if not self.settings.saveFilters then
 		for k, filter in pairs(self.settings.filters) do
-			BWQ:SetAllFilterTo(k, true);
+			BWQ:SetAllFilterTo(k, false);
 		end
 	end
 	
@@ -1778,13 +1888,6 @@ function BWQ:OnEnable()
 			BWQ_Tab_Onclick(BWQ_TabNormal);
 		end)
 		
-	hooksecurefunc("WorldMap_ClearTextures", function() 
-			for id in pairs(_questList) do
-				_questList[id].id = -1;
-				_questList[id] = nil;
-			end
-		end)
-		
 	QuestScrollFrame:SetScript("OnShow", function() BWQ_Tab_Onclick(BWQ_TabNormal); end)
 	
 	
@@ -1821,6 +1924,8 @@ addon.events:RegisterEvent("QUEST_TURNED_IN");
 addon.events:RegisterEvent("ADDON_LOADED");
 addon.events:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
 addon.events:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else print("BWQ missing function for: " .. event) end end)
+
+
 addon.events.updatePeriod = BWQ_REFRESH_DEFAULT;
 addon.ticker = C_Timer.NewTicker(BWQ_REFRESH_DEFAULT, function() BWQ:UpdateQuestList(true); end)
 
@@ -1837,13 +1942,15 @@ function addon.events:ADDON_LOADED(loaded)
 			end 
 		end
 		BWQ.FlightMapList = {};
-		hooksecurefunc(BWQ.FlightmapPins, "RefreshAllData", function() BWQ:UpdateFlightMapPins() end)
+		BWQ.UpdateFlightMap = true;
+		hooksecurefunc(BWQ.FlightmapPins, "RefreshAllData", function() if BWQ.UpdateFlightMap then BWQ:UpdateFlightMapPins(); end end)
 		
 		hooksecurefunc(BWQ.FlightmapPins, "OnHide", function() 
 				for id in pairs(BWQ.FlightMapList) do
 				BWQ.FlightMapList[id].id = -1;
 				BWQ.FlightMapList[id] = nil;
 				end 
+				BWQ.UpdateFlightMap = true;
 			end)
 	end
 	
@@ -1906,7 +2013,7 @@ local function slashcmd(msg, editbox)
 		-- local height = WorldMapButton:GetHeight();
 		-- local adjustedY = (centerY + (height/2) - y ) / height;
 		-- local adjustedX = (x - (centerX - (width/2))) / width;
-		-- print(adjustedX, adjustedY)
+		-- print("{\[\"x\"\] = " .. floor(adjustedX*100)/100 .. ", \[\"y\"\] = " .. floor(adjustedY*100)/100 .. "} ")
 	end
 	
 	
