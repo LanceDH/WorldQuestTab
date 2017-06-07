@@ -95,6 +95,7 @@ local _defaults = {
 		funQuests = true;
 		sortBy = 1;
 		emissaryOnly = false;
+		useTomTom = true;
 		filters = {
 				[1] = {["name"] = _L["FACTION"]
 				, ["flags"] = {[GetFactionInfoByID(1859)] = false, [GetFactionInfoByID(1894)] = false, [GetFactionInfoByID(1828)] = false, [GetFactionInfoByID(1883)] = false
@@ -652,6 +653,9 @@ local function AddQuestToList(list, qInfo, zoneId)
 	
 	local info = GetOrCreateQuestInfo();
 	info.id = qInfo.questId;
+	info.mapX = qInfo.x;
+	info.mapY = qInfo.y;
+	info.mapF = qInfo.floor;
 	info.title = title;
 	info.timeString = timeString;
 	info.timeStringShort = timeStringShort;
@@ -1551,6 +1555,18 @@ function BWQ:InitFilter(self, level)
 				info.checked = function() return BWQ.settings.showFactionIcon end;
 				Lib_UIDropDownMenu_AddButton(info, level);		
 				
+				-- TomTom compatibility
+				if TomTom then
+					info.text = "Use TomTom";
+					info.tooltipTitle = "";
+					info.func = function(_, _, _, value)
+							BWQ.settings.useTomTom = value;
+							BWQ:UpdateQuestList();
+						end
+					info.checked = function() return BWQ.settings.useTomTom end;
+					Lib_UIDropDownMenu_AddButton(info, level);	
+				end
+				
 				if BWQ.versionCheck then
 					info.text = "Fun Quests";
 					info.tooltipTitle = "";
@@ -1616,6 +1632,26 @@ function BWQ:InitTrackDropDown(self, level)
 		info.text = OBJECTIVES_FIND_GROUP;
 		info.func = function()
 			LFGListUtil_FindQuestGroup(questId);
+		end
+		Lib_UIDropDownMenu_AddButton(info, level);
+	end
+	
+	-- TomTom functionality
+	if (TomTom and BWQ.settings.useTomTom) then
+	
+		local qInfo = self:GetParent().info;
+		if (not TomTom:WaypointMFExists(qInfo.zoneId, qInfo.mapF, qInfo.mapX, qInfo.mapY, qInfo.title)) then
+			info.text = _L["TRACKDD_TOMTOM"];
+			info.func = function()
+				TomTom:AddMFWaypoint(qInfo.zoneId, qInfo.mapF, qInfo.mapX, qInfo.mapY, {["title"] = qInfo.title})
+			end
+		else
+			info.text = _L["TRACKDD_TOMTOM_REMOVE"];
+			info.func = function()
+				local key = TomTom:GetKeyArgs(qInfo.zoneId, qInfo.mapF, qInfo.mapX, qInfo.mapY, qInfo.title);
+				local wp = TomTom.waypoints[qInfo.zoneId] and TomTom.waypoints[qInfo.zoneId][key];
+				TomTom:RemoveWaypoint(wp);
+			end
 		end
 		Lib_UIDropDownMenu_AddButton(info, level);
 	end
@@ -1774,8 +1810,7 @@ function BWQ:OnEnable()
 				BWQ:UpdateQuestList();
 			end)
 	
-	BWQ_Tab_Onclick((UnitLevel("player") >= 110 and self.settings.defaultTab) and BWQ_TabWorld or BWQ_TabNormal)
-	
+	BWQ_Tab_Onclick((UnitLevel("player") >= 110 and self.settings.defaultTab) and BWQ_TabWorld or BWQ_TabNormal);
 end
 		
 addon.events = CreateFrame("FRAME", "BWQ_EventFrame"); 
@@ -1810,8 +1845,8 @@ function addon.events:ADDON_LOADED(loaded)
 				BWQ.FlightMapList[id] = nil;
 				end 
 			end)
-
 	end
+	
 end
 	
 function addon.events:WORLD_MAP_UPDATE(loaded_addon)

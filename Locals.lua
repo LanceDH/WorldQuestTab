@@ -55,6 +55,8 @@ L["REWARD_GOLD"]	= "Gold";
 L["REWARD_RESOURCES"]	= "Resources";
 L["REWARD_ARTIFACT"]	= "Artifact";
 L["REWARD_RELIC"]	= "Relic";
+L["TRACKDD_TOMTOM"]	= "TomTom add"
+L["TRACKDD_TOMTOM_REMOVE"]	= "TomTom remove"
 
 if locale == "deDE" then
 L["COMBATLOCK"] = "Nicht verfügbar während eines Kampfes."
