@@ -12,6 +12,7 @@
 	<Script file="Locals.lua"/>
 	<Script file="WorldQuestTab.lua"/>
 
+	<!--
 	<Frame name="BWQ_DebugLine" parentArray="DependencyLines" virtual="true">
 		<Layers>
 			<Layer level="OVERLAY" textureSubLevel="-2">
@@ -19,7 +20,7 @@
 			</Layer>
 		</Layers>
 	</Frame>
-
+-->
 	
 	<FontFamily name="BWQ_NumberFontOutline" virtual="true">
 		<Member alphabet="roman">
@@ -383,7 +384,10 @@
 				WorldMapTooltip:Hide();
 				BWQ_PoISelectIndicator:Hide();
 				BWQ_MapZoneHightlight:Hide();
-				WorldMapFrameAreaLabel:SetText("")
+				if (self.resetLabel) then
+					WorldMapFrameAreaLabel:SetText("");
+					self.resetLabel = false;
+				end
 			</OnLeave>
 			<OnUpdate>
 				if not self:IsMouseOver() then return; end
