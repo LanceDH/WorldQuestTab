@@ -72,17 +72,6 @@ local BWQ_FILTER_FUNCTIONS = {
 			}
 	};
 
--- local BWQ_CONTINENT_ZONEIDS = {
-		-- [-1] = {1014, 1015, 1033, 1017, 1024, 1018, 1096, 1021, 261}
-		-- ,[1007] = {1014, 1015, 1033, 1017, 1024, 1018, 1096, 1021} -- Broken Isles
-		-- ,[13]	= {261, 61, 720, 161, 201, 121, 141, 607, 9, 101, 81, 11, 4, 43, 42, 181, 606, 182, 241, 281, 41, 464, 476} -- Kalimdor
-		-- ,[14]	= {673, 37, 19, 14, 32, 34, 39, 30, 36, 29, 28, 17, 27, 35, 700, 40, 16, 26, 24, 684, 21, 20, 22, 23, 463, 462, 499} -- Eastern Kingdoms
-		-- ,[466]	= {473, 478, 477, 465, 466, 475, 479} -- Outland
-		-- ,[485]	= {486, 493, 492, 488, 495, 496, 490, 491} -- Northrend
-		-- ,[862]	= {951, 806, 857, 807, 858, 811, 809, 929, 810, 928} -- Pandaria
-		-- ,[962]	= {950, 941, 949, 946, 948, 947, 945, 978} -- Draenor
-	-- };
-
 local BWQ_ZONE_MAPCOORDS = {
 		[1007] 	= { -- Legion
 			[1015] = {["x"] = 0.33, ["y"] = 0.58} -- Azsuna
@@ -194,7 +183,25 @@ local BWQ_ZONE_MAPCOORDS = {
 			,[945]	= {["x"] = 0.58, ["y"] = 0.47} -- Tanaan Jungle
 			,[978]	= {["x"] = 0.73, ["y"] = 0.43} -- Ashran
 		}
+		
+		,[-1]		= {} -- All of Azeroth
 	}
+
+-- Some magic to get collect all Azeroth quests on the continent map
+local BWQ_AZEROTH_COORDS = {
+		[1007]	= {["x"] = 0.6, ["y"] = 0.41}
+		,[13]	= {["x"] = 0.19, ["y"] = 0.5}
+		,[14]	= {["x"] = 0.88, ["y"] = 0.56}
+		,[485]	= {["x"] = 0.49, ["y"] = 0.13}
+		,[862]	= {["x"] = 0.46, ["y"] = 0.92}
+	}
+for cId, cCoords in pairs(BWQ_AZEROTH_COORDS) do
+	for zId, zCoords in pairs(BWQ_ZONE_MAPCOORDS[cId]) do
+		BWQ_ZONE_MAPCOORDS[-1][zId] = cCoords;
+	end
+	BWQ_AZEROTH_COORDS[cId] = nil;
+end
+BWQ_AZEROTH_COORDS = nil;
 	
 local BWQ_SORT_OPTIONS = {[1] = _L["TIME"], [2] = _L["FACTION"], [3] = _L["TYPE"], [4] = _L["ZONE"], [5] = _L["NAME"], [6] = _L["REWARD"]}
 	
@@ -346,6 +353,16 @@ function BWQ_Quest_OnClick(self, button)
 	BWQ:DisplayQuestList();
 end
 
+function BWQ_Quest_OnLeave(self)
+	WorldMapTooltip:Hide();
+	BWQ_PoISelectIndicator:Hide();
+	BWQ_MapZoneHightlight:Hide();
+	if (self.resetLabel) then
+		WorldMapFrameAreaLabel:SetText("");
+		self.resetLabel = false;
+	end
+end
+
 function BWQ_Quest_OnEnter(self)
 
 	WorldMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
@@ -360,21 +377,27 @@ function BWQ_Quest_OnEnter(self)
 	end
 	
 	-- Put the ping on the relevant map pin
-	local i = 1;
-	local button = _G["WorldMapFrameTaskPOI"..i]
-	while(button) do
-		if button.questID == self.questId then
-			button:Raise();
-			BWQ_PoISelectIndicator:SetParent(button);
-			BWQ_PoISelectIndicator:ClearAllPoints();
-			BWQ_PoISelectIndicator:SetPoint("CENTER", button);
-			BWQ_PoISelectIndicator:SetFrameLevel(button:GetFrameLevel()+1);
-			BWQ_PoISelectIndicator:Show();
-			break;
-		end
-		i = i + 1;
-		button = _G["WorldMapFrameTaskPOI"..i]
+	local pin = WorldMap_GetActiveTaskPOIForQuestID(self.questId);
+	if pin then
+		BWQ_PoISelectIndicator:SetParent(pin);
+		BWQ_PoISelectIndicator:ClearAllPoints();
+		BWQ_PoISelectIndicator:SetPoint("CENTER", pin, 0, -1);
+		BWQ_PoISelectIndicator:SetFrameLevel(pin:GetFrameLevel()+1);
+		BWQ_PoISelectIndicator:Show();
 	end
+	
+	-- local button = nil;
+	-- for i = 1, NUM_WORLDMAP_TASK_POIS do
+		-- button = _G["WorldMapFrameTaskPOI"..i];
+		-- if button.questID == self.questId then
+			-- BWQ_PoISelectIndicator:SetParent(button);
+			-- BWQ_PoISelectIndicator:ClearAllPoints();
+			-- BWQ_PoISelectIndicator:SetPoint("CENTER", button, 0, -1);
+			-- BWQ_PoISelectIndicator:SetFrameLevel(button:GetFrameLevel()+2);
+			-- BWQ_PoISelectIndicator:Show();
+			-- break;
+		-- end
+	-- end
 	
 	-- April fools
 	if BWQ.versionCheck and self.questId < 0 then
@@ -1033,96 +1056,54 @@ function BWQ:UpdateFilterDisplay()
 	BWQ_WorldQuestFrame.filterBar.text:SetText(_L["FILTER"]:format(filterList)); 
 end
 
-function BWQ:UpdatePin(PoI, quest, isFlightmap)
+function BWQ:UpdatePin(PoI, quest, flightPinNr)
 	local bw = PoI:GetWidth();
 	local bh = PoI:GetHeight();
 
-	if (not PoI.BWQRing) then
-		PoI.BWQRing = PoI:CreateTexture(nil)
-		PoI.BWQRing:SetAlpha(0.5);
-		PoI.BWQRing:SetDrawLayer("OVERLAY", 5)
-		PoI.BWQRing:SetPoint("CENTER", PoI, "CENTER", 0, 1)
-		PoI.BWQRing:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRing")
-		PoI.BWQRing:SetVertexColor(0, 0.5, 0) 
-		
-		PoI.BWQIcon = PoI:CreateTexture(nil)
-		PoI.BWQIcon:SetAlpha(1);
-		PoI.BWQIcon:SetDrawLayer("OVERLAY", 4)
-		PoI.BWQIcon:SetPoint("CENTER", PoI, "CENTER", 0, 1)
-		PoI.BWQIcon:SetTexture(BWQ_QUESTIONMARK)
-		PoI.BWQIcon:SetWidth(bw-2);
-		PoI.BWQIcon:SetHeight(bh-2);
-		
-		PoI.BWQGlow = PoI:CreateTexture(nil)
-		PoI.BWQGlow:SetDrawLayer("OVERLAY", 3)
-		PoI.BWQGlow:SetPoint("CENTER", PoI, "CENTER", 0, 1)
-		--PoI.BWQGlow:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIGlow")
-		PoI.BWQGlow:SetTexture("Interface/QUESTFRAME/WorldQuest")
-		PoI.BWQGlow:SetTexCoord(0.546875, 0.619140625, 0.6875, 0.9765625)
-		PoI.BWQGlow:SetBlendMode("BLEND")
+	if (not PoI.BWQOverlay) then
+		local pinNr = flightPinNr or string.match(PoI:GetName(), "(%d+)");
+		PoI.BWQOverlay = CreateFrame("FRAME", "BWQ_Overlay" .. pinNr, PoI, "BWQ_PinTemplate");
+		--PoI.BWQOverlay:SetFlattensRenderLayers(true);
+		PoI.BWQOverlay:SetPoint("TOPLEFT");
+		PoI.BWQOverlay:SetPoint("BOTTOMRIGHT");
+		PoI.BWQOverlay:Show();
 	end
 	
-	if (BWQ.settings.showPinTime and not PoI.BWQText) then
-		PoI.BWQText = PoI:CreateFontString(nil, nil, isFlightmap and "BWQ_NumberFontOutlineBig" or "BWQ_NumberFontOutline")
-		PoI.BWQText:SetPoint("TOP", PoI, "BOTTOM", 1, 3)
-		PoI.BWQText:SetHeight(isFlightmap and 32 or 18);
-		PoI.BWQText:SetDrawLayer("OVERLAY", 7)
-		PoI.BWQText:SetJustifyV("MIDDLE")
-		
-		PoI.BWQBG = PoI:CreateTexture("")
-		PoI.BWQBG:SetAlpha(0.65);
-		PoI.BWQBG:SetDrawLayer("ARTWORK", 3)
-		PoI.BWQBG:SetPoint("LEFT", PoI.BWQText, "LEFT", 0, 4)
-		PoI.BWQBG:SetPoint("RIGHT", PoI.BWQText, "RIGHT", 0, 4)
-		PoI.BWQBG:SetHeight(PoI.BWQText:GetHeight()-2);
-		PoI.BWQBG:SetTexture("Interface/COMMON/NameShadow")
-		PoI.BWQBG:SetTexCoord(0.05, 0.95, 0.8, 0)
+	-- Ring stuff
+	if (BWQ.settings.showPinRing) then
+		PoI.BWQOverlay.ring:SetVertexColor(quest.ringColor.r, quest.ringColor.g, quest.ringColor.b);
+	else
+		PoI.BWQOverlay.ring:SetVertexColor(BWQ_COLOR_CURRENCY.r, BWQ_COLOR_CURRENCY.g, BWQ_COLOR_CURRENCY.b);
 	end
-
-	if (PoI.BWQRing) then
-		PoI.BWQRing:SetAlpha((BWQ.settings.showPinReward or BWQ.settings.showPinRing) and 1 or 0);
-		PoI.BWQIcon:SetAlpha(BWQ.settings.showPinReward and 1 or 0);
-		PoI.BWQRing:SetWidth(bw+4);
-		PoI.BWQRing:SetHeight(bh+4);
-		PoI.BWQGlow:SetAlpha(BWQ.settings.showPinReward and (quest.isCriteria and (quest.isElite and 0.65 or 1) or 0) or 0);
-		
-		if (not isFlightmap and quest.isElite) then
-			PoI.BWQGlow:SetWidth(bw+36);
-			PoI.BWQGlow:SetHeight(bh+36);
-			PoI.BWQGlow:SetTexture("Interface/QUESTFRAME/WorldQuest")
-			PoI.BWQGlow:SetTexCoord(0, 0.09765625, 0.546875, 0.953125)
-		else
-			PoI.BWQGlow:SetWidth(bw+27);
-			PoI.BWQGlow:SetHeight(bh+27);
-			PoI.BWQGlow:SetTexture("Interface/QUESTFRAME/WorldQuest")
-			PoI.BWQGlow:SetTexCoord(0.546875, 0.619140625, 0.6875, 0.9765625)
-		end
-
-		if (BWQ.settings.showPinRing) then
-			PoI.BWQRing:SetVertexColor(quest.ringColor.r, quest.ringColor.g, quest.ringColor.b);
-		else
-			PoI.BWQRing:SetVertexColor(BWQ_COLOR_CURRENCY.r, BWQ_COLOR_CURRENCY.g, BWQ_COLOR_CURRENCY.b);
-		end
+	PoI.BWQOverlay.ring:SetAlpha((BWQ.settings.showPinReward or BWQ.settings.showPinRing) and 1 or 0);
+	
+	-- Icon stuff
+	PoI.BWQOverlay.icon:SetAlpha(BWQ.settings.showPinReward and 1 or 0);
+	SetPortraitToTexture(PoI.BWQOverlay.icon, quest.rewardTexture);
+	
+	-- Time
+	PoI.BWQOverlay.time:SetAlpha((BWQ.settings.showPinTime and quest.timeStringShort ~= "")and 1 or 0);
+	PoI.BWQOverlay.timeBG:SetAlpha((BWQ.settings.showPinTime and quest.timeStringShort ~= "") and 0.65 or 0);
+	PoI.BWQOverlay.time:SetFontObject(flightPinNr and "BWQ_NumberFontOutlineBig" or "BWQ_NumberFontOutline");
+	PoI.BWQOverlay.time:SetHeight(flightPinNr and 32 or 18);
+	if(BWQ.settings.showPinTime) then
+		PoI.BWQOverlay.time:SetText(quest.timeStringShort)
+		PoI.BWQOverlay.time:SetVertexColor(quest.color.r, quest.color.g, quest.color.b) 
 	end
 	
-	PoI.BWQIcon:SetAlpha(0);
-	if (BWQ.settings.showPinReward and quest.rewardTexture ~= "") then
-		PoI.BWQIcon:SetAlpha(1);
-		PoI.BWQIcon:SetWidth(bw-2);
-		PoI.BWQIcon:SetHeight(bh-2);
-		SetPortraitToTexture(PoI.BWQIcon, quest.rewardTexture)
+	-- Glow
+	PoI.BWQOverlay.glow:SetAlpha(BWQ.settings.showPinReward and (quest.isCriteria and (quest.isElite and 0.65 or 1) or 0) or 0);
+	if (not flightPinNr and quest.isElite) then
+		PoI.BWQOverlay.glow:SetWidth(bw+36);
+		PoI.BWQOverlay.glow:SetHeight(bh+36);
+		PoI.BWQOverlay.glow:SetTexture("Interface/QUESTFRAME/WorldQuest")
+		PoI.BWQOverlay.glow:SetTexCoord(0, 0.09765625, 0.546875, 0.953125)
+	else
+		PoI.BWQOverlay.glow:SetWidth(bw+27);
+		PoI.BWQOverlay.glow:SetHeight(bh+27);
+		PoI.BWQOverlay.glow:SetTexture("Interface/QUESTFRAME/WorldQuest")
+		PoI.BWQOverlay.glow:SetTexCoord(0.546875, 0.619140625, 0.6875, 0.9765625)
 	end
-	
-	
-	if (PoI.BWQText) then
-		PoI.BWQText:SetAlpha((BWQ.settings.showPinTime and quest.timeStringShort ~= "")and 1 or 0);
-		PoI.BWQBG:SetAlpha((BWQ.settings.showPinTime and quest.timeStringShort ~= "") and 0.65 or 0);
-		if(BWQ.settings.showPinTime) then
-			PoI.BWQText:SetText(quest.timeStringShort)
-			PoI.BWQText:SetVertexColor(quest.color.r, quest.color.g, quest.color.b) 
-		end
-	end
-	
 end
 
 function BWQ:UpdateFlightMapPins()
@@ -1162,17 +1143,17 @@ function BWQ:UpdateFlightMapPins()
 	for k, PoI in pairs(BWQ.FlightmapPins.activePins) do
 		quest = BWQ.FlightMapList[k]
 		if (quest) then
-			BWQ:UpdatePin(PoI, quest, true)
+			BWQ:UpdatePin(PoI, quest, k)
 			if (quest.isElite) then
-				PoI.BWQGlow:SetWidth(PoI:GetWidth()+61);
-				PoI.BWQGlow:SetHeight(PoI:GetHeight()+61);
-				PoI.BWQGlow:SetTexture("Interface/QUESTFRAME/WorldQuest")
-				PoI.BWQGlow:SetTexCoord(0, 0.09765625, 0.546875, 0.953125)
+				PoI.BWQOverlay.glow:SetWidth(PoI:GetWidth()+61);
+				PoI.BWQOverlay.glow:SetHeight(PoI:GetHeight()+61);
+				PoI.BWQOverlay.glow:SetTexture("Interface/QUESTFRAME/WorldQuest")
+				PoI.BWQOverlay.glow:SetTexCoord(0, 0.09765625, 0.546875, 0.953125)
 			else
-				PoI.BWQGlow:SetWidth(PoI:GetWidth()+50);
-				PoI.BWQGlow:SetHeight(PoI:GetHeight()+50);
-				PoI.BWQGlow:SetTexture("Interface/QUESTFRAME/WorldQuest")
-				PoI.BWQGlow:SetTexCoord(0.546875, 0.619140625, 0.6875, 0.9765625)
+				PoI.BWQOverlay.glow:SetWidth(PoI:GetWidth()+50);
+				PoI.BWQOverlay.glow:SetHeight(PoI:GetHeight()+50);
+				PoI.BWQOverlay.glow:SetTexture("Interface/QUESTFRAME/WorldQuest")
+				PoI.BWQOverlay.glow:SetTexCoord(0.546875, 0.619140625, 0.6875, 0.9765625)
 			end
 		end
 
@@ -1181,33 +1162,18 @@ function BWQ:UpdateFlightMapPins()
 end
 
 function BWQ:CleanMapPins()
-	local index = 1;
-	local PoI = _G["WorldMapFrameTaskPOI"..index];
-	while(PoI) do
-		if(PoI.BWQGlow) then
-			PoI.BWQGlow:SetAlpha(0);
+	local PoI;
+	for i = 1, NUM_WORLDMAP_TASK_POIS do
+		PoI = _G["WorldMapFrameTaskPOI"..i];
+		if PoI.BWQOverlay then
+			PoI.BWQOverlay:SetAlpha(0);
 		end
-		if (PoI.BWQRing) then
-			PoI.BWQRing:SetAlpha(0);
-			PoI.BWQIcon:SetAlpha(0);
-		end
-		if (PoI.BWQText) then
-			PoI.BWQText:SetAlpha(0);
-			PoI.BWQBG:SetAlpha(0);
-		end
-		index = index + 1;
-		PoI = _G["WorldMapFrameTaskPOI"..index];
 	end
 	
 	if (BWQ.FlightMapList) then
 		for k, PoI in pairs(BWQ.FlightmapPins.activePins) do
-			if (PoI.BWQRing) then
-				PoI.BWQRing:SetAlpha(0);
-				PoI.BWQIcon:SetAlpha(0);
-			end
-			if (PoI.BWQText) then
-				PoI.BWQText:SetAlpha(0);
-				PoI.BWQBG:SetAlpha(0);
+			if PoI.BWQOverlay then
+				PoI.BWQOverlay:SetAlpha(0);
 			end
 		end
 	end
@@ -1218,28 +1184,28 @@ function BWQ:UpdateMapPoI()
 	if InCombatLockdown() then
 		return;
 	end
-	local index = 1;
-	local PoI = _G["WorldMapFrameTaskPOI"..index];
-	local quest = nil;
+	local PoI, quest;
 	
 	BWQ:UpdateQuestFilters();
 	
-	while(PoI) do
+	for i = 1, NUM_WORLDMAP_TASK_POIS do
+		PoI = _G["WorldMapFrameTaskPOI"..i];
 		quest = GetQuestFromList(_questList, PoI.questID);
 		if (quest) then
 			if (BWQ.settings.showPinReward and BWQ.settings.bigPoI) then
 				PoI:SetWidth(25);
 				PoI:SetHeight(25);
 			end
-			BWQ:UpdatePin(PoI, quest)
+			BWQ:UpdatePin(PoI, quest);
+			
 			if (BWQ.settings.filterPoI and not quest.passedFilter) then
 				PoI:Hide();
 			end
-			local bw = PoI:GetWidth();
-			local bh = PoI:GetHeight();
+			
+			if (PoI.BWQOverlay) then
+				PoI.BWQOverlay:SetAlpha(1);
+			end
 		end
-		index = index + 1;
-		PoI = _G["WorldMapFrameTaskPOI"..index];
 	end
 end
 
@@ -1578,7 +1544,7 @@ function BWQ:InitFilter(self, level)
 				info.tooltipTitle = _L["FILTER_PINS_TT"];
 				info.func = function(_, _, _, value)
 						BWQ.settings.filterPoI = value;
-						BWQ:UpdateMapPoI();
+						WorldMap_UpdateQuestBonusObjectives();
 					end
 				info.checked = function() return BWQ.settings.filterPoI end;
 				Lib_UIDropDownMenu_AddButton(info, level);
@@ -1980,8 +1946,8 @@ local function slashcmd(msg, editbox)
 	if msg == "options" then
 		print(_L["OPTIONS_INFO"]);
 	else
-		BWQ_Tab_Onclick(BWQ_WorldQuestFrame.selectedTab);
-		BWQ:UpdateQuestList();
+		-- BWQ_Tab_Onclick(BWQ_WorldQuestFrame.selectedTab);
+		-- BWQ:UpdateQuestList();
 		
 		-- local x, y = GetCursorPosition();
 		-- if ( WorldMapScrollFrame.panning ) then
@@ -1997,12 +1963,8 @@ local function slashcmd(msg, editbox)
 		-- local adjustedX = (x - (centerX - (width/2))) / width;
 		-- print("{\[\"x\"\] = " .. floor(adjustedX*100)/100 .. ", \[\"y\"\] = " .. floor(adjustedY*100)/100 .. "} ")
 	end
-	
-	
-	
 end
 SlashCmdList["BWQSLASH"] = slashcmd
-
 
 --------
 -- Debug stuff to monitor mem usage
@@ -2029,7 +1991,8 @@ SlashCmdList["BWQSLASH"] = slashcmd
 		-- local line = GetDebugLine(i);
 		-- line.Fill:SetStartPoint("BOTTOMLEFT", l_debug, (i-1)*2*scale, l_debug.history[i]/10*scale);
 		-- line.Fill:SetEndPoint("BOTTOMLEFT", l_debug, i*2*scale, l_debug.history[i+1]/10*scale);
-		-- line.Fill:SetVertexColor(1, 1, 1);
+		-- local fade = (l_debug.history[i] / 500)-1;
+		-- line.Fill:SetVertexColor(fade, 1-fade, 0);
 		-- line.Fill:Show();
 	-- end
 	-- l_debug.text:SetText(mem)

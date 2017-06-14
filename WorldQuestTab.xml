@@ -127,7 +127,52 @@
 			</Font>
 		</Member>
 	</FontFamily>
-	 
+	
+	 <Frame name="BWQ_PinTemplate" virtual="true">
+		<Layers>
+			<Layer level="OVERLAY" textureSubLevel="7">
+				 <FontString parentKey="time" inherits="BWQ_NumberFontOutline" maxLines="1" justifyV="MIDDLE">
+					<size y="18" />
+					<Anchors>
+						<Anchor point="TOP" relativePoint="BOTTOM" y="3"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+			<Layer level="OVERLAY" textureSubLevel="5">
+				<Texture parentKey="ring" alpha="0.5" file="Interface\Addons\WorldQuestTab\Images\PoIRing">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="-2" y="2"/>
+						<Anchor point="BOTTOMRIGHT" x="2" y="-2"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY" textureSubLevel="4">
+				<Texture parentKey="icon">
+					<Anchors>
+						<Anchor point="TOPLEFT"/>
+						<Anchor point="BOTTOMRIGHT"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY" textureSubLevel="3">
+				<Texture parentKey="glow" file="Interface/QUESTFRAME/WorldQuest" mode="BLEND">
+					<size x="2" y="2"/>
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+					<TexCoords left="0.546875" right="0.619140625" top="0.6875" bottom="0.9765625"/>
+				</Texture>
+				<Texture parentKey="timeBG" file="Interface/COMMON/NameShadow">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.time" y="5"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.time" y="4"/>
+					</Anchors>
+					<TexCoords left="0.05" right="0.95" top="0.8" bottom="0"/>
+				</Texture>
+			</Layer>
+		</Layers>
+	 </Frame>
+
 	<Button name="BWQ_TabTemplate" virtual="true">
 		<Size x="33" y="35"/>
 		<Layers>
@@ -318,12 +363,10 @@
 				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
-				<!--<Texture parentKey="trackedBorder" atlas="PetList-ButtonSelect" hidden="true"/>-->
 				<FontString parentKey="title" inherits="GameFontNormalLeft" maxLines="1" justifyV="BOTTOM">
 					<Anchors>
 						<Anchor point="BOTTOMLEFT" relativeKey="$parent.faction" relativePoint="RIGHT" x="5"/>
 						<Anchor point="RIGHT" relativeKey="$parent.reward" relativePoint="LEFT" x="-5"/>
-						<!-- <Anchor point="TOPLEFT" x="57" y="-6"/> -->
 					</Anchors>
 					<Color r="1" g="0.82" b="0" a="1"/>
 				</FontString>
@@ -381,13 +424,7 @@
 				BWQ_Quest_OnEnter(self);
 			</OnEnter>
 			<OnLeave>
-				WorldMapTooltip:Hide();
-				BWQ_PoISelectIndicator:Hide();
-				BWQ_MapZoneHightlight:Hide();
-				if (self.resetLabel) then
-					WorldMapFrameAreaLabel:SetText("");
-					self.resetLabel = false;
-				end
+				BWQ_Quest_OnLeave(self);
 			</OnLeave>
 			<OnUpdate>
 				if not self:IsMouseOver() then return; end
