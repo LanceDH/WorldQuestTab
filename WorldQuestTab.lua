@@ -238,7 +238,7 @@ local BWQ_DEFAULTS = {
 		funQuests = true;
 		emissaryOnly = false;
 		useTomTom = true;
-		preciseSearch = true;
+		preciseFilter = true;
 		filters = {
 				[1] = {["name"] = _L["FACTION"]
 				, ["flags"] = {[GetFactionInfoByID(1859)] = false, [GetFactionInfoByID(1894)] = false, [GetFactionInfoByID(1828)] = false, [GetFactionInfoByID(1883)] = false
@@ -1001,7 +1001,7 @@ function BWQ:PassesAllFilters(quest)
 		return WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(quest.id);
 	end
 	
-	local precise = BWQ.settings.preciseSearch;
+	local precise = BWQ.settings.preciseFilter;
 	local passed = true;
 	
 	if precise then
@@ -1532,16 +1532,16 @@ function BWQ:InitFilter(self, level)
 				info.checked = function() return BWQ.settings.saveFilters end;
 				Lib_UIDropDownMenu_AddButton(info, level);	
 				
-				info.text = _L["PRECISE_SEARCH"];
-				info.tooltipTitle = _L["PRECISE_SEARCH_TT"];
+				info.text = _L["PRECISE_FILTER"];
+				info.tooltipTitle = _L["PRECISE_FILTER_TT"];
 				info.func = function(_, _, _, value)
-						BWQ.settings.preciseSearch = value;
+						BWQ.settings.preciseFilter = value;
 						BWQ:DisplayQuestList();
 						if (BWQ.settings.filterPoI) then
 							WorldMap_UpdateQuestBonusObjectives();
 						end
 					end
-				info.checked = function() return BWQ.settings.preciseSearch end;
+				info.checked = function() return BWQ.settings.preciseFilter end;
 				Lib_UIDropDownMenu_AddButton(info, level);	
 				
 				info.text = _L["PIN_DISABLE"];

@@ -38,8 +38,8 @@ L["SHOW_TYPE"]		= "Show Type";
 L["SHOW_TYPE_TT"]	= "Show type icon\nin the quest list.";
 L["SHOW_FACTION"]	= "Show Faction";
 L["SHOW_FACTION_TT"]	= "Show faction icon\nin the quest list.";
-L["PRECISE_SEARCH"]	= "Precise Search";
-L["PRECISE_SEARCH_TT"]	= "Searching only shows quests matching\nall search categories, rather than just\nany of the categories.";
+L["PRECISE_FILTER"]	= "Precise Filter";
+L["PRECISE_FILTER_TT"]	= "Filtering only shows quests matching\nall filter categories, rather than just\nany of the categories.";
 
 L["TYPE_DEFAULT"]	= "Default";
 L["TYPE_ELITE"]		= "Elite";
