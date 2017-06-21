@@ -45,7 +45,7 @@ local BWQ_TYPEFLAG_LABELS = {
 		[2] = {["Default"] = _L["TYPE_DEFAULT"], ["Elite"] = _L["TYPE_ELITE"], ["PvP"] = _L["TYPE_PVP"], ["Petbattle"] = _L["TYPE_PETBATTLE"], ["Dungeon"] = _L["TYPE_DUNGEON"]
 			, ["Raid"] = _L["TYPE_RAID"], ["Profession"] = _L["TYPE_PROFESSION"], ["Invasion"] = _L["TYPE_INVASION"]}--, ["Emissary"] = _L["TYPE_EMISSARY"]}
 		,[3] = {["Item"] = _L["REWARD_ITEM"], ["Armor"] = _L["REWARD_ARMOR"], ["Gold"] = _L["REWARD_GOLD"], ["Currency"] = _L["REWARD_RESOURCES"], ["Artifact"] = _L["REWARD_ARTIFACT"]
-			, ["Relic"] = _L["REWARD_RELIC"], }
+			, ["Relic"] = _L["REWARD_RELIC"], ["None"] = _L["REWARD_NONE"], ["Experience"] = _L["REWARD_EXPERIENCE"], ["Honor"] = _L["REWARD_HONOR"]}
 	};
 
 local BWQ_FILTER_FUNCTIONS = {
@@ -223,6 +223,8 @@ local BWQ_FACTION_ICONS = {
 	
 local BWQ_DEFAULTS = {
 	global = {	
+		version = "";
+		sortBy = 1;
 		defaultTab = false;
 		showTypeIcon = true;
 		showFactionIcon = true;
@@ -234,9 +236,9 @@ local BWQ_DEFAULTS = {
 		showPinRing = true;
 		showPinTime = true;
 		funQuests = true;
-		sortBy = 1;
 		emissaryOnly = false;
 		useTomTom = true;
+		preciseSearch = true;
 		filters = {
 				[1] = {["name"] = _L["FACTION"]
 				, ["flags"] = {[GetFactionInfoByID(1859)] = false, [GetFactionInfoByID(1894)] = false, [GetFactionInfoByID(1828)] = false, [GetFactionInfoByID(1883)] = false
@@ -581,10 +583,6 @@ local function HideOverlayMessage()
 	end
 end
 
--- local function GetContinentZones(zoneId)
-	-- return BWQ_CONTINENT_ZONEIDS[zoneId];
--- end
-
 local function GetOrCreateQuestInfo()
 	for k, info in ipairs(_questPool) do
 		if info.id == -1 then
@@ -609,6 +607,9 @@ local function GetSortedFilterOrder(filterId)
 		table.insert(tbl, k);
 	end
 	table.sort(tbl, function(a, b) 
+				if(a == _L["REWARD_NONE"] or b == _L["REWARD_NONE"])then
+					return a ~= _L["REWARD_NONE"] and b == _L["REWARD_NONE"];
+				end
 				if(a == _L["NO_FACTION"] or b == _L["NO_FACTION"])then
 					return a ~= _L["NO_FACTION"] and b == _L["NO_FACTION"];
 				end
@@ -1000,11 +1001,26 @@ function BWQ:PassesAllFilters(quest)
 		return WorldMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(quest.id);
 	end
 	
-	if BWQ:isUsingFilterNr(1) and BWQ:PassesFactionFilter(quest) then return true; end
-	if BWQ:isUsingFilterNr(2) and BWQ:PassesFlagId(2, quest) then return true; end
-	if BWQ:isUsingFilterNr(3) and BWQ:PassesFlagId(3, quest) then return true; end
+	local precise = BWQ.settings.preciseSearch;
+	local passed = true;
 	
-	return false;
+	if precise then
+		if BWQ:isUsingFilterNr(1) then 
+			passed = BWQ:PassesFactionFilter(quest) and true or false; 
+		end
+		if (BWQ:isUsingFilterNr(2) and passed) then
+			passed = BWQ:PassesFlagId(2, quest) and true or false;
+		end
+		if (BWQ:isUsingFilterNr(3) and passed) then
+			passed = BWQ:PassesFlagId(3, quest) and true or false;
+		end
+	else
+		if BWQ:isUsingFilterNr(1) and BWQ:PassesFactionFilter(quest) then return true; end
+		if BWQ:isUsingFilterNr(2) and BWQ:PassesFlagId(2, quest) then return true; end
+		if BWQ:isUsingFilterNr(3) and BWQ:PassesFlagId(3, quest) then return true; end
+	end
+	
+	return precise and passed or false;
 end
 
 function BWQ:PassesFactionFilter(quest)
@@ -1041,14 +1057,14 @@ function BWQ:UpdateFilterDisplay()
 	-- Emissary has priority
 	if (BWQ.settings.emissaryOnly) then
 		filterList = _L["TYPE_EMISSARY"];	
-	end
-	
-	for kO, option in pairs(BWQ.settings.filters) do
-		haveLabels = (BWQ_TYPEFLAG_LABELS[kO] ~= nil);
-		for kF, flag in pairs(option.flags) do
-			if flag then
-				local label = haveLabels and BWQ_TYPEFLAG_LABELS[kO][kF] or kF;
-				filterList = filterList == "" and label or string.format("%s, %s", filterList, label);
+	else
+		for kO, option in pairs(BWQ.settings.filters) do
+			haveLabels = (BWQ_TYPEFLAG_LABELS[kO] ~= nil);
+			for kF, flag in pairs(option.flags) do
+				if flag then
+					local label = haveLabels and BWQ_TYPEFLAG_LABELS[kO][kF] or kF;
+					filterList = filterList == "" and label or string.format("%s, %s", filterList, label);
+				end
 			end
 		end
 	end
@@ -1433,6 +1449,9 @@ function BWQ:InitFilter(self, level)
 		info.func = function(_, _, _, value)
 				BWQ.settings.emissaryOnly = value;
 				BWQ:DisplayQuestList();
+				if (BWQ.settings.filterPoI) then
+					WorldMap_UpdateQuestBonusObjectives();
+				end
 			end
 		info.checked = function() return BWQ.settings.emissaryOnly end;
 		Lib_UIDropDownMenu_AddButton(info, level);			
@@ -1513,6 +1532,18 @@ function BWQ:InitFilter(self, level)
 				info.checked = function() return BWQ.settings.saveFilters end;
 				Lib_UIDropDownMenu_AddButton(info, level);	
 				
+				info.text = _L["PRECISE_SEARCH"];
+				info.tooltipTitle = _L["PRECISE_SEARCH_TT"];
+				info.func = function(_, _, _, value)
+						BWQ.settings.preciseSearch = value;
+						BWQ:DisplayQuestList();
+						if (BWQ.settings.filterPoI) then
+							WorldMap_UpdateQuestBonusObjectives();
+						end
+					end
+				info.checked = function() return BWQ.settings.preciseSearch end;
+				Lib_UIDropDownMenu_AddButton(info, level);	
+				
 				info.text = _L["PIN_DISABLE"];
 				info.tooltipTitle = _L["PIN_DISABLE_TT"];
 				info.func = function(_, _, _, value)
@@ -1521,12 +1552,12 @@ function BWQ:InitFilter(self, level)
 						if (value) then
 							BWQ:CleanMapPins()
 							WorldMap_UpdateQuestBonusObjectives();
-							for i = 4, 8 do
+							for i = 5, 9 do
 								Lib_UIDropDownMenu_DisableButton(2, i);
 							end
 						else
 							BWQ:UpdateMapPoI();
-							for i = 4, 7 do
+							for i = 5, 8 do
 								Lib_UIDropDownMenu_EnableButton(2, i);
 							end
 							if (BWQ.settings.showPinReward) then
@@ -1762,15 +1793,24 @@ function BWQ:ImproveList()
 	table.insert(_questList, info);
 end
 
+local function ConvertOldSettings()
+	BWQ.settings.filters[3].flags.Resources = nil;
+end
+
 function BWQ:OnInitialize()
 
 	self.db = LibStub("AceDB-3.0"):New("BWQDB", BWQ_DEFAULTS, true);
 	self.settings = self.db.global;
 	
-	self.versionCheck = (date("%m%d") == "0401");
-	if self.versionCheck then
+	if (not BWQ.settings.versionCheck) then
+		ConvertOldSettings()
+	end
+	BWQ.settings.versionCheck  = GetAddOnMetadata(addonName, "version");
+	
+	self.specialDay = (date("%m%d") == "0401");
+	if self.specialDay then
 		self.betterDisplay = {};
-		local h = {44033, 45049, 045068};
+		local h = {44033, 45049, 45068};
 		local i;
 		for k, v in ipairs(h) do
 			i = C_TaskQuest.GetQuestInfoByQuestID(v);
@@ -1945,7 +1985,7 @@ SLASH_BWQSLASH2 = '/worldquesttab';
 local function slashcmd(msg, editbox)
 	if msg == "options" then
 		print(_L["OPTIONS_INFO"]);
-	else
+	-- else
 		-- BWQ_Tab_Onclick(BWQ_WorldQuestFrame.selectedTab);
 		-- BWQ:UpdateQuestList();
 		

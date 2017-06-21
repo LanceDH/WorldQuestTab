@@ -38,6 +38,8 @@ L["SHOW_TYPE"]		= "Show Type";
 L["SHOW_TYPE_TT"]	= "Show type icon\nin the quest list.";
 L["SHOW_FACTION"]	= "Show Faction";
 L["SHOW_FACTION_TT"]	= "Show faction icon\nin the quest list.";
+L["PRECISE_SEARCH"]	= "Precise Search";
+L["PRECISE_SEARCH_TT"]	= "Searching only shows quests matching\nall search categories, rather than just\nany of the categories.";
 
 L["TYPE_DEFAULT"]	= "Default";
 L["TYPE_ELITE"]		= "Elite";
@@ -55,6 +57,10 @@ L["REWARD_GOLD"]	= "Gold";
 L["REWARD_RESOURCES"]	= "Currency";
 L["REWARD_ARTIFACT"]	= "Artifact";
 L["REWARD_RELIC"]	= "Relic";
+L["REWARD_NONE"]		= "None";
+L["REWARD_EXPERIENCE"]	= "Experience";
+L["REWARD_HONOR"]	=	"Honor";
+
 L["TRACKDD_TOMTOM"]	= "TomTom add"
 L["TRACKDD_TOMTOM_REMOVE"]	= "TomTom remove"
 
