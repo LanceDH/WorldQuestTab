@@ -1094,7 +1094,7 @@ function BWQ:UpdatePin(PoI, quest, flightPinNr)
 	PoI.BWQOverlay.ring:SetAlpha((BWQ.settings.showPinReward or BWQ.settings.showPinRing) and 1 or 0);
 	
 	-- Icon stuff
-	PoI.BWQOverlay.icon:SetAlpha(BWQ.settings.showPinReward and 1 or 0);
+	PoI.BWQOverlay.icon:SetAlpha((BWQ.settings.showPinReward and quest.rewardTexture ~= "") and 1 or 0);
 	SetPortraitToTexture(PoI.BWQOverlay.icon, quest.rewardTexture);
 	
 	-- Time
