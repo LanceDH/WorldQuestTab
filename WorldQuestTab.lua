@@ -369,7 +369,7 @@ function BWQ_Quest_OnEnter(self)
 
 	WorldMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
 
-	-- Item coparison
+	-- Item comparison
 	if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
 		GameTooltip_ShowCompareItem(WorldMapTooltip.ItemTooltip.Tooltip, WorldMapTooltip.BackdropFrame);
 	else
@@ -452,7 +452,6 @@ function BWQ_Quest_OnEnter(self)
 
 	if self.info.rewardTexture ~= "" then
 		if self.info.rewardTexture == BWQ_QUESTIONMARK then
-			-- If still missing after retrying to add reward, just give the player an idea
 			WorldMapTooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
 		else
 			GameTooltip_AddQuestRewardsToTooltip(WorldMapTooltip, self.questId);
@@ -748,7 +747,7 @@ end
 
 function BWQ:SetQuestReward(info)
 
-	local _, texture, numItems, quality, rewardType, color = nil, nil, 0, 1, 0, BWQ_COLOR_MISSING;
+	local _, texture, numItems, quality, rewardType, color, rewardId = nil, nil, 0, 1, 0, BWQ_COLOR_MISSING, 0;
 	
 	if GetNumQuestLogRewards(info.id) > 0 then
 		_, texture, numItems, quality = GetQuestLogRewardInfo(1, info.id);
@@ -796,7 +795,10 @@ function BWQ:SetQuestReward(info)
 		rewardType = BWQ_REWARDTYPE_GOLD;
 		color = BWQ_COLOR_GOLD;
 	elseif GetNumQuestLogRewardCurrencies(info.id) > 0 then
-		_, texture, numItems = GetQuestLogRewardCurrencyInfo(1, info.id)
+		_, texture, numItems, rewardId = GetQuestLogRewardCurrencyInfo(1, info.id)
+		if (GetNumQuestLogRewardCurrencies(info.id) > 1 and rewardId == 1342 or rewardId == 1226) then
+			_, texture, numItems, rewardId = GetQuestLogRewardCurrencyInfo(2, info.id)
+		end
 		rewardType = BWQ_REWARDTYPE_CURRENCY;
 		color = BWQ_COLOR_CURRENCY;
 	elseif haveData and GetQuestLogRewardXP(info.id) > 0 then
@@ -804,12 +806,10 @@ function BWQ:SetQuestReward(info)
 		texture = BWQ_EXPERIENCE;
 		color = BWQ_COLOR_ITEM;
 		rewardType = BWQ_REWARDTYPE_XP;
-	elseif GetNumQuestLogRewards(info.id) == 0 and haveData then
+	elseif GetNumQuestLogRewards(info.id) == 0 then
 		texture = "";
 		color = BWQ_COLOR_ITEM;
 		rewardType = BWQ_REWARDTYPE_NONE;
-	else 
-		
 	end
 	
 	info.rewardQuality = quality or 1;
