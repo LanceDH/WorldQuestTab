@@ -728,6 +728,7 @@ function Lib_UIDropDownMenuButton_OnClick(self)
 
 	if ( playSound ) then
 		PlaySound("UChatScrollButton");
+		-- PlaySound(SOUNDKIT.U_CHAT_SCROLL_BUTTON); -- 7.3
 	end
 end
 

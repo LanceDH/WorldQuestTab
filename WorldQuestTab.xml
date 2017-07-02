@@ -615,6 +615,7 @@
 				<Scripts>
 					<OnClick> 
 						PlaySound("igMainMenuOptionCheckBoxOn");
+						<!--PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);-->
 						Lib_ToggleDropDownMenu(1, nil, BWQ_WorldQuestFrameFilterDropDown, "BWQ_WorldQuestFrameFilterButton", 74, 15);
 					</OnClick>	
 				</Scripts>						

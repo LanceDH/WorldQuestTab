@@ -28,7 +28,6 @@ local BWQ_COLOR_ITEM = CreateColor(0.85, 0.85, 0.85) ;
 local BWQ_COLOR_ARMOR = CreateColor(0.7, 0.3, 0.9) ;
 local BWQ_COLOR_RELIC = CreateColor(0.3, 0.7, 1);
 local BWQ_COLOR_MISSING = CreateColor(0.7, 0.1, 0.1);
-local BWQ_COLOR_EXPERIENCE = CreateColor(0.7, 0.1, 0.1);
 local BWQ_COLOR_HONOR = CreateColor(0.8, 0.26, 0);
 local BWQ_COLOR_AREA_NAME = CreateColor(1.0, 0.9294, 0.7607);
 local BWQ_ARTIFACT_R, BWQ_ARTIFACT_G, BWQ_ARTIFACT_B = GetItemQualityColor(6);
@@ -279,6 +278,8 @@ function BWQ_Tab_Onclick(self, button)
 	id = self and self:GetID() or nil;
 	if BWQ_WorldQuestFrame.selectedTab ~= self then
 		Lib_HideDropDownMenu(1);
+		PlaySound("igMainMenuOptionCheckBoxOn");
+		-- PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -- 7.3
 	end
 	
 	BWQ_WorldQuestFrame.selectedTab = self;
@@ -329,6 +330,7 @@ end
 
 function BWQ_Quest_OnClick(self, button)
 	PlaySound("igMainMenuOptionCheckBoxOn");
+	-- PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -- 7.3
 	if not self.questId or self.questId== -1 then return end
 	if IsShiftKeyDown() then
 		if IsWorldQuestHardWatched(self.questId) or (IsWorldQuestWatched(self.questId) and GetSuperTrackedQuestID() == self.questId) then
@@ -530,7 +532,6 @@ local function GetAbreviatedNumber(number)
 	elseif (number >= 10000000) then
 		return floor(number / 1000000000) .. "b";
 	end
-
 	return number 
 end
 
@@ -542,8 +543,10 @@ local function GetQuestFromList(list, id)
 	return nil;
 end
 
-local function IsArtifactItem(itemId)
-	return GetItemSpell(itemId) == _L["EMPOWERING"];
+local function IsArtifactItem(numItems, itemId)
+	-- Because spanish sometimes have a different spell name, and items like petbattle bandages are also 0-8
+	local _, itemLink, _, itemLevel, itemMinLevel, _, _, _, _, _, _, itemClassID, itemSubClassID = GetItemInfo(itemId);
+	return numItems == 1 and itemLevel == 110 and itemClassID == 0 and itemSubClassID == 8;
 end
 
 local function IsRelicItem(itemId)
@@ -731,9 +734,7 @@ local function GetQuestTimeString(questId)
 	end
 	-- start with default, for CN and KR
 	timeStringShort = timeString;
-	-- for some reason using a single match makes t always 4 while the match works fine outside this function
-	local t = string.match(timeString, '(%d+)');
-	local str = string.match(timeString, '(%a)');
+	local t, str = string.match(timeString:gsub(" |4", ""), '(%d+)(%a)');
 	-- Attempt Russian
 	if t and not str then
 		str = string.match(timeString, ' (.[\128-\191]*)');
@@ -752,18 +753,17 @@ function BWQ:SetQuestReward(info)
 	if GetNumQuestLogRewards(info.id) > 0 then
 		_, texture, numItems, quality = GetQuestLogRewardInfo(1, info.id);
 		local itemId = select(6, GetQuestLogRewardInfo(1, info.id))
-		if itemId and IsArtifactItem(itemId) then
-			EmbeddedItemTooltip_SetItemByQuestReward(BWQ_Tooltip.ItemTooltip, 1, info.id)
-			local text = BWQ_TooltipTooltipTextLeft4:GetText();
-			numItems = tonumber(string.match(text:gsub("%p", ""), '%d+'));
-			if (text:find(SECOND_NUMBER)) then -- Million
-				local int, dec=text:match("(%d+)%.?%,?(%d*)");
-				int = tonumber(int .. dec); 
-				numItems = int/(10^dec:len()) * 1000000;
-			elseif (text:find(THIRD_NUMBER)) then -- Billion just in case
+		if itemId and IsArtifactItem(numItems, itemId) then
+			local text = GetSpellDescription(select(3, GetItemSpell(itemId)));
+			numItems = tonumber(string.match(text:gsub("[%p| ]", ""), '%d+'));
+			if (text:find(THIRD_NUMBER)) then -- Billion just in case
 				local int, dec=text:match("(%d+)%.?%,?(%d*)");
 				int = tonumber(int .. dec); 
 				numItems = int/(10^dec:len()) * 1000000000;
+			elseif (text:find(SECOND_NUMBER)) then -- Million
+				local int, dec = text:match("(%d+)%.?%,?(%d*)");
+				int = tonumber(int .. dec); 
+				numItems = int/(10^dec:len()) * 1000000;
 			end
 			rewardType = BWQ_REWARDTYPE_ARTIFACT;
 			color = BWQ_COLOR_ARTIFACT;

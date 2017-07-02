@@ -3,7 +3,6 @@
 local L = {}
 local locale = GetLocale();
 
-L["EMPOWERING"]		= "Empowering";
 L["QUESTLOG"]		= "Questlog";
 L["WORLDQUEST"]		= "World Quests"
 L["COMBATLOCK"]		= "Disabled during combat.";
@@ -69,7 +68,6 @@ L["COMBATLOCK"] = "Nicht verfügbar während eines Kampfes."
 L["DEFAULT_TAB"] = "Standardtab"
 L["DEFAULT_TAB_TT"] = [=[Aktiviert WQT als Standardtab nach dem Einloggen.
 Nicht aktiv für Charaktere unter Level 110.]=]
-L["EMPOWERING"] = "Macht verleihen"
 L["FACTION"] = "Fraktion"
 L["FILTER"] = "Filter: %s"
 L["NAME"] = "Name"
@@ -115,7 +113,6 @@ L["COMBATLOCK"] = "Desativado durante combate."
 L["DEFAULT_TAB"] = "Aba Padrão"
 L["DEFAULT_TAB_TT"] = [=[Definir o WQT como aba padrão quando você logar.
  Isso não se aplica a personagens abaixo do nível 110.]=]
-L["EMPOWERING"] = "Fortalecendo"
 L["FACTION"] = "Facção"
 L["FILTER"] = "Filtro: %s"
 L["FILTER_PINS"] = "Filtrar marcações no mapa"
@@ -175,7 +172,6 @@ L["COMBATLOCK"] = "Désactivé en combat."
 L["DEFAULT_TAB"] = "Onglet par défaut"
 L["DEFAULT_TAB_TT"] = [=[Définir WQT comme onglet par défaut quand vous vous connectez.
 Ne s'applique pas en dessous du niveau 110.]=]
-L["EMPOWERING"] = "Renforcement"
 L["FACTION"] = "Faction"
 L["FILTER"] = "Filtre : %s"
 L["NAME"] = "Nom"
@@ -223,7 +219,6 @@ L["COMBATLOCK"] = "Отключено во время боя."
 L["DEFAULT_TAB"] = "По умолчанию"
 L["DEFAULT_TAB_TT"] = [=[Установить WQT как панель по умолчанию.
 Не применяется к персонажам ниже 110 уровня.]=]
-L["EMPOWERING"] = "Усиление"
 L["FACTION"] = "Фракция"
 L["FILTER"] = "Фильтр: %s"
 L["FILTER_PINS"] = "Фильтр меток"
@@ -280,7 +275,6 @@ L["COMBATLOCK"] = "战斗中无法使用"
 L["DEFAULT_TAB"] = "默认选项卡"
 L["DEFAULT_TAB_TT"] = [=[设置WQT作为你登录后的默认选项卡。
 不会对110级以下的角色生效。]=]
-L["EMPOWERING"] = "强化"
 L["FACTION"] = "阵营"
 L["FILTER"] = "过滤： %s"
 L["FILTER_PINS"] = "过滤地图显示"
@@ -331,7 +325,6 @@ L["COMBATLOCK"] = "戰鬥中無法使用"
 L["DEFAULT_TAB"] = "預設標籤"
 L["DEFAULT_TAB_TT"] = [=[將WQT設定為預設啟用標籤。
 這不適用於等級110以下角色。]=]
-L["EMPOWERING"] = "强化"
 L["FACTION"] = "陣營"
 L["FILTER"] = "過濾: %s"
 L["FILTER_PINS"] = "過濾地圖顯示"
@@ -387,7 +380,6 @@ L["COMBATLOCK"] = "전투 중엔 비활성됩니다."
 L["DEFAULT_TAB"] = "기본 탭"
 L["DEFAULT_TAB_TT"] = [=[로그인 했을 때 WQT를 기본 탭으로 설정합니다.
 110 레벨 미만의 캐릭터엔 적용하지 않습니다.]=]
-L["EMPOWERING"] = "강화"
 L["FACTION"] = "평판 진영"
 L["FILTER"] = "필터: %s"
 L["FILTER_PINS"] = "지도 표시 필터"
