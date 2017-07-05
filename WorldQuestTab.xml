@@ -13,7 +13,7 @@
 	<Script file="WorldQuestTab.lua"/>
 
 	<!--
-	<Frame name="BWQ_DebugLine" parentArray="DependencyLines" virtual="true">
+	<Frame name="WQT_DebugLine" parentArray="DependencyLines" virtual="true">
 		<Layers>
 			<Layer level="OVERLAY" textureSubLevel="-2">
 				<Line parentKey="Fill" file="Interface/Artifacts/_Artifacts-DependencyBar-Fill" thickness="4" horizTile="true" alpha="1" />
@@ -22,7 +22,7 @@
 	</Frame>
 -->
 	
-	<FontFamily name="BWQ_NumberFontOutline" virtual="true">
+	<FontFamily name="WQT_NumberFontOutline" virtual="true">
 		<Member alphabet="roman">
 			<Font font="Fonts\FRIZQT__.TTF" height="10" outline="NORMAL">
 				<Shadow>
@@ -75,7 +75,7 @@
 		</Member>
 	</FontFamily>
 	
-	<FontFamily name="BWQ_NumberFontOutlineBig" virtual="true">
+	<FontFamily name="WQT_NumberFontOutlineBig" virtual="true">
 		<Member alphabet="roman">
 			<Font font="Fonts\FRIZQT__.TTF" height="25" outline="NORMAL">
 				<Shadow>
@@ -128,10 +128,10 @@
 		</Member>
 	</FontFamily>
 	
-	 <Frame name="BWQ_PinTemplate" virtual="true">
+	 <Frame name="WQT_PinTemplate" virtual="true">
 		<Layers>
 			<Layer level="OVERLAY" textureSubLevel="7">
-				 <FontString parentKey="time" inherits="BWQ_NumberFontOutline" maxLines="1" justifyV="MIDDLE">
+				 <FontString parentKey="time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE">
 					<size y="18" />
 					<Anchors>
 						<Anchor point="TOP" relativePoint="BOTTOM" y="3"/>
@@ -173,7 +173,7 @@
 		</Layers>
 	 </Frame>
 
-	<Button name="BWQ_TabTemplate" virtual="true">
+	<Button name="WQT_TabTemplate" virtual="true">
 		<Size x="33" y="35"/>
 		<Layers>
 			<Layer level="BACKGROUND">
@@ -214,7 +214,7 @@
 		</Layers>
 		<Scripts>
 			<OnClick>
-				BWQ_Tab_Onclick(self, button);
+				WQT_Tab_Onclick(self, button);
 			</OnClick>
 			<OnLeave>
 				GameTooltip:Hide();
@@ -225,7 +225,7 @@
 		</Scripts>
 	</Button>
 	 
-	<Button name="BWQ_QuestTemplate" hidden="true" inherits="SecureFrameTemplate" virtual="true" >
+	<Button name="WQT_QuestTemplate" hidden="true" inherits="SecureFrameTemplate" virtual="true" >
 		<Size>
 			<AbsDimension x="260" y="32"/>
 		</Size>
@@ -293,25 +293,25 @@
 			</Frame>
 		
 			<Frame parentKey="reward" hidden="true">
-				<Size x="26" y="26" />
+				<Size x="28" y="28" />
 				<Anchors>
-					<Anchor point="RIGHT" x="-5"/>
+					<Anchor point="RIGHT" x="-5" y="-1"/>
 				</Anchors>
 				<Layers>
 					<Layer level="BACKGROUND">
 						<Texture parentKey="icon" file="Interface\ICONS\INV_Misc_QuestionMark"/>
 					</Layer>
 					<Layer level="ARTWORK">
-						<FontString parentKey="amount" inherits="BWQ_NumberFontOutline" maxLines="1" justifyH="RIGHT">
+						<FontString parentKey="amount" inherits="WQT_NumberFontOutline" maxLines="1" justifyH="RIGHT">
 							<Anchors>
-								<Anchor point="BOTTOMRIGHT" x="3" y="0"/>
+								<Anchor point="BOTTOMRIGHT" x="3" y="1"/>
 							</Anchors>
 							<Color r="1" g="1" b="1"/>
 						</FontString>
 					</Layer>
 					<Layer level="BORDER">
 						<Texture parentKey="iconBorder" file="Interface\Common\WhiteIconFrame" hidden="false">
-							<Size x="27" y="27"/>
+							<Size x="29" y="29"/>
 							<Anchors>
 								<Anchor point="CENTER" relativeKey="$parent.icon"/>
 							</Anchors>
@@ -351,6 +351,39 @@
 					</Layer>
 				</Layers>
 			</Frame>
+			
+			<Frame parentKey="highlight" hidden="true" alpha="0.75" >
+				<Anchors>
+					<Anchor point="TOPLEFT" />
+					<Anchor point="BOTTOMRIGHT" />
+				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture parentKey="hlLeft" file="Interface\PETBATTLES\PETJOURNAL">
+							<Anchors>
+								<Anchor point="TOPLEFT"/>
+								<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMLEFT" x="30"/>
+							</Anchors>
+							<TexCoords left="0.498046875" right="0.591796875" top="0.1748046875" bottom="0.2197265625"/>
+						</Texture>
+						<Texture parentKey="hlRight" file="Interface\PETBATTLES\PETJOURNAL">
+							<Anchors>
+								<Anchor point="TOPRIGHT"/>
+								<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="-30"/>
+							</Anchors>
+							<TexCoords left="0.814453125" right="0.90625" top="0.1748046875" bottom="0.2197265625"/>
+						</Texture>
+						<Texture parentKey="hlCenter" file="Interface\PETBATTLES\PETJOURNAL">
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent.hlLeft" relativePoint="TOPRIGHT"/>
+								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.hlRight" relativePoint="BOTTOMLEFT"/>
+							</Anchors>
+							<TexCoords left="0.591796875" right="0.814453125" top="0.1748046875" bottom="0.2197265625"/>
+						</Texture>
+					</Layer>
+				</Layers>
+			</Frame>
+			
 		</Frames>
 		
 		<Layers>
@@ -387,44 +420,23 @@
 					<Color r="0.8" g="0.8" b="0.8"/>
 				</FontString>
 			</Layer>
-			<Layer level="HIGHLIGHT">
-                <Texture parentKey="hlLeft" file="Interface\PETBATTLES\PETJOURNAL">
-					<Anchors>
-						<Anchor point="TOPLEFT"/>
-						<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMLEFT" x="30"/>
-					</Anchors>
-					<TexCoords left="0.498046875" right="0.591796875" top="0.1748046875" bottom="0.2197265625"/>
-				</Texture>
-				<Texture parentKey="hlRight" file="Interface\PETBATTLES\PETJOURNAL">
-					<Anchors>
-						<Anchor point="TOPRIGHT"/>
-						<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="-30"/>
-					</Anchors>
-					<TexCoords left="0.814453125" right="0.90625" top="0.1748046875" bottom="0.2197265625"/>
-				</Texture>
-				<Texture parentKey="hlCenter" file="Interface\PETBATTLES\PETJOURNAL">
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.hlLeft" relativePoint="TOPRIGHT"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.hlRight" relativePoint="BOTTOMLEFT"/>
-					</Anchors>
-					<TexCoords left="0.591796875" right="0.814453125" top="0.1748046875" bottom="0.2197265625"/>
-				</Texture>
-			</Layer>
 		</Layers>
 
 		<Scripts>
 			<OnClick>
-				BWQ_Quest_OnClick(self, button);
+				WQT_Quest_OnClick(self, button);
 			</OnClick>
 			<OnLoad>
+				self.trackedBorder:SetFrameLevel(self:GetFrameLevel() + 2);
+				self.highlight:SetFrameLevel(self:GetFrameLevel() + 2);
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 				self:EnableKeyboard(false);
 			</OnLoad>
 			<OnEnter>
-				BWQ_Quest_OnEnter(self);
+				WQT_Quest_OnEnter(self);
 			</OnEnter>
 			<OnLeave>
-				BWQ_Quest_OnLeave(self);
+				WQT_Quest_OnLeave(self);
 			</OnLeave>
 			<OnUpdate>
 				if not self:IsMouseOver() then return; end
@@ -439,7 +451,7 @@
 		</Scripts>
 	</Button>
 	 
-	<Frame name="BWQ_WorldQuestFrame" parent="QuestMapFrame" inherits="SecureFrameTemplate" enableMouse="true" hidden="false">
+	<Frame name="WQT_WorldQuestFrame" parent="QuestMapFrame" inherits="SecureFrameTemplate" enableMouse="true" hidden="false">
 		<Size x="287" y="464"/>
 		<Anchors>
 			<Anchor point="TOPLEFT"/>
@@ -510,17 +522,17 @@
 					</Button>
 				</Frames>
 			</Frame>
-			<ScrollFrame parentKey="QuestsFrame" name="BWQ_QuestScrollFrame" inherits="HybridScrollFrameTemplate">
+			<ScrollFrame parentKey="QuestsFrame" name="WQT_QuestScrollFrame" inherits="HybridScrollFrameTemplate">
 				<Size x="259"/>
 				<Anchors>
 					<Anchor point="TOP" relativeKey="$parent.filterBar" relativePoint="BOTTOM"/>
-					<Anchor point="BOTTOM" relativePoint="BWQ_WorldQuestFrame"/>
+					<Anchor point="BOTTOM" relativePoint="WQT_WorldQuestFrame"/>
 				</Anchors>
 				<Frames>
 					<Slider name="$parentScrollBar" inherits="MinimalHybridScrollBarTemplate" parentKey="scrollBar">
 						<Anchors>
-							<Anchor point="TOPRIGHT" relativeTo="BWQ_WorldQuestFrame" x="-1" y="-16"/>
-							<Anchor point="BOTTOMRIGHT" relativeTo="BWQ_WorldQuestFrame" x="-1" y="16"/>
+							<Anchor point="TOPRIGHT" relativeTo="WQT_WorldQuestFrame" x="-1" y="-16"/>
+							<Anchor point="BOTTOMRIGHT" relativeTo="WQT_WorldQuestFrame" x="-1" y="16"/>
 						</Anchors>
 						<Layers>
 							<Layer level="ARTWORK">
@@ -616,7 +628,7 @@
 					<OnClick> 
 						PlaySound("igMainMenuOptionCheckBoxOn");
 						<!--PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);-->
-						Lib_ToggleDropDownMenu(1, nil, BWQ_WorldQuestFrameFilterDropDown, "BWQ_WorldQuestFrameFilterButton", 74, 15);
+						Lib_ToggleDropDownMenu(1, nil, WQT_WorldQuestFrameFilterDropDown, "WQT_WorldQuestFrameFilterButton", 74, 15);
 					</OnClick>	
 				</Scripts>						
 			</Button>
@@ -625,7 +637,7 @@
 			<Button name="$parentSortButton" inherits="Lib_UIDropDownMenuTemplate" text="">
 				<Size x="93" y="22"/>
 				<Anchors>
-					<Anchor point="RIGHT" relativeTo="BWQ_WorldQuestFrameFilterButton" relativePoint="LEFT" x="10" y="-1"/>
+					<Anchor point="RIGHT" relativeTo="WQT_WorldQuestFrameFilterButton" relativePoint="LEFT" x="10" y="-1"/>
 				</Anchors>
 				<Scripts>
 					<OnLoad>
@@ -633,6 +645,7 @@
 					</OnLoad>
 					<OnClick> 
 						PlaySound("igMainMenuOptionCheckBoxOn");
+						<!--PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -->
 					</OnClick>	
 				</Scripts>						
 			</Button>
@@ -645,7 +658,7 @@
 		</Scripts>
 	</Frame>
 	
-	<Button name="BWQ_TabNormal" inherits="BWQ_TabTemplate" parent="QuestMapFrame" enableMouse="true" id="1">
+	<Button name="WQT_TabNormal" inherits="WQT_TabTemplate" parent="QuestMapFrame" enableMouse="true" id="1">
 		<Anchors>
 			<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="3" y="0"/>
 		</Anchors>
@@ -658,14 +671,14 @@
 			</OnLoad>
 			<OnEnter>
 				GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
-				GameTooltip:SetText(BWQ_TAB_NORMAL, nil, nil, nil, nil, true);
+				GameTooltip:SetText(WQT_TAB_NORMAL, nil, nil, nil, nil, true);
 				GameTooltip:Show();
 			</OnEnter>
 		</Scripts>
 	</Button>
-	<Button name="BWQ_TabWorld" inherits="BWQ_TabTemplate" parent="QuestMapFrame" enableMouse="true" id="2">
+	<Button name="WQT_TabWorld" inherits="WQT_TabTemplate" parent="QuestMapFrame" enableMouse="true" id="2">
 		<Anchors>
-			<Anchor point="LEFT" relativeTo="BWQ_TabNormal" relativePoint="RIGHT"/>
+			<Anchor point="LEFT" relativeTo="WQT_TabNormal" relativePoint="RIGHT"/>
 		</Anchors>
 		<Scripts>
 			<OnLoad>
@@ -675,17 +688,17 @@
 			</OnLoad>
 			<OnEnter>
 				GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
-				GameTooltip:SetText(BWQ_TAB_WORLD, nil, nil, nil, nil, true);
+				GameTooltip:SetText(WQT_TAB_WORLD, nil, nil, nil, nil, true);
 				GameTooltip:Show();
 			</OnEnter>
 		</Scripts>
 	</Button>
-	<Button name="BWQ_TabDetails" inherits="BWQ_TabTemplate" parent="QuestMapFrame" enableMouse="false" id="3" hidden="true">
+	<Button name="WQT_TabDetails" inherits="WQT_TabTemplate" parent="QuestMapFrame" enableMouse="false" id="3" hidden="true">
 		<Anchors>
-			<Anchor point="LEFT" relativeTo="BWQ_TabWorld" relativePoint="RIGHT"/>
+			<Anchor point="LEFT" relativeTo="WQT_TabWorld" relativePoint="RIGHT"/>
 		</Anchors>
 	</Button>
-	<Frame name="BWQ_PoISelectIndicator" hidden="true">
+	<Frame name="WQT_PoISelectIndicator" hidden="true">
 		<Size x="32" y="32"/>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -728,7 +741,7 @@
 		</Scripts>
 	</Frame>
 	
-	<GameTooltip name="BWQ_Tooltip" frameStrata="TOOLTIP" hidden="true" parent="WorldMapFrame" inherits="GameTooltipTemplate">
+	<GameTooltip name="WQT_Tooltip" frameStrata="TOOLTIP" hidden="true" parent="WorldMapFrame" inherits="GameTooltipTemplate">
 		<Frames>
 			<Frame parentKey="ItemTooltip" inherits="EmbeddedItemTooltip" hidden="true">
 				<Size x="100" y="100"/>
@@ -747,7 +760,7 @@
 		</Frames>
 	</GameTooltip>
 	
-	<Frame name="BWQ_MapZoneHightlight" parent="WorldMapDetailFrame">
+	<Frame name="WQT_MapZoneHightlight" parent="WorldMapDetailFrame">
 		<Size x="128" y="128"/>
 		<Anchors>
 			<Anchor point="CENTER"/>
@@ -763,5 +776,5 @@
 			</Layer>
 		</Layers>
 	</Frame>
-	<Frame name="BWQ_TrackDropDown" inherits="Lib_UIDropDownMenuTemplate" enableMouse="true" hidden="true"/>
+	<Frame name="WQT_TrackDropDown" inherits="Lib_UIDropDownMenuTemplate" enableMouse="true" hidden="true"/>
  </Ui>
