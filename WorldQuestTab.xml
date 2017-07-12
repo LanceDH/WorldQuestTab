@@ -20,7 +20,7 @@
 			</Layer>
 		</Layers>
 	</Frame>
--->
+	-->
 	
 	<FontFamily name="WQT_NumberFontOutline" virtual="true">
 		<Member alphabet="roman">
@@ -128,7 +128,7 @@
 		</Member>
 	</FontFamily>
 	
-	 <Frame name="WQT_PinTemplate" virtual="true">
+	 <Frame name="WQT_PinTemplate" mixin="WQT_PinMixin" virtual="true">
 		<Layers>
 			<Layer level="OVERLAY" textureSubLevel="7">
 				 <FontString parentKey="time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE">
@@ -214,18 +214,18 @@
 		</Layers>
 		<Scripts>
 			<OnClick>
-				WQT_Tab_Onclick(self, button);
+				WQT_WorldQuestFrame:SelectTab(self, button);
 			</OnClick>
 			<OnLeave>
 				GameTooltip:Hide();
 			</OnLeave>
 			<OnLoad>
-				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
+				self:RegisterForClicks("LeftButtonUp");
 			</OnLoad>
 		</Scripts>
 	</Button>
 	 
-	<Button name="WQT_QuestTemplate" hidden="true" inherits="SecureFrameTemplate" virtual="true" >
+	<Button name="WQT_QuestTemplate" mixin="WQT_ListButtonMixin" hidden="true" inherits="SecureFrameTemplate" virtual="true" >
 		<Size>
 			<AbsDimension x="260" y="32"/>
 		</Size>
@@ -424,7 +424,7 @@
 
 		<Scripts>
 			<OnClick>
-				WQT_Quest_OnClick(self, button);
+				self:OnClick(button);
 			</OnClick>
 			<OnLoad>
 				self.trackedBorder:SetFrameLevel(self:GetFrameLevel() + 2);
@@ -433,10 +433,10 @@
 				self:EnableKeyboard(false);
 			</OnLoad>
 			<OnEnter>
-				WQT_Quest_OnEnter(self);
+				self:OnEnter();
 			</OnEnter>
 			<OnLeave>
-				WQT_Quest_OnLeave(self);
+				self:OnLeave();
 			</OnLeave>
 			<OnUpdate>
 				if not self:IsMouseOver() then return; end
@@ -451,7 +451,7 @@
 		</Scripts>
 	</Button>
 	 
-	<Frame name="WQT_WorldQuestFrame" parent="QuestMapFrame" inherits="SecureFrameTemplate" enableMouse="true" hidden="false">
+	<Frame name="WQT_WorldQuestFrame" mixin="WQT_CoreMixin" parent="QuestMapFrame" inherits="SecureFrameTemplate" enableMouse="true" hidden="false">
 		<Size x="287" y="464"/>
 		<Anchors>
 			<Anchor point="TOPLEFT"/>
@@ -504,6 +504,9 @@
 							</Layer>
 						</Layers>
 						<Scripts>
+							<OnClick>
+								self:GetParent():GetParent():FilterClearButtonOnClick();
+							</OnClick>
 							<OnEnter>
 								self.texture:SetAlpha(1.0);
 							</OnEnter>
@@ -522,7 +525,7 @@
 					</Button>
 				</Frames>
 			</Frame>
-			<ScrollFrame parentKey="QuestsFrame" name="WQT_QuestScrollFrame" inherits="HybridScrollFrameTemplate">
+			<ScrollFrame parentKey="scrollFrame" name="WQT_QuestScrollFrame" mixin="WQT_ScrollListMixin" inherits="HybridScrollFrameTemplate">
 				<Size x="259"/>
 				<Anchors>
 					<Anchor point="TOP" relativeKey="$parent.filterBar" relativePoint="BOTTOM"/>
@@ -563,14 +566,14 @@
 								</Texture>
 							</Layer>
 						</Layers>
-						
-						<Scripts>
-							<OnLoad>
-								self.trackBG:Hide();
-							</OnLoad>
-						</Scripts>
 					</Slider>
 				</Frames>
+				
+				<Scripts>
+					<OnLoad>
+						self:OnLoad();
+					</OnLoad>
+				</Scripts>
 			</ScrollFrame>
 			<Frame parentKey="blocker" enableMouse="false" hidden="true">
 				<Anchors>
@@ -604,7 +607,7 @@
 				</Layers>
 			</Frame>
 			
-			<Button name="$parentFilterButton" inherits="UIMenuButtonStretchTemplate" text="FILTER">
+			<Button name="$parentFilterButton" parentKey="filterButton" inherits="UIMenuButtonStretchTemplate" text="FILTER">
 				<Size x="93" y="22"/>
 				<Anchors>
 					<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" x="-5" y="6"/>
@@ -626,15 +629,15 @@
 				</Layers>
 				<Scripts>
 					<OnClick> 
-						<!--PlaySound("igMainMenuOptionCheckBoxOn");-->
-						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+						PlaySound("igMainMenuOptionCheckBoxOn");
+						<!--PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);-->
 						Lib_ToggleDropDownMenu(1, nil, WQT_WorldQuestFrameFilterDropDown, "WQT_WorldQuestFrameFilterButton", 74, 15);
 					</OnClick>	
 				</Scripts>						
 			</Button>
-			<Frame name="$parentFilterDropDown" inherits="Lib_UIDropDownMenuTemplate" />
+			<Frame name="$parentFilterDropDown" parentKey="filterDropDown" inherits="Lib_UIDropDownMenuTemplate" />
 			
-			<Button name="$parentSortButton" inherits="Lib_UIDropDownMenuTemplate" text="">
+			<Button name="$parentSortButton" parentKey="sortButton"  inherits="Lib_UIDropDownMenuTemplate" text="">
 				<Size x="93" y="22"/>
 				<Anchors>
 					<Anchor point="RIGHT" relativeTo="WQT_WorldQuestFrameFilterButton" relativePoint="LEFT" x="10" y="-1"/>
@@ -644,17 +647,19 @@
 						self:EnableMouse(false);
 					</OnLoad>
 					<OnClick> 
-						<!--PlaySound("igMainMenuOptionCheckBoxOn");-->
-						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); 
+						PlaySound("igMainMenuOptionCheckBoxOn");
+						<!--PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -->
 					</OnClick>	
 				</Scripts>						
 			</Button>
 		</Frames>
 		<Scripts>
 			<OnLoad>
-				self:SetFrameLevel(self:GetParent():GetFrameLevel()+4);
-				self.blocker:SetFrameLevel(self:GetFrameLevel()+4);
+				self:OnLoad();
 			</OnLoad>
+			<OnShow>
+				self.scrollFrame:UpdateQuestList();
+			</OnShow>
 		</Scripts>
 	</Frame>
 	
