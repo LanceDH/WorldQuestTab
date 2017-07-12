@@ -80,6 +80,7 @@ local WQT_ZONE_MAPCOORDS = {
 			,[1018] = {["x"] = 0.34, ["y"] = 0.33} -- Val'sharah
 			,[1096] = {["x"] = 0.46, ["y"] = 0.84} -- Eye of Azshara
 			,[1021] = {["x"] = 0.54, ["y"] = 0.68} -- Broken Shore
+			,[1014] = {["x"] = 0.45, ["y"] = 0.64} -- Dalaran
 		}
 		
 		,[13] 	= { --Kalimdor
@@ -183,6 +184,10 @@ local WQT_ZONE_MAPCOORDS = {
 			,[978]	= {["x"] = 0.73, ["y"] = 0.43} -- Ashran
 		}
 		
+		,[1184]	= {
+			[1135]	= {["x"] = 0.8, ["y"] = 0.73}
+		}
+		
 		,[-1]		= {} -- All of Azeroth
 	}
 
@@ -201,6 +206,10 @@ for cId, cCoords in pairs(WQT_AZEROTH_COORDS) do
 	WQT_AZEROTH_COORDS[cId] = nil;
 end
 WQT_AZEROTH_COORDS = nil;
+
+-- for zId, zCoords in pairs(WQT_ZONE_MAPCOORDS[1007]) do
+	-- WQT_ZONE_MAPCOORDS[1184][zId] = {["x"] = -1, ["y"] = -1};
+-- end
 	
 local WQT_SORT_OPTIONS = {[1] = _L["TIME"], [2] = _L["FACTION"], [3] = _L["TYPE"], [4] = _L["ZONE"], [5] = _L["NAME"], [6] = _L["REWARD"]}
 	
@@ -212,12 +221,14 @@ local WQT_FACTION_ICONS = {
 	,[1828] = "Interface/ICONS/INV_LegionCircle_Faction_HightmountainTribes"
 	,[1883] = "Interface/ICONS/INV_LegionCircle_Faction_DreamWeavers"
 	,[1090] = "Interface/ICONS/INV_LegionCircle_Faction_KirinTor"
+	,[2045] = "Interface/Addons/WorldQuestTab/Images/Faction2045" -- Armies of Legionfall 7.2 Legionfall
 	,[609] = "Interface/Addons/WorldQuestTab/Images/Faction609" -- Cenarion Circle - Call of the Scarab
 	,[910] = "Interface/Addons/WorldQuestTab/Images/Faction910" -- Brood of Nozdormu - Call of the Scarab
-	,[2045] = "Interface/Addons/WorldQuestTab/Images/Faction2045" -- Armies of Legionfall 7.2 Legionfall
 	,[1515] = "Interface/Addons/WorldQuestTab/Images/Faction1515" -- Dreanor Arakkoa Outcasts
 	,[1681] = "Interface/Addons/WorldQuestTab/Images/Faction1681" -- Dreanor Vol'jin's Spear
+	,[1682] = "Interface/Addons/WorldQuestTab/Images/Faction1682" -- Dreanor Wrynn's Vanguard
 	,[1731] = "Interface/Addons/WorldQuestTab/Images/Faction1731" -- Dreanor Council of Exarchs
+	,[1445] = "Interface/Addons/WorldQuestTab/Images/Faction1445" -- Draenor Frostwolf Orcs
 }
 	
 local WQT_DEFAULTS = {
@@ -278,8 +289,8 @@ function WQT_Tab_Onclick(self, button)
 	id = self and self:GetID() or nil;
 	if WQT_WorldQuestFrame.selectedTab ~= self then
 		Lib_HideDropDownMenu(1);
-		PlaySound("igMainMenuOptionCheckBoxOn");
-		-- PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -- 7.3
+		--PlaySound("igMainMenuOptionCheckBoxOn");
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -- 7.3
 	end
 	
 	WQT_WorldQuestFrame.selectedTab = self;
@@ -329,8 +340,8 @@ function WQT_Tab_Onclick(self, button)
 end
 
 function WQT_Quest_OnClick(self, button)
-	PlaySound("igMainMenuOptionCheckBoxOn");
-	-- PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -- 7.3
+	--PlaySound("igMainMenuOptionCheckBoxOn");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -- 7.3
 	if not self.questId or self.questId== -1 then return end
 	if IsShiftKeyDown() then
 		if IsWorldQuestHardWatched(self.questId) or (IsWorldQuestWatched(self.questId) and GetSuperTrackedQuestID() == self.questId) then
@@ -1129,14 +1140,15 @@ function WQT:UpdateFlightMapPins()
 	local quest = nil;
 	local questsById;
 	local missingRewardData = false;
-
+	local continentId = GetTaxiMapID();
+	
 	for id in pairs(WQT.FlightMapList) do
 		WQT.FlightMapList[id].id = -1;
 		WQT.FlightMapList[id] = nil;
 	end
 	
-	for zoneId, data in pairs(WQT_ZONE_MAPCOORDS[1007] or {}) do
-		questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId, 1007);
+	for zoneId, data in pairs(WQT_ZONE_MAPCOORDS[continentId] or {}) do
+		questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId, continentId);
 		if questsById and type(questsById) == "table" then
 			for k2, info in ipairs(questsById) do
 				quest = AddQuestToList(nil, info, zoneId);
@@ -1912,7 +1924,6 @@ addon.events:RegisterEvent("ADDON_LOADED");
 addon.events:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
 addon.events:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else print("WQT missing function for: " .. event) end end)
 
-
 addon.events.updatePeriod = WQT_REFRESH_DEFAULT;
 addon.ticker = C_Timer.NewTicker(WQT_REFRESH_DEFAULT, function() WQT:UpdateQuestList(true); end)
 
@@ -1984,7 +1995,7 @@ SLASH_WQTSLASH2 = '/worldquesttab';
 local function slashcmd(msg, editbox)
 	if msg == "options" then
 		print(_L["OPTIONS_INFO"]);
-	-- else
+	else
 		-- WQT_Tab_Onclick(WQT_WorldQuestFrame.selectedTab);
 		-- WQT:UpdateQuestList();
 		
@@ -2000,6 +2011,7 @@ local function slashcmd(msg, editbox)
 		-- local height = WorldMapButton:GetHeight();
 		-- local adjustedY = (centerY + (height/2) - y ) / height;
 		-- local adjustedX = (x - (centerX - (width/2))) / width;
+		-- print(GetCurrentMapAreaID())
 		-- print("{\[\"x\"\] = " .. floor(adjustedX*100)/100 .. ", \[\"y\"\] = " .. floor(adjustedY*100)/100 .. "} ")
 	end
 end
