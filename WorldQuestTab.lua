@@ -979,7 +979,7 @@ WQT_ListButtonMixin = {}
 
 function WQT_ListButtonMixin:OnClick(button)
 	PlaySound("igMainMenuOptionCheckBoxOn");
-	-- PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -- 7.3
+	--PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -- 7.3
 	if not self.questId or self.questId== -1 then return end
 	if IsShiftKeyDown() then
 		if IsWorldQuestHardWatched(self.questId) or (IsWorldQuestWatched(self.questId) and GetSuperTrackedQuestID() == self.questId) then
@@ -1041,6 +1041,7 @@ function WQT_ListButtonMixin:OnEnter()
 		WQT_PoISelectIndicator:Show();
 	end
 	
+	-- I want hightlighted ones to jump to the front, but it makes everything jitter around
 	-- local button = nil;
 	-- for i = 1, NUM_WORLDMAP_TASK_POIS do
 		-- button = _G["WorldMapFrameTaskPOI"..i];
@@ -1219,6 +1220,7 @@ function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 end
 
 function WQT_ListButtonMixin:Update(questInfo)
+	local continentZones = WQT_ZONE_MAPCOORDS[GetCurrentMapAreaID()];
 	self:Show();
 	self.title:SetText(questInfo.title);
 	self.time:SetTextColor(questInfo.color.r, questInfo.color.g, questInfo.color.b, 1);
@@ -1296,6 +1298,8 @@ function WQT_ListButtonMixin:ShowWorldmapHighlight(zoneId)
 
 	if not WQT_ZONE_MAPCOORDS[areaId] or not WQT_ZONE_MAPCOORDS[areaId][zoneId] then return; end;
 
+	WorldMapFrameAreaLabel:SetText(GetMapNameByID(zoneId));
+	
 	local adjustedX, adjustedY = WQT_ZONE_MAPCOORDS[areaId][zoneId].x, WQT_ZONE_MAPCOORDS[areaId][zoneId].y;
 	local width = WorldMapButton:GetWidth();
 	local height = WorldMapButton:GetHeight();
@@ -1475,11 +1479,11 @@ function WQT_QuestDataProvider:GetQuestsInZone(zoneId)
 	local missingRewardData = false;
 	
 	if continentZones then
-		for zoneId, data in pairs(continentZones) do
-			questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId, zoneId);
+		for ID, data in pairs(continentZones) do
+			questsById = C_TaskQuest.GetQuestsForPlayerByMapID(ID, zoneId);
 			if questsById and type(questsById) == "table" then
 				for k2, info in ipairs(questsById) do
-					quest = self:AddQuest(info, zoneId);
+					quest = self:AddQuest(info, ID);
 					if not quest then 
 						missingRewardData = true
 					end;
@@ -1678,7 +1682,7 @@ end
 
 function WQT_ScrollListMixin:ApplySort()
 	local list = self.questList;
-	local sortOption = Lib_UIDropDownMenu_GetSelectedValue(WQT_WorldQuestFrameSortButton);
+	local sortOption = Lib_UIDropDownMenu_GetSelectedValue(WQT_WorldQuestFrame.sortButton);
 	if sortOption == 2 then -- faction
 		SortQuestListByFaction(list);
 	elseif sortOption == 3 then -- type
@@ -1753,7 +1757,7 @@ function WQT_ScrollListMixin:UpdateQuestList()
 	
 	-- If we were missing reward data, redo this function
 	if missingRewardData and not addon.errorTimer then
-		addon.errorTimer = C_Timer.NewTimer(0.5, function() addon.errorTimer = nil; WQT_QuestScrollFrame:UpdateQuestList() end);
+		addon.errorTimer = C_Timer.NewTimer(0.5, function() addon.errorTimer = nil; self:UpdateQuestList() end);
 	end
 	
 	self:UpdateQuestFilters();
@@ -1768,10 +1772,9 @@ end
 function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 
 	if InCombatLockdown() or not WorldMapFrame:IsShown() or not WQT_WorldQuestFrame:IsShown() then return end
-	
-	local scrollFrame = WQT_QuestScrollFrame;
-	local offset = HybridScrollFrame_GetOffset(scrollFrame);
-	local buttons = scrollFrame.buttons;
+
+	local offset = HybridScrollFrame_GetOffset(self);
+	local buttons = self.buttons;
 	if buttons == nil then return; end
 
 	self:ApplySort();
@@ -1793,7 +1796,7 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 		end
 	end
 	
-	HybridScrollFrame_Update(WQT_QuestScrollFrame, #list * WQT_LISTITTEM_HEIGHT, scrollFrame:GetHeight());
+	HybridScrollFrame_Update(self, #list * WQT_LISTITTEM_HEIGHT, self:GetHeight());
 
 	if (not skipPins and not continentZones and #list ~= 0) then	
 		-- If we are filtering PoI we need to call this function to have pin refresh on Blizzard's end
@@ -1916,6 +1919,7 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 				end 
 				self.pinHandler.UpdateFlightMap = true;
 			end)
+		self:UnregisterEvent("ADDON_LOADED");
 	end
 end
 	
@@ -1930,16 +1934,16 @@ function WQT_CoreMixin:WORLD_MAP_UPDATE(loaded_addon)
 end
 
 function WQT_CoreMixin:PLAYER_REGEN_DISABLED(loaded_addon)
-	self:ScrollFrameSetEnabled(false)
+	self.scrollFrame:ScrollFrameSetEnabled(false)
 	self:ShowOverlayMessage(_L["COMBATLOCK"]);
 	Lib_HideDropDownMenu(1);
 end
 
 function WQT_CoreMixin:PLAYER_REGEN_ENABLED(loaded_addon)
 	if self:GetAlpha() == 1 then
-		self:ScrollFrameSetEnabled(true)
+		self.scrollFrame:ScrollFrameSetEnabled(true)
 	end
-	WQT_Tab_Onclick(self.selectedTab);
+	self:SelectTab(self.selectedTab);
 	self.scrollFrame:UpdateQuestList();
 end
 
@@ -1955,12 +1959,12 @@ function WQT_CoreMixin:ShowOverlayMessage(message)
 	local buttons = self.scrollFrame.buttons;
 	message = message or "";
 	
-	ShowUIPanel(WQT_WorldQuestFrame.blocker);
-	WQT_WorldQuestFrame.blocker.text:SetText(message);
-	WQT_QuestScrollFrame:EnableMouseWheel(false);
+	ShowUIPanel(self.blocker);
+	self.blocker.text:SetText(message);
+	self.scrollFrame:EnableMouseWheel(false);
 	
-	WQT_WorldQuestFrameFilterButton:Disable();
-	WQT_WorldQuestFrameSortButton:Disable();
+	self.filterButton:Disable();
+	self.sortButton:Disable();
 	
 	for k, button in ipairs(buttons) do
 		button:Disable();
@@ -1969,23 +1973,23 @@ end
 
 function WQT_CoreMixin:HideOverlayMessage()
 	local buttons = self.scrollFrame.buttons;
-	HideUIPanel(WQT_WorldQuestFrame.blocker);
-	WQT_QuestScrollFrame:EnableMouseWheel(true);
+	HideUIPanel(self.blocker);
+	self.scrollFrame:EnableMouseWheel(true);
 
-	WQT_WorldQuestFrameFilterButton:Enable();
-	WQT_WorldQuestFrameSortButton:Enable();
+	self.filterButton:Enable();
+	self.sortButton:Enable();
 	
 	for k, button in ipairs(buttons) do
 		button:Enable();
 	end
 end
 
-function WQT_CoreMixin:SelectTab(tab, button)
+function WQT_CoreMixin:SelectTab(tab)
 	local id = tab and tab:GetID() or nil;
 	if self.selectedTab ~= tab then
 		Lib_HideDropDownMenu(1);
 		PlaySound("igMainMenuOptionCheckBoxOn");
-		-- PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -- 7.3
+		--PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -- 7.3
 	end
 	
 	self.selectedTab = tab;
@@ -2010,7 +2014,7 @@ function WQT_CoreMixin:SelectTab(tab, button)
 		WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
 		ShowUIPanel(QuestScrollFrame);
 		if not InCombatLockdown() then
-			WQT_QuestScrollFrame:ScrollFrameSetEnabled(false)
+			self.scrollFrame:ScrollFrameSetEnabled(false)
 		end
 	elseif id == 2 then
 		WQT_TabWorld.Highlight:Show();
@@ -2020,7 +2024,7 @@ function WQT_CoreMixin:SelectTab(tab, button)
 		HideUIPanel(QuestScrollFrame);
 		if not InCombatLockdown() then
 			self:SetFrameLevel(self:GetParent():GetFrameLevel()+3);
-			WQT_QuestScrollFrame:ScrollFrameSetEnabled(true)
+			self.scrollFrame:ScrollFrameSetEnabled(true)
 		end
 	elseif id == 3 then
 		self:SetAlpha(0);
