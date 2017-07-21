@@ -1262,7 +1262,7 @@ function WQT_ListButtonMixin:Update(questInfo)
 	-- display reward
 	self.reward:Show();
 	self.reward.icon:Show();
-	r, g, b = GetItemQualityColor(questInfo.rewardQuality);
+	local r, g, b = GetItemQualityColor(questInfo.rewardQuality);
 	self.reward.iconBorder:SetVertexColor(r, g, b);
 	self.reward:SetAlpha(1);
 	if questInfo.rewardTexture == "" then
@@ -1272,7 +1272,7 @@ function WQT_ListButtonMixin:Update(questInfo)
 
 	if questInfo.numItems and questInfo.numItems > 1 then
 		self.reward.amount:SetText(GetAbreviatedNumber(questInfo.numItems));
-		r, g, b = 1, 1, 1;
+		local r, g, b = 1, 1, 1;
 		if questInfo.rewardType == WQT_REWARDTYPE_RELIC then
 			self.reward.amount:SetText("+" .. questInfo.numItems);
 		elseif questInfo.rewardType == WQT_REWARDTYPE_ARTIFACT then
@@ -1477,6 +1477,7 @@ function WQT_QuestDataProvider:GetQuestsInZone(zoneId)
 	
 	local continentZones =WQT_ZONE_MAPCOORDS[zoneId];
 	local missingRewardData = false;
+	local questsById, quest;
 	
 	if continentZones then
 		for ID, data in pairs(continentZones) do
