@@ -1264,7 +1264,7 @@ function WQT_ListButtonMixin:Update(questInfo)
 	-- display reward
 	self.reward:Show();
 	self.reward.icon:Show();
-	r, g, b = GetItemQualityColor(questInfo.rewardQuality);
+	local r, g, b = GetItemQualityColor(questInfo.rewardQuality);
 	self.reward.iconBorder:SetVertexColor(r, g, b);
 	self.reward:SetAlpha(1);
 	if questInfo.rewardTexture == "" then
