@@ -1479,6 +1479,7 @@ function WQT_QuestDataProvider:GetQuestsInZone(zoneId)
 	
 	local continentZones =WQT_ZONE_MAPCOORDS[zoneId];
 	local missingRewardData = false;
+	local questsById, quest;
 	
 	if continentZones then
 		for ID, data in pairs(continentZones) do
