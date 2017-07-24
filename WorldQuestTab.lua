@@ -305,6 +305,8 @@ local function slashcmd(msg, editbox)
 	if msg == "options" then
 		print(_L["OPTIONS_INFO"]);
 	else
+		-- This is to get the zone coords for highlights so I don't have to retype it every time
+		
 		-- WQT_Tab_Onclick(WQT_WorldQuestFrame.selectedTab);
 		-- WQT:UpdateQuestList();
 		
@@ -507,9 +509,9 @@ function WQT:InitFilter(self, level)
 		info.func = function(_, _, _, value)
 				WQT.settings.emissaryOnly = value;
 				WQT_QuestScrollFrame:DisplayQuestList();
-				if (WQT.settings.filterPoI) then
-					WorldMap_UpdateQuestBonusObjectives();
-				end
+				-- if (WQT.settings.filterPoI) then
+					-- WorldMap_UpdateQuestBonusObjectives();
+				-- end
 			end
 		info.checked = function() return WQT.settings.emissaryOnly end;
 		Lib_UIDropDownMenu_AddButton(info, level);			
@@ -595,9 +597,9 @@ function WQT:InitFilter(self, level)
 				info.func = function(_, _, _, value)
 						WQT.settings.preciseFilter = value;
 						WQT_QuestScrollFrame:DisplayQuestList();
-						if (WQT.settings.filterPoI) then
-							WorldMap_UpdateQuestBonusObjectives();
-						end
+						-- if (WQT.settings.filterPoI) then
+							-- WorldMap_UpdateQuestBonusObjectives();
+						-- end
 					end
 				info.checked = function() return WQT.settings.preciseFilter end;
 				Lib_UIDropDownMenu_AddButton(info, level);	
@@ -606,7 +608,7 @@ function WQT:InitFilter(self, level)
 				info.tooltipTitle = _L["PIN_DISABLE_TT"];
 				info.func = function(_, _, _, value)
 						-- Update these numbers when adding now options !
-						local start, stop = 5, 9
+						local start, stop = 5, 8
 						WQT.settings.disablePoI = value;
 						if (value) then
 							WQT_WorldQuestFrame.pinHandler.pinPool:ReleaseAll();
@@ -629,15 +631,15 @@ function WQT:InitFilter(self, level)
 				info.checked = function() return WQT.settings.disablePoI end;
 				Lib_UIDropDownMenu_AddButton(info, level);
 				
-				info.text = _L["FILTER_PINS"];
-				info.disabled = WQT.settings.disablePoI;
-				info.tooltipTitle = _L["FILTER_PINS_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.filterPoI = value;
-						WorldMap_UpdateQuestBonusObjectives();
-					end
-				info.checked = function() return WQT.settings.filterPoI end;
-				Lib_UIDropDownMenu_AddButton(info, level);
+				-- info.text = _L["FILTER_PINS"];
+				-- info.disabled = WQT.settings.disablePoI;
+				-- info.tooltipTitle = _L["FILTER_PINS_TT"];
+				-- info.func = function(_, _, _, value)
+						-- WQT.settings.filterPoI = value;
+						-- WorldMap_UpdateQuestBonusObjectives();
+					-- end
+				-- info.checked = function() return WQT.settings.filterPoI end;
+				-- Lib_UIDropDownMenu_AddButton(info, level);
 				
 				info.text = _L["PIN_REWARDS"];
 				info.disabled = WQT.settings.disablePoI;
@@ -1109,7 +1111,7 @@ function WQT_ListButtonMixin:OnEnter()
 			GameTooltip_AddQuestRewardsToTooltip(WorldMapTooltip, self.questId);
 		end
 	end
-
+	
 	-- Add debug lines
 	-- for k, v in pairs(self.info)do
 		-- WorldMapTooltip:AddDoubleLine(k, tostring(v));
@@ -1609,9 +1611,9 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 			end
 			local pin = WQT_WorldQuestFrame.pinHandler.pinPool:Acquire();
 			pin:Update(PoI, quest, k);
-			if (WQT.settings.filterPoI and not quest.passedFilter) then
-				PoI:Hide();
-			end
+			-- if (WQT.settings.filterPoI and not quest.passedFilter) then
+				-- PoI:Hide();
+			-- end
 		end
 	end
 end
@@ -1802,7 +1804,7 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 		-- If we are filtering PoI we need to call this function to have pin refresh on Blizzard's end
 		-- A hook calls UpdateMapPoI so we don't want to call it twice
 		if(WQT.settings.filterPoI) then
-			WorldMap_UpdateQuestBonusObjectives();
+			-- WorldMap_UpdateQuestBonusObjectives();
 		else
 			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
 		end
