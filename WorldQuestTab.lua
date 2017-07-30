@@ -185,7 +185,9 @@ local WQT_ZONE_MAPCOORDS = {
 		}
 		
 		,[1184]	= {
-			[1135]	= {["x"] = 0.8, ["y"] = 0.73}
+			[1135]	= {["x"] = 0.8, ["y"] = 0.73} -- Krokuun
+			,[1171]	= {["x"] = 0, ["y"] = 0} -- Antoran Wastes
+			,[1170]	= {["x"] = 0.8, ["y"] = 0.73} -- Mac'Aree
 		}
 		
 		,[-1]		= {} -- All of Azeroth
@@ -221,7 +223,9 @@ local WQT_FACTION_ICONS = {
 	,[1828] = "Interface/ICONS/INV_LegionCircle_Faction_HightmountainTribes"
 	,[1883] = "Interface/ICONS/INV_LegionCircle_Faction_DreamWeavers"
 	,[1090] = "Interface/ICONS/INV_LegionCircle_Faction_KirinTor"
-	,[2045] = "Interface/Addons/WorldQuestTab/Images/Faction2045" -- Armies of Legionfall 7.2 Legionfall
+	,[2045] = "Interface/Addons/WorldQuestTab/Images/Faction2045" --"Interface/ICONS/INV_LegionCircle_Faction_Legionfall" -- This isn't in until 7.3
+	,[2165] = "Interface/ICONS/INV_LegionCircle_Faction_ArmyoftheLight"
+	,[2170] = "Interface/ICONS/INV_LegionCircle_Faction_ArgussianReach"
 	,[609] = "Interface/Addons/WorldQuestTab/Images/Faction609" -- Cenarion Circle - Call of the Scarab
 	,[910] = "Interface/Addons/WorldQuestTab/Images/Faction910" -- Brood of Nozdormu - Call of the Scarab
 	,[1515] = "Interface/Addons/WorldQuestTab/Images/Faction1515" -- Dreanor Arakkoa Outcasts
@@ -325,17 +329,6 @@ local function slashcmd(msg, editbox)
 		-- print(GetCurrentMapAreaID())
 		-- print("{\[\"x\"\] = " .. floor(adjustedX*100)/100 .. ", \[\"y\"\] = " .. floor(adjustedY*100)/100 .. "} ")
 	end
-end
-
-local function IsArtifactItem(numItems, itemId)
-	-- Because spanish sometimes have a different spell name, and items like petbattle bandages are also 0-8
-	local _, itemLink, _, itemLevel, itemMinLevel, _, _, _, _, _, _, itemClassID, itemSubClassID = GetItemInfo(itemId);
-	return numItems == 1 and itemLevel == 110 and itemClassID == 0 and itemSubClassID == 8;
-end
-
-local function IsRelicItem(itemId)
-	local itemClassID, itemSubClassID = select(12, GetItemInfo(itemId));
-	return (itemClassID == 3 and itemSubClassID == 11);
 end
 
 local function GetSortedFilterOrder(filterId)
@@ -980,8 +973,8 @@ end
 WQT_ListButtonMixin = {}
 
 function WQT_ListButtonMixin:OnClick(button)
-	PlaySound("igMainMenuOptionCheckBoxOn");
-	--PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -- 7.3
+		PlaySound("igMainMenuOptionCheckBoxOn");
+		--PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -- 7.3
 	if not self.questId or self.questId== -1 then return end
 	if IsShiftKeyDown() then
 		if IsWorldQuestHardWatched(self.questId) or (IsWorldQuestWatched(self.questId) and GetSuperTrackedQuestID() == self.questId) then
@@ -1116,8 +1109,8 @@ function WQT_ListButtonMixin:OnEnter()
 	-- for k, v in pairs(self.info)do
 		-- WorldMapTooltip:AddDoubleLine(k, tostring(v));
 	-- end
-	
 	WorldMapTooltip:Show();
+	
 
 	-- If we are on a continent, we want to highlight the relevant zone
 	self:ShowWorldmapHighlight(self.info.zoneId);
@@ -1345,14 +1338,29 @@ function WQT_QuestDataProvider:OnLoad()
 	self.keyList = {};
 end
 
+function WQT_QuestDataProvider:GetRelicRewardLevel(questID)
+	local level = 0;
+	
+	GameTooltip_AddQuestRewardsToTooltip(WQT_Tooltip, questID);
+	for i=4, 6 do
+		local lineText = _G["WQT_TooltipTooltipTextLeft"..i]:GetText();
+		level = tonumber(lineText:match("^%+(%d+)"));
+		if level and level > 0 then break; end
+	end
+	
+	return level;
+end
+
+
 function WQT_QuestDataProvider:SetQuestReward(info)
 
 	local _, texture, numItems, quality, rewardType, color, rewardId, itemId = nil, nil, 0, 1, 0, WQT_COLOR_MISSING, 0, 0;
 	
 	if GetNumQuestLogRewards(info.id) > 0 then
 		_, texture, numItems, quality, _, itemId = GetQuestLogRewardInfo(1, info.id);
+		--info.itemID = itemId;
 		
-		if itemId and IsArtifactItem(numItems, itemId) then -- Artifact
+		if itemId and IsArtifactPowerItem(itemId) then
 			local text = GetSpellDescription(select(3, GetItemSpell(itemId)));
 			numItems = tonumber(string.match(text:gsub("[%p| ]", ""), '%d+'));
 			if (text:find(THIRD_NUMBER)) then -- Billion just in case
@@ -1369,14 +1377,9 @@ function WQT_QuestDataProvider:SetQuestReward(info)
 		elseif itemId and select(9, GetItemInfo(itemId)) ~= "" then -- Gear
 			rewardType = WQT_REWARDTYPE_ARMOR;
 			color = WQT_COLOR_ARMOR;
-		elseif itemId and IsRelicItem(itemId) then -- Relic
-			local _, link = GetItemInfo(itemId);
-			for k, v in pairs(GetItemStats(link)) do
-				if (k == "RELIC_ITEM_LEVEL_INCREASE") then
-					numItems = v;
-					break;
-				end
-			end
+		elseif itemId and IsArtifactRelicItem(itemId) then
+			-- because getting a link of the itemID only shows the base item
+			numItems = self:GetRelicRewardLevel(info.id)
 			rewardType = WQT_REWARDTYPE_RELIC;	
 			color = WQT_COLOR_RELIC;
 		else	-- Normal items
@@ -1478,11 +1481,12 @@ function WQT_QuestDataProvider:GetQuestsInZone(zoneId)
 	self.pool:ReleaseAll();
 	
 	local continentZones =WQT_ZONE_MAPCOORDS[zoneId];
+	local continentID = select(2, GetCurrentMapContinent());
 	local missingRewardData = false;
 	local questsById, quest;
-	
+
 	if continentZones then
-		for ID, data in pairs(continentZones) do
+		for ID, data in pairs(continentZones) do	
 			questsById = C_TaskQuest.GetQuestsForPlayerByMapID(ID, zoneId);
 			if questsById and type(questsById) == "table" then
 				for k2, info in ipairs(questsById) do
@@ -1494,7 +1498,7 @@ function WQT_QuestDataProvider:GetQuestsInZone(zoneId)
 			end
 		end
 	else
-		questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId);
+		questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId, continentID);
 		if questsById and type(questsById) == "table" then
 			for k, info in ipairs(questsById) do
 				quest = self:AddQuest(info, zoneId);
@@ -1804,11 +1808,12 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 	if (not skipPins and not continentZones and #list ~= 0) then	
 		-- If we are filtering PoI we need to call this function to have pin refresh on Blizzard's end
 		-- A hook calls UpdateMapPoI so we don't want to call it twice
-		if(WQT.settings.filterPoI) then
-			-- WorldMap_UpdateQuestBonusObjectives();
-		else
-			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
-		end
+		-- if(WQT.settings.filterPoI) then
+			--WorldMap_UpdateQuestBonusObjectives();
+		-- else
+			-- WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
+		-- end
+		WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
 	end
 	
 	self:UpdateFilterDisplay();
@@ -1928,11 +1933,13 @@ end
 	
 function WQT_CoreMixin:WORLD_MAP_UPDATE(loaded_addon)
 	local mapAreaID = GetCurrentMapAreaID();
-	if not InCombatLockdown() and self.lastMapId ~= mapAreaID then
+	local level = GetCurrentMapDungeonLevel();
+	if not InCombatLockdown() and (self.currentMapId ~= mapAreaID or self.currentLevel ~= level) then
 
 		Lib_HideDropDownMenu(1);
 		self.scrollFrame:UpdateQuestList();
-		addon.lastMapId = mapAreaID;
+		self.currentMapId = mapAreaID;
+		self.currentLevel = level;
 	end
 end
 
