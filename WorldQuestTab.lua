@@ -311,9 +311,6 @@ local function slashcmd(msg, editbox)
 	else
 		-- This is to get the zone coords for highlights so I don't have to retype it every time
 		
-		-- WQT_Tab_Onclick(WQT_WorldQuestFrame.selectedTab);
-		-- WQT:UpdateQuestList();
-		
 		-- local x, y = GetCursorPosition();
 		-- if ( WorldMapScrollFrame.panning ) then
 			-- WorldMapScrollFrame_OnPan(x, y);
@@ -784,16 +781,16 @@ function WQT:InitTrackDropDown(self, level)
 	if (TomTom and WQT.settings.useTomTom) then
 	
 		local qInfo = self:GetParent().info;
-		if (not TomTom:WaypointMFExists(qInfo.zoneId, qInfo.mapF, qInfo.mapX, qInfo.mapY, qInfo.title)) then
+		if (not TomTom:WaypointMFExists(qInfo.continentID, qInfo.mapF, qInfo.mapX, qInfo.mapY, qInfo.title)) then
 			info.text = _L["TRACKDD_TOMTOM"];
 			info.func = function()
-				TomTom:AddMFWaypoint(qInfo.zoneId, qInfo.mapF, qInfo.mapX, qInfo.mapY, {["title"] = qInfo.title})
+				TomTom:AddMFWaypoint(qInfo.continentID, qInfo.mapF, qInfo.mapX, qInfo.mapY, {["title"] = qInfo.title})
 			end
 		else
 			info.text = _L["TRACKDD_TOMTOM_REMOVE"];
 			info.func = function()
-				local key = TomTom:GetKeyArgs(qInfo.zoneId, qInfo.mapF, qInfo.mapX, qInfo.mapY, qInfo.title);
-				local wp = TomTom.waypoints[qInfo.zoneId] and TomTom.waypoints[qInfo.zoneId][key];
+				local key = TomTom:GetKeyArgs(qInfo.continentID, qInfo.mapF, qInfo.mapX, qInfo.mapY, qInfo.title);
+				local wp = TomTom.waypoints[qInfo.continentID] and TomTom.waypoints[qInfo.continentID][key];
 				TomTom:RemoveWaypoint(wp);
 			end
 		end
@@ -1433,7 +1430,7 @@ function WQT_QuestDataProvider:SetSubReward(info)
 	info.subRewardType = subType;
 end
 
-function WQT_QuestDataProvider:AddQuest(qInfo, zoneId)
+function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentID)
 	local haveData = HaveQuestRewardData(qInfo.questId);
 	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(qInfo.questId);
 	local minutes, timeString, color, timeStringShort = GetQuestTimeString(qInfo.questId);
@@ -1456,6 +1453,7 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId)
 	info.rarity = rarity;
 	info.isElite = isElite;
 	info.zoneId = zoneId;
+	info.continentID = continentID or zoneId;
 	info.tradeskill = tradeskillLineIndex;
 	info.numObjectives = qInfo.numObjectives;
 	info.passedFilter = true;
@@ -1490,7 +1488,7 @@ function WQT_QuestDataProvider:GetQuestsInZone(zoneId)
 			questsById = C_TaskQuest.GetQuestsForPlayerByMapID(ID, zoneId);
 			if questsById and type(questsById) == "table" then
 				for k2, info in ipairs(questsById) do
-					quest = self:AddQuest(info, ID);
+					quest = self:AddQuest(info, ID, zoneId);
 					if not quest then 
 						missingRewardData = true
 					end;
@@ -1501,7 +1499,7 @@ function WQT_QuestDataProvider:GetQuestsInZone(zoneId)
 		questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId, continentID);
 		if questsById and type(questsById) == "table" then
 			for k, info in ipairs(questsById) do
-				quest = self:AddQuest(info, zoneId);
+				quest = self:AddQuest(info, zoneId, continentID);
 				if not quest then
 					missingRewardData = true
 				end;
