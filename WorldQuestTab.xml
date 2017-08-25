@@ -12,7 +12,7 @@
 	<Script file="Locals.lua"/>
 	<Script file="WorldQuestTab.lua"/>
 
-	<!--
+	<!-- 
 	<Frame name="WQT_DebugLine" parentArray="DependencyLines" virtual="true">
 		<Layers>
 			<Layer level="OVERLAY" textureSubLevel="-2">
@@ -629,8 +629,7 @@
 				</Layers>
 				<Scripts>
 					<OnClick> 
-						PlaySound("igMainMenuOptionCheckBoxOn");
-						<!--PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);-->
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 						Lib_ToggleDropDownMenu(1, nil, WQT_WorldQuestFrameFilterDropDown, "WQT_WorldQuestFrameFilterButton", 74, 15);
 					</OnClick>	
 				</Scripts>						
@@ -647,8 +646,7 @@
 						self:EnableMouse(false);
 					</OnLoad>
 					<OnClick> 
-						PlaySound("igMainMenuOptionCheckBoxOn");
-						<!--PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);-->
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 					</OnClick>	
 				</Scripts>						
 			</Button>

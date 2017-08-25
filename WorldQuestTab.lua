@@ -40,6 +40,8 @@ local WQT_EXPERIENCE = "Interface/ICONS/XP_ICON";
 local WQT_HONOR = "Interface/ICONS/Achievement_LegionPVPTier4";
 local WQT_FACTIONUNKNOWN = "Interface/addons/WorldQuestTab/Images/FactionUnknown";
 
+local WQT_ARGUS_COSMIC_BUTTONS = {KrokuunButton, MacAreeButton, AntoranWastesButton}
+
 local WQT_TYPEFLAG_LABELS = {
 		[2] = {["Default"] = _L["TYPE_DEFAULT"], ["Elite"] = _L["TYPE_ELITE"], ["PvP"] = _L["TYPE_PVP"], ["Petbattle"] = _L["TYPE_PETBATTLE"], ["Dungeon"] = _L["TYPE_DUNGEON"]
 			, ["Raid"] = _L["TYPE_RAID"], ["Profession"] = _L["TYPE_PROFESSION"], ["Invasion"] = _L["TYPE_INVASION"]}--, ["Emissary"] = _L["TYPE_EMISSARY"]}
@@ -73,7 +75,7 @@ local WQT_FILTER_FUNCTIONS = {
 
 local WQT_ZONE_MAPCOORDS = {
 		[1007] 	= { -- Legion
-			[1015] = {["x"] = 0.33, ["y"] = 0.58} -- Azsuna
+			[1015] =  {["x"] = 0.33, ["y"] = 0.58} -- Azsuna
 			,[1033] = {["x"] = 0.46, ["y"] = 0.45} -- Suramar
 			,[1017] = {["x"] = 0.60, ["y"] = 0.33} -- Stormheim
 			,[1024] = {["x"] = 0.46, ["y"] = 0.23} -- Highmountain
@@ -185,9 +187,9 @@ local WQT_ZONE_MAPCOORDS = {
 		}
 		
 		,[1184]	= {
-			[1135]	= {["x"] = 0.8, ["y"] = 0.73} -- Krokuun
-			,[1171]	= {["x"] = 0, ["y"] = 0} -- Antoran Wastes
-			,[1170]	= {["x"] = 0.8, ["y"] = 0.73} -- Mac'Aree
+			[1135]	= {["x"] = 0.64, ["y"] = 0.64} -- Krokuun
+			,[1171]	= {["x"] = 0.26, ["y"] = 0.55} -- Antoran Wastes
+			,[1170]	= {["x"] = 0.61, ["y"] = 0.28} -- Mac'Aree
 		}
 		
 		,[-1]		= {} -- All of Azeroth
@@ -208,10 +210,6 @@ for cId, cCoords in pairs(WQT_AZEROTH_COORDS) do
 	WQT_AZEROTH_COORDS[cId] = nil;
 end
 WQT_AZEROTH_COORDS = nil;
-
--- for zId, zCoords in pairs(WQT_ZONE_MAPCOORDS[1007]) do
-	-- WQT_ZONE_MAPCOORDS[1184][zId] = {["x"] = -1, ["y"] = -1};
--- end
 	
 local WQT_SORT_OPTIONS = {[1] = _L["TIME"], [2] = _L["FACTION"], [3] = _L["TYPE"], [4] = _L["ZONE"], [5] = _L["NAME"], [6] = _L["REWARD"]}
 	
@@ -223,7 +221,7 @@ local WQT_FACTION_ICONS = {
 	,[1828] = "Interface/ICONS/INV_LegionCircle_Faction_HightmountainTribes"
 	,[1883] = "Interface/ICONS/INV_LegionCircle_Faction_DreamWeavers"
 	,[1090] = "Interface/ICONS/INV_LegionCircle_Faction_KirinTor"
-	,[2045] = "Interface/Addons/WorldQuestTab/Images/Faction2045" --"Interface/ICONS/INV_LegionCircle_Faction_Legionfall" -- This isn't in until 7.3
+	,[2045] = --[["Interface/Addons/WorldQuestTab/Images/Faction2045" ]] "Interface/ICONS/INV_LegionCircle_Faction_Legionfall" -- This isn't in until 7.3
 	,[2165] = "Interface/ICONS/INV_LegionCircle_Faction_ArmyoftheLight"
 	,[2170] = "Interface/ICONS/INV_LegionCircle_Faction_ArgussianReach"
 	,[609] = "Interface/Addons/WorldQuestTab/Images/Faction609" -- Cenarion Circle - Call of the Scarab
@@ -256,7 +254,8 @@ local WQT_DEFAULTS = {
 		filters = {
 				[1] = {["name"] = _L["FACTION"]
 				, ["flags"] = {[GetFactionInfoByID(1859)] = false, [GetFactionInfoByID(1894)] = false, [GetFactionInfoByID(1828)] = false, [GetFactionInfoByID(1883)] = false
-								, [GetFactionInfoByID(1948)] = false, [GetFactionInfoByID(1900)] = false, [GetFactionInfoByID(1090)] = false, [GetFactionInfoByID(2045)] = false, [_L["OTHER_FACTION"]] = false, [_L["NO_FACTION"]] = false}}
+								, [GetFactionInfoByID(1948)] = false, [GetFactionInfoByID(1900)] = false, [GetFactionInfoByID(1090)] = false, [GetFactionInfoByID(2045)] = false
+								, [GetFactionInfoByID(2165)] = false, [GetFactionInfoByID(2170)] = false, [_L["OTHER_FACTION"]] = false, [_L["NO_FACTION"]] = false}}
 				,[2] = {["name"] = _L["TYPE"]
 						, ["flags"] = {["Default"] = false, ["Elite"] = false, ["PvP"] = false, ["Petbattle"] = false, ["Dungeon"] = false, ["Raid"] = false, ["Profession"] = false, ["Invasion"] = false}}--, ["Emissary"] = false}}
 				,[3] = {["name"] = _L["REWARD"]
@@ -347,6 +346,12 @@ local function GetSortedFilterOrder(filterId)
 				return a < b; 
 			end)
 	return tbl;
+end
+
+function UnlockArgusHighlights()
+	for k, button in ipairs(WQT_ARGUS_COSMIC_BUTTONS) do
+		button:UnlockHighlight(); 
+	end
 end
 
 local function SortQuestList(list)
@@ -778,19 +783,20 @@ function WQT:InitTrackDropDown(self, level)
 	end
 	
 	-- TomTom functionality
-	if (TomTom and WQT.settings.useTomTom) then
+	-- Exclude Argus because it's a hot mess
+	if (TomTom and WQT.settings.useTomTom and self:GetParent().info.continentID and self:GetParent().info.continentID ~= 1184) then
 	
 		local qInfo = self:GetParent().info;
-		if (not TomTom:WaypointMFExists(qInfo.continentID, qInfo.mapF, qInfo.mapX, qInfo.mapY, qInfo.title)) then
+		if (not TomTom:WaypointMFExists(qInfo.zoneId, qInfo.mapF, qInfo.mapX, qInfo.mapY, qInfo.title)) then
 			info.text = _L["TRACKDD_TOMTOM"];
 			info.func = function()
-				TomTom:AddMFWaypoint(qInfo.continentID, qInfo.mapF, qInfo.mapX, qInfo.mapY, {["title"] = qInfo.title})
+				TomTom:AddMFWaypoint(qInfo.zoneId, qInfo.mapF, qInfo.mapX, qInfo.mapY, {["title"] = qInfo.title})
 			end
 		else
 			info.text = _L["TRACKDD_TOMTOM_REMOVE"];
 			info.func = function()
-				local key = TomTom:GetKeyArgs(qInfo.continentID, qInfo.mapF, qInfo.mapX, qInfo.mapY, qInfo.title);
-				local wp = TomTom.waypoints[qInfo.continentID] and TomTom.waypoints[qInfo.continentID][key];
+				local key = TomTom:GetKeyArgs(qInfo.zoneId, qInfo.mapF, qInfo.mapX, qInfo.mapY, qInfo.title);
+				local wp = TomTom.waypoints[qInfo.zoneId] and TomTom.waypoints[qInfo.zoneId][key];
 				TomTom:RemoveWaypoint(wp);
 			end
 		end
@@ -970,8 +976,7 @@ end
 WQT_ListButtonMixin = {}
 
 function WQT_ListButtonMixin:OnClick(button)
-		PlaySound("igMainMenuOptionCheckBoxOn");
-		--PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -- 7.3
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	if not self.questId or self.questId== -1 then return end
 	if IsShiftKeyDown() then
 		if IsWorldQuestHardWatched(self.questId) or (IsWorldQuestWatched(self.questId) and GetSuperTrackedQuestID() == self.questId) then
@@ -999,6 +1004,7 @@ function WQT_ListButtonMixin:OnClick(button)
 end
 
 function WQT_ListButtonMixin:OnLeave()
+	UnlockArgusHighlights();
 	HideUIPanel(self.highlight);
 	WorldMapTooltip:Hide();
 	WQT_PoISelectIndicator:Hide();
@@ -1282,22 +1288,30 @@ function WQT_ListButtonMixin:Update(questInfo)
 	if WQT.versionCheck and self.settings.funQuests then
 		WQT:ImproveDisplay(self);
 	end
-
 end
 
 function WQT_ListButtonMixin:ShowWorldmapHighlight(zoneId)
 	local areaId = GetCurrentMapAreaID();
-
-	if not WQT_ZONE_MAPCOORDS[areaId] or not WQT_ZONE_MAPCOORDS[areaId][zoneId] then return; end;
+	local coords = WQT_ZONE_MAPCOORDS[areaId] and WQT_ZONE_MAPCOORDS[areaId][zoneId];
+	if not coords then return; end;
 
 	WorldMapFrameAreaLabel:SetText(GetMapNameByID(zoneId));
-	
-	local adjustedX, adjustedY = WQT_ZONE_MAPCOORDS[areaId][zoneId].x, WQT_ZONE_MAPCOORDS[areaId][zoneId].y;
 	local width = WorldMapButton:GetWidth();
 	local height = WorldMapButton:GetHeight();
+	local isArgusContinent = WorldMapFrame_IsArgusContinentMap();
+	
+	-- Special snowflake Argus
+	if isArgusContinent then
+		for k, button in ipairs(WQT_ARGUS_COSMIC_BUTTONS) do
+			if (button.zoneID == zoneId) then 
+				button:LockHighlight(); 
+				break;
+			end
+		end
+	end
 	
 	-- Now we cheat by acting like we moved our mouse over the relevant zone
-	local name, fileName, texPercentageX, texPercentageY, textureX, textureY, scrollChildX, scrollChildY, minLevel, maxLevel, petMinLevel, petMaxLevel = UpdateMapHighlight( adjustedX, adjustedY );
+	local name, fileName, texPercentageX, texPercentageY, textureX, textureY, scrollChildX, scrollChildY, minLevel, maxLevel, petMinLevel, petMaxLevel = UpdateMapHighlight( coords.x, coords.y );
 	if ( fileName ) then
 		WQT_MapZoneHightlight.texture:SetTexCoord(0, texPercentageX, 0, texPercentageY);
 		WQT_MapZoneHightlight.texture:SetTexture("Interface\\WorldMap\\"..fileName.."\\"..fileName.."Highlight");
@@ -1484,26 +1498,24 @@ function WQT_QuestDataProvider:GetQuestsInZone(zoneId)
 	local questsById, quest;
 
 	if continentZones then
+		-- Have to do Argus differently because not like Blizzard gives a fuck about consistency and decided to make Argus a cosmetic map
 		for ID, data in pairs(continentZones) do	
-			questsById = C_TaskQuest.GetQuestsForPlayerByMapID(ID, zoneId);
-			if questsById and type(questsById) == "table" then
-				for k2, info in ipairs(questsById) do
-					quest = self:AddQuest(info, ID, zoneId);
-					if not quest then 
-						missingRewardData = true
-					end;
-				end
-			end
-		end
-	else
-		questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId, continentID);
-		if questsById and type(questsById) == "table" then
-			for k, info in ipairs(questsById) do
-				quest = self:AddQuest(info, zoneId, continentID);
-				if not quest then
+			questsById = C_TaskQuest.GetQuestsForPlayerByMapID(ID, continentID ~= 1184 and continentID or ID);
+			for k2, info in ipairs(questsById) do
+				quest = self:AddQuest(info, ID, zoneId);
+				if not quest then 
 					missingRewardData = true
 				end;
 			end
+		end
+	else
+		-- Dalaran being a special snowflake
+		questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId, zoneId ~= 1014 and zoneId or continentID);
+		for k, info in ipairs(questsById) do
+			quest = self:AddQuest(info, zoneId, continentID);
+			if not quest then
+				missingRewardData = true
+			end;
 		end
 	end
 	
@@ -1556,13 +1568,13 @@ function WQT_PinHandlerMixin:OnLoad()
 end
 
 function WQT_PinHandlerMixin:UpdateFlightMapPins()
-	if WQT.settings.disablePoI then return; end
+	if not FlightMapFrame:IsShown() or WQT.settings.disablePoI then return; end
 	local quest = nil;
 	local questsById;
 	local missingRewardData = false;
 	local continentId = GetTaxiMapID();
 	
-	local missingRewardData = _questDataProvider:GetQuestsInZone(GetTaxiMapID());
+	local missingRewardData = _questDataProvider:GetQuestsInZone(continentId);
 	WQT.FlightMapList = _questDataProvider:GetKeyList()
 	
 	-- If nothing is missing, we can stop updating until we open the map the next time
@@ -1572,6 +1584,7 @@ function WQT_PinHandlerMixin:UpdateFlightMapPins()
 	
 	quest = nil;
 	for k, PoI in pairs(WQT.FlightmapPins.activePins) do
+		
 		quest = WQT.FlightMapList[k]
 		if (quest) then
 			local pin = self.pinPool:Acquire();
@@ -1916,7 +1929,8 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 		end
 		WQT.FlightMapList = {};
 		self.pinHandler.UpdateFlightMap = true;
-		hooksecurefunc(WQT.FlightmapPins, "RefreshAllData", function() if self.pinHandler.UpdateFlightMap then self.pinHandler:UpdateFlightMapPins() end end)
+		hooksecurefunc(WQT.FlightmapPins, "OnShow", function() if self.pinHandler.UpdateFlightMap then self.pinHandler:UpdateFlightMapPins() end end);
+		hooksecurefunc(WQT.FlightmapPins, "RefreshAllData", function() if self.pinHandler.UpdateFlightMap then self.pinHandler:UpdateFlightMapPins() end end);
 		
 		hooksecurefunc(WQT.FlightmapPins, "OnHide", function() 
 				for id in pairs(WQT.FlightMapList) do
@@ -1989,6 +2003,7 @@ function WQT_CoreMixin:HideOverlayMessage()
 	
 	for k, button in ipairs(buttons) do
 		button:Enable();
+		button:Enable();
 	end
 end
 
@@ -1996,8 +2011,7 @@ function WQT_CoreMixin:SelectTab(tab)
 	local id = tab and tab:GetID() or nil;
 	if self.selectedTab ~= tab then
 		Lib_HideDropDownMenu(1);
-		PlaySound("igMainMenuOptionCheckBoxOn");
-		--PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); -- 7.3
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	end
 	
 	self.selectedTab = tab;
