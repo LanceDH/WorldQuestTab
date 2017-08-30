@@ -519,7 +519,7 @@ function WQT:InitFilter(self, level)
 				WQT.settings.emissaryOnly = value;
 				WQT_QuestScrollFrame:DisplayQuestList();
 				if (WQT.settings.filterPoI) then
-					WorldMap_UpdateQuestBonusObjectives();
+					WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
 				end
 			end
 		info.checked = function() return WQT.settings.emissaryOnly end;
@@ -570,7 +570,7 @@ function WQT:InitFilter(self, level)
 					info.func = function(_, _, _, value)
 										options[flagKey] = value;
 										if (value) then
-											WorldMap_UpdateQuestBonusObjectives();
+											WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
 										end
 										WQT_QuestScrollFrame:DisplayQuestList();
 									end
@@ -607,7 +607,7 @@ function WQT:InitFilter(self, level)
 						WQT.settings.preciseFilter = value;
 						WQT_QuestScrollFrame:DisplayQuestList();
 						if (WQT.settings.filterPoI) then
-							WorldMap_UpdateQuestBonusObjectives();
+							WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
 						end
 					end
 				info.checked = function() return WQT.settings.preciseFilter end;
@@ -621,12 +621,10 @@ function WQT:InitFilter(self, level)
 						WQT.settings.disablePoI = value;
 						if (value) then
 							WQT_WorldQuestFrame.pinHandler.pinPool:ReleaseAll();
-							WorldMap_UpdateQuestBonusObjectives();
 							for i = start, stop do
 								Lib_UIDropDownMenu_DisableButton(2, i);
 							end
 						else
-							WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
 							for i = start, stop do
 								Lib_UIDropDownMenu_EnableButton(2, i);
 							end
@@ -636,6 +634,7 @@ function WQT:InitFilter(self, level)
 								Lib_UIDropDownMenu_DisableButton(2, 8);
 							end
 						end
+						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(true)
 					end
 				info.checked = function() return WQT.settings.disablePoI end;
 				Lib_UIDropDownMenu_AddButton(info, level);
@@ -645,7 +644,7 @@ function WQT:InitFilter(self, level)
 				info.tooltipTitle = _L["FILTER_PINS_TT"];
 				info.func = function(_, _, _, value)
 						WQT.settings.filterPoI = value;
-						WorldMap_UpdateQuestBonusObjectives();
+						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
 					end
 				info.checked = function() return WQT.settings.filterPoI end;
 				Lib_UIDropDownMenu_AddButton(info, level);
@@ -655,7 +654,7 @@ function WQT:InitFilter(self, level)
 				info.tooltipTitle = _L["PIN_REWARDS_TT"];
 				info.func = function(_, _, _, value)
 						WQT.settings.showPinReward = value;
-						WorldMap_UpdateQuestBonusObjectives();
+						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
 						if (value) then
 							Lib_UIDropDownMenu_EnableButton(2, 8);
 						else
@@ -690,7 +689,7 @@ function WQT:InitFilter(self, level)
 				info.tooltipTitle = _L["PIN_BIGGER_TT"];
 				info.func = function(_, _, _, value)
 						WQT.settings.bigPoI = value;
-						WorldMap_UpdateQuestBonusObjectives();
+						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
 					end
 				info.checked = function() return WQT.settings.bigPoI end;
 				Lib_UIDropDownMenu_AddButton(info, level);
@@ -1623,10 +1622,24 @@ function WQT_PinHandlerMixin:UpdateFlightMapPins()
 end
 
 function WQT_PinHandlerMixin:UpdateMapPoI()
-	if WQT.settings.disablePoI then return; end
-	if InCombatLockdown() then
+	if (GetCurrentMapContinent() <= 0 or select(2, GetCurrentMapContinent()) == GetCurrentMapAreaID()) then
+		for i = 1, NUM_WORLDMAP_TASK_POIS do
+			PoI = _G["WorldMapFrameTaskPOI"..i];
+			PoI:SetShown(false);
+		end
 		return;
 	end
+	if (WQT.settings.disablePoI) then 
+		for i = 1, NUM_WORLDMAP_TASK_POIS do
+			PoI = _G["WorldMapFrameTaskPOI"..i];
+			PoI:SetShown(true);
+		end
+		return; 
+	end
+	
+	-- if InCombatLockdown() then
+		-- return;
+	-- end
 	local PoI, quest;
 	
 	WQT_WorldQuestFrame.pinHandler.pinPool:ReleaseAll();
@@ -1641,9 +1654,12 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 			end
 			local pin = WQT_WorldQuestFrame.pinHandler.pinPool:Acquire();
 			pin:Update(PoI, quest, k);
-			if (WQT.settings.filterPoI and not quest.passedFilter) then
-				PoI:Hide();
-			end
+			
+		end
+		if (WQT.settings.filterPoI) then
+			PoI:SetShown(quest and quest.passedFilter);
+		else
+			PoI:SetShown(true);
 		end
 	end
 end
@@ -1773,7 +1789,8 @@ function WQT_ScrollListMixin:UpdateQuestFilters()
 end
 
 function WQT_ScrollListMixin:UpdateQuestList()
-	if (InCombatLockdown() or not WorldMapFrame:IsShown()) then return end
+	--if (InCombatLockdown() or not WorldMapFrame:IsShown()) then return end
+	if (not WorldMapFrame:IsShown()) then return end
 
 	local mapAreaID = GetCurrentMapAreaID();
 
@@ -1794,12 +1811,17 @@ function WQT_ScrollListMixin:UpdateQuestList()
 	end
 
 	self:ApplySort();
-	self:DisplayQuestList();
+	if not InCombatLockdown() then
+		self:DisplayQuestList();
+	else
+		WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
+	end
 end
 
 function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 
 	if InCombatLockdown() or not WorldMapFrame:IsShown() or not WQT_WorldQuestFrame:IsShown() then return end
+	-- if not WorldMapFrame:IsShown() or not WQT_WorldQuestFrame:IsShown() then return end
 
 	local offset = HybridScrollFrame_GetOffset(self);
 	local buttons = self.buttons;
@@ -1811,7 +1833,7 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 	local r, g, b = 1, 1, 1;
 	local continentZones = WQT_ZONE_MAPCOORDS[GetCurrentMapAreaID()];
 	self:GetParent():HideOverlayMessage();
-	
+
 	for i=1, #buttons do
 		local button = buttons[i];
 		local displayIndex = i + offset;
@@ -1826,15 +1848,8 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 	
 	HybridScrollFrame_Update(self, #list * WQT_LISTITTEM_HEIGHT, self:GetHeight());
 
-	if (not skipPins and not continentZones and #list ~= 0) then	
-		-- If we are filtering PoI we need to call this function to have pin refresh on Blizzard's end
-		-- A hook calls UpdateMapPoI so we don't want to call it twice
-		if(WQT.settings.filterPoI) then
-			WorldMap_UpdateQuestBonusObjectives();
-		else
-			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
-		end
-		WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
+	if (not skipPins and not continentZones) then	
+		WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
 	end
 	
 	self:UpdateFilterDisplay();
@@ -1878,7 +1893,7 @@ function WQT_CoreMixin:OnLoad()
 	self:RegisterEvent("PLAYER_REGEN_DISABLED");
 	self:RegisterEvent("PLAYER_REGEN_ENABLED");
 	self:RegisterEvent("QUEST_TURNED_IN");
-	self:RegisterEvent("QUEST_COMPLETE"); -- Class hall items
+	self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED"); -- Class hall items
 	self:RegisterEvent("ADDON_LOADED");
 	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
 	self:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else print("WQT missing function for: " .. event) end end)
@@ -1957,7 +1972,8 @@ end
 function WQT_CoreMixin:WORLD_MAP_UPDATE()
 	local mapAreaID = GetCurrentMapAreaID();
 	local level = GetCurrentMapDungeonLevel();
-	if not InCombatLockdown() and (self.currentMapId ~= mapAreaID or self.currentLevel ~= level) then
+	--if not InCombatLockdown() and (self.currentMapId ~= mapAreaID or self.currentLevel ~= level) then
+	if (self.currentMapId ~= mapAreaID or self.currentLevel ~= level) then
 
 		Lib_HideDropDownMenu(1);
 		self.scrollFrame:UpdateQuestList();
@@ -1984,9 +2000,11 @@ function WQT_CoreMixin:QUEST_TURNED_IN()
 	self.scrollFrame:UpdateQuestList();
 end
 
-function WQT_CoreMixin:QUEST_COMPLETE()
-	print("QUEST_COMPLETE")
-	self.scrollFrame:UpdateQuestList();
+function WQT_CoreMixin:UNIT_SPELLCAST_SUCCEEDED(...)
+	local unitTag, spellName, rank, lineID, spellID = ...;
+	if spellID == GetWorldMapActionButtonSpellInfo() then
+			self.scrollFrame:UpdateQuestList();
+	end
 end
 
 function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED()
