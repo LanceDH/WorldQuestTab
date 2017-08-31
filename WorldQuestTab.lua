@@ -1654,13 +1654,12 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 			end
 			local pin = WQT_WorldQuestFrame.pinHandler.pinPool:Acquire();
 			pin:Update(PoI, quest, k);
-			
-		end
-		if (WQT.settings.filterPoI) then
-			PoI:SetShown(quest and quest.passedFilter);
-		else
 			PoI:SetShown(true);
+			if (WQT.settings.filterPoI) then
+				PoI:SetShown(quest.passedFilter);
+			end
 		end
+		
 	end
 end
 
