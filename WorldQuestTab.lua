@@ -341,6 +341,15 @@ local function slashcmd(msg, editbox)
 	end
 end
 
+local function QuestIsWatched(questID)
+	for i=1, GetNumWorldQuestWatches() do 
+		if (GetWorldQuestWatchInfo(i) == questID) then
+			return true;
+		end
+	end
+	return false;
+end
+
 local function GetSortedFilterOrder(filterId)
 	local filter = WQT.settings.filters[filterId];
 	local tbl = {};
@@ -783,7 +792,6 @@ function WQT:InitTrackDropDown(self, level)
 
 	if not self:GetParent() or not self:GetParent().info then return; end
 	local questId = self:GetParent().info.id;
-	local isTracked = (IsWorldQuestHardWatched(questId) or (IsWorldQuestWatched(questId) and GetSuperTrackedQuestID() == questId))
 	local qInfo = self:GetParent().info;
 	local info = Lib_UIDropDownMenu_CreateInfo();
 	info.notCheckable = true;	
@@ -816,16 +824,16 @@ function WQT:InitTrackDropDown(self, level)
 		Lib_UIDropDownMenu_AddButton(info, level);
 	end
 	
-	if isTracked then
+	if (QuestIsWatched(questId)) then
 		info.text = UNTRACK_QUEST;
 		info.func = function(_, _, _, value)
-					BonusObjectiveTracker_UntrackWorldQuest(questId)
+					RemoveWorldQuestWatch(questId);
 					WQT_QuestScrollFrame:DisplayQuestList();
 				end
 	else
 		info.text = TRACK_QUEST;
 		info.func = function(_, _, _, value)
-					BonusObjectiveTracker_TrackWorldQuest(questId, true);
+					AddWorldQuestWatch(questId);
 					WQT_QuestScrollFrame:DisplayQuestList();
 				end
 	end	
@@ -992,17 +1000,13 @@ function WQT_ListButtonMixin:OnClick(button)
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	if not self.questId or self.questId== -1 then return end
 	if IsShiftKeyDown() then
-		if IsWorldQuestHardWatched(self.questId) or (IsWorldQuestWatched(self.questId) and GetSuperTrackedQuestID() == self.questId) then
-			BonusObjectiveTracker_UntrackWorldQuest(self.questId);
+		if (QuestIsWatched(self.questId)) then
+			RemoveWorldQuestWatch(self.questId);
 		else
-			BonusObjectiveTracker_TrackWorldQuest(self.questId, true);
+			AddWorldQuestWatch(self.questId, true);
 		end
 	elseif button == "LeftButton" then
-		if IsWorldQuestHardWatched(self.questId) then
-			SetSuperTrackedQuestID(self.questId);
-		else
-			BonusObjectiveTracker_TrackWorldQuest(self.questId);
-		end
+		AddWorldQuestWatch(self.questId);
 		SetMapByID(self.zoneId or 1007);
 	elseif button == "RightButton" then
 		if WQT_TrackDropDown:GetParent() ~= self then
@@ -1507,6 +1511,8 @@ end
 
 function WQT_QuestDataProvider:LoadQuestsInZone(zoneId)
 	self.pool:ReleaseAll();
+
+	if not WorldMapFrame:IsShown() then return; end
 	
 	local continentZones =WQT_ZONE_MAPCOORDS[zoneId];
 	local continentID = select(2, GetCurrentMapContinent());
@@ -1527,11 +1533,15 @@ function WQT_QuestDataProvider:LoadQuestsInZone(zoneId)
 	else
 		-- Dalaran being a special snowflake
 		questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneId, zoneId ~= 1014 and zoneId or continentID);
-		for k, info in ipairs(questsById) do
-			quest = self:AddQuest(info, zoneId, continentID);
-			if not quest then
-				missingRewardData = true
-			end;
+		if questsById then
+			for k, info in ipairs(questsById) do
+				quest = self:AddQuest(info, zoneId, continentID);
+				if not quest then
+					missingRewardData = true
+				end;
+			end
+		else
+			missingRewardData = true;
 		end
 	end
 	
@@ -1622,6 +1632,9 @@ function WQT_PinHandlerMixin:UpdateFlightMapPins()
 end
 
 function WQT_PinHandlerMixin:UpdateMapPoI()
+	local currentFloor = WQT_WorldQuestFrame.currentLevel;
+	local PoI, quest;
+	WQT_WorldQuestFrame.pinHandler.pinPool:ReleaseAll();
 	if (GetCurrentMapContinent() <= 0 or select(2, GetCurrentMapContinent()) == GetCurrentMapAreaID()) then
 		for i = 1, NUM_WORLDMAP_TASK_POIS do
 			PoI = _G["WorldMapFrameTaskPOI"..i];
@@ -1636,18 +1649,11 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 		end
 		return; 
 	end
-	
-	-- if InCombatLockdown() then
-		-- return;
-	-- end
-	local PoI, quest;
-	
-	WQT_WorldQuestFrame.pinHandler.pinPool:ReleaseAll();
-	
+
 	for i = 1, NUM_WORLDMAP_TASK_POIS do
 		PoI = _G["WorldMapFrameTaskPOI"..i];
 		quest = _questDataProvider:GetQuestById(PoI.questID);
-		if (quest) then
+		if (quest and quest.mapF == currentFloor) then
 			if (WQT.settings.showPinReward and WQT.settings.bigPoI) then
 				PoI:SetWidth(25);
 				PoI:SetHeight(25);
@@ -1921,6 +1927,10 @@ function WQT_CoreMixin:OnLoad()
 	hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
 			self:SelectTab(WQT_TabNormal);
 		end)
+		
+	WorldMapFrame:HookScript("OnShow", function() 
+			self.scrollFrame:UpdateQuestList();
+		end)
 
 	QuestScrollFrame:SetScript("OnShow", function() 
 			if(self.selectedTab:GetID() == 2) then
@@ -1971,9 +1981,8 @@ end
 function WQT_CoreMixin:WORLD_MAP_UPDATE()
 	local mapAreaID = GetCurrentMapAreaID();
 	local level = GetCurrentMapDungeonLevel();
-	--if not InCombatLockdown() and (self.currentMapId ~= mapAreaID or self.currentLevel ~= level) then
+	
 	if (self.currentMapId ~= mapAreaID or self.currentLevel ~= level) then
-
 		Lib_HideDropDownMenu(1);
 		self.scrollFrame:UpdateQuestList();
 		self.currentMapId = mapAreaID;
