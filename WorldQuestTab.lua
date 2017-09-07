@@ -284,38 +284,68 @@ local _filterOrders = {}
 
 ------------------------------------------------------------
 
+local function GetAbreviatedNumberChinese(number)
+	if type(number) ~= "number" then return "NaN" end;
+	if (number >= 10000 and number < 100000) then
+		local rest = number - floor(number/10000)*10000
+		if rest < 100 then
+			return _L["NUMBERS_FIRST"]:format(floor(number / 10000));
+		else
+			return _L["NUMBERS_FIRST"]:format(floor(number / 1000)/10);
+		end
+	elseif (number >= 100000 and number < 100000000) then
+		return _L["NUMBERS_FIRST"]:format(floor(number / 10000));
+	elseif (number >= 100000000 and number < 1000000000) then
+		local rest = number - floor(number/100000000)*100000000
+		if rest < 100 then
+			return _L["NUMBERS_SECOND"]:format(floor(number / 100000000));
+		else
+			return _L["NUMBERS_SECOND"]:format(floor(number / 10000000)/10);
+		end
+	elseif (number >= 1000000000) then
+		return _L["NUMBERS_SECOND"]:format(floor(number / 100000000));
+	end
+	return number 
+end
 
-local function GetAbreviatedNumber(number)
+local function GetAbreviatedNumberRoman(number)
 	if type(number) ~= "number" then return "NaN" end;
 	if (number >= 1000 and number < 10000) then
 		local rest = number - floor(number/1000)*1000
 		if rest < 100 then
-			return floor(number / 1000) .. "k";
+			return _L["NUMBERS_FIRST"]:format(floor(number / 1000));
 		else
-			return floor(number / 100)/10 .. "k";
+			return _L["NUMBERS_FIRST"]:format(floor(number / 100)/10);
 		end
 	elseif (number >= 10000 and number < 1000000) then
-		return floor(number / 1000) .. "k";
+		return _L["NUMBERS_FIRST"]:format(floor(number / 1000));
 	elseif (number >= 1000000 and number < 10000000) then
 		local rest = number - floor(number/1000000)*1000000
 		if rest < 100000 then
-			return floor(number / 1000000) .. "m";
+			return _L["NUMBERS_SECOND"]:format(floor(number / 1000000));
 		else
-			return floor(number / 100000)/10 .. "m";
+			return _L["NUMBERS_SECOND"]:format(floor(number / 100000)/10);
 		end
 	elseif (number >= 10000000 and number < 1000000000) then
-		return floor(number / 1000000) .. "m";
+		return _L["NUMBERS_SECOND"]:format(floor(number / 1000000));
 	elseif (number >= 1000000000 and number < 10000000000) then
 		local rest = number - floor(number/1000000000)*1000000000
 		if rest < 100000000 then
-			return floor(number / 1000000000) .. "b";
+			return _L["NUMBERS_THIRD"]:format(floor(number / 1000000000));
 		else
-			return floor(number / 100000000)/10 .. "b";
+			return _L["NUMBERS_THIRD"]:format(floor(number / 100000000)/10);
 		end
 	elseif (number >= 10000000) then
-		return floor(number / 1000000000) .. "b";
+		return _L["NUMBERS_THIRD"]:format(floor(number / 1000000000));
 	end
 	return number 
+end
+
+local function GetLocalizedAbreviatedNumber(number)
+	if (_L["IS_AZIAN_CLIENT"]) then
+		return GetAbreviatedNumberChinese(number);
+	end
+	return GetAbreviatedNumberRoman(number);
 end
 
 local function slashcmd(msg, editbox)
@@ -489,10 +519,6 @@ local function GetQuestTimeString(questId)
 	-- start with default, for CN and KR
 	timeStringShort = timeString;
 	local t, str = string.match(timeString:gsub(" |4", ""), '(%d+)(%a)');
-	-- Attempt Russian
-	if t and not str then
-		str = string.match(timeString, ' (.[\128-\191]*)');
-	end
 	if t and str then
 		timeStringShort = t..str;
 	end
@@ -1286,7 +1312,7 @@ function WQT_ListButtonMixin:Update(questInfo)
 	self.reward.icon:SetTexture(questInfo.rewardTexture);
 
 	if questInfo.rewardType ~= WQT_REWARDTYPE_ARMOR and questInfo.numItems and questInfo.numItems > 1  then
-		self.reward.amount:SetText(GetAbreviatedNumber(questInfo.numItems));
+		self.reward.amount:SetText(GetLocalizedAbreviatedNumber(questInfo.numItems));
 		r, g, b = 1, 1, 1;
 		if questInfo.rewardType == WQT_REWARDTYPE_RELIC then
 			self.reward.amount:SetText("+" .. questInfo.numItems);
@@ -1385,6 +1411,26 @@ function WQT_QuestDataProvider:ScanTooltipRewardForPattern(questID, pattern)
 	return result;
 end
 
+function WQT_QuestDataProvider:GetAPrewardFromText(text)
+	local numItems = tonumber(string.match(text:gsub("[%p| ]", ""), '%d+'));
+	local int, dec=text:match("(%d+)%.?%,?(%d*)");
+	numItems = numItems/(10^dec:len())
+	if (_L["IS_AZIAN_CLIENT"]) then
+		if (text:find(THIRD_NUMBER)) then
+			numItems = numItems * 100000000;
+		elseif (text:find(SECOND_NUMBER)) then
+			numItems = numItems * 10000;
+		end
+	else --roman numerals
+		if (text:find(THIRD_NUMBER)) then -- Billion just in case
+			numItems = numItems * 1000000000;
+		elseif (text:find(SECOND_NUMBER)) then -- Million
+			numItems = numItems * 1000000;
+		end
+	end
+	
+	return numItems;
+end
 
 function WQT_QuestDataProvider:SetQuestReward(info)
 
@@ -1396,16 +1442,7 @@ function WQT_QuestDataProvider:SetQuestReward(info)
 		
 		if itemId and IsArtifactPowerItem(itemId) then
 			local text = GetSpellDescription(select(3, GetItemSpell(itemId)));
-			numItems = tonumber(string.match(text:gsub("[%p| ]", ""), '%d+'));
-			if (text:find(THIRD_NUMBER)) then -- Billion just in case
-				local int, dec=text:match("(%d+)%.?%,?(%d*)");
-				int = tonumber(int .. dec); 
-				numItems = int/(10^dec:len()) * 1000000000;
-			elseif (text:find(SECOND_NUMBER)) then -- Million
-				local int, dec = text:match("(%d+)%.?%,?(%d*)");
-				int = tonumber(int .. dec); 
-				numItems = int/(10^dec:len()) * 1000000;
-			end
+			numItems = self:GetAPrewardFromText(text);
 			rewardType = WQT_REWARDTYPE_ARTIFACT;
 			color = WQT_COLOR_ARTIFACT;
 		elseif itemId and select(9, GetItemInfo(itemId)) ~= "" then -- Gear
@@ -1512,7 +1549,7 @@ end
 function WQT_QuestDataProvider:LoadQuestsInZone(zoneId)
 	self.pool:ReleaseAll();
 
-	if not WorldMapFrame:IsShown() then return; end
+	if not (WorldMapFrame:IsShown() or FlightMapFrame:IsShown()) then return; end
 	
 	local continentZones =WQT_ZONE_MAPCOORDS[zoneId];
 	local continentID = select(2, GetCurrentMapContinent());
@@ -1613,7 +1650,6 @@ function WQT_PinHandlerMixin:UpdateFlightMapPins()
 		if (quest) then
 			local pin = self.pinPool:Acquire();
 			pin:Update(PoI, quest, k);
-			--WQT:UpdatePin(PoI, quest, k)
 			if (quest.isElite) then
 				pin.glow:SetWidth(PoI:GetWidth()+61);
 				pin.glow:SetHeight(PoI:GetHeight()+61);
@@ -1794,7 +1830,6 @@ function WQT_ScrollListMixin:UpdateQuestFilters()
 end
 
 function WQT_ScrollListMixin:UpdateQuestList()
-	--if (InCombatLockdown() or not WorldMapFrame:IsShown()) then return end
 	if (not WorldMapFrame:IsShown()) then return end
 
 	local mapAreaID = GetCurrentMapAreaID();
@@ -1826,7 +1861,6 @@ end
 function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 
 	if InCombatLockdown() or not WorldMapFrame:IsShown() or not WQT_WorldQuestFrame:IsShown() then return end
-	-- if not WorldMapFrame:IsShown() or not WQT_WorldQuestFrame:IsShown() then return end
 
 	local offset = HybridScrollFrame_GetOffset(self);
 	local buttons = self.buttons;
@@ -1969,8 +2003,8 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 		
 		hooksecurefunc(WQT.FlightmapPins, "OnHide", function() 
 				for id in pairs(WQT.FlightMapList) do
-				WQT.FlightMapList[id].id = -1;
-				WQT.FlightMapList[id] = nil;
+					WQT.FlightMapList[id].id = -1;
+					WQT.FlightMapList[id] = nil;
 				end 
 				self.pinHandler.UpdateFlightMap = true;
 			end)

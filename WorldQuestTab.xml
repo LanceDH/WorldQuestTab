@@ -34,7 +34,7 @@
 			</Font>
 		</Member>
 		<Member alphabet="korean">
-			<Font font="Fonts\2002.TTF" height="11" outline="NORMAL">
+			<Font font="Fonts\2002.TTF" height="10" outline="NORMAL">
 				<Shadow>
 					<Offset>
 						<AbsDimension x="1" y="-1"/>
@@ -44,7 +44,7 @@
 			</Font>
 		</Member>
 		<Member alphabet="simplifiedchinese">
-			<Font font="Fonts\ARKai_T.ttf" height="15" outline="NORMAL">
+			<Font font="Fonts\ARKai_T.ttf" height="12" outline="NORMAL">
 				<Shadow>
 					<Offset>
 						<AbsDimension x="1" y="-1"/>
@@ -54,7 +54,7 @@
 			</Font>
 		</Member>
 		<Member alphabet="traditionalchinese">
-			<Font font="Fonts\blei00d.TTF" height="15" outline="NORMAL">
+			<Font font="Fonts\blei00d.TTF" height="12" outline="NORMAL">
 				<Shadow>
 					<Offset>
 						<AbsDimension x="1" y="-1"/>

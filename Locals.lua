@@ -62,6 +62,10 @@ L["REWARD_HONOR"]	=	"Honor";
 
 L["TRACKDD_TOMTOM"]	= "TomTom add"
 L["TRACKDD_TOMTOM_REMOVE"]	= "TomTom remove"
+L["NUMBERS_FIRST"]	= "%gk"
+L["NUMBERS_SECOND"]	= "%gm"
+L["NUMBERS_THIRD"]	= "%gb"
+L["IS_AZIAN_CLIENT"]	= false
 
 if locale == "deDE" then
 L["COMBATLOCK"] = "Nicht verfügbar während eines Kampfes."
@@ -318,6 +322,10 @@ L["TYPE_PROFESSION"] = "专业"
 L["TYPE_PVP"] = "PvP"
 L["WORLDQUEST"] = "世界任务"
 L["ZONE"] = "区域"
+L["NUMBERS_FIRST"]	= "%g万"
+L["NUMBERS_SECOND"]	= "%g亿"
+L["NUMBERS_THIRD"]	= "%g"
+L["IS_AZIAN_CLIENT"]	= true
 end
 
 if locale == "zhTW" then
@@ -372,10 +380,13 @@ L["TYPE_PVP"] = "PvP"
 L["TYPE_RAID"] = "團隊"
 L["WORLDQUEST"] = "世界任務"
 L["ZONE"] = "地區"
-
+L["NUMBERS_FIRST"]	= "%g万"
+L["NUMBERS_SECOND"]	= "%g亿"
+L["NUMBERS_THIRD"]	= "%g"
+L["IS_AZIAN_CLIENT"]	= true
 end
 
-if locale == "koKO" then
+if locale == "koKR" then
 L["COMBATLOCK"] = "전투 중엔 비활성됩니다."
 L["DEFAULT_TAB"] = "기본 탭"
 L["DEFAULT_TAB_TT"] = [=[로그인 했을 때 WQT를 기본 탭으로 설정합니다.
@@ -432,6 +443,10 @@ L["TYPE_PVP"] = "PvP"
 L["TYPE_RAID"] = "공격대"
 L["WORLDQUEST"] = "전역 퀘스트"
 L["ZONE"] = "지역"
+L["NUMBERS_FIRST"]	= "%g만"
+L["NUMBERS_SECOND"]	= "%g억"
+L["NUMBERS_THIRD"]	= "%g조"
+L["IS_AZIAN_CLIENT"]	= true
 end
 
 addon.L = L;
