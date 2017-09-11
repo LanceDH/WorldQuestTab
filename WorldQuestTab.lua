@@ -1065,6 +1065,7 @@ function WQT_ListButtonMixin:OnEnter()
 
 	-- Item comparison
 	if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
+		--print("here")
 		GameTooltip_ShowCompareItem(WorldMapTooltip.ItemTooltip.Tooltip, WorldMapTooltip.BackdropFrame);
 	else
 		for i, tooltip in ipairs(WorldMapTooltip.ItemTooltip.Tooltip.shoppingTooltips) do

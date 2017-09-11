@@ -743,6 +743,8 @@
 		</Scripts>
 	</Frame>
 	
+	<GameTooltip name="WQT_CompareTooltip1" clampedToScreen="true" frameStrata="TOOLTIP" hidden="true" parent="WorldMapFrame" inherits="ShoppingTooltipTemplate"/>
+	<GameTooltip name="WQT_CompareTooltip2" clampedToScreen="true" frameStrata="TOOLTIP" hidden="true" parent="WorldMapFrame" inherits="ShoppingTooltipTemplate"/>
 	<GameTooltip name="WQT_Tooltip" frameStrata="TOOLTIP" hidden="true" parent="WorldMapFrame" inherits="GameTooltipTemplate">
 		<Frames>
 			<Frame parentKey="ItemTooltip" inherits="EmbeddedItemTooltip" hidden="true">
@@ -755,7 +757,7 @@
 				</KeyValues>
 				<Scripts>
 					<OnLoad inherit="prepend">
-						self.Tooltip.shoppingTooltips = { WorldMapCompareTooltip1, WorldMapCompareTooltip2 };
+						self.Tooltip.shoppingTooltips = { WQT_CompareTooltip1, WQT_CompareTooltip2 };
 					</OnLoad>
 				</Scripts>
 			</Frame>
