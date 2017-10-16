@@ -1672,19 +1672,14 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 	local currentFloor = WQT_WorldQuestFrame.currentLevel;
 	local PoI, quest;
 	WQT_WorldQuestFrame.pinHandler.pinPool:ReleaseAll();
+	
+	if (WQT.settings.disablePoI) then return; end
 	if (GetCurrentMapContinent() <= 0 or select(2, GetCurrentMapContinent()) == GetCurrentMapAreaID()) then
 		for i = 1, NUM_WORLDMAP_TASK_POIS do
 			PoI = _G["WorldMapFrameTaskPOI"..i];
 			PoI:SetShown(false);
 		end
 		return;
-	end
-	if (WQT.settings.disablePoI) then 
-		for i = 1, NUM_WORLDMAP_TASK_POIS do
-			PoI = _G["WorldMapFrameTaskPOI"..i];
-			PoI:SetShown(true);
-		end
-		return; 
 	end
 
 	for i = 1, NUM_WORLDMAP_TASK_POIS do
