@@ -664,9 +664,9 @@ function WQT:InitFilter(self, level)
 								Lib_UIDropDownMenu_EnableButton(2, i);
 							end
 							if (WQT.settings.showPinReward) then
-								Lib_UIDropDownMenu_EnableButton(2, 8);
+								Lib_UIDropDownMenu_EnableButton(2, 9);
 							else
-								Lib_UIDropDownMenu_DisableButton(2, 8);
+								Lib_UIDropDownMenu_DisableButton(2, 9);
 							end
 						end
 						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(true)
@@ -691,9 +691,9 @@ function WQT:InitFilter(self, level)
 						WQT.settings.showPinReward = value;
 						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
 						if (value) then
-							Lib_UIDropDownMenu_EnableButton(2, 8);
+							Lib_UIDropDownMenu_EnableButton(2, 9);
 						else
-							Lib_UIDropDownMenu_DisableButton(2, 8);
+							Lib_UIDropDownMenu_DisableButton(2, 9);
 						end
 					end
 				info.checked = function() return WQT.settings.showPinReward end;
@@ -1691,7 +1691,7 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 				PoI:SetHeight(25);
 			end
 			local pin = WQT_WorldQuestFrame.pinHandler.pinPool:Acquire();
-			pin:Update(PoI, quest, k);
+			pin:Update(PoI, quest);
 			PoI:SetShown(true);
 			if (WQT.settings.filterPoI) then
 				PoI:SetShown(quest.passedFilter);
