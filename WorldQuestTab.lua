@@ -502,17 +502,16 @@ local function GetQuestTimeString(questId)
 	local color = WQT_WHITE_FONT_COLOR;
 	if ( timeLeftMinutes ) then
 		if ( timeLeftMinutes <= WORLD_QUESTS_TIME_CRITICAL_MINUTES ) then
-			-- Grace period, show the actual time left
 			color = RED_FONT_COLOR;
 			timeString = SecondsToTime(timeLeftMinutes * 60);
-		elseif timeLeftMinutes <= 60 + WORLD_QUESTS_TIME_CRITICAL_MINUTES then
-			timeString = SecondsToTime((timeLeftMinutes - WORLD_QUESTS_TIME_CRITICAL_MINUTES) * 60);
+		elseif timeLeftMinutes < 60  then
+			timeString = SecondsToTime(timeLeftMinutes * 60);
 			color = WQT_ORANGE_FONT_COLOR;
-		elseif timeLeftMinutes < 24 * 60 + WORLD_QUESTS_TIME_CRITICAL_MINUTES then
-			timeString = D_HOURS:format(math.floor(timeLeftMinutes - WORLD_QUESTS_TIME_CRITICAL_MINUTES) / 60);
+		elseif timeLeftMinutes < 24 * 60  then
+			timeString = D_HOURS:format(timeLeftMinutes / 60);
 			color = WQT_GREEN_FONT_COLOR
 		else
-			timeString = D_DAYS:format(math.floor(timeLeftMinutes - WORLD_QUESTS_TIME_CRITICAL_MINUTES) / 1440);
+			timeString = D_DAYS:format(timeLeftMinutes  / 1440);
 			color = WQT_BLUE_FONT_COLOR;
 		end
 	end
