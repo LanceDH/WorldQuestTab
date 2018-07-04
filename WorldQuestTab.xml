@@ -5,10 +5,8 @@
 	<Script file="Libs\LibStub\LibStub.lua"/>
 	<Include file="libs\AceAddon-3.0\AceAddon-3.0.xml"/>
 	<Include file="libs\AceDB-3.0\AceDB-3.0.xml"/>
-	 
-	<Include file="libs\DropDownMenu\UIDropDownMenuTemplates.xml"/>
-	<Script file="Libs\DropDownMenu\UIDropDownMenu.lua"/>
-	
+	<Include file="libs\AddonDropDown-1.0\AddonDropDown-1.0.xml"/>
+
 	<Script file="Locals.lua"/>
 	<Script file="WorldQuestTab.lua"/>
 
@@ -134,7 +132,7 @@
 				 <FontString parentKey="time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE">
 					<size y="18" />
 					<Anchors>
-						<Anchor point="TOP" relativePoint="BOTTOM" y="2"/>
+						<Anchor point="TOP" relativePoint="BOTTOM" x="2" y="2"/>
 					</Anchors>
 				</FontString>
 			</Layer>
@@ -165,7 +163,7 @@
 				<Texture parentKey="timeBG" file="Interface/COMMON/NameShadow">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.time" y="5"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.time" y="5"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.time" x="-3" y="5" />
 					</Anchors>
 					<TexCoords left="0.05" right="0.95" top="0.8" bottom="0"/>
 				</Texture>
@@ -452,16 +450,17 @@
 	</Button>
 	 
 	<Frame name="WQT_WorldQuestFrame" mixin="WQT_CoreMixin" parent="QuestMapFrame" inherits="SecureFrameTemplate" enableMouse="true" hidden="false">
-		<Size x="287" y="464"/>
+		<Size x="287" y="468"/>
 		<Anchors>
-			<Anchor point="TOPLEFT"/>
+			<Anchor point="TOPLEFT" y="-2"/>
 		</Anchors>
 		<Layers>
 			<Layer level="BACKGROUND">
 				<Texture parentKey="Background" atlas="QuestLogBackground" useAtlasSize="true">
-					<Size x="287" y="464"/>
+					<!--<Size x="287" y="464"/>-->
 					<Anchors>
-						<Anchor point="TOPLEFT" x="2" y="-1"/>
+						<Anchor point="TOPLEFT" x="2" y="0"/>
+						<Anchor point="BOTTOMRIGHT" x="0" y="2"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -528,13 +527,13 @@
 			<ScrollFrame parentKey="scrollFrame" name="WQT_QuestScrollFrame" mixin="WQT_ScrollListMixin" inherits="HybridScrollFrameTemplate">
 				<Size x="259"/>
 				<Anchors>
-					<Anchor point="TOP" relativeKey="$parent.filterBar" relativePoint="BOTTOM"/>
-					<Anchor point="BOTTOM" relativePoint="WQT_WorldQuestFrame"/>
+					<Anchor point="TOP" relativeKey="$parent.filterBar" relativePoint="BOTTOM" x="0" y="-2"/>
+					<Anchor point="BOTTOM" relativePoint="WQT_WorldQuestFrame" x="0" y="3"/>
 				</Anchors>
 				<Frames>
 					<Slider name="$parentScrollBar" inherits="MinimalHybridScrollBarTemplate" parentKey="scrollBar">
 						<Anchors>
-							<Anchor point="TOPRIGHT" relativeTo="WQT_WorldQuestFrame" x="-1" y="-16"/>
+							<Anchor point="TOPRIGHT" relativeTo="WQT_WorldQuestFrame" x="-1" y="-20"/>
 							<Anchor point="BOTTOMRIGHT" relativeTo="WQT_WorldQuestFrame" x="-1" y="16"/>
 						</Anchors>
 						<Layers>
@@ -567,6 +566,22 @@
 							</Layer>
 						</Layers>
 					</Slider>
+					<Frame parentKey="DetailFrame" setAllPoints="true">
+						<Layers>
+							<Layer level="ARTWORK" textureSubLevel="2">
+								<Texture parentKey="BottomDetail" atlas="QuestLog_BottomDetail" useAtlasSize="true">
+									<Anchors>
+										<Anchor point="BOTTOM" x="1" y="-4"/>
+									</Anchors>
+								</Texture>
+								<Texture parentKey="TopDetail" atlas="QuestLog_TopDetail" useAtlasSize="true">
+									<Anchors>
+										<Anchor point="TOP" x="1" y="9"/>
+									</Anchors>
+								</Texture>
+							</Layer>
+						</Layers>
+					</Frame>
 				</Frames>
 				
 				<Scripts>
@@ -630,23 +645,7 @@
 				<Scripts>
 					<OnClick> 
 						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-						Lib_ToggleDropDownMenu(1, nil, WQT_WorldQuestFrameFilterDropDown, "WQT_WorldQuestFrameFilterButton", 74, 15);
-					</OnClick>	
-				</Scripts>						
-			</Button>
-			<Frame name="$parentFilterDropDown" parentKey="filterDropDown" inherits="Lib_UIDropDownMenuTemplate" />
-			
-			<Button name="$parentSortButton" parentKey="sortButton"  inherits="Lib_UIDropDownMenuTemplate" text="">
-				<Size x="93" y="22"/>
-				<Anchors>
-					<Anchor point="RIGHT" relativeTo="WQT_WorldQuestFrameFilterButton" relativePoint="LEFT" x="10" y="-1"/>
-				</Anchors>
-				<Scripts>
-					<OnLoad>
-						self:EnableMouse(false);
-					</OnLoad>
-					<OnClick> 
-						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+						ADDON_DROPDOWN:ToggleDropDownMenu(1, nil, WQT_WorldQuestFrameFilterDropDown, "WQT_WorldQuestFrameFilterButton", 74, 15);
 					</OnClick>	
 				</Scripts>						
 			</Button>
@@ -663,7 +662,7 @@
 	
 	<Button name="WQT_TabNormal" inherits="WQT_TabTemplate" parent="QuestMapFrame" enableMouse="true" id="1">
 		<Anchors>
-			<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="3" y="0"/>
+			<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="3" y="-2"/>
 		</Anchors>
 		<Scripts>
 			<OnLoad>
@@ -706,20 +705,26 @@
 	</Button>
 	
 	<Frame name="WQT_PoISelectIndicator" hidden="true">
-		<Size x="32" y="32"/>
+		<Size x="40" y="40"/>
 		<Layers>
 			<Layer level="ARTWORK">
 				<Texture parentKey="ping" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="0">
-					<Size x="26" y="26"/>
+					<Size x="50" y="50"/>
 					<Anchors>
 						<Anchor point="CENTER" y="1"/>
 					</Anchors>
 				</Texture>
 				<Texture parentKey="icon" file="Interface/WorldMap/UI-QuestPoi-NumberIcons" alpha="0.6" alphaMode="ADD">
+				<Size x="70" y="70"/>
+					<Anchors>
+						<Anchor point="CENTER" y="1"/>
+					</Anchors>
+				<!--
 					<Anchors>
 						<Anchor point="TOPLEFT"/>
 						<Anchor point="BOTTOMRIGHT"/>
 					</Anchors>
+					-->
 					<TexCoords left="0.625" right="0.75" top="0.875" bottom="1"/>
 				</Texture>
 			</Layer>
@@ -747,7 +752,7 @@
 	<GameTooltip name="WQT_CompareTooltip2" clampedToScreen="true" frameStrata="TOOLTIP" hidden="true" parent="WorldMapFrame" inherits="ShoppingTooltipTemplate"/>
 	<GameTooltip name="WQT_Tooltip" frameStrata="TOOLTIP" hidden="true" parent="WorldMapFrame" inherits="GameTooltipTemplate">
 		<Frames>
-			<Frame parentKey="ItemTooltip" inherits="EmbeddedItemTooltip" hidden="true">
+			<Frame parentKey="ItemTooltip" inherits="InternalEmbeddedItemTooltipTemplate" hidden="true">
 				<Size x="100" y="100"/>
 				<Anchors>
 					<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMLEFT" x="10" y="13"/>
@@ -764,7 +769,7 @@
 		</Frames>
 	</GameTooltip>
 	
-	<Frame name="WQT_MapZoneHightlight" parent="WorldMapDetailFrame">
+	<Frame name="WQT_MapZoneHightlight" hidden="true">
 		<Size x="128" y="128"/>
 		<Anchors>
 			<Anchor point="CENTER"/>
@@ -780,8 +785,6 @@
 			</Layer>
 		</Layers>
 	</Frame>
-	
-	<Frame name="WQT_TrackDropDown" inherits="Lib_UIDropDownMenuTemplate" enableMouse="true" hidden="true"/>
  
  </Ui>
  
