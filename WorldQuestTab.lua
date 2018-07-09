@@ -334,7 +334,7 @@ local WQT_DEFAULTS = {
 }
 
 for k, v in pairs(WQT_FACTION_DATA) do
-	if v.expansion >= 6 then
+	if v.expansion >= WQT_EXPANSION_LEGION then
 		WQT_DEFAULTS.global.filters[1].flags[k] = false;
 	end
 end
@@ -454,6 +454,19 @@ local function QuestIsWatched(questID)
 			return true;
 		end
 	end
+	return false;
+end
+
+local function IsRelevantFilter(filterID, key)
+	-- Any filter outside of factions is auto-pass
+	if (filterID > 1) then return true; end
+	-- Faction filters that are a string get a pass
+	if (type(key) == "string") then return true; end
+	-- Factions with an ID of which the player faction is matching or neutral pass
+	local data = WQT_FACTION_DATA[key];
+	local playerFaction = GetPlayerFactionGroup();
+	if (not data.faction or data.faction == playerFaction) then return true; end
+	
 	return false;
 end
 
@@ -613,6 +626,17 @@ end
 
 local function ConvertOldSettings()
 	WQT.settings.filters[3].flags.Resources = nil;
+	WQT.settings.versionCheck = "1";
+end
+
+local function ConvertToBfASettings()
+	-- In 8.0.01 factions use ids rather than name
+	local repFlags = WQT.settings.filters[1].flags;
+	for name, value in pairs(repFlags) do
+		if (type(name) == "string" and name ~=_L["OTHER_FACTION"] and name ~= _L["NO_FACTION"]) then
+			repFlags[name] = nil;
+		end
+	end
 end
 
 function WQT:SetAllFilterTo(id, value)
@@ -884,18 +908,6 @@ function WQT:InitFilter(self, level)
 					info.checked = function() return WQT.settings.useTomTom end;
 					ADD:AddButton(info, level);	
 				end
-				
-				if WQT.versionCheck then
-					info.text = "Fun Quests";
-					info.tooltipTitle = "";
-					info.func = function(_, _, _, value)
-							WQT.settings.funQuests = value;
-							WQT_QuestScrollFrame:UpdateQuestList();
-						end
-					info.checked = function() return WQT.settings.funQuests end;
-					ADD:AddButton(info, level);	
-				end
-				
 			end
 		end
 	elseif level == 3 then
@@ -1043,10 +1055,13 @@ function WQT:ImproveList()
 end
 
 function WQT:IsFiltering()
+	local playerFaction = GetPlayerFactionGroup()
 	if WQT.settings.emissaryOnly then return true; end
 	for k, category in pairs(WQT.settings.filters)do
 		for k2, flag in pairs(category.flags) do
-			if flag then return true; end
+			if flag and IsRelevantFilter(k, k2) then 
+				return true;
+			end
 		end
 	end
 	return false;
@@ -1111,6 +1126,8 @@ function WQT:PassesFlagId(flagId ,quest)
 	return false;
 end
 
+
+
 function WQT:OnInitialize()
 
 	self.db = LibStub("AceDB-3.0"):New("BWQDB", WQT_DEFAULTS, true);
@@ -1119,7 +1136,11 @@ function WQT:OnInitialize()
 	if (not WQT.settings.versionCheck) then
 		ConvertOldSettings()
 	end
+	if (WQT.settings.versionCheck < "8.0.1") then
+		ConvertToBfASettings();
+	end
 	WQT.settings.versionCheck  = GetAddOnMetadata(addonName, "version");
+	
 end
 
 function WQT:OnEnable()
@@ -1134,8 +1155,6 @@ function WQT:OnEnable()
 		end
 	end
 
-	
-	
 	if self.settings.saveFilters and WQT_SORT_OPTIONS[self.settings.sortBy] then
 		ADD:SetSelectedValue(WQT_WorldQuestFrameSortButton, self.settings.sortBy);
 		ADD:SetText(WQT_WorldQuestFrameSortButton, WQT_SORT_OPTIONS[self.settings.sortBy]);
@@ -1995,7 +2014,7 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 		for kO, option in pairs(WQT.settings.filters) do
 			haveLabels = (WQT_TYPEFLAG_LABELS[kO] ~= nil);
 			for kF, flag in pairs(option.flags) do
-				if flag then
+				if (flag and IsRelevantFilter(kO, kF)) then
 					local label = haveLabels and WQT_TYPEFLAG_LABELS[kO][kF] or kF;
 					label = type(kF) == "number" and GetFactionInfoByID(kF) or label;
 					filterList = filterList == "" and label or string.format("%s, %s", filterList, label);
