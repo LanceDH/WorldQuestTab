@@ -1233,11 +1233,14 @@ function WQT_ListButtonMixin:OnEnter()
 	WorldMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
 
 	-- Item comparison
-	if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
-		GameTooltip_ShowCompareItem(WorldMapTooltip.ItemTooltip.Tooltip, WorldMapTooltip.BackdropFrame);
-	else
-		for i, tooltip in ipairs(WorldMapTooltip.ItemTooltip.Tooltip.shoppingTooltips) do
-			tooltip:Hide();
+	local qData = self.info;
+	if(qData.rewardType == WQT_REWARDTYPE_ARMOR) then
+		if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
+			GameTooltip_ShowCompareItem(WorldMapTooltip.ItemTooltip.Tooltip, WorldMapTooltip.BackdropFrame);
+		else
+			for i, tooltip in ipairs(WorldMapTooltip.ItemTooltip.Tooltip.shoppingTooltips) do
+				tooltip:Hide();
+			end
 		end
 	end
 	
@@ -1641,24 +1644,23 @@ function WQT_QuestDataProvider:SetQuestReward(info)
 	elseif GetNumQuestLogRewardCurrencies(info.id) > 0 then
 		_, texture, numItems, rewardId = GetQuestLogRewardCurrencyInfo(GetNumQuestLogRewardCurrencies(info.id), info.id)
 		-- Because azerite is currency but is treated as an item
-		-- 1553 = azerite
-		if rewardId ~= 1553 then
+		local azuriteID = C_CurrencyInfo.GetAzeriteCurrencyID();
+		if rewardId ~= azuriteID then
 			local name, _, apTex, _, _, _, _, apQuality = GetCurrencyInfo(rewardId);
 			name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(rewardId, numItems, name, texture, apQuality); 
 			
 			if	C_CurrencyInfo.GetFactionGrantedByCurrency(rewardId) then
 				rewardType = WQT_REWARDTYPE_REP;
+				quality = 0;
 			else
 				rewardType = WQT_REWARDTYPE_CURRENCY;
 			end
 			
 			color = WQT_COLOR_CURRENCY;
-			
-			
 		else
 			-- We want azerite to act like AP
-			local name, _, apTex, _, _, _, _, apQuality = GetCurrencyInfo(1553);
-			name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(1553, numItems, name, texture, apQuality); 
+			local name, _, apTex, _, _, _, _, apQuality = GetCurrencyInfo(azuriteID);
+			name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(azuriteID, numItems, name, texture, apQuality); 
 			
 			rewardType = WQT_REWARDTYPE_ARTIFACT;
 			color = WQT_COLOR_ARTIFACT;
@@ -1971,6 +1973,8 @@ function WQT_ScrollListMixin:SetButtonsEnabled(value)
 	
 	for k, button in ipairs(buttons) do
 		button:SetEnabled(value);
+		button:EnableMouse(value);
+		button:EnableMouseWheel(value);
 	end
 	
 end
@@ -2038,14 +2042,16 @@ function WQT_ScrollListMixin:UpdateQuestFilters()
 end
 
 function WQT_ScrollListMixin:UpdateQuestList()
-	if (not WorldMapFrame:IsShown()) then return end
+	if (not WorldMapFrame:IsShown() or InCombatLockdown()) then return end
 
+	--local isMouseEnabled = self:IsMouseEnabled();
 	local mapAreaID = WorldMapFrame.mapID;
 
 	local quest = nil;
 	local questsById = nil
 	
 	local missingRewardData = _questDataProvider:LoadQuestsInZone(mapAreaID);
+	
 	self.questList = _questDataProvider:GetIterativeList();
 	
 	-- If we were missing reward data, redo this function
@@ -2064,6 +2070,10 @@ function WQT_ScrollListMixin:UpdateQuestList()
 	else
 		WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
 	end
+	-- Updating the scrollframe enabled the mouse
+	-- If we wasn't enabled before, disabled it again
+	--self:EnableMouse(isMouseEnabled);
+	--WQT_QuestScrollFrameScrollChild:EnableMouse(isMouseEnabled);
 end
 
 function WQT_ScrollListMixin:DisplayQuestList(skipPins)
@@ -2273,8 +2283,8 @@ function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
 	if self:GetAlpha() == 1 then
 		self.scrollFrame:ScrollFrameSetEnabled(true)
 	end
-	self:SelectTab(self.selectedTab);
 	self.scrollFrame:UpdateQuestList();
+	self:SelectTab(self.selectedTab);
 end
 
 function WQT_CoreMixin:QUEST_TURNED_IN()
@@ -2320,17 +2330,24 @@ function WQT_CoreMixin:HideOverlayMessage()
 end
 
 function WQT_CoreMixin:SetCombatEnabled(value)
-	value = value or false;
+	value = value==nil and true or value;
 	
 	self:EnableMouse(value);
+	self:EnableMouseWheel(value);
+	WQT_QuestScrollFrame:EnableMouseWheel(value);
 	WQT_QuestScrollFrame:EnableMouse(value);
+	WQT_QuestScrollFrameScrollChild:EnableMouseWheel(value);
 	WQT_QuestScrollFrameScrollChild:EnableMouse(value);
 	WQT_WorldQuestFrameSortButtonButton:EnableMouse(value);
-	
+	self.filterButton:EnableMouse(value);
+	self.scrollFrame:SetButtonsEnabled(value);
+		
 	self.scrollFrame:EnableMouseWheel(value);
 end
 
 function WQT_CoreMixin:SelectTab(tab)
+	-- There's a lot of shenanigans going on here with enabling/disabling the mouse due to
+	-- Addon restructions of hiding/showing frames during combat
 	local id = tab and tab:GetID() or nil;
 	if self.selectedTab ~= tab then
 		ADD:HideDropDownMenu(1);
@@ -2348,14 +2365,13 @@ function WQT_CoreMixin:SelectTab(tab)
 	 
 		self.filterButton:SetFrameLevel(self:GetFrameLevel());
 		self.sortButton:SetFrameLevel(self:GetFrameLevel());
-		WQT_QuestScrollFrameScrollChild:EnableMouse(true);
-		self:EnableMouse(true);
+		
+		self.filterButton:EnableMouse(true);
 	end
+	
 	
 	WQT_TabWorld:EnableMouse(true);
 	WQT_TabNormal:EnableMouse(true);
-	self.filterButton:EnableMouse(true);
-	self.blocker:EnableMouse(true);
 	
 
 	if (not QuestScrollFrame.Contents:IsShown() and not QuestMapFrame.DetailsFrame:IsShown()) or id == 1 then
@@ -2365,13 +2381,11 @@ function WQT_CoreMixin:SelectTab(tab)
 		WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
 		WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
 		ShowUIPanel(QuestScrollFrame);
-		self.blocker:EnableMouse(false);
-		self.scrollFrame:SetButtonsEnabled(false);
+		
 		if not InCombatLockdown() then
-			self:EnableMouse(false);
-			WQT_QuestScrollFrameScrollChild:EnableMouse(false);
-			self.scrollFrame:ScrollFrameSetEnabled(false)
+			self.blocker:EnableMouse(false);
 			HideUIPanel(self.blocker)
+			self:SetCombatEnabled(false);
 		end
 	elseif id == 2 then
 		-- WQT
@@ -2380,25 +2394,26 @@ function WQT_CoreMixin:SelectTab(tab)
 		WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
 		WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
 		HideUIPanel(QuestScrollFrame);
-		self.scrollFrame:SetButtonsEnabled(true);
+		
 		if not InCombatLockdown() then
 			self:SetFrameLevel(self:GetParent():GetFrameLevel()+3);
-			self.scrollFrame:ScrollFrameSetEnabled(true)
+			self:SetCombatEnabled(true);
 		end
 	elseif id == 3 then
 		-- Quest details
-		WQT_TabWorld:EnableMouse(false);
-		WQT_TabNormal:EnableMouse(false);
-		self.filterButton:EnableMouse(false);
-		self.scrollFrame:SetButtonsEnabled(false);
 		self:SetAlpha(0);
 		WQT_TabNormal:SetAlpha(0);
 		WQT_TabWorld:SetAlpha(0);
 		HideUIPanel(QuestScrollFrame);
-		WQT_TabNormal:SetFrameLevel(WQT_TabNormal:GetParent():GetFrameLevel()-1);
-		WQT_TabWorld:SetFrameLevel(WQT_TabWorld:GetParent():GetFrameLevel()-1);
-		self.filterButton:SetFrameLevel(0);
-		self.sortButton:SetFrameLevel(0);
+		WQT_TabWorld:EnableMouse(false);
+		WQT_TabNormal:EnableMouse(false);
+		if not InCombatLockdown() then
+			self.blocker:EnableMouse(false);
+			WQT_TabWorld:EnableMouse(false);
+			WQT_TabNormal:EnableMouse(false);
+			self.filterButton:EnableMouse(false);
+			self:SetCombatEnabled(false);
+		end
 	end
 end
 
