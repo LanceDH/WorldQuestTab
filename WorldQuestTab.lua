@@ -2189,6 +2189,7 @@ function WQT_CoreMixin:OnLoad()
 		
 	WorldMapFrame:HookScript("OnShow", function() 
 			self.scrollFrame:UpdateQuestList();
+			self:SelectTab(self.selectedTab); 
 		end)
 
 	QuestScrollFrame:SetScript("OnShow", function() 
@@ -2315,6 +2316,8 @@ function WQT_CoreMixin:ShowOverlayMessage(message)
 end
 
 function WQT_CoreMixin:HideOverlayMessage()
+	-- if it's not shown, there's nothing to hide
+	if (not self.blocker:IsShown()) then return; end
 	local buttons = self.scrollFrame.buttons;
 	self:SetCombatEnabled(true);
 	HideUIPanel(self.blocker);
@@ -2324,7 +2327,6 @@ function WQT_CoreMixin:HideOverlayMessage()
 	self.sortButton:Enable();
 	
 	for k, button in ipairs(buttons) do
-		button:Enable();
 		button:Enable();
 	end
 end
@@ -2346,6 +2348,7 @@ function WQT_CoreMixin:SetCombatEnabled(value)
 end
 
 function WQT_CoreMixin:SelectTab(tab)
+	
 	-- There's a lot of shenanigans going on here with enabling/disabling the mouse due to
 	-- Addon restructions of hiding/showing frames during combat
 	local id = tab and tab:GetID() or nil;
@@ -2356,6 +2359,7 @@ function WQT_CoreMixin:SelectTab(tab)
 	
 	self.selectedTab = tab;
 	
+	WQT_TabNormal:SetAlpha(1);
 	WQT_TabNormal:SetAlpha(1);
 	WQT_TabWorld:SetAlpha(1);
 	-- because hiding stuff in combat doesn't work
