@@ -50,11 +50,6 @@ local WQT_HONOR = "Interface/ICONS/Achievement_LegionPVPTier4";
 local WQT_FACTIONUNKNOWN = "Interface/addons/WorldQuestTab/Images/FactionUnknown";
 
 local WQT_ARGUS_COSMIC_BUTTONS = {KrokuunButton, MacAreeButton, AntoranWastesButton, BrokenIslesArgusButton}
-local WQT_NO_TOMTOM_ZONES = {
-		[1135] = true	-- Krokuun
-		,[1170] = true	-- High Noon
-		,[1171] = true	-- Antoran Wastes
-	}
 
 local WQT_TYPEFLAG_LABELS = {
 		[2] = {["Default"] = _L["TYPE_DEFAULT"], ["Elite"] = _L["TYPE_ELITE"], ["PvP"] = _L["TYPE_PVP"], ["Petbattle"] = _L["TYPE_PETBATTLE"], ["Dungeon"] = _L["TYPE_DUNGEON"]
@@ -988,22 +983,32 @@ function WQT:InitTrackDropDown(self, level)
 	-- end
 	
 	-- TomTom functionality
-	-- Exclude Argus because it's a mess
-	if (TomTom and WQT.settings.useTomTom and not WQT_NO_TOMTOM_ZONES[qInfo.zoneId]) then
-		if (not TomTom:WaypointMFExists(qInfo.zoneId, qInfo.mapF, qInfo.mapX, qInfo.mapY, qInfo.title)) then
-			info.text = _L["TRACKDD_TOMTOM"];
-			info.func = function()
-				TomTom:AddMFWaypoint(qInfo.zoneId, qInfo.mapF, qInfo.mapX, qInfo.mapY, {["title"] = qInfo.title})
-				TomTom:AddMFWaypoint(qInfo.zoneId, qInfo.mapF, qInfo.mapX, qInfo.mapY, {["title"] = qInfo.title})
+	if (TomTom and WQT.settings.useTomTom) then
+	
+		if (TomTom.WaypointExists and TomTom.AddWaypoint and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
+			-- All required functions are found
+			if (not TomTom:WaypointExists(qInfo.zoneId, qInfo.mapX, qInfo.mapY, qInfo.title)) then
+				info.text = _L["TRACKDD_TOMTOM"];
+				info.func = function()
+					TomTom:AddWaypoint(qInfo.zoneId, qInfo.mapX, qInfo.mapY, {["title"] = qInfo.title})
+					TomTom:AddWaypoint(qInfo.zoneId, qInfo.mapX, qInfo.mapY, {["title"] = qInfo.title})
+				end
+			else
+				info.text = _L["TRACKDD_TOMTOM_REMOVE"];
+				info.func = function()
+					local key = TomTom:GetKeyArgs(qInfo.zoneId, qInfo.mapX, qInfo.mapY, qInfo.title);
+					local wp = TomTom.waypoints[qInfo.zoneId] and TomTom.waypoints[qInfo.zoneId][key];
+					TomTom:RemoveWaypoint(wp);
+				end
 			end
 		else
-			info.text = _L["TRACKDD_TOMTOM_REMOVE"];
+			-- Something wrong with TomTom
+			info.text = "TomTom Unavailable";
 			info.func = function()
-				local key = TomTom:GetKeyArgs(qInfo.zoneId, qInfo.mapF, qInfo.mapX, qInfo.mapY, qInfo.title);
-				local wp = TomTom.waypoints[qInfo.zoneId] and TomTom.waypoints[qInfo.zoneId][key];
-				TomTom:RemoveWaypoint(wp);
+				print("Something is wrong with TomTom. Either it failed to load correctly, or an update changed its functionality.");
 			end
 		end
+		
 		ADD:AddButton(info, level);
 	end
 	
