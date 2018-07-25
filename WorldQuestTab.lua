@@ -261,6 +261,8 @@ local WQT_ZONE_MAPCOORDS = {
 
 local WQT_SORT_OPTIONS = {[1] = _L["TIME"], [2] = _L["FACTION"], [3] = _L["TYPE"], [4] = _L["ZONE"], [5] = _L["NAME"], [6] = _L["REWARD"]}
 
+
+local WQT_NO_FACTION_DATA = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "" } -- No faction
 local WQT_FACTION_DATA = {
 	[1894] = 	{ ["expansion"] = WQT_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Warden" }
 	,[1859] = 	{ ["expansion"] = WQT_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_NightFallen" }
@@ -279,6 +281,8 @@ local WQT_FACTION_DATA = {
 	,[1682] = 	{ ["expansion"] = WQT_EXPANSION_WOD ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1682" } -- Dreanor Wrynn's Vanguard
 	,[1731] = 	{ ["expansion"] = WQT_EXPANSION_WOD ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1731" } -- Dreanor Council of Exarchs
 	,[1445] = 	{ ["expansion"] = WQT_EXPANSION_WOD ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1445" } -- Draenor Frostwolf Orcs
+	,[67] = 		{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction67" } -- Horde
+	,[469] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction469" } -- Alliance
 	-- BfA                                                         
 	,[2164] = 	{ ["expansion"] = WQT_EXPANSION_BFA ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Faction_Championsofazeroth_Round" } -- Champions of Azeroth
 	,[2156] = 	{ ["expansion"] = WQT_EXPANSION_BFA ,["faction"] = "Horde" ,["icon"] = 2058211 } -- Talanji's Expedition
@@ -355,6 +359,21 @@ local function GetMapWQProvider()
 	hooksecurefunc(WQT.mapWQProvider, "RefreshAllData", function() WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); end);
 
 	return WQT.mapWQProvider;
+end
+
+local function GetFactionData(id)
+	if (not id) then  
+		-- No faction
+		return WQT_NO_FACTION_DATA;
+	end;
+
+	if (not WQT_FACTION_DATA[id]) then
+		-- Add new faction
+		WQT_FACTION_DATA[id] = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = WQT_FACTIONUNKNOWN }
+		WQT_FACTION_DATA[id].name = GetFactionInfoByID(id) or "Unknown Faction";
+	end
+	
+	return WQT_FACTION_DATA[id];
 end
 
 local function GetAbreviatedNumberChinese(number)
@@ -456,11 +475,11 @@ local function IsRelevantFilter(filterID, key)
 	-- Any filter outside of factions is auto-pass
 	if (filterID > 1) then return true; end
 	-- Faction filters that are a string get a pass
-	if (type(key) == "string") then return true; end
+	if (not key or type(key) == "string") then return true; end
 	-- Factions with an ID of which the player faction is matching or neutral pass
-	local data = WQT_FACTION_DATA[key];
+	local data = GetFactionData(key);
 	local playerFaction = GetPlayerFactionGroup();
-	if (not data.faction or data.faction == playerFaction) then return true; end
+	if (data and not data.faction or data.faction == playerFaction) then return true; end
 	
 	return false;
 end
@@ -482,7 +501,12 @@ local function GetSortedFilterOrder(filterId)
 					return a ~= _L["OTHER_FACTION"] and b == _L["OTHER_FACTION"];
 				end
 				if(type(a) == "number" and type(b) == "number")then
-					return GetFactionInfoByID(tonumber(a)) < GetFactionInfoByID(tonumber(b)); 
+					local nameA = GetFactionInfoByID(tonumber(a));
+					local nameB = GetFactionInfoByID(tonumber(b));
+					if nameA and nameB then
+						return nameA < nameB;
+					end
+					return a and not b;
 				end
 				return a < b; 
 			end)
@@ -707,7 +731,7 @@ function WQT:InitFilter(self, level)
 				local currExp = WQT_EXPANSION_BFA;
 				local playerFaction = GetPlayerFactionGroup();
 				for k, flagKey in pairs(order) do
-					local factionInfo = WQT_FACTION_DATA[flagKey];
+					local factionInfo = type(flagKey) == "number" and GetFactionData(flagKey) or nil;
 					-- factions that aren't a faction (other and no faction), are of current expansion, and are neutral of player faction
 					if (not factionInfo or (factionInfo.expansion == currExp and (not factionInfo.faction or factionInfo.faction == playerFaction))) then
 						info.text = type(flagKey) == "number" and GetFactionInfoByID(flagKey) or flagKey;
@@ -727,6 +751,7 @@ function WQT:InitFilter(self, level)
 				info.notCheckable = true;
 				info.text = EXPANSION_NAME6;
 				info.value = 100;
+				info.func = nil;
 				ADD:AddButton(info, level)
 				
 			
@@ -913,8 +938,9 @@ function WQT:InitFilter(self, level)
 		local haveLabels = (WQT_TYPEFLAG_LABELS[1] ~= nil);
 		local currExp = WQT_EXPANSION_LEGION;
 		for k, flagKey in pairs(order) do
-			if (WQT_FACTION_DATA[flagKey] and WQT_FACTION_DATA[flagKey].expansion == currExp ) then
-				info.text = type(flagKey) == "number" and GetFactionInfoByID(flagKey) or flagKey;
+			local data = type(flagKey) == "number" and GetFactionData(flagKey) or nil;
+			if (data and data.expansion == currExp ) then
+				info.text = type(flagKey) == "number" and data.name or flagKey;
 				info.func = function(_, _, _, value)
 									options[flagKey] = value;
 									if (value) then
@@ -1032,16 +1058,6 @@ function WQT:InitTrackDropDown(self, level)
 	ADD:AddButton(info, level)
 end
 
-function WQT:ImproveDisplay(button)
-	if button.questId < 0 then return end;
-
-	if WQT.settings.showFactionIcon then
-		button.faction:Show();
-		button.faction.icon:SetTexture(WQT_FACTION_DATA[1090].icon);
-	end
-	button.title:SetText(WQT.betterDisplay[button.questId%#WQT.betterDisplay + 1]);
-end
-
 function WQT:ImproveList()		
 	local info = GetOrCreateQuestInfo();
 	info.title = "z What's the date again?";
@@ -1117,8 +1133,17 @@ end
 function WQT:PassesFactionFilter(quest)
 	-- Factions (1)
 	local flags = WQT.settings.filters[1].flags
-	if flags[quest.factionId] ~= nil and flags[quest.factionId] then return true; end
-	if quest.faction ~= _L["NO_FACTION"] and flags[quest.factionId] == nil and flags[_L["OTHER_FACTION"]] then return true; end
+	-- no faction
+	if not quest.factionId then return flags[_L["NO_FACTION"]]; end
+	
+	if flags[quest.factionId] ~= nil then 
+		-- specific faction
+		return flags[quest.factionId];
+	else
+		-- other faction
+		return flags[_L["OTHER_FACTION"]];
+	end
+
 	return false;
 end
 
@@ -1467,7 +1492,9 @@ function WQT_ListButtonMixin:Update(questInfo)
 	
 	if WQT.settings.showFactionIcon then
 		self.faction:Show();
-		self.faction.icon:SetTexture(questInfo.factionId and (WQT_FACTION_DATA[questInfo.factionId].icon or WQT_FACTIONUNKNOWN) or "");--, nil, nil, "TRILINEAR");
+		local factionData = GetFactionData(questInfo.factionId);
+		
+		self.faction.icon:SetTexture(factionData.icon);--, nil, nil, "TRILINEAR");
 		self.faction:SetWidth(self.faction:GetHeight());
 	else
 		self.faction:Hide();
@@ -1516,9 +1543,6 @@ function WQT_ListButtonMixin:Update(questInfo)
 		self.trackedBorder:Show();
 	end
 
-	if WQT.versionCheck and self.settings.funQuests then
-		WQT:ImproveDisplay(self);
-	end
 end
 
 function WQT_ListButtonMixin:ShowWorldmapHighlight(zoneId)
