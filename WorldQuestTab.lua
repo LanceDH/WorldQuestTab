@@ -2222,7 +2222,7 @@ function WQT_CoreMixin:OnLoad()
 		end)
 
 	QuestScrollFrame:SetScript("OnShow", function() 
-			if(self.selectedTab:GetID() == 2) then
+			if(self.selectedTab and self.selectedTab:GetID() == 2) then
 				self:SelectTab(WQT_TabWorld); 
 			else
 				self:SelectTab(WQT_TabNormal); 
