@@ -5,6 +5,8 @@ local ADD = LibStub("AddonDropDown-1.0");
 
 local _L = addon.L
 
+local _TomTomLoaded = IsAddOnLoaded("TomTom");
+
 WQT_TAB_NORMAL = _L["QUESTLOG"];
 WQT_TAB_WORLD = _L["WORLDQUEST"];
 
@@ -955,7 +957,7 @@ function WQT:InitFilter(self, level)
 				ADD:AddButton(info, level);		
 				
 				-- TomTom compatibility
-				if TomTom then
+				if _TomTomLoaded then
 					info.text = "Use TomTom";
 					info.tooltipTitle = "";
 					info.func = function(_, _, _, value)
@@ -1046,7 +1048,7 @@ function WQT:InitTrackDropDown(self, level)
 	-- end
 	
 	-- TomTom functionality
-	if (TomTom and WQT.settings.useTomTom) then
+	if (_TomTomLoaded and WQT.settings.useTomTom) then
 	
 		if (TomTom.WaypointExists and TomTom.AddWaypoint and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
 			-- All required functions are found
@@ -1924,17 +1926,6 @@ function WQT_PinHandlerMixin:UpdateFlightMapPins()
 		if (quest) then
 			local pin = self.pinPool:Acquire();
 			pin:Update(PoI, quest, qID);
-			if (quest.isElite) then
-				pin.glow:SetWidth(PoI:GetWidth()+61);
-				pin.glow:SetHeight(PoI:GetHeight()+61);
-				pin.glow:SetTexture("Interface/QUESTFRAME/WorldQuest")
-				pin.glow:SetTexCoord(0, 0.09765625, 0.546875, 0.953125)
-			else
-				pin.glow:SetWidth(PoI:GetWidth()+50);
-				pin.glow:SetHeight(PoI:GetHeight()+50);
-				pin.glow:SetTexture("Interface/QUESTFRAME/WorldQuest")
-				pin.glow:SetTexCoord(0.546875, 0.619140625, 0.6875, 0.9765625)
-			end
 		end
 	end
 end
@@ -2354,6 +2345,8 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 
 		-- find worldmap's world quest data provider
 		self:UnregisterEvent("ADDON_LOADED");
+	elseif (loaded == "TomTom") then
+		_TomTomLoaded = true;
 	end
 end
 	
@@ -2385,7 +2378,7 @@ end
 
 function WQT_CoreMixin:QUEST_TURNED_IN(questId)
 	-- Remove TomTom arrow if tracked
-	if (TomTom and WQT.settings.useTomTom) then
+	if (_TomTomLoaded and WQT.settings.useTomTom and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
 		local qInfo = _questDataProvider:GetQuestById(questId);
 		if qInfo then
 			local key = TomTom:GetKeyArgs(qInfo.zoneId, qInfo.mapX, qInfo.mapY, qInfo.title);
