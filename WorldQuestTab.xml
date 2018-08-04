@@ -126,7 +126,7 @@
 		</Member>
 	</FontFamily>
 	
-	 <Frame name="WQT_PinTemplate" mixin="WQT_PinMixin" virtual="true">
+	 <Frame name="WQT_PinTemplate" mixin="WQT_PinMixin" virtual="true" >
 		<Layers>
 			<Layer level="OVERLAY" textureSubLevel="7">
 				 <FontString parentKey="time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE">
@@ -153,13 +153,6 @@
 				</Texture>
 			</Layer>
 			<Layer level="OVERLAY" textureSubLevel="3">
-				<Texture parentKey="glow" file="Interface/QUESTFRAME/WorldQuest" mode="BLEND">
-					<size x="2" y="2"/>
-					<Anchors>
-						<Anchor point="CENTER"/>
-					</Anchors>
-					<TexCoords left="0.546875" right="0.619140625" top="0.6875" bottom="0.9765625"/>
-				</Texture>
 				<Texture parentKey="timeBG" file="Interface/COMMON/NameShadow">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.time" y="5"/>
@@ -704,12 +697,18 @@
 		</Anchors>
 	</Button>
 	
-	<Frame name="WQT_PoISelectIndicator" hidden="true">
+	<Frame name="WQT_PoISelectIndicator" hidden="true" flattenRenderLayers="true">
 		<Size x="40" y="40"/>
 		<Layers>
 			<Layer level="ARTWORK">
+				<Texture parentKey="pingStatic" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="1">
+					<Size x="70" y="70"/>
+					<Anchors>
+						<Anchor point="CENTER" y="1"/>
+					</Anchors>
+				</Texture>
 				<Texture parentKey="ping" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="0">
-					<Size x="50" y="50"/>
+					<Size x="60" y="60"/>
 					<Anchors>
 						<Anchor point="CENTER" y="1"/>
 					</Anchors>
@@ -719,31 +718,32 @@
 					<Anchors>
 						<Anchor point="CENTER" y="1"/>
 					</Anchors>
-				<!--
-					<Anchors>
-						<Anchor point="TOPLEFT"/>
-						<Anchor point="BOTTOMRIGHT"/>
-					</Anchors>
-					-->
 					<TexCoords left="0.625" right="0.75" top="0.875" bottom="1"/>
 				</Texture>
 			</Layer>
 		</Layers>
 		<Animations>
 			<AnimationGroup parentKey="ringAnim" looping="REPEAT">
-				<Alpha parentKey="ping" childKey="ping" fromAlpha="0" toAlpha="0.8"  Duration="0.2" order="0" />
-				<Alpha parentKey="ping" childKey="ping" fromAlpha="1" toAlpha="0" smoothing="IN" Duration="0.7" order="1"  startDelay="0.2" endDelay="0.1"/>
-				<Scale parentKey="ping" childKey="ping" fromScaleX="1" toScaleX="1.9" smoothing="OUT" fromScaleY="1" toScaleY="1.9" Duration="1" order="1" endDelay="0.1"/>
-				<Scale parentKey="ping" childKey="ping" fromScaleX="1.9" toScaleX="1" fromScaleY="1.9" toScaleY="1" Duration="0.1" order="2" endDelay="0.1"/>
+				<Alpha parentKey="ping" childKey="ping" fromAlpha="0" toAlpha="0.8"  Duration="0.4" order="0" />
+				<Alpha parentKey="ping" childKey="ping" fromAlpha="1" toAlpha="0" smoothing="IN" Duration="1" order="1"  startDelay=".2" endDelay="0"/>
+				<Scale parentKey="ping" childKey="ping" fromScaleX="1" toScaleX="1.9" smoothing="OUT" fromScaleY="1" toScaleY="1.9" Duration="1" order="1" endDelay="0"/>
+				<Scale parentKey="ping" childKey="ping" fromScaleX="1.9" toScaleX="1" fromScaleY="1.9" toScaleY="1" Duration="0.1" order="2" endDelay="0"/>
+			</AnimationGroup>
+			<AnimationGroup parentKey="ringAnim2" looping="NONE">
+				<Scale parentKey="pingStatic" childKey="pingStatic" fromScaleX="1.2" toScaleX="1" smoothing="IN" fromScaleY="1.2" toScaleY="1" Duration=".4" order="0"/>
+				<Alpha parentKey="pingStatic" childKey="pingStatic" fromAlpha="0.5" toAlpha="1"  Duration="0.2" order="0"/>
 			</AnimationGroup>
 		</Animations>
 		<Scripts>
 			<OnShow>
 				self.ringAnim:Stop();
 				self.ringAnim:Play();
+				self.ringAnim2:Stop();
+				self.ringAnim2:Play();
 			</OnShow>
 			<OnHide>
 				self.ringAnim:Stop();
+				self.ringAnim2:Stop();
 			</OnHide>
 		</Scripts>
 	</Frame>
