@@ -1275,7 +1275,9 @@ function WQT_ListButtonMixin:OnLeave()
 	WQT_MapZoneHightlight:Hide();
 	
 	-- Reset highlighted pin to iriginal frame level
-	WQT_PoISelectIndicator.pin:SetFrameLevel(WQT_PoISelectIndicator.pinLevel);
+	if (WQT_PoISelectIndicator.pin) then
+		WQT_PoISelectIndicator.pin:SetFrameLevel(WQT_PoISelectIndicator.pinLevel);
+	end
 	WQT_PoISelectIndicator.questId = nil;
 	
 	if (self.resetLabel) then
