@@ -135,6 +135,15 @@
 						<Anchor point="TOP" relativePoint="BOTTOM" x="2" y="2"/>
 					</Anchors>
 				</FontString>
+				
+			</Layer>
+			<Layer level="OVERLAY" textureSubLevel="6">
+				<Texture parentKey="trackedCheck" atlas="worldquest-emissary-tracker-checkmark">
+					<Size x="42" y="37"/>
+					<Anchors>
+						<Anchor point="BOTTOM" relativePoint="BOTTOMRIGHT" x="-2" y="-8"/>
+					</Anchors>
+				</Texture>
 			</Layer>
 			<Layer level="OVERLAY" textureSubLevel="5">
 				<Texture parentKey="ring" alpha="0.5" file="Interface\Addons\WorldQuestTab\Images\PoIRing">
@@ -422,6 +431,7 @@
 				self.highlight:SetFrameLevel(self:GetFrameLevel() + 2);
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 				self:EnableKeyboard(false);
+				self.UpdateTooltip = self.OnEnter;
 			</OnLoad>
 			<OnEnter>
 				self:OnEnter();
@@ -429,16 +439,6 @@
 			<OnLeave>
 				self:OnLeave();
 			</OnLeave>
-			<OnUpdate>
-				if not self:IsMouseOver() then return; end
-				if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
-					GameTooltip_ShowCompareItem(WorldMapTooltip.ItemTooltip.Tooltip, WorldMapTooltip.BackdropFrame);
-				else
-					for i, tooltip in ipairs(WorldMapTooltip.ItemTooltip.Tooltip.shoppingTooltips) do
-						tooltip:Hide();
-					end
-				end
-			</OnUpdate>
 		</Scripts>
 	</Button>
 	 
@@ -635,6 +635,33 @@
 						</FontString>
 					</Layer>
 				</Layers>
+				<Frames>
+					<Frame parentKey = "indicator" >
+						<Size x="10" y="10"/>
+						<Anchors>
+							<Anchor point="LEFT"  x="7" y="-1"/>
+						</Anchors>
+						<Layers>
+							<Layer level="ARTWORK">
+								<Texture file="Interface\DialogFrame\UI-Dialog-Icon-AlertNew"/>
+							</Layer>
+						</Layers>
+						<Scripts>
+							<OnEnter> 
+								if (self.tooltipTitle and self.tooltipSub) then
+									GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
+									GameTooltip:SetText(self.tooltipTitle, 1, 1, 1, 1, true);
+									GameTooltip:AddLine(self.tooltipSub, nil, nil, nil, true);
+									GameTooltip:Show();
+								end
+							</OnEnter>	
+							<OnLeave>
+								GameTooltip:Hide();
+							</OnLeave>
+						</Scripts>				
+					</Frame>
+				</Frames>
+				
 				<Scripts>
 					<OnClick> 
 						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
@@ -767,6 +794,30 @@
 				</Scripts>
 			</Frame>
 		</Frames>
+		<Scripts>
+			<OnLoad>
+				self:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
+				self:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);
+				self.shoppingTooltips = { WQT_CompareTooltip1, WQT_CompareTooltip2 };
+			</OnLoad>
+			<OnUpdate>
+				if ( self.recalculatePadding ) then
+					self.recalculatePadding = nil;
+					GameTooltip_CalculatePadding(self);
+				end
+
+				self.updateTooltip = (self.updateTooltip or TOOLTIP_UPDATE_TIME) - elapsed;
+				if ( self.updateTooltip > 0 ) then
+					return;
+				end
+				self.updateTooltip = TOOLTIP_UPDATE_TIME;
+				
+				local owner = self:GetOwner();
+				if ( owner and owner.UpdateTooltip ) then
+					owner:UpdateTooltip();
+				end
+			</OnUpdate>
+		</Scripts>
 	</GameTooltip>
 	
 	<Frame name="WQT_MapZoneHightlight" hidden="true">
