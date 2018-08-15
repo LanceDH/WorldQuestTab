@@ -1,4 +1,4 @@
-local MAJOR, MINOR = "AddonDropDown-1.0", 2
+local MAJOR, MINOR = "AddonDropDown-1.0", 3
 local ADD, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not ADD then return end -- No Upgrade needed.
@@ -235,6 +235,11 @@ info.minWidth = [nil, NUMBER] -- Minimum width for this line
 info.customFrame = frame -- Allows this button to be a completely custom frame, should inherit from UIDropDownCustomMenuEntryTemplate and override appropriate methods.
 info.icon = [TEXTURE] -- An icon for the button.
 info.mouseOverIcon = [TEXTURE] -- An override icon when a button is moused over.
+
+info.funcEnter = [function()] -- Function on enter button
+info.funcLeave = [function()] -- Function on leave button
+info.hoverFuncWhileDisabled = [nil, 1] -- Trigger leave/enter functions while disabled;
+
 ]]
 
 local ADD_ButtonInfo = {};
@@ -456,6 +461,9 @@ function ADD:AddButton(info, level)
 	button.padding = info.padding;
 	button.icon = info.icon;
 	button.mouseOverIcon = info.mouseOverIcon;
+	button.funcEnter = info.funcEnter;
+	button.funcLeave = info.funcLeave;
+	button.hoverFuncWhileDisabled = info.hoverFuncWhileDisabled;
 
 	if ( info.value ) then
 		button.value = info.value;

@@ -3,6 +3,8 @@
 local L = {}
 local locale = GetLocale();
 
+L["IS_AZIAN_CLIENT"]	= false
+
 L["QUESTLOG"]		= "Questlog";
 L["WORLDQUEST"]		= "World Quests"
 L["COMBATLOCK"]		= "Disabled during combat.";
@@ -65,10 +67,10 @@ L["TRACKDD_TOMTOM_REMOVE"]	= "TomTom remove"
 L["NUMBERS_FIRST"]	= "%gk"
 L["NUMBERS_SECOND"]	= "%gm"
 L["NUMBERS_THIRD"]	= "%gb"
-L["IS_AZIAN_CLIENT"]	= false
-L["MAP_FILTER_DISABLED"] = "Disabled by worldmap filters.";
+L["MAP_FILTER_DISABLED"] = "Disabled by world map filters.";
 L["MAP_FILTER_DISABLED_TITLE"] = "Some world map filters disabled";
 L["MAP_FILTER_DISABLED_INFO"]	= "Disabled filters may hide some quests. You can re-enable them under the magnifying glass on the topright of the map.";
+
 
 if locale == "deDE" then
 L["COMBATLOCK"] = "Nicht verfügbar während eines Kampfes."

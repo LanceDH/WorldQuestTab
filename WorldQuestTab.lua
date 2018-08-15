@@ -6,6 +6,7 @@ local ADD = LibStub("AddonDropDown-1.0");
 local _L = addon.L
 
 local _TomTomLoaded = IsAddOnLoaded("TomTom");
+local _CIMILoaded = IsAddOnLoaded("CanIMogIt");
 
 WQT_TAB_NORMAL = _L["QUESTLOG"];
 WQT_TAB_WORLD = _L["WORLDQUEST"];
@@ -721,6 +722,7 @@ function WQT:InitFilter(self, level)
 	info.keepShownOnClick = true;	
 	info.tooltipWhileDisabled = true;
 	info.tooltipOnButton = true;
+	info.hoverFuncWhileDisabled = true;
 	
 	if level == 1 then
 		info.checked = 	nil;
@@ -843,10 +845,15 @@ function WQT:InitFilter(self, level)
 										WQT_QuestScrollFrame:DisplayQuestList();
 									end
 					info.checked = function() return options[flagKey] end;
+					info.funcEnter = nil;
+					info.funcLeave = nil;
 					
 					if WQT:FilterIsWorldMapDisabled(flagKey) then
 						info.disabled = true;
 						info.tooltipTitle = _L["MAP_FILTER_DISABLED"];
+						info.tooltipText = _L["MAP_FILTER_DISABLED_INFO"];
+						info.funcEnter = function() WQT_WorldQuestFrame:ShowHighlightOnMapFilters(); end;
+						info.funcLeave = function() WQT_PoISelectIndicator:Hide(); end;	
 					end
 					
 					ADD:AddButton(info, level);			
@@ -1068,13 +1075,13 @@ function WQT:InitTrackDropDown(self, level)
 	local info = ADD:CreateInfo();
 	info.notCheckable = true;	
 
-	-- if ObjectiveTracker_Util_ShouldAddDropdownEntryForQuestGroupSearch(questId) then
-		-- info.text = OBJECTIVES_FIND_GROUP;
-		-- info.func = function()
-			-- LFGListUtil_FindQuestGroup(questId);
-		-- end
-		-- ADD:AddButton(info, level);
-	-- end
+	if C_LFGList.CanCreateQuestGroup(questId) then
+		info.text = OBJECTIVES_FIND_GROUP;
+		info.func = function()
+			LFGListUtil_FindQuestGroup(questId);
+		end
+		ADD:AddButton(info, level);
+	end
 	
 	-- TomTom functionality
 	if (_TomTomLoaded and WQT.settings.useTomTom) then
@@ -1126,23 +1133,6 @@ function WQT:InitTrackDropDown(self, level)
 	ADD:AddButton(info, level)
 end
 
-function WQT:ImproveList()		
-	local info = GetOrCreateQuestInfo();
-	info.title = "z What's the date again?";
-	info.timeString = D_DAYS:format(4);
-	info.color = WQT_BLUE_FONT_COLOR;
-	info.minutes = 5760;
-	info.rewardTexture = "Interface/ICONS/Spell_Misc_EmotionHappy";
-	info.factionId = 1090;
-	info.faction = "z";
-	info.type = 10;
-	info.zoneId = 9001;
-	info.numItems = 1;
-	info.rarity = LE_WORLD_QUEST_QUALITY_EPIC;
-	info.isElite = true;
-	table.insert(WQT_QuestScrollFrame.questList, info);
-end
-
 function WQT:IsFiltering()
 	local playerFaction = GetPlayerFactionGroup()
 	if WQT.settings.emissaryOnly then return true; end
@@ -1167,7 +1157,6 @@ function WQT:isUsingFilterNr(id)
 end
 
 function WQT:PassesAllFilters(questInfo)
-	--if quest.minutes == 0 then return true; end
 	if questInfo.questId < 0 then return true; end
 	
 	if not WQT:IsFiltering() then return true; end
@@ -1311,18 +1300,19 @@ end
 function WQT_ListButtonMixin:OnLeave()
 	UnlockArgusHighlights();
 	HideUIPanel(self.highlight);
+	GameTooltip_AddQuestRewardsToTooltip(WQT_Tooltip, 0);
 	WQT_Tooltip:Hide();
+	WQT_Tooltip.ItemTooltip:Hide();
 	WQT_PoISelectIndicator:Hide();
 	WQT_MapZoneHightlight:Hide();
 	
-	-- Reset highlighted pin to iriginal frame level
+	-- Reset highlighted pin to original frame level
 	if (WQT_PoISelectIndicator.pin) then
 		WQT_PoISelectIndicator.pin:SetFrameLevel(WQT_PoISelectIndicator.pinLevel);
 	end
 	WQT_PoISelectIndicator.questId = nil;
 	
 	if (self.resetLabel) then
-		--WorldMapFrameAreaLabel:SetText("");
 		WorldMapFrame.ScrollContainer:GetMap():TriggerEvent("ClearAreaLabel", MAP_AREA_LABEL_TYPE.POI);
 		self.resetLabel = false;
 	end
@@ -1362,6 +1352,7 @@ function WQT_ListButtonMixin:OnEnter()
 	-- In case we somehow don't have data on this quest, even through that makes no sense at this point
 	if ( not HaveQuestData(self.questId) ) then
 		WQT_Tooltip:SetText(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
+		WQT_Tooltip.recalculatePadding = true;
 		WQT_Tooltip:Show();
 		return;
 	end
@@ -1413,25 +1404,52 @@ function WQT_ListButtonMixin:OnEnter()
 		end
 	end
 	
+	-- CanIMogIt functionality
+	-- Partial copy of addToTooltip in tooltips.lua
+	if (_CIMILoaded and qData.rewardId) then
+		local _, itemLink = GetItemInfo(qData.rewardId);
+		local tooltip = WQT_Tooltip.ItemTooltip.Tooltip;
+		if (not CanIMogIt:IsReadyForCalculations(itemLink)) then
+			return;
+		end
+
+		local text;
+		text = CanIMogIt:GetTooltipText(itemLink);
+		if (text and text ~= "") then
+			tooltip:AddDoubleLine(" ", text);
+			tooltip:Show();
+			tooltip.CIMI_tooltipWritten = true
+		end
+		
+		if CanIMogItOptions["showSourceLocationTooltip"] then
+			local sourceTypesText = CanIMogIt:GetSourceLocationText(itemLink);
+			if (sourceTypesText and sourceTypesText ~= "") then
+				tooltip:AddDoubleLine(" ", sourceTypesText);
+				tooltip:Show();
+				tooltip.CIMI_tooltipWritten = true
+			end
+		end
+	end
+	
 	-- Add debug lines
 	-- for k, v in pairs(self.info)do
 		-- if type(v) == "table" then
 			-- if v.GetRGBA then
-				-- WorldMapTooltip:AddDoubleLine(k, v.r .. "/" .. v.g .. "/" .. v.b );
+				-- WQT_Tooltip:AddDoubleLine(k, v.r .. "/" .. v.g .. "/" .. v.b );
 			-- else
-				-- WorldMapTooltip:AddDoubleLine(k, tostring(v));
+				-- WQT_Tooltip:AddDoubleLine(k, tostring(v));
 				-- for k2, v2 in pairs(v) do
-					-- WorldMapTooltip:AddDoubleLine("    " .. k2, tostring(v2));
+					-- WQT_Tooltip:AddDoubleLine("    " .. k2, tostring(v2));
 				-- end
 			-- end
 		-- else
-			-- WorldMapTooltip:AddDoubleLine(k, tostring(v));
+			-- WQT_Tooltip:AddDoubleLine(k, tostring(v));
 		-- end
 	-- end
-	
+
 	WQT_Tooltip:Show();
 	WQT_Tooltip.recalculatePadding = true;
-
+	
 	-- If we are on a continent, we want to highlight the relevant zone
 	self:ShowWorldmapHighlight(self.info.zoneId);
 end
@@ -1534,9 +1552,8 @@ function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 	end
 end
 
-function WQT_ListButtonMixin:Update(questInfo)
-	local mapInfo = C_Map.GetMapInfo(WorldMapFrame.mapID);
-	local shouldShowZone = mapInfo and (mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World); 
+function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
+	
 	self:Show();
 	self.title:SetText(questInfo.title);
 	self.time:SetTextColor(questInfo.color.r, questInfo.color.g, questInfo.color.b, 1);
@@ -1830,7 +1847,7 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	-- If the quest as a second reward e.g. Mark of Honor + Honor points
 	self:SetSubReward(info);
 	
-	if not haveData then
+	if not haveData and info.type >= 0 then
 		info.rewardType = WQT_REWARDTYPE_MISSING;
 		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
 		return nil;
@@ -1852,6 +1869,7 @@ function WQT_QuestDataProvider:AddQuestsInZone(zoneID, continentId)
 			end;
 		end
 	end
+	
 	return missingData;
 end
 
@@ -2127,7 +2145,6 @@ end
 function WQT_ScrollListMixin:UpdateQuestList()
 	if (not WorldMapFrame:IsShown() or InCombatLockdown()) then return end
 
-	--local isMouseEnabled = self:IsMouseEnabled();
 	local mapAreaID = WorldMapFrame.mapID;
 
 	local quest = nil;
@@ -2143,9 +2160,6 @@ function WQT_ScrollListMixin:UpdateQuestList()
 	end
 
 	self:UpdateQuestFilters();
-	if WQT.versionCheck and #self.questListDisplay > 0 and self.settings.funQuests then
-		WQT:ImproveList();
-	end
 
 	self:ApplySort();
 	if not InCombatLockdown() then
@@ -2153,10 +2167,6 @@ function WQT_ScrollListMixin:UpdateQuestList()
 	else
 		WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
 	end
-	-- Updating the scrollframe enabled the mouse
-	-- If we wasn't enabled before, disabled it again
-	--self:EnableMouse(isMouseEnabled);
-	--WQT_QuestScrollFrameScrollChild:EnableMouse(isMouseEnabled);
 end
 
 function WQT_ScrollListMixin:DisplayQuestList(skipPins)
@@ -2166,6 +2176,9 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 	local offset = HybridScrollFrame_GetOffset(self);
 	local buttons = self.buttons;
 	if buttons == nil then return; end
+	
+	local mapInfo = C_Map.GetMapInfo(WorldMapFrame.mapID);
+	local shouldShowZone = mapInfo and (mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World); 
 
 	self:ApplySort();
 	self:UpdateQuestFilters();
@@ -2182,7 +2195,7 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 		button.info = nil;
 		
 		if ( displayIndex <= #list) then
-			button:Update(list[displayIndex]);
+			button:Update(list[displayIndex], shouldShowZone);
 		end
 	end
 	
@@ -2297,6 +2310,7 @@ function WQT_CoreMixin:OnLoad()
 	end)
 	
 	local worldMapFilter;
+	
 	for k, frame in ipairs(WorldMapFrame.overlayFrames) do
 		for name, value in pairs(frame) do
 			if (name == "OnSelection") then
@@ -2310,8 +2324,10 @@ function WQT_CoreMixin:OnLoad()
 				self.scrollFrame:UpdateQuestList();
 				WQT:UpdateFilterIndicator();
 			end);
+		self.worldMapFilter = worldMapFilter;
 	end
 	
+	-- Close all our custom dropdowns when opening an Blizzard dropdown
 	hooksecurefunc("ToggleDropDownMenu", function()
 			ADD:CloseDropDownMenus();
 		end);
@@ -2350,6 +2366,16 @@ function WQT_CoreMixin:OnLoad()
 	QuestMapFrame.VerticalSeparator:SetHeight(470);
 end
 
+function WQT_CoreMixin:ShowHighlightOnMapFilters()
+	if (not self.worldMapFilter) then return; end
+	WQT_PoISelectIndicator:SetParent(self.worldMapFilter);
+	WQT_PoISelectIndicator:ClearAllPoints();
+	WQT_PoISelectIndicator:SetPoint("CENTER", self.worldMapFilter, 0, 1);
+	WQT_PoISelectIndicator:SetFrameLevel(self.worldMapFilter:GetFrameLevel()+1);
+	WQT_PoISelectIndicator:Show();
+	WQT_PoISelectIndicator:SetScale(0.40);
+end
+
 function WQT_CoreMixin:ShowHighlightOnPin(pin)
 	WQT_PoISelectIndicator:SetParent(pin);
 	WQT_PoISelectIndicator:ClearAllPoints();
@@ -2359,6 +2385,7 @@ function WQT_CoreMixin:ShowHighlightOnPin(pin)
 	WQT_PoISelectIndicator.pin = pin;
 	pin:SetFrameLevel(3000);
 	WQT_PoISelectIndicator:Show();
+	WQT_PoISelectIndicator:SetScale(1);
 end
 
 function WQT_CoreMixin:FilterClearButtonOnClick()
@@ -2400,6 +2427,8 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 		self:UnregisterEvent("ADDON_LOADED");
 	elseif (loaded == "TomTom") then
 		_TomTomLoaded = true;
+	elseif (loaded == "CanIMogIt") then
+		_CIMILoaded = true;
 	end
 end
 	

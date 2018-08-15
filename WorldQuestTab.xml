@@ -654,9 +654,11 @@
 									GameTooltip:AddLine(self.tooltipSub, nil, nil, nil, true);
 									GameTooltip:Show();
 								end
+								WQT_WorldQuestFrame:ShowHighlightOnMapFilters();
 							</OnEnter>	
 							<OnLeave>
 								GameTooltip:Hide();
+								WQT_PoISelectIndicator:Hide();
 							</OnLeave>
 						</Scripts>				
 					</Frame>
