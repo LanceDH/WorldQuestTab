@@ -916,11 +916,6 @@ function WQT:InitFilter(self, level)
 							for i = start, stop do
 								ADD:EnableButton(2, i);
 							end
-							-- if (WQT.settings.showPinReward) then
-								-- ADD:EnableButton(2, 9);
-							-- else
-								-- ADD:DisableButton(2, 9);
-							-- end
 						end
 						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(true)
 					end
@@ -943,11 +938,6 @@ function WQT:InitFilter(self, level)
 				info.func = function(_, _, _, value)
 						WQT.settings.showPinReward = value;
 						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
-						-- if (value) then
-							-- ADD:EnableButton(2, 9);
-						-- else
-							-- ADD:DisableButton(2, 9);
-						-- end
 					end
 				info.checked = function() return WQT.settings.showPinReward end;
 				ADD:AddButton(info, level);
@@ -1300,7 +1290,7 @@ end
 function WQT_ListButtonMixin:OnLeave()
 	UnlockArgusHighlights();
 	HideUIPanel(self.highlight);
-	GameTooltip_AddQuestRewardsToTooltip(WQT_Tooltip, 0);
+	--GameTooltip_AddQuestRewardsToTooltip(WQT_Tooltip, 0);
 	WQT_Tooltip:Hide();
 	WQT_Tooltip.ItemTooltip:Hide();
 	WQT_PoISelectIndicator:Hide();
@@ -1333,21 +1323,6 @@ function WQT_ListButtonMixin:OnEnter()
 		WQT_WorldQuestFrame:ShowHighlightOnPin(pin)
 		WQT_PoISelectIndicator.questId = qData.questId;
 	end
-	
-	
-	-- I want hightlighted ones to jump to the front, but it makes everything jitter around
-	-- local button = nil;
-	-- for i = 1, NUM_WORLDMAP_TASK_POIS do
-		-- button = _G["WorldMapFrameTaskPOI"..i];
-		-- if button.questID == self.questId then
-			-- WQT_PoISelectIndicator:SetParent(button);
-			-- WQT_PoISelectIndicator:ClearAllPoints();
-			-- WQT_PoISelectIndicator:SetPoint("CENTER", button, 0, -1);
-			-- WQT_PoISelectIndicator:SetFrameLevel(button:GetFrameLevel()+2);
-			-- WQT_PoISelectIndicator:Show();
-			-- break;
-		-- end
-	-- end
 	
 	-- In case we somehow don't have data on this quest, even through that makes no sense at this point
 	if ( not HaveQuestData(self.questId) ) then
@@ -1389,6 +1364,8 @@ function WQT_ListButtonMixin:OnEnter()
 		GameTooltip_ShowProgressBar(WQT_Tooltip, 0, 100, percent, PERCENTAGE_STRING:format(percent));
 	end
 
+	
+	
 	if self.info.rewardTexture ~= "" then
 		if self.info.rewardTexture == WQT_QUESTIONMARK then
 			WQT_Tooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
@@ -1396,37 +1373,54 @@ function WQT_ListButtonMixin:OnEnter()
 			GameTooltip_AddQuestRewardsToTooltip(WQT_Tooltip, self.questId);
 			
 			-- reposition compare frame
-			if(qData.rewardType == WQT_REWARDTYPE_ARMOR) then
+			if((qData.rewardType == WQT_REWARDTYPE_ARMOR) and WQT_Tooltip.ItemTooltip:IsShown()) then
 				if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
-					GameTooltip_ShowCompareItem(WQT_Tooltip.ItemTooltip.Tooltip, WQT_Tooltip);
+					-- Setup and check total size of both tooltips
+					WQT_CompareTooltip1:SetCompareItem(WQT_CompareTooltip2, WQT_Tooltip.ItemTooltip.Tooltip);
+					local totalWidth = 0;
+					if ( WQT_CompareTooltip1:IsShown()  ) then
+							totalWidth = totalWidth + WQT_CompareTooltip1:GetWidth();
+					end
+					if ( WQT_CompareTooltip2:IsShown()  ) then
+							totalWidth = totalWidth + WQT_CompareTooltip2:GetWidth();
+					end
+					
+					-- If there is room to the right, give priority to show compare tooltips to the right of the tooltip
+					local priorityRight = WQT_Tooltip.ItemTooltip.Tooltip:GetRight() + totalWidth < GetScreenWidth();
+					WQT_Tooltip.ItemTooltip.Tooltip.overrideComparisonAnchorSide  = priorityRight and "right" or "left";
+					GameTooltip_ShowCompareItem(WQT_Tooltip.ItemTooltip.Tooltip, WQT_Tooltip.ItemTooltip);
+
+					-- Set higher frame level in case things overlap
+					local level = WQT_Tooltip:GetFrameLevel();
+					WQT_CompareTooltip1:SetFrameLevel(level +2);
+					WQT_CompareTooltip2:SetFrameLevel(level +1);
 				end
 			end
 		end
 	end
+
 	
 	-- CanIMogIt functionality
 	-- Partial copy of addToTooltip in tooltips.lua
 	if (_CIMILoaded and qData.rewardId) then
 		local _, itemLink = GetItemInfo(qData.rewardId);
 		local tooltip = WQT_Tooltip.ItemTooltip.Tooltip;
-		if (not CanIMogIt:IsReadyForCalculations(itemLink)) then
-			return;
-		end
-
-		local text;
-		text = CanIMogIt:GetTooltipText(itemLink);
-		if (text and text ~= "") then
-			tooltip:AddDoubleLine(" ", text);
-			tooltip:Show();
-			tooltip.CIMI_tooltipWritten = true
-		end
-		
-		if CanIMogItOptions["showSourceLocationTooltip"] then
-			local sourceTypesText = CanIMogIt:GetSourceLocationText(itemLink);
-			if (sourceTypesText and sourceTypesText ~= "") then
-				tooltip:AddDoubleLine(" ", sourceTypesText);
+		if (itemLink and CanIMogIt:IsReadyForCalculations(itemLink)) then
+			local text;
+			text = CanIMogIt:GetTooltipText(itemLink);
+			if (text and text ~= "") then
+				tooltip:AddDoubleLine(" ", text);
 				tooltip:Show();
 				tooltip.CIMI_tooltipWritten = true
+			end
+			
+			if CanIMogItOptions["showSourceLocationTooltip"] then
+				local sourceTypesText = CanIMogIt:GetSourceLocationText(itemLink);
+				if (sourceTypesText and sourceTypesText ~= "") then
+					tooltip:AddDoubleLine(" ", sourceTypesText);
+					tooltip:Show();
+					tooltip.CIMI_tooltipWritten = true
+				end
 			end
 		end
 	end
@@ -1447,8 +1441,10 @@ function WQT_ListButtonMixin:OnEnter()
 		-- end
 	-- end
 
+	
 	WQT_Tooltip:Show();
 	WQT_Tooltip.recalculatePadding = true;
+	
 	
 	-- If we are on a continent, we want to highlight the relevant zone
 	self:ShowWorldmapHighlight(self.info.zoneId);
@@ -1701,6 +1697,11 @@ function WQT_QuestDataProvider:ScanTooltipRewardForPattern(questID, pattern)
 		if result then break; end
 	end
 	
+	-- Force hide compare tooltips as they's show up for people with alwaysCompareItems set to 1
+	for k, tooltip in ipairs(WQT_Tooltip.shoppingTooltips) do
+		tooltip:Hide();
+	end
+	
 	return result;
 end
 
@@ -1731,7 +1732,6 @@ function WQT_QuestDataProvider:SetQuestReward(info)
 	
 	if GetNumQuestLogRewards(info.questId) > 0 then
 		_, texture, numItems, quality, _, itemId = GetQuestLogRewardInfo(1, info.questId);
-		--info.itemID = itemId;
 		
 		if itemId and select(9, GetItemInfo(itemId)) ~= "" then -- Gear
 			numItems = self:ScanTooltipRewardForPattern(info.questId, "(%d+)%+$")
