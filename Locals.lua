@@ -20,7 +20,7 @@ L["NAME"]			= "Name";
 L["REWARD"]			= "Reward";
 L["SETTINGS"]		= "Settings";
 L["DEFAULT_TAB"]	= "Default Tab";
-L["DEFAULT_TAB_TT"]	= "Set WQT as the default tab when you log in.\nDoes not apply to characters below lvl 110.";
+L["DEFAULT_TAB_TT"]	= "Set WQT as the default tab when you log in.\nOnly applies to max level characters.";
 L["SAVE_SETTINGS"]	= "Save Filters/Sort";
 L["SAVE_SETTINGS_TT"]	= "Save filter and sort settings\nbetween sessions and reloads."
 L["PIN_DISABLE"]	= "Disable pin changes";
@@ -75,8 +75,6 @@ L["MAP_FILTER_DISABLED_INFO"]	= "Disabled filters may hide some quests. You can 
 if locale == "deDE" then
 L["COMBATLOCK"] = "Nicht verfügbar während eines Kampfes."
 L["DEFAULT_TAB"] = "Standardtab"
-L["DEFAULT_TAB_TT"] = [=[Aktiviert WQT als Standardtab nach dem Einloggen.
-Nicht aktiv für Charaktere unter Level 110.]=]
 L["FACTION"] = "Fraktion"
 L["FILTER"] = "Filter: %s"
 L["NAME"] = "Name"
@@ -120,8 +118,6 @@ end
 if locale == "ptBR" then
 L["COMBATLOCK"] = "Desativado durante combate."
 L["DEFAULT_TAB"] = "Aba Padrão"
-L["DEFAULT_TAB_TT"] = [=[Definir o WQT como aba padrão quando você logar.
- Isso não se aplica a personagens abaixo do nível 110.]=]
 L["FACTION"] = "Facção"
 L["FILTER"] = "Filtro: %s"
 L["FILTER_PINS"] = "Filtrar marcações no mapa"
@@ -179,8 +175,6 @@ end
 if locale == "frFR" then
 L["COMBATLOCK"] = "Désactivé en combat."
 L["DEFAULT_TAB"] = "Onglet par défaut"
-L["DEFAULT_TAB_TT"] = [=[Définir WQT comme onglet par défaut quand vous vous connectez.
-Ne s'applique pas en dessous du niveau 110.]=]
 L["FACTION"] = "Faction"
 L["FILTER"] = "Filtre : %s"
 L["NAME"] = "Nom"
@@ -226,8 +220,6 @@ end
 if locale == "ruRU" then
 L["COMBATLOCK"] = "Отключено во время боя."
 L["DEFAULT_TAB"] = "По умолчанию"
-L["DEFAULT_TAB_TT"] = [=[Установить WQT как панель по умолчанию.
-Не применяется к персонажам ниже 110 уровня.]=]
 L["FACTION"] = "Фракция"
 L["FILTER"] = "Фильтр: %s"
 L["FILTER_PINS"] = "Фильтр меток"
@@ -292,8 +284,6 @@ end
 if locale == "zhCN" then
 L["COMBATLOCK"] = "战斗中无法使用"
 L["DEFAULT_TAB"] = "默认选项卡"
-L["DEFAULT_TAB_TT"] = [=[设置WQT作为你登录后的默认选项卡。
-不会对110级以下的角色生效。]=]
 L["FACTION"] = "阵营"
 L["FILTER"] = "过滤： %s"
 L["FILTER_PINS"] = "过滤地图显示"
@@ -346,8 +336,6 @@ end
 if locale == "zhTW" then
 L["COMBATLOCK"] = "戰鬥中無法使用"
 L["DEFAULT_TAB"] = "預設標籤"
-L["DEFAULT_TAB_TT"] = [=[將WQT設定為預設啟用標籤。
-這不適用於等級110以下角色。]=]
 L["FACTION"] = "陣營"
 L["FILTER"] = "過濾: %s"
 L["FILTER_PINS"] = "過濾地圖顯示"
@@ -411,8 +399,6 @@ end
 if locale == "koKR" then
 L["COMBATLOCK"] = "전투 중엔 비활성됩니다."
 L["DEFAULT_TAB"] = "기본 탭"
-L["DEFAULT_TAB_TT"] = [=[로그인 했을 때 WQT를 기본 탭으로 설정합니다.
-110 레벨 미만의 캐릭터엔 적용하지 않습니다.]=]
 L["FACTION"] = "평판 진영"
 L["FILTER"] = "필터: %s"
 L["FILTER_PINS"] = "지도 표시 필터"

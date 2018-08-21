@@ -1349,7 +1349,10 @@ function WQT_ListButtonMixin:OnEnter()
 		end
 	end
 
-	WorldMap_AddQuestTimeToTooltip(self.questId);
+	-- Add time
+	local timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(qData.questId)*60;
+	WQT_Tooltip:AddLine(BONUS_OBJECTIVE_TIME_LEFT:format(SecondsToTime(timeLeftMinutes, true, true)), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	
 
 	for objectiveIndex = 1, self.numObjectives do
 		local objectiveText, objectiveType, finished = GetQuestObjectiveInfo(self.questId, objectiveIndex, false);
@@ -1426,20 +1429,20 @@ function WQT_ListButtonMixin:OnEnter()
 	end
 	
 	-- Add debug lines
-	-- for k, v in pairs(self.info)do
-		-- if type(v) == "table" then
-			-- if v.GetRGBA then
-				-- WQT_Tooltip:AddDoubleLine(k, v.r .. "/" .. v.g .. "/" .. v.b );
-			-- else
-				-- WQT_Tooltip:AddDoubleLine(k, tostring(v));
-				-- for k2, v2 in pairs(v) do
-					-- WQT_Tooltip:AddDoubleLine("    " .. k2, tostring(v2));
-				-- end
-			-- end
-		-- else
-			-- WQT_Tooltip:AddDoubleLine(k, tostring(v));
-		-- end
-	-- end
+	for k, v in pairs(self.info)do
+		if type(v) == "table" then
+			if v.GetRGBA then
+				WQT_Tooltip:AddDoubleLine(k, v.r .. "/" .. v.g .. "/" .. v.b );
+			else
+				WQT_Tooltip:AddDoubleLine(k, tostring(v));
+				for k2, v2 in pairs(v) do
+					WQT_Tooltip:AddDoubleLine("    " .. k2, tostring(v2));
+				end
+			end
+		else
+			WQT_Tooltip:AddDoubleLine(k, tostring(v));
+		end
+	end
 
 	
 	WQT_Tooltip:Show();
@@ -1672,12 +1675,38 @@ end
 WQT_QuestDataProvider = {};
 
 local function QuestCreationFunc(pool)
-	local info = {["questId"] = -1, ["rewardId"] = -1, ["title"] = "z", ["timeString"] = "", ["timeStringShort"] = "", ["color"] = WQT_WHITE_FONT_COLOR, ["minutes"] = 0
+	local info = {["rewardId"] = -1, ["title"] = "z", ["timeString"] = "", ["timeStringShort"] = "", ["color"] = WQT_WHITE_FONT_COLOR, ["minutes"] = 0
 					, ["faction"] = "", ["type"] = 0, ["rarity"] = 0, ["isElite"] = false, ["tradeskill"] = 0
 					, ["numObjectives"] = 0, ["numItems"] = 0, ["rewardTexture"] = "", ["rewardQuality"] = 1
-					, ["rewardType"] = 0, ["isCriteria"] = false, ["ringColor"] = WQT_COLOR_MISSING, ["zoneId"] = -1}
+					, ["rewardType"] = 0, ["isCriteria"] = false, ["ringColor"] = WQT_COLOR_MISSING, ["zoneId"] = -1
+					, ["reward"] = {["type"] = 0, ["amount"] = 0, ["texture"] = "", ["quality"] = 1, ["id"] = 0}
+					}
 	return info;
 end
+
+-- local function QuestResetFunc(pool, info)
+	-- info.rewardId = -1;
+	-- info.title = "";
+	-- info.timeString = "";
+	-- info.timeStringShort = "";
+	-- info.color = WQT_WHITE_FONT_COLOR;
+	-- info.minutes = 0;
+	-- info.faction = "";
+	-- info.type = 0;
+	-- info.rarity = 0;
+	-- info.isElite = false;
+	-- info.tradeskill = 0;
+	-- info.numObjectives = 0;
+	-- info.
+	-- info
+
+	-- {["questId"] = -1, ["rewardId"] = -1, ["title"] = "z", ["timeString"] = "", ["timeStringShort"] = "", ["color"] = WQT_WHITE_FONT_COLOR, ["minutes"] = 0
+					-- , ["faction"] = "", ["type"] = 0, ["rarity"] = 0, ["isElite"] = false, ["tradeskill"] = 0
+					-- , ["numObjectives"] = 0, ["numItems"] = 0, ["rewardTexture"] = "", ["rewardQuality"] = 1
+					-- , ["rewardType"] = 0, ["isCriteria"] = false, ["ringColor"] = WQT_COLOR_MISSING, ["zoneId"] = -1
+					-- , ["reward"] = {["type"] = 0, ["amount"] = 0, ["texture"] = "", ["quality"] = 1, ["id"] = 0}
+					-- }
+-- end
 
 function WQT_QuestDataProvider:OnLoad()
 	self.pool = CreateObjectPool(QuestCreationFunc);
@@ -1727,7 +1756,7 @@ function WQT_QuestDataProvider:GetAPrewardFromText(text)
 end
 
 function WQT_QuestDataProvider:SetQuestReward(info)
-
+	local reward = info.reward;
 	local _, texture, numItems, quality, rewardType, color, rewardId, itemId = nil, nil, 0, 1, 0, WQT_COLOR_MISSING, nil, nil;
 	
 	if GetNumQuestLogRewards(info.questId) > 0 then
@@ -1797,6 +1826,12 @@ function WQT_QuestDataProvider:SetQuestReward(info)
 	info.numItems = numItems or 0;
 	info.rewardType = rewardType or 0;
 	info.ringColor = color;
+	
+	info.reward.id = itemId;
+	info.reward.quality = quality or 1;
+	info.reward.texture = texture or WQT_QUESTIONMARK;
+	info.reward.amount = numItems or 0;
+	info.reward.type = rewardType or 0;
 end
 
 function WQT_QuestDataProvider:SetSubReward(info) 
@@ -1811,7 +1846,31 @@ function WQT_QuestDataProvider:SetSubReward(info)
 	info.subRewardType = subType;
 end
 
+function WQT_QuestDataProvider:FindDuplicate(questId)
+	for questInfo, v in self.pool:EnumerateActive() do
+		if (questInfo.questId == questId) then
+			return questInfo;
+		end
+	end
+	
+	return nil;
+end
+
 function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
+	local duplicate = self:FindDuplicate(qInfo.questId);
+	-- If there is a duplicate, we don't want to go through all the info again
+	if (duplicate) then
+		-- If the new zone is a child of the duplicate's zone, use that one isntead.
+		-- It's probably a city in the zone
+		local zoneInfo = C_Map.GetMapInfo(zoneId);
+		if (duplicate.zoneId == zoneInfo.parentMapID) then
+			duplicate.zoneId = zoneId;
+			duplicate.zoneInfo = zoneInfo;
+		end
+		
+		return duplicate;
+	end
+
 	local haveData = HaveQuestRewardData(qInfo.questId);
 	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(qInfo.questId);
 	local minutes, timeString, color, timeStringShort = GetQuestTimeString(qInfo.questId);
