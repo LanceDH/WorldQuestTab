@@ -10,6 +10,7 @@ local _CIMILoaded = IsAddOnLoaded("CanIMogIt");
 
 WQT_TAB_NORMAL = _L["QUESTLOG"];
 WQT_TAB_WORLD = _L["WORLDQUEST"];
+WQT_GROUP_INFO = _L["GROUP_SEARCH_INFO"];
 
 local WQT_REWARDTYPE_MISSING = 100;
 local WQT_REWARDTYPE_ARMOR = 1;
@@ -73,16 +74,16 @@ local WQT_FILTER_FUNCTIONS = {
 			,function(quest, flags) return (flags["Default"] and (quest.type ~= LE_QUEST_TAG_TYPE_PVP and quest.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON  and quest.type ~= LE_QUEST_TAG_TYPE_PROFESSION and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.type ~= LE_QUEST_TAG_TYPE_INVASION and not quest.isElite)); end 
 			}
 		,[3] = { -- Reward filters
-			function(quest, flags) return (flags["Armor"] and quest.rewardType == WQT_REWARDTYPE_ARMOR); end 
-			,function(quest, flags) return (flags["Relic"] and quest.rewardType == WQT_REWARDTYPE_RELIC); end 
-			,function(quest, flags) return (flags["Item"] and quest.rewardType == WQT_REWARDTYPE_ITEM); end 
-			,function(quest, flags) return (flags["Artifact"] and quest.rewardType == WQT_REWARDTYPE_ARTIFACT); end 
-			,function(quest, flags) return (flags["Honor"] and (quest.rewardType == WQT_REWARDTYPE_HONOR or quest.subRewardType == WQT_REWARDTYPE_HONOR)); end 
-			,function(quest, flags) return (flags["Gold"] and (quest.rewardType == WQT_REWARDTYPE_GOLD or quest.subRewardType == WQT_REWARDTYPE_GOLD) ); end 
-			,function(quest, flags) return (flags["Currency"] and (quest.rewardType == WQT_REWARDTYPE_CURRENCY or quest.subRewardType == WQT_REWARDTYPE_CURRENCY)); end 
-			,function(quest, flags) return (flags["Experience"] and quest.rewardType == WQT_REWARDTYPE_XP); end 
-			,function(quest, flags) return (flags["Reputation"] and quest.rewardType == WQT_REWARDTYPE_REP or quest.subRewardType == WQT_REWARDTYPE_REP); end
-			,function(quest, flags) return (flags["None"] and quest.rewardType == WQT_REWARDTYPE_NONE); end
+			function(quest, flags) return (flags["Armor"] and quest.reward.type == WQT_REWARDTYPE_ARMOR); end 
+			,function(quest, flags) return (flags["Relic"] and quest.reward.type == WQT_REWARDTYPE_RELIC); end 
+			,function(quest, flags) return (flags["Item"] and quest.reward.type == WQT_REWARDTYPE_ITEM); end 
+			,function(quest, flags) return (flags["Artifact"] and quest.reward.type == WQT_REWARDTYPE_ARTIFACT); end 
+			,function(quest, flags) return (flags["Honor"] and (quest.reward.type == WQT_REWARDTYPE_HONOR or quest.reward.subType == WQT_REWARDTYPE_HONOR)); end 
+			,function(quest, flags) return (flags["Gold"] and (quest.reward.type == WQT_REWARDTYPE_GOLD or quest.reward.subType == WQT_REWARDTYPE_GOLD) ); end 
+			,function(quest, flags) return (flags["Currency"] and (quest.reward.type == WQT_REWARDTYPE_CURRENCY or quest.reward.subType == WQT_REWARDTYPE_CURRENCY)); end 
+			,function(quest, flags) return (flags["Experience"] and quest.reward.type == WQT_REWARDTYPE_XP); end 
+			,function(quest, flags) return (flags["Reputation"] and quest.reward.type == WQT_REWARDTYPE_REP or quest.reward.subType == WQT_REWARDTYPE_REP); end
+			,function(quest, flags) return (flags["None"] and quest.reward.type == WQT_REWARDTYPE_NONE); end
 			}
 	};
 
@@ -358,8 +359,7 @@ local function GetMapWQProvider()
 		end 
 	end
 	-- We hook it here because we can't hook it during addonloaded for some reason
-	hooksecurefunc(WQT.mapWQProvider, "RefreshAllData", function() 
-			
+	hooksecurefunc(WQT.mapWQProvider, "RefreshAllData", function(self) 
 			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
 			
 			-- If the pins updated and make sure the highlight is still on the correct pin
@@ -554,24 +554,24 @@ end
 local function SortQuestList(list)
 	table.sort(list, function(a, b) 
 			-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-			if (a.minutes > 60 and b.minutes > 60 and math.abs(a.minutes - b.minutes) < 2) or a.minutes == b.minutes then
+			if (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) or a.time.minutes == b.time.minutes then
 				if a.expantionLevel ==  b.expantionLevel then
 					return a.title < b.title;
 				end
 				return a.expantionLevel > b.expantionLevel;
 			end	
-			return a.minutes < b.minutes;
+			return a.time.minutes < b.time.minutes;
 	end);
 end
 
 local function SortQuestListByZone(list)
 	table.sort(list, function(a, b) 
-		if a.zoneId == b.zoneId then
+		if a.zoneInfo.mapID == b.zoneInfo.mapID then
 			-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-			if (a.minutes > 60 and b.minutes > 60 and math.abs(a.minutes - b.minutes) < 2) or a.minutes == b.minutes then
+			if (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) or a.time.minutes == b.time.minutes then
 				return a.title < b.title;
 			end	
-			return a.minutes < b.minutes;
+			return a.time.minutes < b.time.minutes;
 		end
 		return (a.zoneInfo.name or "zz") < (b.zoneInfo.name or "zz");
 	end);
@@ -582,10 +582,10 @@ local function SortQuestListByFaction(list)
 	if a.expantionLevel ==  b.expantionLevel then
 		if a.faction == b.faction then
 			-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-			if (a.minutes > 60 and b.minutes > 60 and math.abs(a.minutes - b.minutes) < 2) or a.minutes == b.minutes then
+			if (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) or a.time.minutes == b.time.minutes then
 				return a.title < b.title;
 			end	
-			return a.minutes < b.minutes;
+			return a.time.minutes < b.time.minutes;
 		end
 		return a.faction > b.faction;
 	end
@@ -602,10 +602,10 @@ local function SortQuestListByType(list)
 				if a.rarity == b.rarity then
 					if (a.isElite and b.isElite) or (not a.isElite and not b.isElite) then
 						-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-						if (a.minutes > 60 and b.minutes > 60 and math.abs(a.minutes - b.minutes) < 2) or a.minutes == b.minutes then
+						if (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) or a.time.minutes == b.time.minutes then
 							return a.title < b.title;
 						end	
-						return a.minutes < b.minutes;
+						return a.time.minutes < b.time.minutes;
 					end
 					return b.isElite;
 				end
@@ -625,23 +625,23 @@ end
 
 local function SortQuestListByReward(list)
 	table.sort(list, function(a, b) 
-		if a.rewardType == b.rewardType then
-			if not a.rewardQuality or not b.rewardQuality or a.rewardQuality == b.rewardQuality then
-				if not a.numItems or not b.numItems or a.numItems == b.numItems then
+		if a.reward.type == b.reward.type then
+			if not a.reward.quality or not b.reward.quality or a.reward.quality == b.reward.quality then
+				if not a.reward.amount or not b.reward.amount or a.reward.amount == b.reward.amount then
 					-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-					if (a.minutes > 60 and b.minutes > 60 and math.abs(a.minutes - b.minutes) < 2) or a.minutes == b.minutes then
+					if (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) or a.time.minutes == b.time.minutes then
 						return a.title < b.title;
 					end	
-					return a.minutes < b.minutes;
+					return a.time.minutes < b.time.minutes;
 				
 				end
-				return a.numItems > b.numItems;
+				return a.reward.amount > b.reward.amount;
 			end
-			return a.rewardQuality > b.rewardQuality;
-		elseif a.rewardType == 0 or b.rewardType == 0 then
-			return a.rewardType > b.rewardType;
+			return a.reward.quality > b.reward.quality;
+		elseif a.reward.type == 0 or b.reward.type == 0 then
+			return a.reward.type > b.reward.type;
 		end
-		return a.rewardType < b.rewardType;
+		return a.reward.type < b.reward.type;
 	end);
 end
 
@@ -688,6 +688,51 @@ local function ConvertToBfASettings()
 			repFlags[name] = nil;
 		end
 	end
+end
+
+local deprecated = {
+		["id"] = true, ["mapX"] = true, ["mapY"] = true, ["mapF"] = true, ["timeString"] = true, ["timeStringShort"] = true, 
+		["color"] = true, ["minutes"] = true, ["zoneId"] = true, ["continentId"] = true, ["rewardId"] = true, ["rewardQuality"] = true, 
+		["rewardTexture"] = true, ["numItems"] = true, ["rewardType"] = true, ["ringColor"] = true, ["subRewardType"] = true;
+	}
+
+local function AddDebugToTooltip(tooltip, questInfo)
+	-- First all non table values;
+	for key, value in pairs(questInfo) do
+		if (not deprecated[key]) then
+			if (type(value) ~= "table") then
+				tooltip:AddDoubleLine(key, tostring(value));
+			elseif (type(value) == "table" and value.GetRGBA) then
+				tooltip:AddDoubleLine(key, value.r .. "/" .. value.g .. "/" .. value.b );
+			end
+		end
+	end
+
+	-- Actual tables
+	for key, value in pairs(questInfo) do
+		if (type(value) == "table" and not value.GetRGBA) then
+			tooltip:AddDoubleLine(key, "");
+			for key2, value2 in pairs(value) do
+				if (type(value2) == "table" and value2.GetRGBA) then-- colors
+					tooltip:AddDoubleLine("    " .. key2, value2.r .. "/" .. value2.g .. "/" .. value2.b );
+				else
+					tooltip:AddDoubleLine("    " .. key2, tostring(value2));
+				end
+			end
+		end
+	end
+	
+	-- Deprecated values
+	for key, value in pairs(questInfo) do
+		if (deprecated[key]) then
+			if (type(value) ~= "table") then
+				tooltip:AddDoubleLine(key, tostring(value) , 0.5, 0.5, 0.5, 0.5, 0.5, 0.5);
+			elseif (type(value) == "table" and value.GetRGBA) then
+				tooltip:AddDoubleLine(key, value.r .. "/" .. value.g .. "/" .. value.b , 0.5, 0.5, 0.5, 0.5, 0.5, 0.5);
+			end
+		end
+	end
+
 end
 
 function WQT:UpdateFilterIndicator() 
@@ -1061,34 +1106,26 @@ function WQT:InitTrackDropDown(self, level)
 
 	if not self:GetParent() or not self:GetParent().info then return; end
 	local questId = self:GetParent().info.questId;
-	local qInfo = self:GetParent().info;
+	local questInfo = self:GetParent().info;
 	local info = ADD:CreateInfo();
 	info.notCheckable = true;	
-
-	if C_LFGList.CanCreateQuestGroup(questId) then
-		info.text = OBJECTIVES_FIND_GROUP;
-		info.func = function()
-			LFGListUtil_FindQuestGroup(questId);
-		end
-		ADD:AddButton(info, level);
-	end
 	
 	-- TomTom functionality
 	if (_TomTomLoaded and WQT.settings.useTomTom) then
 	
 		if (TomTom.WaypointExists and TomTom.AddWaypoint and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
 			-- All required functions are found
-			if (not TomTom:WaypointExists(qInfo.zoneId, qInfo.mapX, qInfo.mapY, qInfo.title)) then
+			if (not TomTom:WaypointExists(questInfo.zoneInfo.mapID, questInfo.zoneInfo.mapX, questInfo.zoneInfo.mapY, questInfo.title)) then
 				info.text = _L["TRACKDD_TOMTOM"];
 				info.func = function()
-					TomTom:AddWaypoint(qInfo.zoneId, qInfo.mapX, qInfo.mapY, {["title"] = qInfo.title})
-					TomTom:AddWaypoint(qInfo.zoneId, qInfo.mapX, qInfo.mapY, {["title"] = qInfo.title})
+					TomTom:AddWaypoint(questInfo.zoneInfo.mapID, questInfo.zoneInfo.mapX, questInfo.zoneInfo.mapY, {["title"] = questInfo.title})
+					TomTom:AddWaypoint(questInfo.zoneInfo.mapID, questInfo.zoneInfo.mapX, questInfo.zoneInfo.mapY, {["title"] = questInfo.title})
 				end
 			else
 				info.text = _L["TRACKDD_TOMTOM_REMOVE"];
 				info.func = function()
-					local key = TomTom:GetKeyArgs(qInfo.zoneId, qInfo.mapX, qInfo.mapY, qInfo.title);
-					local wp = TomTom.waypoints[qInfo.zoneId] and TomTom.waypoints[qInfo.zoneId][key];
+					local key = TomTom:GetKeyArgs(questInfo.zoneInfo.mapID, questInfo.zoneInfo.mapX, questInfo.zoneInfo.mapY, questInfo.title);
+					local wp = TomTom.waypoints[questInfo.zoneInfo.mapID] and TomTom.waypoints[questInfo.zoneInfo.mapID][key];
 					TomTom:RemoveWaypoint(wp);
 				end
 			end
@@ -1103,6 +1140,7 @@ function WQT:InitTrackDropDown(self, level)
 		ADD:AddButton(info, level);
 	end
 	
+	-- Tracking
 	if (QuestIsWatched(questId)) then
 		info.text = UNTRACK_QUEST;
 		info.func = function(_, _, _, value)
@@ -1117,6 +1155,20 @@ function WQT:InitTrackDropDown(self, level)
 				end
 	end	
 	ADD:AddButton(info, level)
+	
+	-- LFG if possible
+	if (questInfo.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and questInfo.type ~= LE_QUEST_TAG_TYPE_DUNGEON  and questInfo.type ~= LE_QUEST_TAG_TYPE_PROFESSION and questInfo.type ~= LE_QUEST_TAG_TYPE_RAID) then
+		info.text = OBJECTIVES_FIND_GROUP;
+		info.func = function()
+			WQT_GroupSearch:Hide();
+			LFGListUtil_FindQuestGroup(questId);
+			if (not C_LFGList.CanCreateQuestGroup(questId)) then
+				WQT_GroupSearch.Text:SetText(_L["FORMAT_GROUP_SEARCH"]:format(questInfo.questId, questInfo.title));
+				WQT_GroupSearch:Show();
+			end
+		end
+		ADD:AddButton(info, level);
+	end
 	
 	info.text = CANCEL;
 	info.func = nil;
@@ -1255,13 +1307,16 @@ function WQT_ListButtonMixin:OnClick(button)
 	if not self.questId or self.questId== -1 then return end
 
 	if IsModifiedClick("QUESTWATCHTOGGLE") then
-		if (QuestIsWatched(self.questId)) then
-			RemoveWorldQuestWatch(self.questId);
-		else
-			AddWorldQuestWatch(self.questId, true);
+		-- Only do tracking if we aren't adding the link tot he chat
+		if (not ChatEdit_TryInsertQuestLinkForQuestID(self.questId)) then 
+			if (QuestIsWatched(self.questId)) then
+				RemoveWorldQuestWatch(self.questId);
+			else
+				AddWorldQuestWatch(self.questId, true);
+			end
 		end
-	elseif IsModifiedClick("DRESSUP") and self.info.rewardType == WQT_REWARDTYPE_ARMOR then
-		local _, link = GetItemInfo(self.info.rewardId);
+	elseif IsModifiedClick("DRESSUP") and self.info.reward.type == WQT_REWARDTYPE_ARMOR then
+		local _, link = GetItemInfo(self.info.reward.id);
 		DressUpItemLink(link)
 		
 	elseif button == "LeftButton" then
@@ -1290,7 +1345,6 @@ end
 function WQT_ListButtonMixin:OnLeave()
 	UnlockArgusHighlights();
 	HideUIPanel(self.highlight);
-	--GameTooltip_AddQuestRewardsToTooltip(WQT_Tooltip, 0);
 	WQT_Tooltip:Hide();
 	WQT_Tooltip.ItemTooltip:Hide();
 	WQT_PoISelectIndicator:Hide();
@@ -1309,155 +1363,28 @@ function WQT_ListButtonMixin:OnLeave()
 end
 
 function WQT_ListButtonMixin:OnEnter()
-	
 	ShowUIPanel(self.highlight);
-	WQT_Tooltip:SetOwner(self, "ANCHOR_RIGHT");
-
-	local qData = self.info;
 	
+	local questInfo = self.info;
 	
-
 	-- Put the ping on the relevant map pin
-	local pin = WQT:GetMapPinForWorldQuest(self.questId);
+	local pin = WQT:GetMapPinForWorldQuest(questInfo.questId);
 	if pin then
 		WQT_WorldQuestFrame:ShowHighlightOnPin(pin)
-		WQT_PoISelectIndicator.questId = qData.questId;
+		WQT_PoISelectIndicator.questId = questInfo.questId;
 	end
 	
-	-- In case we somehow don't have data on this quest, even through that makes no sense at this point
-	if ( not HaveQuestData(self.questId) ) then
-		WQT_Tooltip:SetText(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
-		WQT_Tooltip.recalculatePadding = true;
-		WQT_Tooltip:Show();
-		return;
-	end
-	
-	local title, factionID, capped = C_TaskQuest.GetQuestInfoByQuestID(self.questId);
-	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(self.questId);
-	local color = WORLD_QUEST_QUALITY_COLORS[rarity or 1];
-	
-	WQT_Tooltip:SetText(title, color.r, color.g, color.b);
-	
-	if ( factionID ) then
-		local factionName = GetFactionInfoByID(factionID);
-		if ( factionName ) then
-			if (capped) then
-				WQT_Tooltip:AddLine(factionName, GRAY_FONT_COLOR:GetRGB());
-			else
-				WQT_Tooltip:AddLine(factionName);
-			end
-		end
-	end
-
-	-- Add time
-	local timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(qData.questId)*60;
-	WQT_Tooltip:AddLine(BONUS_OBJECTIVE_TIME_LEFT:format(SecondsToTime(timeLeftMinutes, true, true)), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	
-
-	for objectiveIndex = 1, self.numObjectives do
-		local objectiveText, objectiveType, finished = GetQuestObjectiveInfo(self.questId, objectiveIndex, false);
-		if ( objectiveText and #objectiveText > 0 ) then
-			local color = finished and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
-			WQT_Tooltip:AddLine(QUEST_DASH .. objectiveText, color.r, color.g, color.b, true);
-		end
-	end
-
-	local percent = C_TaskQuest.GetQuestProgressBarInfo(self.questId);
-	if ( percent ) then
-		GameTooltip_ShowProgressBar(WQT_Tooltip, 0, 100, percent, PERCENTAGE_STRING:format(percent));
-	end
-
-	
-	
-	if self.info.rewardTexture ~= "" then
-		if self.info.rewardTexture == WQT_QUESTIONMARK then
-			WQT_Tooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
-		else
-			GameTooltip_AddQuestRewardsToTooltip(WQT_Tooltip, self.questId);
-			
-			-- reposition compare frame
-			if((qData.rewardType == WQT_REWARDTYPE_ARMOR) and WQT_Tooltip.ItemTooltip:IsShown()) then
-				if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
-					-- Setup and check total size of both tooltips
-					WQT_CompareTooltip1:SetCompareItem(WQT_CompareTooltip2, WQT_Tooltip.ItemTooltip.Tooltip);
-					local totalWidth = 0;
-					if ( WQT_CompareTooltip1:IsShown()  ) then
-							totalWidth = totalWidth + WQT_CompareTooltip1:GetWidth();
-					end
-					if ( WQT_CompareTooltip2:IsShown()  ) then
-							totalWidth = totalWidth + WQT_CompareTooltip2:GetWidth();
-					end
-					
-					-- If there is room to the right, give priority to show compare tooltips to the right of the tooltip
-					local priorityRight = WQT_Tooltip.ItemTooltip.Tooltip:GetRight() + totalWidth < GetScreenWidth();
-					WQT_Tooltip.ItemTooltip.Tooltip.overrideComparisonAnchorSide  = priorityRight and "right" or "left";
-					GameTooltip_ShowCompareItem(WQT_Tooltip.ItemTooltip.Tooltip, WQT_Tooltip.ItemTooltip);
-
-					-- Set higher frame level in case things overlap
-					local level = WQT_Tooltip:GetFrameLevel();
-					WQT_CompareTooltip1:SetFrameLevel(level +2);
-					WQT_CompareTooltip2:SetFrameLevel(level +1);
-				end
-			end
-		end
-	end
-
-	
-	-- CanIMogIt functionality
-	-- Partial copy of addToTooltip in tooltips.lua
-	if (_CIMILoaded and qData.rewardId) then
-		local _, itemLink = GetItemInfo(qData.rewardId);
-		local tooltip = WQT_Tooltip.ItemTooltip.Tooltip;
-		if (itemLink and CanIMogIt:IsReadyForCalculations(itemLink)) then
-			local text;
-			text = CanIMogIt:GetTooltipText(itemLink);
-			if (text and text ~= "") then
-				tooltip:AddDoubleLine(" ", text);
-				tooltip:Show();
-				tooltip.CIMI_tooltipWritten = true
-			end
-			
-			if CanIMogItOptions["showSourceLocationTooltip"] then
-				local sourceTypesText = CanIMogIt:GetSourceLocationText(itemLink);
-				if (sourceTypesText and sourceTypesText ~= "") then
-					tooltip:AddDoubleLine(" ", sourceTypesText);
-					tooltip:Show();
-					tooltip.CIMI_tooltipWritten = true
-				end
-			end
-		end
-	end
-	
-	-- Add debug lines
-	for k, v in pairs(self.info)do
-		if type(v) == "table" then
-			if v.GetRGBA then
-				WQT_Tooltip:AddDoubleLine(k, v.r .. "/" .. v.g .. "/" .. v.b );
-			else
-				WQT_Tooltip:AddDoubleLine(k, tostring(v));
-				for k2, v2 in pairs(v) do
-					WQT_Tooltip:AddDoubleLine("    " .. k2, tostring(v2));
-				end
-			end
-		else
-			WQT_Tooltip:AddDoubleLine(k, tostring(v));
-		end
-	end
-
-	
-	WQT_Tooltip:Show();
-	WQT_Tooltip.recalculatePadding = true;
-	
+	WQT_QuestScrollFrame:ShowQuestTooltip(self, questInfo);
 	
 	-- If we are on a continent, we want to highlight the relevant zone
-	self:ShowWorldmapHighlight(self.info.zoneId);
+	self:ShowWorldmapHighlight(questInfo.zoneInfo.mapID);
 end
 
 function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 	local frame = self.type;
 	local inProgress = false;
 	local isCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
-	local questType, rarity, isElite, tradeskillLineIndex = questInfo.type, questInfo.rarity, questInfo.isElite, questInfo.tradeskill
+	local questType, rarity, isElite, tradeskillLineIndex = questInfo.type, questInfo.rarity, questInfo.isElite, questInfo.tradeskill;
 	
 	frame:Show();
 	frame:SetWidth(frame:GetHeight());
@@ -1555,15 +1482,19 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	
 	self:Show();
 	self.title:SetText(questInfo.title);
-	self.time:SetTextColor(questInfo.color.r, questInfo.color.g, questInfo.color.b, 1);
-	self.time:SetText(questInfo.timeString);
+	self.time:SetTextColor(questInfo.time.color.r, questInfo.time.color.g, questInfo.time.color.b, 1);
+	self.time:SetText(questInfo.time.full);
 	self.extra:SetText(shouldShowZone and questInfo.zoneInfo.name or "");
+			
+	if (WQT_QuestScrollFrame.PoIHoverId == questInfo.questId) then
+		self.highlight:Show();
+	end
 			
 	self.title:ClearAllPoints()
 	self.title:SetPoint("RIGHT", self.reward, "LEFT", -5, 0);
 	
 	self.info = questInfo;
-	self.zoneId = questInfo.zoneId;
+	self.zoneId = questInfo.zoneInfo.mapID;
 	self.questId = questInfo.questId;
 	self.numObjectives = questInfo.numObjectives;
 	
@@ -1597,25 +1528,25 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	self.reward:Show();
 	self.reward.icon:Show();
 
-	if questInfo.rewardType == WQT_REWARDTYPE_MISSING then
+	if questInfo.reward.type == WQT_REWARDTYPE_MISSING then
 		self.reward.iconBorder:SetVertexColor(1, 0, 0);
 		self.reward:SetAlpha(1);
 		self.reward.icon:SetTexture(WQT_QUESTIONMARK);
 	else
-		local r, g, b = GetItemQualityColor(questInfo.rewardQuality);
+		local r, g, b = GetItemQualityColor(questInfo.reward.quality);
 		self.reward.iconBorder:SetVertexColor(r, g, b);
 		self.reward:SetAlpha(1);
-		if questInfo.rewardTexture == "" then
+		if questInfo.reward.texture == "" then
 			self.reward:SetAlpha(0);
 		end
-		self.reward.icon:SetTexture(questInfo.rewardTexture);
+		self.reward.icon:SetTexture(questInfo.reward.texture);
 	
-		if questInfo.rewardType ~= WQT_REWARDTYPE_ARMOR and questInfo.numItems and questInfo.numItems > 1  then
-			self.reward.amount:SetText(GetLocalizedAbreviatedNumber(questInfo.numItems));
+		if questInfo.reward.type ~= WQT_REWARDTYPE_ARMOR and questInfo.reward.amount and questInfo.reward.amount > 1  then
+			self.reward.amount:SetText(GetLocalizedAbreviatedNumber(questInfo.reward.amount));
 			r, g, b = 1, 1, 1;
-			if questInfo.rewardType == WQT_REWARDTYPE_RELIC then
-				self.reward.amount:SetText("+" .. questInfo.numItems);
-			elseif questInfo.rewardType == WQT_REWARDTYPE_ARTIFACT then
+			if questInfo.reward.type == WQT_REWARDTYPE_RELIC then
+				self.reward.amount:SetText("+" .. questInfo.reward.amount);
+			elseif questInfo.reward.type == WQT_REWARDTYPE_ARTIFACT then
 				r, g, b = GetItemQualityColor(2);
 			end
 	
@@ -1675,41 +1606,41 @@ end
 WQT_QuestDataProvider = {};
 
 local function QuestCreationFunc(pool)
-	local info = {["rewardId"] = -1, ["title"] = "z", ["timeString"] = "", ["timeStringShort"] = "", ["color"] = WQT_WHITE_FONT_COLOR, ["minutes"] = 0
-					, ["faction"] = "", ["type"] = 0, ["rarity"] = 0, ["isElite"] = false, ["tradeskill"] = 0
-					, ["numObjectives"] = 0, ["numItems"] = 0, ["rewardTexture"] = "", ["rewardQuality"] = 1
-					, ["rewardType"] = 0, ["isCriteria"] = false, ["ringColor"] = WQT_COLOR_MISSING, ["zoneId"] = -1
-					, ["reward"] = {["type"] = 0, ["amount"] = 0, ["texture"] = "", ["quality"] = 1, ["id"] = 0}
+	local questInfo = {["title"] = "" , ["faction"] = "", ["type"] = 0, ["rarity"] = 0, ["isElite"] = false, ["tradeskill"] = 0
+					, ["numObjectives"] = 0, ["isCriteria"] = false
+					, ["time"] = {["minutes"] = 0, ["full"] = "", ["short"] = "", ["color"] = WQT_WHITE_FONT_COLOR}
+					, ["reward"] = {["type"] = 0, ["amount"] = 0, ["texture"] = "", ["quality"] = 1, ["id"] = 0, ["color"] = WQT_COLOR_MISSING, ["subType"] = nil}
 					}
-	return info;
+	return questInfo;
 end
 
--- local function QuestResetFunc(pool, info)
-	-- info.rewardId = -1;
-	-- info.title = "";
-	-- info.timeString = "";
-	-- info.timeStringShort = "";
-	-- info.color = WQT_WHITE_FONT_COLOR;
-	-- info.minutes = 0;
-	-- info.faction = "";
-	-- info.type = 0;
-	-- info.rarity = 0;
-	-- info.isElite = false;
-	-- info.tradeskill = 0;
-	-- info.numObjectives = 0;
-	-- info.
-	-- info
-
-	-- {["questId"] = -1, ["rewardId"] = -1, ["title"] = "z", ["timeString"] = "", ["timeStringShort"] = "", ["color"] = WQT_WHITE_FONT_COLOR, ["minutes"] = 0
-					-- , ["faction"] = "", ["type"] = 0, ["rarity"] = 0, ["isElite"] = false, ["tradeskill"] = 0
-					-- , ["numObjectives"] = 0, ["numItems"] = 0, ["rewardTexture"] = "", ["rewardQuality"] = 1
-					-- , ["rewardType"] = 0, ["isCriteria"] = false, ["ringColor"] = WQT_COLOR_MISSING, ["zoneId"] = -1
-					-- , ["reward"] = {["type"] = 0, ["amount"] = 0, ["texture"] = "", ["quality"] = 1, ["id"] = 0}
-					-- }
--- end
+local function QuestResetFunc(pool, questInfo)
+	questInfo.title = "";
+	questInfo.faction = "";
+	questInfo.factionId = 0;
+	questInfo.type = 0;
+	questInfo.rarity = 0;
+	questInfo.isElite = false;
+	questInfo.tradeskill = 0;
+	questInfo.numObjectives = 0;
+	questInfo.isCriteria = false;
+	-- reward
+	questInfo.reward.id = nil;
+	questInfo.reward.type = 0;
+	questInfo.reward.amount = 0;
+	questInfo.reward.texture = 0;
+	questInfo.reward.quality = 1;
+	questInfo.reward.color = WQT_COLOR_MISSING;
+	questInfo.reward.subType = nil;
+	-- time
+	questInfo.time.full = "";
+	questInfo.time.short = "";
+	questInfo.time.minutes = 0;
+	questInfo.time.color = WQT_WHITE_FONT_COLOR;
+end
 
 function WQT_QuestDataProvider:OnLoad()
-	self.pool = CreateObjectPool(QuestCreationFunc);
+	self.pool = CreateObjectPool(QuestCreationFunc, QuestResetFunc);
 	self.iterativeList = {};
 	self.keyList = {};
 end
@@ -1755,38 +1686,38 @@ function WQT_QuestDataProvider:GetAPrewardFromText(text)
 	return numItems;
 end
 
-function WQT_QuestDataProvider:SetQuestReward(info)
-	local reward = info.reward;
+function WQT_QuestDataProvider:SetQuestReward(questInfo)
+	local reward = questInfo.reward;
 	local _, texture, numItems, quality, rewardType, color, rewardId, itemId = nil, nil, 0, 1, 0, WQT_COLOR_MISSING, nil, nil;
 	
-	if GetNumQuestLogRewards(info.questId) > 0 then
-		_, texture, numItems, quality, _, itemId = GetQuestLogRewardInfo(1, info.questId);
+	if GetNumQuestLogRewards(questInfo.questId) > 0 then
+		_, texture, numItems, quality, _, itemId = GetQuestLogRewardInfo(1, questInfo.questId);
 		
 		if itemId and select(9, GetItemInfo(itemId)) ~= "" then -- Gear
-			numItems = self:ScanTooltipRewardForPattern(info.questId, "(%d+)%+$")
+			numItems = self:ScanTooltipRewardForPattern(questInfo.questId, "(%d+)%+$")
 			rewardType = WQT_REWARDTYPE_ARMOR;
 			color = WQT_COLOR_ARMOR;
 		elseif itemId and IsArtifactRelicItem(itemId) then
 			-- because getting a link of the itemID only shows the base item
-			numItems = self:ScanTooltipRewardForPattern(info.questId, "^%+(%d+)")
+			numItems = self:ScanTooltipRewardForPattern(questInfo.questId, "^%+(%d+)")
 			rewardType = WQT_REWARDTYPE_RELIC;	
 			color = WQT_COLOR_RELIC;
 		else	-- Normal items
 			rewardType = WQT_REWARDTYPE_ITEM;
 			color = WQT_COLOR_ITEM;
 		end
-	elseif GetQuestLogRewardHonor(info.questId) > 0 then
-		numItems = GetQuestLogRewardHonor(info.questId);
+	elseif GetQuestLogRewardHonor(questInfo.questId) > 0 then
+		numItems = GetQuestLogRewardHonor(questInfo.questId);
 		texture = WQT_HONOR;
 		color = WQT_COLOR_HONOR;
 		rewardType = WQT_REWARDTYPE_HONOR;
-	elseif GetQuestLogRewardMoney(info.questId) > 0 then
-		numItems = floor(abs(GetQuestLogRewardMoney(info.questId) / 10000))
+	elseif GetQuestLogRewardMoney(questInfo.questId) > 0 then
+		numItems = floor(abs(GetQuestLogRewardMoney(questInfo.questId) / 10000))
 		texture = "Interface/ICONS/INV_Misc_Coin_01";
 		rewardType = WQT_REWARDTYPE_GOLD;
 		color = WQT_COLOR_GOLD;
-	elseif GetNumQuestLogRewardCurrencies(info.questId) > 0 then
-		_, texture, numItems, rewardId = GetQuestLogRewardCurrencyInfo(GetNumQuestLogRewardCurrencies(info.questId), info.questId)
+	elseif GetNumQuestLogRewardCurrencies(questInfo.questId) > 0 then
+		_, texture, numItems, rewardId = GetQuestLogRewardCurrencyInfo(GetNumQuestLogRewardCurrencies(questInfo.questId), questInfo.questId)
 		-- Because azerite is currency but is treated as an item
 		local azuriteID = C_CurrencyInfo.GetAzeriteCurrencyID();
 		if rewardId ~= azuriteID then
@@ -1809,41 +1740,44 @@ function WQT_QuestDataProvider:SetQuestReward(info)
 			rewardType = WQT_REWARDTYPE_ARTIFACT;
 			color = WQT_COLOR_ARTIFACT;
 		end
-	elseif haveData and GetQuestLogRewardXP(info.questId) > 0 then
-		numItems = GetQuestLogRewardXP(info.questId);
+	elseif haveData and GetQuestLogRewardXP(questInfo.questId) > 0 then
+		numItems = GetQuestLogRewardXP(questInfo.questId);
 		texture = WQT_EXPERIENCE;
 		color = WQT_COLOR_ITEM;
 		rewardType = WQT_REWARDTYPE_XP;
-	elseif GetNumQuestLogRewards(info.questId) == 0 then
+	elseif GetNumQuestLogRewards(questInfo.questId) == 0 then
 		texture = "";
 		color = WQT_COLOR_ITEM;
 		rewardType = WQT_REWARDTYPE_NONE;
 	end
 	
-	info.rewardId = itemId;
-	info.rewardQuality = quality or 1;
-	info.rewardTexture = texture or WQT_QUESTIONMARK;
-	info.numItems = numItems or 0;
-	info.rewardType = rewardType or 0;
-	info.ringColor = color;
+	questInfo.rewardId = itemId; -- deprecated
+	questInfo.rewardQuality = quality or 1; -- deprecated
+	questInfo.rewardTexture = texture or WQT_QUESTIONMARK; -- deprecated
+	questInfo.numItems = numItems or 0; -- deprecated
+	questInfo.rewardType = rewardType or 0; -- deprecated
+	questInfo.ringColor = color; -- deprecated
 	
-	info.reward.id = itemId;
-	info.reward.quality = quality or 1;
-	info.reward.texture = texture or WQT_QUESTIONMARK;
-	info.reward.amount = numItems or 0;
-	info.reward.type = rewardType or 0;
+	questInfo.reward.id = itemId;
+	questInfo.reward.quality = quality or 1;
+	questInfo.reward.texture = texture or WQT_QUESTIONMARK;
+	questInfo.reward.amount = numItems or 0;
+	questInfo.reward.type = rewardType or 0;
+	questInfo.reward.color = color;
 end
 
-function WQT_QuestDataProvider:SetSubReward(info) 
+function WQT_QuestDataProvider:SetSubReward(questInfo) 
 	local subType = nil;
-	if info.rewardType ~= WQT_REWARDTYPE_CURRENCY and info.rewardType ~= WQT_REWARDTYPE_ARTIFACT and info.rewardType ~= WQT_REWARDTYPE_REP and GetNumQuestLogRewardCurrencies(info.questId) > 0 then
+	if questInfo.reward.type ~= WQT_REWARDTYPE_CURRENCY and questInfo.reward.type ~= WQT_REWARDTYPE_ARTIFACT and questInfo.reward.type ~= WQT_REWARDTYPE_REP and GetNumQuestLogRewardCurrencies(questInfo.questId) > 0 then
 		subType = WQT_REWARDTYPE_CURRENCY;
-	elseif info.rewardType ~= WQT_REWARDTYPE_HONOR and GetQuestLogRewardHonor(info.questId) > 0 then
+	elseif questInfo.reward.type ~= WQT_REWARDTYPE_HONOR and GetQuestLogRewardHonor(questInfo.questId) > 0 then
 		subType = WQT_REWARDTYPE_HONOR;
-	elseif info.rewardType ~= WQT_REWARDTYPE_GOLD and GetQuestLogRewardMoney(info.questId) > 0 then
+	elseif questInfo.reward.type ~= WQT_REWARDTYPE_GOLD and GetQuestLogRewardMoney(questInfo.questId) > 0 then
 		subType = WQT_REWARDTYPE_GOLD;
 	end
-	info.subRewardType = subType;
+	questInfo.subRewardType = subType; -- deprecated
+	
+	questInfo.reward.subType = subType;
 end
 
 function WQT_QuestDataProvider:FindDuplicate(questId)
@@ -1863,9 +1797,10 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 		-- If the new zone is a child of the duplicate's zone, use that one isntead.
 		-- It's probably a city in the zone
 		local zoneInfo = C_Map.GetMapInfo(zoneId);
-		if (duplicate.zoneId == zoneInfo.parentMapID) then
-			duplicate.zoneId = zoneId;
+		if (duplicate.zoneInfo.mapID == zoneInfo.parentMapID) then
 			duplicate.zoneInfo = zoneInfo;
+			duplicate.zoneInfo.mapX = qInfo.x;
+			duplicate.zoneInfo.mapY = qInfo.y;
 		end
 		
 		return duplicate;
@@ -1876,43 +1811,50 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	local minutes, timeString, color, timeStringShort = GetQuestTimeString(qInfo.questId);
 	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(qInfo.questId);
 	local faction = factionId and GetFactionInfoByID(factionId) or _L["NO_FACTION"];
-	local info = self.pool:Acquire();
+	local questInfo = self.pool:Acquire();
 	local expLevel = WQT_ZONE_EXPANSIONS[zoneId] or 0;
+
+	questInfo.id = qInfo.questId; -- deprecated
+	questInfo.mapX = questInfo.x; -- deprecated
+	questInfo.mapY = questInfo.y; -- deprecated
+	questInfo.timeString = timeString; -- deprecated
+	questInfo.timeStringShort = timeStringShort; -- deprecated
+	questInfo.color = color; -- deprecated
+	questInfo.minutes = minutes; -- deprecated
+	questInfo.zoneId = zoneId; -- deprecated
 	
-	info.id = qInfo.questId; -- deprecated
-	info.questId = qInfo.questId;
-	info.mapX = qInfo.x;
-	info.mapY = qInfo.y;
-	info.mapF = qInfo.floor;
-	info.title = title;
-	info.timeString = timeString;
-	info.timeStringShort = timeStringShort;
-	info.color = color;
-	info.minutes = minutes;
-	info.faction = faction;
-	info.factionId = factionId;
-	info.type = worldQuestType or -1;
-	info.rarity = rarity;
-	info.isElite = isElite;
-	info.zoneId = zoneId;
-	info.zoneInfo = C_Map.GetMapInfo(zoneId);
-	info.continentId = continentId or zoneId;
-	info.expantionLevel = expLevel;
-	info.tradeskill = tradeskillLineIndex;
-	info.numObjectives = qInfo.numObjectives;
-	info.passedFilter = true;
-	info.isCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(qInfo.questId);
-	self:SetQuestReward(info);
+	questInfo.time.minutes = minutes;
+	questInfo.time.full = timeString;
+	questInfo.time.short = timeStringShort;
+	questInfo.time.color = color;
+	
+	questInfo.questId = qInfo.questId;
+	questInfo.title = title;
+	questInfo.faction = faction;
+	questInfo.factionId = factionId;
+	questInfo.type = worldQuestType or -1;
+	questInfo.rarity = rarity;
+	questInfo.isElite = isElite;
+	questInfo.zoneInfo = C_Map.GetMapInfo(zoneId);
+	questInfo.zoneInfo.mapX = qInfo.x;
+	questInfo.zoneInfo.mapY = qInfo.y;
+	questInfo.expantionLevel = expLevel;
+	questInfo.tradeskill = tradeskillLineIndex;
+	questInfo.numObjectives = qInfo.numObjectives;
+	questInfo.passedFilter = true;
+	questInfo.isCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(qInfo.questId);
+	
+	self:SetQuestReward(questInfo);
 	-- If the quest as a second reward e.g. Mark of Honor + Honor points
-	self:SetSubReward(info);
+	self:SetSubReward(questInfo);
 	
-	if not haveData and info.type >= 0 then
-		info.rewardType = WQT_REWARDTYPE_MISSING;
+	if not haveData and questInfo.type >= 0 then
+		questInfo.reward.type = WQT_REWARDTYPE_MISSING;
 		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
 		return nil;
 	end;
 
-	return info;
+	return questInfo;
 end
 
 function WQT_QuestDataProvider:AddQuestsInZone(zoneID, continentId)
@@ -2049,7 +1991,7 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 	local quest;
 	for qID, PoI in pairs(WQProvider.activePins) do
 		quest = _questDataProvider:GetQuestById(qID);
-		if (quest) then -- and quest.mapF == currentFloor) then
+		if (quest) then
 			local pin = WQT_WorldQuestFrame.pinHandler.pinPool:Acquire();
 			pin.questID = qID;
 			pin:Update(PoI, quest);
@@ -2077,33 +2019,33 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 	PoI.TrackedCheck:SetAlpha(0);
 
 	self.trackedCheck:SetAlpha(IsWorldQuestWatched(quest.questId) and 1 or 0);
-	
+
 	-- Ring stuff
 	if (WQT.settings.showPinRing) then
-		self.ring:SetVertexColor(quest.ringColor:GetRGB());
+		self.ring:SetVertexColor(quest.reward.color:GetRGB());
 	else
 		self.ring:SetVertexColor(WQT_COLOR_CURRENCY:GetRGB());
 	end
 	self.ring:SetAlpha((WQT.settings.showPinReward or WQT.settings.showPinRing) and 1 or 0);
 	
 	-- Icon stuff
-	local showIcon =WQT.settings.showPinReward and (quest.rewardType == WQT_REWARDTYPE_MISSING or quest.rewardTexture ~= "")
+	local showIcon =WQT.settings.showPinReward and (quest.reward.type == WQT_REWARDTYPE_MISSING or quest.reward.texture ~= "")
 	self.icon:SetAlpha(showIcon and 1 or 0);
-	if quest.rewardType == WQT_REWARDTYPE_MISSING then
+	if quest.reward.type == WQT_REWARDTYPE_MISSING then
 		SetPortraitToTexture(self.icon, WQT_QUESTIONMARK);
 	else
-		SetPortraitToTexture(self.icon, quest.rewardTexture);
+		SetPortraitToTexture(self.icon, quest.reward.texture);
 	end
 	
 	-- Time
-	self.time:SetAlpha((WQT.settings.showPinTime and quest.timeStringShort ~= "")and 1 or 0);
-	self.timeBG:SetAlpha((WQT.settings.showPinTime and quest.timeStringShort ~= "") and 0.65 or 0);
+	self.time:SetAlpha((WQT.settings.showPinTime and quest.time.short ~= "")and 1 or 0);
+	self.timeBG:SetAlpha((WQT.settings.showPinTime and quest.time.short ~= "") and 0.65 or 0);
 	self.time:SetFontObject(flightPinNr and "WQT_NumberFontOutlineBig" or "WQT_NumberFontOutline");
 	self.time:SetScale(flightPinNr and 1 or 2.5);
 	self.time:SetHeight(flightPinNr and 32 or 16);
 	if(WQT.settings.showPinTime) then
-		self.time:SetText(quest.timeStringShort)
-		self.time:SetVertexColor(quest.color.r, quest.color.g, quest.color.b) 
+		self.time:SetText(quest.time.short)
+		self.time:SetVertexColor(quest.time.color.r, quest.time.color.g, quest.time.color.b) 
 	end
 	
 end
@@ -2122,6 +2064,116 @@ function WQT_ScrollListMixin:OnLoad()
 	HybridScrollFrame_Update(self, 200, self:GetHeight());
 		
 	self.update = function() self:DisplayQuestList(true) end;
+end
+
+function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
+	WQT_Tooltip:SetOwner(button, "ANCHOR_RIGHT");
+
+	-- In case we somehow don't have data on this quest, even through that makes no sense at this point
+	if ( not HaveQuestData(questInfo.questId) ) then
+		WQT_Tooltip:SetText(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
+		WQT_Tooltip.recalculatePadding = true;
+		WQT_Tooltip:Show();
+		return;
+	end
+	
+	local title, factionID, capped = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
+	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questInfo.questId);
+	local color = WORLD_QUEST_QUALITY_COLORS[rarity or 1];
+	
+	WQT_Tooltip:SetText(title, color.r, color.g, color.b);
+	
+	if ( factionID ) then
+		local factionName = GetFactionInfoByID(factionID);
+		if ( factionName ) then
+			if (capped) then
+				WQT_Tooltip:AddLine(factionName, GRAY_FONT_COLOR:GetRGB());
+			else
+				WQT_Tooltip:AddLine(factionName);
+			end
+		end
+	end
+
+	-- Add time
+	WQT_Tooltip:AddLine(BONUS_OBJECTIVE_TIME_LEFT:format(SecondsToTime(questInfo.time.minutes*60, true, true)), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	
+
+	for objectiveIndex = 1, questInfo.numObjectives do
+		local objectiveText, objectiveType, finished = GetQuestObjectiveInfo(questInfo.questId, objectiveIndex, false);
+		if ( objectiveText and #objectiveText > 0 ) then
+			local color = finished and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
+			WQT_Tooltip:AddLine(QUEST_DASH .. objectiveText, color.r, color.g, color.b, true);
+		end
+	end
+
+	local percent = C_TaskQuest.GetQuestProgressBarInfo(questInfo.questId);
+	if ( percent ) then
+		GameTooltip_ShowProgressBar(WQT_Tooltip, 0, 100, percent, PERCENTAGE_STRING:format(percent));
+	end
+
+	if questInfo.reward.texture ~= "" then
+		if questInfo.reward.texture == WQT_QUESTIONMARK then
+			WQT_Tooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
+		else
+			GameTooltip_AddQuestRewardsToTooltip(WQT_Tooltip, questInfo.questId);
+			
+			-- reposition compare frame
+			if((questInfo.reward.type == WQT_REWARDTYPE_ARMOR) and WQT_Tooltip.ItemTooltip:IsShown()) then
+				if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
+					-- Setup and check total size of both tooltips
+					WQT_CompareTooltip1:SetCompareItem(WQT_CompareTooltip2, WQT_Tooltip.ItemTooltip.Tooltip);
+					local totalWidth = 0;
+					if ( WQT_CompareTooltip1:IsShown()  ) then
+							totalWidth = totalWidth + WQT_CompareTooltip1:GetWidth();
+					end
+					if ( WQT_CompareTooltip2:IsShown()  ) then
+							totalWidth = totalWidth + WQT_CompareTooltip2:GetWidth();
+					end
+					
+					-- If there is room to the right, give priority to show compare tooltips to the right of the tooltip
+					local priorityRight = WQT_Tooltip.ItemTooltip.Tooltip:GetRight() + totalWidth < GetScreenWidth();
+					WQT_Tooltip.ItemTooltip.Tooltip.overrideComparisonAnchorSide  = priorityRight and "right" or "left";
+					GameTooltip_ShowCompareItem(WQT_Tooltip.ItemTooltip.Tooltip, WQT_Tooltip.ItemTooltip);
+
+					-- Set higher frame level in case things overlap
+					local level = WQT_Tooltip:GetFrameLevel();
+					WQT_CompareTooltip1:SetFrameLevel(level +2);
+					WQT_CompareTooltip2:SetFrameLevel(level +1);
+				end
+			end
+		end
+	end
+
+	-- CanIMogIt functionality
+	-- Partial copy of addToTooltip in tooltips.lua
+	if (_CIMILoaded and questInfo.reward.id) then
+		local _, itemLink = GetItemInfo(questInfo.reward.id);
+		local tooltip = WQT_Tooltip.ItemTooltip.Tooltip;
+		if (itemLink and CanIMogIt:IsReadyForCalculations(itemLink)) then
+			local text;
+			text = CanIMogIt:GetTooltipText(itemLink);
+			if (text and text ~= "") then
+				tooltip:AddDoubleLine(" ", text);
+				tooltip:Show();
+				tooltip.CIMI_tooltipWritten = true
+			end
+			
+			if CanIMogItOptions["showSourceLocationTooltip"] then
+				local sourceTypesText = CanIMogIt:GetSourceLocationText(itemLink);
+				if (sourceTypesText and sourceTypesText ~= "") then
+					tooltip:AddDoubleLine(" ", sourceTypesText);
+					tooltip:Show();
+					tooltip.CIMI_tooltipWritten = true
+				end
+			end
+		end
+	end
+	
+	-- Add debug lines
+	--AddDebugToTooltip(WQT_Tooltip, questInfo);
+
+	WQT_Tooltip:Show();
+	WQT_Tooltip.recalculatePadding = true;
 end
 
 function WQT_ScrollListMixin:SetButtonsEnabled(value)
@@ -2205,9 +2257,6 @@ function WQT_ScrollListMixin:UpdateQuestList()
 	if (not WorldMapFrame:IsShown() or InCombatLockdown()) then return end
 
 	local mapAreaID = WorldMapFrame.mapID;
-
-	local quest = nil;
-	local questsById = nil
 	
 	local missingRewardData = _questDataProvider:LoadQuestsInZone(mapAreaID);
 	
@@ -2252,6 +2301,7 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 		button.reward.amount:Hide();
 		button.trackedBorder:Hide();
 		button.info = nil;
+		button.highlight:Hide();
 		
 		if ( displayIndex <= #list) then
 			button:Update(list[displayIndex], shouldShowZone);
@@ -2341,7 +2391,7 @@ function WQT_CoreMixin:OnLoad()
 	hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
 			self:SelectTab(WQT_TabNormal);
 		end)
-		
+	
 	WorldMapFrame:HookScript("OnShow", function() 
 			self.scrollFrame:UpdateQuestList();
 			self:SelectTab(self.selectedTab); 
@@ -2413,9 +2463,31 @@ function WQT_CoreMixin:OnLoad()
 		WQT_QuestScrollFrame:DisplayQuestList();
 	end)
 	
+	-- Show hightlight in list when hovering over PoI
+	hooksecurefunc("TaskPOI_OnEnter", function(self)
+			if (self.questID ~= WQT_QuestScrollFrame.PoIHoverId) then
+				WQT_QuestScrollFrame.PoIHoverId = self.questID;
+				WQT_QuestScrollFrame:DisplayQuestList(true);
+			end
+		end)
+		
+	hooksecurefunc("TaskPOI_OnLeave", function(self)
+			WQT_QuestScrollFrame.PoIHoverId = nil;
+			WQT_QuestScrollFrame:DisplayQuestList(true);
+		end)
+		
+	-- PVEFrame quest grouping
+	LFGListFrame:HookScript("OnHide", function() 
+			WQT_GroupSearch:Hide(); 
+		end)
+
+	hooksecurefunc("LFGListSearchPanel_UpdateResults", function(self)
+			if (self.searching and not InCombatLockdown()) then
+				WQT_GroupSearch:Hide();
+			end
+		end);
 	
-	
-	
+
 	-- Shift questlog around to make room for the tabs
 	local a,b,c,d =QuestMapFrame:GetPoint(1);
 	QuestMapFrame:SetPoint(a,b,c,d,-60);
@@ -2521,10 +2593,10 @@ end
 function WQT_CoreMixin:QUEST_TURNED_IN(questId)
 	-- Remove TomTom arrow if tracked
 	if (_TomTomLoaded and WQT.settings.useTomTom and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
-		local qInfo = _questDataProvider:GetQuestById(questId);
-		if qInfo then
-			local key = TomTom:GetKeyArgs(qInfo.zoneId, qInfo.mapX, qInfo.mapY, qInfo.title);
-			local wp = TomTom.waypoints[qInfo.zoneId] and TomTom.waypoints[qInfo.zoneId][key];
+		local questInfo = _questDataProvider:GetQuestById(questId);
+		if questInfo then
+			local key = TomTom:GetKeyArgs(questInfo.zoneInfo.mapID, questInfo.zoneInfo.mapX, questInfo.zoneInfo.mapY, questInfo.title);
+			local wp = TomTom.waypoints[questInfo.zoneInfo.mapID] and TomTom.waypoints[questInfo.zoneInfo.mapID][key];
 			if wp then
 				TomTom:RemoveWaypoint(wp);
 			end

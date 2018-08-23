@@ -70,6 +70,8 @@ L["NUMBERS_THIRD"]	= "%gb"
 L["MAP_FILTER_DISABLED"] = "Disabled by world map filters.";
 L["MAP_FILTER_DISABLED_TITLE"] = "Some world map filters disabled";
 L["MAP_FILTER_DISABLED_INFO"]	= "Disabled filters may hide some quests. You can re-enable them under the magnifying glass on the topright of the map.";
+L["GROUP_SEARCH_INFO"] = "Blizzard prevents add-ons from automatically looking for a group for the majority of world quests. Because of this, players have to manually fill in the search box.";
+L["FORMAT_GROUP_SEARCH"] = "Type |cFFFFFFFF%d|r to search for a group for this quest. Or type its name: |cFFFFFFFF%s|r.";
 
 
 if locale == "deDE" then
