@@ -28,6 +28,8 @@ local WQT_EXPANSION_BFA = 7;
 local WQT_EXPANSION_LEGION = 6;
 local WQT_EXPANSION_WOD = 5;
 
+local WQT_TYPE_BONUSOBJECTIVE = 99;
+
 local WQT_WHITE_FONT_COLOR = CreateColor(0.8, 0.8, 0.8);
 local WQT_ORANGE_FONT_COLOR = CreateColor(1, 0.6, 0);
 local WQT_GREEN_FONT_COLOR = CreateColor(0, 0.75, 0);
@@ -57,7 +59,7 @@ local WQT_ARGUS_COSMIC_BUTTONS = {KrokuunButton, MacAreeButton, AntoranWastesBut
 
 local WQT_TYPEFLAG_LABELS = {
 		[2] = {["Default"] = _L["TYPE_DEFAULT"], ["Elite"] = _L["TYPE_ELITE"], ["PvP"] = _L["TYPE_PVP"], ["Petbattle"] = _L["TYPE_PETBATTLE"], ["Dungeon"] = _L["TYPE_DUNGEON"]
-			, ["Raid"] = _L["TYPE_RAID"], ["Profession"] = _L["TYPE_PROFESSION"], ["Invasion"] = _L["TYPE_INVASION"]}
+			, ["Raid"] = _L["TYPE_RAID"], ["Profession"] = _L["TYPE_PROFESSION"], ["Invasion"] = _L["TYPE_INVASION"], ["Bonus"] = _L["TYPE_BONUS"]}
 		,[3] = {["Item"] = _L["REWARD_ITEM"], ["Armor"] = _L["REWARD_ARMOR"], ["Gold"] = _L["REWARD_GOLD"], ["Currency"] = _L["REWARD_RESOURCES"], ["Artifact"] = _L["REWARD_ARTIFACT"]
 			, ["Relic"] = _L["REWARD_RELIC"], ["None"] = _L["REWARD_NONE"], ["Experience"] = _L["REWARD_EXPERIENCE"], ["Honor"] = _L["REWARD_HONOR"], ["Reputation"] = REPUTATION}
 	};
@@ -71,7 +73,8 @@ local WQT_FILTER_FUNCTIONS = {
 			,function(quest, flags) return (flags["Profession"] and quest.type == LE_QUEST_TAG_TYPE_PROFESSION); end 
 			,function(quest, flags) return (flags["Invasion"] and quest.type == LE_QUEST_TAG_TYPE_INVASION); end 
 			,function(quest, flags) return (flags["Elite"] and (quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.isElite)); end 
-			,function(quest, flags) return (flags["Default"] and (quest.type ~= LE_QUEST_TAG_TYPE_PVP and quest.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON  and quest.type ~= LE_QUEST_TAG_TYPE_PROFESSION and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.type ~= LE_QUEST_TAG_TYPE_INVASION and not quest.isElite)); end 
+			,function(quest, flags) return (flags["Default"] and (quest.type ~= LE_QUEST_TAG_TYPE_PVP and quest.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON and quest.type ~= WQT_TYPE_BONUSOBJECTIVE  and quest.type ~= LE_QUEST_TAG_TYPE_PROFESSION and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.type ~= LE_QUEST_TAG_TYPE_INVASION and not quest.isElite)); end 
+			,function(quest, flags) return (flags["Bonus"] and quest.type == WQT_TYPE_BONUSOBJECTIVE); end 
 			}
 		,[3] = { -- Reward filters
 			function(quest, flags) return (flags["Armor"] and quest.reward.type == WQT_REWARDTYPE_ARMOR); end 
@@ -266,7 +269,7 @@ local WQT_ZONE_MAPCOORDS = {
 local WQT_SORT_OPTIONS = {[1] = _L["TIME"], [2] = _L["FACTION"], [3] = _L["TYPE"], [4] = _L["ZONE"], [5] = _L["NAME"], [6] = _L["REWARD"]}
 
 
-local WQT_NO_FACTION_DATA = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "" } -- No faction
+local WQT_NO_FACTION_DATA = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/FactionNone", ["name"]=_L["NO_FACTION"] } -- No faction
 local WQT_FACTION_DATA = {
 	[1894] = 	{ ["expansion"] = WQT_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Warden" }
 	,[1859] = 	{ ["expansion"] = WQT_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_NightFallen" }
@@ -329,7 +332,7 @@ local WQT_DEFAULTS = {
 								-- , [GetFactionInfoByID(1948)] = false, [GetFactionInfoByID(1900)] = false, [GetFactionInfoByID(1090)] = false, [GetFactionInfoByID(2045)] = false
 								-- , [GetFactionInfoByID(2165)] = false, [GetFactionInfoByID(2170)] = false, [_L["OTHER_FACTION"]] = false, [_L["NO_FACTION"]] = false}}
 				,[2] = {["name"] = _L["TYPE"]
-						, ["flags"] = {["Default"] = false, ["Elite"] = false, ["PvP"] = false, ["Petbattle"] = false, ["Dungeon"] = false, ["Raid"] = false, ["Profession"] = false, ["Invasion"] = false}}--, ["Emissary"] = false}}
+						, ["flags"] = {["Default"] = false, ["Elite"] = false, ["PvP"] = false, ["Petbattle"] = false, ["Dungeon"] = false, ["Raid"] = false, ["Profession"] = false, ["Invasion"] = false, ["Bonus"] = false}}--, ["Emissary"] = false}}
 				,[3] = {["name"] = _L["REWARD"]
 						, ["flags"] = {["Item"] = false, ["Armor"] = false, ["Gold"] = false, ["Currency"] = false, ["Artifact"] = false, ["Relic"] = false, ["None"] = false, ["Experience"] = false, ["Honor"] = false, ["Reputation"] = false}}
 			}
@@ -390,7 +393,21 @@ function WQT:GetMapPinForWorldQuest(questID)
 	if (provider == nil) then
 		return nil
 	end
+	
 	return provider.activePins[questID];
+end
+
+function WQT:GetMapPinForBonusObjective(questID)
+	if not WorldMapFrame.pinPools["BonusObjectivePinTemplate"] then 
+		return nil; 
+	end
+	
+	for pin, v in pairs(WorldMapFrame.pinPools["BonusObjectivePinTemplate"].activeObjects) do 
+		if (questID == pin.questID) then
+			return pin;
+		end
+	end
+	return nil;
 end
 
 local function GetFactionData(id)
@@ -1140,34 +1157,38 @@ function WQT:InitTrackDropDown(self, level)
 		ADD:AddButton(info, level);
 	end
 	
-	-- Tracking
-	if (QuestIsWatched(questId)) then
-		info.text = UNTRACK_QUEST;
-		info.func = function(_, _, _, value)
-					RemoveWorldQuestWatch(questId);
-					WQT_QuestScrollFrame:DisplayQuestList();
+	-- Don't allow tracking and LFG for bonus objective, Blizzard UI can't handle it
+	if (questInfo.type ~= WQT_TYPE_BONUSOBJECTIVE) then
+		-- Tracking
+		if (QuestIsWatched(questId)) then
+			info.text = UNTRACK_QUEST;
+			info.func = function(_, _, _, value)
+						RemoveWorldQuestWatch(questId);
+						WQT_QuestScrollFrame:DisplayQuestList();
+					end
+		else
+			info.text = TRACK_QUEST;
+			info.func = function(_, _, _, value)
+						AddWorldQuestWatch(questId);
+						WQT_QuestScrollFrame:DisplayQuestList();
+					end
+		end	
+		ADD:AddButton(info, level)
+		
+		
+		-- LFG if possible
+		if (questInfo.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and questInfo.type ~= LE_QUEST_TAG_TYPE_DUNGEON  and questInfo.type ~= LE_QUEST_TAG_TYPE_PROFESSION and questInfo.type ~= LE_QUEST_TAG_TYPE_RAID) then
+			info.text = OBJECTIVES_FIND_GROUP;
+			info.func = function()
+				WQT_GroupSearch:Hide();
+				LFGListUtil_FindQuestGroup(questId);
+				if (not C_LFGList.CanCreateQuestGroup(questId)) then
+					WQT_GroupSearch.Text:SetText(_L["FORMAT_GROUP_SEARCH"]:format(questInfo.questId, questInfo.title));
+					WQT_GroupSearch:Show();
 				end
-	else
-		info.text = TRACK_QUEST;
-		info.func = function(_, _, _, value)
-					AddWorldQuestWatch(questId);
-					WQT_QuestScrollFrame:DisplayQuestList();
-				end
-	end	
-	ADD:AddButton(info, level)
-	
-	-- LFG if possible
-	if (questInfo.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and questInfo.type ~= LE_QUEST_TAG_TYPE_DUNGEON  and questInfo.type ~= LE_QUEST_TAG_TYPE_PROFESSION and questInfo.type ~= LE_QUEST_TAG_TYPE_RAID) then
-		info.text = OBJECTIVES_FIND_GROUP;
-		info.func = function()
-			WQT_GroupSearch:Hide();
-			LFGListUtil_FindQuestGroup(questId);
-			if (not C_LFGList.CanCreateQuestGroup(questId)) then
-				WQT_GroupSearch.Text:SetText(_L["FORMAT_GROUP_SEARCH"]:format(questInfo.questId, questInfo.title));
-				WQT_GroupSearch:Show();
 			end
+			ADD:AddButton(info, level);
 		end
-		ADD:AddButton(info, level);
 	end
 	
 	info.text = CANCEL;
@@ -1307,12 +1328,15 @@ function WQT_ListButtonMixin:OnClick(button)
 	if not self.questId or self.questId== -1 then return end
 
 	if IsModifiedClick("QUESTWATCHTOGGLE") then
-		-- Only do tracking if we aren't adding the link tot he chat
-		if (not ChatEdit_TryInsertQuestLinkForQuestID(self.questId)) then 
-			if (QuestIsWatched(self.questId)) then
-				RemoveWorldQuestWatch(self.questId);
-			else
-				AddWorldQuestWatch(self.questId, true);
+		-- Don't track bonus objectives. The object tracker doesn't like it;
+		if (self.info.type ~= WQT_TYPE_BONUSOBJECTIVE) then
+			-- Only do tracking if we aren't adding the link tot he chat
+			if (not ChatEdit_TryInsertQuestLinkForQuestID(self.questId)) then 
+				if (QuestIsWatched(self.questId)) then
+					RemoveWorldQuestWatch(self.questId);
+				else
+					AddWorldQuestWatch(self.questId, true);
+				end
 			end
 		end
 	elseif IsModifiedClick("DRESSUP") and self.info.reward.type == WQT_REWARDTYPE_ARMOR then
@@ -1320,9 +1344,12 @@ function WQT_ListButtonMixin:OnClick(button)
 		DressUpItemLink(link)
 		
 	elseif button == "LeftButton" then
-		AddWorldQuestWatch(self.questId);
-		WorldMapFrame:SetMapID(self.zoneId);
-		WQT_QuestScrollFrame:DisplayQuestList();
+		-- Don't track bonus objectives. The object tracker doesn't like it;
+		if (self.info.type ~= WQT_TYPE_BONUSOBJECTIVE) then
+			AddWorldQuestWatch(self.questId);
+			WorldMapFrame:SetMapID(self.zoneId);
+			WQT_QuestScrollFrame:DisplayQuestList();
+		end
 	elseif button == "RightButton" then
 
 		if WQT_TrackDropDown:GetParent() ~= self then
@@ -1368,9 +1395,14 @@ function WQT_ListButtonMixin:OnEnter()
 	local questInfo = self.info;
 	
 	-- Put the ping on the relevant map pin
-	local pin = WQT:GetMapPinForWorldQuest(questInfo.questId);
+	local scale = 1;
+	local pin = WQT:GetMapPinForWorldQuest(questInfo.questId)
+	if not pin then
+		 pin = WQT:GetMapPinForBonusObjective(questInfo.questId);
+		 scale = 0.5;
+	end
 	if pin then
-		WQT_WorldQuestFrame:ShowHighlightOnPin(pin)
+		WQT_WorldQuestFrame:ShowHighlightOnPin(pin, scale)
 		WQT_PoISelectIndicator.questId = questInfo.questId;
 	end
 	
@@ -1475,6 +1507,12 @@ function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 		frame.criteriaGlow:Show();
 	else
 		frame.criteriaGlow:Hide();
+	end
+	
+	-- Bonus objectives
+	if (questType == WQT_TYPE_BONUSOBJECTIVE) then
+		frame.texture:SetAtlas("QuestBonusObjective", true);
+		frame.texture:SetSize(22, 22);
 	end
 end
 
@@ -1808,8 +1846,11 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 
 	local haveData = HaveQuestRewardData(qInfo.questId);
 	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(qInfo.questId);
+	--print(GetQuestTagInfo(qInfo.questId))
+	worldQuestType = not QuestUtils_IsQuestWorldQuest(qInfo.questId) and WQT_TYPE_BONUSOBJECTIVE or worldQuestType;
 	local minutes, timeString, color, timeStringShort = GetQuestTimeString(qInfo.questId);
 	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(qInfo.questId);
+	
 	local faction = factionId and GetFactionInfoByID(factionId) or _L["NO_FACTION"];
 	local questInfo = self.pool:Acquire();
 	local expLevel = WQT_ZONE_EXPANSIONS[zoneId] or 0;
@@ -1830,6 +1871,7 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	
 	questInfo.questId = qInfo.questId;
 	questInfo.title = title;
+	
 	questInfo.faction = faction;
 	questInfo.factionId = factionId;
 	questInfo.type = worldQuestType or -1;
@@ -1848,7 +1890,15 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	-- If the quest as a second reward e.g. Mark of Honor + Honor points
 	self:SetSubReward(questInfo);
 	
-	if not haveData and questInfo.type >= 0 then
+	-- Filter out invalid quests like "Tracking Quest" in nazmir, to prevent them from triggering the missing data refresh
+	local isInvalid = not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) and questInfo.time.minutes == 0 and questInfo.reward.type == WQT_REWARDTYPE_NONE and not questInfo.factionId;
+	
+	-- if isInvalid then
+		-- print("|cFFFF0000 Invalid quest: " .. questInfo.title  .. "|r")
+	-- end
+	
+	if not haveData and not isInvalid then
+		print("|cFFFF0000 missing reward: " .. questInfo.title  .. "|r")
 		questInfo.reward.type = WQT_REWARDTYPE_MISSING;
 		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
 		return nil;
@@ -2170,7 +2220,7 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 	end
 	
 	-- Add debug lines
-	--AddDebugToTooltip(WQT_Tooltip, questInfo);
+	AddDebugToTooltip(WQT_Tooltip, questInfo);
 
 	WQT_Tooltip:Show();
 	WQT_Tooltip.recalculatePadding = true;
@@ -2486,6 +2536,7 @@ function WQT_CoreMixin:OnLoad()
 				WQT_GroupSearch:Hide();
 			end
 		end);
+
 	
 
 	-- Shift questlog around to make room for the tabs
@@ -2507,7 +2558,7 @@ function WQT_CoreMixin:ShowHighlightOnMapFilters()
 	WQT_PoISelectIndicator:SetScale(0.40);
 end
 
-function WQT_CoreMixin:ShowHighlightOnPin(pin)
+function WQT_CoreMixin:ShowHighlightOnPin(pin, scale)
 	WQT_PoISelectIndicator:SetParent(pin);
 	WQT_PoISelectIndicator:ClearAllPoints();
 	WQT_PoISelectIndicator:SetPoint("CENTER", pin, 0, -1);
@@ -2516,7 +2567,7 @@ function WQT_CoreMixin:ShowHighlightOnPin(pin)
 	WQT_PoISelectIndicator.pin = pin;
 	pin:SetFrameLevel(3000);
 	WQT_PoISelectIndicator:Show();
-	WQT_PoISelectIndicator:SetScale(1);
+	WQT_PoISelectIndicator:SetScale(scale or 1);
 end
 
 function WQT_CoreMixin:FilterClearButtonOnClick()
@@ -2647,6 +2698,7 @@ end
 function WQT_CoreMixin:SetCombatEnabled(value)
 	value = value==nil and true or value;
 	
+	print(value)
 	self:EnableMouse(value);
 	self:EnableMouseWheel(value);
 	WQT_QuestScrollFrame:EnableMouseWheel(value);
@@ -2711,7 +2763,6 @@ function WQT_CoreMixin:SelectTab(tab)
 		WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
 		WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
 		HideUIPanel(QuestScrollFrame);
-		
 		if not InCombatLockdown() then
 			self:SetFrameLevel(self:GetParent():GetFrameLevel()+3);
 			self:SetCombatEnabled(true);

@@ -51,6 +51,7 @@ L["TYPE_RAID"]		= "Raid";
 L["TYPE_PROFESSION"]	= "Profession";
 L["TYPE_INVASION"]	= "Invasion";
 L["TYPE_EMISSARY"]	= "Emissary";
+L["TYPE_BONUS"]	= "Bonus";
 
 L["REWARD_ITEM"]	= "Item";
 L["REWARD_ARMOR"]	= "Armor";
