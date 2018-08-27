@@ -67,10 +67,6 @@ WQT_REWARDTYPE = {
 	,["none"] = 10
 };
 
-local WQT_EXPANSION_BFA = 7;
-local WQT_EXPANSION_LEGION = 6;
-local WQT_EXPANSION_WOD = 5;
-
 local WQT_TYPE_BONUSOBJECTIVE = 99;
 
 local WQT_WHITE_FONT_COLOR = CreateColor(0.8, 0.8, 0.8);
@@ -133,30 +129,30 @@ local WQT_FILTER_FUNCTIONS = {
 	};
 
 local WQT_ZONE_EXPANSIONS = {
-	[875] = WQT_EXPANSION_BFA -- Zandalar
-	,[864] = WQT_EXPANSION_BFA -- Vol'dun
-	,[863] = WQT_EXPANSION_BFA -- Nazmir
-	,[862] = WQT_EXPANSION_BFA -- Zuldazar
-	,[1165] = WQT_EXPANSION_BFA -- Dazar'alor
-	,[876] = WQT_EXPANSION_BFA -- Kul Tiras
-	,[942] = WQT_EXPANSION_BFA -- Stromsong Valley
-	,[896] = WQT_EXPANSION_BFA -- Drustvar
-	,[895] = WQT_EXPANSION_BFA -- Tiragarde Sound
-	,[1161] = WQT_EXPANSION_BFA -- Boralus
+	[875] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Zandalar
+	,[864] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Vol'dun
+	,[863] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Nazmir
+	,[862] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Zuldazar
+	,[1165] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Dazar'alor
+	,[876] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Kul Tiras
+	,[942] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Stromsong Valley
+	,[896] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Drustvar
+	,[895] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Tiragarde Sound
+	,[1161] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Boralus
 
-	,[619] = WQT_EXPANSION_LEGION -- Broken Isles
-	,[630] = WQT_EXPANSION_LEGION -- Azsuna
-	,[680] = WQT_EXPANSION_LEGION -- Suramar
-	,[634] = WQT_EXPANSION_LEGION -- Stormheim
-	,[650] = WQT_EXPANSION_LEGION -- Highmountain
-	,[641] = WQT_EXPANSION_LEGION -- Val'sharah
-	,[790] = WQT_EXPANSION_LEGION -- Eye of Azshara
-	,[646] = WQT_EXPANSION_LEGION -- Broken Shore
-	,[627] = WQT_EXPANSION_LEGION -- Dalaran
-	,[830] = WQT_EXPANSION_LEGION -- Krokuun
-	,[885] = WQT_EXPANSION_LEGION -- Antoran Wastes
-	,[882] = WQT_EXPANSION_LEGION -- Mac'Aree
-	,[905] = WQT_EXPANSION_LEGION -- Argus
+	,[619] = LE_EXPANSION_LEGION -- Broken Isles
+	,[630] = LE_EXPANSION_LEGION -- Azsuna
+	,[680] = LE_EXPANSION_LEGION -- Suramar
+	,[634] = LE_EXPANSION_LEGION -- Stormheim
+	,[650] = LE_EXPANSION_LEGION -- Highmountain
+	,[641] = LE_EXPANSION_LEGION -- Val'sharah
+	,[790] = LE_EXPANSION_LEGION -- Eye of Azshara
+	,[646] = LE_EXPANSION_LEGION -- Broken Shore
+	,[627] = LE_EXPANSION_LEGION -- Dalaran
+	,[830] = LE_EXPANSION_LEGION -- Krokuun
+	,[885] = LE_EXPANSION_LEGION -- Antoran Wastes
+	,[882] = LE_EXPANSION_LEGION -- Mac'Aree
+	,[905] = LE_EXPANSION_LEGION -- Argus
 }
 	
 local WQT_ZANDALAR = {
@@ -313,36 +309,36 @@ local WQT_SORT_OPTIONS = {[1] = _L["TIME"], [2] = _L["FACTION"], [3] = _L["TYPE"
 
 local WQT_NO_FACTION_DATA = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/FactionNone", ["name"]=_L["NO_FACTION"] } -- No faction
 local WQT_FACTION_DATA = {
-	[1894] = 	{ ["expansion"] = WQT_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Warden" }
-	,[1859] = 	{ ["expansion"] = WQT_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_NightFallen" }
-	,[1900] = 	{ ["expansion"] = WQT_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_CourtofFarnodis" }
-	,[1948] = 	{ ["expansion"] = WQT_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Valarjar" }
-	,[1828] = 	{ ["expansion"] = WQT_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_HightmountainTribes" }
-	,[1883] = 	{ ["expansion"] = WQT_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_DreamWeavers" }
-	,[1090] = 	{ ["expansion"] = WQT_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_KirinTor" }
-	,[2045] = 	{ ["expansion"] = WQT_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Legionfall" } -- This isn't in until 7.3
-	,[2165] = 	{ ["expansion"] = WQT_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_ArmyoftheLight" }
-	,[2170] = 	{ ["expansion"] = WQT_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_ArgussianReach" }
+	[1894] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Warden" }
+	,[1859] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_NightFallen" }
+	,[1900] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_CourtofFarnodis" }
+	,[1948] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Valarjar" }
+	,[1828] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_HightmountainTribes" }
+	,[1883] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_DreamWeavers" }
+	,[1090] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_KirinTor" }
+	,[2045] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Legionfall" } -- This isn't in until 7.3
+	,[2165] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_ArmyoftheLight" }
+	,[2170] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_ArgussianReach" }
 	,[609] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction609" } -- Cenarion Circle - Call of the Scarab
 	,[910] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction910" } -- Brood of Nozdormu - Call of the Scarab
-	,[1515] = 	{ ["expansion"] = WQT_EXPANSION_WOD ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1515" } -- Dreanor Arakkoa Outcasts
-	,[1681] = 	{ ["expansion"] = WQT_EXPANSION_WOD ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1681" } -- Dreanor Vol'jin's Spear
-	,[1682] = 	{ ["expansion"] = WQT_EXPANSION_WOD ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1682" } -- Dreanor Wrynn's Vanguard
-	,[1731] = 	{ ["expansion"] = WQT_EXPANSION_WOD ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1731" } -- Dreanor Council of Exarchs
-	,[1445] = 	{ ["expansion"] = WQT_EXPANSION_WOD ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1445" } -- Draenor Frostwolf Orcs
+	,[1515] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1515" } -- Dreanor Arakkoa Outcasts
+	,[1681] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1681" } -- Dreanor Vol'jin's Spear
+	,[1682] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1682" } -- Dreanor Wrynn's Vanguard
+	,[1731] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1731" } -- Dreanor Council of Exarchs
+	,[1445] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1445" } -- Draenor Frostwolf Orcs
 	,[67] = 		{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction67" } -- Horde
 	,[469] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction469" } -- Alliance
 	-- BfA                                                         
-	,[2164] = 	{ ["expansion"] = WQT_EXPANSION_BFA ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Faction_Championsofazeroth_Round" } -- Champions of Azeroth
-	,[2156] = 	{ ["expansion"] = WQT_EXPANSION_BFA ,["faction"] = "Horde" ,["icon"] = 2058211 } -- Talanji's Expedition
-	,[2103] = 	{ ["expansion"] = WQT_EXPANSION_BFA ,["faction"] = "Horde" ,["icon"] = 2058217 } -- Zandalari Empire
-	,[2158] = 	{ ["expansion"] = WQT_EXPANSION_BFA ,["faction"] = "Horde" ,["icon"] = "Interface/ICONS/INV_Faction_Voldunai_Round" } -- Voldunai
-	,[2157] = 	{ ["expansion"] = WQT_EXPANSION_BFA ,["faction"] = "Horde" ,["icon"] = "Interface/ICONS/INV_Faction_HordeWarEffort_Round" } -- The Honorbound
-	,[2163] = 	{ ["expansion"] = WQT_EXPANSION_BFA ,["faction"] = nil ,["icon"] = 2058212 } -- Tortollan Seekers
-	,[2162] = 	{ ["expansion"] = WQT_EXPANSION_BFA ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_Stormswake_Round" } -- Storm's Wake
-	,[2160] = 	{ ["expansion"] = WQT_EXPANSION_BFA ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_ProudmooreAdmiralty_Round" } -- Proudmoore Admirality
-	,[2161] = 	{ ["expansion"] = WQT_EXPANSION_BFA ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_OrderofEmbers_Round" } -- Order of Embers
-	,[2159] = 	{ ["expansion"] = WQT_EXPANSION_BFA ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_AllianceWarEffort_Round" } -- 7th Legion
+	,[2164] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Faction_Championsofazeroth_Round" } -- Champions of Azeroth
+	,[2156] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Horde" ,["icon"] = 2058211 } -- Talanji's Expedition
+	,[2103] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Horde" ,["icon"] = 2058217 } -- Zandalari Empire
+	,[2158] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Horde" ,["icon"] = "Interface/ICONS/INV_Faction_Voldunai_Round" } -- Voldunai
+	,[2157] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Horde" ,["icon"] = "Interface/ICONS/INV_Faction_HordeWarEffort_Round" } -- The Honorbound
+	,[2163] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = nil ,["icon"] = 2058212 } -- Tortollan Seekers
+	,[2162] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_Stormswake_Round" } -- Storm's Wake
+	,[2160] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_ProudmooreAdmiralty_Round" } -- Proudmoore Admirality
+	,[2161] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_OrderofEmbers_Round" } -- Order of Embers
+	,[2159] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_AllianceWarEffort_Round" } -- 7th Legion
 }
 
 for k, v in pairs(WQT_FACTION_DATA) do
@@ -380,7 +376,7 @@ local WQT_DEFAULTS = {
 }
 
 for k, v in pairs(WQT_FACTION_DATA) do
-	if v.expansion >= WQT_EXPANSION_LEGION then
+	if v.expansion >= LE_EXPANSION_LEGION then
 		WQT_DEFAULTS.global.filters[1].flags[k] = false;
 	end
 end
@@ -966,7 +962,7 @@ function WQT:InitFilter(self, level)
 				local options = WQT.settings.filters[ADD.MENU_VALUE].flags;
 				local order = _filterOrders[ADD.MENU_VALUE] 
 				local haveLabels = (WQT_TYPEFLAG_LABELS[ADD.MENU_VALUE] ~= nil);
-				local currExp = WQT_EXPANSION_BFA;
+				local currExp = LE_EXPANSION_BATTLE_FOR_AZEROTH;
 				local playerFaction = GetPlayerFactionGroup();
 				for k, flagKey in pairs(order) do
 					local factionInfo = type(flagKey) == "number" and GetFactionData(flagKey) or nil;
@@ -1185,7 +1181,7 @@ function WQT:InitFilter(self, level)
 		local options = WQT.settings.filters[1].flags;
 		local order = _filterOrders[1] 
 		local haveLabels = (WQT_TYPEFLAG_LABELS[1] ~= nil);
-		local currExp = WQT_EXPANSION_LEGION;
+		local currExp = LE_EXPANSION_LEGION;
 		for k, flagKey in pairs(order) do
 			local data = type(flagKey) == "number" and GetFactionData(flagKey) or nil;
 			if (data and data.expansion == currExp ) then
@@ -2188,7 +2184,7 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 	WQT_WorldQuestFrame.pinHandler.pinPool:ReleaseAll();
 	
 	if (WQT.settings.disablePoI) then return; end
-	local buttons = WQT_WorldQuestFrame.scrollFrame.buttons;
+	local buttons = WQT_WorldQuestFrame.ScrollFrame.buttons;
 	local WQProvider = GetMapWQProvider();
 
 	local quest;
@@ -2420,18 +2416,18 @@ end
 
 function WQT_ScrollListMixin:UpdateFilterDisplay()
 	local isFiltering = WQT:IsFiltering();
-	WQT_WorldQuestFrame.filterBar.clearButton:SetShown(isFiltering);
+	WQT_WorldQuestFrame.FilterBar.ClearButton:SetShown(isFiltering);
 	-- If we're not filtering, we 'hide' everything
 	if not isFiltering then
-		WQT_WorldQuestFrame.filterBar.text:SetText(""); 
-		WQT_WorldQuestFrame.filterBar:SetHeight(0.1);
+		WQT_WorldQuestFrame.FilterBar.Text:SetText(""); 
+		WQT_WorldQuestFrame.FilterBar:SetHeight(0.1);
 		return;
 	end
 
 	local filterList = "";
 	local haveLabels = false;
 	-- If we are filtering, 'show' things
-	WQT_WorldQuestFrame.filterBar:SetHeight(20);
+	WQT_WorldQuestFrame.FilterBar:SetHeight(20);
 	-- Emissary has priority
 	if (WQT.settings.emissaryOnly) then
 		filterList = _L["TYPE_EMISSARY"];	
@@ -2448,7 +2444,7 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 		end
 	end
 
-	WQT_WorldQuestFrame.filterBar.text:SetText(_L["FILTER"]:format(filterList)); 
+	WQT_WorldQuestFrame.FilterBar.Text:SetText(_L["FILTER"]:format(filterList)); 
 end
 
 function WQT_ScrollListMixin:UpdateQuestFilters()
@@ -2590,7 +2586,7 @@ function WQT_CoreMixin:OnLoad()
 	self:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else print("WQT missing function for: " .. event) end end)
 	
 	self.updatePeriod = WQT_REFRESH_DEFAULT;
-	self.ticker = C_Timer.NewTicker(WQT_REFRESH_DEFAULT, function() self.scrollFrame:UpdateQuestList(true); end)
+	self.ticker = C_Timer.NewTicker(WQT_REFRESH_DEFAULT, function() self.ScrollFrame:UpdateQuestList(true); end)
 	-- Did not want this, but WorldMap_DoesWorldQuestInfoPassFilters sometimes doesn't work correctly, hiding quests
 	-- Seems to not affect performance, so I guess it's ok
 	self.refreshDisplayTicer = C_Timer.NewTicker(1, function() WQT_QuestScrollFrame:DisplayQuestList(); end)
@@ -2605,7 +2601,7 @@ function WQT_CoreMixin:OnLoad()
 		end)
 	
 	WorldMapFrame:HookScript("OnShow", function() 
-			self.scrollFrame:UpdateQuestList();
+			self.ScrollFrame:UpdateQuestList();
 			self:SelectTab(self.selectedTab); 
 		end)
 
@@ -2622,7 +2618,7 @@ function WQT_CoreMixin:OnLoad()
 	
 		if (self.currentMapId ~= mapAreaID) then
 			ADD:HideDropDownMenu(1);
-			self.scrollFrame:UpdateQuestList();
+			self.ScrollFrame:UpdateQuestList();
 			self.pinHandler:UpdateMapPoI();
 			self.currentMapId = mapAreaID;
 		end
@@ -2640,7 +2636,7 @@ function WQT_CoreMixin:OnLoad()
 	end
 	if (worldMapFilter) then
 		hooksecurefunc(worldMapFilter, "OnSelection", function() 
-				self.scrollFrame:UpdateQuestList();
+				self.ScrollFrame:UpdateQuestList();
 				WQT:UpdateFilterIndicator();
 			end);
 		self.worldMapFilter = worldMapFilter;
@@ -2774,7 +2770,7 @@ function WQT_CoreMixin:FilterClearButtonOnClick()
 	for k, v in pairs(WQT.settings.filters) do
 		WQT:SetAllFilterTo(k, false);
 	end
-	self.scrollFrame:UpdateQuestList();
+	self.ScrollFrame:UpdateQuestList();
 end
 
 function WQT_CoreMixin:ADDON_LOADED(loaded)
@@ -2813,16 +2809,16 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 end
 
 function WQT_CoreMixin:PLAYER_REGEN_DISABLED()
-	self.scrollFrame:ScrollFrameSetEnabled(false)
+	self.ScrollFrame:ScrollFrameSetEnabled(false)
 	self:ShowOverlayMessage(_L["COMBATLOCK"]);
 	ADD:HideDropDownMenu(1);
 end
 
 function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
 	if self:GetAlpha() == 1 then
-		self.scrollFrame:ScrollFrameSetEnabled(true)
+		self.ScrollFrame:ScrollFrameSetEnabled(true)
 	end
-	self.scrollFrame:UpdateQuestList();
+	self.ScrollFrame:UpdateQuestList();
 	self:SelectTab(self.selectedTab);
 	WQT:UpdateFilterIndicator();
 end
@@ -2842,16 +2838,16 @@ function WQT_CoreMixin:QUEST_TURNED_IN(questId)
 			end
 		end
 
-		self.scrollFrame:UpdateQuestList();
+		self.ScrollFrame:UpdateQuestList();
 	end
 end
 
 function WQT_CoreMixin:WORLD_QUEST_COMPLETED_BY_SPELL(...)
-	self.scrollFrame:UpdateQuestList();
+	self.ScrollFrame:UpdateQuestList();
 end
 
 function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED()
-	self.scrollFrame:DisplayQuestList();
+	self.ScrollFrame:DisplayQuestList();
 end
 
 function WQT_CoreMixin:ShowOverlayMessage(message)
@@ -2885,9 +2881,9 @@ function WQT_CoreMixin:SetCombatEnabled(value)
 		self.sortButton:Disable();
 	end
 	
-	self.scrollFrame:SetButtonsEnabled(value);
+	self.ScrollFrame:SetButtonsEnabled(value);
 		
-	self.scrollFrame:EnableMouseWheel(value);
+	self.ScrollFrame:EnableMouseWheel(value);
 end
 
 function WQT_CoreMixin:SelectTab(tab)
@@ -2940,7 +2936,7 @@ function WQT_CoreMixin:SelectTab(tab)
 		WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
 		WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
 		HideUIPanel(QuestScrollFrame);
-		self.scrollFrame:DisplayQuestList();
+		self.ScrollFrame:DisplayQuestList();
 		if not InCombatLockdown() then
 			self:SetFrameLevel(self:GetParent():GetFrameLevel()+3);
 			self:SetCombatEnabled(true);

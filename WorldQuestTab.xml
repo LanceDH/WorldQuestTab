@@ -461,7 +461,7 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame parentKey="filterBar">
+			<Frame parentKey="FilterBar">
 				<Size x="259" y="0.1"/>
 				<Anchors>
 					<Anchor point="TOPRIGHT" x="-26" y="-1"/>
@@ -471,7 +471,7 @@
 						<Texture file="Interface\Buttons\UI-Listbox-Highlight2">
 							<Color r="0.6" g="0.75" b="1.0" a="0.5" />
 						</Texture>
-						<FontString parentKey="text" inherits="GameFontHighlightSmall" justifyH="LEFT">
+						<FontString parentKey="Text" inherits="GameFontHighlightSmall" justifyH="LEFT">
 							<Size x="235" y="13"/>
 							<Anchors>
 								<Anchor point="LEFT" x="5" y="0"/>
@@ -480,7 +480,7 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<Button name="$parentClearButton" parentKey="clearButton" hidden="true">
+					<Button name="$parentClearButton" parentKey="ClearButton" hidden="true">
 						<Size x="17" y="17"/>
 						<Anchors>
 							<Anchor point="RIGHT"/>
@@ -519,10 +519,10 @@
 					</Button>
 				</Frames>
 			</Frame>
-			<ScrollFrame parentKey="scrollFrame" name="WQT_QuestScrollFrame" mixin="WQT_ScrollListMixin" inherits="HybridScrollFrameTemplate">
+			<ScrollFrame parentKey="ScrollFrame" name="WQT_QuestScrollFrame" mixin="WQT_ScrollListMixin" inherits="HybridScrollFrameTemplate">
 				<Size x="259"/>
 				<Anchors>
-					<Anchor point="TOP" relativeKey="$parent.filterBar" relativePoint="BOTTOM" x="0" y="-2"/>
+					<Anchor point="TOP" relativeKey="$parent.FilterBar" relativePoint="BOTTOM" x="0" y="-2"/>
 					<Anchor point="BOTTOM" relativePoint="WQT_WorldQuestFrame" x="0" y="3"/>
 				</Anchors>
 				<Frames>
@@ -679,7 +679,7 @@
 				self:OnLoad();
 			</OnLoad>
 			<OnShow>
-				self.scrollFrame:UpdateQuestList();
+				self.ScrollFrame:UpdateQuestList();
 			</OnShow>
 		</Scripts>
 	</Frame>
