@@ -16,20 +16,21 @@
 -- title					[string] quest title
 -- faction				[string] faction name
 -- isElite				[boolean] is elite quest
+-- isInvalid			[boolean, nullable] true if the quest is invalid. Hard to explain, there's just invalid quests.
 -- time					[table] time related values
 -- 	short				[string] short time string (6H)
 -- 	full				[string] long time string (6 Hours)
 --		minutes			[number] minutes remaining
 --		color				[color] color of time string
 -- mapInfo			[table] zone related values
---		mapType		[Enum.UIMapType] map type
+--		mapType		[number] map type, see official Enum.UIMapType
 --		mapID			[number] mapID, uses capital 'ID' because Blizzard
 -- 	name			[string] zone name
 --		mapX			[number] x pin position
 --		mapY			[number] y pin position
 --		parentMapID	[number] parentmapID, uses capital 'ID' because Blizzard
 -- reward				[number] reward related values
---		type				[number] reward type, check 'WQT_REWARDTYPE_...' values below
+--		type				[number] reward type, see WQT_REWARDTYPE below
 --		texture			[number/string] texture of the reward. can be string for things like gold or unknown reward
 --		amount			[amount] amount of items, gold, rep, or item level
 --		id					[number, nullable] itemId for reward. null if not an item
@@ -52,17 +53,19 @@ WQT_TAB_NORMAL = _L["QUESTLOG"];
 WQT_TAB_WORLD = _L["WORLDQUEST"];
 WQT_GROUP_INFO = _L["GROUP_SEARCH_INFO"];
 
-local WQT_REWARDTYPE_MISSING = 100;
-local WQT_REWARDTYPE_ARMOR = 1;
-local WQT_REWARDTYPE_RELIC = 2;
-local WQT_REWARDTYPE_ARTIFACT = 3;
-local WQT_REWARDTYPE_ITEM = 4;
-local WQT_REWARDTYPE_GOLD = 5;
-local WQT_REWARDTYPE_CURRENCY = 6;
-local WQT_REWARDTYPE_HONOR = 7;
-local WQT_REWARDTYPE_REP = 8;
-local WQT_REWARDTYPE_XP = 9;
-local WQT_REWARDTYPE_NONE = 10;
+WQT_REWARDTYPE = {
+	["missing"] = 100
+	,["equipment"] = 1
+	,["relic"] = 2
+	,["artifact"] = 3
+	,["item"] = 4
+	,["gold"] = 5
+	,["currency"] = 6
+	,["honor"] = 7
+	,["reputation"] = 8
+	,["xp"] = 9
+	,["none"] = 10
+};
 
 local WQT_EXPANSION_BFA = 7;
 local WQT_EXPANSION_LEGION = 6;
@@ -116,16 +119,16 @@ local WQT_FILTER_FUNCTIONS = {
 			,function(quest, flags) return (flags["Default"] and (quest.type ~= LE_QUEST_TAG_TYPE_PVP and quest.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON and quest.type ~= WQT_TYPE_BONUSOBJECTIVE  and quest.type ~= LE_QUEST_TAG_TYPE_PROFESSION and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.type ~= LE_QUEST_TAG_TYPE_INVASION and not quest.isElite)); end 
 			}
 		,[3] = { -- Reward filters
-			function(quest, flags) return (flags["Armor"] and quest.reward.type == WQT_REWARDTYPE_ARMOR); end 
-			,function(quest, flags) return (flags["Relic"] and quest.reward.type == WQT_REWARDTYPE_RELIC); end 
-			,function(quest, flags) return (flags["Item"] and quest.reward.type == WQT_REWARDTYPE_ITEM); end 
-			,function(quest, flags) return (flags["Artifact"] and quest.reward.type == WQT_REWARDTYPE_ARTIFACT); end 
-			,function(quest, flags) return (flags["Honor"] and (quest.reward.type == WQT_REWARDTYPE_HONOR or quest.reward.subType == WQT_REWARDTYPE_HONOR)); end 
-			,function(quest, flags) return (flags["Gold"] and (quest.reward.type == WQT_REWARDTYPE_GOLD or quest.reward.subType == WQT_REWARDTYPE_GOLD) ); end 
-			,function(quest, flags) return (flags["Currency"] and (quest.reward.type == WQT_REWARDTYPE_CURRENCY or quest.reward.subType == WQT_REWARDTYPE_CURRENCY)); end 
-			,function(quest, flags) return (flags["Experience"] and quest.reward.type == WQT_REWARDTYPE_XP); end 
-			,function(quest, flags) return (flags["Reputation"] and quest.reward.type == WQT_REWARDTYPE_REP or quest.reward.subType == WQT_REWARDTYPE_REP); end
-			,function(quest, flags) return (flags["None"] and quest.reward.type == WQT_REWARDTYPE_NONE); end
+			function(quest, flags) return (flags["Armor"] and quest.reward.type == WQT_REWARDTYPE.equipment); end 
+			,function(quest, flags) return (flags["Relic"] and quest.reward.type == WQT_REWARDTYPE.relic); end 
+			,function(quest, flags) return (flags["Item"] and quest.reward.type == WQT_REWARDTYPE.item); end 
+			,function(quest, flags) return (flags["Artifact"] and quest.reward.type == WQT_REWARDTYPE.artifact); end 
+			,function(quest, flags) return (flags["Honor"] and (quest.reward.type == WQT_REWARDTYPE.honor or quest.reward.subType == WQT_REWARDTYPE.honor)); end 
+			,function(quest, flags) return (flags["Gold"] and (quest.reward.type == WQT_REWARDTYPE.gold or quest.reward.subType == WQT_REWARDTYPE.gold) ); end 
+			,function(quest, flags) return (flags["Currency"] and (quest.reward.type == WQT_REWARDTYPE.currency or quest.reward.subType == WQT_REWARDTYPE.currency)); end 
+			,function(quest, flags) return (flags["Experience"] and quest.reward.type == WQT_REWARDTYPE.xp); end 
+			,function(quest, flags) return (flags["Reputation"] and quest.reward.type == WQT_REWARDTYPE.reputation or quest.reward.subType == WQT_REWARDTYPE.reputation); end
+			,function(quest, flags) return (flags["None"] and quest.reward.type == WQT_REWARDTYPE.none); end
 			}
 	};
 
@@ -1351,6 +1354,8 @@ end
 function WQT:PassesAllFilters(questInfo)
 	if questInfo.questId < 0 then return true; end
 	
+	if not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) then return false; end
+	
 	if not WQT:IsFiltering() then return true; end
 
 	if WQT.settings.emissaryOnly then 
@@ -1468,7 +1473,7 @@ function WQT_ListButtonMixin:OnClick(button)
 				end
 			end
 		end
-	elseif IsModifiedClick("DRESSUP") and self.info.reward.type == WQT_REWARDTYPE_ARMOR then
+	elseif IsModifiedClick("DRESSUP") and self.info.reward.type == WQT_REWARDTYPE.equipment then
 		local _, link = GetItemInfo(self.info.reward.id);
 		DressUpItemLink(link)
 		
@@ -1512,22 +1517,31 @@ function WQT_ListButtonMixin:OnLeave()
 	HideUIPanel(self.highlight);
 	WQT_Tooltip:Hide();
 	WQT_Tooltip.ItemTooltip:Hide();
-	WQT_PoISelectIndicator:Hide();
+	
+	-- Small delay to prevent the animation from resetting every time the list updates
+	WQT_PoISelectIndicator.delayTicker = C_Timer.NewTicker(0.05, function() 
+			WQT_PoISelectIndicator:Hide(); 
+			if (self.resetLabel) then
+				WorldMapFrame.ScrollContainer:GetMap():TriggerEvent("ClearAreaLabel", MAP_AREA_LABEL_TYPE.POI);
+				self.resetLabel = false;
+			end
+			-- Reset highlighted pin to original frame level
+			if (WQT_PoISelectIndicator.pin) then
+				WQT_PoISelectIndicator.pin:SetFrameLevel(WQT_PoISelectIndicator.pinLevel);
+			end
+			WQT_PoISelectIndicator.questId = nil;
+		end, 1)
+	
 	WQT_MapZoneHightlight:Hide();
 	
-	-- Reset highlighted pin to original frame level
-	if (WQT_PoISelectIndicator.pin) then
-		WQT_PoISelectIndicator.pin:SetFrameLevel(WQT_PoISelectIndicator.pinLevel);
-	end
-	WQT_PoISelectIndicator.questId = nil;
-	
-	if (self.resetLabel) then
-		WorldMapFrame.ScrollContainer:GetMap():TriggerEvent("ClearAreaLabel", MAP_AREA_LABEL_TYPE.POI);
-		self.resetLabel = false;
-	end
 end
 
 function WQT_ListButtonMixin:OnEnter()
+	-- Cancel the timer if we are an a button before it ends so highlight doesn't get hidden
+	if WQT_PoISelectIndicator.delayTicker then
+		WQT_PoISelectIndicator.delayTicker:Cancel();
+	end
+
 	ShowUIPanel(self.highlight);
 	
 	local questInfo = self.info;
@@ -1540,6 +1554,11 @@ function WQT_ListButtonMixin:OnEnter()
 		 scale = 0.5;
 	end
 	if pin then
+		-- the pin is different, hide the highlight to restart the animation
+		if (pin ~= WQT_PoISelectIndicator.pin) then
+			WQT_PoISelectIndicator:Hide();
+		end
+	
 		WQT_WorldQuestFrame:ShowHighlightOnPin(pin, scale);
 		WQT_PoISelectIndicator.questId = questInfo.questId;
 	end
@@ -1706,7 +1725,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	self.reward:Show();
 	self.reward.icon:Show();
 
-	if questInfo.reward.type == WQT_REWARDTYPE_MISSING then
+	if questInfo.reward.type == WQT_REWARDTYPE.missing then
 		self.reward.iconBorder:SetVertexColor(1, 0, 0);
 		self.reward:SetAlpha(1);
 		self.reward.icon:SetTexture(WQT_QUESTIONMARK);
@@ -1722,11 +1741,11 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 		if questInfo.reward.amount and questInfo.reward.amount > 1  then
 			self.reward.amount:SetText(GetLocalizedAbreviatedNumber(questInfo.reward.amount));
 			r, g, b = 1, 1, 1;
-			if questInfo.reward.type == WQT_REWARDTYPE_RELIC then
+			if questInfo.reward.type == WQT_REWARDTYPE.relic then
 				self.reward.amount:SetText("+" .. questInfo.reward.amount);
-			elseif questInfo.reward.type == WQT_REWARDTYPE_ARTIFACT then
+			elseif questInfo.reward.type == WQT_REWARDTYPE.artifact then
 				r, g, b = GetItemQualityColor(2);
-			elseif questInfo.reward.type == WQT_REWARDTYPE_ARMOR then
+			elseif questInfo.reward.type == WQT_REWARDTYPE.equipment then
 				if questInfo.reward.canUpgrade then
 					self.reward.amount:SetText(questInfo.reward.amount.."+");
 				end
@@ -1863,26 +1882,26 @@ function WQT_QuestDataProvider:SetQuestReward(questInfo)
 				numItems = tonumber(result:match("(%d+)"));
 				canUpgrade = result:match("(%+)") and true;
 			end
-			rewardType = WQT_REWARDTYPE_ARMOR;
+			rewardType = WQT_REWARDTYPE.equipment;
 			color = WQT_COLOR_ARMOR;
 		elseif itemId and IsArtifactRelicItem(itemId) then
 			-- Because getting a link of the itemID only shows the base item
 			numItems = tonumber(self:ScanTooltipRewardForPattern(questInfo.questId, "^%+(%d+)"));
-			rewardType = WQT_REWARDTYPE_RELIC;	
+			rewardType = WQT_REWARDTYPE.relic;	
 			color = WQT_COLOR_RELIC;
 		else	-- Normal items
-			rewardType = WQT_REWARDTYPE_ITEM;
+			rewardType = WQT_REWARDTYPE.item;
 			color = WQT_COLOR_ITEM;
 		end
 	elseif GetQuestLogRewardHonor(questInfo.questId) > 0 then
 		numItems = GetQuestLogRewardHonor(questInfo.questId);
 		texture = WQT_HONOR;
 		color = WQT_COLOR_HONOR;
-		rewardType = WQT_REWARDTYPE_HONOR;
+		rewardType = WQT_REWARDTYPE.honor;
 	elseif GetQuestLogRewardMoney(questInfo.questId) > 0 then
 		numItems = floor(abs(GetQuestLogRewardMoney(questInfo.questId) / 10000))
 		texture = "Interface/ICONS/INV_Misc_Coin_01";
-		rewardType = WQT_REWARDTYPE_GOLD;
+		rewardType = WQT_REWARDTYPE.gold;
 		color = WQT_COLOR_GOLD;
 	elseif GetNumQuestLogRewardCurrencies(questInfo.questId) > 0 then
 		_, texture, numItems, rewardId = GetQuestLogRewardCurrencyInfo(GetNumQuestLogRewardCurrencies(questInfo.questId), questInfo.questId)
@@ -1893,10 +1912,10 @@ function WQT_QuestDataProvider:SetQuestReward(questInfo)
 			name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(rewardId, numItems, name, texture, apQuality); 
 			
 			if	C_CurrencyInfo.GetFactionGrantedByCurrency(rewardId) then
-				rewardType = WQT_REWARDTYPE_REP;
+				rewardType = WQT_REWARDTYPE.reputation;
 				quality = 0;
 			else
-				rewardType = WQT_REWARDTYPE_CURRENCY;
+				rewardType = WQT_REWARDTYPE.currency;
 			end
 			
 			color = WQT_COLOR_CURRENCY;
@@ -1905,18 +1924,18 @@ function WQT_QuestDataProvider:SetQuestReward(questInfo)
 			local name, _, apTex, _, _, _, _, apQuality = GetCurrencyInfo(azuriteID);
 			name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(azuriteID, numItems, name, texture, apQuality); 
 			
-			rewardType = WQT_REWARDTYPE_ARTIFACT;
+			rewardType = WQT_REWARDTYPE.artifact;
 			color = WQT_COLOR_ARTIFACT;
 		end
 	elseif haveData and GetQuestLogRewardXP(questInfo.questId) > 0 then
 		numItems = GetQuestLogRewardXP(questInfo.questId);
 		texture = WQT_EXPERIENCE;
 		color = WQT_COLOR_ITEM;
-		rewardType = WQT_REWARDTYPE_XP;
+		rewardType = WQT_REWARDTYPE.xp;
 	elseif GetNumQuestLogRewards(questInfo.questId) == 0 then
 		texture = "";
 		color = WQT_COLOR_ITEM;
-		rewardType = WQT_REWARDTYPE_NONE;
+		rewardType = WQT_REWARDTYPE.none;
 	end
 	
 	questInfo.rewardId = itemId; -- deprecated
@@ -1937,12 +1956,12 @@ end
 
 function WQT_QuestDataProvider:SetSubReward(questInfo) 
 	local subType = nil;
-	if questInfo.reward.type ~= WQT_REWARDTYPE_CURRENCY and questInfo.reward.type ~= WQT_REWARDTYPE_ARTIFACT and questInfo.reward.type ~= WQT_REWARDTYPE_REP and GetNumQuestLogRewardCurrencies(questInfo.questId) > 0 then
-		subType = WQT_REWARDTYPE_CURRENCY;
-	elseif questInfo.reward.type ~= WQT_REWARDTYPE_HONOR and GetQuestLogRewardHonor(questInfo.questId) > 0 then
-		subType = WQT_REWARDTYPE_HONOR;
-	elseif questInfo.reward.type ~= WQT_REWARDTYPE_GOLD and GetQuestLogRewardMoney(questInfo.questId) > 0 then
-		subType = WQT_REWARDTYPE_GOLD;
+	if questInfo.reward.type ~= WQT_REWARDTYPE.currency and questInfo.reward.type ~= WQT_REWARDTYPE.artifact and questInfo.reward.type ~= WQT_REWARDTYPE.reputation and GetNumQuestLogRewardCurrencies(questInfo.questId) > 0 then
+		subType = WQT_REWARDTYPE.currency;
+	elseif questInfo.reward.type ~= WQT_REWARDTYPE.honor and GetQuestLogRewardHonor(questInfo.questId) > 0 then
+		subType = WQT_REWARDTYPE.honor;
+	elseif questInfo.reward.type ~= WQT_REWARDTYPE.gold and GetQuestLogRewardMoney(questInfo.questId) > 0 then
+		subType = WQT_REWARDTYPE.gold;
 	end
 	questInfo.subRewardType = subType; -- deprecated
 	
@@ -2025,14 +2044,14 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	self:SetSubReward(questInfo);
 	
 	-- Filter out invalid quests like "Tracking Quest" in nazmir, to prevent them from triggering the missing data refresh
-	local isInvalid = not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) and questInfo.time.minutes == 0 and questInfo.reward.type == WQT_REWARDTYPE_NONE and not questInfo.factionId;
+	questInfo.isInvalid = not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) and questInfo.time.minutes == 0 and questInfo.reward.type == WQT_REWARDTYPE.none and not questInfo.factionId;
 	
-	if _debug and isInvalid then
+	if _debug and questInfo.isInvalid then
 		print("|cFFFF0000 Invalid: " .. questInfo.title  .. " (" .. questInfo.mapInfo.name .. ")" .."|r")
 	end
 	
-	if not haveData and not isInvalid then
-		questInfo.reward.type = WQT_REWARDTYPE_MISSING;
+	if not haveData and not questInfo.isInvalid then
+		questInfo.reward.type = WQT_REWARDTYPE.missing;
 		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
 		return nil;
 	end;
@@ -2217,9 +2236,9 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 	self.ring:SetAlpha((WQT.settings.showPinReward or WQT.settings.showPinRing) and 1 or 0);
 	
 	-- Icon stuff
-	local showIcon =WQT.settings.showPinReward and (quest.reward.type == WQT_REWARDTYPE_MISSING or quest.reward.texture ~= "")
+	local showIcon =WQT.settings.showPinReward and (quest.reward.type == WQT_REWARDTYPE.missing or quest.reward.texture ~= "")
 	self.icon:SetAlpha(showIcon and 1 or 0);
-	if quest.reward.type == WQT_REWARDTYPE_MISSING then
+	if quest.reward.type == WQT_REWARDTYPE.missing then
 		SetPortraitToTexture(self.icon, WQT_QUESTIONMARK);
 	else
 		SetPortraitToTexture(self.icon, quest.reward.texture);
@@ -2308,7 +2327,7 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 			GameTooltip_AddQuestRewardsToTooltip(WQT_Tooltip, questInfo.questId);
 			
 			-- reposition compare frame
-			if((questInfo.reward.type == WQT_REWARDTYPE_ARMOR) and WQT_Tooltip.ItemTooltip:IsShown()) then
+			if((questInfo.reward.type == WQT_REWARDTYPE.equipment) and WQT_Tooltip.ItemTooltip:IsShown()) then
 				if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
 					-- Setup and check total size of both tooltips
 					WQT_CompareTooltip1:SetCompareItem(WQT_CompareTooltip2, WQT_Tooltip.ItemTooltip.Tooltip);
@@ -2436,7 +2455,7 @@ function WQT_ScrollListMixin:UpdateQuestFilters()
 	wipe(self.questListDisplay);
 	
 	for k, questInfo in ipairs(self.questList) do
-		if (WorldMap_DoesWorldQuestInfoPassFilters(questInfo)) then
+		if (not questInfo.isInvalid) then
 			questInfo.passedFilter = WQT:PassesAllFilters(questInfo)
 			if questInfo.passedFilter then
 				table.insert(self.questListDisplay, questInfo);
@@ -2572,6 +2591,9 @@ function WQT_CoreMixin:OnLoad()
 	
 	self.updatePeriod = WQT_REFRESH_DEFAULT;
 	self.ticker = C_Timer.NewTicker(WQT_REFRESH_DEFAULT, function() self.scrollFrame:UpdateQuestList(true); end)
+	-- Did not want this, but WorldMap_DoesWorldQuestInfoPassFilters sometimes doesn't work correctly, hiding quests
+	-- Seems to not affect performance, so I guess it's ok
+	self.refreshDisplayTicer = C_Timer.NewTicker(1, function() WQT_QuestScrollFrame:DisplayQuestList(); end)
 	
 	SLASH_WQTSLASH1 = '/wqt';
 	SLASH_WQTSLASH2 = '/worldquesttab';
