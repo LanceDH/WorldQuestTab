@@ -6,7 +6,7 @@
 -- New info structure
 --
 -- factionId			[number, nullable] factionId, null if no faction
--- expantionLevel	[number] expansion is belongs to
+-- expansionLevel	[number] expansion it belongs to
 -- isCriteria			[boolean] is part of currently selected amissary
 -- passedFilter		[boolean] passed current filters
 -- type					[number] type of quest
