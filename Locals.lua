@@ -51,13 +51,9 @@ L["TYPE_RAID"]		= "Raid";
 L["TYPE_PROFESSION"]	= "Profession";
 L["TYPE_INVASION"]	= "Invasion";
 L["TYPE_EMISSARY"]	= "Emissary";
-L["TYPE_BONUS"]	= "Bonus";
 
 L["REWARD_ITEM"]	= "Item";
-L["REWARD_ARMOR"]	= "Armor";
-L["REWARD_GOLD"]	= "Gold";
 L["REWARD_RESOURCES"]	= "Currency";
-L["REWARD_ARTIFACT"]	= "Artifact";
 L["REWARD_RELIC"]	= "Relic";
 L["REWARD_NONE"]		= "None";
 L["REWARD_EXPERIENCE"]	= "Experience";
@@ -73,6 +69,8 @@ L["MAP_FILTER_DISABLED_TITLE"] = "Some world map filters disabled";
 L["MAP_FILTER_DISABLED_INFO"]	= "Disabled filters may hide some quests. You can re-enable them under the magnifying glass on the topright of the map.";
 L["GROUP_SEARCH_INFO"] = "Blizzard prevents add-ons from automatically looking for a group for the majority of world quests. Because of this, players have to manually fill in the search box.";
 L["FORMAT_GROUP_SEARCH"] = "Type |cFFFFFFFF%d|r to search for a group for this quest. Or type its name: |cFFFFFFFF%s|r.";
+L["FORMAT_GROUP_CREATE"] = "Type |cFFFFFFFF%d|r to create a group for this quest. Or type its name: |cFFFFFFFF%s|r. Consider using both so players without add-ons can also find your group.";
+L["FORMAT_GROUP_TYPO"] = "It appears to have made a typo. Type either |cFFFFFFFF%d|r, or |cFFFFFFFF%s|r.";
 
 
 if locale == "deDE" then

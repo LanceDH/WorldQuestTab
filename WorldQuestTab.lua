@@ -1,9 +1,49 @@
-﻿local addonName, addon = ...
+﻿--
+-- Deprecated and deleted come 8.1
+--
+--	id, mapX, mapY, mapF, timeString, timeStringShort, color, minutes, zoneId, continentId, rewardId, rewardQuality, rewardTexture, numItems, rewardType, ringcolor, subRewardType
+--
+-- New info structure
+--
+-- factionId			[number, nullable] factionId, null if no faction
+-- expantionLevel	[number] expansion is belongs to
+-- isCriteria			[boolean] is part of currently selected amissary
+-- passedFilter		[boolean] passed current filters
+-- type					[number] type of quest
+-- questId				[number] questId
+-- rarity					[number] quest rarity; normal, rare, epic
+-- numObjetives		[number] number of objectives
+-- title					[string] quest title
+-- faction				[string] faction name
+-- isElite				[boolean] is elite quest
+-- time					[table] time related values
+-- 	short				[string] short time string (6H)
+-- 	full				[string] long time string (6 Hours)
+--		minutes			[number] minutes remaining
+--		color				[color] color of time string
+-- zoneInfo			[table] zone related values
+--		mapType		[Enum.UIMapType] map type
+--		mapID			[number] mapID, uses capital 'ID' because Blizzard
+-- 	name			[string] zone name
+--		mapX			[number] x pin position
+--		mapY			[number] y pin position
+--		parentMapID	[number] parentmapID, uses capital 'ID' because Blizzard
+-- reward				[number] reward related values
+--		type				[number] reward type, check 'WQT_REWARDTYPE_...' values below
+--		texture			[number/string] texture of the reward. can be string for things like gold or unknown reward
+--		amount			[amount] amount of items, gold, rep, or item level
+--		id					[number, nullable] itemId for reward. null if not an item
+--		quality			[number] item quality; common, rare, epic, etc
+--		upgradable	[boolean, nullable] true if item has a chance to upgrade (e.g. ilvl 285+)
+
+local addonName, addon = ...
 
 local WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 local ADD = LibStub("AddonDropDown-1.0");
 
 local _L = addon.L
+
+local _debug = false;
 
 local _TomTomLoaded = IsAddOnLoaded("TomTom");
 local _CIMILoaded = IsAddOnLoaded("CanIMogIt");
@@ -38,7 +78,7 @@ local WQT_COLOR_ARTIFACT = CreateColor(0, 0.75, 0);
 local WQT_COLOR_GOLD = CreateColor(0.85, 0.7, 0) ;
 local WQT_COLOR_CURRENCY = CreateColor(0.6, 0.4, 0.1) ;
 local WQT_COLOR_ITEM = CreateColor(0.85, 0.85, 0.85) ;
-local WQT_COLOR_ARMOR = CreateColor(0.7, 0.3, 0.9) ;
+local WQT_COLOR_ARMOR =  CreateColor(0.85, 0.5, 0.95) ; -- CreateColor(0.7, 0.3, 0.9) ;
 local WQT_COLOR_RELIC = CreateColor(0.3, 0.7, 1);
 local WQT_COLOR_MISSING = CreateColor(0.7, 0.1, 0.1);
 local WQT_COLOR_HONOR = CreateColor(0.8, 0.26, 0);
@@ -59,8 +99,8 @@ local WQT_ARGUS_COSMIC_BUTTONS = {KrokuunButton, MacAreeButton, AntoranWastesBut
 
 local WQT_TYPEFLAG_LABELS = {
 		[2] = {["Default"] = _L["TYPE_DEFAULT"], ["Elite"] = _L["TYPE_ELITE"], ["PvP"] = _L["TYPE_PVP"], ["Petbattle"] = _L["TYPE_PETBATTLE"], ["Dungeon"] = _L["TYPE_DUNGEON"]
-			, ["Raid"] = _L["TYPE_RAID"], ["Profession"] = _L["TYPE_PROFESSION"], ["Invasion"] = _L["TYPE_INVASION"], ["Bonus"] = _L["TYPE_BONUS"]}
-		,[3] = {["Item"] = _L["REWARD_ITEM"], ["Armor"] = _L["REWARD_ARMOR"], ["Gold"] = _L["REWARD_GOLD"], ["Currency"] = _L["REWARD_RESOURCES"], ["Artifact"] = _L["REWARD_ARTIFACT"]
+			, ["Raid"] = _L["TYPE_RAID"], ["Profession"] = _L["TYPE_PROFESSION"], ["Invasion"] = _L["TYPE_INVASION"]}
+		,[3] = {["Item"] = _L["REWARD_ITEM"], ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = WORLD_QUEST_REWARD_FILTERS_RESOURCES, ["Artifact"] = ITEM_QUALITY6_DESC
 			, ["Relic"] = _L["REWARD_RELIC"], ["None"] = _L["REWARD_NONE"], ["Experience"] = _L["REWARD_EXPERIENCE"], ["Honor"] = _L["REWARD_HONOR"], ["Reputation"] = REPUTATION}
 	};
 
@@ -74,7 +114,6 @@ local WQT_FILTER_FUNCTIONS = {
 			,function(quest, flags) return (flags["Invasion"] and quest.type == LE_QUEST_TAG_TYPE_INVASION); end 
 			,function(quest, flags) return (flags["Elite"] and (quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.isElite)); end 
 			,function(quest, flags) return (flags["Default"] and (quest.type ~= LE_QUEST_TAG_TYPE_PVP and quest.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON and quest.type ~= WQT_TYPE_BONUSOBJECTIVE  and quest.type ~= LE_QUEST_TAG_TYPE_PROFESSION and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.type ~= LE_QUEST_TAG_TYPE_INVASION and not quest.isElite)); end 
-			,function(quest, flags) return (flags["Bonus"] and quest.type == WQT_TYPE_BONUSOBJECTIVE); end 
 			}
 		,[3] = { -- Reward filters
 			function(quest, flags) return (flags["Armor"] and quest.reward.type == WQT_REWARDTYPE_ARMOR); end 
@@ -325,14 +364,12 @@ local WQT_DEFAULTS = {
 		emissaryOnly = false;
 		useTomTom = true;
 		preciseFilter = true;
+		rewardAmountColors = true;
 		filters = {
 				[1] = {["name"] = _L["FACTION"]
 				, ["flags"] = {[_L["OTHER_FACTION"]] = false, [_L["NO_FACTION"]] = false}}
-				-- , ["flags"] = {[GetFactionInfoByID(1859)] = false, [GetFactionInfoByID(1894)] = false, [GetFactionInfoByID(1828)] = false, [GetFactionInfoByID(1883)] = false
-								-- , [GetFactionInfoByID(1948)] = false, [GetFactionInfoByID(1900)] = false, [GetFactionInfoByID(1090)] = false, [GetFactionInfoByID(2045)] = false
-								-- , [GetFactionInfoByID(2165)] = false, [GetFactionInfoByID(2170)] = false, [_L["OTHER_FACTION"]] = false, [_L["NO_FACTION"]] = false}}
 				,[2] = {["name"] = _L["TYPE"]
-						, ["flags"] = {["Default"] = false, ["Elite"] = false, ["PvP"] = false, ["Petbattle"] = false, ["Dungeon"] = false, ["Raid"] = false, ["Profession"] = false, ["Invasion"] = false, ["Bonus"] = false}}--, ["Emissary"] = false}}
+						, ["flags"] = {["Default"] = false, ["Elite"] = false, ["PvP"] = false, ["Petbattle"] = false, ["Dungeon"] = false, ["Raid"] = false, ["Profession"] = false, ["Invasion"] = false}}--, ["Emissary"] = false}}
 				,[3] = {["name"] = _L["REWARD"]
 						, ["flags"] = {["Item"] = false, ["Armor"] = false, ["Gold"] = false, ["Currency"] = false, ["Artifact"] = false, ["Relic"] = false, ["None"] = false, ["Experience"] = false, ["Honor"] = false, ["Reputation"] = false}}
 			}
@@ -350,6 +387,16 @@ end
 local _filterOrders = {}
 
 ------------------------------------------------------------
+
+local function QuestIsWatched(questID)
+	for i=1, GetNumWorldQuestWatches() do 
+		if (GetWorldQuestWatchInfo(i) == questID) then
+			return true;
+		end
+	end
+	return false;
+end
+
 local function GetMapWQProvider()
 	if WQT.mapWQProvider then return WQT.mapWQProvider; end
 	
@@ -375,7 +422,7 @@ local function GetMapWQProvider()
 				end
 			end
 			
-			--Keep highlighted pin in foreground
+			-- Keep highlighted pin in foreground
 			if (WQT_PoISelectIndicator.questId) then
 				local provider = GetMapWQProvider();
 				local pin = provider.activePins[WQT_PoISelectIndicator.questId];
@@ -383,6 +430,31 @@ local function GetMapWQProvider()
 					pin:SetFrameLevel(3000);
 				end
 			end
+			
+			
+			-- Hook a script to every pin's OnClick
+			for qId, pin in pairs(WQT.mapWQProvider.activePins ) do
+				if (not pin.WQTHooked) then
+					pin.WQTHooked = true;
+					hooksecurefunc(pin, "OnClick", function(self, button) 
+						if (button == "RightButton") then
+							-- If the quest wasn't tracked before we clicked, untrack it again
+							if (self.notTracked and QuestIsWatched(self.questID)) then
+								RemoveWorldQuestWatch(self.questID);
+							end
+							-- Show the tracker dropdown
+							if WQT_TrackDropDown:GetParent() ~= self then
+								-- If the dropdown is linked to another button, we must move and close it first
+								WQT_TrackDropDown:SetParent(self);
+								ADD:HideDropDownMenu(1);
+							end
+							ADD:ToggleDropDownMenu(1, nil, WQT_TrackDropDown, self, -10, 0);
+						end
+							
+					end)
+				end
+			end
+
 		end);
 
 	return WQT.mapWQProvider;
@@ -493,6 +565,7 @@ local function slashcmd(msg, editbox)
 	if msg == "options" then
 		print(_L["OPTIONS_INFO"]);
 	else
+		if _debug then
 		-- This is to get the zone coords for highlights so I don't have to retype it every time
 		
 		-- local x, y = GetCursorPosition();
@@ -508,16 +581,59 @@ local function slashcmd(msg, editbox)
 		-- local adjustedX = (x - (centerX - (width/2))) / width;
 		-- print(WorldMapFrame.mapID)
 		-- print("{\[\"x\"\] = " .. floor(adjustedX*100)/100 .. ", \[\"y\"\] = " .. floor(adjustedY*100)/100 .. "} ")
-	end
-end
-
-local function QuestIsWatched(questID)
-	for i=1, GetNumWorldQuestWatches() do 
-		if (GetWorldQuestWatchInfo(i) == questID) then
-			return true;
+		local debugfr = WQT.debug;
+		debugfr.mem = GetAddOnMemoryUsage(addonName);
+		local frames = {WQT_WorldQuestFrame, WQT_QuestScrollFrame, WQT_WorldQuestFrame.pinHandler, WQT_WorldQuestFrame.dataprovider, WQT};
+		for key, frame in pairs(frames) do
+			for k, v in pairs(frame) do
+				if type(v) == "function" then
+					local name = frame.GetName and  frame:GetName() .. ":" or ""
+					debugfr.callCounters[name .. k] = {};
+					hooksecurefunc(frame, k, function(self) 
+							local mem = GetAddOnMemoryUsage(addonName) - debugfr.mem;
+							tinsert(debugfr.callCounters[name .. k], time().."|"..mem);
+						end)
+				end
+			end
+		end
+	
+		debugfr.callCounters["OnMapChanged"] = {};
+		hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
+			local mem = GetAddOnMemoryUsage(addonName) - debugfr.mem;
+			tinsert(debugfr.callCounters["OnMapChanged"], time().."|"..mem);
+		end)
+			
+		debugfr.callCounters["QuestMapFrame_ShowQuestDetails"] = {};
+		hooksecurefunc("QuestMapFrame_ShowQuestDetails", function()
+				local mem = GetAddOnMemoryUsage(addonName) - debugfr.mem;
+				tinsert(debugfr.callCounters["QuestMapFrame_ShowQuestDetails"], time().."|"..mem);
+			end)
+		
+		debugfr.callCounters["QuestMapFrame_ReturnFromQuestDetails"] = {};
+		hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
+				local mem = GetAddOnMemoryUsage(addonName) - debugfr.mem;
+				tinsert(debugfr.callCounters["QuestMapFrame_ReturnFromQuestDetails"], time().."|"..mem);
+			end)
+			
+			debugfr.callCounters["ToggleDropDownMenu"] = {};
+		hooksecurefunc("ToggleDropDownMenu", function()
+				local mem = GetAddOnMemoryUsage(addonName) - debugfr.mem;
+				tinsert(debugfr.callCounters["ToggleDropDownMenu"], time().."|"..mem);
+			end);
+			
+			debugfr.callCounters["QuestMapFrame_ShowQuestDetails"] = {};
+		hooksecurefunc("QuestMapFrame_ShowQuestDetails", function(self)
+				local mem = GetAddOnMemoryUsage(addonName) - debugfr.mem;
+				tinsert(debugfr.callCounters["QuestMapFrame_ShowQuestDetails"], time().."|"..mem);
+			end)
+			
+			debugfr.callCounters["LFGListSearchPanel_UpdateResults"] = {};
+		hooksecurefunc("LFGListSearchPanel_UpdateResults", function(self)
+				local mem = GetAddOnMemoryUsage(addonName) - debugfr.mem;
+				tinsert(debugfr.callCounters["LFGListSearchPanel_UpdateResults"], time().."|"..mem);
+			end)
 		end
 	end
-	return false;
 end
 
 local function IsRelevantFilter(filterID, key)
@@ -1183,8 +1299,18 @@ function WQT:InitTrackDropDown(self, level)
 				WQT_GroupSearch:Hide();
 				LFGListUtil_FindQuestGroup(questId);
 				if (not C_LFGList.CanCreateQuestGroup(questId)) then
+					WQT_GroupSearch:SetParent(LFGListFrame.SearchPanel.SearchBox);
+					WQT_GroupSearch:SetFrameLevel(LFGListFrame.SearchPanel.SearchBox:GetFrameLevel()+5);
+					WQT_GroupSearch:ClearAllPoints();
+					WQT_GroupSearch:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "BOTTOMLEFT", -2, -3);
+					WQT_GroupSearch:SetPoint("RIGHT", LFGListFrame.SearchPanel, "RIGHT", -30, 0);
+				
 					WQT_GroupSearch.Text:SetText(_L["FORMAT_GROUP_SEARCH"]:format(questInfo.questId, questInfo.title));
+					WQT_GroupSearch.downArrow = false;
 					WQT_GroupSearch:Show();
+					
+					WQT_GroupSearch.questId = questId;
+					WQT_GroupSearch.title = questInfo.title;
 				end
 			end
 			ADD:AddButton(info, level);
@@ -1347,9 +1473,10 @@ function WQT_ListButtonMixin:OnClick(button)
 		-- Don't track bonus objectives. The object tracker doesn't like it;
 		if (self.info.type ~= WQT_TYPE_BONUSOBJECTIVE) then
 			AddWorldQuestWatch(self.questId);
-			WorldMapFrame:SetMapID(self.zoneId);
-			WQT_QuestScrollFrame:DisplayQuestList();
 		end
+		WorldMapFrame:SetMapID(self.zoneId);
+		WQT_QuestScrollFrame:DisplayQuestList();
+		
 	elseif button == "RightButton" then
 
 		if WQT_TrackDropDown:GetParent() ~= self then
@@ -1365,6 +1492,14 @@ end
 
 function WQT_ListButtonMixin:SetEnabled(value)
 	value = value==nil and true or value;
+	
+	if value then
+		self:Enable();
+	else
+		self:Disable();
+	end
+	
+	
 	self:EnableMouse(value);
 	self.faction:EnableMouse(value);
 end
@@ -1579,13 +1714,18 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 		end
 		self.reward.icon:SetTexture(questInfo.reward.texture);
 	
-		if questInfo.reward.type ~= WQT_REWARDTYPE_ARMOR and questInfo.reward.amount and questInfo.reward.amount > 1  then
+		if questInfo.reward.amount and questInfo.reward.amount > 1  then
 			self.reward.amount:SetText(GetLocalizedAbreviatedNumber(questInfo.reward.amount));
 			r, g, b = 1, 1, 1;
 			if questInfo.reward.type == WQT_REWARDTYPE_RELIC then
 				self.reward.amount:SetText("+" .. questInfo.reward.amount);
 			elseif questInfo.reward.type == WQT_REWARDTYPE_ARTIFACT then
 				r, g, b = GetItemQualityColor(2);
+			elseif questInfo.reward.type == WQT_REWARDTYPE_ARMOR then
+				if questInfo.reward.upgradable then
+					self.reward.amount:SetText(questInfo.reward.amount.."+");
+				end
+				r, g, b = WQT_COLOR_ARMOR:GetRGB();
 			end
 	
 			self.reward.amount:SetVertexColor(r, g, b);
@@ -1644,37 +1784,19 @@ end
 WQT_QuestDataProvider = {};
 
 local function QuestCreationFunc(pool)
-	local questInfo = {["title"] = "" , ["faction"] = "", ["type"] = 0, ["rarity"] = 0, ["isElite"] = false, ["tradeskill"] = 0
-					, ["numObjectives"] = 0, ["isCriteria"] = false
-					, ["time"] = {["minutes"] = 0, ["full"] = "", ["short"] = "", ["color"] = WQT_WHITE_FONT_COLOR}
-					, ["reward"] = {["type"] = 0, ["amount"] = 0, ["texture"] = "", ["quality"] = 1, ["id"] = 0, ["color"] = WQT_COLOR_MISSING, ["subType"] = nil}
-					}
+	local questInfo = {["time"] = {}, ["reward"] = {}};
 	return questInfo;
 end
 
 local function QuestResetFunc(pool, questInfo)
-	questInfo.title = "";
-	questInfo.faction = "";
-	questInfo.factionId = 0;
-	questInfo.type = 0;
-	questInfo.rarity = 0;
-	questInfo.isElite = false;
-	questInfo.tradeskill = 0;
-	questInfo.numObjectives = 0;
-	questInfo.isCriteria = false;
-	-- reward
-	questInfo.reward.id = nil;
-	questInfo.reward.type = 0;
-	questInfo.reward.amount = 0;
-	questInfo.reward.texture = 0;
-	questInfo.reward.quality = 1;
-	questInfo.reward.color = WQT_COLOR_MISSING;
-	questInfo.reward.subType = nil;
-	-- time
-	questInfo.time.full = "";
-	questInfo.time.short = "";
-	questInfo.time.minutes = 0;
-	questInfo.time.color = WQT_WHITE_FONT_COLOR;
+	-- Clean out everthing that isn't a color
+	for k, v in pairs(questInfo) do
+		if type(v) == "table" and not v.GetRGB then
+			QuestResetFunc(pool, v)
+		else
+			questInfo[k] = nil;
+		end
+	end
 end
 
 function WQT_QuestDataProvider:OnLoad()
@@ -1686,12 +1808,12 @@ end
 
 
 function WQT_QuestDataProvider:ScanTooltipRewardForPattern(questID, pattern)
-	local result = 0;
+	local result;
 	
 	GameTooltip_AddQuestRewardsToTooltip(WQT_Tooltip, questID);
 	for i=2, 6 do
-		local lineText = _G["WQT_TooltipTooltipTextLeft"..i]:GetText();
-		result = tonumber(lineText:match(pattern));
+		local lineText = _G["WQT_TooltipTooltipTextLeft"..i]:GetText() or "";
+		result = lineText:match(pattern);
 		if result then break; end
 	end
 	
@@ -1726,18 +1848,21 @@ end
 
 function WQT_QuestDataProvider:SetQuestReward(questInfo)
 	local reward = questInfo.reward;
-	local _, texture, numItems, quality, rewardType, color, rewardId, itemId = nil, nil, 0, 1, 0, WQT_COLOR_MISSING, nil, nil;
+	local _, texture, numItems, quality, rewardType, color, rewardId, itemId, upgradable = nil, nil, 0, 1, 0, WQT_COLOR_MISSING, nil, nil, nil;
 	
 	if GetNumQuestLogRewards(questInfo.questId) > 0 then
 		_, texture, numItems, quality, _, itemId = GetQuestLogRewardInfo(1, questInfo.questId);
-		
-		if itemId and select(9, GetItemInfo(itemId)) ~= "" then -- Gear
-			numItems = self:ScanTooltipRewardForPattern(questInfo.questId, "(%d+)%+$")
+		if itemId and (select(6, GetItemInfo(itemId)) == ARMOR )then -- Gear
+			local result = self:ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+?)$");
+			if result then
+				numItems = tonumber(result:match("(%d+)"));
+				upgradable = result:match("(%+)") and true;
+			end
 			rewardType = WQT_REWARDTYPE_ARMOR;
 			color = WQT_COLOR_ARMOR;
 		elseif itemId and IsArtifactRelicItem(itemId) then
-			-- because getting a link of the itemID only shows the base item
-			numItems = self:ScanTooltipRewardForPattern(questInfo.questId, "^%+(%d+)")
+			-- Because getting a link of the itemID only shows the base item
+			numItems = tonumber(self:ScanTooltipRewardForPattern(questInfo.questId, "^%+(%d+)"));
 			rewardType = WQT_REWARDTYPE_RELIC;	
 			color = WQT_COLOR_RELIC;
 		else	-- Normal items
@@ -1802,6 +1927,7 @@ function WQT_QuestDataProvider:SetQuestReward(questInfo)
 	questInfo.reward.amount = numItems or 0;
 	questInfo.reward.type = rewardType or 0;
 	questInfo.reward.color = color;
+	questInfo.reward.upgradable = upgradable;
 end
 
 function WQT_QuestDataProvider:SetSubReward(questInfo) 
@@ -1832,13 +1958,16 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	local duplicate = self:FindDuplicate(qInfo.questId);
 	-- If there is a duplicate, we don't want to go through all the info again
 	if (duplicate) then
-		-- If the new zone is a child of the duplicate's zone, use that one isntead.
-		-- It's probably a city in the zone
-		local zoneInfo = C_Map.GetMapInfo(zoneId);
-		if (duplicate.zoneInfo.mapID == zoneInfo.parentMapID) then
+		-- Check if the new zone is the 'official' zone, if so, use that one instead
+		if (zoneId == C_TaskQuest.GetQuestZoneID(qInfo.questId) ) then
+			local zoneInfo = C_Map.GetMapInfo(zoneId);
 			duplicate.zoneInfo = zoneInfo;
 			duplicate.zoneInfo.mapX = qInfo.x;
 			duplicate.zoneInfo.mapY = qInfo.y;
+		end
+		
+		if _debug then
+			print("|cFFFFFF00 duplicate: " .. duplicate.title  .. " (" .. duplicate.zoneInfo.name .. ")" .."|r")
 		end
 		
 		return duplicate;
@@ -1846,7 +1975,7 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 
 	local haveData = HaveQuestRewardData(qInfo.questId);
 	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(qInfo.questId);
-	--print(GetQuestTagInfo(qInfo.questId))
+	
 	worldQuestType = not QuestUtils_IsQuestWorldQuest(qInfo.questId) and WQT_TYPE_BONUSOBJECTIVE or worldQuestType;
 	local minutes, timeString, color, timeStringShort = GetQuestTimeString(qInfo.questId);
 	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(qInfo.questId);
@@ -1893,12 +2022,11 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	-- Filter out invalid quests like "Tracking Quest" in nazmir, to prevent them from triggering the missing data refresh
 	local isInvalid = not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) and questInfo.time.minutes == 0 and questInfo.reward.type == WQT_REWARDTYPE_NONE and not questInfo.factionId;
 	
-	-- if isInvalid then
-		-- print("|cFFFF0000 Invalid quest: " .. questInfo.title  .. "|r")
-	-- end
+	if _debug and isInvalid then
+		print("|cFFFF0000 Invalid: " .. questInfo.title  .. " (" .. questInfo.zoneInfo.name .. ")" .."|r")
+	end
 	
 	if not haveData and not isInvalid then
-		print("|cFFFF0000 missing reward: " .. questInfo.title  .. "|r")
 		questInfo.reward.type = WQT_REWARDTYPE_MISSING;
 		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
 		return nil;
@@ -1911,6 +2039,7 @@ function WQT_QuestDataProvider:AddQuestsInZone(zoneID, continentId)
 	local questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneID, continentId);
 	if not questsById then return false; end
 	local missingData = false;
+	local quest;
 	
 	for k, info in ipairs(questsById) do
 		if info.mapID == zoneID then
@@ -2063,6 +2192,10 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 	self:SetParent(PoI);
 	self:SetAllPoints();
 	self:Show();
+	
+	if not flightPinNr then
+		PoI.info = quest;
+	end
 	
 	PoI.BountyRing:SetAlpha(0);
 	PoI.TimeLowFrame:SetAlpha(0);
@@ -2220,7 +2353,9 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 	end
 	
 	-- Add debug lines
-	AddDebugToTooltip(WQT_Tooltip, questInfo);
+	if _debug then
+		AddDebugToTooltip(WQT_Tooltip, questInfo);
+	end
 
 	WQT_Tooltip:Show();
 	WQT_Tooltip.recalculatePadding = true;
@@ -2392,6 +2527,8 @@ function WQT_CoreMixin:OnLoad()
 	self.pinHandler = CreateFromMixins(WQT_PinHandlerMixin);
 	self.pinHandler:OnLoad();
 
+	self.dataprovider = _questDataProvider
+	
 	self:SetFrameLevel(self:GetParent():GetFrameLevel()+4);
 	self.blocker:SetFrameLevel(self:GetFrameLevel()+4);
 	
@@ -2433,10 +2570,6 @@ function WQT_CoreMixin:OnLoad()
 	SLASH_WQTSLASH2 = '/worldquesttab';
 	SlashCmdList["WQTSLASH"] = slashcmd
 	
-	-- Hide things when looking at quest details
-	hooksecurefunc("QuestMapFrame_ShowQuestDetails", function()
-			self:SelectTab(WQT_TabDetails);
-		end)
 	-- Show quest tab when leaving quest details
 	hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
 			self:SelectTab(WQT_TabNormal);
@@ -2445,6 +2578,9 @@ function WQT_CoreMixin:OnLoad()
 	WorldMapFrame:HookScript("OnShow", function() 
 			self.scrollFrame:UpdateQuestList();
 			self:SelectTab(self.selectedTab); 
+		end)
+	WorldMapFrame:HookScript("OnHide", function() 
+			self.dataprovider.pool:ReleaseAll();
 		end)
 
 	QuestScrollFrame:SetScript("OnShow", function() 
@@ -2457,14 +2593,12 @@ function WQT_CoreMixin:OnLoad()
 		
 	hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
 		local mapAreaID = WorldMapFrame.mapID;
-		local level = 0;
 	
 		if (self.currentMapId ~= mapAreaID) then
 			ADD:HideDropDownMenu(1);
 			self.scrollFrame:UpdateQuestList();
 			self.pinHandler:UpdateMapPoI();
 			self.currentMapId = mapAreaID;
-			self.currentLevel = level;
 		end
 	end)
 	
@@ -2499,6 +2633,7 @@ function WQT_CoreMixin:OnLoad()
 		end)
 	
 	hooksecurefunc("QuestMapFrame_ShowQuestDetails", function(questId)
+			self:SelectTab(WQT_TabDetails);
 			if QuestMapFrame.DetailsFrame.questID == nil then
 				QuestMapFrame.DetailsFrame.questID = questId;
 			end
@@ -2519,24 +2654,65 @@ function WQT_CoreMixin:OnLoad()
 				WQT_QuestScrollFrame.PoIHoverId = self.questID;
 				WQT_QuestScrollFrame:DisplayQuestList(true);
 			end
+			self.notTracked = not QuestIsWatched(self.questID);
 		end)
 		
 	hooksecurefunc("TaskPOI_OnLeave", function(self)
 			WQT_QuestScrollFrame.PoIHoverId = nil;
 			WQT_QuestScrollFrame:DisplayQuestList(true);
+			self.notTracked = nil;
 		end)
 		
 	-- PVEFrame quest grouping
 	LFGListFrame:HookScript("OnHide", function() 
 			WQT_GroupSearch:Hide(); 
+			WQT_GroupSearch.questId = nil;
+			WQT_GroupSearch.title = nil;
 		end)
 
 	hooksecurefunc("LFGListSearchPanel_UpdateResults", function(self)
 			if (self.searching and not InCombatLockdown()) then
+				local searchString = LFGListFrame.SearchPanel.SearchBox:GetText();
+				searchString = searchString:lower();
+			
+				if (WQT_GroupSearch.questId and WQT_GroupSearch.title and not (searchString:find(WQT_GroupSearch.questId) or WQT_GroupSearch.title:lower():find(searchString))) then
+					WQT_GroupSearch.Text:SetText(_L["FORMAT_GROUP_TYPO"]:format(WQT_GroupSearch.questId, WQT_GroupSearch.title));
+					WQT_GroupSearch:Show();
+				else
+					WQT_GroupSearch:Hide();
+				end
+			
+				
+			end
+		end);
+		
+	LFGListFrame.EntryCreation:HookScript("OnHide", function() 
+			if (not InCombatLockdown()) then
 				WQT_GroupSearch:Hide();
 			end
 		end);
+		
+	LFGListSearchPanelScrollFrame.StartGroupButton:HookScript("OnClick", function() 
+			-- If we are creating a group because we couldn't find one, show the info on the create frame
+			if InCombatLockdown() then return; end
+			local searchString = LFGListFrame.SearchPanel.SearchBox:GetText();
+			searchString = searchString:lower();
+			if (WQT_GroupSearch.questId and WQT_GroupSearch.title and (searchString:find(WQT_GroupSearch.questId) or WQT_GroupSearch.title:lower():find(searchString))) then
+				WQT_GroupSearch.Text:SetText(_L["FORMAT_GROUP_CREATE"]:format(WQT_GroupSearch.questId, WQT_GroupSearch.title));
+				WQT_GroupSearch:SetParent(LFGListFrame.EntryCreation.Name);
+				WQT_GroupSearch:SetFrameLevel(LFGListFrame.EntryCreation.Name:GetFrameLevel()+5);
+				WQT_GroupSearch:ClearAllPoints();
+				WQT_GroupSearch:SetPoint("BOTTOMLEFT", LFGListFrame.EntryCreation.Name, "TOPLEFT", -2, 3);
+				WQT_GroupSearch:SetPoint("BOTTOMRIGHT", LFGListFrame.EntryCreation.Name, "TOPRIGHT", -2, 3);
+				WQT_GroupSearch.downArrow = true;
+				WQT_GroupSearch.questId = nil;
+				WQT_GroupSearch.title = nil;
+				WQT_GroupSearch:Show();
+			end
+		end)
 
+	
+	
 	
 
 	-- Shift questlog around to make room for the tabs
@@ -2613,18 +2789,6 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 		_CIMILoaded = true;
 	end
 end
-	
-function WQT_CoreMixin:WORLD_MAP_UPDATE()
-	local mapAreaID = WorldMapFrame.mapID;
-	local level = GetCurrentMapDungeonLevel();
-	
-	if (self.currentMapId ~= mapAreaID or self.currentLevel ~= level) then
-		ADD:HideDropDownMenu(1);
-		self.scrollFrame:UpdateQuestList();
-		self.currentMapId = mapAreaID;
-		self.currentLevel = level;
-	end
-end
 
 function WQT_CoreMixin:PLAYER_REGEN_DISABLED()
 	self.scrollFrame:ScrollFrameSetEnabled(false)
@@ -2642,18 +2806,22 @@ function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
 end
 
 function WQT_CoreMixin:QUEST_TURNED_IN(questId)
-	-- Remove TomTom arrow if tracked
-	if (_TomTomLoaded and WQT.settings.useTomTom and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
-		local questInfo = _questDataProvider:GetQuestById(questId);
-		if questInfo then
-			local key = TomTom:GetKeyArgs(questInfo.zoneInfo.mapID, questInfo.zoneInfo.mapX, questInfo.zoneInfo.mapY, questInfo.title);
-			local wp = TomTom.waypoints[questInfo.zoneInfo.mapID] and TomTom.waypoints[questInfo.zoneInfo.mapID][key];
+	if (QuestUtils_IsQuestWorldQuest(questId)) then
+		-- Remove TomTom arrow if tracked
+		if (_TomTomLoaded and WQT.settings.useTomTom and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
+			-- We need to re-obtain these details, because by this point, the questlist has already updated and our quest no longer exists
+			local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+			local mapId = C_TaskQuest.GetQuestZoneID(questId);
+			local x, y = C_TaskQuest.GetQuestLocation(questId, mapId)
+			local key = TomTom:GetKeyArgs(mapId, x, y, title);
+			local wp = TomTom.waypoints[mapId] and TomTom.waypoints[mapId][key];
 			if wp then
 				TomTom:RemoveWaypoint(wp);
 			end
 		end
+
+		self.scrollFrame:UpdateQuestList();
 	end
-	self.scrollFrame:UpdateQuestList();
 end
 
 function WQT_CoreMixin:WORLD_QUEST_COMPLETED_BY_SPELL(...)
@@ -2665,40 +2833,20 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED()
 end
 
 function WQT_CoreMixin:ShowOverlayMessage(message)
-	local buttons = self.scrollFrame.buttons;
 	message = message or "";
 	self:SetCombatEnabled(false);
 	ShowUIPanel(self.blocker);
 	self.blocker.text:SetText(message);
-	
-	self.filterButton:Disable();
-	self.sortButton:Disable();
-	
-	for k, button in ipairs(buttons) do
-		button:Disable();
-	end
 end
 
 function WQT_CoreMixin:HideOverlayMessage()
-	-- if it's not shown, there's nothing to hide
-	if (not self.blocker:IsShown()) then return; end
-	local buttons = self.scrollFrame.buttons;
 	self:SetCombatEnabled(true);
 	HideUIPanel(self.blocker);
-	
-
-	self.filterButton:Enable();
-	self.sortButton:Enable();
-	
-	for k, button in ipairs(buttons) do
-		button:Enable();
-	end
 end
 
 function WQT_CoreMixin:SetCombatEnabled(value)
 	value = value==nil and true or value;
 	
-	print(value)
 	self:EnableMouse(value);
 	self:EnableMouseWheel(value);
 	WQT_QuestScrollFrame:EnableMouseWheel(value);
@@ -2707,13 +2855,20 @@ function WQT_CoreMixin:SetCombatEnabled(value)
 	WQT_QuestScrollFrameScrollChild:EnableMouse(value);
 	WQT_WorldQuestFrameSortButtonButton:EnableMouse(value);
 	self.filterButton:EnableMouse(value);
+	if value then
+		self.filterButton:Enable();
+		self.sortButton:Enable();
+	else
+		self.filterButton:Disable();
+		self.sortButton:Disable();
+	end
+	
 	self.scrollFrame:SetButtonsEnabled(value);
 		
 	self.scrollFrame:EnableMouseWheel(value);
 end
 
 function WQT_CoreMixin:SelectTab(tab)
-	
 	-- There's a lot of shenanigans going on here with enabling/disabling the mouse due to
 	-- Addon restructions of hiding/showing frames during combat
 	local id = tab and tab:GetID() or nil;
@@ -2786,67 +2941,114 @@ function WQT_CoreMixin:SelectTab(tab)
 	end
 end
 
+
 --------
 -- Debug stuff to monitor mem usage
 -- Remember to uncomment line template in xml
 --------
 
--- local l_debug = CreateFrame("frame", addonName .. "Debug", UIParent);
+if _debug then
 
--- l_debug.linePool = CreateFramePool("FRAME", l_debug, "WQT_DebugLine");
+local l_debug = CreateFrame("frame", addonName .. "Debug", UIParent);
+WQT.debug = l_debug;
 
--- local function ShowDebugHistory()
-	-- local mem = floor(l_debug.history[#l_debug.history]*100)/100;
-	-- local scale = l_debug:GetScale();
-	-- local current = 0;
-	-- local line = nil;
-	-- l_debug.linePool:ReleaseAll();
-	-- for i=1, #l_debug.history-1, 1 do
-		-- line = l_debug.linePool:Acquire();
-		-- current = l_debug.history[i];
-		-- line:Show();
-		-- line.Fill:SetStartPoint("BOTTOMLEFT", l_debug, (i-1)*2*scale, current/10*scale);
-		-- line.Fill:SetEndPoint("BOTTOMLEFT", l_debug, i*2*scale, l_debug.history[i+1]/10*scale);
-		-- local fade = (current/ 500)-1;
-		-- line.Fill:SetVertexColor(fade, 1-fade, 0);
-		-- line.Fill:Show();
-	-- end
-	-- l_debug.text:SetText(mem)
--- end
+l_debug.linePool = CreateFramePool("FRAME", l_debug, "WQT_DebugLine");
 
--- l_debug:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-      -- edgeFile = nil,
-	  -- tileSize = 0, edgeSize = 16,
-      -- insets = { left = 0, right = 0, top = 0, bottom = 0 }
-	  -- })
--- l_debug:SetFrameLevel(5)
--- l_debug:SetMovable(true)
--- l_debug:SetPoint("Center", 250, 0)
--- l_debug:RegisterForDrag("LeftButton")
--- l_debug:EnableMouse(true);
--- l_debug:SetScript("OnDragStart", l_debug.StartMoving)
--- l_debug:SetScript("OnDragStop", l_debug.StopMovingOrSizing)
--- l_debug:SetWidth(100)
--- l_debug:SetHeight(100)
--- l_debug:SetClampedToScreen(true)
--- l_debug.text = l_debug:CreateFontString(nil, nil, "GameFontWhiteSmall")
--- l_debug.text:SetPoint("BOTTOMLEFT", 2, 2)
--- l_debug.text:SetText("0000")
--- l_debug.text:SetJustifyH("left")
--- l_debug.time = 0;
--- l_debug.interval = 0.2;
--- l_debug.history = {}
--- l_debug:SetScript("OnUpdate", function(self,elapsed) 
-		-- self.time = self.time + elapsed;
-		-- if(self.time >= self.interval) then
-			-- self.time = self.time - self.interval;
-			-- UpdateAddOnMemoryUsage();
-			-- table.insert(self.history, GetAddOnMemoryUsage(addonName));
-			-- if(#self.history > 50) then
-				-- table.remove(self.history, 1)
-			-- end
-			-- ShowDebugHistory()
+local function ShowDebugHistory()
+	local mem = floor(l_debug.history[#l_debug.history]*100)/100;
+	local scale = l_debug:GetScale();
+	local current = 0;
+	local line = nil;
+	l_debug.linePool:ReleaseAll();
+	for i=1, #l_debug.history-1, 1 do
+		line = l_debug.linePool:Acquire();
+		current = l_debug.history[i];
+		line:Show();
+		line.Fill:SetStartPoint("BOTTOMLEFT", l_debug, (i-1)*2*scale, current/10*scale);
+		line.Fill:SetEndPoint("BOTTOMLEFT", l_debug, i*2*scale, l_debug.history[i+1]/10*scale);
+		local fade = (current/ 500)-1;
+		line.Fill:SetVertexColor(fade, 1-fade, 0);
+		line.Fill:Show();
+	end
+	l_debug.text:SetText(mem)
+end
 
-		-- end
-	-- end)
--- l_debug:Show()
+l_debug:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+      edgeFile = nil,
+	  tileSize = 0, edgeSize = 16,
+      insets = { left = 0, right = 0, top = 0, bottom = 0 }
+	  })
+l_debug:SetFrameLevel(5)
+l_debug:SetMovable(true)
+l_debug:SetPoint("Center", 250, 0)
+l_debug:RegisterForDrag("LeftButton")
+l_debug:EnableMouse(true);
+l_debug:SetScript("OnDragStart", l_debug.StartMoving)
+l_debug:SetScript("OnDragStop", l_debug.StopMovingOrSizing)
+l_debug:SetWidth(100)
+l_debug:SetHeight(100)
+l_debug:SetClampedToScreen(true)
+l_debug.text = l_debug:CreateFontString(nil, nil, "GameFontWhiteSmall")
+l_debug.text:SetPoint("BOTTOMLEFT", 2, 2)
+l_debug.text:SetText("0000")
+l_debug.text:SetJustifyH("left")
+l_debug.time = 0;
+l_debug.interval = 0.2;
+l_debug.history = {}
+l_debug.callCounters = {}
+
+l_debug:SetScript("OnUpdate", function(self,elapsed) 
+		self.time = self.time + elapsed;
+		if(self.time >= self.interval) then
+			self.time = self.time - self.interval;
+			UpdateAddOnMemoryUsage();
+			table.insert(self.history, GetAddOnMemoryUsage(addonName));
+			if(#self.history > 50) then
+				table.remove(self.history, 1)
+			end
+			ShowDebugHistory()
+
+			if(l_debug.showTT) then
+				GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
+				GameTooltip:SetText("Function calls", nil, nil, nil, nil, true);
+				for k, v in pairs(l_debug.callCounters) do
+					local t = time();
+					local ts = 0;
+					local mem = 0;
+					local memtot = 0;
+					local latest = 0;
+					
+					for i = #v, 1, -1 do
+						ts, mem = v[i]:match("(%d+)|(%d+)");
+						ts = tonumber(ts);
+						mem = tonumber(mem);
+						if (t - ts> 20) then
+							table.remove(v, i);
+						elseif (ts > latest) then
+							latest = ts;
+						end
+						memtot = memtot + mem;
+					end
+						
+					if #v > 0 then
+						local color = (t - latest <=1) and NORMAL_FONT_COLOR or DISABLED_FONT_COLOR;
+						GameTooltip:AddDoubleLine(k, #v .. " (" .. floor(memtot/10)/10 .. ")", color.r, color.g, color.b, color.r, color.g, color.b);		
+					end
+				end
+				GameTooltip:Show();
+			end
+		end
+	end)
+
+l_debug:SetScript("OnEnter", function(self,elapsed) 
+		l_debug.showTT = true;
+		
+	end)
+	
+l_debug:SetScript("OnLeave", function(self,elapsed) 
+		l_debug.showTT = false;
+		GameTooltip:Hide();
+	end)
+l_debug:Show()
+
+end

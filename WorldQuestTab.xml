@@ -11,6 +11,7 @@
 	<Script file="WorldQuestTab.lua"/>
 
 	<!--
+	-->
 	<Frame name="WQT_DebugLine" parentArray="DependencyLines" virtual="true">
 		<Layers>
 			<Layer level="OVERLAY" textureSubLevel="-2">
@@ -18,7 +19,7 @@
 			</Layer>
 		</Layers>
 	</Frame>
-	-->
+	
 	
 	<FontFamily name="WQT_NumberFontOutline" virtual="true">
 		<Member alphabet="roman">
@@ -266,6 +267,7 @@
 		
 			<Frame parentKey="faction">
 				<Size x="28" y="28" />
+				<HitRectInsets left="0" right="0" top="-2" bottom="-2"/>
 				<Anchors>
 					<Anchor point="LEFT" relativeKey="$parent.type" relativePoint="RIGHT" x="-1"/>
 				</Anchors>
@@ -913,10 +915,10 @@
 		
 		<Layers>
 			<Layer level="ARTWORK">
-				<FontString parentKey="Text" inherits="GameFontNormalSmall" justifyH="LEFT" text="Type 53513 to search a group for this quest. Type 53513 to search a group for this quest.">
+				<FontString parentKey="Text" inherits="GameFontNormalSmall" justifyH="LEFT" spacing="2" text="Type 53513 to search a group for this quest. Type 53513 to search a group for this quest.">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="10" y="-10"/>
-						<Anchor point="RIGHT" x="-40" y="0"/>
+						<Anchor point="RIGHT" x="-25" y="0"/>
 					</Anchors>
 				</FontString>
 				
@@ -925,6 +927,13 @@
 					<Anchors>
 						<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT"  x="13" y="-10"/>
 					</Anchors>
+				</Texture>
+				<Texture name="$parentArrow" parentKey="ArrowDown" file="Interface\BUTTONS\Arrow-Up-Disabled" hidden="true">
+					<Size x="25" y="25"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativePoint="BOTTOMLEFT"  x="13" y="10"/>
+					</Anchors>
+					<TexCoords left="0" right="1" top="1" bottom="0" />
 				</Texture>
 			</Layer>
 		</Layers>
@@ -936,11 +945,15 @@
 				self:SetParent(LFGListFrame.SearchPanel.SearchBox);
 				self:SetFrameLevel(LFGListFrame.SearchPanel.SearchBox:GetFrameLevel()+5);
 				self:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "BOTTOMLEFT", -2, -3);
-				self:SetPoint("TOPRIGHT", LFGListFrame.SearchPanel.SearchBox, "BOTTOMRIGHT", -15, -3);
+				<!--self:SetPoint("TOPRIGHT", LFGListFrame.SearchPanel.SearchBox, "BOTTOMRIGHT", -15, -3);-->
+				self:SetPoint("RIGHT", LFGListFrame.SearchPanel, "RIGHT", -30, 0);
 			</OnLoad>
 			<OnShow>
 				local height = self.Text:GetHeight();
 				self:SetHeight(height + 20);
+				
+				self.Arrow:SetShown(not self.downArrow);
+				self.ArrowDown:SetShown(self.downArrow);
 			</OnShow>
 		</Scripts>
 	</Frame>
