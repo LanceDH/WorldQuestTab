@@ -21,7 +21,7 @@
 -- 	full				[string] long time string (6 Hours)
 --		minutes			[number] minutes remaining
 --		color				[color] color of time string
--- zoneInfo			[table] zone related values
+-- mapInfo			[table] zone related values
 --		mapType		[Enum.UIMapType] map type
 --		mapID			[number] mapID, uses capital 'ID' because Blizzard
 -- 	name			[string] zone name
@@ -34,7 +34,7 @@
 --		amount			[amount] amount of items, gold, rep, or item level
 --		id					[number, nullable] itemId for reward. null if not an item
 --		quality			[number] item quality; common, rare, epic, etc
---		upgradable	[boolean, nullable] true if item has a chance to upgrade (e.g. ilvl 285+)
+--		canUpgrade	[boolean, nullable] true if item has a chance to upgrade (e.g. ilvl 285+)
 
 local addonName, addon = ...
 
@@ -431,12 +431,13 @@ local function GetMapWQProvider()
 				end
 			end
 			
-			
+			if (WQT.settings.disablePoI) then return; end
 			-- Hook a script to every pin's OnClick
 			for qId, pin in pairs(WQT.mapWQProvider.activePins ) do
 				if (not pin.WQTHooked) then
 					pin.WQTHooked = true;
 					hooksecurefunc(pin, "OnClick", function(self, button) 
+						if (WQT.settings.disablePoI) then return; end
 						if (button == "RightButton") then
 							-- If the quest wasn't tracked before we clicked, untrack it again
 							if (self.notTracked and QuestIsWatched(self.questID)) then
@@ -687,7 +688,7 @@ end
 local function SortQuestList(list)
 	table.sort(list, function(a, b) 
 			-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-			if (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) or a.time.minutes == b.time.minutes then
+			if a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) then
 				if a.expantionLevel ==  b.expantionLevel then
 					return a.title < b.title;
 				end
@@ -699,14 +700,14 @@ end
 
 local function SortQuestListByZone(list)
 	table.sort(list, function(a, b) 
-		if a.zoneInfo.mapID == b.zoneInfo.mapID then
+		if a.mapInfo.mapID == b.mapInfo.mapID then
 			-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-			if (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) or a.time.minutes == b.time.minutes then
+			if a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) then
 				return a.title < b.title;
 			end	
 			return a.time.minutes < b.time.minutes;
 		end
-		return (a.zoneInfo.name or "zz") < (b.zoneInfo.name or "zz");
+		return (a.mapInfo.name or "zz") < (b.mapInfo.name or "zz");
 	end);
 end
 
@@ -715,7 +716,7 @@ local function SortQuestListByFaction(list)
 	if a.expantionLevel ==  b.expantionLevel then
 		if a.faction == b.faction then
 			-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-			if (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) or a.time.minutes == b.time.minutes then
+			if a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) then
 				return a.title < b.title;
 			end	
 			return a.time.minutes < b.time.minutes;
@@ -735,7 +736,7 @@ local function SortQuestListByType(list)
 				if a.rarity == b.rarity then
 					if (a.isElite and b.isElite) or (not a.isElite and not b.isElite) then
 						-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-						if (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) or a.time.minutes == b.time.minutes then
+						if a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) then
 							return a.title < b.title;
 						end	
 						return a.time.minutes < b.time.minutes;
@@ -762,7 +763,7 @@ local function SortQuestListByReward(list)
 			if not a.reward.quality or not b.reward.quality or a.reward.quality == b.reward.quality then
 				if not a.reward.amount or not b.reward.amount or a.reward.amount == b.reward.amount then
 					-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-					if (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) or a.time.minutes == b.time.minutes then
+					if a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) then
 						return a.title < b.title;
 					end	
 					return a.time.minutes < b.time.minutes;
@@ -797,6 +798,8 @@ local function GetQuestTimeString(questId)
 			timeString = D_DAYS:format(timeLeftMinutes  / 1440);
 			color = WQT_BLUE_FONT_COLOR;
 		end
+	else 
+		timeLeftMinutes = 0;
 	end
 	-- start with default, for CN and KR
 	timeStringShort = timeString;
@@ -804,7 +807,7 @@ local function GetQuestTimeString(questId)
 	if t and str then
 		timeStringShort = t..str;
 	end
-
+	
 	return timeLeftMinutes, timeString, color, timeStringShort;
 end
 
@@ -1248,17 +1251,17 @@ function WQT:InitTrackDropDown(self, level)
 	
 		if (TomTom.WaypointExists and TomTom.AddWaypoint and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
 			-- All required functions are found
-			if (not TomTom:WaypointExists(questInfo.zoneInfo.mapID, questInfo.zoneInfo.mapX, questInfo.zoneInfo.mapY, questInfo.title)) then
+			if (not TomTom:WaypointExists(questInfo.mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, questInfo.title)) then
 				info.text = _L["TRACKDD_TOMTOM"];
 				info.func = function()
-					TomTom:AddWaypoint(questInfo.zoneInfo.mapID, questInfo.zoneInfo.mapX, questInfo.zoneInfo.mapY, {["title"] = questInfo.title})
-					TomTom:AddWaypoint(questInfo.zoneInfo.mapID, questInfo.zoneInfo.mapX, questInfo.zoneInfo.mapY, {["title"] = questInfo.title})
+					TomTom:AddWaypoint(questInfo.mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, {["title"] = questInfo.title})
+					TomTom:AddWaypoint(questInfo.mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, {["title"] = questInfo.title})
 				end
 			else
 				info.text = _L["TRACKDD_TOMTOM_REMOVE"];
 				info.func = function()
-					local key = TomTom:GetKeyArgs(questInfo.zoneInfo.mapID, questInfo.zoneInfo.mapX, questInfo.zoneInfo.mapY, questInfo.title);
-					local wp = TomTom.waypoints[questInfo.zoneInfo.mapID] and TomTom.waypoints[questInfo.zoneInfo.mapID][key];
+					local key = TomTom:GetKeyArgs(questInfo.mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, questInfo.title);
+					local wp = TomTom.waypoints[questInfo.mapInfo.mapID] and TomTom.waypoints[questInfo.mapInfo.mapID][key];
 					TomTom:RemoveWaypoint(wp);
 				end
 			end
@@ -1531,20 +1534,20 @@ function WQT_ListButtonMixin:OnEnter()
 	
 	-- Put the ping on the relevant map pin
 	local scale = 1;
-	local pin = WQT:GetMapPinForWorldQuest(questInfo.questId)
+	local pin = WQT:GetMapPinForWorldQuest(questInfo.questId);
 	if not pin then
 		 pin = WQT:GetMapPinForBonusObjective(questInfo.questId);
 		 scale = 0.5;
 	end
 	if pin then
-		WQT_WorldQuestFrame:ShowHighlightOnPin(pin, scale)
+		WQT_WorldQuestFrame:ShowHighlightOnPin(pin, scale);
 		WQT_PoISelectIndicator.questId = questInfo.questId;
 	end
 	
 	WQT_QuestScrollFrame:ShowQuestTooltip(self, questInfo);
 	
 	-- If we are on a continent, we want to highlight the relevant zone
-	self:ShowWorldmapHighlight(questInfo.zoneInfo.mapID);
+	self:ShowWorldmapHighlight(questInfo.mapInfo.mapID);
 end
 
 function WQT_ListButtonMixin:UpdateQuestType(questInfo)
@@ -1657,7 +1660,9 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	self.title:SetText(questInfo.title);
 	self.time:SetTextColor(questInfo.time.color.r, questInfo.time.color.g, questInfo.time.color.b, 1);
 	self.time:SetText(questInfo.time.full);
-	self.extra:SetText(shouldShowZone and questInfo.zoneInfo.name or "");
+	self.extra:SetText(shouldShowZone and questInfo.mapInfo.name or "");
+	
+	
 			
 	if (WQT_QuestScrollFrame.PoIHoverId == questInfo.questId) then
 		self.highlight:Show();
@@ -1667,7 +1672,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	self.title:SetPoint("RIGHT", self.reward, "LEFT", -5, 0);
 	
 	self.info = questInfo;
-	self.zoneId = questInfo.zoneInfo.mapID;
+	self.zoneId = questInfo.mapInfo.mapID;
 	self.questId = questInfo.questId;
 	self.numObjectives = questInfo.numObjectives;
 	
@@ -1722,7 +1727,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 			elseif questInfo.reward.type == WQT_REWARDTYPE_ARTIFACT then
 				r, g, b = GetItemQualityColor(2);
 			elseif questInfo.reward.type == WQT_REWARDTYPE_ARMOR then
-				if questInfo.reward.upgradable then
+				if questInfo.reward.canUpgrade then
 					self.reward.amount:SetText(questInfo.reward.amount.."+");
 				end
 				r, g, b = WQT_COLOR_ARMOR:GetRGB();
@@ -1848,7 +1853,7 @@ end
 
 function WQT_QuestDataProvider:SetQuestReward(questInfo)
 	local reward = questInfo.reward;
-	local _, texture, numItems, quality, rewardType, color, rewardId, itemId, upgradable = nil, nil, 0, 1, 0, WQT_COLOR_MISSING, nil, nil, nil;
+	local _, texture, numItems, quality, rewardType, color, rewardId, itemId, canUpgrade = nil, nil, 0, 1, 0, WQT_COLOR_MISSING, nil, nil, nil;
 	
 	if GetNumQuestLogRewards(questInfo.questId) > 0 then
 		_, texture, numItems, quality, _, itemId = GetQuestLogRewardInfo(1, questInfo.questId);
@@ -1856,7 +1861,7 @@ function WQT_QuestDataProvider:SetQuestReward(questInfo)
 			local result = self:ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+?)$");
 			if result then
 				numItems = tonumber(result:match("(%d+)"));
-				upgradable = result:match("(%+)") and true;
+				canUpgrade = result:match("(%+)") and true;
 			end
 			rewardType = WQT_REWARDTYPE_ARMOR;
 			color = WQT_COLOR_ARMOR;
@@ -1927,7 +1932,7 @@ function WQT_QuestDataProvider:SetQuestReward(questInfo)
 	questInfo.reward.amount = numItems or 0;
 	questInfo.reward.type = rewardType or 0;
 	questInfo.reward.color = color;
-	questInfo.reward.upgradable = upgradable;
+	questInfo.reward.canUpgrade = canUpgrade;
 end
 
 function WQT_QuestDataProvider:SetSubReward(questInfo) 
@@ -1960,14 +1965,14 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	if (duplicate) then
 		-- Check if the new zone is the 'official' zone, if so, use that one instead
 		if (zoneId == C_TaskQuest.GetQuestZoneID(qInfo.questId) ) then
-			local zoneInfo = C_Map.GetMapInfo(zoneId);
-			duplicate.zoneInfo = zoneInfo;
-			duplicate.zoneInfo.mapX = qInfo.x;
-			duplicate.zoneInfo.mapY = qInfo.y;
+			local mapInfo = C_Map.GetMapInfo(zoneId);
+			duplicate.mapInfo = mapInfo;
+			duplicate.mapInfo.mapX = qInfo.x;
+			duplicate.mapInfo.mapY = qInfo.y;
 		end
 		
 		if _debug then
-			print("|cFFFFFF00 duplicate: " .. duplicate.title  .. " (" .. duplicate.zoneInfo.name .. ")" .."|r")
+			print("|cFFFFFF00 duplicate: " .. duplicate.title  .. " (" .. duplicate.mapInfo.name .. ")" .."|r")
 		end
 		
 		return duplicate;
@@ -2006,9 +2011,9 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	questInfo.type = worldQuestType or -1;
 	questInfo.rarity = rarity;
 	questInfo.isElite = isElite;
-	questInfo.zoneInfo = C_Map.GetMapInfo(zoneId);
-	questInfo.zoneInfo.mapX = qInfo.x;
-	questInfo.zoneInfo.mapY = qInfo.y;
+	questInfo.mapInfo = C_Map.GetMapInfo(zoneId);
+	questInfo.mapInfo.mapX = qInfo.x;
+	questInfo.mapInfo.mapY = qInfo.y;
 	questInfo.expantionLevel = expLevel;
 	questInfo.tradeskill = tradeskillLineIndex;
 	questInfo.numObjectives = qInfo.numObjectives;
@@ -2023,7 +2028,7 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	local isInvalid = not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) and questInfo.time.minutes == 0 and questInfo.reward.type == WQT_REWARDTYPE_NONE and not questInfo.factionId;
 	
 	if _debug and isInvalid then
-		print("|cFFFF0000 Invalid: " .. questInfo.title  .. " (" .. questInfo.zoneInfo.name .. ")" .."|r")
+		print("|cFFFF0000 Invalid: " .. questInfo.title  .. " (" .. questInfo.mapInfo.name .. ")" .."|r")
 	end
 	
 	if not haveData and not isInvalid then
@@ -2253,7 +2258,7 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 	WQT_Tooltip:SetOwner(button, "ANCHOR_RIGHT");
 
 	-- In case we somehow don't have data on this quest, even through that makes no sense at this point
-	if ( not HaveQuestData(questInfo.questId) ) then
+	if (not questInfo.questId or not HaveQuestData(questInfo.questId) ) then
 		WQT_Tooltip:SetText(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
 		WQT_Tooltip.recalculatePadding = true;
 		WQT_Tooltip:Show();
@@ -2278,7 +2283,9 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 	end
 
 	-- Add time
-	WQT_Tooltip:AddLine(BONUS_OBJECTIVE_TIME_LEFT:format(SecondsToTime(questInfo.time.minutes*60, true, true)), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	if (questInfo.time.minutes > 0) then
+		WQT_Tooltip:AddLine(BONUS_OBJECTIVE_TIME_LEFT:format(SecondsToTime(questInfo.time.minutes*60, true, true)), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	end
 	
 
 	for objectiveIndex = 1, questInfo.numObjectives do
@@ -2464,7 +2471,7 @@ end
 
 function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 
-	if InCombatLockdown() or not WorldMapFrame:IsShown() or not WQT_WorldQuestFrame:IsShown() then return end
+	if InCombatLockdown() or not WorldMapFrame:IsShown() or not WQT_WorldQuestFrame:IsShown() or WQT_WorldQuestFrame.selectedTab:GetID() ~= 2 then return end
 	
 	local offset = HybridScrollFrame_GetOffset(self);
 	local buttons = self.buttons;
@@ -2579,9 +2586,6 @@ function WQT_CoreMixin:OnLoad()
 			self.scrollFrame:UpdateQuestList();
 			self:SelectTab(self.selectedTab); 
 		end)
-	WorldMapFrame:HookScript("OnHide", function() 
-			self.dataprovider.pool:ReleaseAll();
-		end)
 
 	QuestScrollFrame:SetScript("OnShow", function() 
 			if(self.selectedTab and self.selectedTab:GetID() == 2) then
@@ -2650,6 +2654,7 @@ function WQT_CoreMixin:OnLoad()
 	
 	-- Show hightlight in list when hovering over PoI
 	hooksecurefunc("TaskPOI_OnEnter", function(self)
+			if (WQT.settings.disablePoI) then return; end
 			if (self.questID ~= WQT_QuestScrollFrame.PoIHoverId) then
 				WQT_QuestScrollFrame.PoIHoverId = self.questID;
 				WQT_QuestScrollFrame:DisplayQuestList(true);
@@ -2658,6 +2663,7 @@ function WQT_CoreMixin:OnLoad()
 		end)
 		
 	hooksecurefunc("TaskPOI_OnLeave", function(self)
+			if (WQT.settings.disablePoI) then return; end
 			WQT_QuestScrollFrame.PoIHoverId = nil;
 			WQT_QuestScrollFrame:DisplayQuestList(true);
 			self.notTracked = nil;
@@ -2681,8 +2687,6 @@ function WQT_CoreMixin:OnLoad()
 				else
 					WQT_GroupSearch:Hide();
 				end
-			
-				
 			end
 		end);
 		
@@ -2710,10 +2714,6 @@ function WQT_CoreMixin:OnLoad()
 				WQT_GroupSearch:Show();
 			end
 		end)
-
-	
-	
-	
 
 	-- Shift questlog around to make room for the tabs
 	local a,b,c,d =QuestMapFrame:GetPoint(1);
@@ -2809,14 +2809,14 @@ function WQT_CoreMixin:QUEST_TURNED_IN(questId)
 	if (QuestUtils_IsQuestWorldQuest(questId)) then
 		-- Remove TomTom arrow if tracked
 		if (_TomTomLoaded and WQT.settings.useTomTom and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
-			-- We need to re-obtain these details, because by this point, the questlist has already updated and our quest no longer exists
-			local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
-			local mapId = C_TaskQuest.GetQuestZoneID(questId);
-			local x, y = C_TaskQuest.GetQuestLocation(questId, mapId)
-			local key = TomTom:GetKeyArgs(mapId, x, y, title);
-			local wp = TomTom.waypoints[mapId] and TomTom.waypoints[mapId][key];
-			if wp then
-				TomTom:RemoveWaypoint(wp);
+			local questInfo = WQT_WorldQuestFrame.dataprovider:GetQuestById(questId);
+			if questInfo then
+				local mapId = questInfo.mapInfo.mapID;
+				local key = TomTom:GetKeyArgs(mapId, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, questInfo.title);
+				local wp = TomTom.waypoints[mapId] and TomTom.waypoints[mapId][key];
+				if wp then
+					TomTom:RemoveWaypoint(wp);
+				end
 			end
 		end
 
@@ -2918,6 +2918,7 @@ function WQT_CoreMixin:SelectTab(tab)
 		WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
 		WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
 		HideUIPanel(QuestScrollFrame);
+		self.scrollFrame:DisplayQuestList();
 		if not InCombatLockdown() then
 			self:SetFrameLevel(self:GetParent():GetFrameLevel()+3);
 			self:SetCombatEnabled(true);
