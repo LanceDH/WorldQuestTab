@@ -687,8 +687,11 @@ end
 local function SortQuestList(list)
 	table.sort(list, function(a, b) 
 			-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-			if a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) then
+			if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
 				if a.expantionLevel ==  b.expantionLevel then
+					if a.title ==  b.title then
+						return a.questId < b.questId;
+					end
 					return a.title < b.title;
 				end
 				return a.expantionLevel > b.expantionLevel;
@@ -701,7 +704,10 @@ local function SortQuestListByZone(list)
 	table.sort(list, function(a, b) 
 		if a.mapInfo.mapID == b.mapInfo.mapID then
 			-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-			if a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) then
+			if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
+				if a.title ==  b.title then
+					return a.questId < b.questId;
+				end
 				return a.title < b.title;
 			end	
 			return a.time.minutes < b.time.minutes;
@@ -715,7 +721,10 @@ local function SortQuestListByFaction(list)
 	if a.expantionLevel ==  b.expantionLevel then
 		if a.faction == b.faction then
 			-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-			if a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) then
+			if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
+				if a.title ==  b.title then
+					return a.questId < b.questId;
+				end
 				return a.title < b.title;
 			end	
 			return a.time.minutes < b.time.minutes;
@@ -735,7 +744,10 @@ local function SortQuestListByType(list)
 				if a.rarity == b.rarity then
 					if (a.isElite and b.isElite) or (not a.isElite and not b.isElite) then
 						-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-						if a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) then
+						if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
+							if a.title ==  b.title then
+								return a.questId < b.questId;
+							end
 							return a.title < b.title;
 						end	
 						return a.time.minutes < b.time.minutes;
@@ -752,6 +764,9 @@ end
 
 local function SortQuestListByName(list)
 	table.sort(list, function(a, b) 
+		if a.title ==  b.title then
+			return a.questId < b.questId;
+		end
 		return a.title < b.title;
 	end);
 end
@@ -762,11 +777,13 @@ local function SortQuestListByReward(list)
 			if not a.reward.quality or not b.reward.quality or a.reward.quality == b.reward.quality then
 				if not a.reward.amount or not b.reward.amount or a.reward.amount == b.reward.amount then
 					-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-					if a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2) then
+					if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
+						if a.title ==  b.title then
+							return a.questId < b.questId;
+						end
 						return a.title < b.title;
 					end	
 					return a.time.minutes < b.time.minutes;
-				
 				end
 				return a.reward.amount > b.reward.amount;
 			end
@@ -873,9 +890,9 @@ end
 function WQT:UpdateFilterIndicator() 
 	if (InCombatLockdown()) then return; end
 	if (GetCVarBool("showTamers") and GetCVarBool("worldQuestFilterArtifactPower") and GetCVarBool("worldQuestFilterResources") and GetCVarBool("worldQuestFilterGold") and GetCVarBool("worldQuestFilterEquipment")) then
-		WQT_WorldQuestFrame.filterButton.indicator:Hide();
+		WQT_WorldQuestFrame.FilterButton.Indicator:Hide();
 	else
-		WQT_WorldQuestFrame.filterButton.indicator:Show();
+		WQT_WorldQuestFrame.FilterButton.Indicator:Show();
 	end
 end
 
@@ -1505,12 +1522,12 @@ function WQT_ListButtonMixin:SetEnabled(value)
 	
 	
 	self:EnableMouse(value);
-	self.faction:EnableMouse(value);
+	self.Faction:EnableMouse(value);
 end
 
 function WQT_ListButtonMixin:OnLeave()
 	UnlockArgusHighlights();
-	HideUIPanel(self.highlight);
+	HideUIPanel(self.Highlight);
 	WQT_Tooltip:Hide();
 	WQT_Tooltip.ItemTooltip:Hide();
 	
@@ -1538,7 +1555,7 @@ function WQT_ListButtonMixin:OnEnter()
 		WQT_PoISelectIndicator.delayTicker:Cancel();
 	end
 
-	ShowUIPanel(self.highlight);
+	ShowUIPanel(self.Highlight);
 	
 	local questInfo = self.info;
 	
@@ -1566,125 +1583,122 @@ function WQT_ListButtonMixin:OnEnter()
 end
 
 function WQT_ListButtonMixin:UpdateQuestType(questInfo)
-	local frame = self.type;
+	local frame = self.Type;
 	local inProgress = false;
 	local isCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
 	local questType, rarity, isElite, tradeskillLineIndex = questInfo.type, questInfo.rarity, questInfo.isElite, questInfo.tradeskill;
 	
 	frame:Show();
 	frame:SetWidth(frame:GetHeight());
-	frame.texture:Show();
-	frame.texture:Show();
+	frame.Texture:Show();
+	frame.Texture:Show();
 	
 	if isElite then
-		frame.elite:Show();
+		frame.Elite:Show();
 	else
-		frame.elite:Hide();
+		frame.Elite:Hide();
 	end
 	
 	if not rarity or rarity == LE_WORLD_QUEST_QUALITY_COMMON then
-		frame.bg:SetTexture("Interface/WorldMap/UI-QuestPoi-NumberIcons");
-		frame.bg:SetTexCoord(0.875, 1, 0.375, 0.5);
-		frame.bg:SetSize(28, 28);
+		frame.Bg:SetTexture("Interface/WorldMap/UI-QuestPoi-NumberIcons");
+		frame.Bg:SetTexCoord(0.875, 1, 0.375, 0.5);
+		frame.Bg:SetSize(28, 28);
 	elseif rarity == LE_WORLD_QUEST_QUALITY_RARE then
-		frame.bg:SetAtlas("worldquest-questmarker-rare");
-		frame.bg:SetTexCoord(0, 1, 0, 1);
-		frame.bg:SetSize(18, 18);
+		frame.Bg:SetAtlas("worldquest-questmarker-rare");
+		frame.Bg:SetTexCoord(0, 1, 0, 1);
+		frame.Bg:SetSize(18, 18);
 	elseif rarity == LE_WORLD_QUEST_QUALITY_EPIC then
-		frame.bg:SetAtlas("worldquest-questmarker-epic");
-		frame.bg:SetTexCoord(0, 1, 0, 1);
-		frame.bg:SetSize(18, 18);
+		frame.Bg:SetAtlas("worldquest-questmarker-epic");
+		frame.Bg:SetTexCoord(0, 1, 0, 1);
+		frame.Bg:SetSize(18, 18);
 	end
 	
 	local tradeskillLineID = tradeskillLineIndex and select(7, GetProfessionInfo(tradeskillLineIndex));
 	if ( questType == LE_QUEST_TAG_TYPE_PVP ) then
 		if ( inProgress ) then
-			frame.texture:SetAtlas("worldquest-questmarker-questionmark");
-			frame.texture:SetSize(10, 15);
+			frame.Texture:SetAtlas("worldquest-questmarker-questionmark");
+			frame.Texture:SetSize(10, 15);
 		else
-			frame.texture:SetAtlas("worldquest-icon-pvp-ffa", true);
+			frame.Texture:SetAtlas("worldquest-icon-pvp-ffa", true);
 		end
 	elseif ( questType == LE_QUEST_TAG_TYPE_PET_BATTLE ) then
 		if ( inProgress ) then
-			frame.texture:SetAtlas("worldquest-questmarker-questionmark");
-			frame.texture:SetSize(10, 15);
+			frame.Texture:SetAtlas("worldquest-questmarker-questionmark");
+			frame.Texture:SetSize(10, 15);
 		else
-			frame.texture:SetAtlas("worldquest-icon-petbattle", true);
+			frame.Texture:SetAtlas("worldquest-icon-petbattle", true);
 		end
 	elseif ( questType == LE_QUEST_TAG_TYPE_PROFESSION and WORLD_QUEST_ICONS_BY_PROFESSION[tradeskillLineID] ) then
 		if ( inProgress ) then
-			frame.texture:SetAtlas("worldquest-questmarker-questionmark");
-			frame.texture:SetSize(10, 15);
+			frame.Texture:SetAtlas("worldquest-questmarker-questionmark");
+			frame.Texture:SetSize(10, 15);
 		else
-			frame.texture:SetAtlas(WORLD_QUEST_ICONS_BY_PROFESSION[tradeskillLineID], true);
+			frame.Texture:SetAtlas(WORLD_QUEST_ICONS_BY_PROFESSION[tradeskillLineID], true);
 		end
 	elseif ( questType == LE_QUEST_TAG_TYPE_DUNGEON ) then
 		if ( inProgress ) then
-			frame.texture:SetAtlas("worldquest-questmarker-questionmark");
-			frame.texture:SetSize(10, 15);
+			frame.Texture:SetAtlas("worldquest-questmarker-questionmark");
+			frame.Texture:SetSize(10, 15);
 		else
-			frame.texture:SetAtlas("worldquest-icon-dungeon", true);
+			frame.Texture:SetAtlas("worldquest-icon-dungeon", true);
 		end
 	elseif ( questType == LE_QUEST_TAG_TYPE_RAID ) then
 		if ( inProgress ) then
-			frame.texture:SetAtlas("worldquest-questmarker-questionmark");
-			frame.texture:SetSize(10, 15);
+			frame.Texture:SetAtlas("worldquest-questmarker-questionmark");
+			frame.Texture:SetSize(10, 15);
 		else
-			frame.texture:SetAtlas("worldquest-icon-raid", true);
+			frame.Texture:SetAtlas("worldquest-icon-raid", true);
 		end
 	elseif ( questType == LE_QUEST_TAG_TYPE_INVASION ) then
 		if ( inProgress ) then
-			frame.texture:SetAtlas("worldquest-questmarker-questionmark");
-			frame.texture:SetSize(10, 15);
+			frame.Texture:SetAtlas("worldquest-questmarker-questionmark");
+			frame.Texture:SetSize(10, 15);
 		else
-			frame.texture:SetAtlas("worldquest-icon-burninglegion", true);
+			frame.Texture:SetAtlas("worldquest-icon-burninglegion", true);
 		end
 	else
 		if ( inProgress ) then
-			frame.texture:SetAtlas("worldquest-questmarker-questionmark");
-			frame.texture:SetSize(10, 15);
+			frame.Texture:SetAtlas("worldquest-questmarker-questionmark");
+			frame.Texture:SetSize(10, 15);
 		else
-			frame.texture:SetAtlas("worldquest-questmarker-questbang");
-			frame.texture:SetSize(6, 15);
+			frame.Texture:SetAtlas("worldquest-questmarker-questbang");
+			frame.Texture:SetSize(6, 15);
 		end
 	end
 	
 	if ( isCriteria ) then
 		if ( isElite ) then
-			frame.criteriaGlow:SetAtlas("worldquest-questmarker-dragon-glow", false);
-			frame.criteriaGlow:SetPoint("CENTER", 0, -1);
+			frame.CriteriaGlow:SetAtlas("worldquest-questmarker-dragon-glow", false);
+			frame.CriteriaGlow:SetPoint("CENTER", 0, -1);
 		else
-			frame.criteriaGlow:SetAtlas("worldquest-questmarker-glow", false);
-			frame.criteriaGlow:SetPoint("CENTER", 0, 0);
+			frame.CriteriaGlow:SetAtlas("worldquest-questmarker-glow", false);
+			frame.CriteriaGlow:SetPoint("CENTER", 0, 0);
 		end
-		frame.criteriaGlow:Show();
+		frame.CriteriaGlow:Show();
 	else
-		frame.criteriaGlow:Hide();
+		frame.CriteriaGlow:Hide();
 	end
 	
 	-- Bonus objectives
 	if (questType == WQT_TYPE_BONUSOBJECTIVE) then
-		frame.texture:SetAtlas("QuestBonusObjective", true);
-		frame.texture:SetSize(22, 22);
+		frame.Texture:SetAtlas("QuestBonusObjective", true);
+		frame.Texture:SetSize(22, 22);
 	end
 end
 
 function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
-	
 	self:Show();
-	self.title:SetText(questInfo.title);
-	self.time:SetTextColor(questInfo.time.color.r, questInfo.time.color.g, questInfo.time.color.b, 1);
-	self.time:SetText(questInfo.time.full);
-	self.extra:SetText(shouldShowZone and questInfo.mapInfo.name or "");
-	
-	
-			
+	self.Title:SetText(questInfo.title);
+	self.Time:SetTextColor(questInfo.time.color.r, questInfo.time.color.g, questInfo.time.color.b, 1);
+	self.Time:SetText(questInfo.time.full);
+	self.Extra:SetText(shouldShowZone and questInfo.mapInfo.name or "");
+
 	if (WQT_QuestScrollFrame.PoIHoverId == questInfo.questId) then
-		self.highlight:Show();
+		self.Highlight:Show();
 	end
 			
-	self.title:ClearAllPoints()
-	self.title:SetPoint("RIGHT", self.reward, "LEFT", -5, 0);
+	self.Title:ClearAllPoints()
+	self.Title:SetPoint("RIGHT", self.Reward, "LEFT", -5, 0);
 	
 	self.info = questInfo;
 	self.zoneId = questInfo.mapInfo.mapID;
@@ -1692,69 +1706,69 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	self.numObjectives = questInfo.numObjectives;
 	
 	if WQT.settings.showFactionIcon then
-		self.title:SetPoint("BOTTOMLEFT", self.faction, "RIGHT", 5, 1);
+		self.Title:SetPoint("BOTTOMLEFT", self.Faction, "RIGHT", 5, 1);
 	elseif WQT.settings.showTypeIcon then
-		self.title:SetPoint("BOTTOMLEFT", self.type, "RIGHT", 5, 1);
+		self.Title:SetPoint("BOTTOMLEFT", self.Type, "RIGHT", 5, 1);
 	else
-		self.title:SetPoint("BOTTOMLEFT", self, "LEFT", 10, 0);
+		self.Title:SetPoint("BOTTOMLEFT", self, "LEFT", 10, 0);
 	end
 	
 	if WQT.settings.showFactionIcon then
-		self.faction:Show();
+		self.Faction:Show();
 		local factionData = GetFactionData(questInfo.factionId);
 		
-		self.faction.icon:SetTexture(factionData.icon);--, nil, nil, "TRILINEAR");
-		self.faction:SetWidth(self.faction:GetHeight());
+		self.Faction.Icon:SetTexture(factionData.icon);--, nil, nil, "TRILINEAR");
+		self.Faction:SetWidth(self.Faction:GetHeight());
 	else
-		self.faction:Hide();
-		self.faction:SetWidth(0.1);
+		self.Faction:Hide();
+		self.Faction:SetWidth(0.1);
 	end
 	
 	if WQT.settings.showTypeIcon then
 		self:UpdateQuestType(questInfo)
 	else
-		self.type:Hide()
-		self.type:SetWidth(0.1);
+		self.Type:Hide()
+		self.Type:SetWidth(0.1);
 	end
 	
 	-- display reward
-	self.reward:Show();
-	self.reward.icon:Show();
+	self.Reward:Show();
+	self.Reward.Icon:Show();
 
 	if questInfo.reward.type == WQT_REWARDTYPE.missing then
-		self.reward.iconBorder:SetVertexColor(1, 0, 0);
-		self.reward:SetAlpha(1);
-		self.reward.icon:SetTexture(WQT_QUESTIONMARK);
+		self.Reward.IconBorder:SetVertexColor(1, 0, 0);
+		self.Reward:SetAlpha(1);
+		self.Reward.Icon:SetTexture(WQT_QUESTIONMARK);
 	else
 		local r, g, b = GetItemQualityColor(questInfo.reward.quality);
-		self.reward.iconBorder:SetVertexColor(r, g, b);
-		self.reward:SetAlpha(1);
+		self.Reward.IconBorder:SetVertexColor(r, g, b);
+		self.Reward:SetAlpha(1);
 		if questInfo.reward.texture == "" then
-			self.reward:SetAlpha(0);
+			self.Reward:SetAlpha(0);
 		end
-		self.reward.icon:SetTexture(questInfo.reward.texture);
+		self.Reward.Icon:SetTexture(questInfo.reward.texture);
 	
 		if questInfo.reward.amount and questInfo.reward.amount > 1  then
-			self.reward.amount:SetText(GetLocalizedAbreviatedNumber(questInfo.reward.amount));
+			self.Reward.Amount:SetText(GetLocalizedAbreviatedNumber(questInfo.reward.amount));
 			r, g, b = 1, 1, 1;
 			if questInfo.reward.type == WQT_REWARDTYPE.relic then
-				self.reward.amount:SetText("+" .. questInfo.reward.amount);
+				self.Reward.Amount:SetText("+" .. questInfo.reward.amount);
 			elseif questInfo.reward.type == WQT_REWARDTYPE.artifact then
 				r, g, b = GetItemQualityColor(2);
 			elseif questInfo.reward.type == WQT_REWARDTYPE.equipment then
 				if questInfo.reward.canUpgrade then
-					self.reward.amount:SetText(questInfo.reward.amount.."+");
+					self.Reward.Amount:SetText(questInfo.reward.amount.."+");
 				end
 				r, g, b = WQT_COLOR_ARMOR:GetRGB();
 			end
 	
-			self.reward.amount:SetVertexColor(r, g, b);
-			self.reward.amount:Show();
+			self.Reward.Amount:SetVertexColor(r, g, b);
+			self.Reward.Amount:Show();
 		end
 	end
 	
 	if GetSuperTrackedQuestID() == questInfo.questId or IsWorldQuestWatched(questInfo.questId) then
-		self.trackedBorder:Show();
+		self.TrackedBorder:Show();
 	end
 
 end
@@ -1772,26 +1786,26 @@ function WQT_ListButtonMixin:ShowWorldmapHighlight(zoneId)
 	WQT_MapZoneHightlight:SetFrameLevel(5);
 	local fileDataID, atlasID, texPercentageX, texPercentageY, textureX, textureY, scrollChildX, scrollChildY = C_Map.GetMapHighlightInfoAtPosition(WorldMapFrame.mapID, coords.x, coords.y);
 	if (fileDataID and fileDataID > 0) or (atlasID) then
-		WQT_MapZoneHightlight.texture:SetTexCoord(0, texPercentageX, 0, texPercentageY);
+		WQT_MapZoneHightlight.Texture:SetTexCoord(0, texPercentageX, 0, texPercentageY);
 		local width = WorldMapFrame.ScrollContainer.Child:GetWidth();
 		local height = WorldMapFrame.ScrollContainer.Child:GetHeight();
-		WQT_MapZoneHightlight.texture:ClearAllPoints();
+		WQT_MapZoneHightlight.Texture:ClearAllPoints();
 		if (atlasID) then
-			WQT_MapZoneHightlight.texture:SetAtlas(atlasID, true, "TRILINEAR");
+			WQT_MapZoneHightlight.Texture:SetAtlas(atlasID, true, "TRILINEAR");
 			scrollChildX = ((scrollChildX + 0.5*textureX) - 0.5) * width;
 			scrollChildY = -((scrollChildY + 0.5*textureY) - 0.5) * height;
 			WQT_MapZoneHightlight:SetPoint("CENTER", scrollChildX, scrollChildY);
 			WQT_MapZoneHightlight:Show();
 		else
-			WQT_MapZoneHightlight.texture:SetTexture(fileDataID, nil, nil, "LINEAR");
+			WQT_MapZoneHightlight.Texture:SetTexture(fileDataID, nil, nil, "LINEAR");
 			textureX = textureX * width;
 			textureY = textureY * height;
 			scrollChildX = scrollChildX * width;
 			scrollChildY = -scrollChildY * height;
 			if textureX > 0 and textureY > 0 then
-				WQT_MapZoneHightlight.texture:SetWidth(textureX);
-				WQT_MapZoneHightlight.texture:SetHeight(textureY);
-				WQT_MapZoneHightlight.texture:SetPoint("TOPLEFT", WQT_MapZoneHightlight:GetParent(), "TOPLEFT", scrollChildX, scrollChildY);
+				WQT_MapZoneHightlight.Texture:SetWidth(textureX);
+				WQT_MapZoneHightlight.Texture:SetHeight(textureY);
+				WQT_MapZoneHightlight.Texture:SetPoint("TOPLEFT", WQT_MapZoneHightlight:GetParent(), "TOPLEFT", scrollChildX, scrollChildY);
 				WQT_MapZoneHightlight:Show();
 			end
 		end
@@ -1872,7 +1886,8 @@ function WQT_QuestDataProvider:SetQuestReward(questInfo)
 	
 	if GetNumQuestLogRewards(questInfo.questId) > 0 then
 		_, texture, numItems, quality, _, itemId = GetQuestLogRewardInfo(1, questInfo.questId);
-		if itemId and (select(6, GetItemInfo(itemId)) == ARMOR )then -- Gear
+		local itemType = select(6, GetItemInfo(itemId));
+		if itemId and (itemType == ARMOR or itemType == WEAPON) then -- Gear
 			local result = self:ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+?)$");
 			if result then
 				numItems = tonumber(result:match("(%d+)"));
@@ -2221,34 +2236,34 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 	PoI.TimeLowFrame:SetAlpha(0);
 	PoI.TrackedCheck:SetAlpha(0);
 
-	self.trackedCheck:SetAlpha(IsWorldQuestWatched(quest.questId) and 1 or 0);
+	self.TrackedCheck:SetAlpha(IsWorldQuestWatched(quest.questId) and 1 or 0);
 
 	-- Ring stuff
 	if (WQT.settings.showPinRing) then
-		self.ring:SetVertexColor(quest.reward.color:GetRGB());
+		self.Ring:SetVertexColor(quest.reward.color:GetRGB());
 	else
-		self.ring:SetVertexColor(WQT_COLOR_CURRENCY:GetRGB());
+		self.Ring:SetVertexColor(WQT_COLOR_CURRENCY:GetRGB());
 	end
-	self.ring:SetAlpha((WQT.settings.showPinReward or WQT.settings.showPinRing) and 1 or 0);
+	self.Ring:SetAlpha((WQT.settings.showPinReward or WQT.settings.showPinRing) and 1 or 0);
 	
 	-- Icon stuff
-	local showIcon =WQT.settings.showPinReward and (quest.reward.type == WQT_REWARDTYPE.missing or quest.reward.texture ~= "")
-	self.icon:SetAlpha(showIcon and 1 or 0);
+	local showIcon = WQT.settings.showPinReward and (quest.reward.type == WQT_REWARDTYPE.missing or quest.reward.texture ~= "")
+	self.Icon:SetAlpha(showIcon and 1 or 0);
 	if quest.reward.type == WQT_REWARDTYPE.missing then
-		SetPortraitToTexture(self.icon, WQT_QUESTIONMARK);
+		SetPortraitToTexture(self.Icon, WQT_QUESTIONMARK);
 	else
-		SetPortraitToTexture(self.icon, quest.reward.texture);
+		SetPortraitToTexture(self.Icon, quest.reward.texture);
 	end
 	
 	-- Time
-	self.time:SetAlpha((WQT.settings.showPinTime and quest.time.short ~= "")and 1 or 0);
-	self.timeBG:SetAlpha((WQT.settings.showPinTime and quest.time.short ~= "") and 0.65 or 0);
-	self.time:SetFontObject(flightPinNr and "WQT_NumberFontOutlineBig" or "WQT_NumberFontOutline");
-	self.time:SetScale(flightPinNr and 1 or 2.5);
-	self.time:SetHeight(flightPinNr and 32 or 16);
+	self.Time:SetAlpha((WQT.settings.showPinTime and quest.time.short ~= "")and 1 or 0);
+	self.TimeBg:SetAlpha((WQT.settings.showPinTime and quest.time.short ~= "") and 0.65 or 0);
+	self.Time:SetFontObject(flightPinNr and "WQT_NumberFontOutlineBig" or "WQT_NumberFontOutline");
+	self.Time:SetScale(flightPinNr and 1 or 2.5);
+	self.Time:SetHeight(flightPinNr and 32 or 16);
 	if(WQT.settings.showPinTime) then
-		self.time:SetText(quest.time.short)
-		self.time:SetVertexColor(quest.time.color.r, quest.time.color.g, quest.time.color.b) 
+		self.Time:SetText(quest.time.short)
+		self.Time:SetVertexColor(quest.time.color.r, quest.time.color.g, quest.time.color.b) 
 	end
 	
 end
@@ -2505,10 +2520,10 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 		local button = buttons[i];
 		local displayIndex = i + offset;
 		button:Hide();
-		button.reward.amount:Hide();
-		button.trackedBorder:Hide();
+		button.Reward.Amount:Hide();
+		button.TrackedBorder:Hide();
 		button.info = nil;
-		button.highlight:Hide();
+		button.Highlight:Hide();
 		
 		if ( displayIndex <= #list) then
 			button:Update(list[displayIndex], shouldShowZone);
@@ -2546,20 +2561,22 @@ end
 WQT_CoreMixin = {}
 
 function WQT_CoreMixin:OnLoad()
+	self.scrollFrame = self.ScrollFrame; -- deprecated
+
 	self.pinHandler = CreateFromMixins(WQT_PinHandlerMixin);
 	self.pinHandler:OnLoad();
 
 	self.dataprovider = _questDataProvider
 	
 	self:SetFrameLevel(self:GetParent():GetFrameLevel()+4);
-	self.blocker:SetFrameLevel(self:GetFrameLevel()+4);
+	self.Blocker:SetFrameLevel(self:GetFrameLevel()+4);
 	
 	
 	self.filterDropDown = ADD:CreateMenuTemplate("WQT_WorldQuestFrameFilterDropDown", self);
 	self.filterDropDown.noResize = true;
 	ADD:Initialize(self.filterDropDown, function(self, level) WQT:InitFilter(self, level) end, "MENU");
-	self.filterButton.indicator.tooltipTitle = _L["MAP_FILTER_DISABLED_TITLE"];
-	self.filterButton.indicator.tooltipSub = _L["MAP_FILTER_DISABLED_INFO"];
+	self.FilterButton.Indicator.tooltipTitle = _L["MAP_FILTER_DISABLED_TITLE"];
+	self.FilterButton.Indicator.tooltipSub = _L["MAP_FILTER_DISABLED_INFO"];
 	
 	self.sortButton = ADD:CreateMenuTemplate("WQT_WorldQuestFrameSortButton", self, nil, "BUTTON");
 	self.sortButton:SetSize(93, 22);
@@ -2853,13 +2870,13 @@ end
 function WQT_CoreMixin:ShowOverlayMessage(message)
 	message = message or "";
 	self:SetCombatEnabled(false);
-	ShowUIPanel(self.blocker);
-	self.blocker.text:SetText(message);
+	ShowUIPanel(self.Blocker);
+	self.Blocker.Text:SetText(message);
 end
 
 function WQT_CoreMixin:HideOverlayMessage()
 	self:SetCombatEnabled(true);
-	HideUIPanel(self.blocker);
+	HideUIPanel(self.Blocker);
 end
 
 function WQT_CoreMixin:SetCombatEnabled(value)
@@ -2872,12 +2889,12 @@ function WQT_CoreMixin:SetCombatEnabled(value)
 	WQT_QuestScrollFrameScrollChild:EnableMouseWheel(value);
 	WQT_QuestScrollFrameScrollChild:EnableMouse(value);
 	WQT_WorldQuestFrameSortButtonButton:EnableMouse(value);
-	self.filterButton:EnableMouse(value);
+	self.FilterButton:EnableMouse(value);
 	if value then
-		self.filterButton:Enable();
+		self.FilterButton:Enable();
 		self.sortButton:Enable();
 	else
-		self.filterButton:Disable();
+		self.FilterButton:Disable();
 		self.sortButton:Disable();
 	end
 	
@@ -2905,10 +2922,10 @@ function WQT_CoreMixin:SelectTab(tab)
 		WQT_TabNormal:SetFrameLevel(WQT_TabNormal:GetParent():GetFrameLevel()+(tab == WQT_TabNormal and 2 or 1));
 		WQT_TabWorld:SetFrameLevel(WQT_TabWorld:GetParent():GetFrameLevel()+(tab == WQT_TabWorld and 2 or 1));
 	 
-		self.filterButton:SetFrameLevel(self:GetFrameLevel());
+		self.FilterButton:SetFrameLevel(self:GetFrameLevel());
 		self.sortButton:SetFrameLevel(self:GetFrameLevel());
 		
-		self.filterButton:EnableMouse(true);
+		self.FilterButton:EnableMouse(true);
 	end
 	
 	
@@ -2925,8 +2942,8 @@ function WQT_CoreMixin:SelectTab(tab)
 		ShowUIPanel(QuestScrollFrame);
 		
 		if not InCombatLockdown() then
-			self.blocker:EnableMouse(false);
-			HideUIPanel(self.blocker)
+			self.Blocker:EnableMouse(false);
+			HideUIPanel(self.Blocker)
 			self:SetCombatEnabled(false);
 		end
 	elseif id == 2 then
@@ -2951,10 +2968,10 @@ function WQT_CoreMixin:SelectTab(tab)
 		WQT_TabWorld:EnableMouse(false);
 		WQT_TabNormal:EnableMouse(false);
 		if not InCombatLockdown() then
-			self.blocker:EnableMouse(false);
+			self.Blocker:EnableMouse(false);
 			WQT_TabWorld:EnableMouse(false);
 			WQT_TabNormal:EnableMouse(false);
-			self.filterButton:EnableMouse(false);
+			self.FilterButton:EnableMouse(false);
 			self:SetCombatEnabled(false);
 		end
 	end
