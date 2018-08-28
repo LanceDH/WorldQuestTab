@@ -1886,23 +1886,25 @@ function WQT_QuestDataProvider:SetQuestReward(questInfo)
 	
 	if GetNumQuestLogRewards(questInfo.questId) > 0 then
 		_, texture, numItems, quality, _, itemId = GetQuestLogRewardInfo(1, questInfo.questId);
-		local itemType = select(6, GetItemInfo(itemId));
-		if itemId and (itemType == ARMOR or itemType == WEAPON) then -- Gear
-			local result = self:ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+?)$");
-			if result then
-				numItems = tonumber(result:match("(%d+)"));
-				canUpgrade = result:match("(%+)") and true;
+		if itemId then
+			local itemType = select(6, GetItemInfo(itemId));
+			if (itemType == ARMOR or itemType == WEAPON) then -- Gear
+				local result = self:ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+?)$");
+				if result then
+					numItems = tonumber(result:match("(%d+)"));
+					canUpgrade = result:match("(%+)") and true;
+				end
+				rewardType = WQT_REWARDTYPE.equipment;
+				color = WQT_COLOR_ARMOR;
+			elseif IsArtifactRelicItem(itemId) then
+				-- Because getting a link of the itemID only shows the base item
+				numItems = tonumber(self:ScanTooltipRewardForPattern(questInfo.questId, "^%+(%d+)"));
+				rewardType = WQT_REWARDTYPE.relic;	
+				color = WQT_COLOR_RELIC;
+			else	-- Normal items
+				rewardType = WQT_REWARDTYPE.item;
+				color = WQT_COLOR_ITEM;
 			end
-			rewardType = WQT_REWARDTYPE.equipment;
-			color = WQT_COLOR_ARMOR;
-		elseif itemId and IsArtifactRelicItem(itemId) then
-			-- Because getting a link of the itemID only shows the base item
-			numItems = tonumber(self:ScanTooltipRewardForPattern(questInfo.questId, "^%+(%d+)"));
-			rewardType = WQT_REWARDTYPE.relic;	
-			color = WQT_COLOR_RELIC;
-		else	-- Normal items
-			rewardType = WQT_REWARDTYPE.item;
-			color = WQT_COLOR_ITEM;
 		end
 	elseif GetQuestLogRewardHonor(questInfo.questId) > 0 then
 		numItems = GetQuestLogRewardHonor(questInfo.questId);
