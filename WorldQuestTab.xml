@@ -700,7 +700,7 @@
 			</OnLoad>
 			<OnEnter>
 				GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
-				GameTooltip:SetText(WQT_TAB_NORMAL, nil, nil, nil, nil, true);
+				GameTooltip:SetText(QUEST_LOG, nil, nil, nil, nil, true);
 				GameTooltip:Show();
 			</OnEnter>
 		</Scripts>
@@ -719,7 +719,7 @@
 			</OnLoad>
 			<OnEnter>
 				GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
-				GameTooltip:SetText(WQT_TAB_WORLD, nil, nil, nil, nil, true);
+				GameTooltip:SetText(TRACKER_HEADER_WORLD_QUESTS, nil, nil, nil, nil, true);
 				GameTooltip:Show();
 			</OnEnter>
 		</Scripts>

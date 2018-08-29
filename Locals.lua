@@ -5,20 +5,11 @@ local locale = GetLocale();
 
 L["IS_AZIAN_CLIENT"]	= false
 
-L["QUESTLOG"]		= "Questlog";
-L["WORLDQUEST"]		= "World Quests"
 L["COMBATLOCK"]		= "Disabled during combat.";
 L["FILTER"] 		= "Filter: %s";
 L["OPTIONS_INFO"] 	= "[WQT] Options can be found under the filter button."
 L["NO_FACTION"] 	= "No Faction";
-L["OTHER_FACTION"] 	= "Other";
 L["TIME"]			= "Time";
-L["FACTION"]		= "Faction";
-L["TYPE"]			= "Type";
-L["ZONE"]			= "Zone";
-L["NAME"]			= "Name";
-L["REWARD"]			= "Reward";
-L["SETTINGS"]		= "Settings";
 L["DEFAULT_TAB"]	= "Default Tab";
 L["DEFAULT_TAB_TT"]	= "Set WQT as the default tab when you log in.\nOnly applies to max level characters.";
 L["SAVE_SETTINGS"]	= "Save Filters/Sort";
@@ -42,22 +33,8 @@ L["SHOW_FACTION_TT"]	= "Show faction icon\nin the quest list.";
 L["PRECISE_FILTER"]	= "Precise Filter";
 L["PRECISE_FILTER_TT"]	= "Filtering only shows quests matching\nall filter categories, rather than just\nany of the categories.";
 
-L["TYPE_DEFAULT"]	= "Default";
-L["TYPE_ELITE"]		= "Elite";
-L["TYPE_PVP"]		= "PvP";
-L["TYPE_PETBATTLE"]	= "Petbattle";
-L["TYPE_DUNGEON"]	= "Dungeon";
-L["TYPE_RAID"]		= "Raid";
-L["TYPE_PROFESSION"]	= "Profession";
 L["TYPE_INVASION"]	= "Invasion";
 L["TYPE_EMISSARY"]	= "Emissary";
-
-L["REWARD_ITEM"]	= "Item";
-L["REWARD_RESOURCES"]	= "Currency";
-L["REWARD_RELIC"]	= "Relic";
-L["REWARD_NONE"]		= "None";
-L["REWARD_EXPERIENCE"]	= "Experience";
-L["REWARD_HONOR"]	=	"Honor";
 
 L["TRACKDD_TOMTOM"]	= "TomTom add"
 L["TRACKDD_TOMTOM_REMOVE"]	= "TomTom remove"
@@ -400,11 +377,19 @@ end
 if locale == "koKR" then
 L["COMBATLOCK"] = "전투 중엔 비활성됩니다."
 L["DEFAULT_TAB"] = "기본 탭"
+L["DEFAULT_TAB_TT"] = [=[로그인 했을 때 WQT를 기본 탭으로 설정합니다.
+110 레벨 미만의 캐릭터엔 적용하지 않습니다.]=]
 L["FACTION"] = "평판 진영"
 L["FILTER"] = "필터: %s"
 L["FILTER_PINS"] = "지도 표시 필터"
 L["FILTER_PINS_TT"] = [=[지도 상의 표시에
 필터를 적용합니다.]=]
+--[[Translation missing --]]
+L["MAP_FILTER_DISABLED"] = "Disabled by world map filters."
+--[[Translation missing --]]
+L["MAP_FILTER_DISABLED_INFO"] = "Disabled filters may hide some quests. You can re-enable them under the magnifying glass on the topright of the map."
+--[[Translation missing --]]
+L["MAP_FILTER_DISABLED_TITLE"] = "Some world map filters disabled"
 L["NAME"] = "이름"
 L["NO_FACTION"] = "진영 없음"
 L["NUMBERS_FIRST"] = "%g만"
@@ -436,7 +421,7 @@ L["REWARD_HONOR"] = "명예"
 L["REWARD_ITEM"] = "아이템"
 L["REWARD_NONE"] = "없음"
 L["REWARD_RELIC"] = "성물"
-L["REWARD_RESOURCES"] = "자원"
+L["REWARD_RESOURCES"] = "화폐"
 L["SAVE_SETTINGS"] = "필터/정렬 저장"
 L["SAVE_SETTINGS_TT"] = [=[세션과 다시 불러오기 간에
 필터와 정렬 설정을 저장합니다.]=]
@@ -455,13 +440,14 @@ L["TYPE_DEFAULT"] = "기본"
 L["TYPE_DUNGEON"] = "던전"
 L["TYPE_ELITE"] = "정예"
 L["TYPE_EMISSARY"] = "사절"
-L["TYPE_INVASION"] = "침략"
+L["TYPE_INVASION"] = "침공"
 L["TYPE_PETBATTLE"] = "애완동물 대전"
 L["TYPE_PROFESSION"] = "전문 기술"
 L["TYPE_PVP"] = "PvP"
 L["TYPE_RAID"] = "공격대"
 L["WORLDQUEST"] = "전역 퀘스트"
 L["ZONE"] = "지역"
+
 L["IS_AZIAN_CLIENT"]	= true
 end
 

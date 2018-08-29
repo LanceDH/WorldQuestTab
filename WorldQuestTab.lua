@@ -49,8 +49,6 @@ local _debug = false;
 local _TomTomLoaded = IsAddOnLoaded("TomTom");
 local _CIMILoaded = IsAddOnLoaded("CanIMogIt");
 
-WQT_TAB_NORMAL = _L["QUESTLOG"];
-WQT_TAB_WORLD = _L["WORLDQUEST"];
 WQT_GROUP_INFO = _L["GROUP_SEARCH_INFO"];
 
 WQT_REWARDTYPE = {
@@ -97,10 +95,9 @@ local WQT_FACTIONUNKNOWN = "Interface/addons/WorldQuestTab/Images/FactionUnknown
 local WQT_ARGUS_COSMIC_BUTTONS = {KrokuunButton, MacAreeButton, AntoranWastesButton, BrokenIslesArgusButton}
 
 local WQT_TYPEFLAG_LABELS = {
-		[2] = {["Default"] = _L["TYPE_DEFAULT"], ["Elite"] = _L["TYPE_ELITE"], ["PvP"] = _L["TYPE_PVP"], ["Petbattle"] = _L["TYPE_PETBATTLE"], ["Dungeon"] = _L["TYPE_DUNGEON"]
-			, ["Raid"] = _L["TYPE_RAID"], ["Profession"] = _L["TYPE_PROFESSION"], ["Invasion"] = _L["TYPE_INVASION"]}
-		,[3] = {["Item"] = _L["REWARD_ITEM"], ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = WORLD_QUEST_REWARD_FILTERS_RESOURCES, ["Artifact"] = ITEM_QUALITY6_DESC
-			, ["Relic"] = _L["REWARD_RELIC"], ["None"] = _L["REWARD_NONE"], ["Experience"] = _L["REWARD_EXPERIENCE"], ["Honor"] = _L["REWARD_HONOR"], ["Reputation"] = REPUTATION}
+		[2] = {["Default"] = DEFAULT, ["Elite"] = ELITE, ["PvP"] = PVP, ["Petbattle"] = PET_BATTLE_PVP_QUEUE, ["Dungeon"] = TRACKER_HEADER_DUNGEON, ["Raid"] = RAID, ["Profession"] = BATTLE_PET_SOURCE_4, ["Invasion"] = _L["TYPE_INVASION"]}
+		,[3] = {["Item"] = HELPFRAME_ITEM_TITLE, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = WORLD_QUEST_REWARD_FILTERS_RESOURCES, ["Artifact"] = ITEM_QUALITY6_DESC
+			, ["Relic"] = RELICSLOT, ["None"] = NONE, ["Experience"] = POWER_TYPE_EXPERIENCE, ["Honor"] = HONOR, ["Reputation"] = REPUTATION}
 	};
 
 local WQT_FILTER_FUNCTIONS = {
@@ -304,7 +301,7 @@ local WQT_ZONE_MAPCOORDS = {
 		} -- All of Azeroth
 	}
 
-local WQT_SORT_OPTIONS = {[1] = _L["TIME"], [2] = _L["FACTION"], [3] = _L["TYPE"], [4] = _L["ZONE"], [5] = _L["NAME"], [6] = _L["REWARD"]}
+local WQT_SORT_OPTIONS = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD}
 
 
 local WQT_NO_FACTION_DATA = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/FactionNone", ["name"]=_L["NO_FACTION"] } -- No faction
@@ -365,11 +362,11 @@ local WQT_DEFAULTS = {
 		preciseFilter = true;
 		rewardAmountColors = true;
 		filters = {
-				[1] = {["name"] = _L["FACTION"]
-				, ["flags"] = {[_L["OTHER_FACTION"]] = false, [_L["NO_FACTION"]] = false}}
-				,[2] = {["name"] = _L["TYPE"]
+				[1] = {["name"] = FACTION
+				, ["flags"] = {[OTHER] = false, [_L["NO_FACTION"]] = false}}
+				,[2] = {["name"] = TYPE
 						, ["flags"] = {["Default"] = false, ["Elite"] = false, ["PvP"] = false, ["Petbattle"] = false, ["Dungeon"] = false, ["Raid"] = false, ["Profession"] = false, ["Invasion"] = false}}--, ["Emissary"] = false}}
-				,[3] = {["name"] = _L["REWARD"]
+				,[3] = {["name"] = REWARD
 						, ["flags"] = {["Item"] = false, ["Armor"] = false, ["Gold"] = false, ["Currency"] = false, ["Artifact"] = false, ["Relic"] = false, ["None"] = false, ["Experience"] = false, ["Honor"] = false, ["Reputation"] = false}}
 			}
 	}
@@ -664,14 +661,14 @@ local function GetSortedFilterOrder(filterId)
 		table.insert(tbl, k);
 	end
 	table.sort(tbl, function(a, b) 
-				if(a == _L["REWARD_NONE"] or b == _L["REWARD_NONE"])then
-					return a == _L["REWARD_NONE"] and b == _L["REWARD_NONE"];
+				if(a == NONE or b == NONE)then
+					return a == NONE and b == NONE;
 				end
 				if(a == _L["NO_FACTION"] or b == _L["NO_FACTION"])then
 					return a ~= _L["NO_FACTION"] and b == _L["NO_FACTION"];
 				end
-				if(a == _L["OTHER_FACTION"] or b == _L["OTHER_FACTION"])then
-					return a ~= _L["OTHER_FACTION"] and b == _L["OTHER_FACTION"];
+				if(a == OTHER or b == OTHER)then
+					return a ~= OTHER and b == OTHER;
 				end
 				if(type(a) == "number" and type(b) == "number")then
 					local nameA = GetFactionInfoByID(tonumber(a));
@@ -681,7 +678,11 @@ local function GetSortedFilterOrder(filterId)
 					end
 					return a and not b;
 				end
-				return a < b; 
+				if (WQT_TYPEFLAG_LABELS[filterId]) then
+					return (WQT_TYPEFLAG_LABELS[filterId][a] or "") < (WQT_TYPEFLAG_LABELS[filterId][b] or "");
+				else
+					return a < b;
+				end
 			end)
 	return tbl;
 end
@@ -844,7 +845,7 @@ local function ConvertToBfASettings()
 	-- In 8.0.01 factions use ids rather than name
 	local repFlags = WQT.settings.filters[1].flags;
 	for name, value in pairs(repFlags) do
-		if (type(name) == "string" and name ~=_L["OTHER_FACTION"] and name ~= _L["NO_FACTION"]) then
+		if (type(name) == "string" and name ~=OTHER and name ~= _L["NO_FACTION"]) then
 			repFlags[name] = nil;
 		end
 	end
@@ -956,7 +957,7 @@ function WQT:InitFilter(self, level)
 			ADD:AddButton(info, level)
 		end
 		
-		info.text = _L["SETTINGS"];
+		info.text = SETTINGS;
 		info.value = 0;
 		ADD:AddButton(info, level)
 	elseif level == 2 then
@@ -1416,7 +1417,7 @@ function WQT:PassesFactionFilter(questInfo)
 		return flags[questInfo.factionId];
 	else
 		-- other faction
-		return flags[_L["OTHER_FACTION"]];
+		return flags[OTHER];
 	end
 
 	return false;
@@ -1847,10 +1848,17 @@ end
 local function QuestResetFunc(pool, questInfo)
 	-- Clean out everthing that isn't a color
 	for k, v in pairs(questInfo) do
-		if type(v) == "table" and not v.GetRGB then
+		local objType = type(v);
+		if objType == "table" and not v.GetRGB then
 			QuestResetFunc(pool, v)
 		else
-			questInfo[k] = nil;
+			if (objType == "boolean") then
+				questInfo[k] = nil;
+			elseif (objType == "string") then
+				questInfo[k] = "";
+			elseif (objType == "number") then
+				questInfo[k] = 0;
+			end
 		end
 	end
 end

@@ -1,4 +1,4 @@
-local MAJOR, MINOR = "AddonDropDownTemplates-1.0", 3
+local MAJOR, MINOR = "AddonDropDownTemplates-1.0", 4
 local ADDT, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not ADDT then return end -- No Upgrade needed.
@@ -231,7 +231,7 @@ function ADDT:CreateListTemplate(lib, name, id)
 	temp:SetBackdrop( {
 		["bgFile"] = "Interface/Tooltips/UI-Tooltip-Background", 
 		["edgeFile"] = "Interface/Tooltips/UI-Tooltip-Border", ["tile"] = true, ["tileSize"] = 16, ["edgeSize"] = 16, 
-		["insets"] = { ["left"] = 5, ["right"] = 4, ["top"] = 4, ["bottom"] = 4 }
+		["insets"] = { ["left"] = 4, ["right"] = 4, ["top"] = 4, ["bottom"] = 4 }
 	});
 	
 	temp:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
