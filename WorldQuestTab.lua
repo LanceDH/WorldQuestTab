@@ -437,18 +437,26 @@ local function GetMapWQProvider()
 					pin.WQTHooked = true;
 					hooksecurefunc(pin, "OnClick", function(self, button) 
 						if (WQT.settings.disablePoI) then return; end
-						if (button == "RightButton") then
+						
+						if (button == "LeftButton") then
+							WQT_WorldQuestFrame.recentlyUntrackedQuest = nil;
+						elseif (button == "RightButton") then
+							if (WQT_WorldQuestFrame.recentlyUntrackedQuest) then
+								AddWorldQuestWatch(WQT_WorldQuestFrame.recentlyUntrackedQuest);
+								WQT_WorldQuestFrame.recentlyUntrackedQuest = nil;
+							end
 							-- If the quest wasn't tracked before we clicked, untrack it again
 							if (self.notTracked and QuestIsWatched(self.questID)) then
 								RemoveWorldQuestWatch(self.questID);
 							end
+							
 							-- Show the tracker dropdown
 							if WQT_TrackDropDown:GetParent() ~= self then
 								-- If the dropdown is linked to another button, we must move and close it first
 								WQT_TrackDropDown:SetParent(self);
 								ADD:HideDropDownMenu(1);
 							end
-							ADD:ToggleDropDownMenu(1, nil, WQT_TrackDropDown, self, -10, 0);
+							ADD:ToggleDropDownMenu(1, nil, WQT_TrackDropDown, self, -10, 0, nil, nil, 2);
 						end
 							
 					end)
@@ -1505,7 +1513,7 @@ function WQT_ListButtonMixin:OnClick(button)
 			WQT_TrackDropDown:SetParent(self);
 			ADD:HideDropDownMenu(1);
 		end
-		ADD:ToggleDropDownMenu(1, nil, WQT_TrackDropDown, "cursor", -10, -10);
+		ADD:ToggleDropDownMenu(1, nil, WQT_TrackDropDown, "cursor", -10, -10, nil, nil, 2);
 	end
 	
 	
@@ -1687,14 +1695,24 @@ function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 end
 
 function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
+
+	if self.info ~= questInfo then
+		self.Reward.Amount:Hide();
+		self.TrackedBorder:Hide();
+		self.Highlight:Hide();
+		self:Hide();
+	end
+
 	self:Show();
 	self.Title:SetText(questInfo.title);
 	self.Time:SetTextColor(questInfo.time.color.r, questInfo.time.color.g, questInfo.time.color.b, 1);
 	self.Time:SetText(questInfo.time.full);
 	self.Extra:SetText(shouldShowZone and questInfo.mapInfo.name or "");
-
-	if (WQT_QuestScrollFrame.PoIHoverId == questInfo.questId) then
+	
+	if (self:IsMouseOver() or self.Faction:IsMouseOver() or (WQT_QuestScrollFrame.PoIHoverId and WQT_QuestScrollFrame.PoIHoverId > 0 and WQT_QuestScrollFrame.PoIHoverId == questInfo.questId)) then
 		self.Highlight:Show();
+	else
+		self.Highlight:Hide();
 	end
 			
 	self.Title:ClearAllPoints()
@@ -1764,11 +1782,15 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	
 			self.Reward.Amount:SetVertexColor(r, g, b);
 			self.Reward.Amount:Show();
+		else
+			self.Reward.Amount:Hide();
 		end
 	end
 	
 	if GetSuperTrackedQuestID() == questInfo.questId or IsWorldQuestWatched(questInfo.questId) then
 		self.TrackedBorder:Show();
+	else
+		self.TrackedBorder:Hide();
 	end
 
 end
@@ -2521,14 +2543,15 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 	for i=1, #buttons do
 		local button = buttons[i];
 		local displayIndex = i + offset;
-		button:Hide();
-		button.Reward.Amount:Hide();
-		button.TrackedBorder:Hide();
-		button.info = nil;
-		button.Highlight:Hide();
-		
+
 		if ( displayIndex <= #list) then
 			button:Update(list[displayIndex], shouldShowZone);
+		else
+			button.Reward.Amount:Hide();
+			button.TrackedBorder:Hide();
+			button.Highlight:Hide();
+			button:Hide();
+			button.info = nil;
 		end
 	end
 	
@@ -2567,8 +2590,11 @@ function WQT_CoreMixin:OnLoad()
 
 	self.pinHandler = CreateFromMixins(WQT_PinHandlerMixin);
 	self.pinHandler:OnLoad();
+	
 
 	self.dataprovider = _questDataProvider
+	
+	
 	
 	self:SetFrameLevel(self:GetParent():GetFrameLevel()+4);
 	self.Blocker:SetFrameLevel(self:GetFrameLevel()+4);
@@ -2613,6 +2639,32 @@ function WQT_CoreMixin:OnLoad()
 	SLASH_WQTSLASH1 = '/wqt';
 	SLASH_WQTSLASH2 = '/worldquesttab';
 	SlashCmdList["WQTSLASH"] = slashcmd
+	
+	self.trackedQuests = {};
+	self.recentlyUntrackedQuest = 
+---
+	
+	-- Step 2: Check compare list after changes, if quest is left == quest that was untracked
+	-- check QUEST_WATCH_LIST_CHANGED for step 1
+	hooksecurefunc("ObjectiveTracker_Update", function(...)
+			local wqModule;
+			for k, v in ipairs(ObjectiveTrackerFrame.MODULES) do
+				if v.headerText and v.headerText == TRACKER_HEADER_WORLD_QUESTS then
+					wqModule = v;
+					break;
+				end
+			end
+			if wqModule then
+				for k, v in pairs(wqModule.usedBlocks) do
+					self.trackedQuests[k] = nil;
+				end
+			end
+			-- store the untracked quest. right clicking on map PoI will retrack the quest
+			for k, v in pairs(self.trackedQuests) do
+				self.recentlyUntrackedQuest = k;
+			end
+			wipe(self.trackedQuests);
+		end)
 	
 	-- Show quest tab when leaving quest details
 	hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
@@ -2701,7 +2753,7 @@ function WQT_CoreMixin:OnLoad()
 		
 	hooksecurefunc("TaskPOI_OnLeave", function(self)
 			if (WQT.settings.disablePoI) then return; end
-			WQT_QuestScrollFrame.PoIHoverId = nil;
+			WQT_QuestScrollFrame.PoIHoverId = -1;
 			WQT_QuestScrollFrame:DisplayQuestList(true);
 			self.notTracked = nil;
 		end)
@@ -2865,7 +2917,24 @@ function WQT_CoreMixin:WORLD_QUEST_COMPLETED_BY_SPELL(...)
 	self.ScrollFrame:UpdateQuestList();
 end
 
-function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED()
+function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
+	-- step 1: Get all the tracked quests before any changes happen
+	-- check ObjectiveTracker_Update hook for step 2
+	self.recentlyUntrackedQuest = nil;
+	local wqModule;
+	wipe(self.trackedQuests);
+	for k, v in ipairs(ObjectiveTrackerFrame.MODULES) do
+		if v.headerText and v.headerText == TRACKER_HEADER_WORLD_QUESTS then
+			wqModule = v;
+			break;
+		end
+	end
+	if wqModule then
+		for k, v in pairs(wqModule.usedBlocks) do
+			self.trackedQuests[k] = true
+		end
+	end
+	
 	self.ScrollFrame:DisplayQuestList();
 end
 

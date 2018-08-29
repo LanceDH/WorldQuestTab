@@ -283,12 +283,14 @@
 				</Layers>
 				<Scripts>
 					<OnEnter>
+						self:GetParent().Highlight:Show();
 						if self:GetParent().info.faction then
 							GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
 							GameTooltip:SetText(self:GetParent().info.faction, nil, nil, nil, nil, true);
 						end
 					</OnEnter>
 					<OnLeave>
+						self:GetParent().Highlight:Hide();
 						GameTooltip:Hide();
 					</OnLeave>
 				</Scripts>
