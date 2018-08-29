@@ -393,6 +393,23 @@ local function QuestIsWatched(questID)
 	return false;
 end
 
+function WQT:GetObjectiveTrackerWQModule()
+	if WQT.wqObjectiveTacker then
+		return WQT.wqObjectiveTacker;
+	end
+	
+	if ObjectiveTrackerFrame.MODULES then
+		for k, v in ipairs(ObjectiveTrackerFrame.MODULES) do
+			if (v.headerText and v.headerText == TRACKER_HEADER_WORLD_QUESTS) then
+				WQT.wqObjectiveTacker = v;
+				return v;
+			end
+		end
+	end
+
+	return nil;
+end
+
 local function GetMapWQProvider()
 	if WQT.mapWQProvider then return WQT.mapWQProvider; end
 	
@@ -2641,7 +2658,7 @@ function WQT_CoreMixin:OnLoad()
 	self.updatePeriod = WQT_REFRESH_DEFAULT;
 	self.ticker = C_Timer.NewTicker(WQT_REFRESH_DEFAULT, function() self.ScrollFrame:UpdateQuestList(true); end)
 	-- Did not want this, but WorldMap_DoesWorldQuestInfoPassFilters sometimes doesn't work correctly, hiding quests
-	-- Seems to not affect performance, so I guess it's ok
+	-- Seems to not affect performance, so I guess it's ok, just a nightmare to work around the update
 	self.refreshDisplayTicer = C_Timer.NewTicker(1, function() WQT_QuestScrollFrame:DisplayQuestList(); end)
 	
 	SLASH_WQTSLASH1 = '/wqt';
@@ -2649,29 +2666,23 @@ function WQT_CoreMixin:OnLoad()
 	SlashCmdList["WQTSLASH"] = slashcmd
 	
 	self.trackedQuests = {};
-	self.recentlyUntrackedQuest = 
----
+	self.recentlyUntrackedQuest = nil;
 	
 	-- Step 2: Check compare list after changes, if quest is left == quest that was untracked
 	-- check QUEST_WATCH_LIST_CHANGED for step 1
 	hooksecurefunc("ObjectiveTracker_Update", function(...)
-			local wqModule;
-			for k, v in ipairs(ObjectiveTrackerFrame.MODULES) do
-				if v.headerText and v.headerText == TRACKER_HEADER_WORLD_QUESTS then
-					wqModule = v;
-					break;
+				local wqModule = WQT:GetObjectiveTrackerWQModule()
+				if wqModule then
+					for k, v in pairs(wqModule.usedBlocks) do
+						self.trackedQuests[k] = nil;
+					end
+					
+					-- store the untracked quest. right clicking on map PoI will retrack the quest
+					for k, v in pairs(self.trackedQuests) do
+						self.recentlyUntrackedQuest = k;
+					end
+					wipe(self.trackedQuests);
 				end
-			end
-			if wqModule then
-				for k, v in pairs(wqModule.usedBlocks) do
-					self.trackedQuests[k] = nil;
-				end
-			end
-			-- store the untracked quest. right clicking on map PoI will retrack the quest
-			for k, v in pairs(self.trackedQuests) do
-				self.recentlyUntrackedQuest = k;
-			end
-			wipe(self.trackedQuests);
 		end)
 	
 	-- Show quest tab when leaving quest details
@@ -2929,15 +2940,9 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 	-- step 1: Get all the tracked quests before any changes happen
 	-- check ObjectiveTracker_Update hook for step 2
 	self.recentlyUntrackedQuest = nil;
-	local wqModule;
-	wipe(self.trackedQuests);
-	for k, v in ipairs(ObjectiveTrackerFrame.MODULES) do
-		if v.headerText and v.headerText == TRACKER_HEADER_WORLD_QUESTS then
-			wqModule = v;
-			break;
-		end
-	end
+	local wqModule = WQT:GetObjectiveTrackerWQModule();
 	if wqModule then
+		wipe(self.trackedQuests);
 		for k, v in pairs(wqModule.usedBlocks) do
 			self.trackedQuests[k] = true
 		end
