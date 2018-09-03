@@ -99,6 +99,14 @@ local WQT_TYPEFLAG_LABELS = {
 		,[3] = {["Item"] = HELPFRAME_ITEM_TITLE, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = WORLD_QUEST_REWARD_FILTERS_RESOURCES, ["Artifact"] = ITEM_QUALITY6_DESC
 			, ["Relic"] = RELICSLOT, ["None"] = NONE, ["Experience"] = POWER_TYPE_EXPERIENCE, ["Honor"] = HONOR, ["Reputation"] = REPUTATION}
 	};
+	
+local WQT_CVAR_LIST = {
+		["Petbattle"] = "showTamers"
+		,["Artifact"] = "worldQuestFilterArtifactPower"
+		,["Armor"] = "worldQuestFilterEquipment"
+		,["Gold"] = "worldQuestFilterGold"
+		,["Currency"] = "worldQuestFilterResources"
+	}
 
 local WQT_FILTER_FUNCTIONS = {
 		[2] = { -- Types
@@ -163,6 +171,7 @@ local WQT_KULTIRAS = {
 	,[896] = {["x"] = 0.36, ["y"] = 0.67} -- Drustvar
 	,[895] = {["x"] = 0.56, ["y"] = 0.54} -- Tiragarde Sound
 	,[1161] = {["x"] = 0.56, ["y"] = 0.54} -- Boralus
+	,[1169] = {["x"] = 0.78, ["y"] = 0.61} -- Tol Dagor
 }
 local WQT_LEGION = {
 	[630] =  {["x"] = 0.33, ["y"] = 0.58} -- Azsuna
@@ -383,6 +392,8 @@ end
 local _filterOrders = {}
 
 ------------------------------------------------------------
+
+
 
 local function QuestIsWatched(questID)
 	for i=1, GetNumWorldQuestWatches() do 
@@ -945,7 +956,7 @@ function WQT:InitFilter(self, level)
 	info.keepShownOnClick = true;	
 	info.tooltipWhileDisabled = true;
 	info.tooltipOnButton = true;
-	info.hoverFuncWhileDisabled = true;
+	info.motionScriptsWhileDisabled = true;
 	
 	if level == 1 then
 		info.checked = 	nil;
@@ -1070,13 +1081,25 @@ function WQT:InitFilter(self, level)
 					info.checked = function() return options[flagKey] end;
 					info.funcEnter = nil;
 					info.funcLeave = nil;
+					info.funcDisabled = nil
 					
 					if WQT:FilterIsWorldMapDisabled(flagKey) then
 						info.disabled = true;
 						info.tooltipTitle = _L["MAP_FILTER_DISABLED"];
-						info.tooltipText = _L["MAP_FILTER_DISABLED_INFO"];
+						info.tooltipText = _L["MAP_FILTER_DISABLED_BUTTON_INFO"];
 						info.funcEnter = function() WQT_WorldQuestFrame:ShowHighlightOnMapFilters(); end;
 						info.funcLeave = function() WQT_PoISelectIndicator:Hide(); end;	
+						info.funcDisabled = function(listButton, button)  
+								if (button == "RightButton") then 
+									if (WQT_WorldQuestFrame:SetCvarValue(flagKey, true)) then
+										ADD:EnableButton(2, listButton:GetID());
+										listButton.tooltipTitle = nil;
+										listButton.tooltipText = nil;
+										listButton.funcEnter = nil;
+										listButton.funcLeave = nil;	
+									end
+								end
+							end;	
 					end
 					
 					ADD:AddButton(info, level);			
@@ -1330,7 +1353,7 @@ function WQT:InitTrackDropDown(self, level)
 		else
 			info.text = TRACK_QUEST;
 			info.func = function(_, _, _, value)
-						AddWorldQuestWatch(questId);
+						AddWorldQuestWatch(questId, true);
 						WQT_QuestScrollFrame:DisplayQuestList();
 					end
 		end	
@@ -2143,7 +2166,7 @@ function WQT_QuestDataProvider:LoadQuestsInZone(zoneId)
 	if not (WorldMapFrame:IsShown() or FlightMapFrame:IsShown()) then return; end
 	
 	local currentMapInfo = C_Map.GetMapInfo(zoneId);
-	local continentId = currentMapInfo.parentMapID; --select(2, GetCurrentMapContinent());
+	local continentId = currentMapInfo.parentMapID;
 	local missingRewardData = false;
 	local questsById, quest;
 
@@ -2155,7 +2178,7 @@ function WQT_QuestDataProvider:LoadQuestsInZone(zoneId)
 		end
 	elseif (currentMapInfo.mapType == Enum.UIMapType.World) then
 		for contID, contData in pairs(continentZones) do
-			-- every ID is a continent, get every zone on every continent;
+			-- Every ID is a continent, get every zone on every continent;
 			local ContExpLevel = WQT_ZONE_EXPANSIONS[contID];
 			if ContExpLevel == GetExpansionLevel() or ContExpLevel == 0 then
 				continentZones = WQT_ZONE_MAPCOORDS[contID];
@@ -2166,7 +2189,7 @@ function WQT_QuestDataProvider:LoadQuestsInZone(zoneId)
 			end
 		end
 	else
-		-- Dalaran being a special snowflake
+		-- Simple zone map
 		missingRewardData = self:AddQuestsInZone(zoneId, continentId);
 	end
 	
@@ -2550,7 +2573,7 @@ end
 
 function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 
-	if InCombatLockdown() or not WorldMapFrame:IsShown() or not WQT_WorldQuestFrame:IsShown() or WQT_WorldQuestFrame.selectedTab:GetID() ~= 2 then return end
+	if InCombatLockdown() or not WorldMapFrame:IsShown() or not WQT_WorldQuestFrame:IsShown() or not WQT_WorldQuestFrame.selectedTab or WQT_WorldQuestFrame.selectedTab:GetID() ~= 2 then return end
 	
 	local offset = HybridScrollFrame_GetOffset(self);
 	local buttons = self.buttons;
@@ -2949,6 +2972,18 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 	end
 	
 	self.ScrollFrame:DisplayQuestList();
+end
+
+function WQT_CoreMixin:SetCvarValue(flagKey, value)
+	value = (value == nil) and true or value;
+
+	if WQT_CVAR_LIST[flagKey] then
+		SetCVar(WQT_CVAR_LIST[flagKey], value);
+		self.ScrollFrame:DisplayQuestList();
+		WQT:UpdateFilterIndicator();
+		return true;
+	end
+	return false;
 end
 
 function WQT_CoreMixin:ShowOverlayMessage(message)

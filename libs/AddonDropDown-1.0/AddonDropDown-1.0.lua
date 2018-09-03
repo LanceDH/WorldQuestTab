@@ -1,4 +1,4 @@
-local MAJOR, MINOR = "AddonDropDown-1.0", 4
+local MAJOR, MINOR = "AddonDropDown-1.0", 5
 local ADD, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not ADD then return end -- No Upgrade needed.
@@ -238,7 +238,7 @@ info.mouseOverIcon = [TEXTURE] -- An override icon when a button is moused over.
 
 info.funcEnter = [function()] -- Function on enter button
 info.funcLeave = [function()] -- Function on leave button
-info.hoverFuncWhileDisabled = [nil, 1] -- Trigger leave/enter functions while disabled;
+info.funcDisabled = [function()]  --  The function that is called when you click the button
 
 ]]
 
@@ -463,7 +463,7 @@ function ADD:AddButton(info, level)
 	button.mouseOverIcon = info.mouseOverIcon;
 	button.funcEnter = info.funcEnter;
 	button.funcLeave = info.funcLeave;
-	button.hoverFuncWhileDisabled = info.hoverFuncWhileDisabled;
+	button.funcDisabled = info.funcDisabled;
 
 	if ( info.value ) then
 		button.value = info.value;

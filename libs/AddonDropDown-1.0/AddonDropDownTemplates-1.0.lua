@@ -1,4 +1,4 @@
-local MAJOR, MINOR = "AddonDropDownTemplates-1.0", 4
+local MAJOR, MINOR = "AddonDropDownTemplates-1.0", 5
 local ADDT, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not ADDT then return end -- No Upgrade needed.
@@ -103,6 +103,7 @@ function ADDT:CreateButtonTemplate(lib, name, parent, id)
 	local frame = _G[name .. "InvisibleButton"] --CreateFrame("BUTTON", name.."InvisibleButton", button);
 	button.invisibleButton = frame;
 	frame:Hide();
+	frame:RegisterForClicks("AnyUp")
 	frame:SetPoint("TOPLEFT");
 	frame:SetPoint("BOTTOMRIGHT");
 	frame:SetPoint("RIGHT", frameCS, "LEFT");
@@ -123,7 +124,7 @@ function ADDT:CreateButtonTemplate(lib, name, parent, id)
 				end
 			end
 		
-			if (parent.hoverFuncWhileDisabled and parent.funcEnter) then
+			if (parent.funcEnter) then
 				parent.funcEnter();
 			end
 		end);
@@ -132,8 +133,14 @@ function ADDT:CreateButtonTemplate(lib, name, parent, id)
 			GameTooltip:Hide();
 			
 			local parent = self:GetParent();
-			if (parent.hoverFuncWhileDisabled and parent.funcLeave) then
+			if (parent.funcLeave) then
 				parent.funcLeave();
+			end
+		end);
+	frame:SetScript("OnClick", function(self, button, down) 
+			local parent = self:GetParent();
+			if (parent.funcDisabled) then
+				parent:funcDisabled(button, down);
 			end
 		end);
 	-- End of parentInvisibleButton
@@ -174,7 +181,7 @@ function ADDT:CreateButtonTemplate(lib, name, parent, id)
 				self.Icon:Show();
 			end
 			
-			if (self.hoverFuncWhileDisabled and self.funcEnter) then
+			if (self.funcEnter) then
 				self.funcEnter();
 			end
 		end);
@@ -192,7 +199,7 @@ function ADDT:CreateButtonTemplate(lib, name, parent, id)
 				end
 			end
 			
-			if (self.hoverFuncWhileDisabled and self.funcLeave) then
+			if (self.funcLeave) then
 				self.funcLeave();
 			end
 		end);
