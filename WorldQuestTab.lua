@@ -44,7 +44,7 @@ local ADD = LibStub("AddonDropDown-1.0");
 
 local _L = addon.L
 
-local _debug = true;
+local _debug = false;
 
 local _TomTomLoaded = IsAddOnLoaded("TomTom");
 local _CIMILoaded = IsAddOnLoaded("CanIMogIt");
@@ -370,7 +370,7 @@ local WQT_DEFAULTS = {
 		useTomTom = true;
 		preciseFilter = true;
 		rewardAmountColors = true;
-		allwayAllQuests = false;
+		allwaysAllQuests = false;
 		filters = {
 				[1] = {["name"] = FACTION
 				, ["flags"] = {[OTHER] = false, [_L["NO_FACTION"]] = false}}
@@ -727,40 +727,35 @@ function UnlockArgusHighlights()
 	end
 end
 
-local function SortQuestList(list)
-	table.sort(list, function(a, b) 
-			-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-			if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
-				if a.expantionLevel ==  b.expantionLevel then
-					if a.title ==  b.title then
-						return a.questId < b.questId;
-					end
-					return a.title < b.title;
-				end
-				return a.expantionLevel > b.expantionLevel;
-			end	
-			return a.time.minutes < b.time.minutes;
-	end);
-end
-
-local function SortQuestListByZone(list)
-	table.sort(list, function(a, b) 
-		if a.mapInfo.mapID == b.mapInfo.mapID then
-			-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-			if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
-				if a.title ==  b.title then
-					return a.questId < b.questId;
-				end
-				return a.title < b.title;
-			end	
-			return a.time.minutes < b.time.minutes;
+local function SortQuestList(a, b) 
+	-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
+	if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
+		if a.expantionLevel ==  b.expantionLevel then
+			if a.title ==  b.title then
+				return a.questId < b.questId;
+			end
+			return a.title < b.title;
 		end
-		return (a.mapInfo.name or "zz") < (b.mapInfo.name or "zz");
-	end);
+		return a.expantionLevel > b.expantionLevel;
+	end	
+	return a.time.minutes < b.time.minutes;
 end
 
-local function SortQuestListByFaction(list)
-	table.sort(list, function(a, b) 
+local function SortQuestListByZone(a, b) 
+	if a.mapInfo.mapID == b.mapInfo.mapID then
+		-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
+		if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
+			if a.title ==  b.title then
+				return a.questId < b.questId;
+			end
+			return a.title < b.title;
+		end	
+		return a.time.minutes < b.time.minutes;
+	end
+	return (a.mapInfo.name or "zz") < (b.mapInfo.name or "zz");
+end
+
+local function SortQuestListByFaction(a, b) 
 	if a.expantionLevel ==  b.expantionLevel then
 		if a.faction == b.faction then
 			-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
@@ -775,50 +770,15 @@ local function SortQuestListByFaction(list)
 		return a.faction > b.faction;
 	end
 	return a.expantionLevel > b.expantionLevel;
-	end);
 end
 
-local function SortQuestListByType(list)
-	table.sort(list, function(a, b) 
-		local aIsCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(a.questId);
-		local bIsCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(b.questId);
-		if aIsCriteria == bIsCriteria then
-			if a.type == b.type then
-				if a.rarity == b.rarity then
-					if (a.isElite and b.isElite) or (not a.isElite and not b.isElite) then
-						-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-						if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
-							if a.title ==  b.title then
-								return a.questId < b.questId;
-							end
-							return a.title < b.title;
-						end	
-						return a.time.minutes < b.time.minutes;
-					end
-					return b.isElite;
-				end
-				return a.rarity < b.rarity;
-			end
-			return a.type < b.type;
-		end
-		return aIsCriteria and not bIsCriteria;
-	end);
-end
-
-local function SortQuestListByName(list)
-	table.sort(list, function(a, b) 
-		if a.title ==  b.title then
-			return a.questId < b.questId;
-		end
-		return a.title < b.title;
-	end);
-end
-
-local function SortQuestListByReward(list)
-	table.sort(list, function(a, b) 
-		if a.reward.type == b.reward.type then
-			if not a.reward.quality or not b.reward.quality or a.reward.quality == b.reward.quality then
-				if not a.reward.amount or not b.reward.amount or a.reward.amount == b.reward.amount then
+local function SortQuestListByType(a, b) 
+	local aIsCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(a.questId);
+	local bIsCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(b.questId);
+	if aIsCriteria == bIsCriteria then
+		if a.type == b.type then
+			if a.rarity == b.rarity then
+				if (a.isElite and b.isElite) or (not a.isElite and not b.isElite) then
 					-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
 					if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
 						if a.title ==  b.title then
@@ -828,14 +788,42 @@ local function SortQuestListByReward(list)
 					end	
 					return a.time.minutes < b.time.minutes;
 				end
-				return a.reward.amount > b.reward.amount;
+				return b.isElite;
 			end
-			return a.reward.quality > b.reward.quality;
-		elseif a.reward.type == 0 or b.reward.type == 0 then
-			return a.reward.type > b.reward.type;
+			return a.rarity < b.rarity;
 		end
-		return a.reward.type < b.reward.type;
-	end);
+		return a.type < b.type;
+	end
+	return aIsCriteria and not bIsCriteria;
+end
+
+local function SortQuestListByName(a, b) 
+	if a.title ==  b.title then
+		return a.questId < b.questId;
+	end
+	return a.title < b.title;
+end
+
+local function SortQuestListByReward(a, b) 
+	if a.reward.type == b.reward.type then
+		if not a.reward.quality or not b.reward.quality or a.reward.quality == b.reward.quality then
+			if not a.reward.amount or not b.reward.amount or a.reward.amount == b.reward.amount then
+				-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
+				if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
+					if a.title ==  b.title then
+						return a.questId < b.questId;
+					end
+					return a.title < b.title;
+				end	
+				return a.time.minutes < b.time.minutes;
+			end
+			return a.reward.amount > b.reward.amount;
+		end
+		return a.reward.quality > b.reward.quality;
+	elseif a.reward.type == 0 or b.reward.type == 0 then
+		return a.reward.type > b.reward.type;
+	end
+	return a.reward.type < b.reward.type;
 end
 
 local function GetQuestTimeString(questId)
@@ -1793,7 +1781,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 		self.Faction:Show();
 		local factionData = GetFactionData(questInfo.factionId);
 		
-		self.Faction.Icon:SetTexture(factionData.icon);--, nil, nil, "TRILINEAR");
+		self.Faction.Icon:SetTexture(factionData.icon);
 		self.Faction:SetWidth(self.Faction:GetHeight());
 	else
 		self.Faction:Hide();
@@ -1812,9 +1800,9 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	self.Reward.Icon:Show();
 
 	if questInfo.reward.type == WQT_REWARDTYPE.missing then
-		self.Reward.IconBorder:SetVertexColor(1, 0, 0);
+		self.Reward.IconBorder:SetVertexColor(.75, 0, 0);
 		self.Reward:SetAlpha(1);
-		self.Reward.Icon:SetTexture(WQT_QUESTIONMARK);
+		self.Reward.Icon:SetColorTexture(0, 0, 0, 0.5);
 	else
 		local r, g, b = GetItemQualityColor(questInfo.reward.quality);
 		self.Reward.IconBorder:SetVertexColor(r, g, b);
@@ -1924,9 +1912,23 @@ function WQT_QuestDataProvider:OnLoad()
 	self.pool = CreateObjectPool(QuestCreationFunc, QuestResetFunc);
 	self.iterativeList = {};
 	self.keyList = {};
+	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room
+	self.waitingRoomRewards = {};
+	-- Every tick we go trough all the quests in the waiting room to try and update their rewards
+	self.dataUpdateTicker = C_Timer.NewTicker(0.5, function() 
+			local questInfo;
+			for i = #self.waitingRoomRewards, 1, -1 do
+				questInfo = self.waitingRoomRewards[i];
+				if HaveQuestRewardData(questInfo.questId) then
+					self:SetQuestReward(questInfo);
+					self:SetSubReward(questInfo);
+					table.remove(self.waitingRoomRewards, i);
+				end
+			end
+		end)
+	
+	
 end
-
-
 
 function WQT_QuestDataProvider:ScanTooltipRewardForPattern(questID, pattern)
 	local result;
@@ -2153,6 +2155,7 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	if not haveData and not questInfo.isInvalid then
 		questInfo.reward.type = WQT_REWARDTYPE.missing;
 		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
+		tinsert(self.waitingRoomRewards, questInfo);
 		return nil;
 	end;
 
@@ -2189,6 +2192,9 @@ function WQT_QuestDataProvider:LoadQuestsInZone(zoneId)
 	local continentId = currentMapInfo.parentMapID;
 	local missingRewardData = false;
 	local questsById, quest;
+	
+	-- Wipe the waiting room. Either they will be updated now, or it's a new zone and we no longer care
+	wipe(self.waitingRoomRewards)
 
 	if currentMapInfo.mapType == Enum.UIMapType.Continent  and continentZones then
 		-- All zones in a continent
@@ -2337,7 +2343,11 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 
 	-- Ring stuff
 	if (WQT.settings.showPinRing) then
-		self.Ring:SetVertexColor(quest.reward.color:GetRGB());
+		if (quest.reward.type == WQT_REWARDTYPE.missing) then
+			self.Ring:SetVertexColor(WQT_COLOR_MISSING:GetRGB());
+		else
+			self.Ring:SetVertexColor(quest.reward.color:GetRGB());
+		end
 	else
 		self.Ring:SetVertexColor(WQT_COLOR_CURRENCY:GetRGB());
 	end
@@ -2346,8 +2356,8 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 	-- Icon stuff
 	local showIcon = WQT.settings.showPinReward and (quest.reward.type == WQT_REWARDTYPE.missing or quest.reward.texture ~= "")
 	self.Icon:SetAlpha(showIcon and 1 or 0);
-	if quest.reward.type == WQT_REWARDTYPE.missing then
-		SetPortraitToTexture(self.Icon, WQT_QUESTIONMARK);
+	if quest.reward.type == WQT_REWARDTYPE.missing or quest.reward.type == WQT_REWARDTYPE.none then
+		SetPortraitToTexture(self.Icon, "Interface/DialogFrame/UI-DialogBox-Background-Dark");--WQT_QUESTIONMARK);
 	else
 		SetPortraitToTexture(self.Icon, quest.reward.texture);
 	end
@@ -2385,7 +2395,7 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 	WQT_Tooltip:SetOwner(button, "ANCHOR_RIGHT");
 
 	-- In case we somehow don't have data on this quest, even through that makes no sense at this point
-	if (not questInfo.questId or not HaveQuestData(questInfo.questId) ) then
+	if (not questInfo.questId or not HaveQuestData(questInfo.questId)) then
 		WQT_Tooltip:SetText(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
 		WQT_Tooltip.recalculatePadding = true;
 		WQT_Tooltip:Show();
@@ -2413,7 +2423,6 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 	if (questInfo.time.minutes > 0) then
 		WQT_Tooltip:AddLine(BONUS_OBJECTIVE_TIME_LEFT:format(SecondsToTime(questInfo.time.minutes*60, true, true)), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
 	end
-	
 
 	for objectiveIndex = 1, questInfo.numObjectives do
 		local objectiveText, objectiveType, finished = GetQuestObjectiveInfo(questInfo.questId, objectiveIndex, false);
@@ -2428,35 +2437,33 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 		GameTooltip_ShowProgressBar(WQT_Tooltip, 0, 100, percent, PERCENTAGE_STRING:format(percent));
 	end
 
-	if questInfo.reward.texture ~= "" then
-		if questInfo.reward.texture == WQT_QUESTIONMARK then
-			WQT_Tooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
-		else
-			GameTooltip_AddQuestRewardsToTooltip(WQT_Tooltip, questInfo.questId);
-			
-			-- reposition compare frame
-			if((questInfo.reward.type == WQT_REWARDTYPE.equipment) and WQT_Tooltip.ItemTooltip:IsShown()) then
-				if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
-					-- Setup and check total size of both tooltips
-					WQT_CompareTooltip1:SetCompareItem(WQT_CompareTooltip2, WQT_Tooltip.ItemTooltip.Tooltip);
-					local totalWidth = 0;
-					if ( WQT_CompareTooltip1:IsShown()  ) then
-							totalWidth = totalWidth + WQT_CompareTooltip1:GetWidth();
-					end
-					if ( WQT_CompareTooltip2:IsShown()  ) then
-							totalWidth = totalWidth + WQT_CompareTooltip2:GetWidth();
-					end
-					
-					-- If there is room to the right, give priority to show compare tooltips to the right of the tooltip
-					local priorityRight = WQT_Tooltip.ItemTooltip.Tooltip:GetRight() + totalWidth < GetScreenWidth();
-					WQT_Tooltip.ItemTooltip.Tooltip.overrideComparisonAnchorSide  = priorityRight and "right" or "left";
-					GameTooltip_ShowCompareItem(WQT_Tooltip.ItemTooltip.Tooltip, WQT_Tooltip.ItemTooltip);
-
-					-- Set higher frame level in case things overlap
-					local level = WQT_Tooltip:GetFrameLevel();
-					WQT_CompareTooltip1:SetFrameLevel(level +2);
-					WQT_CompareTooltip2:SetFrameLevel(level +1);
+	if (questInfo.reward.type == WQT_REWARDTYPE.missing) then
+		WQT_Tooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
+	else
+		GameTooltip_AddQuestRewardsToTooltip(WQT_Tooltip, questInfo.questId);
+		
+		-- reposition compare frame
+		if((questInfo.reward.type == WQT_REWARDTYPE.equipment) and WQT_Tooltip.ItemTooltip:IsShown()) then
+			if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
+				-- Setup and check total size of both tooltips
+				WQT_CompareTooltip1:SetCompareItem(WQT_CompareTooltip2, WQT_Tooltip.ItemTooltip.Tooltip);
+				local totalWidth = 0;
+				if ( WQT_CompareTooltip1:IsShown()  ) then
+						totalWidth = totalWidth + WQT_CompareTooltip1:GetWidth();
 				end
+				if ( WQT_CompareTooltip2:IsShown()  ) then
+						totalWidth = totalWidth + WQT_CompareTooltip2:GetWidth();
+				end
+				
+				-- If there is room to the right, give priority to show compare tooltips to the right of the tooltip
+				local priorityRight = WQT_Tooltip.ItemTooltip.Tooltip:GetRight() + totalWidth < GetScreenWidth();
+				WQT_Tooltip.ItemTooltip.Tooltip.overrideComparisonAnchorSide  = priorityRight and "right" or "left";
+				GameTooltip_ShowCompareItem(WQT_Tooltip.ItemTooltip.Tooltip, WQT_Tooltip.ItemTooltip);
+
+				-- Set higher frame level in case things overlap
+				local level = WQT_Tooltip:GetFrameLevel();
+				WQT_CompareTooltip1:SetFrameLevel(level +2);
+				WQT_CompareTooltip2:SetFrameLevel(level +1);
 			end
 		end
 	end
@@ -2511,19 +2518,22 @@ end
 function WQT_ScrollListMixin:ApplySort()
 	local list = self.questList;
 	local sortOption = ADD:GetSelectedValue(WQT_WorldQuestFrame.sortButton);
+	local sortFunction;
 	if sortOption == 2 then -- faction
-		SortQuestListByFaction(list);
+		sortFunction = SortQuestListByFaction;
 	elseif sortOption == 3 then -- type
-		SortQuestListByType(list);
+		sortFunction = SortQuestListByType;
 	elseif sortOption == 4 then -- zone
-		SortQuestListByZone(list);
+		sortFunction = SortQuestListByZone;
 	elseif sortOption == 5 then -- name
-		SortQuestListByName(list);
+		sortFunction = SortQuestListByName;
 	elseif sortOption == 6 then -- reward
-		SortQuestListByReward(list)
+		sortFunction = SortQuestListByReward;
 	else -- time or anything else
-		SortQuestList(list)
+		sortFunction = SortQuestList;
 	end
+	
+	table.sort(list, sortFunction);
 end
 
 function WQT_ScrollListMixin:UpdateFilterDisplay()
@@ -2575,22 +2585,11 @@ end
 function WQT_ScrollListMixin:UpdateQuestList()
 	if (not WorldMapFrame:IsShown() or InCombatLockdown()) then return end
 	
-	-- If there is an error timer going on, cancel it, we're updating right now
-	if(addon.errorTimer) then
-		addon.errorTimer:Cancel();
-		addon.errorTimer = nil;
-	end
-
 	local mapAreaID = WorldMapFrame.mapID;
 	
-	local missingRewardData = _questDataProvider:LoadQuestsInZone(mapAreaID);
+	_questDataProvider:LoadQuestsInZone(mapAreaID);
 	
 	self.questList = _questDataProvider:GetIterativeList();
-	
-	-- If we were missing reward data, redo this function
-	if missingRewardData and not addon.errorTimer then
-		addon.errorTimer = C_Timer.NewTimer(0.5, function() addon.errorTimer = nil; self:UpdateQuestList() end);
-	end
 
 	self:UpdateQuestFilters();
 
@@ -2710,7 +2709,7 @@ function WQT_CoreMixin:OnLoad()
 	self.ticker = C_Timer.NewTicker(WQT_REFRESH_DEFAULT, function() self.ScrollFrame:UpdateQuestList(true); end)
 	-- Did not want this, but WorldMap_DoesWorldQuestInfoPassFilters sometimes doesn't work correctly, hiding quests
 	-- Seems to not affect performance, so I guess it's ok, just a nightmare to work around the update
-	self.refreshDisplayTicer = C_Timer.NewTicker(1, function() WQT_QuestScrollFrame:DisplayQuestList(); end)
+	self.refreshDisplayTicker = C_Timer.NewTicker(1, function() WQT_QuestScrollFrame:DisplayQuestList(); end)
 	
 	SLASH_WQTSLASH1 = '/wqt';
 	SLASH_WQTSLASH2 = '/worldquesttab';
