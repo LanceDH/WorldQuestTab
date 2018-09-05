@@ -44,7 +44,7 @@ local ADD = LibStub("AddonDropDown-1.0");
 
 local _L = addon.L
 
-local _debug = false;
+local _debug = true;
 
 local _TomTomLoaded = IsAddOnLoaded("TomTom");
 local _CIMILoaded = IsAddOnLoaded("CanIMogIt");
@@ -75,7 +75,7 @@ local WQT_COLOR_ARTIFACT = CreateColor(0, 0.75, 0);
 local WQT_COLOR_GOLD = CreateColor(0.85, 0.7, 0) ;
 local WQT_COLOR_CURRENCY = CreateColor(0.6, 0.4, 0.1) ;
 local WQT_COLOR_ITEM = CreateColor(0.85, 0.85, 0.85) ;
-local WQT_COLOR_ARMOR =  CreateColor(0.85, 0.5, 0.95) ; -- CreateColor(0.7, 0.3, 0.9) ;
+local WQT_COLOR_ARMOR =  CreateColor(0.85, 0.5, 0.95) ;
 local WQT_COLOR_RELIC = CreateColor(0.3, 0.7, 1);
 local WQT_COLOR_MISSING = CreateColor(0.7, 0.1, 0.1);
 local WQT_COLOR_HONOR = CreateColor(0.8, 0.26, 0);
@@ -359,7 +359,7 @@ local WQT_DEFAULTS = {
 		showTypeIcon = true;
 		showFactionIcon = true;
 		saveFilters = true;
-		filterPoI = false;
+		filterPoI = true;
 		bigPoI = false;
 		disablePoI = false;
 		showPinReward = true;
@@ -370,6 +370,7 @@ local WQT_DEFAULTS = {
 		useTomTom = true;
 		preciseFilter = true;
 		rewardAmountColors = true;
+		allwayAllQuests = false;
 		filters = {
 				[1] = {["name"] = FACTION
 				, ["flags"] = {[OTHER] = false, [_L["NO_FACTION"]] = false}}
@@ -432,6 +433,8 @@ local function GetMapWQProvider()
 			end 
 		end 
 	end
+	
+	if not WQT.hookedWQProvider then
 	-- We hook it here because we can't hook it during addonloaded for some reason
 	hooksecurefunc(WQT.mapWQProvider, "RefreshAllData", function(self) 
 			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
@@ -489,7 +492,10 @@ local function GetMapWQProvider()
 			end
 
 		end);
-
+		WQT.hookedWQProvider = true;
+	end
+		
+		
 	return WQT.mapWQProvider;
 end
 
@@ -1154,7 +1160,8 @@ function WQT:InitFilter(self, level)
 								PoI.TimeLowFrame:SetAlpha(1);
 								PoI.TrackedCheck:SetAlpha(1);
 							end
-							WQT_WorldQuestFrame.pinHandler.pinPool:ReleaseAll();
+							WQT_WorldQuestFrame.pinHandler.pinPool:ReleaseAllPools();
+							
 							for i = start, stop do
 								ADD:DisableButton(2, i);
 							end
@@ -1413,8 +1420,18 @@ function WQT:isUsingFilterNr(id)
 	return false;
 end
 
+function WQT:PassesMapFilter(questInfo)
+	if (WQT_WorldQuestFrame.currentMapInfo.mapType == Enum.UIMapType.World) then return true; end
+
+	if (WorldMapFrame.mapID == questInfo.mapInfo.mapID) then return true; end
+	
+	if (WQT_ZONE_MAPCOORDS[WorldMapFrame.mapID] and WQT_ZONE_MAPCOORDS[WorldMapFrame.mapID][questInfo.mapInfo.mapID]) then return true; end
+end
+
 function WQT:PassesAllFilters(questInfo)
 	if questInfo.questId < 0 then return true; end
+	
+	if not self:PassesMapFilter(questInfo) then return false; end
 	
 	if not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) then return false; end
 	
@@ -2162,9 +2179,12 @@ end
 
 function WQT_QuestDataProvider:LoadQuestsInZone(zoneId)
 	self.pool:ReleaseAll();
-	local continentZones = WQT_ZONE_MAPCOORDS[zoneId];
 	if not (WorldMapFrame:IsShown() or FlightMapFrame:IsShown()) then return; end
-	
+	-- If the flight map is open, we want all quests no matter what
+	if (FlightMapFrame and FlightMapFrame:IsShown()) then 
+		zoneId = GetTaxiMapID();
+	end
+	local continentZones = WQT_ZONE_MAPCOORDS[zoneId];
 	local currentMapInfo = C_Map.GetMapInfo(zoneId);
 	local continentId = currentMapInfo.parentMapID;
 	local missingRewardData = false;
@@ -2238,6 +2258,12 @@ end
 
 function WQT_PinHandlerMixin:OnLoad()
 	self.pinPool = CreateFramePool("FRAME", WorldMapPOIFrame, "WQT_PinTemplate", OnPinRelease);
+	self.pinPoolFlightMap = CreateFramePool("FRAME", WorldMapPOIFrame, "WQT_PinTemplate", OnPinRelease);
+end
+
+function WQT_PinHandlerMixin:ReleaseAllPools()
+	self.pinPool:ReleaseAll();
+	self.pinPoolFlightMap:ReleaseAll();
 end
 
 function WQT_PinHandlerMixin:UpdateFlightMapPins()
@@ -2255,20 +2281,19 @@ function WQT_PinHandlerMixin:UpdateFlightMapPins()
 		self.UpdateFlightMap = false
 	end
 	
-	WQT_WorldQuestFrame.pinHandler.pinPool:ReleaseAll();
+	self.pinPoolFlightMap:ReleaseAll();
 	local quest = nil;
 	for qID, PoI in pairs(WQT.FlightmapPins.activePins) do
 		quest =  _questDataProvider:GetQuestById(qID);
-		
 		if (quest) then
-			local pin = self.pinPool:Acquire();
+			local pin = self.pinPoolFlightMap:Acquire();
 			pin:Update(PoI, quest, qID);
 		end
 	end
 end
 
 function WQT_PinHandlerMixin:UpdateMapPoI()
-	WQT_WorldQuestFrame.pinHandler.pinPool:ReleaseAll();
+	self.pinPool:ReleaseAll();
 	
 	if (WQT.settings.disablePoI) then return; end
 	local buttons = WQT_WorldQuestFrame.ScrollFrame.buttons;
@@ -2278,7 +2303,7 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 	for qID, PoI in pairs(WQProvider.activePins) do
 		quest = _questDataProvider:GetQuestById(qID);
 		if (quest) then
-			local pin = WQT_WorldQuestFrame.pinHandler.pinPool:Acquire();
+			local pin = self.pinPool:Acquire();
 			pin.questID = qID;
 			pin:Update(PoI, quest);
 			PoI:SetShown(true);
@@ -2549,6 +2574,12 @@ end
 
 function WQT_ScrollListMixin:UpdateQuestList()
 	if (not WorldMapFrame:IsShown() or InCombatLockdown()) then return end
+	
+	-- If there is an error timer going on, cancel it, we're updating right now
+	if(addon.errorTimer) then
+		addon.errorTimer:Cancel();
+		addon.errorTimer = nil;
+	end
 
 	local mapAreaID = WorldMapFrame.mapID;
 	
@@ -2638,12 +2669,9 @@ function WQT_CoreMixin:OnLoad()
 
 	self.pinHandler = CreateFromMixins(WQT_PinHandlerMixin);
 	self.pinHandler:OnLoad();
-	
 
 	self.dataprovider = _questDataProvider
-	
-	
-	
+
 	self:SetFrameLevel(self:GetParent():GetFrameLevel()+4);
 	self.Blocker:SetFrameLevel(self:GetFrameLevel()+4);
 	
@@ -2730,10 +2758,11 @@ function WQT_CoreMixin:OnLoad()
 		local mapAreaID = WorldMapFrame.mapID;
 	
 		if (self.currentMapId ~= mapAreaID) then
+			self.currentMapId = mapAreaID;
+			self.currentMapInfo = C_Map.GetMapInfo(mapAreaID);
 			ADD:HideDropDownMenu(1);
 			self.ScrollFrame:UpdateQuestList();
 			self.pinHandler:UpdateMapPoI();
-			self.currentMapId = mapAreaID;
 		end
 	end)
 	
@@ -2901,9 +2930,8 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 		end
 		WQT.FlightMapList = {};
 		self.pinHandler.UpdateFlightMap = true;
-		hooksecurefunc(WQT.FlightmapPins, "OnShow", function() self.pinHandler:UpdateFlightMapPins() end);
+		--hooksecurefunc(WQT.FlightmapPins, "OnShow", function() self.pinHandler:UpdateFlightMapPins() end);
 		hooksecurefunc(WQT.FlightmapPins, "RefreshAllData", function() self.pinHandler:UpdateFlightMapPins() end);
-		
 		hooksecurefunc(WQT.FlightmapPins, "OnHide", function() 
 				for id in pairs(WQT.FlightMapList) do
 					WQT.FlightMapList[id].id = -1;
