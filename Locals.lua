@@ -11,27 +11,27 @@ L["OPTIONS_INFO"] 	= "[WQT] Options can be found under the filter button."
 L["NO_FACTION"] 	= "No Faction";
 L["TIME"]			= "Time";
 L["DEFAULT_TAB"]	= "Default Tab";
-L["DEFAULT_TAB_TT"]	= "Set WQT as the default tab when you log in.\nOnly applies to max level characters.";
+L["DEFAULT_TAB_TT"]	= "Set WQT as the default tab when you log in. Only applies to max level characters.";
 L["SAVE_SETTINGS"]	= "Save Filters/Sort";
-L["SAVE_SETTINGS_TT"]	= "Save filter and sort settings\nbetween sessions and reloads."
-L["PIN_DISABLE"]	= "Disable pin changes";
+L["SAVE_SETTINGS_TT"]	= "Save filter and sort settings between sessions and reloads."
+L["PIN_DISABLE"]	= "Disable Pin Changes";
 L["PIN_DISABLE_TT"]	= "Prevent WQT from making changes to map pins.";
-L["FILTER_PINS"]	= "Filter map pins";
-L["FILTER_PINS_TT"]	= "Applies filters to\npins on the map.";
-L["PIN_REWARDS"]	= "Map pin rewards";
+L["FILTER_PINS"]	= "Filter Map Pins";
+L["FILTER_PINS_TT"]	= "Applies filters to pins on the map.";
+L["PIN_REWARDS"]	= "Map Pin Rewards";
 L["PIN_REWARDS_TT"]	= "Show quest reward icons on map pins.";
-L["PIN_COLOR"]		= "Map pin color ring";
-L["PIN_COLOR_TT"]	= "Show a colored ring around pins\ndepending on reward type.";
-L["PIN_TIME"]		= "Map pin time";
+L["PIN_COLOR"]		= "Map Pin Color Ring";
+L["PIN_COLOR_TT"]	= "Show a colored ring around pins depending on reward type.";
+L["PIN_TIME"]		= "Map Pin Time";
 L["PIN_TIME_TT"]	= "Add time left to map pins.";
-L["PIN_BIGGER"]		= "Bigger map pins";
-L["PIN_BIGGER_TT"]	= "Slightly increase map pin size for visability.\nOnly available with Map pin rewards enabled";
 L["SHOW_TYPE"]		= "Show Type";
-L["SHOW_TYPE_TT"]	= "Show type icon\nin the quest list.";
+L["SHOW_TYPE_TT"]	= "Show type icon in the quest list.";
 L["SHOW_FACTION"]	= "Show Faction";
-L["SHOW_FACTION_TT"]	= "Show faction icon\nin the quest list.";
+L["SHOW_FACTION_TT"]	= "Show faction icon in the quest list.";
 L["PRECISE_FILTER"]	= "Precise Filter";
-L["PRECISE_FILTER_TT"]	= "Filtering only shows quests matching\nall filter categories, rather than just\nany of the categories.";
+L["PRECISE_FILTER_TT"]	= "Filtering only shows quests matching all filter categories, rather than just any of the categories.";
+L["ALWAYS_ALL"] = "Always All Quests"
+L["ALWAYS_ALL_TT"] = "Always show all quests for all expansion zones related to the current zone";
 
 L["TYPE_INVASION"]	= "Invasion";
 L["TYPE_EMISSARY"]	= "Emissary";
@@ -49,6 +49,7 @@ L["GROUP_SEARCH_INFO"] = "Blizzard prevents add-ons from automatically looking f
 L["FORMAT_GROUP_SEARCH"] = "Type |cFFFFFFFF%d|r to search for a group for this quest. Or type its name: |cFFFFFFFF%s|r.";
 L["FORMAT_GROUP_CREATE"] = "Type |cFFFFFFFF%d|r to create a group for this quest. Or type its name: |cFFFFFFFF%s|r. Consider using both so players without add-ons can also find your group.";
 L["FORMAT_GROUP_TYPO"] = "It appears to have made a typo. Type either |cFFFFFFFF%d|r, or |cFFFFFFFF%s|r.";
+
 
 
 if locale == "deDE" then

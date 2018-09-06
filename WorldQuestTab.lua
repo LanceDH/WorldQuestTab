@@ -44,7 +44,7 @@ local ADD = LibStub("AddonDropDown-1.0");
 
 local _L = addon.L
 
-local _debug = false;
+local _debug = true;
 
 local _TomTomLoaded = IsAddOnLoaded("TomTom");
 local _CIMILoaded = IsAddOnLoaded("CanIMogIt");
@@ -144,6 +144,7 @@ local WQT_ZONE_EXPANSIONS = {
 	,[896] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Drustvar
 	,[895] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Tiragarde Sound
 	,[1161] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Boralus
+	,[1169] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Tol Dagor
 
 	,[619] = LE_EXPANSION_LEGION -- Broken Isles
 	,[630] = LE_EXPANSION_LEGION -- Azsuna
@@ -187,6 +188,11 @@ local WQT_LEGION = {
 	,[885]	= {["x"] = 0.86, ["y"] = 0.15} -- Antoran Wastes
 	,[882]	= {["x"] = 0.86, ["y"] = 0.15} -- Mac'Aree
 }
+
+local WQT_CONTINENT_GROUPS = {
+	[875]	= {876} 
+	,[876]	= {875}
+	}
 	
 local WQT_ZONE_MAPCOORDS = {
 		[875]	= WQT_ZANDALAR -- Zandalar
@@ -299,17 +305,30 @@ local WQT_ZONE_MAPCOORDS = {
 			,[558]	= {["x"] = 0.73, ["y"] = 0.43} -- Ashran
 		}
 		
-		,[947]		= {
-			[619]	= {["x"] = 0.6, ["y"] = 0.41}
-			,[12]	= {["x"] = 0.19, ["y"] = 0.5}
-			,[13]	= {["x"] = 0.88, ["y"] = 0.56}
-			,[113]	= {["x"] = 0.49, ["y"] = 0.13}
-			,[424]	= {["x"] = 0.46, ["y"] = 0.92}
-			,[875]	= {["x"] = 0.46, ["y"] = 0.92}
-			,[876]	= {["x"] = 0.46, ["y"] = 0.92}
+		,[947]		= {	
 		} -- All of Azeroth
 	}
+	-- world map continents depending on expansion level
+	local expLevel = GetExpansionLevel();
+	if expLevel == LE_EXPANSION_BATTLE_FOR_AZEROTH then
+		WQT_ZONE_MAPCOORDS[947][875] = {["x"] = 0.46, ["y"] = 0.92}
+		WQT_ZONE_MAPCOORDS[947][876] = {["x"] = 0.46, ["y"] = 0.92}
+	elseif expLevel == LE_EXPANSION_LEGION then
+		WQT_ZONE_MAPCOORDS[947][619] = {["x"] = 0.6, ["y"] = 0.41}
+	else
+		WQT_ZONE_MAPCOORDS[947][12] = {["x"] = 0.19, ["y"] = 0.5}
+		WQT_ZONE_MAPCOORDS[947][13] = {["x"] = 0.88, ["y"] = 0.56}
+		WQT_ZONE_MAPCOORDS[947][113] = {["x"] = 0.49, ["y"] = 0.13}
+		WQT_ZONE_MAPCOORDS[947][424] = {["x"] = 0.46, ["y"] = 0.92}
+	end
+	
+			
+			
+			
 
+
+	
+	
 local WQT_SORT_OPTIONS = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD}
 
 
@@ -370,7 +389,7 @@ local WQT_DEFAULTS = {
 		useTomTom = true;
 		preciseFilter = true;
 		rewardAmountColors = true;
-		allwaysAllQuests = false;
+		alwaysAllQuests = false;
 		filters = {
 				[1] = {["name"] = FACTION
 				, ["flags"] = {[OTHER] = false, [_L["NO_FACTION"]] = false}}
@@ -437,7 +456,7 @@ local function GetMapWQProvider()
 	if not WQT.hookedWQProvider then
 	-- We hook it here because we can't hook it during addonloaded for some reason
 	hooksecurefunc(WQT.mapWQProvider, "RefreshAllData", function(self) 
-			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
+			--WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
 			
 			-- If the pins updated and make sure the highlight is still on the correct pin
 			local parentPin = WQT_PoISelectIndicator:GetParent();
@@ -497,6 +516,15 @@ local function GetMapWQProvider()
 		
 		
 	return WQT.mapWQProvider;
+end
+
+function WQT:GetFirstContinent(a) 
+	local i = C_Map.GetMapInfo(a) 
+	local p = i.parentMapID;
+	if not p or i.mapType <= Enum.UIMapType.Continent then 
+		return a 
+	end 
+	return self:GetFirstContinent(p) 
 end
 
 function WQT:GetMapPinForWorldQuest(questID)
@@ -620,6 +648,7 @@ local function slashcmd(msg, editbox)
 		-- local adjustedX = (x - (centerX - (width/2))) / width;
 		-- print(WorldMapFrame.mapID)
 		-- print("{\[\"x\"\] = " .. floor(adjustedX*100)/100 .. ", \[\"y\"\] = " .. floor(adjustedY*100)/100 .. "} ")
+		
 		local debugfr = WQT.debug;
 		debugfr.mem = GetAddOnMemoryUsage(addonName);
 		local frames = {WQT_WorldQuestFrame, WQT_QuestScrollFrame, WQT_WorldQuestFrame.pinHandler, WQT_WorldQuestFrame.dataprovider, WQT};
@@ -752,6 +781,12 @@ local function SortQuestListByZone(a, b)
 		end	
 		return a.time.minutes < b.time.minutes;
 	end
+	if WQT.settings.alwaysAllQuests then
+		if a.mapInfo.mapID == WorldMapFrame.mapID or b.mapInfo.mapID == WorldMapFrame.mapID then
+			return a.mapInfo.mapID == WorldMapFrame.mapID and b.mapInfo.mapID ~= WorldMapFrame.mapID;
+		end
+	end
+	
 	return (a.mapInfo.name or "zz") < (b.mapInfo.name or "zz");
 end
 
@@ -1103,9 +1138,11 @@ function WQT:InitFilter(self, level)
 				info.notCheckable = false;
 				info.tooltipWhileDisabled = true;
 				info.tooltipOnButton = true;
+				info.keepShownOnClick = true;	
 				
 				info.text = _L["DEFAULT_TAB"];
-				info.tooltipTitle = _L["DEFAULT_TAB_TT"];
+				info.tooltipTitle = _L["DEFAULT_TAB"];
+				info.tooltipText = _L["DEFAULT_TAB_TT"];
 				info.func = function(_, _, _, value)
 						WQT.settings.defaultTab = value;
 
@@ -1114,7 +1151,8 @@ function WQT:InitFilter(self, level)
 				ADD:AddButton(info, level);			
 
 				info.text = _L["SAVE_SETTINGS"];
-				info.tooltipTitle = _L["SAVE_SETTINGS_TT"];
+				info.tooltipTitle = _L["SAVE_SETTINGS"];
+				info.tooltipText = _L["SAVE_SETTINGS_TT"];
 				info.func = function(_, _, _, value)
 						WQT.settings.saveFilters = value;
 					end
@@ -1122,7 +1160,8 @@ function WQT:InitFilter(self, level)
 				ADD:AddButton(info, level);	
 				
 				info.text = _L["PRECISE_FILTER"];
-				info.tooltipTitle = _L["PRECISE_FILTER_TT"];
+				info.tooltipTitle = _L["PRECISE_FILTER"];
+				info.tooltipText = _L["PRECISE_FILTER_TT"];
 				info.func = function(_, _, _, value)
 						WQT.settings.preciseFilter = value;
 						WQT_QuestScrollFrame:DisplayQuestList();
@@ -1134,7 +1173,8 @@ function WQT:InitFilter(self, level)
 				ADD:AddButton(info, level);	
 				
 				info.text = _L["PIN_DISABLE"];
-				info.tooltipTitle = _L["PIN_DISABLE_TT"];
+				info.tooltipTitle = _L["PIN_DISABLE"];
+				info.tooltipText = _L["PIN_DISABLE_TT"];
 				info.func = function(_, _, _, value)
 						-- Update these numbers when adding new options !
 						local start, stop = 5, 8
@@ -1148,7 +1188,7 @@ function WQT:InitFilter(self, level)
 								PoI.TimeLowFrame:SetAlpha(1);
 								PoI.TrackedCheck:SetAlpha(1);
 							end
-							WQT_WorldQuestFrame.pinHandler.pinPool:ReleaseAllPools();
+							WQT_WorldQuestFrame.pinHandler:ReleaseAllPools();
 							
 							for i = start, stop do
 								ADD:DisableButton(2, i);
@@ -1165,7 +1205,8 @@ function WQT:InitFilter(self, level)
 				
 				info.text = _L["FILTER_PINS"];
 				info.disabled = WQT.settings.disablePoI;
-				info.tooltipTitle = _L["FILTER_PINS_TT"];
+				info.tooltipTitle = _L["FILTER_PINS"];
+				info.tooltipText = _L["FILTER_PINS_TT"];
 				info.func = function(_, _, _, value)
 						WQT.settings.filterPoI = value;
 						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
@@ -1175,7 +1216,8 @@ function WQT:InitFilter(self, level)
 				
 				info.text = _L["PIN_REWARDS"];
 				info.disabled = WQT.settings.disablePoI;
-				info.tooltipTitle = _L["PIN_REWARDS_TT"];
+				info.tooltipTitle = _L["PIN_REWARDS"];
+				info.tooltipText = _L["PIN_REWARDS_TT"];
 				info.func = function(_, _, _, value)
 						WQT.settings.showPinReward = value;
 						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
@@ -1185,7 +1227,8 @@ function WQT:InitFilter(self, level)
 				
 				info.text = _L["PIN_COLOR"];
 				info.disabled = WQT.settings.disablePoI;
-				info.tooltipTitle = _L["PIN_COLOR_TT"];
+				info.tooltipTitle = _L["PIN_COLOR"];
+				info.tooltipText = _L["PIN_COLOR_TT"];
 				info.func = function(_, _, _, value)
 						WQT.settings.showPinRing = value;
 						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
@@ -1195,7 +1238,8 @@ function WQT:InitFilter(self, level)
 				
 				info.text = _L["PIN_TIME"];
 				info.disabled = WQT.settings.disablePoI;
-				info.tooltipTitle = _L["PIN_TIME_TT"];
+				info.tooltipTitle = _L["PIN_TIME"];
+				info.tooltipText = _L["PIN_TIME_TT"];
 				info.func = function(_, _, _, value)
 						WQT.settings.showPinTime = value;
 						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
@@ -1206,7 +1250,8 @@ function WQT:InitFilter(self, level)
 				info.disabled = false;
 				
 				info.text = _L["SHOW_TYPE"];
-				info.tooltipTitle = _L["SHOW_TYPE_TT"];
+				info.tooltipTitle = _L["SHOW_TYPE"];
+				info.tooltipText = _L["SHOW_TYPE_TT"];
 				info.func = function(_, _, _, value)
 						WQT.settings.showTypeIcon = value;
 						WQT_QuestScrollFrame:UpdateQuestList();
@@ -1215,12 +1260,23 @@ function WQT:InitFilter(self, level)
 				ADD:AddButton(info, level);		
 				
 				info.text = _L["SHOW_FACTION"];
-				info.tooltipTitle = _L["SHOW_FACTION_TT"];
+				info.tooltipTitle = _L["SHOW_FACTION"];
+				info.tooltipText = _L["SHOW_FACTION_TT"];
 				info.func = function(_, _, _, value)
 						WQT.settings.showFactionIcon = value;
 						WQT_QuestScrollFrame:UpdateQuestList();
 					end
 				info.checked = function() return WQT.settings.showFactionIcon end;
+				ADD:AddButton(info, level);		
+				
+				info.text = _L["ALWAYS_ALL"];
+				info.tooltipTitle = _L["ALWAYS_ALL"];
+				info.tooltipText = _L["ALWAYS_ALL_TT"];
+				info.func = function(_, _, _, value)
+						WQT.settings.alwaysAllQuests = value;
+						WQT_QuestScrollFrame:UpdateQuestList();
+					end
+				info.checked = function() return WQT.settings.alwaysAllQuests end;
 				ADD:AddButton(info, level);		
 				
 				-- TomTom compatibility
@@ -1385,6 +1441,15 @@ function WQT:InitTrackDropDown(self, level)
 	ADD:AddButton(info, level)
 end
 
+function WQT:IsWorldMapFiltering()
+	for k, cVar in pairs(WQT_CVAR_LIST) do
+		if not GetCVarBool(cVar) then
+			return true;
+		end
+	end
+	return false;
+end
+
 function WQT:IsFiltering()
 	local playerFaction = GetPlayerFactionGroup()
 	if WQT.settings.emissaryOnly then return true; end
@@ -1422,8 +1487,6 @@ function WQT:PassesAllFilters(questInfo)
 	if not self:PassesMapFilter(questInfo) then return false; end
 	
 	if not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) then return false; end
-	
-	if not WQT:IsFiltering() then return true; end
 
 	if WQT.settings.emissaryOnly then 
 		return WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
@@ -1803,6 +1866,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 		self.Reward.IconBorder:SetVertexColor(.75, 0, 0);
 		self.Reward:SetAlpha(1);
 		self.Reward.Icon:SetColorTexture(0, 0, 0, 0.5);
+		self.Reward.Amount:Hide();
 	else
 		local r, g, b = GetItemQualityColor(questInfo.reward.quality);
 		self.Reward.IconBorder:SetVertexColor(r, g, b);
@@ -1917,17 +1981,23 @@ function WQT_QuestDataProvider:OnLoad()
 	-- Every tick we go trough all the quests in the waiting room to try and update their rewards
 	self.dataUpdateTicker = C_Timer.NewTicker(0.5, function() 
 			local questInfo;
+			local updatedData = false;
 			for i = #self.waitingRoomRewards, 1, -1 do
 				questInfo = self.waitingRoomRewards[i];
 				if HaveQuestRewardData(questInfo.questId) then
 					self:SetQuestReward(questInfo);
 					self:SetSubReward(questInfo);
 					table.remove(self.waitingRoomRewards, i);
+					updatedData = true;
 				end
 			end
+			if updatedData then
+				WQT_QuestScrollFrame:ApplySort();
+				WQT_QuestScrollFrame:UpdateQuestFilters();
+				WQT_QuestScrollFrame:DisplayQuestList(true, true);
+				WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
+			end
 		end)
-	
-	
 end
 
 function WQT_QuestDataProvider:ScanTooltipRewardForPattern(questID, pattern)
@@ -2195,31 +2265,52 @@ function WQT_QuestDataProvider:LoadQuestsInZone(zoneId)
 	
 	-- Wipe the waiting room. Either they will be updated now, or it's a new zone and we no longer care
 	wipe(self.waitingRoomRewards)
+	
+	if (WQT.settings.alwaysAllQuests and currentMapInfo.mapType ~= Enum.UIMapType.World) then
+	
+		local highestMapId = WQT:GetFirstContinent(zoneId);
+		continentZones = WQT_ZONE_MAPCOORDS[highestMapId];
+		if continentZones then
+			
+			for ID, data in pairs(continentZones) do	
+				self:AddQuestsInZone(ID, ID);
+			end
+		end
+
+		local relatedMaps = WQT_CONTINENT_GROUPS[highestMapId];
+		if relatedMaps then
+			for k, mapId in pairs(relatedMaps) do	
+				continentZones = WQT_ZONE_MAPCOORDS[mapId];
+				if continentZones then
+					for ID, data in pairs(continentZones) do	
+						self:AddQuestsInZone(ID, ID);
+					end
+				end
+			end
+		end
+		return;
+	end
 
 	if currentMapInfo.mapType == Enum.UIMapType.Continent  and continentZones then
 		-- All zones in a continent
 		for ID, data in pairs(continentZones) do	
-			 local missing = self:AddQuestsInZone(ID, ID);
-			 missingRewardData = missing or missingRewardData;
+			 self:AddQuestsInZone(ID, ID);
 		end
 	elseif (currentMapInfo.mapType == Enum.UIMapType.World) then
 		for contID, contData in pairs(continentZones) do
 			-- Every ID is a continent, get every zone on every continent;
-			local ContExpLevel = WQT_ZONE_EXPANSIONS[contID];
-			if ContExpLevel == GetExpansionLevel() or ContExpLevel == 0 then
+			--local ContExpLevel = WQT_ZONE_EXPANSIONS[contID];
+			--if ContExpLevel == GetExpansionLevel() or ContExpLevel == 0 then
 				continentZones = WQT_ZONE_MAPCOORDS[contID];
 				for zoneID, zoneData  in pairs(continentZones) do
-					local missing = self:AddQuestsInZone(zoneID, contID);
-					missingRewardData = missing or missingRewardData;
+					self:AddQuestsInZone(zoneID, contID);
 				end
-			end
+			--end
 		end
 	else
 		-- Simple zone map
-		missingRewardData = self:AddQuestsInZone(zoneId, continentId);
+		self:AddQuestsInZone(zoneId, continentId);
 	end
-	
-	return missingRewardData;
 end
 
 function WQT_QuestDataProvider:GetIterativeList()
@@ -2274,18 +2365,7 @@ end
 
 function WQT_PinHandlerMixin:UpdateFlightMapPins()
 	if not FlightMapFrame:IsShown() or WQT.settings.disablePoI then return; end
-	local missingRewardData = false;
-	local continentId = GetTaxiMapID();
-	local missingRewardData = false;
-	
-	if self.UpdateFlightMap then
-		missingRewardData = _questDataProvider:LoadQuestsInZone(continentId);
-	end
 	WQT.FlightMapList = _questDataProvider:GetKeyList()
-	-- If nothing is missing, we can stop updating until we open the map the next time
-	if not missingRewardData then
-		self.UpdateFlightMap = false
-	end
 	
 	self.pinPoolFlightMap:ReleaseAll();
 	local quest = nil;
@@ -2572,9 +2652,10 @@ end
 function WQT_ScrollListMixin:UpdateQuestFilters()
 	wipe(self.questListDisplay);
 	
+	local isfiltering = WQT:IsWorldMapFiltering() or WQT:IsFiltering();
 	for k, questInfo in ipairs(self.questList) do
 		if (not questInfo.isInvalid) then
-			questInfo.passedFilter = WQT:PassesAllFilters(questInfo)
+			questInfo.passedFilter = isfiltering and WQT:PassesAllFilters(questInfo) or not isfiltering;
 			if questInfo.passedFilter then
 				table.insert(self.questListDisplay, questInfo);
 			end
@@ -2601,7 +2682,7 @@ function WQT_ScrollListMixin:UpdateQuestList()
 	end
 end
 
-function WQT_ScrollListMixin:DisplayQuestList(skipPins)
+function WQT_ScrollListMixin:DisplayQuestList(skipPins, skipFilter)
 
 	if InCombatLockdown() or not WorldMapFrame:IsShown() or not WQT_WorldQuestFrame:IsShown() or not WQT_WorldQuestFrame.selectedTab or WQT_WorldQuestFrame.selectedTab:GetID() ~= 2 then return end
 	
@@ -2610,10 +2691,13 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 	if buttons == nil then return; end
 	
 	local mapInfo = C_Map.GetMapInfo(WorldMapFrame.mapID);
-	local shouldShowZone = mapInfo and (mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World); 
+	local shouldShowZone = WQT.settings.alwaysAllQuests or (mapInfo and (mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World)); 
 
-	self:ApplySort();
-	self:UpdateQuestFilters();
+	if not skipFilter then
+		self:UpdateQuestFilters();
+		self:ApplySort();
+		self:UpdateFilterDisplay();
+	end
 	local list = self.questListDisplay;
 	local r, g, b = 1, 1, 1;
 	local mapInfo = C_Map.GetMapInfo(WorldMapFrame.mapID);
@@ -2638,8 +2722,6 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 	if (not skipPins and mapInfo.mapType ~= Enum.UIMapType.Continent) then	
 		WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
 	end
-	
-	self:UpdateFilterDisplay();
 	
 	if (IsAddOnLoaded("Aurora")) then
 		WQT_WorldQuestFrame.Background:SetAlpha(0);
@@ -2706,10 +2788,10 @@ function WQT_CoreMixin:OnLoad()
 	self:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else print("WQT missing function for: " .. event) end end)
 	
 	self.updatePeriod = WQT_REFRESH_DEFAULT;
-	self.ticker = C_Timer.NewTicker(WQT_REFRESH_DEFAULT, function() self.ScrollFrame:UpdateQuestList(true); end)
+	self.ticker = C_Timer.NewTicker(WQT_REFRESH_DEFAULT, function() self.ScrollFrame:UpdateQuestList(); end)
 	-- Did not want this, but WorldMap_DoesWorldQuestInfoPassFilters sometimes doesn't work correctly, hiding quests
 	-- Seems to not affect performance, so I guess it's ok, just a nightmare to work around the update
-	self.refreshDisplayTicker = C_Timer.NewTicker(1, function() WQT_QuestScrollFrame:DisplayQuestList(); end)
+	--self.refreshDisplayTicker = C_Timer.NewTicker(1, function() WQT_QuestScrollFrame:DisplayQuestList(); end)
 	
 	SLASH_WQTSLASH1 = '/wqt';
 	SLASH_WQTSLASH2 = '/worldquesttab';
@@ -2928,15 +3010,17 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 			end 
 		end
 		WQT.FlightMapList = {};
-		self.pinHandler.UpdateFlightMap = true;
-		--hooksecurefunc(WQT.FlightmapPins, "OnShow", function() self.pinHandler:UpdateFlightMapPins() end);
+		-- Load quest list once on show, the dataprovider will update the rewards if needed
+		hooksecurefunc(WQT.FlightmapPins, "OnShow", function() 
+				_questDataProvider:LoadQuestsInZone(GetTaxiMapID());
+				self.pinHandler:UpdateFlightMapPins() 
+			end);
 		hooksecurefunc(WQT.FlightmapPins, "RefreshAllData", function() self.pinHandler:UpdateFlightMapPins() end);
 		hooksecurefunc(WQT.FlightmapPins, "OnHide", function() 
 				for id in pairs(WQT.FlightMapList) do
 					WQT.FlightMapList[id].id = -1;
 					WQT.FlightMapList[id] = nil;
 				end 
-				self.pinHandler.UpdateFlightMap = true;
 			end)
 
 		-- find worldmap's world quest data provider
@@ -3032,6 +3116,8 @@ function WQT_CoreMixin:SetCombatEnabled(value)
 	self:EnableMouseWheel(value);
 	WQT_QuestScrollFrame:EnableMouseWheel(value);
 	WQT_QuestScrollFrame:EnableMouse(value);
+	WQT_QuestScrollFrame.scrollBar:EnableMouseWheel(value);
+	WQT_QuestScrollFrame.scrollBar:EnableMouse(value);
 	WQT_QuestScrollFrameScrollChild:EnableMouseWheel(value);
 	WQT_QuestScrollFrameScrollChild:EnableMouse(value);
 	WQT_WorldQuestFrameSortButtonButton:EnableMouse(value);
@@ -3043,6 +3129,7 @@ function WQT_CoreMixin:SetCombatEnabled(value)
 		self.FilterButton:Disable();
 		self.sortButton:Disable();
 	end
+	--self.ScrollFrame.scrollBar:EnableMouse(value):
 	
 	self.ScrollFrame:SetButtonsEnabled(value);
 		
@@ -3050,9 +3137,10 @@ function WQT_CoreMixin:SetCombatEnabled(value)
 end
 
 function WQT_CoreMixin:SelectTab(tab)
+	--if not tab then return end;
 	-- There's a lot of shenanigans going on here with enabling/disabling the mouse due to
 	-- Addon restructions of hiding/showing frames during combat
-	local id = tab and tab:GetID() or nil;
+	local id = tab and tab:GetID() or 0;
 	if self.selectedTab ~= tab then
 		ADD:HideDropDownMenu(1);
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
@@ -3203,13 +3291,18 @@ l_debug:SetScript("OnUpdate", function(self,elapsed)
 					for i = #v, 1, -1 do
 						ts, mem = v[i]:match("(%d+)|(%d+)");
 						ts = tonumber(ts);
+						
 						mem = tonumber(mem);
-						if (t - ts> 20) then
-							table.remove(v, i);
-						elseif (ts > latest) then
-							latest = ts;
+						if ts then
+							if (t - ts> 20) then
+								table.remove(v, i);
+							elseif (ts > latest) then
+								latest = ts;
+							end
+							memtot = memtot + mem;
 						end
-						memtot = memtot + mem;
+						
+						
 					end
 						
 					if #v > 0 then
