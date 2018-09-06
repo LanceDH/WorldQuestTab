@@ -44,7 +44,7 @@ local ADD = LibStub("AddonDropDown-1.0");
 
 local _L = addon.L
 
-local _debug = true;
+local _debug = false;
 
 local _TomTomLoaded = IsAddOnLoaded("TomTom");
 local _CIMILoaded = IsAddOnLoaded("CanIMogIt");
@@ -321,14 +321,7 @@ local WQT_ZONE_MAPCOORDS = {
 		WQT_ZONE_MAPCOORDS[947][113] = {["x"] = 0.49, ["y"] = 0.13}
 		WQT_ZONE_MAPCOORDS[947][424] = {["x"] = 0.46, ["y"] = 0.92}
 	end
-	
-			
-			
-			
 
-
-	
-	
 local WQT_SORT_OPTIONS = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD}
 
 
@@ -365,7 +358,7 @@ local WQT_FACTION_DATA = {
 	,[2161] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_OrderofEmbers_Round" } -- Order of Embers
 	,[2159] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_AllianceWarEffort_Round" } -- 7th Legion
 }
-
+-- Add localized faction names
 for k, v in pairs(WQT_FACTION_DATA) do
 	v.name = GetFactionInfoByID(k);
 end
@@ -390,6 +383,7 @@ local WQT_DEFAULTS = {
 		preciseFilter = true;
 		rewardAmountColors = true;
 		alwaysAllQuests = false;
+		useLFGButtons = false;
 		filters = {
 				[1] = {["name"] = FACTION
 				, ["flags"] = {[OTHER] = false, [_L["NO_FACTION"]] = false}}
@@ -456,7 +450,7 @@ local function GetMapWQProvider()
 	if not WQT.hookedWQProvider then
 	-- We hook it here because we can't hook it during addonloaded for some reason
 	hooksecurefunc(WQT.mapWQProvider, "RefreshAllData", function(self) 
-			--WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
+			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
 			
 			-- If the pins updated and make sure the highlight is still on the correct pin
 			local parentPin = WQT_PoISelectIndicator:GetParent();
@@ -953,6 +947,8 @@ local function AddDebugToTooltip(tooltip, questInfo)
 
 end
 
+
+
 function WQT:UpdateFilterIndicator() 
 	if (InCombatLockdown()) then return; end
 	if (GetCVarBool("showTamers") and GetCVarBool("worldQuestFilterArtifactPower") and GetCVarBool("worldQuestFilterResources") and GetCVarBool("worldQuestFilterGold") and GetCVarBool("worldQuestFilterEquipment")) then
@@ -1067,7 +1063,7 @@ function WQT:InitFilter(self, level)
 				info.hasArrow = true;
 				info.notCheckable = true;
 				info.text = EXPANSION_NAME6;
-				info.value = 100;
+				info.value = 301;
 				info.func = nil;
 				ADD:AddButton(info, level)
 				
@@ -1172,12 +1168,111 @@ function WQT:InitFilter(self, level)
 				info.checked = function() return WQT.settings.preciseFilter end;
 				ADD:AddButton(info, level);	
 				
-				info.text = _L["PIN_DISABLE"];
+				
+				info.disabled = false;
+				
+				info.text = _L["SHOW_TYPE"];
+				info.tooltipTitle = _L["SHOW_TYPE"];
+				info.tooltipText = _L["SHOW_TYPE_TT"];
+				info.func = function(_, _, _, value)
+						WQT.settings.showTypeIcon = value;
+						WQT_QuestScrollFrame:DisplayQuestList(true, true);
+					end
+				info.checked = function() return WQT.settings.showTypeIcon end;
+				ADD:AddButton(info, level);		
+				
+				info.text = _L["SHOW_FACTION"];
+				info.tooltipTitle = _L["SHOW_FACTION"];
+				info.tooltipText = _L["SHOW_FACTION_TT"];
+				info.func = function(_, _, _, value)
+						WQT.settings.showFactionIcon = value;
+						WQT_QuestScrollFrame:DisplayQuestList(true, true);
+					end
+				info.checked = function() return WQT.settings.showFactionIcon end;
+				ADD:AddButton(info, level);		
+				
+				info.keepShownOnClick = true;	
+				info.text = _L["ALWAYS_ALL"];
+				info.tooltipTitle = _L["ALWAYS_ALL"];
+				info.tooltipText = _L["ALWAYS_ALL_TT"];
+				info.func = function(_, _, _, value)
+						WQT.settings.alwaysAllQuests = value;
+						WQT_QuestScrollFrame:UpdateQuestList();
+					end
+				info.checked = function() return WQT.settings.alwaysAllQuests end;
+				ADD:AddButton(info, level);		
+				
+				info.text = _L["LFG_BUTTONS"];
+				info.tooltipTitle = _L["LFG_BUTTONS"];
+				info.tooltipText = _L["LFG_BUTTONS_TT"];
+				info.func = function(_, _, _, value)
+						WQT.settings.useLFGButtons = value;
+					end
+				info.checked = function() return WQT.settings.useLFGButtons end;
+				ADD:AddButton(info, level);		
+				
+				-- TomTom compatibility
+				if _TomTomLoaded then
+					info.text = _L["USE_TOMTOM"];
+					info.tooltipTitle = _L["USE_TOMTOM"];
+					info.tooltipText = _L["USE_TOMTOM_TT"];
+					info.func = function(_, _, _, value)
+							WQT.settings.useTomTom = value;
+							WQT_QuestScrollFrame:UpdateQuestList();
+						end
+					info.checked = function() return WQT.settings.useTomTom end;
+					ADD:AddButton(info, level);	
+				end
+				
+				info.tooltipTitle = nil;
+				info.tooltipText = nil;
+				info.hasArrow = true;
+				info.notCheckable = true;
+				info.text = _L["PIN_SETTINGS"];
+				info.value = 302;
+				info.func = nil;
+				ADD:AddButton(info, level)
+			end
+		end
+	elseif level == 3 then
+		if ADD.MENU_VALUE == 301 then -- Legion factions
+			info.isNotRadio = true;
+			info.notCheckable = false;
+			info.disabled = false;
+			local options = WQT.settings.filters[1].flags;
+			local order = _filterOrders[1] 
+			local haveLabels = (WQT_TYPEFLAG_LABELS[1] ~= nil);
+			local currExp = LE_EXPANSION_LEGION;
+			for k, flagKey in pairs(order) do
+				local data = type(flagKey) == "number" and GetFactionData(flagKey) or nil;
+				if (data and data.expansion == currExp ) then
+					info.text = type(flagKey) == "number" and data.name or flagKey;
+					info.func = function(_, _, _, value)
+										options[flagKey] = value;
+										if (value) then
+											WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
+										end
+										WQT_QuestScrollFrame:DisplayQuestList();
+									end
+					info.checked = function() return options[flagKey] end;
+					ADD:AddButton(info, level);			
+				end
+			end
+		elseif ADD.MENU_VALUE == 302 then -- Map Pins
+			info.notCheckable = false;
+			info.tooltipWhileDisabled = true;
+			info.tooltipOnButton = true;
+			info.keepShownOnClick = true;	
+			info.isNotRadio = true;
+			info.notCheckable = false;
+			info.disabled = false;
+			
+			info.text = _L["PIN_DISABLE"];
 				info.tooltipTitle = _L["PIN_DISABLE"];
 				info.tooltipText = _L["PIN_DISABLE_TT"];
 				info.func = function(_, _, _, value)
 						-- Update these numbers when adding new options !
-						local start, stop = 5, 8
+						local start, stop = 2, 5;
 						WQT.settings.disablePoI = value;
 						if (value) then
 							-- Reset alpha on official pins
@@ -1191,11 +1286,11 @@ function WQT:InitFilter(self, level)
 							WQT_WorldQuestFrame.pinHandler:ReleaseAllPools();
 							
 							for i = start, stop do
-								ADD:DisableButton(2, i);
+								ADD:DisableButton(3, i);
 							end
 						else
 							for i = start, stop do
-								ADD:EnableButton(2, i);
+								ADD:EnableButton(3, i);
 							end
 						end
 						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(true)
@@ -1247,72 +1342,7 @@ function WQT:InitFilter(self, level)
 				info.checked = function() return WQT.settings.showPinTime end;
 				ADD:AddButton(info, level);
 				
-				info.disabled = false;
-				
-				info.text = _L["SHOW_TYPE"];
-				info.tooltipTitle = _L["SHOW_TYPE"];
-				info.tooltipText = _L["SHOW_TYPE_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.showTypeIcon = value;
-						WQT_QuestScrollFrame:UpdateQuestList();
-					end
-				info.checked = function() return WQT.settings.showTypeIcon end;
-				ADD:AddButton(info, level);		
-				
-				info.text = _L["SHOW_FACTION"];
-				info.tooltipTitle = _L["SHOW_FACTION"];
-				info.tooltipText = _L["SHOW_FACTION_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.showFactionIcon = value;
-						WQT_QuestScrollFrame:UpdateQuestList();
-					end
-				info.checked = function() return WQT.settings.showFactionIcon end;
-				ADD:AddButton(info, level);		
-				
-				info.text = _L["ALWAYS_ALL"];
-				info.tooltipTitle = _L["ALWAYS_ALL"];
-				info.tooltipText = _L["ALWAYS_ALL_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.alwaysAllQuests = value;
-						WQT_QuestScrollFrame:UpdateQuestList();
-					end
-				info.checked = function() return WQT.settings.alwaysAllQuests end;
-				ADD:AddButton(info, level);		
-				
-				-- TomTom compatibility
-				if _TomTomLoaded then
-					info.text = "Use TomTom";
-					info.tooltipTitle = "";
-					info.func = function(_, _, _, value)
-							WQT.settings.useTomTom = value;
-							WQT_QuestScrollFrame:UpdateQuestList();
-						end
-					info.checked = function() return WQT.settings.useTomTom end;
-					ADD:AddButton(info, level);	
-				end
-			end
-		end
-	elseif level == 3 then
-		info.isNotRadio = true;
-		info.notCheckable = false;
-		local options = WQT.settings.filters[1].flags;
-		local order = _filterOrders[1] 
-		local haveLabels = (WQT_TYPEFLAG_LABELS[1] ~= nil);
-		local currExp = LE_EXPANSION_LEGION;
-		for k, flagKey in pairs(order) do
-			local data = type(flagKey) == "number" and GetFactionData(flagKey) or nil;
-			if (data and data.expansion == currExp ) then
-				info.text = type(flagKey) == "number" and data.name or flagKey;
-				info.func = function(_, _, _, value)
-									options[flagKey] = value;
-									if (value) then
-										WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
-									end
-									WQT_QuestScrollFrame:DisplayQuestList();
-								end
-				info.checked = function() return options[flagKey] end;
-				ADD:AddButton(info, level);			
-			end
+			
 		end
 	end
 
@@ -1399,38 +1429,27 @@ function WQT:InitTrackDropDown(self, level)
 			info.text = UNTRACK_QUEST;
 			info.func = function(_, _, _, value)
 						RemoveWorldQuestWatch(questId);
-						WQT_QuestScrollFrame:DisplayQuestList();
+						if WQT_WorldQuestFrame:GetAlpha() > 0 then 
+							WQT_QuestScrollFrame:DisplayQuestList();
+						end
 					end
 		else
 			info.text = TRACK_QUEST;
 			info.func = function(_, _, _, value)
 						AddWorldQuestWatch(questId, true);
-						WQT_QuestScrollFrame:DisplayQuestList();
+						if WQT_WorldQuestFrame:GetAlpha() > 0 then 
+							WQT_QuestScrollFrame:DisplayQuestList();
+						end
 					end
 		end	
 		ADD:AddButton(info, level)
 		
 		
 		-- LFG if possible
-		if (questInfo.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and questInfo.type ~= LE_QUEST_TAG_TYPE_DUNGEON  and questInfo.type ~= LE_QUEST_TAG_TYPE_PROFESSION and questInfo.type ~= LE_QUEST_TAG_TYPE_RAID) then
+		if WQT_WorldQuestFrame:ShouldAllowLFG(questInfo) then -- (questInfo.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and questInfo.type ~= LE_QUEST_TAG_TYPE_DUNGEON  and questInfo.type ~= LE_QUEST_TAG_TYPE_PROFESSION and questInfo.type ~= LE_QUEST_TAG_TYPE_RAID) then
 			info.text = OBJECTIVES_FIND_GROUP;
 			info.func = function()
-				WQT_GroupSearch:Hide();
-				LFGListUtil_FindQuestGroup(questId);
-				if (not C_LFGList.CanCreateQuestGroup(questId)) then
-					WQT_GroupSearch:SetParent(LFGListFrame.SearchPanel.SearchBox);
-					WQT_GroupSearch:SetFrameLevel(LFGListFrame.SearchPanel.SearchBox:GetFrameLevel()+5);
-					WQT_GroupSearch:ClearAllPoints();
-					WQT_GroupSearch:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "BOTTOMLEFT", -2, -3);
-					WQT_GroupSearch:SetPoint("RIGHT", LFGListFrame.SearchPanel, "RIGHT", -30, 0);
-				
-					WQT_GroupSearch.Text:SetText(_L["FORMAT_GROUP_SEARCH"]:format(questInfo.questId, questInfo.title));
-					WQT_GroupSearch.downArrow = false;
-					WQT_GroupSearch:Show();
-					
-					WQT_GroupSearch.questId = questId;
-					WQT_GroupSearch.title = questInfo.title;
-				end
+				WQT_WorldQuestFrame:SearchGroup(questInfo);
 			end
 			ADD:AddButton(info, level);
 		end
@@ -1582,6 +1601,29 @@ function WQT:OnEnable()
 	end
 	
 	WQT_WorldQuestFrame:SelectTab((UnitLevel("player") >= 110 and self.settings.defaultTab) and WQT_TabWorld or WQT_TabNormal);
+	
+	-- Add LFG buttons to objective tracker
+	if self.settings.useLFGButtons then
+		WQT_WorldQuestFrame.LFGButtonPool = CreateFramePool("BUTTON", Test_Frame, "WQT_LFGEyeButtonTemplate");
+	
+		hooksecurefunc("QuestObjectiveSetupBlockButton_FindGroup", function(block, questID) 
+				-- release button if it exists
+				if (block.WQTButton) then
+					WQT_WorldQuestFrame.LFGButtonPool:Release(block.WQTButton);
+					block.WQTButton = nil;
+				end
+				
+				if not block.rightButton and QuestUtils_IsQuestWorldQuest(questID) then
+					if WQT_WorldQuestFrame:ShouldAllowLFG(questID) then
+						local button = WQT_WorldQuestFrame.LFGButtonPool:Acquire();
+						button.questId = questID;
+						button:SetParent(block);
+						QuestObjectiveSetupBlockButton_AddRightButton(block, button, block.module.buttonOffsets.groupFinder);
+						block.WQTButton = button;
+					end
+				end
+			end);
+	end
 end
 
 
@@ -1613,7 +1655,9 @@ function WQT_ListButtonMixin:OnClick(button)
 			AddWorldQuestWatch(self.questId);
 		end
 		WorldMapFrame:SetMapID(self.zoneId);
-		WQT_QuestScrollFrame:DisplayQuestList();
+		if WQT_WorldQuestFrame:GetAlpha() > 0 then 
+			WQT_QuestScrollFrame:DisplayQuestList();
+		end
 		
 	elseif button == "RightButton" then
 
@@ -1994,7 +2038,9 @@ function WQT_QuestDataProvider:OnLoad()
 			if updatedData then
 				WQT_QuestScrollFrame:ApplySort();
 				WQT_QuestScrollFrame:UpdateQuestFilters();
-				WQT_QuestScrollFrame:DisplayQuestList(true, true);
+				if WQT_WorldQuestFrame:GetAlpha() > 0 then 
+					WQT_QuestScrollFrame:DisplayQuestList(true, true);
+				end
 				WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
 			end
 		end)
@@ -2675,7 +2721,7 @@ function WQT_ScrollListMixin:UpdateQuestList()
 	self:UpdateQuestFilters();
 
 	self:ApplySort();
-	if not InCombatLockdown() then
+	if not InCombatLockdown() and WQT_WorldQuestFrame:GetAlpha() > 0 then 
 		self:DisplayQuestList();
 	else
 		WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
@@ -2684,7 +2730,7 @@ end
 
 function WQT_ScrollListMixin:DisplayQuestList(skipPins, skipFilter)
 
-	if InCombatLockdown() or not WorldMapFrame:IsShown() or not WQT_WorldQuestFrame:IsShown() or not WQT_WorldQuestFrame.selectedTab or WQT_WorldQuestFrame.selectedTab:GetID() ~= 2 then return end
+	if InCombatLockdown() or not WorldMapFrame:IsShown() or WQT_WorldQuestFrame:GetAlpha() < 1 or not WQT_WorldQuestFrame.selectedTab or WQT_WorldQuestFrame.selectedTab:GetID() ~= 2 then return end
 	
 	local offset = HybridScrollFrame_GetOffset(self);
 	local buttons = self.buttons;
@@ -2890,7 +2936,9 @@ function WQT_CoreMixin:OnLoad()
 	
 	hooksecurefunc(bountyBoard, "OnTabClick", function(tab) 
 		WQT.settings.emissaryOnly = true;
-		WQT_QuestScrollFrame:DisplayQuestList();
+		if WQT_WorldQuestFrame:GetAlpha() > 0 then 
+			WQT_QuestScrollFrame:DisplayQuestList();
+		end
 	end)
 	
 	-- Show hightlight in list when hovering over PoI
@@ -2898,7 +2946,9 @@ function WQT_CoreMixin:OnLoad()
 			if (WQT.settings.disablePoI) then return; end
 			if (self.questID ~= WQT_QuestScrollFrame.PoIHoverId) then
 				WQT_QuestScrollFrame.PoIHoverId = self.questID;
-				WQT_QuestScrollFrame:DisplayQuestList(true);
+				if WQT_WorldQuestFrame:GetAlpha() > 0 then 
+					WQT_QuestScrollFrame:DisplayQuestList(true);
+				end
 			end
 			self.notTracked = not QuestIsWatched(self.questID);
 		end)
@@ -2906,7 +2956,9 @@ function WQT_CoreMixin:OnLoad()
 	hooksecurefunc("TaskPOI_OnLeave", function(self)
 			if (WQT.settings.disablePoI) then return; end
 			WQT_QuestScrollFrame.PoIHoverId = -1;
-			WQT_QuestScrollFrame:DisplayQuestList(true);
+			if WQT_WorldQuestFrame:GetAlpha() > 0 then 
+				WQT_QuestScrollFrame:DisplayQuestList(true);
+			end
 			self.notTracked = nil;
 		end)
 		
@@ -2955,6 +3007,9 @@ function WQT_CoreMixin:OnLoad()
 				WQT_GroupSearch:Show();
 			end
 		end)
+	local test = {15, 4};	
+	
+
 
 	-- Shift questlog around to make room for the tabs
 	local a,b,c,d =QuestMapFrame:GetPoint(1);
@@ -2994,6 +3049,45 @@ function WQT_CoreMixin:FilterClearButtonOnClick()
 		WQT:SetAllFilterTo(k, false);
 	end
 	self.ScrollFrame:UpdateQuestList();
+end
+
+function WQT_CoreMixin:SearchGroup(questInfo)
+	local id, title;
+	if (type(questInfo) == "number") then
+		id = questInfo;
+		title = C_TaskQuest.GetQuestInfoByQuestID(id);
+	else
+		id = questInfo.questId;
+		title = questInfo.title;
+	end
+	
+	WQT_GroupSearch:Hide();
+	LFGListUtil_FindQuestGroup(id);
+	if (not C_LFGList.CanCreateQuestGroup(id)) then
+		WQT_GroupSearch:SetParent(LFGListFrame.SearchPanel.SearchBox);
+		WQT_GroupSearch:SetFrameLevel(LFGListFrame.SearchPanel.SearchBox:GetFrameLevel()+5);
+		WQT_GroupSearch:ClearAllPoints();
+		WQT_GroupSearch:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "BOTTOMLEFT", -2, -3);
+		WQT_GroupSearch:SetPoint("RIGHT", LFGListFrame.SearchPanel, "RIGHT", -30, 0);
+	
+		WQT_GroupSearch.Text:SetText(_L["FORMAT_GROUP_SEARCH"]:format(id, title));
+		WQT_GroupSearch.downArrow = false;
+		WQT_GroupSearch:Show();
+		
+		WQT_GroupSearch.questId = id;
+		WQT_GroupSearch.title = title;
+	end
+end
+
+function WQT_CoreMixin:ShouldAllowLFG(questInfo)
+	local questType;
+	if type(questInfo) == "number" then
+		questType = select(3, GetQuestTagInfo(questInfo));
+	else 
+		questType = questInfo.type;
+	end
+	
+	return not (questType == LE_QUEST_TAG_TYPE_PET_BATTLE or questType == LE_QUEST_TAG_TYPE_DUNGEON or questType == LE_QUEST_TAG_TYPE_PROFESSION or questType == LE_QUEST_TAG_TYPE_RAID);
 end
 
 function WQT_CoreMixin:ADDON_LOADED(loaded)
@@ -3081,8 +3175,9 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 			self.trackedQuests[k] = true
 		end
 	end
-	
-	self.ScrollFrame:DisplayQuestList();
+	if WQT_WorldQuestFrame:GetAlpha() > 0 then 
+		self.ScrollFrame:DisplayQuestList();
+	end
 end
 
 function WQT_CoreMixin:SetCvarValue(flagKey, value)
@@ -3090,7 +3185,9 @@ function WQT_CoreMixin:SetCvarValue(flagKey, value)
 
 	if WQT_CVAR_LIST[flagKey] then
 		SetCVar(WQT_CVAR_LIST[flagKey], value);
-		self.ScrollFrame:DisplayQuestList();
+		if WQT_WorldQuestFrame:GetAlpha() > 0 then 
+			self.ScrollFrame:DisplayQuestList();
+		end
 		WQT:UpdateFilterIndicator();
 		return true;
 	end
@@ -3187,7 +3284,9 @@ function WQT_CoreMixin:SelectTab(tab)
 		WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
 		WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
 		HideUIPanel(QuestScrollFrame);
-		self.ScrollFrame:DisplayQuestList();
+		if WQT_WorldQuestFrame:GetAlpha() > 0 then 
+			self.ScrollFrame:DisplayQuestList();
+		end
 		if not InCombatLockdown() then
 			self:SetFrameLevel(self:GetParent():GetFrameLevel()+3);
 			self:SetCombatEnabled(true);

@@ -5,6 +5,7 @@ local locale = GetLocale();
 
 L["IS_AZIAN_CLIENT"]	= false
 
+L["PIN_SETTINGS"]	= "Map Pin Settings";
 L["COMBATLOCK"]		= "Disabled during combat.";
 L["FILTER"] 		= "Filter: %s";
 L["OPTIONS_INFO"] 	= "[WQT] Options can be found under the filter button."
@@ -30,8 +31,12 @@ L["SHOW_FACTION"]	= "Show Faction";
 L["SHOW_FACTION_TT"]	= "Show faction icon in the quest list.";
 L["PRECISE_FILTER"]	= "Precise Filter";
 L["PRECISE_FILTER_TT"]	= "Filtering only shows quests matching all filter categories, rather than just any of the categories.";
-L["ALWAYS_ALL"] = "Always All Quests"
-L["ALWAYS_ALL_TT"] = "Always show all quests for all expansion zones related to the current zone";
+L["ALWAYS_ALL"]		= "Always All Quests"
+L["ALWAYS_ALL_TT"]	= "Always show all quests for the expansion related to the current zone";
+L["LFG_BUTTONS"]	= "Enable LFG Buttons"
+L["LFG_BUTTONS_TT"]	= "Add LFG buttons to world quests in the objective tracker. Enabling this setting can cause an increase in memory and CPU usage. |cFFFF5555A reload is required for this setting to take effect.|r"
+L["USE_TOMTOM"]		= "Allow TomTom"
+L["USE_TOMTOM_TT"]	= "Add TomTom functionality to the add-on."
 
 L["TYPE_INVASION"]	= "Invasion";
 L["TYPE_EMISSARY"]	= "Emissary";
