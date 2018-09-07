@@ -16,7 +16,7 @@
 -- title					[string] quest title
 -- faction				[string] faction name
 -- isElite				[boolean] is elite quest
--- isInvalid			[boolean, nullable] true if the quest is invalid. Hard to explain, there's just invalid quests.
+-- isValid			[boolean, nullable] true if the quest is valid. Hard to explain, there's just invalid quests.
 -- time					[table] time related values
 -- 	short				[string] short time string (6H)
 -- 	full				[string] long time string (6 Hours)
@@ -1446,7 +1446,7 @@ function WQT:InitTrackDropDown(self, level)
 		
 		
 		-- LFG if possible
-		if WQT_WorldQuestFrame:ShouldAllowLFG(questInfo) then -- (questInfo.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and questInfo.type ~= LE_QUEST_TAG_TYPE_DUNGEON  and questInfo.type ~= LE_QUEST_TAG_TYPE_PROFESSION and questInfo.type ~= LE_QUEST_TAG_TYPE_RAID) then
+		if WQT_WorldQuestFrame:ShouldAllowLFG(questInfo) then
 			info.text = OBJECTIVES_FIND_GROUP;
 			info.func = function()
 				WQT_WorldQuestFrame:SearchGroup(questInfo);
@@ -1483,7 +1483,6 @@ function WQT:IsFiltering()
 end
 
 function WQT:isUsingFilterNr(id)
-	-- TODO see if we can change this to only check once every time we go through all quests
 	if not WQT.settings.filters[id] then return false end
 	local flags = WQT.settings.filters[id].flags;
 	for k, flag in pairs(flags) do
@@ -1662,7 +1661,7 @@ function WQT_ListButtonMixin:OnClick(button)
 	elseif button == "RightButton" then
 
 		if WQT_TrackDropDown:GetParent() ~= self then
-			 -- If the dropdown is linked to another button, we must move and close it first
+			-- If the dropdown is linked to another button, we must move and close it first
 			WQT_TrackDropDown:SetParent(self);
 			ADD:HideDropDownMenu(1);
 		end
@@ -2017,7 +2016,7 @@ local function QuestResetFunc(pool, questInfo)
 end
 
 function WQT_QuestDataProvider:OnLoad()
-	self.pool = CreateObjectPool(QuestCreationFunc, QuestResetFunc);
+	self.pool = CreateObjectPool(QuestCreationFunc);--, QuestResetFunc);
 	self.iterativeList = {};
 	self.keyList = {};
 	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room
@@ -2087,73 +2086,77 @@ end
 
 function WQT_QuestDataProvider:SetQuestReward(questInfo)
 	local reward = questInfo.reward;
-	local _, texture, numItems, quality, rewardType, color, rewardId, itemId, canUpgrade = nil, nil, 0, 1, 0, WQT_COLOR_MISSING, nil, nil, nil;
+	local _, texture, numItems, quality, rewardType, color, rewardId, itemId, canUpgrade = nil, nil, 0, 1, WQT_REWARDTYPE.missing, WQT_COLOR_MISSING, nil, nil, nil;
 	
-	if GetNumQuestLogRewards(questInfo.questId) > 0 then
-		_, texture, numItems, quality, _, itemId = GetQuestLogRewardInfo(1, questInfo.questId);
-		if itemId then
-			local itemType = select(6, GetItemInfo(itemId));
-			if (itemType == ARMOR or itemType == WEAPON) then -- Gear
-				local result = self:ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+?)$");
-				if result then
-					numItems = tonumber(result:match("(%d+)"));
-					canUpgrade = result:match("(%+)") and true;
+	local haveData = HaveQuestRewardData(questInfo.questId);
+	
+	if haveData then
+		if GetNumQuestLogRewards(questInfo.questId) > 0 then
+			_, texture, numItems, quality, _, itemId = GetQuestLogRewardInfo(1, questInfo.questId);
+			if itemId then
+				local itemType = select(6, GetItemInfo(itemId));
+				if (itemType == ARMOR or itemType == WEAPON) then -- Gear
+					local result = self:ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+?)$");
+					if result then
+						numItems = tonumber(result:match("(%d+)"));
+						canUpgrade = result:match("(%+)") and true;
+					end
+					rewardType = WQT_REWARDTYPE.equipment;
+					color = WQT_COLOR_ARMOR;
+				elseif IsArtifactRelicItem(itemId) then
+					-- Because getting a link of the itemID only shows the base item
+					numItems = tonumber(self:ScanTooltipRewardForPattern(questInfo.questId, "^%+(%d+)"));
+					rewardType = WQT_REWARDTYPE.relic;	
+					color = WQT_COLOR_RELIC;
+				else	-- Normal items
+					rewardType = WQT_REWARDTYPE.item;
+					color = WQT_COLOR_ITEM;
 				end
-				rewardType = WQT_REWARDTYPE.equipment;
-				color = WQT_COLOR_ARMOR;
-			elseif IsArtifactRelicItem(itemId) then
-				-- Because getting a link of the itemID only shows the base item
-				numItems = tonumber(self:ScanTooltipRewardForPattern(questInfo.questId, "^%+(%d+)"));
-				rewardType = WQT_REWARDTYPE.relic;	
-				color = WQT_COLOR_RELIC;
-			else	-- Normal items
-				rewardType = WQT_REWARDTYPE.item;
-				color = WQT_COLOR_ITEM;
 			end
-		end
-	elseif GetQuestLogRewardHonor(questInfo.questId) > 0 then
-		numItems = GetQuestLogRewardHonor(questInfo.questId);
-		texture = WQT_HONOR;
-		color = WQT_COLOR_HONOR;
-		rewardType = WQT_REWARDTYPE.honor;
-	elseif GetQuestLogRewardMoney(questInfo.questId) > 0 then
-		numItems = floor(abs(GetQuestLogRewardMoney(questInfo.questId) / 10000))
-		texture = "Interface/ICONS/INV_Misc_Coin_01";
-		rewardType = WQT_REWARDTYPE.gold;
-		color = WQT_COLOR_GOLD;
-	elseif GetNumQuestLogRewardCurrencies(questInfo.questId) > 0 then
-		_, texture, numItems, rewardId = GetQuestLogRewardCurrencyInfo(GetNumQuestLogRewardCurrencies(questInfo.questId), questInfo.questId)
-		-- Because azerite is currency but is treated as an item
-		local azuriteID = C_CurrencyInfo.GetAzeriteCurrencyID();
-		if rewardId ~= azuriteID then
-			local name, _, apTex, _, _, _, _, apQuality = GetCurrencyInfo(rewardId);
-			name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(rewardId, numItems, name, texture, apQuality); 
-			
-			if	C_CurrencyInfo.GetFactionGrantedByCurrency(rewardId) then
-				rewardType = WQT_REWARDTYPE.reputation;
-				quality = 0;
+		elseif GetQuestLogRewardHonor(questInfo.questId) > 0 then
+			numItems = GetQuestLogRewardHonor(questInfo.questId);
+			texture = WQT_HONOR;
+			color = WQT_COLOR_HONOR;
+			rewardType = WQT_REWARDTYPE.honor;
+		elseif GetQuestLogRewardMoney(questInfo.questId) > 0 then
+			numItems = floor(abs(GetQuestLogRewardMoney(questInfo.questId) / 10000))
+			texture = "Interface/ICONS/INV_Misc_Coin_01";
+			rewardType = WQT_REWARDTYPE.gold;
+			color = WQT_COLOR_GOLD;
+		elseif GetNumQuestLogRewardCurrencies(questInfo.questId) > 0 then
+			_, texture, numItems, rewardId = GetQuestLogRewardCurrencyInfo(GetNumQuestLogRewardCurrencies(questInfo.questId), questInfo.questId)
+			-- Because azerite is currency but is treated as an item
+			local azuriteID = C_CurrencyInfo.GetAzeriteCurrencyID();
+			if rewardId ~= azuriteID then
+				local name, _, apTex, _, _, _, _, apQuality = GetCurrencyInfo(rewardId);
+				name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(rewardId, numItems, name, texture, apQuality); 
+				
+				if	C_CurrencyInfo.GetFactionGrantedByCurrency(rewardId) then
+					rewardType = WQT_REWARDTYPE.reputation;
+					quality = 0;
+				else
+					rewardType = WQT_REWARDTYPE.currency;
+				end
+				
+				color = WQT_COLOR_CURRENCY;
 			else
-				rewardType = WQT_REWARDTYPE.currency;
+				-- We want azerite to act like AP
+				local name, _, apTex, _, _, _, _, apQuality = GetCurrencyInfo(azuriteID);
+				name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(azuriteID, numItems, name, texture, apQuality); 
+				
+				rewardType = WQT_REWARDTYPE.artifact;
+				color = WQT_COLOR_ARTIFACT;
 			end
-			
-			color = WQT_COLOR_CURRENCY;
-		else
-			-- We want azerite to act like AP
-			local name, _, apTex, _, _, _, _, apQuality = GetCurrencyInfo(azuriteID);
-			name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(azuriteID, numItems, name, texture, apQuality); 
-			
-			rewardType = WQT_REWARDTYPE.artifact;
-			color = WQT_COLOR_ARTIFACT;
+		elseif haveData and GetQuestLogRewardXP(questInfo.questId) > 0 then
+			numItems = GetQuestLogRewardXP(questInfo.questId);
+			texture = WQT_EXPERIENCE;
+			color = WQT_COLOR_ITEM;
+			rewardType = WQT_REWARDTYPE.xp;
+		elseif GetNumQuestLogRewards(questInfo.questId) == 0 then
+			texture = "";
+			color = WQT_COLOR_ITEM;
+			rewardType = WQT_REWARDTYPE.none;
 		end
-	elseif haveData and GetQuestLogRewardXP(questInfo.questId) > 0 then
-		numItems = GetQuestLogRewardXP(questInfo.questId);
-		texture = WQT_EXPERIENCE;
-		color = WQT_COLOR_ITEM;
-		rewardType = WQT_REWARDTYPE.xp;
-	elseif GetNumQuestLogRewards(questInfo.questId) == 0 then
-		texture = "";
-		color = WQT_COLOR_ITEM;
-		rewardType = WQT_REWARDTYPE.none;
 	end
 	
 	questInfo.rewardId = itemId; -- deprecated
@@ -2170,6 +2173,8 @@ function WQT_QuestDataProvider:SetQuestReward(questInfo)
 	questInfo.reward.type = rewardType or 0;
 	questInfo.reward.color = color;
 	questInfo.reward.canUpgrade = canUpgrade;
+	
+	return haveData;
 end
 
 function WQT_QuestDataProvider:SetSubReward(questInfo) 
@@ -2215,7 +2220,6 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 		return duplicate;
 	end
 
-	local haveData = HaveQuestRewardData(qInfo.questId);
 	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(qInfo.questId);
 	
 	worldQuestType = not QuestUtils_IsQuestWorldQuest(qInfo.questId) and WQT_TYPE_BONUSOBJECTIVE or worldQuestType;
@@ -2257,19 +2261,20 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	questInfo.passedFilter = true;
 	questInfo.isCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(qInfo.questId);
 	
-	self:SetQuestReward(questInfo);
-	-- If the quest as a second reward e.g. Mark of Honor + Honor points
-	self:SetSubReward(questInfo);
+	local haveRewardData = self:SetQuestReward(questInfo);
+	if haveRewardData then
+		-- If the quest as a second reward e.g. Mark of Honor + Honor points
+		self:SetSubReward(questInfo);
+	end
 	
 	-- Filter out invalid quests like "Tracking Quest" in nazmir, to prevent them from triggering the missing data refresh
-	questInfo.isInvalid = not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) and questInfo.time.minutes == 0 and questInfo.reward.type == WQT_REWARDTYPE.none and not questInfo.factionId;
+	questInfo.isValid = not (not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) and questInfo.time.minutes == 0 and questInfo.reward.type == WQT_REWARDTYPE.missing and not questInfo.factionId);
 	
-	if _debug and questInfo.isInvalid then
+	if _debug and not questInfo.isValid then
 		print("|cFFFF0000 Invalid: " .. questInfo.title  .. " (" .. questInfo.mapInfo.name .. ")" .."|r")
 	end
 	
-	if not haveData and not questInfo.isInvalid then
-		questInfo.reward.type = WQT_REWARDTYPE.missing;
+	if not haveRewardData and questInfo.isValid then
 		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
 		tinsert(self.waitingRoomRewards, questInfo);
 		return nil;
@@ -2303,8 +2308,11 @@ function WQT_QuestDataProvider:LoadQuestsInZone(zoneId)
 	if (FlightMapFrame and FlightMapFrame:IsShown()) then 
 		zoneId = GetTaxiMapID();
 	end
-	local continentZones = WQT_ZONE_MAPCOORDS[zoneId];
+	
 	local currentMapInfo = C_Map.GetMapInfo(zoneId);
+	if not currentMapInfo then return end;
+	
+	local continentZones = WQT_ZONE_MAPCOORDS[zoneId];
 	local continentId = currentMapInfo.parentMapID;
 	local missingRewardData = false;
 	local questsById, quest;
@@ -2344,14 +2352,11 @@ function WQT_QuestDataProvider:LoadQuestsInZone(zoneId)
 		end
 	elseif (currentMapInfo.mapType == Enum.UIMapType.World) then
 		for contID, contData in pairs(continentZones) do
-			-- Every ID is a continent, get every zone on every continent;
-			--local ContExpLevel = WQT_ZONE_EXPANSIONS[contID];
-			--if ContExpLevel == GetExpansionLevel() or ContExpLevel == 0 then
-				continentZones = WQT_ZONE_MAPCOORDS[contID];
-				for zoneID, zoneData  in pairs(continentZones) do
-					self:AddQuestsInZone(zoneID, contID);
-				end
-			--end
+			-- Every ID is a continent, get every zone on every continent
+			continentZones = WQT_ZONE_MAPCOORDS[contID];
+			for zoneID, zoneData  in pairs(continentZones) do
+				self:AddQuestsInZone(zoneID, contID);
+			end
 		end
 	else
 		-- Simple zone map
@@ -2483,7 +2488,7 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 	local showIcon = WQT.settings.showPinReward and (quest.reward.type == WQT_REWARDTYPE.missing or quest.reward.texture ~= "")
 	self.Icon:SetAlpha(showIcon and 1 or 0);
 	if quest.reward.type == WQT_REWARDTYPE.missing or quest.reward.type == WQT_REWARDTYPE.none then
-		SetPortraitToTexture(self.Icon, "Interface/DialogFrame/UI-DialogBox-Background-Dark");--WQT_QUESTIONMARK);
+		SetPortraitToTexture(self.Icon, "Interface/DialogFrame/UI-DialogBox-Background-Dark");
 	else
 		SetPortraitToTexture(self.Icon, quest.reward.texture);
 	end
@@ -2524,6 +2529,10 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 	if (not questInfo.questId or not HaveQuestData(questInfo.questId)) then
 		WQT_Tooltip:SetText(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
 		WQT_Tooltip.recalculatePadding = true;
+			-- Add debug lines
+	if _debug then
+		AddDebugToTooltip(WQT_Tooltip, questInfo);
+	end
 		WQT_Tooltip:Show();
 		return;
 	end
@@ -2593,6 +2602,11 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 			end
 		end
 	end
+	
+	-- Add debug lines
+	if _debug then
+		AddDebugToTooltip(WQT_Tooltip, questInfo);
+	end
 
 	-- CanIMogIt functionality
 	-- Partial copy of addToTooltip in tooltips.lua
@@ -2617,11 +2631,6 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 				end
 			end
 		end
-	end
-	
-	-- Add debug lines
-	if _debug then
-		AddDebugToTooltip(WQT_Tooltip, questInfo);
 	end
 
 	WQT_Tooltip:Show();
@@ -2700,7 +2709,7 @@ function WQT_ScrollListMixin:UpdateQuestFilters()
 	
 	local isfiltering = WQT:IsWorldMapFiltering() or WQT:IsFiltering();
 	for k, questInfo in ipairs(self.questList) do
-		if (not questInfo.isInvalid) then
+		if (questInfo.isValid) then
 			questInfo.passedFilter = isfiltering and WQT:PassesAllFilters(questInfo) or not isfiltering;
 			if questInfo.passedFilter then
 				table.insert(self.questListDisplay, questInfo);
@@ -2832,13 +2841,11 @@ function WQT_CoreMixin:OnLoad()
 	self:RegisterEvent("ADDON_LOADED");
 	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
 	self:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else print("WQT missing function for: " .. event) end end)
-	
-	self.updatePeriod = WQT_REFRESH_DEFAULT;
+
+	-- Refresh the list every 60 seconds to update time remaining and check for new quests.
+	-- I want this replaced with a function hook or event call. QUEST_LOG_UPDATE triggers too often
 	self.ticker = C_Timer.NewTicker(WQT_REFRESH_DEFAULT, function() self.ScrollFrame:UpdateQuestList(); end)
-	-- Did not want this, but WorldMap_DoesWorldQuestInfoPassFilters sometimes doesn't work correctly, hiding quests
-	-- Seems to not affect performance, so I guess it's ok, just a nightmare to work around the update
-	--self.refreshDisplayTicker = C_Timer.NewTicker(1, function() WQT_QuestScrollFrame:DisplayQuestList(); end)
-	
+
 	SLASH_WQTSLASH1 = '/wqt';
 	SLASH_WQTSLASH2 = '/worldquesttab';
 	SlashCmdList["WQTSLASH"] = slashcmd
