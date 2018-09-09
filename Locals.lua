@@ -39,7 +39,8 @@ L["USE_TOMTOM"]		= "Allow TomTom"
 L["USE_TOMTOM_TT"]	= "Add TomTom functionality to the add-on."
 
 L["TYPE_INVASION"]	= "Invasion";
-L["TYPE_EMISSARY"]	= "Emissary";
+L["TYPE_EMISSARY"]	= "Emissary Only";
+L["TYPE_EMISSARY_TT"]	= "Show only quests for the currently selected emissary. This filter overwrites all other filters.";
 
 L["TRACKDD_TOMTOM"]	= "TomTom add"
 L["TRACKDD_TOMTOM_REMOVE"]	= "TomTom remove"

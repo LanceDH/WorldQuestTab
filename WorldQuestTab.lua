@@ -6,36 +6,36 @@
 -- New info structure
 --
 -- factionId			[number, nullable] factionId, null if no faction
--- expansionLevel	[number] expansion it belongs to
+-- expansionLevel		[number] expansion it belongs to
 -- isCriteria			[boolean] is part of currently selected amissary
--- passedFilter		[boolean] passed current filters
+-- passedFilter			[boolean] passed current filters
 -- type					[number] type of quest
 -- questId				[number] questId
--- rarity					[number] quest rarity; normal, rare, epic
--- numObjetives		[number] number of objectives
--- title					[string] quest title
+-- rarity				[number] quest rarity; normal, rare, epic
+-- numObjetives			[number] number of objectives
+-- title				[string] quest title
 -- faction				[string] faction name
 -- isElite				[boolean] is elite quest
--- isValid			[boolean, nullable] true if the quest is valid. Hard to explain, there's just invalid quests.
+-- isValid				[boolean, nullable] true if the quest is valid. Quest can be invalid if they are awaiting data or are an actual invalid quest (Don't ask).
 -- time					[table] time related values
--- 	short				[string] short time string (6H)
--- 	full				[string] long time string (6 Hours)
+--		short			[string] short time string (6H)
+-- 		full			[string] long time string (6 Hours)
 --		minutes			[number] minutes remaining
---		color				[color] color of time string
--- mapInfo			[table] zone related values
---		mapType		[number] map type, see official Enum.UIMapType
+--		color			[color] color of time string
+-- mapInfo				[table] zone related values
+--		mapType			[number] map type, see official Enum.UIMapType
 --		mapID			[number] mapID, uses capital 'ID' because Blizzard
--- 	name			[string] zone name
+-- 	name				[string] zone name
 --		mapX			[number] x pin position
 --		mapY			[number] y pin position
---		parentMapID	[number] parentmapID, uses capital 'ID' because Blizzard
+--		parentMapID		[number] parentmapID, uses capital 'ID' because Blizzard
 -- reward				[number] reward related values
---		type				[number] reward type, see WQT_REWARDTYPE below
+--		type			[number] reward type, see WQT_REWARDTYPE below
 --		texture			[number/string] texture of the reward. can be string for things like gold or unknown reward
 --		amount			[amount] amount of items, gold, rep, or item level
---		id					[number, nullable] itemId for reward. null if not an item
+--		id				[number, nullable] itemId for reward. null if not an item
 --		quality			[number] item quality; common, rare, epic, etc
---		canUpgrade	[boolean, nullable] true if item has a chance to upgrade (e.g. ilvl 285+)
+--		canUpgrade		[boolean, nullable] true if item has a chance to upgrade (e.g. ilvl 285+)
 
 local addonName, addon = ...
 
@@ -48,6 +48,7 @@ local _debug = false;
 
 local _TomTomLoaded = IsAddOnLoaded("TomTom");
 local _CIMILoaded = IsAddOnLoaded("CanIMogIt");
+local _WFMLoaded = IsAddOnLoaded("WorldFlightMap");
 
 WQT_GROUP_INFO = _L["GROUP_SEARCH_INFO"];
 
@@ -407,7 +408,9 @@ local _filterOrders = {}
 
 ------------------------------------------------------------
 
-
+local function debugPrint(...)
+	if _debug then print(...) end
+end
 
 local function QuestIsWatched(questID)
 	for i=1, GetNumWorldQuestWatches() do 
@@ -450,8 +453,6 @@ local function GetMapWQProvider()
 	if not WQT.hookedWQProvider then
 	-- We hook it here because we can't hook it during addonloaded for some reason
 	hooksecurefunc(WQT.mapWQProvider, "RefreshAllData", function(self) 
-			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
-			
 			-- If the pins updated and make sure the highlight is still on the correct pin
 			local parentPin = WQT_PoISelectIndicator:GetParent();
 			local questId = parentPin and parentPin.questID;
@@ -751,6 +752,9 @@ function UnlockArgusHighlights()
 end
 
 local function SortQuestList(a, b) 
+	if not a.isValid or not b.isValid then
+		return a.isValid and not b.isValid;
+	end
 	-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
 	if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
 		if a.expantionLevel ==  b.expantionLevel then
@@ -765,6 +769,9 @@ local function SortQuestList(a, b)
 end
 
 local function SortQuestListByZone(a, b) 
+	if not a.isValid or not b.isValid then
+		return a.isValid and not b.isValid;
+	end
 	if a.mapInfo.mapID == b.mapInfo.mapID then
 		-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
 		if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
@@ -785,6 +792,9 @@ local function SortQuestListByZone(a, b)
 end
 
 local function SortQuestListByFaction(a, b) 
+	if not a.isValid or not b.isValid then
+		return a.isValid and not b.isValid;
+	end
 	if a.expantionLevel ==  b.expantionLevel then
 		if a.faction == b.faction then
 			-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
@@ -802,6 +812,9 @@ local function SortQuestListByFaction(a, b)
 end
 
 local function SortQuestListByType(a, b) 
+	if not a.isValid or not b.isValid then
+		return a.isValid and not b.isValid;
+	end
 	local aIsCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(a.questId);
 	local bIsCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(b.questId);
 	if aIsCriteria == bIsCriteria then
@@ -827,6 +840,9 @@ local function SortQuestListByType(a, b)
 end
 
 local function SortQuestListByName(a, b) 
+	if not a.isValid or not b.isValid then
+		return a.isValid and not b.isValid;
+	end
 	if a.title ==  b.title then
 		return a.questId < b.questId;
 	end
@@ -834,6 +850,9 @@ local function SortQuestListByName(a, b)
 end
 
 local function SortQuestListByReward(a, b) 
+	if not a.isValid or not b.isValid then
+		return a.isValid and not b.isValid;
+	end
 	if a.reward.type == b.reward.type then
 		if not a.reward.quality or not b.reward.quality or a.reward.quality == b.reward.quality then
 			if not a.reward.amount or not b.reward.amount or a.reward.amount == b.reward.amount then
@@ -985,12 +1004,14 @@ function WQT:InitFilter(self, level)
 	
 	if level == 1 then
 		info.checked = 	nil;
-		info.isNotRadio = nil;
+		info.isNotRadio = true;
 		info.func =  nil;
 		info.hasArrow = false;
 		info.notCheckable = false;
 		
 		info.text = _L["TYPE_EMISSARY"];
+		info.tooltipTitle = _L["TYPE_EMISSARY"];
+		info.tooltipText =  _L["TYPE_EMISSARY_TT"];
 		info.func = function(_, _, _, value)
 				WQT.settings.emissaryOnly = value;
 				WQT_QuestScrollFrame:DisplayQuestList();
@@ -1003,6 +1024,9 @@ function WQT:InitFilter(self, level)
 		
 		info.hasArrow = true;
 		info.notCheckable = true;
+		info.isNotRadio = nil;
+		info.tooltipTitle = nil;
+		info.tooltipText = nil;
 		
 		for k, v in pairs(WQT.settings.filters) do
 			info.text = v.name;
@@ -1500,7 +1524,7 @@ function WQT:PassesMapFilter(questInfo)
 end
 
 function WQT:PassesAllFilters(questInfo)
-	if questInfo.questId < 0 then return true; end
+	if questInfo.questId < 0 or not questInfo.isValid then return true; end
 	
 	if not self:PassesMapFilter(questInfo) then return false; end
 	
@@ -2016,24 +2040,47 @@ local function QuestResetFunc(pool, questInfo)
 end
 
 function WQT_QuestDataProvider:OnLoad()
-	self.pool = CreateObjectPool(QuestCreationFunc);--, QuestResetFunc);
+	self.pool = CreateObjectPool(QuestCreationFunc, function(pool, questInfo) questInfo.isValid = false; end);--, QuestResetFunc);
 	self.iterativeList = {};
 	self.keyList = {};
 	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room
 	self.waitingRoomRewards = {};
+	self.waitingRoomQuest = {};
 	-- Every tick we go trough all the quests in the waiting room to try and update their rewards
 	self.dataUpdateTicker = C_Timer.NewTicker(0.5, function() 
 			local questInfo;
 			local updatedData = false;
+			
+			for i = #self.waitingRoomQuest, 1, -1 do
+				local questInfo = self.waitingRoomQuest[i];
+				if HaveQuestData(questInfo.questId) then
+					debugPrint("Fixed", questInfo.questId);
+					self:SetQuestData(questInfo);
+					if HaveQuestRewardData(questInfo.questId) then	
+						self:SetQuestReward(questInfo);
+						self:SetSubReward(questInfo);
+						self:ValidateQuest(questInfo);
+					else
+						debugPrint(questInfo.questId, "still missing reward");
+						tinsert(self.waitingRoomRewards, questInfo);
+					end
+					table.remove(self.waitingRoomQuest, i);
+					updatedData = true;
+				end
+			end
+			
 			for i = #self.waitingRoomRewards, 1, -1 do
 				questInfo = self.waitingRoomRewards[i];
 				if HaveQuestRewardData(questInfo.questId) then
+					debugPrint("Fixed", questInfo.questId, "reward");
 					self:SetQuestReward(questInfo);
 					self:SetSubReward(questInfo);
+					self:ValidateQuest(questInfo);
 					table.remove(self.waitingRoomRewards, i);
 					updatedData = true;
 				end
 			end
+
 			if updatedData then
 				WQT_QuestScrollFrame:ApplySort();
 				WQT_QuestScrollFrame:UpdateQuestFilters();
@@ -2082,6 +2129,49 @@ function WQT_QuestDataProvider:GetAPrewardFromText(text)
 	end
 	
 	return numItems;
+end
+
+function WQT_QuestDataProvider:SetQuestData(questInfo)
+	local questId = questInfo.questId;
+	local zoneId = questInfo.mapInfo.mapID;
+	
+	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questId);
+	
+	worldQuestType = not QuestUtils_IsQuestWorldQuest(questId) and WQT_TYPE_BONUSOBJECTIVE or worldQuestType;
+	local minutes, timeString, color, timeStringShort = GetQuestTimeString(questId);
+	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questId);
+	
+	local faction = factionId and GetFactionInfoByID(factionId) or _L["NO_FACTION"];
+	
+	local expLevel = WQT_ZONE_EXPANSIONS[zoneId] or 0;
+
+	
+	questInfo.mapX = questInfo.x; -- deprecated
+	questInfo.mapY = questInfo.y; -- deprecated
+	questInfo.timeString = timeString; -- deprecated
+	questInfo.timeStringShort = timeStringShort; -- deprecated
+	questInfo.color = color; -- deprecated
+	questInfo.minutes = minutes; -- deprecated
+	
+	
+	questInfo.time.minutes = minutes;
+	questInfo.time.full = timeString;
+	questInfo.time.short = timeStringShort;
+	questInfo.time.color = color;
+	
+	questInfo.title = title;
+	
+	questInfo.faction = faction;
+	questInfo.factionId = factionId;
+	questInfo.type = worldQuestType or -1;
+	questInfo.rarity = rarity;
+	questInfo.isElite = isElite;
+	
+	questInfo.expantionLevel = expLevel;
+	questInfo.tradeskill = tradeskillLineIndex;
+	
+	questInfo.passedFilter = true;
+	questInfo.isCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(questId);
 end
 
 function WQT_QuestDataProvider:SetQuestReward(questInfo)
@@ -2201,8 +2291,13 @@ function WQT_QuestDataProvider:FindDuplicate(questId)
 	return nil;
 end
 
+function WQT_QuestDataProvider:ValidateQuest(questInfo)
+	questInfo.isValid = not (not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) and questInfo.time.minutes == 0 and questInfo.reward.type == WQT_REWARDTYPE.missing and not questInfo.factionId);
+end
+
 function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	local duplicate = self:FindDuplicate(qInfo.questId);
+
 	-- If there is a duplicate, we don't want to go through all the info again
 	if (duplicate) then
 		-- Check if the new zone is the 'official' zone, if so, use that one instead
@@ -2213,53 +2308,29 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 			duplicate.mapInfo.mapY = qInfo.y;
 		end
 		
-		if _debug then
-			print("|cFFFFFF00 duplicate: " .. duplicate.title  .. " (" .. duplicate.mapInfo.name .. ")" .."|r")
-		end
+		debugPrint("|cFFFFFF00Duplicate: " .. duplicate.title  .. " (" .. duplicate.mapInfo.name .. ")" .."|r");
 		
 		return duplicate;
 	end
 
-	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(qInfo.questId);
-	
-	worldQuestType = not QuestUtils_IsQuestWorldQuest(qInfo.questId) and WQT_TYPE_BONUSOBJECTIVE or worldQuestType;
-	local minutes, timeString, color, timeStringShort = GetQuestTimeString(qInfo.questId);
-	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(qInfo.questId);
-	
-	local faction = factionId and GetFactionInfoByID(factionId) or _L["NO_FACTION"];
 	local questInfo = self.pool:Acquire();
-	local expLevel = WQT_ZONE_EXPANSIONS[zoneId] or 0;
-
 	questInfo.id = qInfo.questId; -- deprecated
-	questInfo.mapX = questInfo.x; -- deprecated
-	questInfo.mapY = questInfo.y; -- deprecated
-	questInfo.timeString = timeString; -- deprecated
-	questInfo.timeStringShort = timeStringShort; -- deprecated
-	questInfo.color = color; -- deprecated
-	questInfo.minutes = minutes; -- deprecated
 	questInfo.zoneId = zoneId; -- deprecated
 	
-	questInfo.time.minutes = minutes;
-	questInfo.time.full = timeString;
-	questInfo.time.short = timeStringShort;
-	questInfo.time.color = color;
-	
+	questInfo.isValid = false;
 	questInfo.questId = qInfo.questId;
-	questInfo.title = title;
-	
-	questInfo.faction = faction;
-	questInfo.factionId = factionId;
-	questInfo.type = worldQuestType or -1;
-	questInfo.rarity = rarity;
-	questInfo.isElite = isElite;
 	questInfo.mapInfo = C_Map.GetMapInfo(zoneId);
 	questInfo.mapInfo.mapX = qInfo.x;
 	questInfo.mapInfo.mapY = qInfo.y;
-	questInfo.expantionLevel = expLevel;
-	questInfo.tradeskill = tradeskillLineIndex;
 	questInfo.numObjectives = qInfo.numObjectives;
-	questInfo.passedFilter = true;
-	questInfo.isCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(qInfo.questId);
+	
+	if not HaveQuestData(qInfo.questId) then
+		debugPrint("|cFF00FFFFMissing data: " .. questInfo.questId .. "|r");
+		tinsert(self.waitingRoomQuest, questInfo);
+		return nil;
+	end
+	
+	self:SetQuestData(questInfo);
 	
 	local haveRewardData = self:SetQuestReward(questInfo);
 	if haveRewardData then
@@ -2267,14 +2338,14 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 		self:SetSubReward(questInfo);
 	end
 	
-	-- Filter out invalid quests like "Tracking Quest" in nazmir, to prevent them from triggering the missing data refresh
-	questInfo.isValid = not (not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) and questInfo.time.minutes == 0 and questInfo.reward.type == WQT_REWARDTYPE.missing and not questInfo.factionId);
+	-- Filter out invalid quests like "Tracking Quest" in nazmir
+	self:ValidateQuest(questInfo);
 	
-	if _debug and not questInfo.isValid then
-		print("|cFFFF0000 Invalid: " .. questInfo.title  .. " (" .. questInfo.mapInfo.name .. ")" .."|r")
+	if not questInfo.isValid then
+		debugPrint("|cFFFF0000Invalid: " .. questInfo.title  .. " (" .. questInfo.mapInfo.name .. ")" .."|r");
 	end
 	
-	if not haveRewardData and questInfo.isValid then
+	if not haveRewardData then
 		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
 		tinsert(self.waitingRoomRewards, questInfo);
 		return nil;
@@ -2302,11 +2373,17 @@ function WQT_QuestDataProvider:AddQuestsInZone(zoneID, continentId)
 end
 
 function WQT_QuestDataProvider:LoadQuestsInZone(zoneId)
+	
 	self.pool:ReleaseAll();
 	if not (WorldMapFrame:IsShown() or FlightMapFrame:IsShown()) then return; end
 	-- If the flight map is open, we want all quests no matter what
 	if (FlightMapFrame and FlightMapFrame:IsShown()) then 
-		zoneId = GetTaxiMapID();
+		local taxiId = GetTaxiMapID()
+		zoneId = (taxiId and taxiId > 0) and taxiId or zoneId;
+		-- World Flight Map  add-on overwrite
+		if (_WFMLoaded) then
+			zoneId = WorldMapFrame.mapID;
+		end
 	end
 	
 	local currentMapInfo = C_Map.GetMapInfo(zoneId);
@@ -2319,6 +2396,8 @@ function WQT_QuestDataProvider:LoadQuestsInZone(zoneId)
 	
 	-- Wipe the waiting room. Either they will be updated now, or it's a new zone and we no longer care
 	wipe(self.waitingRoomRewards)
+	wipe(self.waitingRoomQuest)
+	
 	
 	if (WQT.settings.alwaysAllQuests and currentMapInfo.mapType ~= Enum.UIMapType.World) then
 	
@@ -2422,7 +2501,7 @@ function WQT_PinHandlerMixin:UpdateFlightMapPins()
 	local quest = nil;
 	for qID, PoI in pairs(WQT.FlightmapPins.activePins) do
 		quest =  _questDataProvider:GetQuestById(qID);
-		if (quest) then
+		if (quest and quest.isValid) then
 			local pin = self.pinPoolFlightMap:Acquire();
 			pin:Update(PoI, quest, qID);
 		end
@@ -2439,7 +2518,7 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 	local quest;
 	for qID, PoI in pairs(WQProvider.activePins) do
 		quest = _questDataProvider:GetQuestById(qID);
-		if (quest) then
+		if (quest and quest.isValid) then
 			local pin = self.pinPool:Acquire();
 			pin.questID = qID;
 			pin:Update(PoI, quest);
@@ -2840,7 +2919,8 @@ function WQT_CoreMixin:OnLoad()
 	self:RegisterEvent("WORLD_QUEST_COMPLETED_BY_SPELL"); -- Class hall items
 	self:RegisterEvent("ADDON_LOADED");
 	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
-	self:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else print("WQT missing function for: " .. event) end end)
+	self:RegisterEvent("QUEST_LOG_UPDATE");
+	self:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else debugPrint("WQT missing function for: " .. event); end end)
 
 	-- Refresh the list every 60 seconds to update time remaining and check for new quests.
 	-- I want this replaced with a function hook or event call. QUEST_LOG_UPDATE triggers too often
@@ -3130,6 +3210,8 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 		_TomTomLoaded = true;
 	elseif (loaded == "CanIMogIt") then
 		_CIMILoaded = true;
+	elseif (loaded == "WorldFlightMap") then
+		_WFMLoaded = true;
 	end
 end
 
@@ -3153,7 +3235,7 @@ function WQT_CoreMixin:QUEST_TURNED_IN(questId)
 		-- Remove TomTom arrow if tracked
 		if (_TomTomLoaded and WQT.settings.useTomTom and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
 			local questInfo = WQT_WorldQuestFrame.dataprovider:GetQuestById(questId);
-			if questInfo then
+			if questInfo and questInfo.isValid then
 				local mapId = questInfo.mapInfo.mapID;
 				local key = TomTom:GetKeyArgs(mapId, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, questInfo.title);
 				local wp = TomTom.waypoints[mapId] and TomTom.waypoints[mapId][key];
@@ -3185,6 +3267,10 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 	if WQT_WorldQuestFrame:GetAlpha() > 0 then 
 		self.ScrollFrame:DisplayQuestList();
 	end
+end
+
+function WQT_CoreMixin:QUEST_LOG_UPDATE()
+	WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
 end
 
 function WQT_CoreMixin:SetCvarValue(flagKey, value)
