@@ -1424,8 +1424,7 @@ function WQT:InitTrackDropDown(self, level)
 			if (not TomTom:WaypointExists(questInfo.mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, questInfo.title)) then
 				info.text = _L["TRACKDD_TOMTOM"];
 				info.func = function()
-					TomTom:AddWaypoint(questInfo.mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, {["title"] = questInfo.title})
-					TomTom:AddWaypoint(questInfo.mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, {["title"] = questInfo.title})
+					local uId = TomTom:AddWaypoint(questInfo.mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, {["title"] = questInfo.title})
 				end
 			else
 				info.text = _L["TRACKDD_TOMTOM_REMOVE"];
@@ -1662,7 +1661,12 @@ function WQT_ListButtonMixin:OnClick(button)
 			-- Only do tracking if we aren't adding the link tot he chat
 			if (not ChatEdit_TryInsertQuestLinkForQuestID(self.questId)) then 
 				if (QuestIsWatched(self.questId)) then
+					local hardWatched = IsWorldQuestHardWatched(self.questId);
 					RemoveWorldQuestWatch(self.questId);
+					-- If it wasn't actually hard watched, do so now
+					if not hardWatched then
+						AddWorldQuestWatch(self.questId, true);
+					end
 				else
 					AddWorldQuestWatch(self.questId, true);
 				end
@@ -1675,7 +1679,12 @@ function WQT_ListButtonMixin:OnClick(button)
 	elseif button == "LeftButton" then
 		-- Don't track bonus objectives. The object tracker doesn't like it;
 		if (self.info.type ~= WQT_TYPE_BONUSOBJECTIVE) then
+			local hardWatched = IsWorldQuestHardWatched(self.questId);
 			AddWorldQuestWatch(self.questId);
+			-- if it was hard watched, keep it that way
+			if hardWatched then
+				AddWorldQuestWatch(self.questId, true);
+			end
 		end
 		WorldMapFrame:SetMapID(self.zoneId);
 		if WQT_WorldQuestFrame:GetAlpha() > 0 then 
@@ -1966,6 +1975,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	
 	if GetSuperTrackedQuestID() == questInfo.questId or IsWorldQuestWatched(questInfo.questId) then
 		self.TrackedBorder:Show();
+		self.TrackedBorder:SetAlpha(IsWorldQuestHardWatched(questInfo.questId) and 1 or 0.6);
 	else
 		self.TrackedBorder:Hide();
 	end
@@ -2039,6 +2049,51 @@ local function QuestResetFunc(pool, questInfo)
 	end
 end
 
+function WQT_QuestDataProvider:UpdateWaitingRoom()
+	local questInfo;
+	local updatedData = false;
+	
+	for i = #self.waitingRoomQuest, 1, -1 do
+		local questInfo = self.waitingRoomQuest[i];
+		if HaveQuestData(questInfo.questId) then
+			debugPrint("Fixed", questInfo.questId);
+			self:SetQuestData(questInfo);
+			if HaveQuestRewardData(questInfo.questId) then	
+				self:SetQuestReward(questInfo);
+				self:SetSubReward(questInfo);
+				self:ValidateQuest(questInfo);
+			else
+				debugPrint(questInfo.questId, "still missing reward");
+				tinsert(self.waitingRoomRewards, questInfo);
+			end
+			table.remove(self.waitingRoomQuest, i);
+			updatedData = true;
+		end
+	end
+	
+	for i = #self.waitingRoomRewards, 1, -1 do
+		questInfo = self.waitingRoomRewards[i];
+		if HaveQuestRewardData(questInfo.questId) then
+			debugPrint("Fixed", questInfo.questId, "reward");
+			self:SetQuestReward(questInfo);
+			self:SetSubReward(questInfo);
+			self:ValidateQuest(questInfo);
+			table.remove(self.waitingRoomRewards, i);
+			updatedData = true;
+		end
+	end
+
+	if updatedData then
+		WQT_QuestScrollFrame:ApplySort();
+		WQT_QuestScrollFrame:UpdateQuestFilters();
+		if WQT_WorldQuestFrame:GetAlpha() > 0 then 
+			WQT_QuestScrollFrame:DisplayQuestList();
+		else
+			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
+		end
+	end
+end
+
 function WQT_QuestDataProvider:OnLoad()
 	self.pool = CreateObjectPool(QuestCreationFunc, function(pool, questInfo) questInfo.isValid = false; end);--, QuestResetFunc);
 	self.iterativeList = {};
@@ -2046,50 +2101,6 @@ function WQT_QuestDataProvider:OnLoad()
 	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room
 	self.waitingRoomRewards = {};
 	self.waitingRoomQuest = {};
-	-- Every tick we go trough all the quests in the waiting room to try and update their rewards
-	self.dataUpdateTicker = C_Timer.NewTicker(0.5, function() 
-			local questInfo;
-			local updatedData = false;
-			
-			for i = #self.waitingRoomQuest, 1, -1 do
-				local questInfo = self.waitingRoomQuest[i];
-				if HaveQuestData(questInfo.questId) then
-					debugPrint("Fixed", questInfo.questId);
-					self:SetQuestData(questInfo);
-					if HaveQuestRewardData(questInfo.questId) then	
-						self:SetQuestReward(questInfo);
-						self:SetSubReward(questInfo);
-						self:ValidateQuest(questInfo);
-					else
-						debugPrint(questInfo.questId, "still missing reward");
-						tinsert(self.waitingRoomRewards, questInfo);
-					end
-					table.remove(self.waitingRoomQuest, i);
-					updatedData = true;
-				end
-			end
-			
-			for i = #self.waitingRoomRewards, 1, -1 do
-				questInfo = self.waitingRoomRewards[i];
-				if HaveQuestRewardData(questInfo.questId) then
-					debugPrint("Fixed", questInfo.questId, "reward");
-					self:SetQuestReward(questInfo);
-					self:SetSubReward(questInfo);
-					self:ValidateQuest(questInfo);
-					table.remove(self.waitingRoomRewards, i);
-					updatedData = true;
-				end
-			end
-
-			if updatedData then
-				WQT_QuestScrollFrame:ApplySort();
-				WQT_QuestScrollFrame:UpdateQuestFilters();
-				if WQT_WorldQuestFrame:GetAlpha() > 0 then 
-					WQT_QuestScrollFrame:DisplayQuestList(true, true);
-				end
-				WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
-			end
-		end)
 end
 
 function WQT_QuestDataProvider:ScanTooltipRewardForPattern(questID, pattern)
@@ -2308,7 +2319,7 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 			duplicate.mapInfo.mapY = qInfo.y;
 		end
 		
-		debugPrint("|cFFFFFF00Duplicate: " .. duplicate.title  .. " (" .. duplicate.mapInfo.name .. ")" .."|r");
+		debugPrint("|cFFFFFF00Duplicate:", duplicate.title or duplicate.questId, "(", duplicate.mapInfo.name ,")|r");
 		
 		return duplicate;
 	end
@@ -2325,7 +2336,7 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	questInfo.numObjectives = qInfo.numObjectives;
 	
 	if not HaveQuestData(qInfo.questId) then
-		debugPrint("|cFF00FFFFMissing data: " .. questInfo.questId .. "|r");
+		debugPrint("|cFF00FFFFMissing data:", questInfo.questId,"|r");
 		tinsert(self.waitingRoomQuest, questInfo);
 		return nil;
 	end
@@ -2342,7 +2353,7 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	self:ValidateQuest(questInfo);
 	
 	if not questInfo.isValid then
-		debugPrint("|cFFFF0000Invalid: " .. questInfo.title  .. " (" .. questInfo.mapInfo.name .. ")" .."|r");
+		debugPrint("|cFFFF0000Invalid:",questInfo.title,"(",questInfo.mapInfo.name,")|r");
 	end
 	
 	if not haveRewardData then
@@ -2920,7 +2931,7 @@ function WQT_CoreMixin:OnLoad()
 	self:RegisterEvent("ADDON_LOADED");
 	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
 	self:RegisterEvent("QUEST_LOG_UPDATE");
-	self:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else debugPrint("WQT missing function for: " .. event); end end)
+	self:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else debugPrint("WQT missing function for:",event); end end)
 
 	-- Refresh the list every 60 seconds to update time remaining and check for new quests.
 	-- I want this replaced with a function hook or event call. QUEST_LOG_UPDATE triggers too often
@@ -3038,6 +3049,11 @@ function WQT_CoreMixin:OnLoad()
 				end
 			end
 			self.notTracked = not QuestIsWatched(self.questID);
+			
+			-- Improve official tooltips overlap
+			local level = WorldMapTooltip:GetFrameLevel();
+			WorldMapCompareTooltip1:SetFrameLevel(level + 1);
+			WorldMapCompareTooltip2:SetFrameLevel(level + 1);
 		end)
 		
 	hooksecurefunc("TaskPOI_OnLeave", function(self)
@@ -3095,8 +3111,6 @@ function WQT_CoreMixin:OnLoad()
 			end
 		end)
 	local test = {15, 4};	
-	
-
 
 	-- Shift questlog around to make room for the tabs
 	local a,b,c,d =QuestMapFrame:GetPoint(1);
@@ -3267,9 +3281,11 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 	if WQT_WorldQuestFrame:GetAlpha() > 0 then 
 		self.ScrollFrame:DisplayQuestList();
 	end
+	WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
 end
 
 function WQT_CoreMixin:QUEST_LOG_UPDATE()
+	WQT_WorldQuestFrame.dataprovider:UpdateWaitingRoom();
 	WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
 end
 
