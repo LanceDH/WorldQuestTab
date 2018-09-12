@@ -2,7 +2,7 @@
 ## Title: World Quest Tab
 ## Notes: Creates a new quest tab to keep track of world quests.
 ## Author: LanceDH
-## Version: 8.0.08d
+## Version: 8.0.09
 ## SavedVariables: BWQDB
 
 WorldQuestTab.xml

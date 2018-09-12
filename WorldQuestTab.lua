@@ -380,11 +380,14 @@ local WQT_DEFAULTS = {
 		showPinTime = true;
 		funQuests = true;
 		emissaryOnly = false;
-		useTomTom = true;
 		preciseFilter = true;
 		rewardAmountColors = true;
 		alwaysAllQuests = false;
 		useLFGButtons = false;
+		
+		useTomTom = true;
+		TomTomAutoArrow = true;
+		
 		filters = {
 				[1] = {["name"] = FACTION
 				, ["flags"] = {[OTHER] = false, [_L["NO_FACTION"]] = false}}
@@ -420,6 +423,8 @@ local function QuestIsWatched(questID)
 	end
 	return false;
 end
+
+
 
 function WQT:GetObjectiveTrackerWQModule()
 	if WQT.wqObjectiveTacker then
@@ -1235,19 +1240,6 @@ function WQT:InitFilter(self, level)
 				info.checked = function() return WQT.settings.useLFGButtons end;
 				ADD:AddButton(info, level);		
 				
-				-- TomTom compatibility
-				if _TomTomLoaded then
-					info.text = _L["USE_TOMTOM"];
-					info.tooltipTitle = _L["USE_TOMTOM"];
-					info.tooltipText = _L["USE_TOMTOM_TT"];
-					info.func = function(_, _, _, value)
-							WQT.settings.useTomTom = value;
-							WQT_QuestScrollFrame:UpdateQuestList();
-						end
-					info.checked = function() return WQT.settings.useTomTom end;
-					ADD:AddButton(info, level);	
-				end
-				
 				info.tooltipTitle = nil;
 				info.tooltipText = nil;
 				info.hasArrow = true;
@@ -1256,13 +1248,25 @@ function WQT:InitFilter(self, level)
 				info.value = 302;
 				info.func = nil;
 				ADD:AddButton(info, level)
+				
+				-- TomTom compatibility
+				if _TomTomLoaded then
+					info.tooltipTitle = nil;
+					info.tooltipText = nil;
+					info.hasArrow = true;
+					info.notCheckable = true;
+					info.text = "TomTom";
+					info.value = 303;
+					info.func = nil;
+					ADD:AddButton(info, level)
+				end
 			end
 		end
 	elseif level == 3 then
+		info.isNotRadio = true;
+		info.notCheckable = false;
+		info.notCheckable = false;
 		if ADD.MENU_VALUE == 301 then -- Legion factions
-			info.isNotRadio = true;
-			info.notCheckable = false;
-			info.disabled = false;
 			local options = WQT.settings.filters[1].flags;
 			local order = _filterOrders[1] 
 			local haveLabels = (WQT_TYPEFLAG_LABELS[1] ~= nil);
@@ -1283,14 +1287,9 @@ function WQT:InitFilter(self, level)
 				end
 			end
 		elseif ADD.MENU_VALUE == 302 then -- Map Pins
-			info.notCheckable = false;
 			info.tooltipWhileDisabled = true;
 			info.tooltipOnButton = true;
 			info.keepShownOnClick = true;	
-			info.isNotRadio = true;
-			info.notCheckable = false;
-			info.disabled = false;
-			
 			info.text = _L["PIN_DISABLE"];
 				info.tooltipTitle = _L["PIN_DISABLE"];
 				info.tooltipText = _L["PIN_DISABLE_TT"];
@@ -1366,7 +1365,33 @@ function WQT:InitFilter(self, level)
 				info.checked = function() return WQT.settings.showPinTime end;
 				ADD:AddButton(info, level);
 				
+		elseif ADD.MENU_VALUE == 303 then -- TomTom
+			info.text = _L["USE_TOMTOM"];
+			info.tooltipTitle = _L["USE_TOMTOM"];
+			info.tooltipText = _L["USE_TOMTOM_TT"];
+			info.func = function(_, _, _, value)
+					WQT.settings.useTomTom = value;
+					WQT_QuestScrollFrame:UpdateQuestList();
+					
+					if value then
+						ADD:EnableButton(3, 2);
+					else 
+						ADD:DisableButton(3, 2);
+					end
+				end
+			info.checked = function() return WQT.settings.useTomTom end;
+			ADD:AddButton(info, level);	
 			
+			info.disabled = not WQT.settings.useTomTom;
+			info.text = _L["TOMTOM_AUTO_ARROW"];
+			info.tooltipTitle = _L["TOMTOM_AUTO_ARROW"];
+			info.tooltipText = _L["TOMTOM_AUTO_ARROW_TT"];
+			info.func = function(_, _, _, value)
+					WQT.settings.TomTomAutoArrow = value;
+					WQT_QuestScrollFrame:UpdateQuestList();
+				end
+			info.checked = function() return WQT.settings.TomTomAutoArrow end;
+			ADD:AddButton(info, level);	
 		end
 	end
 
@@ -1459,6 +1484,7 @@ function WQT:InitTrackDropDown(self, level)
 		else
 			info.text = TRACK_QUEST;
 			info.func = function(_, _, _, value)
+						--WQT_WorldQuestFrame.dataprovider:HardTrackQuest(questInfo);
 						AddWorldQuestWatch(questId, true);
 						if WQT_WorldQuestFrame:GetAlpha() > 0 then 
 							WQT_QuestScrollFrame:DisplayQuestList();
@@ -2092,6 +2118,15 @@ function WQT_QuestDataProvider:UpdateWaitingRoom()
 			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
 		end
 	end
+end
+
+function WQT_QuestDataProvider:HardTrackQuest(questInfo)
+	if type(questInfo) == "number" then
+		questInfo = self:GetQuestById(questInfo);
+	end
+	if not questInfo then return; end
+	
+	AddWorldQuestWatch(questInfo.questId, true);
 end
 
 function WQT_QuestDataProvider:OnLoad()
@@ -2958,6 +2993,21 @@ function WQT_CoreMixin:OnLoad()
 						self.recentlyUntrackedQuest = k;
 					end
 					wipe(self.trackedQuests);
+					
+					local questId = self.recentlyUntrackedQuest;
+					-- If we have auto arrow handling turned on, remove it if it exists
+					if (questId and _TomTomLoaded and WQT.settings.useTomTom and WQT.settings.TomTomAutoArrow) then
+						local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+						local zoneId = C_TaskQuest.GetQuestZoneID(questId);
+						local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
+						if (title and zoneId and x and y) then
+							local key = TomTom:GetKeyArgs(zoneId, x, y, title);
+							local wp = TomTom.waypoints[zoneId] and TomTom.waypoints[zoneId][key];
+							if wp then
+								TomTom:RemoveWaypoint(wp);
+							end
+						end
+					end
 				end
 		end)
 	
@@ -3268,6 +3318,7 @@ function WQT_CoreMixin:WORLD_QUEST_COMPLETED_BY_SPELL(...)
 end
 
 function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
+	local questId, added = ...;
 	-- step 1: Get all the tracked quests before any changes happen
 	-- check ObjectiveTracker_Update hook for step 2
 	self.recentlyUntrackedQuest = nil;
@@ -3282,6 +3333,15 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 		self.ScrollFrame:DisplayQuestList();
 	end
 	WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
+
+	if questId and added and _TomTomLoaded and WQT.settings.useTomTom and WQT.settings.TomTomAutoArrow and IsWorldQuestHardWatched(questId) then
+		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+		local zoneId = C_TaskQuest.GetQuestZoneID(questId);
+		local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
+		if (title and zoneId and x and y) then
+			local uId = TomTom:AddWaypoint(zoneId, x, y, {["title"] = title})
+		end
+	end
 end
 
 function WQT_CoreMixin:QUEST_LOG_UPDATE()

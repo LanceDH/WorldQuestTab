@@ -37,6 +37,8 @@ L["LFG_BUTTONS"]	= "Enable LFG Buttons"
 L["LFG_BUTTONS_TT"]	= "Add LFG buttons to world quests in the objective tracker. Enabling this setting can cause an increase in memory and CPU usage. |cFFFF5555A reload is required for this setting to take effect.|r"
 L["USE_TOMTOM"]		= "Allow TomTom"
 L["USE_TOMTOM_TT"]	= "Add TomTom functionality to the add-on."
+L["TOMTOM_AUTO_ARROW"]		= "Waypoint On Track"
+L["TOMTOM_AUTO_ARROW_TT"]	= "Hard tracking a quests by shift clicking, or by using the option in the dropdown, will automatically create a TomTom waypoint."
 
 L["TYPE_INVASION"]	= "Invasion";
 L["TYPE_EMISSARY"]	= "Emissary Only";
