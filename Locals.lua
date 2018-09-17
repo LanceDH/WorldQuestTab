@@ -237,6 +237,8 @@ L["IS_AZIAN_CLIENT"]	= true
 end
 
 if locale == "zhTW" then
+L["ALWAYS_ALL"] = "總是所有任務"
+L["ALWAYS_ALL_TT"] = "總是顯示當前區域所有資料片相關的任務"
 L["COMBATLOCK"] = "戰鬥中無法使用"
 L["DEFAULT_TAB"] = "預設標籤"
 L["DEFAULT_TAB_TT"] = [=[將WQT設定為預設啟用標籤。
@@ -248,7 +250,10 @@ L["FORMAT_GROUP_CREATE"] = "輸入|cFFFFFFFF%d|r 為此任務建立一個隊伍�
 L["FORMAT_GROUP_SEARCH"] = "輸入|cFFFFFFFF%d|r 搜索此任務的隊伍。 或輸入其名稱：|cFFFFFFFF%s|r。"
 L["FORMAT_GROUP_TYPO"] = "它似乎是打錯字。輸入任一個|cFFFFFFFF%d|r，或|cFFFFFFFF%s|r。"
 L["GROUP_SEARCH_INFO"] = "暴雪阻止插件為大多數世界任務自動尋找隊伍。 因此，玩家必須手動填寫搜索框。"
+L["LFG_BUTTONS"] = "啟用LFG按鈕"
+L["LFG_BUTTONS_TT"] = "在目標追蹤中的世界任務添加尋求組隊按鈕。啟用此設置會導至記憶體與CPU使用率增加。|cFFFF5555A需要重載以讓設置生效。|r"
 L["MAP_FILTER_DISABLED"] = "在世界地圖過濾已停用。"
+L["MAP_FILTER_DISABLED_BUTTON_INFO"] = "已在世界地圖過濾中停用。右鍵點擊來重新啟用此過濾"
 L["MAP_FILTER_DISABLED_INFO"] = "停用過濾或許會隱藏某些任務。您可以在地圖右上的放大鏡重新啟用它們。"
 L["MAP_FILTER_DISABLED_TITLE"] = "某些世界地圖過濾已停用"
 L["NO_FACTION"] = "無陣營"
@@ -256,15 +261,13 @@ L["NUMBERS_FIRST"] = "%g萬"
 L["NUMBERS_SECOND"] = "%g億"
 L["NUMBERS_THIRD"] = "%g"
 L["OPTIONS_INFO"] = "[WQT]設定選項可以在過濾按鍵下找到"
-L["PIN_BIGGER"] = "地圖上顯示大型圖示"
-L["PIN_BIGGER_TT"] = [=[增加地圖示大小以提高可見性
-僅於啟用地圖上顯示獎勵圖示時有效]=]
 L["PIN_COLOR"] = "依獎勵著色圖示週邊"
 L["PIN_COLOR_TT"] = "根據獎勵類型在圖示周圍著色顯示"
 L["PIN_DISABLE"] = "停用任務點更改"
 L["PIN_DISABLE_TT"] = "防止世界任務追蹤更改地圖任務點。"
 L["PIN_REWARDS"] = "地圖上顯示獎勵圖示"
 L["PIN_REWARDS_TT"] = "在圖示上顯示任務獎勵圖示"
+L["PIN_SETTINGS"] = "地圖標誌設置"
 L["PIN_TIME"] = "地圖上顯示剩餘時間"
 L["PIN_TIME_TT"] = "在圖示上加入任務剩餘時間"
 L["PRECISE_FILTER"] = "精確過濾"
@@ -276,10 +279,15 @@ L["SHOW_FACTION_TT"] = "在任務清單顯示陣營圖示"
 L["SHOW_TYPE"] = "顯示類型"
 L["SHOW_TYPE_TT"] = "在任務清單顯示類型圖示"
 L["TIME"] = "時間"
+L["TOMTOM_AUTO_ARROW"] = "追蹤的路徑點"
+L["TOMTOM_AUTO_ARROW_TT"] = "Shift+點擊以試圖追蹤一個任務。或者使用下拉選單中的選項，將自動建立一個TomTom的路徑點。"
 L["TRACKDD_TOMTOM"] = "加入TomTom"
 L["TRACKDD_TOMTOM_REMOVE"] = "從TomTom移除"
 L["TYPE_EMISSARY"] = "特使任務"
+L["TYPE_EMISSARY_TT"] = "只顯示當前選擇特使的任務。此過濾覆寫其他所有過濾。"
 L["TYPE_INVASION"] = "入侵"
+L["USE_TOMTOM"] = "允許TomTom"
+L["USE_TOMTOM_TT"] = "在此插件添加TomTom功能。"
 
 L["IS_AZIAN_CLIENT"]	= true
 end

@@ -179,7 +179,7 @@
 		<Layers>
 			<Layer level="BACKGROUND">
 				<Texture file="Interface\PaperDollInfoFrame\PaperDollSidebarTabs" parentKey="TabBg">
-					<Size x="50" y="43"/>
+					<Size x="50" y="42"/>
 					<Anchors>
 						<Anchor point="BOTTOMLEFT" x="-9" y="-2"/>
 					</Anchors>
@@ -190,13 +190,13 @@
 				<Texture parentKey="Icon">
 					<Size x="19" y="21"/>
 					<Anchors>
-						<Anchor point="BOTTOM" x="1" y="6"/>
+						<Anchor point="BOTTOM" x="1" y="4"/>
 					</Anchors>
 				</Texture>
 			</Layer>
 			<Layer level="OVERLAY">
 				<Texture parentKey="Hider" file="Interface\PaperDollInfoFrame\PaperDollSidebarTabs">
-					<Size x="34" y="19"/>
+					<Size x="32" y="19"/>
 					<Anchors>
 						<Anchor point="BOTTOM"/>
 					</Anchors>
@@ -207,7 +207,7 @@
 				<Texture parentKey="Highlight" file="Interface\PaperDollInfoFrame\PaperDollSidebarTabs">
 					<Size x="31" y="31"/>	
 					<Anchors>
-						<Anchor point="TOPLEFT" x="2" y="-3"/>
+						<Anchor point="TOPLEFT" x="2" y="-4"/>
 					</Anchors>
 					<TexCoords left="0.01562500" right="0.50000000" top="0.19531250" bottom="0.31640625"/>
 				</Texture>
@@ -216,7 +216,20 @@
 		<Scripts>
 			<OnClick>
 				WQT_WorldQuestFrame:SelectTab(self, button);
+				self.Highlight:Hide();
 			</OnClick>
+			<OnEnter>
+				if self.tooltipText then
+					GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+					GameTooltip:SetText(self.tooltipText, nil, nil, nil, nil, true);
+					GameTooltip:Show();
+				end
+				if WQT_WorldQuestFrame.selectedTab == self then
+					self.Highlight:Hide();
+				else
+					self.Highlight:Show();
+				end
+			</OnEnter>
 			<OnLeave>
 				GameTooltip:Hide();
 			</OnLeave>
@@ -621,7 +634,7 @@
 			</Frame>
 			
 			<Button name="$parentFilterButton" parentKey="FilterButton" inherits="UIMenuButtonStretchTemplate" text="FILTER">
-				<Size x="93" y="22"/>
+				<Size x="90" y="23"/>
 				<Anchors>
 					<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" x="-5" y="6"/>
 				</Anchors>
@@ -670,6 +683,11 @@
 				</Frames>
 				
 				<Scripts>
+					<OnLoad>
+						local text = _G[self:GetName() .. "Text"];
+						local a, b, c, x, y = text:GetPoint(1);
+						text:SetPoint(a, b, c, x, 0);
+					</OnLoad>
 					<OnClick> 
 						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 						ADDON_DROPDOWN:ToggleDropDownMenu(1, nil, WQT_WorldQuestFrameFilterDropDown, "WQT_WorldQuestFrameFilterButton", 74, 15);
@@ -689,7 +707,7 @@
 	
 	<Button name="WQT_TabNormal" inherits="WQT_TabTemplate" parent="QuestMapFrame" enableMouse="true" id="1">
 		<Anchors>
-			<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="3" y="-2"/>
+			<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="3" y="-1"/>
 		</Anchors>
 		<Scripts>
 			<OnLoad>
@@ -697,31 +715,25 @@
 				self.Icon:SetTexture("Interface/MINIMAP/TRACKING/OBJECTICONS");
 				self.Icon:SetTexCoord(0.125, 0.25, 0.5, 1);
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
+				self.tooltipText = QUEST_LOG;
 			</OnLoad>
-			<OnEnter>
-				GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
-				GameTooltip:SetText(QUEST_LOG, nil, nil, nil, nil, true);
-				GameTooltip:Show();
-			</OnEnter>
 		</Scripts>
 	</Button>
 	
 	<Button name="WQT_TabWorld" inherits="WQT_TabTemplate" parent="QuestMapFrame" enableMouse="true" id="2">
-	
 		<Anchors>
-			<Anchor point="LEFT" relativeTo="WQT_TabNormal" relativePoint="RIGHT"/>
+			<Anchor point="LEFT" relativeTo="WQT_TabNormal" relativePoint="RIGHT" x="4"/>
 		</Anchors>
+		
+		
+		
 		<Scripts>
 			<OnLoad>
 				self:SetFrameLevel(self:GetParent():GetFrameLevel());
 				self.Icon:SetTexture("Interface/Worldmap/UI-World-Icon");
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
+				self.tooltipText = TRACKER_HEADER_WORLD_QUESTS;
 			</OnLoad>
-			<OnEnter>
-				GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
-				GameTooltip:SetText(TRACKER_HEADER_WORLD_QUESTS, nil, nil, nil, nil, true);
-				GameTooltip:Show();
-			</OnEnter>
 		</Scripts>
 	</Button>
 	
@@ -730,6 +742,80 @@
 			<Anchor point="LEFT" relativeTo="WQT_TabWorld" relativePoint="RIGHT"/>
 		</Anchors>
 	</Button>
+	
+	<Frame name="WQT_QuestLogFiller" hidden="false" parent="QuestMapFrame" flattenRenderLayers="true">
+		<Size y="40"/>
+		<Anchors>
+			<Anchor point="LEFT" relativeTo="WQT_TabWorld" relativePoint="RIGHT" x="1"/>
+			<Anchor point="BOTTOMRIGHT"  relativePoint="TOPRIGHT" y="-1"/>
+		</Anchors>
+		<Layers>
+		
+			<Layer level="BACKGROUND">
+				<Texture parentKey="BoxLeft" file="Interface\AUCTIONFRAME\UI-AuctionFrame-ItemSlot">
+					<Size x="33" y="25"/>
+					<Anchors>
+						<Anchor point="BOTTOM" x="-35" y="-2"/>
+					</Anchors>
+					<TexCoords left="0.32421875" right="0.48046875" top="0.15625" bottom="0.84375"/>
+				</Texture>
+				<Texture parentKey="BoxRight" file="Interface\AUCTIONFRAME\UI-AuctionFrame-ItemSlot">
+					<Size x="33" y="25"/>
+					<Anchors>
+						<Anchor point="LEFT" relativeKey="$parent.BoxLeft" relativePoint="RIGHT"/>
+					</Anchors>
+					<TexCoords left="0.6796875" right="0.83984375" top="0.15625" bottom="0.84375"/>
+				</Texture>
+			</Layer>
+			<Layer level="BACKGROUND" textureSubLevel="-1">
+				<Texture parentKey="BoxBG">
+					<Size x="40" y="30"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.BoxLeft" x="1" y="-1"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BoxRight" x="-2" y="1"/>
+					</Anchors>
+					<Color r="0" g="0" b="0" a=".5" />
+				</Texture>
+			</Layer>
+			<Layer level="ARTWORK">
+				<Texture parentKey="DecorRight" file="Interface\PaperDollInfoFrame\PaperDollSidebarTabs">
+					<Size x="28" y="13"/>
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BoxRight" relativePoint="BOTTOMRIGHT" y="2"/>
+					</Anchors>
+					<TexCoords left="0.01562500" right="0.45312500" top="0.05468750" bottom="0.10546875"/>
+				</Texture>
+				<Texture parentKey="DecorLeft" file="Interface\PaperDollInfoFrame\PaperDollSidebarTabs">
+					<Size x="28" y="11"/>
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BoxLeft" relativePoint="BOTTOMLEFT" y="2"/>
+					</Anchors>
+					<TexCoords left="0.01562500" right="0.45312500" top="0.00390625" bottom="0.04687500"/>
+				</Texture>
+				<Texture parentKey="DecorRight2" file="Interface\PaperDollInfoFrame\PaperDollSidebarTabs">
+					<Size x="28" y="11"/>
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT" y="0"/>
+					</Anchors>
+					<TexCoords left="0.01562500" right="0.45312500" top="0.00390625" bottom="0.04687500"/>
+				</Texture>
+
+				<FontString inherits="GameFontNormalMed3" justifyV="MIDDLE" justifyH="CENTER" parentKey="QuestCount" text="00/00">
+					<Size x="80" y="25"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.BoxLeft"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BoxRight"/>
+					</Anchors>
+					<Color r="1" g="1" b="1"/>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad>
+				self:SetFrameLevel(self:GetParent():GetFrameLevel() +5);
+			</OnLoad>
+		</Scripts>
+	</Frame>
 	
 	<Frame name="WQT_PoISelectIndicator" hidden="true" flattenRenderLayers="true">
 		<Size x="40" y="40"/>

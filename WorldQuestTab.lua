@@ -424,7 +424,27 @@ local function QuestIsWatched(questID)
 	return false;
 end
 
-
+local function GetQuestLogInfo()
+	local numEntries, numQuests = GetNumQuestLogEntries();
+	local maxQuests = C_QuestLog.GetMaxNumQuestsCanAccept();
+	local questCount = 0;
+	for questLogIndex = 1, numEntries do
+		local _, _, _, isHeader, _, _, frequency, questID, _, _, _, _, isTask, isBounty, _, _, _ = GetQuestLogTitle(questLogIndex);
+		local tagID, tagName = GetQuestTagInfo(questID)
+		if not (isHeader or isTask or isBounty or frequency > 2 or tagID == 102) or tagID == 256 or frequency == 2 then
+			questCount = questCount + 1;
+		end
+	end
+	
+	local color = questCount >= maxQuests and RED_FONT_COLOR or (questCount >= maxQuests-2 and WQT_ORANGE_FONT_COLOR or WQT_WHITE_FONT_COLOR);
+	
+	if (questCount > maxQuests) then
+		debugPrint("|cFFFF0000Questlog:", questCount, "/", maxQuests, "|r");
+	end
+	
+	return questCount, maxQuests, color;
+	
+end
 
 function WQT:GetObjectiveTrackerWQModule()
 	if WQT.wqObjectiveTacker then
@@ -1018,10 +1038,16 @@ function WQT:InitFilter(self, level)
 		info.tooltipTitle = _L["TYPE_EMISSARY"];
 		info.tooltipText =  _L["TYPE_EMISSARY_TT"];
 		info.func = function(_, _, _, value)
+				WQT_WorldQuestFrame.autoEmissaryId = nil;
 				WQT.settings.emissaryOnly = value;
 				WQT_QuestScrollFrame:DisplayQuestList();
 				if (WQT.settings.filterPoI) then
 					WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
+				end
+				
+				-- If we turn it off, remove the auto set as well
+				if not value then
+					WQT_WorldQuestFrame.autoEmissaryId = nil;
 				end
 			end
 		info.checked = function() return WQT.settings.emissaryOnly end;
@@ -1520,7 +1546,7 @@ end
 
 function WQT:IsFiltering()
 	local playerFaction = GetPlayerFactionGroup()
-	if WQT.settings.emissaryOnly then return true; end
+	if WQT.settings.emissaryOnly or WQT_WorldQuestFrame.autoEmissaryId then return true; end
 	for k, category in pairs(WQT.settings.filters)do
 		for k2, flag in pairs(category.flags) do
 			if flag and IsRelevantFilter(k, k2) then 
@@ -1555,7 +1581,7 @@ function WQT:PassesAllFilters(questInfo)
 	
 	if not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) then return false; end
 
-	if WQT.settings.emissaryOnly then 
+	if WQT.settings.emissaryOnly or WQT_WorldQuestFrame.autoEmissaryId then 
 		return WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
 	end
 	
@@ -2360,6 +2386,7 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	end
 
 	local questInfo = self.pool:Acquire();
+	QuestResetFunc(self.pool, questInfo);
 	questInfo.id = qInfo.questId; -- deprecated
 	questInfo.zoneId = zoneId; -- deprecated
 	
@@ -2516,6 +2543,13 @@ function WQT_QuestDataProvider:GetQuestById(id)
 		if questInfo.questId == id then return questInfo; end
 	end
 	return nil;
+end
+
+function WQT_QuestDataProvider:ListContainsEmissary()
+	for questInfo, v in self.pool:EnumerateActive() do
+		if questInfo.isCriteria then return true; end
+	end
+	return false
 end
 
 local _questDataProvider = CreateFromMixins(WQT_QuestDataProvider);
@@ -2811,8 +2845,13 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 	-- If we are filtering, 'show' things
 	WQT_WorldQuestFrame.FilterBar:SetHeight(20);
 	-- Emissary has priority
-	if (WQT.settings.emissaryOnly) then
-		filterList = _L["TYPE_EMISSARY"];	
+	if (WQT.settings.emissaryOnly or WQT_WorldQuestFrame.autoEmissaryId) then
+		local text = _L["TYPE_EMISSARY"]
+		if WQT_WorldQuestFrame.autoEmissaryId then
+			text = GARRISON_TEMPORARY_CATEGORY_FORMAT:format(text);
+		end
+		
+		filterList = text;	
 	else
 		for kO, option in pairs(WQT.settings.filters) do
 			haveLabels = (WQT_TYPEFLAG_LABELS[kO] ~= nil);
@@ -2847,7 +2886,7 @@ function WQT_ScrollListMixin:UpdateQuestList()
 	if (not WorldMapFrame:IsShown() or InCombatLockdown()) then return end
 	
 	local mapAreaID = WorldMapFrame.mapID;
-	
+
 	_questDataProvider:LoadQuestsInZone(mapAreaID);
 	
 	self.questList = _questDataProvider:GetIterativeList();
@@ -2936,7 +2975,6 @@ function WQT_CoreMixin:OnLoad()
 	self:SetFrameLevel(self:GetParent():GetFrameLevel()+4);
 	self.Blocker:SetFrameLevel(self:GetFrameLevel()+4);
 	
-	
 	self.filterDropDown = ADD:CreateMenuTemplate("WQT_WorldQuestFrameFilterDropDown", self);
 	self.filterDropDown.noResize = true;
 	ADD:Initialize(self.filterDropDown, function(self, level) WQT:InitFilter(self, level) end, "MENU");
@@ -2944,8 +2982,8 @@ function WQT_CoreMixin:OnLoad()
 	self.FilterButton.Indicator.tooltipSub = _L["MAP_FILTER_DISABLED_INFO"];
 	
 	self.sortButton = ADD:CreateMenuTemplate("WQT_WorldQuestFrameSortButton", self, nil, "BUTTON");
-	self.sortButton:SetSize(93, 22);
-	self.sortButton:SetPoint("RIGHT", "WQT_WorldQuestFrameFilterButton", "LEFT", 10, -1);
+	self.sortButton:SetSize(97, 22);
+	self.sortButton:SetPoint("RIGHT", "WQT_WorldQuestFrameFilterButton", "LEFT", 12, -1);
 	self.sortButton:EnableMouse(false);
 	self.sortButton:SetScript("OnClick", function() PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); end);
 
@@ -2982,6 +3020,7 @@ function WQT_CoreMixin:OnLoad()
 	-- Step 2: Check compare list after changes, if quest is left == quest that was untracked
 	-- check QUEST_WATCH_LIST_CHANGED for step 1
 	hooksecurefunc("ObjectiveTracker_Update", function(...)
+				self.recentlyUntrackedQuest = nil;
 				local wqModule = WQT:GetObjectiveTrackerWQModule()
 				if wqModule then
 					for k, v in pairs(wqModule.usedBlocks) do
@@ -2999,12 +3038,15 @@ function WQT_CoreMixin:OnLoad()
 					if (questId and _TomTomLoaded and WQT.settings.useTomTom and WQT.settings.TomTomAutoArrow) then
 						local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
 						local zoneId = C_TaskQuest.GetQuestZoneID(questId);
-						local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
-						if (title and zoneId and x and y) then
-							local key = TomTom:GetKeyArgs(zoneId, x, y, title);
-							local wp = TomTom.waypoints[zoneId] and TomTom.waypoints[zoneId][key];
-							if wp then
-								TomTom:RemoveWaypoint(wp);
+						if (title and zoneId) then
+							local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
+							if (x and y) then
+								local key = TomTom:GetKeyArgs(zoneId, x, y, title);
+								local wp = TomTom.waypoints[zoneId] and TomTom.waypoints[zoneId][key];
+								if wp then
+									TomTom:RemoveWaypoint(wp);
+								end
+								
 							end
 						end
 					end
@@ -3019,6 +3061,15 @@ function WQT_CoreMixin:OnLoad()
 	WorldMapFrame:HookScript("OnShow", function() 
 			self.ScrollFrame:UpdateQuestList();
 			self:SelectTab(self.selectedTab); 
+			
+			-- If emissaryOnly was automaticaly set, and there's none in the current list, turn it off again.
+			if WQT_WorldQuestFrame.autoEmissaryId and not WQT_WorldQuestFrame.dataprovider:ListContainsEmissary() then
+				WQT_WorldQuestFrame.autoEmissaryId = nil;
+				if WQT_WorldQuestFrame:GetAlpha() > 0 then 
+					WQT_QuestScrollFrame:DisplayQuestList();
+				end
+			end
+			
 		end)
 
 	QuestScrollFrame:SetScript("OnShow", function() 
@@ -3041,6 +3092,7 @@ function WQT_CoreMixin:OnLoad()
 		end
 	end)
 	
+	-- Update filters when stuff happens to the world map filters
 	local worldMapFilter;
 	
 	for k, frame in ipairs(WorldMapFrame.overlayFrames) do
@@ -3082,8 +3134,9 @@ function WQT_CoreMixin:OnLoad()
 	-- Auto emisarry when clicking on one of the buttons
 	local bountyBoard = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID];
 	
-	hooksecurefunc(bountyBoard, "OnTabClick", function(tab) 
-		WQT.settings.emissaryOnly = true;
+	hooksecurefunc(bountyBoard, "OnTabClick", function(self, tab) 
+		if (tab.isEmpty or WQT.settings.emissaryOnly) then return; end
+		WQT_WorldQuestFrame.autoEmissaryId = bountyBoard.bounties[tab.bountyIndex];
 		if WQT_WorldQuestFrame:GetAlpha() > 0 then 
 			WQT_QuestScrollFrame:DisplayQuestList();
 		end
@@ -3196,6 +3249,7 @@ end
 function WQT_CoreMixin:FilterClearButtonOnClick()
 	ADD:CloseDropDownMenus();
 	WQT.settings.emissaryOnly = false;
+	WQT_WorldQuestFrame.autoEmissaryId = nil;
 	for k, v in pairs(WQT.settings.filters) do
 		WQT:SetAllFilterTo(k, false);
 	end
@@ -3295,7 +3349,7 @@ function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
 end
 
 function WQT_CoreMixin:QUEST_TURNED_IN(questId)
-	if (QuestUtils_IsQuestWorldQuest(questId)) then
+	if (QuestUtils_IsQuestWorldQuest(questId) or WQT_WorldQuestFrame.autoEmissaryId == questId) then
 		-- Remove TomTom arrow if tracked
 		if (_TomTomLoaded and WQT.settings.useTomTom and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
 			local questInfo = WQT_WorldQuestFrame.dataprovider:GetQuestById(questId);
@@ -3347,6 +3401,11 @@ end
 function WQT_CoreMixin:QUEST_LOG_UPDATE()
 	WQT_WorldQuestFrame.dataprovider:UpdateWaitingRoom();
 	WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
+	
+	local numQuests, maxQuests, color = GetQuestLogInfo();
+	WQT_QuestLogFiller.QuestCount:SetText(GENERIC_FRACTION_STRING_WITH_SPACING:format(numQuests, maxQuests));
+	WQT_QuestLogFiller.QuestCount:SetTextColor(color.r, color.g, color.b);
+	
 end
 
 function WQT_CoreMixin:SetCvarValue(flagKey, value)
@@ -3395,10 +3454,8 @@ function WQT_CoreMixin:SetCombatEnabled(value)
 		self.FilterButton:Disable();
 		self.sortButton:Disable();
 	end
-	--self.ScrollFrame.scrollBar:EnableMouse(value):
-	
+
 	self.ScrollFrame:SetButtonsEnabled(value);
-		
 	self.ScrollFrame:EnableMouseWheel(value);
 end
 
@@ -3415,27 +3472,30 @@ function WQT_CoreMixin:SelectTab(tab)
 	self.selectedTab = tab;
 	
 	WQT_TabNormal:SetAlpha(1);
-	WQT_TabNormal:SetAlpha(1);
 	WQT_TabWorld:SetAlpha(1);
+	WQT_TabNormal.Hider:SetAlpha(1);
+	WQT_TabWorld.Hider:SetAlpha(1);
+	WQT_QuestLogFiller:SetAlpha(0);
+	
 	-- because hiding stuff in combat doesn't work
 	if not InCombatLockdown() then
-		WQT_TabNormal:SetFrameLevel(WQT_TabNormal:GetParent():GetFrameLevel()+(tab == WQT_TabNormal and 2 or 1));
-		WQT_TabWorld:SetFrameLevel(WQT_TabWorld:GetParent():GetFrameLevel()+(tab == WQT_TabWorld and 2 or 1));
+		WQT_TabNormal:SetFrameLevel(WQT_TabNormal:GetParent():GetFrameLevel()+(tab == WQT_TabNormal and 8 or 1));
+		WQT_TabWorld:SetFrameLevel(WQT_TabWorld:GetParent():GetFrameLevel()+(tab == WQT_TabWorld and 8 or 1));
 	 
 		self.FilterButton:SetFrameLevel(self:GetFrameLevel());
 		self.sortButton:SetFrameLevel(self:GetFrameLevel());
 		
 		self.FilterButton:EnableMouse(true);
 	end
-	
-	
+
 	WQT_TabWorld:EnableMouse(true);
 	WQT_TabNormal:EnableMouse(true);
-	
 
 	if (not QuestScrollFrame.Contents:IsShown() and not QuestMapFrame.DetailsFrame:IsShown()) or id == 1 then
 		-- Default questlog
 		self:SetAlpha(0);
+		WQT_TabNormal.Hider:SetAlpha(0);
+		WQT_QuestLogFiller:SetAlpha(1);
 		WQT_TabNormal.Highlight:Show();
 		WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
 		WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
@@ -3448,6 +3508,7 @@ function WQT_CoreMixin:SelectTab(tab)
 		end
 	elseif id == 2 then
 		-- WQT
+		WQT_TabWorld.Hider:SetAlpha(0);
 		WQT_TabWorld.Highlight:Show();
 		self:SetAlpha(1);
 		WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
@@ -3477,6 +3538,7 @@ function WQT_CoreMixin:SelectTab(tab)
 			self:SetCombatEnabled(false);
 		end
 	end
+	WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
 end
 
 
@@ -3569,8 +3631,6 @@ l_debug:SetScript("OnUpdate", function(self,elapsed)
 							end
 							memtot = memtot + mem;
 						end
-						
-						
 					end
 						
 					if #v > 0 then
