@@ -755,7 +755,7 @@
 				<Texture parentKey="BoxLeft" file="Interface\AUCTIONFRAME\UI-AuctionFrame-ItemSlot">
 					<Size x="33" y="25"/>
 					<Anchors>
-						<Anchor point="BOTTOM" x="-35" y="-2"/>
+						<Anchor point="BOTTOM" x="-35" y="2"/>
 					</Anchors>
 					<TexCoords left="0.32421875" right="0.48046875" top="0.15625" bottom="0.84375"/>
 				</Texture>
@@ -778,28 +778,31 @@
 				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
-				<Texture parentKey="DecorRight" file="Interface\PaperDollInfoFrame\PaperDollSidebarTabs">
-					<Size x="28" y="13"/>
+				<Texture name="DecorLeft" file="Interface\ItemSocketingFrame\UI-ItemSockets" desaturated="true">
+					<Size x="35" y="27"/>
 					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BoxRight" relativePoint="BOTTOMRIGHT" y="2"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BoxLeft" relativePoint="BOTTOMLEFT" x="6" y="-2"/>
 					</Anchors>
-					<TexCoords left="0.01562500" right="0.45312500" top="0.05468750" bottom="0.10546875"/>
+					<TexCoords left="0" right="0.28515625" top="0" bottom="0.21484375"/>
+					
+					<Color r="0.85" g="0.75" b="0.7" />
 				</Texture>
-				<Texture parentKey="DecorLeft" file="Interface\PaperDollInfoFrame\PaperDollSidebarTabs">
-					<Size x="28" y="11"/>
+				<Texture name="DecorRight" file="Interface\ItemSocketingFrame\UI-ItemSockets" desaturated="true">
+					<Size x="35" y="27"/>
 					<Anchors>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BoxLeft" relativePoint="BOTTOMLEFT" y="2"/>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BoxRight" relativePoint="BOTTOMRIGHT" x="-6" y="-2"/>
 					</Anchors>
-					<TexCoords left="0.01562500" right="0.45312500" top="0.00390625" bottom="0.04687500"/>
+					<TexCoords left="0.28515625" right="0.565" top="0" bottom="0.21484375"/>
+					<Color r="0.85" g="0.75" b="0.7" />
 				</Texture>
-				<Texture parentKey="DecorRight2" file="Interface\PaperDollInfoFrame\PaperDollSidebarTabs">
-					<Size x="28" y="11"/>
+				<Texture name="DecorRight2" file="Interface\ItemSocketingFrame\UI-ItemSockets" desaturated="true">
+					<Size x="35" y="27"/>
 					<Anchors>
-						<Anchor point="BOTTOMRIGHT" y="0"/>
+						<Anchor point="BOTTOMRIGHT" x="5" y="0"/>
 					</Anchors>
-					<TexCoords left="0.01562500" right="0.45312500" top="0.00390625" bottom="0.04687500"/>
+					<TexCoords left="0" right="0.28515625" top="0.21484375" bottom="0.39453125"/>
+					<Color r="0.85" g="0.75" b="0.7" />
 				</Texture>
-
 				<FontString inherits="GameFontNormalMed3" justifyV="MIDDLE" justifyH="CENTER" parentKey="QuestCount" text="00/00">
 					<Size x="80" y="25"/>
 					<Anchors>
