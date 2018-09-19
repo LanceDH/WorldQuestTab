@@ -2095,7 +2095,7 @@ local function QuestResetFunc(pool, questInfo)
 			elseif (objType == "string") then
 				questInfo[k] = "";
 			elseif (objType == "number") then
-				questInfo[k] = 0;
+				questInfo[k] = nil;
 			end
 		end
 	end
@@ -2156,7 +2156,7 @@ function WQT_QuestDataProvider:HardTrackQuest(questInfo)
 end
 
 function WQT_QuestDataProvider:OnLoad()
-	self.pool = CreateObjectPool(QuestCreationFunc, function(pool, questInfo) questInfo.isValid = false; end);--, QuestResetFunc);
+	self.pool = CreateObjectPool(QuestCreationFunc, QuestResetFunc);--, function(pool, questInfo) questInfo.isValid = false; end);--, QuestResetFunc);
 	self.iterativeList = {};
 	self.keyList = {};
 	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room
@@ -2386,7 +2386,6 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	end
 
 	local questInfo = self.pool:Acquire();
-	QuestResetFunc(self.pool, questInfo);
 	questInfo.id = qInfo.questId; -- deprecated
 	questInfo.zoneId = zoneId; -- deprecated
 	
@@ -2592,10 +2591,10 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 	self.pinPool:ReleaseAll();
 	
 	if (WQT.settings.disablePoI) then return; end
-	local buttons = WQT_WorldQuestFrame.ScrollFrame.buttons;
 	local WQProvider = GetMapWQProvider();
 
 	local quest;
+
 	for qID, PoI in pairs(WQProvider.activePins) do
 		quest = _questDataProvider:GetQuestById(qID);
 		if (quest and quest.isValid) then
@@ -2679,6 +2678,14 @@ function WQT_ScrollListMixin:OnLoad()
 	HybridScrollFrame_Update(self, 200, self:GetHeight());
 		
 	self.update = function() self:DisplayQuestList(true) end;
+end
+
+function WQT_ScrollListMixin:HookButtonUpdates(func)
+	-- Hook a function to trigger after the Update function of every individual button in the list
+	-- The usable arguments for the function are: func(button, questInfo, shouldShowZone)
+	for k, button in ipairs(self.buttons) do
+		hooksecurefunc(button, "Update", func);
+	end
 end
 
 function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
@@ -2894,22 +2901,25 @@ function WQT_ScrollListMixin:UpdateQuestList()
 	self:UpdateQuestFilters();
 
 	self:ApplySort();
-	if not InCombatLockdown() and WQT_WorldQuestFrame:GetAlpha() > 0 then 
+	if not InCombatLockdown() then
 		self:DisplayQuestList();
-	else
-		WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
 	end
 end
 
 function WQT_ScrollListMixin:DisplayQuestList(skipPins, skipFilter)
-
-	if InCombatLockdown() or not WorldMapFrame:IsShown() or WQT_WorldQuestFrame:GetAlpha() < 1 or not WQT_WorldQuestFrame.selectedTab or WQT_WorldQuestFrame.selectedTab:GetID() ~= 2 then return end
+	local mapInfo = C_Map.GetMapInfo(WorldMapFrame.mapID or 0);
+	
+	if not mapInfo or InCombatLockdown() or not WorldMapFrame:IsShown() or WQT_WorldQuestFrame:GetAlpha() < 1 or not WQT_WorldQuestFrame.selectedTab or WQT_WorldQuestFrame.selectedTab:GetID() ~= 2 then 
+		if (not skipPins and mapInfo and mapInfo.mapType ~= Enum.UIMapType.Continent) then	
+			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
+		end
+		return 
+	end
 	
 	local offset = HybridScrollFrame_GetOffset(self);
 	local buttons = self.buttons;
 	if buttons == nil then return; end
-	
-	local mapInfo = C_Map.GetMapInfo(WorldMapFrame.mapID);
+
 	local shouldShowZone = WQT.settings.alwaysAllQuests or (mapInfo and (mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World)); 
 
 	if not skipFilter then
@@ -3065,9 +3075,7 @@ function WQT_CoreMixin:OnLoad()
 			-- If emissaryOnly was automaticaly set, and there's none in the current list, turn it off again.
 			if WQT_WorldQuestFrame.autoEmissaryId and not WQT_WorldQuestFrame.dataprovider:ListContainsEmissary() then
 				WQT_WorldQuestFrame.autoEmissaryId = nil;
-				if WQT_WorldQuestFrame:GetAlpha() > 0 then 
-					WQT_QuestScrollFrame:DisplayQuestList();
-				end
+				WQT_QuestScrollFrame:DisplayQuestList();
 			end
 			
 		end)
@@ -3137,9 +3145,7 @@ function WQT_CoreMixin:OnLoad()
 	hooksecurefunc(bountyBoard, "OnTabClick", function(self, tab) 
 		if (tab.isEmpty or WQT.settings.emissaryOnly) then return; end
 		WQT_WorldQuestFrame.autoEmissaryId = bountyBoard.bounties[tab.bountyIndex];
-		if WQT_WorldQuestFrame:GetAlpha() > 0 then 
-			WQT_QuestScrollFrame:DisplayQuestList();
-		end
+		WQT_QuestScrollFrame:DisplayQuestList();
 	end)
 	
 	-- Show hightlight in list when hovering over PoI
@@ -3147,9 +3153,7 @@ function WQT_CoreMixin:OnLoad()
 			if (WQT.settings.disablePoI) then return; end
 			if (self.questID ~= WQT_QuestScrollFrame.PoIHoverId) then
 				WQT_QuestScrollFrame.PoIHoverId = self.questID;
-				if WQT_WorldQuestFrame:GetAlpha() > 0 then 
-					WQT_QuestScrollFrame:DisplayQuestList(true);
-				end
+				WQT_QuestScrollFrame:DisplayQuestList(true);
 			end
 			self.notTracked = not QuestIsWatched(self.questID);
 			
@@ -3162,9 +3166,7 @@ function WQT_CoreMixin:OnLoad()
 	hooksecurefunc("TaskPOI_OnLeave", function(self)
 			if (WQT.settings.disablePoI) then return; end
 			WQT_QuestScrollFrame.PoIHoverId = -1;
-			if WQT_WorldQuestFrame:GetAlpha() > 0 then 
-				WQT_QuestScrollFrame:DisplayQuestList(true);
-			end
+			WQT_QuestScrollFrame:DisplayQuestList(true);
 			self.notTracked = nil;
 		end)
 		
@@ -3383,10 +3385,8 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 			self.trackedQuests[k] = true
 		end
 	end
-	if WQT_WorldQuestFrame:GetAlpha() > 0 then 
-		self.ScrollFrame:DisplayQuestList();
-	end
-	WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
+		
+	self.ScrollFrame:DisplayQuestList();
 
 	if questId and added and _TomTomLoaded and WQT.settings.useTomTom and WQT.settings.TomTomAutoArrow and IsWorldQuestHardWatched(questId) then
 		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
@@ -3401,6 +3401,9 @@ end
 function WQT_CoreMixin:QUEST_LOG_UPDATE()
 	WQT_WorldQuestFrame.dataprovider:UpdateWaitingRoom();
 	WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
+	--Do a delayed update because things can mess up if this add-on is set as OptionalDeps for another add-on
+	C_Timer.NewTicker(0.1, function() WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); end, 1); 
+	
 	
 	local numQuests, maxQuests, color = GetQuestLogInfo();
 	WQT_QuestLogFiller.QuestCount:SetText(GENERIC_FRACTION_STRING_WITH_SPACING:format(numQuests, maxQuests));
@@ -3413,9 +3416,7 @@ function WQT_CoreMixin:SetCvarValue(flagKey, value)
 
 	if WQT_CVAR_LIST[flagKey] then
 		SetCVar(WQT_CVAR_LIST[flagKey], value);
-		if WQT_WorldQuestFrame:GetAlpha() > 0 then 
-			self.ScrollFrame:DisplayQuestList();
-		end
+		self.ScrollFrame:DisplayQuestList();
 		WQT:UpdateFilterIndicator();
 		return true;
 	end
@@ -3514,9 +3515,8 @@ function WQT_CoreMixin:SelectTab(tab)
 		WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
 		WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
 		HideUIPanel(QuestScrollFrame);
-		if WQT_WorldQuestFrame:GetAlpha() > 0 then 
-			self.ScrollFrame:DisplayQuestList();
-		end
+		self.ScrollFrame:DisplayQuestList();
+		
 		if not InCombatLockdown() then
 			self:SetFrameLevel(self:GetParent():GetFrameLevel()+3);
 			self:SetCombatEnabled(true);

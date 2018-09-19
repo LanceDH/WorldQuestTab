@@ -10,8 +10,6 @@
 	<Script file="Locals.lua"/>
 	<Script file="WorldQuestTab.lua"/>
 
-	<!--
-	-->
 	<Frame name="WQT_DebugLine" parentArray="DependencyLines" virtual="true">
 		<Layers>
 			<Layer level="OVERLAY" textureSubLevel="-2">
