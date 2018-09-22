@@ -97,7 +97,7 @@ local WQT_ARGUS_COSMIC_BUTTONS = {KrokuunButton, MacAreeButton, AntoranWastesBut
 
 local WQT_TYPEFLAG_LABELS = {
 		[2] = {["Default"] = DEFAULT, ["Elite"] = ELITE, ["PvP"] = PVP, ["Petbattle"] = PET_BATTLE_PVP_QUEUE, ["Dungeon"] = TRACKER_HEADER_DUNGEON, ["Raid"] = RAID, ["Profession"] = BATTLE_PET_SOURCE_4, ["Invasion"] = _L["TYPE_INVASION"]}
-		,[3] = {["Item"] = HELPFRAME_ITEM_TITLE, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = WORLD_QUEST_REWARD_FILTERS_RESOURCES, ["Artifact"] = ITEM_QUALITY6_DESC
+		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = WORLD_QUEST_REWARD_FILTERS_RESOURCES, ["Artifact"] = ITEM_QUALITY6_DESC
 			, ["Relic"] = RELICSLOT, ["None"] = NONE, ["Experience"] = POWER_TYPE_EXPERIENCE, ["Honor"] = HONOR, ["Reputation"] = REPUTATION}
 	};
 	
@@ -384,6 +384,7 @@ local WQT_DEFAULTS = {
 		rewardAmountColors = true;
 		alwaysAllQuests = false;
 		useLFGButtons = false;
+		autoEmisarry = true;
 		
 		useTomTom = true;
 		TomTomAutoArrow = true;
@@ -1038,7 +1039,7 @@ function WQT:InitFilter(self, level)
 		info.tooltipTitle = _L["TYPE_EMISSARY"];
 		info.tooltipText =  _L["TYPE_EMISSARY_TT"];
 		info.func = function(_, _, _, value)
-				WQT_WorldQuestFrame.autoEmissaryId = nil;
+				WQT_WorldQuestFrame.autoEmisarryId = nil;
 				WQT.settings.emissaryOnly = value;
 				WQT_QuestScrollFrame:DisplayQuestList();
 				if (WQT.settings.filterPoI) then
@@ -1047,7 +1048,7 @@ function WQT:InitFilter(self, level)
 				
 				-- If we turn it off, remove the auto set as well
 				if not value then
-					WQT_WorldQuestFrame.autoEmissaryId = nil;
+					WQT_WorldQuestFrame.autoEmisarryId = nil;
 				end
 			end
 		info.checked = function() return WQT.settings.emissaryOnly end;
@@ -1264,6 +1265,15 @@ function WQT:InitFilter(self, level)
 						WQT.settings.useLFGButtons = value;
 					end
 				info.checked = function() return WQT.settings.useLFGButtons end;
+				ADD:AddButton(info, level);		
+				
+				info.text = _L["AUTO_EMISARRY"];
+				info.tooltipTitle = _L["AUTO_EMISARRY"];
+				info.tooltipText = _L["AUTO_EMISARRY_TT"];
+				info.func = function(_, _, _, value)
+						WQT.settings.autoEmisarry = value;
+					end
+				info.checked = function() return WQT.settings.autoEmisarry end;
 				ADD:AddButton(info, level);		
 				
 				info.tooltipTitle = nil;
@@ -1546,7 +1556,7 @@ end
 
 function WQT:IsFiltering()
 	local playerFaction = GetPlayerFactionGroup()
-	if WQT.settings.emissaryOnly or WQT_WorldQuestFrame.autoEmissaryId then return true; end
+	if WQT.settings.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId then return true; end
 	for k, category in pairs(WQT.settings.filters)do
 		for k2, flag in pairs(category.flags) do
 			if flag and IsRelevantFilter(k, k2) then 
@@ -1581,7 +1591,7 @@ function WQT:PassesAllFilters(questInfo)
 	
 	if not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) then return false; end
 
-	if WQT.settings.emissaryOnly or WQT_WorldQuestFrame.autoEmissaryId then 
+	if WQT.settings.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId then 
 		return WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
 	end
 	
@@ -2852,9 +2862,9 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 	-- If we are filtering, 'show' things
 	WQT_WorldQuestFrame.FilterBar:SetHeight(20);
 	-- Emissary has priority
-	if (WQT.settings.emissaryOnly or WQT_WorldQuestFrame.autoEmissaryId) then
+	if (WQT.settings.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId) then
 		local text = _L["TYPE_EMISSARY"]
-		if WQT_WorldQuestFrame.autoEmissaryId then
+		if WQT_WorldQuestFrame.autoEmisarryId then
 			text = GARRISON_TEMPORARY_CATEGORY_FORMAT:format(text);
 		end
 		
@@ -3073,8 +3083,8 @@ function WQT_CoreMixin:OnLoad()
 			self:SelectTab(self.selectedTab); 
 			
 			-- If emissaryOnly was automaticaly set, and there's none in the current list, turn it off again.
-			if WQT_WorldQuestFrame.autoEmissaryId and not WQT_WorldQuestFrame.dataprovider:ListContainsEmissary() then
-				WQT_WorldQuestFrame.autoEmissaryId = nil;
+			if WQT_WorldQuestFrame.autoEmisarryId and not WQT_WorldQuestFrame.dataprovider:ListContainsEmissary() then
+				WQT_WorldQuestFrame.autoEmisarryId = nil;
 				WQT_QuestScrollFrame:DisplayQuestList();
 			end
 			
@@ -3143,8 +3153,8 @@ function WQT_CoreMixin:OnLoad()
 	local bountyBoard = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID];
 	
 	hooksecurefunc(bountyBoard, "OnTabClick", function(self, tab) 
-		if (tab.isEmpty or WQT.settings.emissaryOnly) then return; end
-		WQT_WorldQuestFrame.autoEmissaryId = bountyBoard.bounties[tab.bountyIndex];
+		if (not WQT.settings.autoEmisarry or tab.isEmpty or WQT.settings.emissaryOnly) then return; end
+		WQT_WorldQuestFrame.autoEmisarryId = bountyBoard.bounties[tab.bountyIndex];
 		WQT_QuestScrollFrame:DisplayQuestList();
 	end)
 	
@@ -3250,10 +3260,14 @@ end
 
 function WQT_CoreMixin:FilterClearButtonOnClick()
 	ADD:CloseDropDownMenus();
-	WQT.settings.emissaryOnly = false;
-	WQT_WorldQuestFrame.autoEmissaryId = nil;
-	for k, v in pairs(WQT.settings.filters) do
-		WQT:SetAllFilterTo(k, false);
+	if WQT_WorldQuestFrame.autoEmisarryId then
+		WQT_WorldQuestFrame.autoEmisarryId = nil;
+	elseif WQT.settings.emissaryOnly then
+		WQT.settings.emissaryOnly = false;
+	else
+		for k, v in pairs(WQT.settings.filters) do
+			WQT:SetAllFilterTo(k, false);
+		end
 	end
 	self.ScrollFrame:UpdateQuestList();
 end
@@ -3351,7 +3365,7 @@ function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
 end
 
 function WQT_CoreMixin:QUEST_TURNED_IN(questId)
-	if (QuestUtils_IsQuestWorldQuest(questId) or WQT_WorldQuestFrame.autoEmissaryId == questId) then
+	if (QuestUtils_IsQuestWorldQuest(questId) or WQT_WorldQuestFrame.autoEmisarryId == questId) then
 		-- Remove TomTom arrow if tracked
 		if (_TomTomLoaded and WQT.settings.useTomTom and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
 			local questInfo = WQT_WorldQuestFrame.dataprovider:GetQuestById(questId);
