@@ -541,6 +541,7 @@ end
 
 function WQT:GetFirstContinent(a) 
 	local i = C_Map.GetMapInfo(a) 
+	if not i then return a; end
 	local p = i.parentMapID;
 	if not p or i.mapType <= Enum.UIMapType.Continent then 
 		return a 
