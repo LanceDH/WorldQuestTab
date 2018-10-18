@@ -385,6 +385,7 @@ local WQT_DEFAULTS = {
 		alwaysAllQuests = false;
 		useLFGButtons = false;
 		autoEmisarry = true;
+		questCounter = true;
 		
 		useTomTom = true;
 		TomTomAutoArrow = true;
@@ -1277,6 +1278,16 @@ function WQT:InitFilter(self, level)
 				info.checked = function() return WQT.settings.autoEmisarry end;
 				ADD:AddButton(info, level);		
 				
+				info.text = _L["QUEST_COUNTER"];
+				info.tooltipTitle = _L["QUEST_COUNTER"];
+				info.tooltipText = _L["QUEST_COUNTER_TT"];
+				info.func = function(_, _, _, value)
+						WQT.settings.questCounter = value;
+						WQT_QuestLogFiller:SetShown(value);
+					end
+				info.checked = function() return WQT.settings.questCounter end;
+				ADD:AddButton(info, level);		
+				
 				info.tooltipTitle = nil;
 				info.tooltipText = nil;
 				info.hasArrow = true;
@@ -1662,7 +1673,6 @@ function WQT:OnInitialize()
 end
 
 function WQT:OnEnable()
-
 	WQT_TabNormal.Highlight:Show();
 	WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
 	WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
@@ -1685,7 +1695,11 @@ function WQT:OnEnable()
 		_filterOrders[k] = GetSortedFilterOrder(k);
 	end
 	
+	-- Show default tab depending on setting
 	WQT_WorldQuestFrame:SelectTab((UnitLevel("player") >= 110 and self.settings.defaultTab) and WQT_TabWorld or WQT_TabNormal);
+	
+	-- Show quest log counter
+	WQT_QuestLogFiller:SetShown(self.settings.questCounter);
 	
 	-- Add LFG buttons to objective tracker
 	if self.settings.useLFGButtons then
