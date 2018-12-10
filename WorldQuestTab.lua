@@ -1,12 +1,9 @@
 ﻿--
--- Deprecated and deleted come 8.1
---
---	id, mapX, mapY, mapF, timeString, timeStringShort, color, minutes, zoneId, continentId, rewardId, rewardQuality, rewardTexture, numItems, rewardType, ringcolor, subRewardType
---
--- New info structure
+-- Info structure
 --
 -- factionId			[number, nullable] factionId, null if no faction
 -- expansionLevel		[number] expansion it belongs to
+-- tradeskill			[number] tradeskillId
 -- isCriteria			[boolean] is part of currently selected amissary
 -- passedFilter			[boolean] passed current filters
 -- type					[number] type of quest
@@ -96,7 +93,7 @@ local WQT_FACTIONUNKNOWN = "Interface/addons/WorldQuestTab/Images/FactionUnknown
 local WQT_ARGUS_COSMIC_BUTTONS = {KrokuunButton, MacAreeButton, AntoranWastesButton, BrokenIslesArgusButton}
 
 local WQT_TYPEFLAG_LABELS = {
-		[2] = {["Default"] = DEFAULT, ["Elite"] = ELITE, ["PvP"] = PVP, ["Petbattle"] = PET_BATTLE_PVP_QUEUE, ["Dungeon"] = TRACKER_HEADER_DUNGEON, ["Raid"] = RAID, ["Profession"] = BATTLE_PET_SOURCE_4, ["Invasion"] = _L["TYPE_INVASION"]}
+		[2] = {["Default"] = DEFAULT, ["Elite"] = ELITE, ["PvP"] = PVP, ["Petbattle"] = PET_BATTLE_PVP_QUEUE, ["Dungeon"] = TRACKER_HEADER_DUNGEON, ["Raid"] = RAID, ["Profession"] = BATTLE_PET_SOURCE_4, ["Invasion"] = _L["TYPE_INVASION"], ["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE}
 		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = WORLD_QUEST_REWARD_FILTERS_RESOURCES, ["Artifact"] = ITEM_QUALITY6_DESC
 			, ["Relic"] = RELICSLOT, ["None"] = NONE, ["Experience"] = POWER_TYPE_EXPERIENCE, ["Honor"] = HONOR, ["Reputation"] = REPUTATION}
 	};
@@ -117,8 +114,11 @@ local WQT_FILTER_FUNCTIONS = {
 			,function(quest, flags) return (flags["Raid"] and quest.type == LE_QUEST_TAG_TYPE_RAID); end 
 			,function(quest, flags) return (flags["Profession"] and quest.type == LE_QUEST_TAG_TYPE_PROFESSION); end 
 			,function(quest, flags) return (flags["Invasion"] and quest.type == LE_QUEST_TAG_TYPE_INVASION); end 
+			,function(quest, flags) return (flags["Assault"] and quest.type == LE_QUEST_TAG_TYPE_FACTION_ASSAULT); end 
 			,function(quest, flags) return (flags["Elite"] and (quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.isElite)); end 
-			,function(quest, flags) return (flags["Default"] and (quest.type ~= LE_QUEST_TAG_TYPE_PVP and quest.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON and quest.type ~= WQT_TYPE_BONUSOBJECTIVE  and quest.type ~= LE_QUEST_TAG_TYPE_PROFESSION and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.type ~= LE_QUEST_TAG_TYPE_INVASION and not quest.isElite)); end 
+			,function(quest, flags) return (flags["Default"] and (quest.type ~= LE_QUEST_TAG_TYPE_PVP and quest.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON 
+					and quest.type ~= WQT_TYPE_BONUSOBJECTIVE  and quest.type ~= LE_QUEST_TAG_TYPE_PROFESSION and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.type ~= LE_QUEST_TAG_TYPE_INVASION 
+					and quest.type ~= LE_QUEST_TAG_TYPE_FACTION_ASSAULT and not quest.isElite)); end 
 			}
 		,[3] = { -- Reward filters
 			function(quest, flags) return (flags["Armor"] and quest.reward.type == WQT_REWARDTYPE.equipment); end 
@@ -394,7 +394,7 @@ local WQT_DEFAULTS = {
 				[1] = {["name"] = FACTION
 				, ["flags"] = {[OTHER] = false, [_L["NO_FACTION"]] = false}}
 				,[2] = {["name"] = TYPE
-						, ["flags"] = {["Default"] = false, ["Elite"] = false, ["PvP"] = false, ["Petbattle"] = false, ["Dungeon"] = false, ["Raid"] = false, ["Profession"] = false, ["Invasion"] = false}}--, ["Emissary"] = false}}
+						, ["flags"] = {["Default"] = false, ["Elite"] = false, ["PvP"] = false, ["Petbattle"] = false, ["Dungeon"] = false, ["Raid"] = false, ["Profession"] = false, ["Invasion"] = false, ["Assault"] = false}}--, ["Emissary"] = false}}
 				,[3] = {["name"] = REWARD
 						, ["flags"] = {["Item"] = false, ["Armor"] = false, ["Gold"] = false, ["Currency"] = false, ["Artifact"] = false, ["Relic"] = false, ["None"] = false, ["Experience"] = false, ["Honor"] = false, ["Reputation"] = false}}
 			}
@@ -426,15 +426,21 @@ local function QuestIsWatched(questID)
 	return false;
 end
 
-local function GetQuestLogInfo()
+local function GetQuestLogInfo(hiddenList)
 	local numEntries, numQuests = GetNumQuestLogEntries();
 	local maxQuests = C_QuestLog.GetMaxNumQuestsCanAccept();
 	local questCount = 0;
+	wipe(hiddenList);
 	for questLogIndex = 1, numEntries do
-		local _, _, _, isHeader, _, _, frequency, questID, _, _, _, _, isTask, isBounty, _, _, _ = GetQuestLogTitle(questLogIndex);
+		local _, _, _, isHeader, _, _, frequency, questID, _, _, _, _, isTask, isBounty, _, isHidden, _ = GetQuestLogTitle(questLogIndex);
 		local tagID, tagName = GetQuestTagInfo(questID)
 		if not (isHeader or isTask or isBounty or frequency > 2 or tagID == 102) or tagID == 256 or frequency == 2 then
 			questCount = questCount + 1;
+
+			-- hidden quest counting to the cap
+			if (isHidden) then
+				tinsert(hiddenList, questLogIndex);
+			end
 		end
 	end
 	
@@ -1054,7 +1060,7 @@ function WQT:InitFilter(self, level)
 				end
 			end
 		info.checked = function() return WQT.settings.emissaryOnly end;
-		ADD:AddButton(info, level);			
+		ADD:AddButton(info, level);		
 		
 		info.hasArrow = true;
 		info.notCheckable = true;
@@ -1673,6 +1679,7 @@ function WQT:OnInitialize()
 end
 
 function WQT:OnEnable()
+
 	WQT_TabNormal.Highlight:Show();
 	WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
 	WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
@@ -1882,59 +1889,12 @@ function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 		frame.Bg:SetTexCoord(0, 1, 0, 1);
 		frame.Bg:SetSize(18, 18);
 	end
-	
-	local tradeskillLineID = tradeskillLineIndex and select(7, GetProfessionInfo(tradeskillLineIndex));
-	if ( questType == LE_QUEST_TAG_TYPE_PVP ) then
-		if ( inProgress ) then
-			frame.Texture:SetAtlas("worldquest-questmarker-questionmark");
-			frame.Texture:SetSize(10, 15);
-		else
-			frame.Texture:SetAtlas("worldquest-icon-pvp-ffa", true);
-		end
-	elseif ( questType == LE_QUEST_TAG_TYPE_PET_BATTLE ) then
-		if ( inProgress ) then
-			frame.Texture:SetAtlas("worldquest-questmarker-questionmark");
-			frame.Texture:SetSize(10, 15);
-		else
-			frame.Texture:SetAtlas("worldquest-icon-petbattle", true);
-		end
-	elseif ( questType == LE_QUEST_TAG_TYPE_PROFESSION and WORLD_QUEST_ICONS_BY_PROFESSION[tradeskillLineID] ) then
-		if ( inProgress ) then
-			frame.Texture:SetAtlas("worldquest-questmarker-questionmark");
-			frame.Texture:SetSize(10, 15);
-		else
-			frame.Texture:SetAtlas(WORLD_QUEST_ICONS_BY_PROFESSION[tradeskillLineID], true);
-		end
-	elseif ( questType == LE_QUEST_TAG_TYPE_DUNGEON ) then
-		if ( inProgress ) then
-			frame.Texture:SetAtlas("worldquest-questmarker-questionmark");
-			frame.Texture:SetSize(10, 15);
-		else
-			frame.Texture:SetAtlas("worldquest-icon-dungeon", true);
-		end
-	elseif ( questType == LE_QUEST_TAG_TYPE_RAID ) then
-		if ( inProgress ) then
-			frame.Texture:SetAtlas("worldquest-questmarker-questionmark");
-			frame.Texture:SetSize(10, 15);
-		else
-			frame.Texture:SetAtlas("worldquest-icon-raid", true);
-		end
-	elseif ( questType == LE_QUEST_TAG_TYPE_INVASION ) then
-		if ( inProgress ) then
-			frame.Texture:SetAtlas("worldquest-questmarker-questionmark");
-			frame.Texture:SetSize(10, 15);
-		else
-			frame.Texture:SetAtlas("worldquest-icon-burninglegion", true);
-		end
-	else
-		if ( inProgress ) then
-			frame.Texture:SetAtlas("worldquest-questmarker-questionmark");
-			frame.Texture:SetSize(10, 15);
-		else
-			frame.Texture:SetAtlas("worldquest-questmarker-questbang");
-			frame.Texture:SetSize(6, 15);
-		end
-	end
+
+	-- Update Icon
+	local atlasTexture, sizeX, sizeY = QuestUtil.GetWorldQuestAtlasInfo(questType, inProgress, tradeskillLineIndex);
+
+	frame.Texture:SetAtlas(atlasTexture);
+	frame.Texture:SetSize(sizeX, sizeY);
 	
 	if ( isCriteria ) then
 		if ( isElite ) then
@@ -2242,15 +2202,6 @@ function WQT_QuestDataProvider:SetQuestData(questInfo)
 	
 	local expLevel = WQT_ZONE_EXPANSIONS[zoneId] or 0;
 
-	
-	questInfo.mapX = questInfo.x; -- deprecated
-	questInfo.mapY = questInfo.y; -- deprecated
-	questInfo.timeString = timeString; -- deprecated
-	questInfo.timeStringShort = timeStringShort; -- deprecated
-	questInfo.color = color; -- deprecated
-	questInfo.minutes = minutes; -- deprecated
-	
-	
 	questInfo.time.minutes = minutes;
 	questInfo.time.full = timeString;
 	questInfo.time.short = timeStringShort;
@@ -2345,14 +2296,7 @@ function WQT_QuestDataProvider:SetQuestReward(questInfo)
 			rewardType = WQT_REWARDTYPE.none;
 		end
 	end
-	
-	questInfo.rewardId = itemId; -- deprecated
-	questInfo.rewardQuality = quality or 1; -- deprecated
-	questInfo.rewardTexture = texture or WQT_QUESTIONMARK; -- deprecated
-	questInfo.numItems = numItems or 0; -- deprecated
-	questInfo.rewardType = rewardType or 0; -- deprecated
-	questInfo.ringColor = color; -- deprecated
-	
+
 	questInfo.reward.id = itemId;
 	questInfo.reward.quality = quality or 1;
 	questInfo.reward.texture = texture or WQT_QUESTIONMARK;
@@ -2373,7 +2317,6 @@ function WQT_QuestDataProvider:SetSubReward(questInfo)
 	elseif questInfo.reward.type ~= WQT_REWARDTYPE.gold and GetQuestLogRewardMoney(questInfo.questId) > 0 then
 		subType = WQT_REWARDTYPE.gold;
 	end
-	questInfo.subRewardType = subType; -- deprecated
 	
 	questInfo.reward.subType = subType;
 end
@@ -2411,8 +2354,6 @@ function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
 	end
 
 	local questInfo = self.pool:Acquire();
-	questInfo.id = qInfo.questId; -- deprecated
-	questInfo.zoneId = zoneId; -- deprecated
 	
 	questInfo.isValid = false;
 	questInfo.questId = qInfo.questId;
@@ -2997,10 +2938,47 @@ function WQT_ScrollListMixin:ScrollFrameSetEnabled(enabled)
 end
 
 
+WQT_QuestCounterMixin = {}
+
+function WQT_QuestCounterMixin:OnLoad()
+	self:SetFrameLevel(self:GetParent():GetFrameLevel() +5);
+	self.hiddenList = {};
+end
+
+function WQT_QuestCounterMixin:InfoOnEnter(frame)
+	-- If it's hidden, don't show tooltip
+	if frame.isHidden then return end;
+	
+	GameTooltip:SetOwner(frame, "ANCHOR_RIGHT");
+	GameTooltip:SetText(_L["QUEST_COUNTER_TITLE"], nil, nil, nil, nil, true);
+	GameTooltip:AddLine(_L["QUEST_COUNTER_INFO"]:format(#self.hiddenList), 1, 1, 1, true);
+	
+	-- Add culprits
+	for k, i in ipairs(self.hiddenList) do
+		local n, _, _, header, _, _, _, id, _, _, _, _, _, _, _, hidden = GetQuestLogTitle(i); 
+		local tagId, tagName = GetQuestTagInfo(id)
+		GameTooltip:AddDoubleLine(string.format("%s (%s)", n, id), tagName, 1, 1, 1, 1, 1, 1, true);
+	end
+	
+	GameTooltip:Show();
+end
+
+function WQT_QuestCounterMixin:UpdateText()
+	local numQuests, maxQuests, color, logIsEmpty = GetQuestLogInfo(self.hiddenList);
+	self.QuestCount:SetText(GENERIC_FRACTION_STRING_WITH_SPACING:format(numQuests, maxQuests));
+	self.QuestCount:SetTextColor(color.r, color.g, color.b);
+
+	-- Show or hide the icon
+	local showIcon = #self.hiddenList > 0;
+	self.HiddenInfo:SetAlpha(showIcon and 1 or 0);
+	self.HiddenInfo.isHidden = not showIcon;
+end
+
+
+
 WQT_CoreMixin = {}
 
 function WQT_CoreMixin:OnLoad()
-	self.scrollFrame = self.ScrollFrame; -- deprecated
 
 	self.pinHandler = CreateFromMixins(WQT_PinHandlerMixin);
 	self.pinHandler:OnLoad();
@@ -3433,11 +3411,8 @@ function WQT_CoreMixin:QUEST_LOG_UPDATE()
 	--Do a delayed update because things can mess up if this add-on is set as OptionalDeps for another add-on
 	C_Timer.NewTicker(0.1, function() WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); end, 1); 
 	
-	
-	local numQuests, maxQuests, color = GetQuestLogInfo();
-	WQT_QuestLogFiller.QuestCount:SetText(GENERIC_FRACTION_STRING_WITH_SPACING:format(numQuests, maxQuests));
-	WQT_QuestLogFiller.QuestCount:SetTextColor(color.r, color.g, color.b);
-	
+	-- Update the count number counter
+	WQT_QuestLogFiller:UpdateText();
 end
 
 function WQT_CoreMixin:SetCvarValue(flagKey, value)

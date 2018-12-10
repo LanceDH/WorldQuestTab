@@ -41,12 +41,15 @@ L["TOMTOM_AUTO_ARROW"]		= "Waypoint On Track"
 L["TOMTOM_AUTO_ARROW_TT"]	= "Hard tracking a quests by shift clicking, or by using the option in the dropdown, will automatically create a TomTom waypoint."
 L["AUTO_EMISARRY"] = "Auto Emissary Only"
 L["AUTO_EMISARRY_TT"] = "Clicking on an emisarry on the world map bounty board, will temporarily enable the 'Emisarry Only' filter."
-L["QUEST_COUNTER"] = "Quest Log Counter"
-L["QUEST_COUNTER_TT"] = "Show the number of quests in your default quest log."
 
 L["TYPE_INVASION"]	= "Invasion";
 L["TYPE_EMISSARY"]	= "Emissary Only";
 L["TYPE_EMISSARY_TT"]	= "Show only quests for the currently selected emissary. This filter overwrites all other filters.";
+
+L["QUEST_COUNTER"] = "Quest Log Counter"
+L["QUEST_COUNTER_TT"] = "Show the number of quests in your default quest log."
+L["QUEST_COUNTER_TITLE"]	= "Hidden quests";
+L["QUEST_COUNTER_INFO"]	= "Following |cFFFFd100%d|r hidden quests count to your quest cap and can't be abandoned. This is an issue on Blizzard's end.";
 
 L["TRACKDD_TOMTOM"]	= "TomTom add"
 L["TRACKDD_TOMTOM_REMOVE"]	= "TomTom remove"

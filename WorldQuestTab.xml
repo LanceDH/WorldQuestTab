@@ -741,7 +741,7 @@
 		</Anchors>
 	</Button>
 	
-	<Frame name="WQT_QuestLogFiller" hidden="false" parent="QuestMapFrame" flattenRenderLayers="true">
+	<Frame name="WQT_QuestLogFiller" mixin="WQT_QuestCounterMixin" hidden="false" parent="QuestMapFrame" flattenRenderLayers="true">
 		<Size y="40"/>
 		<Anchors>
 			<Anchor point="LEFT" relativeTo="WQT_TabWorld" relativePoint="RIGHT" x="1"/>
@@ -811,10 +811,30 @@
 				</FontString>
 			</Layer>
 		</Layers>
+		<Frames>
+			<Frame parentKey="HiddenInfo">
+				<Size x="16" y="16"/>
+				<Anchors>
+					<Anchor point="LEFT" relativeKey="$parent.BoxBG" relativePoint="BOTTOMRIGHT" x="-4" y="4"/>
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture parentKey="Icon" file="Interface\DialogFrame\DialogIcon-AlertNew-16" />
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnEnter>
+						self:GetParent():InfoOnEnter(self);
+					</OnEnter>
+					<OnLeave>
+						GameTooltip:Hide();
+					</OnLeave>
+				</Scripts>
+			</Frame>
+		</Frames>
+		
 		<Scripts>
-			<OnLoad>
-				self:SetFrameLevel(self:GetParent():GetFrameLevel() +5);
-			</OnLoad>
+			<OnLoad method="OnLoad"/>
 		</Scripts>
 	</Frame>
 	
