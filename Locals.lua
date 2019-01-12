@@ -51,6 +51,9 @@ L["QUEST_COUNTER_TT"] = "Show the number of quests in your default quest log."
 L["QUEST_COUNTER_TITLE"]	= "Hidden quests";
 L["QUEST_COUNTER_INFO"]	= "Following |cFFFFd100%d|r hidden quests count to your quest cap and can't be abandoned. This is an issue on Blizzard's end.";
 
+L["EMISSARY_COUNTER"] 		= "Emissary Counter";
+L["EMISSARY_COUNTER_TT"] 	= "Add counters to the emissary tabs which indicate your progress for each emissary.";
+
 L["TRACKDD_TOMTOM"]	= "TomTom add"
 L["TRACKDD_TOMTOM_REMOVE"]	= "TomTom remove"
 L["NUMBERS_FIRST"]	= "%gk"

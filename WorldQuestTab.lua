@@ -386,6 +386,7 @@ local WQT_DEFAULTS = {
 		useLFGButtons = false;
 		autoEmisarry = true;
 		questCounter = true;
+		bountyCounter = true;
 		
 		useTomTom = true;
 		TomTomAutoArrow = true;
@@ -1293,6 +1294,17 @@ function WQT:InitFilter(self, level)
 					end
 				info.checked = function() return WQT.settings.questCounter end;
 				ADD:AddButton(info, level);		
+				
+				info.text = _L["EMISSARY_COUNTER"];
+				info.tooltipTitle = _L["EMISSARY_COUNTER"];
+				info.tooltipText = _L["EMISSARY_COUNTER_TT"];
+				info.func = function(_, _, _, value)
+						WQT.settings.bountyCounter = value;
+						WQT_WorldQuestFrame:UpdateBountyCounters();
+						WQT_WorldQuestFrame:RepositionBountyTabs();
+					end
+				info.checked = function() return WQT.settings.bountyCounter end;
+				ADD:AddButton(info, level);	
 				
 				info.tooltipTitle = nil;
 				info.tooltipText = nil;
@@ -2716,8 +2728,11 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 		-- reposition compare frame
 		if((questInfo.reward.type == WQT_REWARDTYPE.equipment) and WQT_Tooltip.ItemTooltip:IsShown()) then
 			if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
-				-- Setup and check total size of both tooltips
-				WQT_CompareTooltip1:SetCompareItem(WQT_CompareTooltip2, WQT_Tooltip.ItemTooltip.Tooltip);
+				-- Setup compare tootltips
+				GameTooltip_ShowCompareItem(WQT_Tooltip.ItemTooltip.Tooltip, WQT_Tooltip.ItemTooltip);
+				
+				-- If there is room to the right, give priority to show compare tooltips to the right of the tooltip
+				--print(WQT_Tooltip.ItemTooltip.Tooltip:GetRight() + totalWidth ,GetScreenWidth())
 				local totalWidth = 0;
 				if ( WQT_CompareTooltip1:IsShown()  ) then
 						totalWidth = totalWidth + WQT_CompareTooltip1:GetWidth();
@@ -2726,11 +2741,14 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 						totalWidth = totalWidth + WQT_CompareTooltip2:GetWidth();
 				end
 				
-				-- If there is room to the right, give priority to show compare tooltips to the right of the tooltip
-				local priorityRight = WQT_Tooltip.ItemTooltip.Tooltip:GetRight() + totalWidth < GetScreenWidth();
-				WQT_Tooltip.ItemTooltip.Tooltip.overrideComparisonAnchorSide  = priorityRight and "right" or "left";
-				GameTooltip_ShowCompareItem(WQT_Tooltip.ItemTooltip.Tooltip, WQT_Tooltip.ItemTooltip);
-
+				if WQT_Tooltip.ItemTooltip.Tooltip:GetRight() + totalWidth < GetScreenWidth() and WQT_CompareTooltip1:IsShown() then
+					WQT_CompareTooltip1:ClearAllPoints();
+					WQT_CompareTooltip1:SetPoint("TOPLEFT", WQT_Tooltip.ItemTooltip.Tooltip, "TOPRIGHT");
+					
+					WQT_CompareTooltip2:ClearAllPoints();
+					WQT_CompareTooltip2:SetPoint("TOPLEFT", WQT_CompareTooltip1, "TOPRIGHT");
+				end
+				
 				-- Set higher frame level in case things overlap
 				local level = WQT_Tooltip:GetFrameLevel();
 				WQT_CompareTooltip1:SetFrameLevel(level +2);
@@ -3159,11 +3177,14 @@ function WQT_CoreMixin:OnLoad()
 	end)
 	
 	hooksecurefunc(bountyBoard, "RefreshSelectedBounty", function(s, tab) 
-		self:UpdateBountyCounters();
+		if (WQT.settings.bountyCounter) then
+			self:UpdateBountyCounters();
+		end
 	end)
 	
 	-- Slight offset the tabs to make room for the counters
 	hooksecurefunc(bountyBoard, "AnchorBountyTab", function(self, tab) 
+		if (not WQT.settings.bountyCounter) then return end
 		local point, relativeTo, relativePoint, x, y = tab:GetPoint(1);
 		tab:SetPoint(point, relativeTo, relativePoint, x, y + 2);
 	end)
@@ -3179,8 +3200,12 @@ function WQT_CoreMixin:OnLoad()
 			
 			-- Improve official tooltips overlap
 			local level = WorldMapTooltip:GetFrameLevel();
-			WorldMapCompareTooltip1:SetFrameLevel(level + 1);
-			WorldMapCompareTooltip2:SetFrameLevel(level + 1);
+			WorldMapTooltipCompareTooltip1:SetFrameLevel(level + 1);
+			WorldMapTooltipCompareTooltip2:SetFrameLevel(level + 1);
+			 -- 8.1.5
+			--local level = GameTooltip:GetFrameLevel();
+			--ShoppingTooltip1:SetFrameLevel(level + 1);
+			--ShoppingTooltip2:SetFrameLevel(level + 1);
 		end)
 		
 	hooksecurefunc("TaskPOI_OnLeave", function(self)
@@ -3248,10 +3273,19 @@ end
 
 function WQT_CoreMixin:UpdateBountyCounters()
 	self.bountyCounterPool:ReleaseAll();
+	if (not WQT.settings.bountyCounter) then return end
+	
 	for tab, v in pairs(self.bountyBoard.bountyTabPool.activeObjects) do
 		self:AddBountyCountersToTab(tab);
 	end
 end
+
+function WQT_CoreMixin:RepositionBountyTabs()
+	for tab, v in pairs(self.bountyBoard.bountyTabPool.activeObjects) do
+		self.bountyBoard:AnchorBountyTab(tab);
+	end
+end
+
 
 function WQT_CoreMixin:AddBountyCountersToTab(tab)
 	local bountyData = self.bountyBoard.bounties[tab.bountyIndex];
