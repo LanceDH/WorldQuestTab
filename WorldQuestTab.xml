@@ -457,6 +457,26 @@
 			</OnLeave>
 		</Scripts>
 	</Button>
+	
+	<Frame name="WQT_BountyCounterTemplate" virtual="true" hidden="false">
+		<Size x="10" y="10"/>
+		<Layers>
+		<!--
+			<Layer level="ARTWORK" textureSubLevel="1">
+				<Texture parentKey="highlight" file="Interface\COMMON\ReputationStar" setAllPoints="true">
+					<TexCoords left="0" right="0.5" top="0.5" bottom="1"/>
+				</Texture>
+			</Layer>
+			-->
+		
+			<Layer level="ARTWORK">
+				<Texture parentKey="icon" file="Interface\COMMON\ReputationStar" setAllPoints="true">
+					<TexCoords left="0" right="0.5" top="0.5" bottom="1"/>
+				</Texture>
+			</Layer>
+		</Layers>
+	</Frame>
+	
 	 
 	<Frame name="WQT_WorldQuestFrame" mixin="WQT_CoreMixin" parent="QuestMapFrame" inherits="SecureFrameTemplate" enableMouse="true" hidden="false">
 		<Size x="287" y="468"/>
@@ -951,6 +971,7 @@
 		</Layers>
 	</Frame>
  
+
  
 	<Frame name="WQT_GroupSearch" hidden="true" enableMouse="true">
 		<Size y="28" />

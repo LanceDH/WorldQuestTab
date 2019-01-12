@@ -1732,6 +1732,10 @@ function WQT:OnEnable()
 	end
 end
 
+function WQT:ClearBountyIcons()
+
+end
+
 
 WQT_ListButtonMixin = {}
 
@@ -2982,6 +2986,8 @@ function WQT_CoreMixin:OnLoad()
 
 	self.pinHandler = CreateFromMixins(WQT_PinHandlerMixin);
 	self.pinHandler:OnLoad();
+	self.bountyCounterPool = CreateFramePool("FRAME", self, "WQT_BountyCounterTemplate");
+
 
 	self.dataprovider = _questDataProvider
 
@@ -3144,11 +3150,22 @@ function WQT_CoreMixin:OnLoad()
 	
 	-- Auto emisarry when clicking on one of the buttons
 	local bountyBoard = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID];
+	self.bountyBoard = bountyBoard;
 	
 	hooksecurefunc(bountyBoard, "OnTabClick", function(self, tab) 
 		if (not WQT.settings.autoEmisarry or tab.isEmpty or WQT.settings.emissaryOnly) then return; end
 		WQT_WorldQuestFrame.autoEmisarryId = bountyBoard.bounties[tab.bountyIndex];
 		WQT_QuestScrollFrame:DisplayQuestList();
+	end)
+	
+	hooksecurefunc(bountyBoard, "RefreshSelectedBounty", function(s, tab) 
+		self:UpdateBountyCounters();
+	end)
+	
+	-- Slight offset the tabs to make room for the counters
+	hooksecurefunc(bountyBoard, "AnchorBountyTab", function(self, tab) 
+		local point, relativeTo, relativePoint, x, y = tab:GetPoint(1);
+		tab:SetPoint(point, relativeTo, relativePoint, x, y + 2);
 	end)
 	
 	-- Show hightlight in list when hovering over PoI
@@ -3227,6 +3244,59 @@ function WQT_CoreMixin:OnLoad()
 	QuestScrollFrame.Background:SetPoint("BOTTOMRIGHT",QuestMapFrame, "BOTTOMRIGHT", 0, -5);
 	QuestMapFrame.DetailsFrame:SetPoint("TOPRIGHT", QuestMapFrame, "TOPRIGHT", -26, -8)
 	QuestMapFrame.VerticalSeparator:SetHeight(470);
+end
+
+function WQT_CoreMixin:UpdateBountyCounters()
+	self.bountyCounterPool:ReleaseAll();
+	for tab, v in pairs(self.bountyBoard.bountyTabPool.activeObjects) do
+		self:AddBountyCountersToTab(tab);
+	end
+end
+
+function WQT_CoreMixin:AddBountyCountersToTab(tab)
+	local bountyData = self.bountyBoard.bounties[tab.bountyIndex];
+	if bountyData then
+		local questIndex = GetQuestLogIndexByID(bountyData.questID);
+		if questIndex > 0 then
+			local desc = GetQuestLogLeaderBoard(1, questIndex);
+			
+			local progress, goal = desc:match("([%d]+)%s*/%s*([%d]+)");
+			progress = tonumber(progress);
+			goal = tonumber(goal);
+			
+			if progress == goal then return end;
+			
+			local offsetAngle, startAngle = 32, 270;
+			
+			-- position of first counter
+			startAngle = startAngle - offsetAngle * (goal -1) /2
+			
+			for i=1, goal do
+				local counter = self.bountyCounterPool:Acquire();
+
+				local x = cos(startAngle) * 16;
+				local y = sin(startAngle) * 16;
+				counter:SetPoint("CENTER", tab.Icon, "CENTER", x, y);
+				counter:SetParent(tab);
+				counter:Show();
+				
+				-- Light nr of completed
+				if i <= progress then
+					counter.icon:SetTexCoord(0, 0.5, 0, 0.5);
+					counter.icon:SetVertexColor(1, 1, 1, 1);
+					counter.icon:SetDesaturated(false);
+				else
+					counter.icon:SetTexCoord(0, 0.5, 0, 0.5);
+					counter.icon:SetVertexColor(0.65, 0.65, 0.65, 1);
+					counter.icon:SetDesaturated(true);
+				end
+
+				-- Offset next counter
+				startAngle = startAngle + offsetAngle;
+			end
+		end
+	end
+	
 end
 
 function WQT_CoreMixin:ShowHighlightOnMapFilters()
