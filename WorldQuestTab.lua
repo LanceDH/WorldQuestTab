@@ -3200,8 +3200,8 @@ function WQT_CoreMixin:OnLoad()
 			
 			-- Improve official tooltips overlap
 			local level = WorldMapTooltip:GetFrameLevel();
-			WorldMapTooltipCompareTooltip1:SetFrameLevel(level + 1);
-			WorldMapTooltipCompareTooltip2:SetFrameLevel(level + 1);
+			WorldMapCompareTooltip1:SetFrameLevel(level + 1);
+			WorldMapCompareTooltip2:SetFrameLevel(level + 1);
 			 -- 8.1.5
 			--local level = GameTooltip:GetFrameLevel();
 			--ShoppingTooltip1:SetFrameLevel(level + 1);
