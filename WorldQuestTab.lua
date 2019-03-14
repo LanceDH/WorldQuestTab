@@ -2729,10 +2729,9 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 		if((questInfo.reward.type == WQT_REWARDTYPE.equipment) and WQT_Tooltip.ItemTooltip:IsShown()) then
 			if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
 				-- Setup compare tootltips
-				GameTooltip_ShowCompareItem(WQT_Tooltip.ItemTooltip.Tooltip, WQT_Tooltip.ItemTooltip);
+				GameTooltip_ShowCompareItem(WQT_Tooltip.ItemTooltip.Tooltip);
 				
 				-- If there is room to the right, give priority to show compare tooltips to the right of the tooltip
-				--print(WQT_Tooltip.ItemTooltip.Tooltip:GetRight() + totalWidth ,GetScreenWidth())
 				local totalWidth = 0;
 				if ( WQT_CompareTooltip1:IsShown()  ) then
 						totalWidth = totalWidth + WQT_CompareTooltip1:GetWidth();
@@ -3199,13 +3198,9 @@ function WQT_CoreMixin:OnLoad()
 			self.notTracked = not QuestIsWatched(self.questID);
 			
 			-- Improve official tooltips overlap
-			local level = WorldMapTooltip:GetFrameLevel();
-			WorldMapCompareTooltip1:SetFrameLevel(level + 1);
-			WorldMapCompareTooltip2:SetFrameLevel(level + 1);
-			 -- 8.1.5
-			--local level = GameTooltip:GetFrameLevel();
-			--ShoppingTooltip1:SetFrameLevel(level + 1);
-			--ShoppingTooltip2:SetFrameLevel(level + 1);
+			local level = GameTooltip:GetFrameLevel();
+			ShoppingTooltip1:SetFrameLevel(level + 1);
+			ShoppingTooltip2:SetFrameLevel(level + 1);
 		end)
 		
 	hooksecurefunc("TaskPOI_OnLeave", function(self)
