@@ -1,47 +1,48 @@
 ﻿--
 -- Info structure
 --
--- factionId			[number, nullable] factionId, null if no faction
+-- factionId				[number, nullable] factionId, null if no faction
 -- expansionLevel		[number] expansion it belongs to
--- tradeskill			[number] tradeskillId
--- isCriteria			[boolean] is part of currently selected amissary
+-- tradeskill				[number] tradeskillId
+-- isCriteria				[boolean] is part of currently selected amissary
 -- passedFilter			[boolean] passed current filters
--- type					[number] type of quest
--- questId				[number] questId
--- rarity				[number] quest rarity; normal, rare, epic
--- numObjetives			[number] number of objectives
--- title				[string] quest title
--- faction				[string] faction name
--- isElite				[boolean] is elite quest
--- isValid				[boolean, nullable] true if the quest is valid. Quest can be invalid if they are awaiting data or are an actual invalid quest (Don't ask).
--- time					[table] time related values
---		short			[string] short time string (6H)
--- 		full			[string] long time string (6 Hours)
---		minutes			[number] minutes remaining
---		color			[color] color of time string
+-- type						[number] type of quest
+-- questId					[number] questId
+-- rarity					[number] quest rarity; normal, rare, epic
+-- numObjetives		[number] number of objectives
+-- title						[string] quest title
+-- faction					[string] faction name
+-- isElite					[boolean] is elite quest
+-- isValid					[boolean, nullable] true if the quest is valid. Quest can be invalid if they are awaiting data or are an actual invalid quest (Don't ask).
+-- time						[table] time related values
+--		short					[string] short time string (6H)
+-- 	full						[string] long time string (6 Hours)
+--		minutes				[number] minutes remaining
+--		color						[color] color of time string
 -- mapInfo				[table] zone related values
---		mapType			[number] map type, see official Enum.UIMapType
---		mapID			[number] mapID, uses capital 'ID' because Blizzard
--- 	name				[string] zone name
---		mapX			[number] x pin position
---		mapY			[number] y pin position
---		parentMapID		[number] parentmapID, uses capital 'ID' because Blizzard
--- reward				[number] reward related values
---		type			[number] reward type, see WQT_REWARDTYPE below
---		texture			[number/string] texture of the reward. can be string for things like gold or unknown reward
---		amount			[amount] amount of items, gold, rep, or item level
---		id				[number, nullable] itemId for reward. null if not an item
---		quality			[number] item quality; common, rare, epic, etc
---		canUpgrade		[boolean, nullable] true if item has a chance to upgrade (e.g. ilvl 285+)
+--		mapType				[number] map type, see official Enum.UIMapType
+--		mapID					[number] mapID, uses capital 'ID' because Blizzard
+-- 	name					[string] zone name
+--		mapX					[number] x pin position
+--		mapY					[number] y pin position
+--		parentMapID			[number] parentmapID, uses capital 'ID' because Blizzard
+-- reward					[table] reward related values
+--		type						[number] reward type, see WQT_REWARDTYPE below
+--		texture					[number/string] texture of the reward. can be string for things like gold or unknown reward
+--		amount					[amount] amount of items, gold, rep, or item level
+--		id							[number, nullable] itemId for reward. null if not an item
+--		quality					[number] item quality; common, rare, epic, etc
+--		canUpgrade			[boolean, nullable] true if item has a chance to upgrade (e.g. ilvl 285+)
 
 local addonName, addon = ...
+local deprecated = {}
 
 local WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 local ADD = LibStub("AddonDropDown-1.0");
 
 local _L = addon.L
 
-local _debug = false;
+local _debug = true;
 
 local _TomTomLoaded = IsAddOnLoaded("TomTom");
 local _CIMILoaded = IsAddOnLoaded("CanIMogIt");
@@ -146,6 +147,9 @@ local WQT_ZONE_EXPANSIONS = {
 	,[895] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Tiragarde Sound
 	,[1161] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Boralus
 	,[1169] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Tol Dagor
+	-- Classic zones with BfA WQ
+	--,[14] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Arathi Highlands
+	--,[62] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Darkshore
 
 	,[619] = LE_EXPANSION_LEGION -- Broken Isles
 	,[630] = LE_EXPANSION_LEGION -- Azsuna
@@ -309,18 +313,19 @@ local WQT_ZONE_MAPCOORDS = {
 		,[947]		= {	
 		} -- All of Azeroth
 	}
+	
 	-- world map continents depending on expansion level
 	local expLevel = GetExpansionLevel();
+		WQT_ZONE_MAPCOORDS[947][113] = {["x"] = 0.49, ["y"] = 0.13} -- Northrend
+		WQT_ZONE_MAPCOORDS[947][424] = {["x"] = 0.46, ["y"] = 0.92} -- Pandaria
 	if expLevel == LE_EXPANSION_BATTLE_FOR_AZEROTH then
-		WQT_ZONE_MAPCOORDS[947][875] = {["x"] = 0.46, ["y"] = 0.92}
-		WQT_ZONE_MAPCOORDS[947][876] = {["x"] = 0.46, ["y"] = 0.92}
+		WQT_ZONE_MAPCOORDS[947][875] = {["x"] = 0.54, ["y"] = 0.61} -- Zandalar
+		WQT_ZONE_MAPCOORDS[947][876] = {["x"] = 0.72, ["y"] = 0.49} -- Kul'tiras
+		
+		WQT_ZONE_MAPCOORDS[947][12] = {["x"] = 0.19, ["y"] = 0.5} -- Kalimdor
+		WQT_ZONE_MAPCOORDS[947][13] = {["x"] = 0.88, ["y"] = 0.56} -- Eastern Kingdom
 	elseif expLevel == LE_EXPANSION_LEGION then
-		WQT_ZONE_MAPCOORDS[947][619] = {["x"] = 0.6, ["y"] = 0.41}
-	else
-		WQT_ZONE_MAPCOORDS[947][12] = {["x"] = 0.19, ["y"] = 0.5}
-		WQT_ZONE_MAPCOORDS[947][13] = {["x"] = 0.88, ["y"] = 0.56}
-		WQT_ZONE_MAPCOORDS[947][113] = {["x"] = 0.49, ["y"] = 0.13}
-		WQT_ZONE_MAPCOORDS[947][424] = {["x"] = 0.46, ["y"] = 0.92}
+		WQT_ZONE_MAPCOORDS[947][619] = {["x"] = 0.6, ["y"] = 0.41} -- Broken Isles
 	end
 
 local WQT_SORT_OPTIONS = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD}
@@ -663,7 +668,7 @@ local function slashcmd(msg, editbox)
 		print(_L["OPTIONS_INFO"]);
 	else
 		if _debug then
-		-- This is to get the zone coords for highlights so I don't have to retype it every time
+		--This is to get the zone coords for highlights so I don't have to retype it every time
 		
 		-- local x, y = GetCursorPosition();
 		
@@ -955,12 +960,6 @@ local function ConvertToBfASettings()
 		end
 	end
 end
-
-local deprecated = {
-		["id"] = true, ["mapX"] = true, ["mapY"] = true, ["mapF"] = true, ["timeString"] = true, ["timeStringShort"] = true, 
-		["color"] = true, ["minutes"] = true, ["zoneId"] = true, ["continentId"] = true, ["rewardId"] = true, ["rewardQuality"] = true, 
-		["rewardTexture"] = true, ["numItems"] = true, ["rewardType"] = true, ["ringColor"] = true, ["subRewardType"] = true;
-	}
 
 local function AddDebugToTooltip(tooltip, questInfo)
 	-- First all non table values;
@@ -1607,7 +1606,7 @@ function WQT:isUsingFilterNr(id)
 end
 
 function WQT:PassesMapFilter(questInfo)
-	if (WQT_WorldQuestFrame.currentMapInfo.mapType == Enum.UIMapType.World) then return true; end
+	if (WQT_WorldQuestFrame.currentMapInfo and WQT_WorldQuestFrame.currentMapInfo.mapType == Enum.UIMapType.World) then return true; end
 
 	if (WorldMapFrame.mapID == questInfo.mapInfo.mapID) then return true; end
 	
@@ -2038,9 +2037,15 @@ end
 function WQT_ListButtonMixin:ShowWorldmapHighlight(zoneId)
 	local areaId = WorldMapFrame.mapID;
 	local coords = WQT_ZONE_MAPCOORDS[areaId] and WQT_ZONE_MAPCOORDS[areaId][zoneId];
+	local mapInfo = C_Map.GetMapInfo(zoneId);
+	--Highlihght continents on world view
+	if (not coords and areaId == 947 and mapInfo and mapInfo.parentMapID) then
+		coords = WQT_ZONE_MAPCOORDS[947][mapInfo.parentMapID];
+		mapInfo = C_Map.GetMapInfo(mapInfo.parentMapID);
+	end
+
 	if not coords then return; end;
 
-	local mapInfo = C_Map.GetMapInfo(zoneId);
 	WorldMapFrame.ScrollContainer:GetMap():TriggerEvent("SetAreaLabel", MAP_AREA_LABEL_TYPE.POI, mapInfo.name);
 
 	-- Now we cheat by acting like we moved our mouse over the relevant zone
