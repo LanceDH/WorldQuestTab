@@ -8,6 +8,8 @@
 	<Include file="libs\AddonDropDown-1.0\AddonDropDown-1.0.xml"/>
 
 	<Script file="Locals.lua"/>
+	<Script file="Data.lua"/>
+	<Script file="Dataprovider.lua"/>
 	<Script file="WorldQuestTab.lua"/>
 
 	<Frame name="WQT_DebugLine" parentArray="DependencyLines" virtual="true">
@@ -319,7 +321,7 @@
 					<Layer level="ARTWORK">
 						<FontString parentKey="Amount" inherits="WQT_NumberFontOutline" maxLines="1" justifyH="RIGHT">
 							<Anchors>
-								<Anchor point="BOTTOMRIGHT" x="3" y="1"/>
+								<Anchor point="BOTTOMRIGHT" x="1" y="1"/>
 							</Anchors>
 							<Color r="1" g="1" b="1"/>
 						</FontString>

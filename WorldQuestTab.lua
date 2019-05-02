@@ -37,337 +37,17 @@
 local addonName, addon = ...
 local deprecated = {}
 
-local WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
+local WQT = addon.WQT;
 local ADD = LibStub("AddonDropDown-1.0");
 
 local _L = addon.L
-
-local _debug = true;
+local _V = addon.variables;
+local _debug = addon.debug
+local _playerFaction = GetPlayerFactionGroup();
 
 local _TomTomLoaded = IsAddOnLoaded("TomTom");
 local _CIMILoaded = IsAddOnLoaded("CanIMogIt");
 local _WFMLoaded = IsAddOnLoaded("WorldFlightMap");
-
-WQT_GROUP_INFO = _L["GROUP_SEARCH_INFO"];
-
-WQT_REWARDTYPE = {
-	["missing"] = 100
-	,["equipment"] = 1
-	,["relic"] = 2
-	,["artifact"] = 3
-	,["item"] = 4
-	,["gold"] = 5
-	,["currency"] = 6
-	,["honor"] = 7
-	,["reputation"] = 8
-	,["xp"] = 9
-	,["none"] = 10
-};
-
-local WQT_TYPE_BONUSOBJECTIVE = 99;
-
-local WQT_WHITE_FONT_COLOR = CreateColor(0.8, 0.8, 0.8);
-local WQT_ORANGE_FONT_COLOR = CreateColor(1, 0.6, 0);
-local WQT_GREEN_FONT_COLOR = CreateColor(0, 0.75, 0);
-local WQT_BLUE_FONT_COLOR = CreateColor(0.1, 0.68, 1);
-local WQT_COLOR_ARTIFACT = CreateColor(0, 0.75, 0);
-local WQT_COLOR_GOLD = CreateColor(0.85, 0.7, 0) ;
-local WQT_COLOR_CURRENCY = CreateColor(0.6, 0.4, 0.1) ;
-local WQT_COLOR_ITEM = CreateColor(0.85, 0.85, 0.85) ;
-local WQT_COLOR_ARMOR =  CreateColor(0.85, 0.5, 0.95) ;
-local WQT_COLOR_RELIC = CreateColor(0.3, 0.7, 1);
-local WQT_COLOR_MISSING = CreateColor(0.7, 0.1, 0.1);
-local WQT_COLOR_HONOR = CreateColor(0.8, 0.26, 0);
-local WQT_COLOR_AREA_NAME = CreateColor(1.0, 0.9294, 0.7607);
-local WQT_ARTIFACT_R, WQT_ARTIFACT_G, WQT_ARTIFACT_B = GetItemQualityColor(6);
-
-local WQT_BOUNDYBOARD_OVERLAYID = 3;
-
-local WQT_LISTITTEM_HEIGHT = 32;
-local WQT_REFRESH_DEFAULT = 60;
-
-local WQT_QUESTIONMARK = "Interface/ICONS/INV_Misc_QuestionMark";
-local WQT_EXPERIENCE = "Interface/ICONS/XP_ICON";
-local WQT_HONOR = "Interface/ICONS/Achievement_LegionPVPTier4";
-local WQT_FACTIONUNKNOWN = "Interface/addons/WorldQuestTab/Images/FactionUnknown";
-
-local WQT_ARGUS_COSMIC_BUTTONS = {KrokuunButton, MacAreeButton, AntoranWastesButton, BrokenIslesArgusButton}
-
-local WQT_TYPEFLAG_LABELS = {
-		[2] = {["Default"] = DEFAULT, ["Elite"] = ELITE, ["PvP"] = PVP, ["Petbattle"] = PET_BATTLE_PVP_QUEUE, ["Dungeon"] = TRACKER_HEADER_DUNGEON, ["Raid"] = RAID, ["Profession"] = BATTLE_PET_SOURCE_4, ["Invasion"] = _L["TYPE_INVASION"], ["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE}
-		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = WORLD_QUEST_REWARD_FILTERS_RESOURCES, ["Artifact"] = ITEM_QUALITY6_DESC
-			, ["Relic"] = RELICSLOT, ["None"] = NONE, ["Experience"] = POWER_TYPE_EXPERIENCE, ["Honor"] = HONOR, ["Reputation"] = REPUTATION}
-	};
-	
-local WQT_CVAR_LIST = {
-		["Petbattle"] = "showTamers"
-		,["Artifact"] = "worldQuestFilterArtifactPower"
-		,["Armor"] = "worldQuestFilterEquipment"
-		,["Gold"] = "worldQuestFilterGold"
-		,["Currency"] = "worldQuestFilterResources"
-	}
-
-local WQT_FILTER_FUNCTIONS = {
-		[2] = { -- Types
-			function(quest, flags) return (flags["PvP"] and quest.type == LE_QUEST_TAG_TYPE_PVP); end 
-			,function(quest, flags) return (flags["Petbattle"] and quest.type == LE_QUEST_TAG_TYPE_PET_BATTLE); end 
-			,function(quest, flags) return (flags["Dungeon"] and quest.type == LE_QUEST_TAG_TYPE_DUNGEON); end 
-			,function(quest, flags) return (flags["Raid"] and quest.type == LE_QUEST_TAG_TYPE_RAID); end 
-			,function(quest, flags) return (flags["Profession"] and quest.type == LE_QUEST_TAG_TYPE_PROFESSION); end 
-			,function(quest, flags) return (flags["Invasion"] and quest.type == LE_QUEST_TAG_TYPE_INVASION); end 
-			,function(quest, flags) return (flags["Assault"] and quest.type == LE_QUEST_TAG_TYPE_FACTION_ASSAULT); end 
-			,function(quest, flags) return (flags["Elite"] and (quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.isElite)); end 
-			,function(quest, flags) return (flags["Default"] and (quest.type ~= LE_QUEST_TAG_TYPE_PVP and quest.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON 
-					and quest.type ~= WQT_TYPE_BONUSOBJECTIVE  and quest.type ~= LE_QUEST_TAG_TYPE_PROFESSION and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.type ~= LE_QUEST_TAG_TYPE_INVASION 
-					and quest.type ~= LE_QUEST_TAG_TYPE_FACTION_ASSAULT and not quest.isElite)); end 
-			}
-		,[3] = { -- Reward filters
-			function(quest, flags) return (flags["Armor"] and quest.reward.type == WQT_REWARDTYPE.equipment); end 
-			,function(quest, flags) return (flags["Relic"] and quest.reward.type == WQT_REWARDTYPE.relic); end 
-			,function(quest, flags) return (flags["Item"] and quest.reward.type == WQT_REWARDTYPE.item); end 
-			,function(quest, flags) return (flags["Artifact"] and quest.reward.type == WQT_REWARDTYPE.artifact); end 
-			,function(quest, flags) return (flags["Honor"] and (quest.reward.type == WQT_REWARDTYPE.honor or quest.reward.subType == WQT_REWARDTYPE.honor)); end 
-			,function(quest, flags) return (flags["Gold"] and (quest.reward.type == WQT_REWARDTYPE.gold or quest.reward.subType == WQT_REWARDTYPE.gold) ); end 
-			,function(quest, flags) return (flags["Currency"] and (quest.reward.type == WQT_REWARDTYPE.currency or quest.reward.subType == WQT_REWARDTYPE.currency)); end 
-			,function(quest, flags) return (flags["Experience"] and quest.reward.type == WQT_REWARDTYPE.xp); end 
-			,function(quest, flags) return (flags["Reputation"] and quest.reward.type == WQT_REWARDTYPE.reputation or quest.reward.subType == WQT_REWARDTYPE.reputation); end
-			,function(quest, flags) return (flags["None"] and quest.reward.type == WQT_REWARDTYPE.none); end
-			}
-	};
-
-local WQT_ZONE_EXPANSIONS = {
-	[875] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Zandalar
-	,[864] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Vol'dun
-	,[863] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Nazmir
-	,[862] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Zuldazar
-	,[1165] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Dazar'alor
-	,[876] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Kul Tiras
-	,[942] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Stromsong Valley
-	,[896] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Drustvar
-	,[895] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Tiragarde Sound
-	,[1161] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Boralus
-	,[1169] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Tol Dagor
-	-- Classic zones with BfA WQ
-	--,[14] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Arathi Highlands
-	--,[62] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Darkshore
-
-	,[619] = LE_EXPANSION_LEGION -- Broken Isles
-	,[630] = LE_EXPANSION_LEGION -- Azsuna
-	,[680] = LE_EXPANSION_LEGION -- Suramar
-	,[634] = LE_EXPANSION_LEGION -- Stormheim
-	,[650] = LE_EXPANSION_LEGION -- Highmountain
-	,[641] = LE_EXPANSION_LEGION -- Val'sharah
-	,[790] = LE_EXPANSION_LEGION -- Eye of Azshara
-	,[646] = LE_EXPANSION_LEGION -- Broken Shore
-	,[627] = LE_EXPANSION_LEGION -- Dalaran
-	,[830] = LE_EXPANSION_LEGION -- Krokuun
-	,[885] = LE_EXPANSION_LEGION -- Antoran Wastes
-	,[882] = LE_EXPANSION_LEGION -- Mac'Aree
-	,[905] = LE_EXPANSION_LEGION -- Argus
-}
-	
-local WQT_ZANDALAR = {
-	[864] =  {["x"] = 0.39, ["y"] = 0.32} -- Vol'dun
-	,[863] = {["x"] = 0.57, ["y"] = 0.28} -- Nazmir
-	,[862] = {["x"] = 0.55, ["y"] = 0.61} -- Zuldazar
-	,[1165] = {["x"] = 0.55, ["y"] = 0.61} -- Dazar'alor
-}
-local WQT_KULTIRAS = {
-	[942] =  {["x"] = 0.55, ["y"] = 0.25} -- Stromsong Valley
-	,[896] = {["x"] = 0.36, ["y"] = 0.67} -- Drustvar
-	,[895] = {["x"] = 0.56, ["y"] = 0.54} -- Tiragarde Sound
-	,[1161] = {["x"] = 0.56, ["y"] = 0.54} -- Boralus
-	,[1169] = {["x"] = 0.78, ["y"] = 0.61} -- Tol Dagor
-}
-local WQT_LEGION = {
-	[630] =  {["x"] = 0.33, ["y"] = 0.58} -- Azsuna
-	,[680] = {["x"] = 0.46, ["y"] = 0.45} -- Suramar
-	,[634] = {["x"] = 0.60, ["y"] = 0.33} -- Stormheim
-	,[650] = {["x"] = 0.46, ["y"] = 0.23} -- Highmountain
-	,[641] = {["x"] = 0.34, ["y"] = 0.33} -- Val'sharah
-	,[790] = {["x"] = 0.46, ["y"] = 0.84} -- Eye of Azshara
-	,[646] = {["x"] = 0.54, ["y"] = 0.68} -- Broken Shore
-	,[627] = {["x"] = 0.45, ["y"] = 0.64} -- Dalaran
-	
-	,[830]	= {["x"] = 0.86, ["y"] = 0.15} -- Krokuun
-	,[885]	= {["x"] = 0.86, ["y"] = 0.15} -- Antoran Wastes
-	,[882]	= {["x"] = 0.86, ["y"] = 0.15} -- Mac'Aree
-}
-
-local WQT_CONTINENT_GROUPS = {
-	[875]	= {876} 
-	,[876]	= {875}
-	}
-	
-local WQT_ZONE_MAPCOORDS = {
-		[875]	= WQT_ZANDALAR -- Zandalar
-		,[1011]	= WQT_ZANDALAR -- Zandalar flightmap
-		,[876]	= WQT_KULTIRAS -- Kul Tiras
-		,[1014]	= WQT_KULTIRAS -- Kul Tiras flightmap
-
-		,[619] 	= WQT_LEGION -- Legion
-		,[993] 	= WQT_LEGION -- Legion flightmap	
-		,[905] 	= WQT_LEGION -- Legion Argus
-		
-		,[12] 	= { --Kalimdor
-			[81] 	= {["x"] = 0.42, ["y"] = 0.82} -- Silithus
-			,[64]	= {["x"] = 0.5, ["y"] = 0.72} -- Thousand Needles
-			,[249]	= {["x"] = 0.47, ["y"] = 0.91} -- Uldum
-			,[71]	= {["x"] = 0.55, ["y"] = 0.84} -- Tanaris
-			,[78]	= {["x"] = 0.5, ["y"] = 0.81} -- Ungoro
-			,[69]	= {["x"] = 0.43, ["y"] = 0.7} -- Feralas
-			,[70]	= {["x"] = 0.55, ["y"] = 0.67} -- Dustwallow
-			,[199]	= {["x"] = 0.51, ["y"] = 0.67} -- S Barrens
-			,[7]	= {["x"] = 0.47, ["y"] = 0.6} -- Mulgore
-			,[66]	= {["x"] = 0.41, ["y"] = 0.57} -- Desolace
-			,[65]	= {["x"] = 0.43, ["y"] = 0.46} -- Stonetalon
-			,[10]	= {["x"] = 0.52, ["y"] = 0.5} -- N Barrens
-			,[1]	= {["x"] = 0.58, ["y"] = 0.5} -- Durotar
-			,[63]	= {["x"] = 0.49, ["y"] = 0.41} -- Ashenvale
-			,[62]	= {["x"] = 0.46, ["y"] = 0.23} -- Dakshore
-			,[76]	= {["x"] = 0.59, ["y"] = 0.37} -- Azshara
-			,[198]	= {["x"] = 0.54, ["y"] = 0.32} -- Hyjal
-			,[77]	= {["x"] = 0.49, ["y"] = 0.25} -- Felwood
-			,[80]	= {["x"] = 0.53, ["y"] = 0.19} -- Moonglade
-			,[83]	= {["x"] = 0.58, ["y"] = 0.23} -- Winterspring
-			,[57]	= {["x"] = 0.42, ["y"] = 0.1} -- Teldrassil
-			,[97]	= {["x"] = 0.33, ["y"] = 0.27} -- Azuremyst
-			,[106]	= {["x"] = 0.3, ["y"] = 0.18} -- Bloodmyst
-		}
-		
-		,[13]	= { -- Eastern Kingdoms
-			[210]	= {["x"] = 0.47, ["y"] = 0.87} -- Cape of STV
-			,[50]	= {["x"] = 0.47, ["y"] = 0.87} -- N STV
-			,[17]	= {["x"] = 0.54, ["y"] = 0.89} -- Blasted Lands
-			,[51]	= {["x"] = 0.54, ["y"] = 0.78} -- Swamp of Sorrow
-			,[42]	= {["x"] = 0.49, ["y"] = 0.79} -- Deadwind
-			,[47]	= {["x"] = 0.45, ["y"] = 0.8} -- Duskwood
-			,[52]	= {["x"] = 0.4, ["y"] = 0.79} -- Westfall
-			,[37]	= {["x"] = 0.47, ["y"] = 0.75} -- Elwynn
-			,[49]	= {["x"] = 0.51, ["y"] = 0.75} -- Redridge
-			,[36]	= {["x"] = 0.49, ["y"] = 0.7} -- Burning Steppes
-			,[32]	= {["x"] = 0.47, ["y"] = 0.65} -- Searing Gorge
-			,[15]	= {["x"] = 0.52, ["y"] = 0.65} -- Badlands
-			,[27]	= {["x"] = 0.44, ["y"] = 0.61} -- Dun Morogh
-			,[48]	= {["x"] = 0.52, ["y"] = 0.6} -- Loch Modan
-			,[241]	= {["x"] = 0.56, ["y"] = 0.55} -- Twilight Highlands
-			,[56]	= {["x"] = 0.5, ["y"] = 0.53} -- Wetlands
-			,[14]	= {["x"] = 0.51, ["y"] = 0.46} -- Arathi Highlands
-			,[26]	= {["x"] = 0.57, ["y"] = 0.4} -- Hinterlands
-			,[25]	= {["x"] = 0.46, ["y"] = 0.4} -- Hillsbrad
-			,[217]	= {["x"] = 0.4, ["y"] = 0.48} -- Ruins of Gilneas
-			,[21]	= {["x"] = 0.41, ["y"] = 0.39} -- Silverpine
-			,[18]	= {["x"] = 0.39, ["y"] = 0.32} -- Tirisfall
-			,[22]	= {["x"] = 0.49, ["y"] = 0.31} -- W Plaugelands
-			,[23]	= {["x"] = 0.54, ["y"] = 0.32} -- E Plaguelands
-			,[95]	= {["x"] = 0.56, ["y"] = 0.23} -- Ghostlands
-			,[94]	= {["x"] = 0.54, ["y"] = 0.18} -- Eversong
-			,[122]	= {["x"] = 0.55, ["y"] = 0.05} -- Quel'Danas
-		}
-		
-		,[101]	= { -- Outland
-			[104]	= {["x"] = 0.74, ["y"] = 0.8} -- Shadowmoon Valley
-			,[108]	= {["x"] = 0.45, ["y"] = 0.77} -- Terrokar
-			,[107]	= {["x"] = 0.3, ["y"] = 0.65} -- Nagrand
-			,[100]	= {["x"] = 0.52, ["y"] = 0.51} -- Hellfire
-			,[102]	= {["x"] = 0.33, ["y"] = 0.47} -- Zangarmarsh
-			,[105]	= {["x"] = 0.36, ["y"] = 0.23} -- Blade's Edge
-			,[109]	= {["x"] = 0.57, ["y"] = 0.2} -- Netherstorm
-		}
-		
-		,[113]	= { -- Northrend
-			[114]	= {["x"] = 0.22, ["y"] = 0.59} -- Borean Tundra
-			,[119]	= {["x"] = 0.25, ["y"] = 0.41} -- Sholazar Basin
-			,[118]	= {["x"] = 0.41, ["y"] = 0.26} -- Icecrown
-			,[127]	= {["x"] = 0.47, ["y"] = 0.55} -- Crystalsong
-			,[120]	= {["x"] = 0.61, ["y"] = 0.21} -- Stormpeaks
-			,[121]	= {["x"] = 0.77, ["y"] = 0.32} -- Zul'Drak
-			,[116]	= {["x"] = 0.71, ["y"] = 0.53} -- Grizzly Hillsbrad
-			,[113]	= {["x"] = 0.78, ["y"] = 0.74} -- Howling Fjord
-		}
-		
-		,[424]	= { -- Pandaria
-			[554]	= {["x"] = 0.9, ["y"] = 0.68} -- Timeless Isles
-			,[371]	= {["x"] = 0.67, ["y"] = 0.52} -- Jade Forest
-			,[418]	= {["x"] = 0.53, ["y"] = 0.75} -- Karasang
-			,[376]	= {["x"] = 0.51, ["y"] = 0.65} -- Four Winds
-			,[422]	= {["x"] = 0.35, ["y"] = 0.62} -- Dread Waste
-			,[390]	= {["x"] = 0.5, ["y"] = 0.52} -- Eternal Blossom
-			,[379]	= {["x"] = 0.45, ["y"] = 0.35} -- Kun-lai Summit
-			,[507]	= {["x"] = 0.48, ["y"] = 0.05} -- Isle of Giants
-			,[388]	= {["x"] = 0.32, ["y"] = 0.45} -- Townlong Steppes
-			,[504]	= {["x"] = 0.2, ["y"] = 0.11} -- Isle of Thunder
-		}
-		
-		,[572]	= { -- Draenor
-			[550]	= {["x"] = 0.24, ["y"] = 0.49} -- Nagrand
-			,[525]	= {["x"] = 0.34, ["y"] = 0.29} -- Frostridge
-			,[543]	= {["x"] = 0.49, ["y"] = 0.21} -- Gorgrond
-			,[535]	= {["x"] = 0.43, ["y"] = 0.56} -- Talador
-			,[542]	= {["x"] = 0.46, ["y"] = 0.73} -- Spired of Arak
-			,[539]	= {["x"] = 0.58, ["y"] = 0.67} -- Shadowmoon
-			,[534]	= {["x"] = 0.58, ["y"] = 0.47} -- Tanaan Jungle
-			,[558]	= {["x"] = 0.73, ["y"] = 0.43} -- Ashran
-		}
-		
-		,[947]		= {	
-		} -- All of Azeroth
-	}
-	
-	-- world map continents depending on expansion level
-	local expLevel = GetExpansionLevel();
-		WQT_ZONE_MAPCOORDS[947][113] = {["x"] = 0.49, ["y"] = 0.13} -- Northrend
-		WQT_ZONE_MAPCOORDS[947][424] = {["x"] = 0.46, ["y"] = 0.92} -- Pandaria
-	if expLevel == LE_EXPANSION_BATTLE_FOR_AZEROTH then
-		WQT_ZONE_MAPCOORDS[947][875] = {["x"] = 0.54, ["y"] = 0.61} -- Zandalar
-		WQT_ZONE_MAPCOORDS[947][876] = {["x"] = 0.72, ["y"] = 0.49} -- Kul'tiras
-		
-		WQT_ZONE_MAPCOORDS[947][12] = {["x"] = 0.19, ["y"] = 0.5} -- Kalimdor
-		WQT_ZONE_MAPCOORDS[947][13] = {["x"] = 0.88, ["y"] = 0.56} -- Eastern Kingdom
-	elseif expLevel == LE_EXPANSION_LEGION then
-		WQT_ZONE_MAPCOORDS[947][619] = {["x"] = 0.6, ["y"] = 0.41} -- Broken Isles
-	end
-
-local WQT_SORT_OPTIONS = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD}
-
-
-local WQT_NO_FACTION_DATA = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/FactionNone", ["name"]=_L["NO_FACTION"] } -- No faction
-local WQT_FACTION_DATA = {
-	[1894] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Warden" }
-	,[1859] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_NightFallen" }
-	,[1900] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_CourtofFarnodis" }
-	,[1948] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Valarjar" }
-	,[1828] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_HightmountainTribes" }
-	,[1883] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_DreamWeavers" }
-	,[1090] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_KirinTor" }
-	,[2045] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Legionfall" } -- This isn't in until 7.3
-	,[2165] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_ArmyoftheLight" }
-	,[2170] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_ArgussianReach" }
-	,[609] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction609" } -- Cenarion Circle - Call of the Scarab
-	,[910] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction910" } -- Brood of Nozdormu - Call of the Scarab
-	,[1515] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1515" } -- Dreanor Arakkoa Outcasts
-	,[1681] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1681" } -- Dreanor Vol'jin's Spear
-	,[1682] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1682" } -- Dreanor Wrynn's Vanguard
-	,[1731] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1731" } -- Dreanor Council of Exarchs
-	,[1445] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1445" } -- Draenor Frostwolf Orcs
-	,[67] = 		{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction67" } -- Horde
-	,[469] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction469" } -- Alliance
-	-- BfA                                                         
-	,[2164] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Faction_Championsofazeroth_Round" } -- Champions of Azeroth
-	,[2156] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Horde" ,["icon"] = 2058211 } -- Talanji's Expedition
-	,[2103] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Horde" ,["icon"] = 2058217 } -- Zandalari Empire
-	,[2158] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Horde" ,["icon"] = "Interface/ICONS/INV_Faction_Voldunai_Round" } -- Voldunai
-	,[2157] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Horde" ,["icon"] = "Interface/ICONS/INV_Faction_HordeWarEffort_Round" } -- The Honorbound
-	,[2163] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = nil ,["icon"] = 2058212 } -- Tortollan Seekers
-	,[2162] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_Stormswake_Round" } -- Storm's Wake
-	,[2160] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_ProudmooreAdmiralty_Round" } -- Proudmoore Admirality
-	,[2161] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_OrderofEmbers_Round" } -- Order of Embers
-	,[2159] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_AllianceWarEffort_Round" } -- 7th Legion
-}
--- Add localized faction names
-for k, v in pairs(WQT_FACTION_DATA) do
-	v.name = GetFactionInfoByID(k);
-end
 	
 local WQT_DEFAULTS = {
 	global = {	
@@ -407,7 +87,7 @@ local WQT_DEFAULTS = {
 	}
 }
 
-for k, v in pairs(WQT_FACTION_DATA) do
+for k, v in pairs(_V["WQT_FACTION_DATA"]) do
 	if v.expansion >= LE_EXPANSION_LEGION then
 		WQT_DEFAULTS.global.filters[1].flags[k] = false;
 	end
@@ -416,12 +96,9 @@ end
 ------------------------------------------------------------
 
 local _filterOrders = {}
+local _dataProvider = CreateFromMixins(WQT_DataProvider);
 
 ------------------------------------------------------------
-
-local function debugPrint(...)
-	if _debug then print(...) end
-end
 
 local function QuestIsWatched(questID)
 	for i=1, GetNumWorldQuestWatches() do 
@@ -450,10 +127,10 @@ local function GetQuestLogInfo(hiddenList)
 		end
 	end
 	
-	local color = questCount >= maxQuests and RED_FONT_COLOR or (questCount >= maxQuests-2 and WQT_ORANGE_FONT_COLOR or WQT_WHITE_FONT_COLOR);
+	local color = questCount >= maxQuests and RED_FONT_COLOR or (questCount >= maxQuests-2 and _V["WQT_ORANGE_FONT_COLOR"] or _V["WQT_WHITE_FONT_COLOR"]);
 	
 	if (questCount > maxQuests) then
-		debugPrint("|cFFFF0000Questlog:", questCount, "/", maxQuests, "|r");
+		WQT:debugPrint("|cFFFF0000Questlog:", questCount, "/", maxQuests, "|r");
 	end
 	
 	return questCount, maxQuests, color;
@@ -587,16 +264,17 @@ end
 local function GetFactionData(id)
 	if (not id) then  
 		-- No faction
-		return WQT_NO_FACTION_DATA;
+		return _V["WQT_NO_FACTION_DATA"];
 	end;
+	local factionData = _V["WQT_FACTION_DATA"];
 
-	if (not WQT_FACTION_DATA[id]) then
-		-- Add new faction
-		WQT_FACTION_DATA[id] = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = WQT_FACTIONUNKNOWN }
-		WQT_FACTION_DATA[id].name = GetFactionInfoByID(id) or "Unknown Faction";
+	if (not factionData[id]) then
+		-- Add new faction in case it's not in our data yet
+		factionData[id] = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = _V["WQT_FACTIONUNKNOWN"] }
+		factionData[id].name = GetFactionInfoByID(id) or "Unknown Faction";
 	end
 	
-	return WQT_FACTION_DATA[id];
+	return factionData[id];
 end
 
 local function GetAbreviatedNumberChinese(number)
@@ -686,7 +364,7 @@ local function slashcmd(msg, editbox)
 		
 		local debugfr = WQT.debug;
 		debugfr.mem = GetAddOnMemoryUsage(addonName);
-		local frames = {WQT_WorldQuestFrame, WQT_QuestScrollFrame, WQT_WorldQuestFrame.pinHandler, WQT_WorldQuestFrame.dataprovider, WQT};
+		local frames = {WQT_WorldQuestFrame, WQT_QuestScrollFrame, WQT_WorldQuestFrame.pinHandler, WQT_WorldQuestFrame.dataProvider, WQT};
 		for key, frame in pairs(frames) do
 			for k, v in pairs(frame) do
 				if type(v) == "function" then
@@ -746,8 +424,8 @@ local function IsRelevantFilter(filterID, key)
 	if (not key or type(key) == "string") then return true; end
 	-- Factions with an ID of which the player faction is matching or neutral pass
 	local data = GetFactionData(key);
-	local playerFaction = GetPlayerFactionGroup();
-	if (data and not data.faction or data.faction == playerFaction) then return true; end
+	
+	if (data and not data.faction or data.faction == _playerFaction) then return true; end
 	
 	return false;
 end
@@ -776,19 +454,13 @@ local function GetSortedFilterOrder(filterId)
 					end
 					return a and not b;
 				end
-				if (WQT_TYPEFLAG_LABELS[filterId]) then
-					return (WQT_TYPEFLAG_LABELS[filterId][a] or "") < (WQT_TYPEFLAG_LABELS[filterId][b] or "");
+				if (_V["WQT_TYPEFLAG_LABELS"][filterId]) then
+					return (_V["WQT_TYPEFLAG_LABELS"][filterId][a] or "") < (_V["WQT_TYPEFLAG_LABELS"][filterId][b] or "");
 				else
 					return a < b;
 				end
 			end)
 	return tbl;
-end
-
-function UnlockArgusHighlights()
-	for k, button in ipairs(WQT_ARGUS_COSMIC_BUTTONS) do
-		button:UnlockHighlight(); 
-	end
 end
 
 local function SortQuestList(a, b) 
@@ -855,8 +527,8 @@ local function SortQuestListByType(a, b)
 	if not a.isValid or not b.isValid then
 		return a.isValid and not b.isValid;
 	end
-	local aIsCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(a.questId);
-	local bIsCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(b.questId);
+	local aIsCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(a.questId);
+	local bIsCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(b.questId);
 	if aIsCriteria == bIsCriteria then
 		if a.type == b.type then
 			if a.rarity == b.rarity then
@@ -914,38 +586,6 @@ local function SortQuestListByReward(a, b)
 	return a.reward.type < b.reward.type;
 end
 
-local function GetQuestTimeString(questId)
-	local timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(questId);
-	local timeString = "";
-	local timeStringShort = "";
-	local color = WQT_WHITE_FONT_COLOR;
-	if ( timeLeftMinutes ) then
-		if ( timeLeftMinutes <= WORLD_QUESTS_TIME_CRITICAL_MINUTES ) then
-			color = RED_FONT_COLOR;
-			timeString = SecondsToTime(timeLeftMinutes * 60);
-		elseif timeLeftMinutes < 60  then
-			timeString = SecondsToTime(timeLeftMinutes * 60);
-			color = WQT_ORANGE_FONT_COLOR;
-		elseif timeLeftMinutes < 24 * 60  then
-			timeString = D_HOURS:format(timeLeftMinutes / 60);
-			color = WQT_GREEN_FONT_COLOR
-		else
-			timeString = D_DAYS:format(timeLeftMinutes  / 1440);
-			color = WQT_BLUE_FONT_COLOR;
-		end
-	else 
-		timeLeftMinutes = 0;
-	end
-	-- start with default, for CN and KR
-	timeStringShort = timeString;
-	local t, str = string.match(timeString:gsub(" |4", ""), '(%d+)(%a)');
-	if t and str then
-		timeStringShort = t..str;
-	end
-	
-	return timeLeftMinutes, timeString, color, timeStringShort;
-end
-
 local function ConvertOldSettings()
 	WQT.settings.filters[3].flags.Resources = nil;
 	WQT.settings.versionCheck = "1";
@@ -999,8 +639,6 @@ local function AddDebugToTooltip(tooltip, questInfo)
 	end
 
 end
-
-
 
 function WQT:UpdateFilterIndicator() 
 	if (InCombatLockdown()) then return; end
@@ -1104,13 +742,12 @@ function WQT:InitFilter(self, level)
 				info.notCheckable = false;
 				local options = WQT.settings.filters[ADD.MENU_VALUE].flags;
 				local order = _filterOrders[ADD.MENU_VALUE] 
-				local haveLabels = (WQT_TYPEFLAG_LABELS[ADD.MENU_VALUE] ~= nil);
+				local haveLabels = (_V["WQT_TYPEFLAG_LABELS"][ADD.MENU_VALUE] ~= nil);
 				local currExp = LE_EXPANSION_BATTLE_FOR_AZEROTH;
-				local playerFaction = GetPlayerFactionGroup();
 				for k, flagKey in pairs(order) do
 					local factionInfo = type(flagKey) == "number" and GetFactionData(flagKey) or nil;
 					-- factions that aren't a faction (other and no faction), are of current expansion, and are neutral of player faction
-					if (not factionInfo or (factionInfo.expansion == currExp and (not factionInfo.faction or factionInfo.faction == playerFaction))) then
+					if (not factionInfo or (factionInfo.expansion == currExp and (not factionInfo.faction or factionInfo.faction == _playerFaction))) then
 						info.text = type(flagKey) == "number" and GetFactionInfoByID(flagKey) or flagKey;
 						info.func = function(_, _, _, value)
 											options[flagKey] = value;
@@ -1155,11 +792,11 @@ function WQT:InitFilter(self, level)
 				info.notCheckable = false;
 				local options = WQT.settings.filters[ADD.MENU_VALUE].flags;
 				local order = _filterOrders[ADD.MENU_VALUE] 
-				local haveLabels = (WQT_TYPEFLAG_LABELS[ADD.MENU_VALUE] ~= nil);
+				local haveLabels = (_V["WQT_TYPEFLAG_LABELS"][ADD.MENU_VALUE] ~= nil);
 				for k, flagKey in pairs(order) do
 					info.disabled = false;
 					info.tooltipTitle = nil;
-					info.text = haveLabels and WQT_TYPEFLAG_LABELS[ADD.MENU_VALUE][flagKey] or flagKey;
+					info.text = haveLabels and _V["WQT_TYPEFLAG_LABELS"][ADD.MENU_VALUE][flagKey] or flagKey;
 					info.func = function(_, _, _, value)
 										options[flagKey] = value;
 										if (value) then
@@ -1334,7 +971,7 @@ function WQT:InitFilter(self, level)
 		if ADD.MENU_VALUE == 301 then -- Legion factions
 			local options = WQT.settings.filters[1].flags;
 			local order = _filterOrders[1] 
-			local haveLabels = (WQT_TYPEFLAG_LABELS[1] ~= nil);
+			local haveLabels = (_V["WQT_TYPEFLAG_LABELS"][1] ~= nil);
 			local currExp = LE_EXPANSION_LEGION;
 			for k, flagKey in pairs(order) do
 				local data = type(flagKey) == "number" and GetFactionData(flagKey) or nil;
@@ -1469,7 +1106,7 @@ function WQT:InitSort(self, level)
 	local buttonsAdded = 0;
 	info.func = function(self, category) WQT:Sort_OnClick(self, category) end
 	
-	for k, option in ipairs(WQT_SORT_OPTIONS) do
+	for k, option in ipairs(_V["WQT_SORT_OPTIONS"]) do
 		info.text = option;
 		info.arg1 = k;
 		info.value = k;
@@ -1492,7 +1129,7 @@ function WQT:Sort_OnClick(self, category)
 		ADD:CloseDropDownMenus();
 		dropdown.active = category
 		ADD:SetSelectedValue(dropdown, category);
-		ADD:SetText(dropdown, WQT_SORT_OPTIONS[category]);
+		ADD:SetText(dropdown, _V["WQT_SORT_OPTIONS"][category]);
 		WQT.settings.sortBy = category;
 		WQT_QuestScrollFrame:UpdateQuestList();
 	end
@@ -1536,7 +1173,7 @@ function WQT:InitTrackDropDown(self, level)
 	end
 	
 	-- Don't allow tracking and LFG for bonus objective, Blizzard UI can't handle it
-	if (questInfo.type ~= WQT_TYPE_BONUSOBJECTIVE) then
+	if (questInfo.type ~= _V["WQT_TYPE_BONUSOBJECTIVE"]) then
 		-- Tracking
 		if (QuestIsWatched(questId)) then
 			info.text = UNTRACK_QUEST;
@@ -1549,7 +1186,6 @@ function WQT:InitTrackDropDown(self, level)
 		else
 			info.text = TRACK_QUEST;
 			info.func = function(_, _, _, value)
-						--WQT_WorldQuestFrame.dataprovider:HardTrackQuest(questInfo);
 						AddWorldQuestWatch(questId, true);
 						if WQT_WorldQuestFrame:GetAlpha() > 0 then 
 							WQT_QuestScrollFrame:DisplayQuestList();
@@ -1575,7 +1211,7 @@ function WQT:InitTrackDropDown(self, level)
 end
 
 function WQT:IsWorldMapFiltering()
-	for k, cVar in pairs(WQT_CVAR_LIST) do
+	for k, cVar in pairs(_V["WQT_CVAR_LIST"]) do
 		if not GetCVarBool(cVar) then
 			return true;
 		end
@@ -1584,7 +1220,6 @@ function WQT:IsWorldMapFiltering()
 end
 
 function WQT:IsFiltering()
-	local playerFaction = GetPlayerFactionGroup()
 	if WQT.settings.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId then return true; end
 	for k, category in pairs(WQT.settings.filters)do
 		for k2, flag in pairs(category.flags) do
@@ -1610,7 +1245,7 @@ function WQT:PassesMapFilter(questInfo)
 
 	if (WorldMapFrame.mapID == questInfo.mapInfo.mapID) then return true; end
 	
-	if (WQT_ZONE_MAPCOORDS[WorldMapFrame.mapID] and WQT_ZONE_MAPCOORDS[WorldMapFrame.mapID][questInfo.mapInfo.mapID]) then return true; end
+	if (_V["WQT_ZONE_MAPCOORDS"][WorldMapFrame.mapID] and _V["WQT_ZONE_MAPCOORDS"][WorldMapFrame.mapID][questInfo.mapInfo.mapID]) then return true; end
 end
 
 function WQT:PassesAllFilters(questInfo)
@@ -1621,7 +1256,7 @@ function WQT:PassesAllFilters(questInfo)
 	if not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) then return false; end
 
 	if WQT.settings.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId then 
-		return WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
+		return WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
 	end
 	
 	local precise = WQT.settings.preciseFilter;
@@ -1666,7 +1301,7 @@ end
 function WQT:PassesFlagId(flagId ,questInfo)
 	local flags = WQT.settings.filters[flagId].flags
 
-	for k, func in ipairs(WQT_FILTER_FUNCTIONS[flagId]) do
+	for k, func in ipairs(_V["WQT_FILTER_FUNCTIONS"][flagId]) do
 		if(func(questInfo, flags)) then return true; end
 	end
 	return false;
@@ -1701,12 +1336,12 @@ function WQT:OnEnable()
 		end
 	end
 
-	if self.settings.saveFilters and WQT_SORT_OPTIONS[self.settings.sortBy] then
+	if self.settings.saveFilters and _V["WQT_SORT_OPTIONS"][self.settings.sortBy] then
 		ADD:SetSelectedValue(WQT_WorldQuestFrameSortButton, self.settings.sortBy);
-		ADD:SetText(WQT_WorldQuestFrameSortButton, WQT_SORT_OPTIONS[self.settings.sortBy]);
+		ADD:SetText(WQT_WorldQuestFrameSortButton, _V["WQT_SORT_OPTIONS"][self.settings.sortBy]);
 	else
 		ADD:SetSelectedValue(WQT_WorldQuestFrameSortButton, 1);
-		ADD:SetText(WQT_WorldQuestFrameSortButton, WQT_SORT_OPTIONS[1]);
+		ADD:SetText(WQT_WorldQuestFrameSortButton, _V["WQT_SORT_OPTIONS"][1]);
 	end
 
 	for k, v in pairs(WQT.settings.filters) do
@@ -1747,6 +1382,9 @@ function WQT:ClearBountyIcons()
 
 end
 
+----------------------
+-- LISTBUTTON MIXIN
+----------------------
 
 WQT_ListButtonMixin = {}
 
@@ -1756,7 +1394,7 @@ function WQT_ListButtonMixin:OnClick(button)
 
 	if IsModifiedClick("QUESTWATCHTOGGLE") then
 		-- Don't track bonus objectives. The object tracker doesn't like it;
-		if (self.info.type ~= WQT_TYPE_BONUSOBJECTIVE) then
+		if (self.info.type ~= _V["WQT_TYPE_BONUSOBJECTIVE"]) then
 			-- Only do tracking if we aren't adding the link tot he chat
 			if (not ChatEdit_TryInsertQuestLinkForQuestID(self.questId)) then 
 				if (QuestIsWatched(self.questId)) then
@@ -1777,7 +1415,7 @@ function WQT_ListButtonMixin:OnClick(button)
 		
 	elseif button == "LeftButton" then
 		-- Don't track bonus objectives. The object tracker doesn't like it;
-		if (self.info.type ~= WQT_TYPE_BONUSOBJECTIVE) then
+		if (self.info.type ~= _V["WQT_TYPE_BONUSOBJECTIVE"]) then
 			local hardWatched = IsWorldQuestHardWatched(self.questId);
 			AddWorldQuestWatch(self.questId);
 			-- if it was hard watched, keep it that way
@@ -1818,7 +1456,6 @@ function WQT_ListButtonMixin:SetEnabled(value)
 end
 
 function WQT_ListButtonMixin:OnLeave()
-	UnlockArgusHighlights();
 	HideUIPanel(self.Highlight);
 	WQT_Tooltip:Hide();
 	WQT_Tooltip.ItemTooltip:Hide();
@@ -1876,8 +1513,7 @@ end
 
 function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 	local frame = self.Type;
-	local inProgress = false;
-	local isCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
+	local isCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
 	local questType, rarity, isElite, tradeskillLineIndex = questInfo.type, questInfo.rarity, questInfo.isElite, questInfo.tradeskill;
 	
 	frame:Show();
@@ -1906,7 +1542,7 @@ function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 	end
 
 	-- Update Icon
-	local atlasTexture, sizeX, sizeY = QuestUtil.GetWorldQuestAtlasInfo(questType, inProgress, tradeskillLineIndex);
+	local atlasTexture, sizeX, sizeY = _dataProvider:GetCachedTypeIconData(questType, tradeskillLineIndex);
 
 	frame.Texture:SetAtlas(atlasTexture);
 	frame.Texture:SetSize(sizeX, sizeY);
@@ -1925,7 +1561,7 @@ function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 	end
 	
 	-- Bonus objectives
-	if (questType == WQT_TYPE_BONUSOBJECTIVE) then
+	if (questType == _V["WQT_TYPE_BONUSOBJECTIVE"]) then
 		frame.Texture:SetAtlas("QuestBonusObjective", true);
 		frame.Texture:SetSize(22, 22);
 	end
@@ -2015,7 +1651,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 				if questInfo.reward.canUpgrade then
 					self.Reward.Amount:SetText(questInfo.reward.amount.."+");
 				end
-				r, g, b = WQT_COLOR_ARMOR:GetRGB();
+				r, g, b = questInfo.reward.color:GetRGB();
 			end
 	
 			self.Reward.Amount:SetVertexColor(r, g, b);
@@ -2036,11 +1672,11 @@ end
 
 function WQT_ListButtonMixin:ShowWorldmapHighlight(zoneId)
 	local areaId = WorldMapFrame.mapID;
-	local coords = WQT_ZONE_MAPCOORDS[areaId] and WQT_ZONE_MAPCOORDS[areaId][zoneId];
+	local coords = _V["WQT_ZONE_MAPCOORDS"][areaId] and _V["WQT_ZONE_MAPCOORDS"][areaId][zoneId];
 	local mapInfo = C_Map.GetMapInfo(zoneId);
 	--Highlihght continents on world view
 	if (not coords and areaId == 947 and mapInfo and mapInfo.parentMapID) then
-		coords = WQT_ZONE_MAPCOORDS[947][mapInfo.parentMapID];
+		coords = _V["WQT_ZONE_MAPCOORDS"][947][mapInfo.parentMapID];
 		mapInfo = C_Map.GetMapInfo(mapInfo.parentMapID);
 	end
 
@@ -2081,466 +1717,6 @@ function WQT_ListButtonMixin:ShowWorldmapHighlight(zoneId)
 	self.resetLabel = true;
 end
 
-
-WQT_QuestDataProvider = {};
-
-local function QuestCreationFunc(pool)
-	local questInfo = {["time"] = {}, ["reward"] = {}};
-	return questInfo;
-end
-
-local function QuestResetFunc(pool, questInfo)
-	-- Clean out everthing that isn't a color
-	for k, v in pairs(questInfo) do
-		local objType = type(v);
-		if objType == "table" and not v.GetRGB then
-			QuestResetFunc(pool, v)
-		else
-			if (objType == "boolean") then
-				questInfo[k] = nil;
-			elseif (objType == "string") then
-				questInfo[k] = "";
-			elseif (objType == "number") then
-				questInfo[k] = nil;
-			end
-		end
-	end
-end
-
-function WQT_QuestDataProvider:UpdateWaitingRoom()
-	local questInfo;
-	local updatedData = false;
-	
-	for i = #self.waitingRoomQuest, 1, -1 do
-		local questInfo = self.waitingRoomQuest[i];
-		if HaveQuestData(questInfo.questId) then
-			debugPrint("Fixed", questInfo.questId);
-			self:SetQuestData(questInfo);
-			if HaveQuestRewardData(questInfo.questId) then	
-				self:SetQuestReward(questInfo);
-				self:SetSubReward(questInfo);
-				self:ValidateQuest(questInfo);
-			else
-				debugPrint(questInfo.questId, "still missing reward");
-				tinsert(self.waitingRoomRewards, questInfo);
-			end
-			table.remove(self.waitingRoomQuest, i);
-			updatedData = true;
-		end
-	end
-	
-	for i = #self.waitingRoomRewards, 1, -1 do
-		questInfo = self.waitingRoomRewards[i];
-		if HaveQuestRewardData(questInfo.questId) then
-			debugPrint("Fixed", questInfo.questId, "reward");
-			self:SetQuestReward(questInfo);
-			self:SetSubReward(questInfo);
-			self:ValidateQuest(questInfo);
-			table.remove(self.waitingRoomRewards, i);
-			updatedData = true;
-		end
-	end
-
-	if updatedData then
-		WQT_QuestScrollFrame:ApplySort();
-		WQT_QuestScrollFrame:UpdateQuestFilters();
-		if WQT_WorldQuestFrame:GetAlpha() > 0 then 
-			WQT_QuestScrollFrame:DisplayQuestList();
-		else
-			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
-		end
-	end
-end
-
-function WQT_QuestDataProvider:HardTrackQuest(questInfo)
-	if type(questInfo) == "number" then
-		questInfo = self:GetQuestById(questInfo);
-	end
-	if not questInfo then return; end
-	
-	AddWorldQuestWatch(questInfo.questId, true);
-end
-
-function WQT_QuestDataProvider:OnLoad()
-	self.pool = CreateObjectPool(QuestCreationFunc, QuestResetFunc);--, function(pool, questInfo) questInfo.isValid = false; end);--, QuestResetFunc);
-	self.iterativeList = {};
-	self.keyList = {};
-	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room
-	self.waitingRoomRewards = {};
-	self.waitingRoomQuest = {};
-end
-
-function WQT_QuestDataProvider:ScanTooltipRewardForPattern(questID, pattern)
-	local result;
-	
-	GameTooltip_AddQuestRewardsToTooltip(WQT_Tooltip, questID);
-	for i=2, 6 do
-		local lineText = _G["WQT_TooltipTooltipTextLeft"..i]:GetText() or "";
-		result = lineText:match(pattern);
-		if result then break; end
-	end
-	
-	-- Force hide compare tooltips as they's show up for people with alwaysCompareItems set to 1
-	for k, tooltip in ipairs(WQT_Tooltip.shoppingTooltips) do
-		tooltip:Hide();
-	end
-	
-	return result;
-end
-
-function WQT_QuestDataProvider:GetAPrewardFromText(text)
-	local numItems = tonumber(string.match(text:gsub("[%p| ]", ""), '%d+'));
-	local int, dec=text:match("(%d+)%.?%,?(%d*)");
-	numItems = numItems/(10^dec:len())
-	if (_L["IS_AZIAN_CLIENT"]) then
-		if (text:find(THIRD_NUMBER)) then
-			numItems = numItems * 100000000;
-		elseif (text:find(SECOND_NUMBER)) then
-			numItems = numItems * 10000;
-		end
-	else --roman numerals
-		if (text:find(THIRD_NUMBER)) then -- Billion just in case
-			numItems = numItems * 1000000000;
-		elseif (text:find(SECOND_NUMBER)) then -- Million
-			numItems = numItems * 1000000;
-		end
-	end
-	
-	return numItems;
-end
-
-function WQT_QuestDataProvider:SetQuestData(questInfo)
-	local questId = questInfo.questId;
-	local zoneId = questInfo.mapInfo.mapID;
-	
-	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questId);
-	
-	worldQuestType = not QuestUtils_IsQuestWorldQuest(questId) and WQT_TYPE_BONUSOBJECTIVE or worldQuestType;
-	local minutes, timeString, color, timeStringShort = GetQuestTimeString(questId);
-	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questId);
-	
-	local faction = factionId and GetFactionInfoByID(factionId) or _L["NO_FACTION"];
-	
-	local expLevel = WQT_ZONE_EXPANSIONS[zoneId] or 0;
-
-	questInfo.time.minutes = minutes;
-	questInfo.time.full = timeString;
-	questInfo.time.short = timeStringShort;
-	questInfo.time.color = color;
-	
-	questInfo.title = title;
-	
-	questInfo.faction = faction;
-	questInfo.factionId = factionId;
-	questInfo.type = worldQuestType or -1;
-	questInfo.rarity = rarity;
-	questInfo.isElite = isElite;
-	
-	questInfo.expantionLevel = expLevel;
-	questInfo.tradeskill = tradeskillLineIndex;
-	
-	questInfo.passedFilter = true;
-	questInfo.isCriteria = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID]:IsWorldQuestCriteriaForSelectedBounty(questId);
-end
-
-function WQT_QuestDataProvider:SetQuestReward(questInfo)
-	local reward = questInfo.reward;
-	local _, texture, numItems, quality, rewardType, color, rewardId, itemId, canUpgrade = nil, nil, 0, 1, WQT_REWARDTYPE.missing, WQT_COLOR_MISSING, nil, nil, nil;
-	
-	local haveData = HaveQuestRewardData(questInfo.questId);
-	
-	if haveData then
-		if GetNumQuestLogRewards(questInfo.questId) > 0 then
-			_, texture, numItems, quality, _, itemId = GetQuestLogRewardInfo(1, questInfo.questId);
-			if itemId then
-				local itemType = select(6, GetItemInfo(itemId));
-				if (itemType == ARMOR or itemType == WEAPON) then -- Gear
-					local result = self:ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+?)$");
-					if result then
-						numItems = tonumber(result:match("(%d+)"));
-						canUpgrade = result:match("(%+)") and true;
-					end
-					rewardType = WQT_REWARDTYPE.equipment;
-					color = WQT_COLOR_ARMOR;
-				elseif IsArtifactRelicItem(itemId) then
-					-- Because getting a link of the itemID only shows the base item
-					numItems = tonumber(self:ScanTooltipRewardForPattern(questInfo.questId, "^%+(%d+)"));
-					rewardType = WQT_REWARDTYPE.relic;	
-					color = WQT_COLOR_RELIC;
-				else	-- Normal items
-					rewardType = WQT_REWARDTYPE.item;
-					color = WQT_COLOR_ITEM;
-				end
-			end
-		elseif GetQuestLogRewardHonor(questInfo.questId) > 0 then
-			numItems = GetQuestLogRewardHonor(questInfo.questId);
-			texture = WQT_HONOR;
-			color = WQT_COLOR_HONOR;
-			rewardType = WQT_REWARDTYPE.honor;
-		elseif GetQuestLogRewardMoney(questInfo.questId) > 0 then
-			numItems = floor(abs(GetQuestLogRewardMoney(questInfo.questId) / 10000))
-			texture = "Interface/ICONS/INV_Misc_Coin_01";
-			rewardType = WQT_REWARDTYPE.gold;
-			color = WQT_COLOR_GOLD;
-		elseif GetNumQuestLogRewardCurrencies(questInfo.questId) > 0 then
-			_, texture, numItems, rewardId = GetQuestLogRewardCurrencyInfo(GetNumQuestLogRewardCurrencies(questInfo.questId), questInfo.questId)
-			-- Because azerite is currency but is treated as an item
-			local azuriteID = C_CurrencyInfo.GetAzeriteCurrencyID();
-			if rewardId ~= azuriteID then
-				local name, _, apTex, _, _, _, _, apQuality = GetCurrencyInfo(rewardId);
-				name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(rewardId, numItems, name, texture, apQuality); 
-				
-				if	C_CurrencyInfo.GetFactionGrantedByCurrency(rewardId) then
-					rewardType = WQT_REWARDTYPE.reputation;
-					quality = 0;
-				else
-					rewardType = WQT_REWARDTYPE.currency;
-				end
-				
-				color = WQT_COLOR_CURRENCY;
-			else
-				-- We want azerite to act like AP
-				local name, _, apTex, _, _, _, _, apQuality = GetCurrencyInfo(azuriteID);
-				name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(azuriteID, numItems, name, texture, apQuality); 
-				
-				rewardType = WQT_REWARDTYPE.artifact;
-				color = WQT_COLOR_ARTIFACT;
-			end
-		elseif haveData and GetQuestLogRewardXP(questInfo.questId) > 0 then
-			numItems = GetQuestLogRewardXP(questInfo.questId);
-			texture = WQT_EXPERIENCE;
-			color = WQT_COLOR_ITEM;
-			rewardType = WQT_REWARDTYPE.xp;
-		elseif GetNumQuestLogRewards(questInfo.questId) == 0 then
-			texture = "";
-			color = WQT_COLOR_ITEM;
-			rewardType = WQT_REWARDTYPE.none;
-		end
-	end
-
-	questInfo.reward.id = itemId;
-	questInfo.reward.quality = quality or 1;
-	questInfo.reward.texture = texture or WQT_QUESTIONMARK;
-	questInfo.reward.amount = numItems or 0;
-	questInfo.reward.type = rewardType or 0;
-	questInfo.reward.color = color;
-	questInfo.reward.canUpgrade = canUpgrade;
-	
-	return haveData;
-end
-
-function WQT_QuestDataProvider:SetSubReward(questInfo) 
-	local subType = nil;
-	if questInfo.reward.type ~= WQT_REWARDTYPE.currency and questInfo.reward.type ~= WQT_REWARDTYPE.artifact and questInfo.reward.type ~= WQT_REWARDTYPE.reputation and GetNumQuestLogRewardCurrencies(questInfo.questId) > 0 then
-		subType = WQT_REWARDTYPE.currency;
-	elseif questInfo.reward.type ~= WQT_REWARDTYPE.honor and GetQuestLogRewardHonor(questInfo.questId) > 0 then
-		subType = WQT_REWARDTYPE.honor;
-	elseif questInfo.reward.type ~= WQT_REWARDTYPE.gold and GetQuestLogRewardMoney(questInfo.questId) > 0 then
-		subType = WQT_REWARDTYPE.gold;
-	end
-	
-	questInfo.reward.subType = subType;
-end
-
-function WQT_QuestDataProvider:FindDuplicate(questId)
-	for questInfo, v in self.pool:EnumerateActive() do
-		if (questInfo.questId == questId) then
-			return questInfo;
-		end
-	end
-	
-	return nil;
-end
-
-function WQT_QuestDataProvider:ValidateQuest(questInfo)
-	questInfo.isValid = not (not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) and questInfo.time.minutes == 0 and questInfo.reward.type == WQT_REWARDTYPE.missing and not questInfo.factionId);
-end
-
-function WQT_QuestDataProvider:AddQuest(qInfo, zoneId, continentId)
-	local duplicate = self:FindDuplicate(qInfo.questId);
-
-	-- If there is a duplicate, we don't want to go through all the info again
-	if (duplicate) then
-		-- Check if the new zone is the 'official' zone, if so, use that one instead
-		if (zoneId == C_TaskQuest.GetQuestZoneID(qInfo.questId) ) then
-			local mapInfo = C_Map.GetMapInfo(zoneId);
-			duplicate.mapInfo = mapInfo;
-			duplicate.mapInfo.mapX = qInfo.x;
-			duplicate.mapInfo.mapY = qInfo.y;
-		end
-		
-		debugPrint("|cFFFFFF00Duplicate:", duplicate.title or duplicate.questId, "(", duplicate.mapInfo.name ,")|r");
-		
-		return duplicate;
-	end
-
-	local questInfo = self.pool:Acquire();
-	
-	questInfo.isValid = false;
-	questInfo.questId = qInfo.questId;
-	questInfo.mapInfo = C_Map.GetMapInfo(zoneId);
-	questInfo.mapInfo.mapX = qInfo.x;
-	questInfo.mapInfo.mapY = qInfo.y;
-	questInfo.numObjectives = qInfo.numObjectives;
-	
-	if not HaveQuestData(qInfo.questId) then
-		debugPrint("|cFF00FFFFMissing data:", questInfo.questId,"|r");
-		tinsert(self.waitingRoomQuest, questInfo);
-		return nil;
-	end
-	
-	self:SetQuestData(questInfo);
-	
-	local haveRewardData = self:SetQuestReward(questInfo);
-	if haveRewardData then
-		-- If the quest as a second reward e.g. Mark of Honor + Honor points
-		self:SetSubReward(questInfo);
-	end
-	
-	-- Filter out invalid quests like "Tracking Quest" in nazmir
-	self:ValidateQuest(questInfo);
-	
-	if not questInfo.isValid then
-		debugPrint("|cFFFF0000Invalid:",questInfo.title,"(",questInfo.mapInfo.name,")|r");
-	end
-	
-	if not haveRewardData then
-		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
-		tinsert(self.waitingRoomRewards, questInfo);
-		return nil;
-	end;
-
-	return questInfo;
-end
-
-function WQT_QuestDataProvider:AddQuestsInZone(zoneID, continentId)
-	local questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneID, continentId);
-	if not questsById then return false; end
-	local missingData = false;
-	local quest;
-	
-	for k, info in ipairs(questsById) do
-		if info.mapID == zoneID then
-			quest = self:AddQuest(info, zoneID, continentId);
-			if not quest then 
-				missingData = true;
-			end;
-		end
-	end
-	
-	return missingData;
-end
-
-function WQT_QuestDataProvider:LoadQuestsInZone(zoneId)
-	
-	self.pool:ReleaseAll();
-	if not (WorldMapFrame:IsShown() or FlightMapFrame:IsShown()) then return; end
-	-- If the flight map is open, we want all quests no matter what
-	if (FlightMapFrame and FlightMapFrame:IsShown()) then 
-		local taxiId = GetTaxiMapID()
-		zoneId = (taxiId and taxiId > 0) and taxiId or zoneId;
-		-- World Flight Map  add-on overwrite
-		if (_WFMLoaded) then
-			zoneId = WorldMapFrame.mapID;
-		end
-	end
-	
-	local currentMapInfo = C_Map.GetMapInfo(zoneId);
-	if not currentMapInfo then return end;
-	
-	local continentZones = WQT_ZONE_MAPCOORDS[zoneId];
-	local continentId = currentMapInfo.parentMapID;
-	local missingRewardData = false;
-	local questsById, quest;
-	
-	-- Wipe the waiting room. Either they will be updated now, or it's a new zone and we no longer care
-	wipe(self.waitingRoomRewards)
-	wipe(self.waitingRoomQuest)
-	
-	
-	if (WQT.settings.alwaysAllQuests and currentMapInfo.mapType ~= Enum.UIMapType.World) then
-	
-		local highestMapId = WQT:GetFirstContinent(zoneId);
-		continentZones = WQT_ZONE_MAPCOORDS[highestMapId];
-		if continentZones then
-			
-			for ID, data in pairs(continentZones) do	
-				self:AddQuestsInZone(ID, ID);
-			end
-		end
-
-		local relatedMaps = WQT_CONTINENT_GROUPS[highestMapId];
-		if relatedMaps then
-			for k, mapId in pairs(relatedMaps) do	
-				continentZones = WQT_ZONE_MAPCOORDS[mapId];
-				if continentZones then
-					for ID, data in pairs(continentZones) do	
-						self:AddQuestsInZone(ID, ID);
-					end
-				end
-			end
-		end
-		return;
-	end
-
-	if currentMapInfo.mapType == Enum.UIMapType.Continent  and continentZones then
-		-- All zones in a continent
-		for ID, data in pairs(continentZones) do	
-			 self:AddQuestsInZone(ID, ID);
-		end
-	elseif (currentMapInfo.mapType == Enum.UIMapType.World) then
-		for contID, contData in pairs(continentZones) do
-			-- Every ID is a continent, get every zone on every continent
-			continentZones = WQT_ZONE_MAPCOORDS[contID];
-			for zoneID, zoneData  in pairs(continentZones) do
-				self:AddQuestsInZone(zoneID, contID);
-			end
-		end
-	else
-		-- Simple zone map
-		self:AddQuestsInZone(zoneId, continentId);
-	end
-end
-
-function WQT_QuestDataProvider:GetIterativeList()
-	wipe(self.iterativeList);
-	
-	for questInfo, v in self.pool:EnumerateActive() do
-		table.insert(self.iterativeList, questInfo);
-	end
-	
-	return self.iterativeList;
-end
-
-function WQT_QuestDataProvider:GetKeyList()
-	for id, questInfo in pairs(self.keyList) do
-		self.keyList[id] = nil;
-	end
-	
-	for questInfo, v in self.pool:EnumerateActive() do
-		self.keyList[questInfo.questId] = questInfo;
-	end
-	
-	return self.keyList;
-end
-
-function WQT_QuestDataProvider:GetQuestById(id)
-	for questInfo, v in self.pool:EnumerateActive() do
-		if questInfo.questId == id then return questInfo; end
-	end
-	return nil;
-end
-
-function WQT_QuestDataProvider:ListContainsEmissary()
-	for questInfo, v in self.pool:EnumerateActive() do
-		if questInfo.isCriteria then return true; end
-	end
-	return false
-end
-
-local _questDataProvider = CreateFromMixins(WQT_QuestDataProvider);
-
-
 WQT_PinHandlerMixin = {};
 
 local function OnPinRelease(pool, pin)
@@ -2561,12 +1737,12 @@ end
 
 function WQT_PinHandlerMixin:UpdateFlightMapPins()
 	if not FlightMapFrame:IsShown() or WQT.settings.disablePoI then return; end
-	WQT.FlightMapList = _questDataProvider:GetKeyList()
+	WQT.FlightMapList = _dataProvider:GetKeyList()
 	
 	self.pinPoolFlightMap:ReleaseAll();
 	local quest = nil;
 	for qID, PoI in pairs(WQT.FlightmapPins.activePins) do
-		quest =  _questDataProvider:GetQuestById(qID);
+		quest =  _dataProvider:GetQuestById(qID);
 		if (quest and quest.isValid) then
 			local pin = self.pinPoolFlightMap:Acquire();
 			pin:Update(PoI, quest, qID);
@@ -2583,7 +1759,7 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 	local quest;
 
 	for qID, PoI in pairs(WQProvider.activePins) do
-		quest = _questDataProvider:GetQuestById(qID);
+		quest = _dataProvider:GetQuestById(qID);
 		if (quest and quest.isValid) then
 			local pin = self.pinPool:Acquire();
 			pin.questID = qID;
@@ -2619,13 +1795,13 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 
 	-- Ring stuff
 	if (WQT.settings.showPinRing) then
-		if (quest.reward.type == WQT_REWARDTYPE.missing) then
-			self.Ring:SetVertexColor(WQT_COLOR_MISSING:GetRGB());
-		else
+		--if (quest.reward.type == WQT_REWARDTYPE.missing) then
+		--	self.Ring:SetVertexColor(WQT_COLOR_MISSING:GetRGB());
+		--else
 			self.Ring:SetVertexColor(quest.reward.color:GetRGB());
-		end
+		--end
 	else
-		self.Ring:SetVertexColor(WQT_COLOR_CURRENCY:GetRGB());
+		self.Ring:SetVertexColor(WQT_COLOR_RINGDEFAULT:GetRGB());
 	end
 	self.Ring:SetAlpha((WQT.settings.showPinReward or WQT.settings.showPinRing) and 1 or 0);
 	
@@ -2655,7 +1831,6 @@ end
 WQT_ScrollListMixin = {};
 
 function WQT_ScrollListMixin:OnLoad()
-	_questDataProvider:OnLoad();
 	self.questList = {};
 	self.questListDisplay = {};
 	self.scrollBar.trackBG:Hide();
@@ -2853,10 +2028,10 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 		filterList = text;	
 	else
 		for kO, option in pairs(WQT.settings.filters) do
-			haveLabels = (WQT_TYPEFLAG_LABELS[kO] ~= nil);
+			haveLabels = (_V["WQT_TYPEFLAG_LABELS"][kO] ~= nil);
 			for kF, flag in pairs(option.flags) do
 				if (flag and IsRelevantFilter(kO, kF)) then
-					local label = haveLabels and WQT_TYPEFLAG_LABELS[kO][kF] or kF;
+					local label = haveLabels and _V["WQT_TYPEFLAG_LABELS"][kO][kF] or kF;
 					label = type(kF) == "number" and GetFactionInfoByID(kF) or label;
 					filterList = filterList == "" and label or string.format("%s, %s", filterList, label);
 				end
@@ -2882,13 +2057,8 @@ function WQT_ScrollListMixin:UpdateQuestFilters()
 end
 
 function WQT_ScrollListMixin:UpdateQuestList()
-	if (not WorldMapFrame:IsShown() or InCombatLockdown()) then return end
-	
-	local mapAreaID = WorldMapFrame.mapID;
-
-	_questDataProvider:LoadQuestsInZone(mapAreaID);
-	
-	self.questList = _questDataProvider:GetIterativeList();
+	if (not WorldMapFrame:IsShown() or InCombatLockdown()) then return end	
+	self.questList = _dataProvider:GetIterativeList();
 
 	self:UpdateQuestFilters();
 
@@ -2920,7 +2090,6 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins, skipFilter)
 		self:UpdateFilterDisplay();
 	end
 	local list = self.questListDisplay;
-	local r, g, b = 1, 1, 1;
 	local mapInfo = C_Map.GetMapInfo(WorldMapFrame.mapID);
 	self:GetParent():HideOverlayMessage();
 	for i=1, #buttons do
@@ -2938,7 +2107,7 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins, skipFilter)
 		end
 	end
 	
-	HybridScrollFrame_Update(self, #list * WQT_LISTITTEM_HEIGHT, self:GetHeight());
+	HybridScrollFrame_Update(self, #list * _V["WQT_LISTITTEM_HEIGHT"], self:GetHeight());
 
 	if (not skipPins and mapInfo.mapType ~= Enum.UIMapType.Continent) then	
 		WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
@@ -3010,9 +2179,6 @@ function WQT_CoreMixin:OnLoad()
 	self.pinHandler:OnLoad();
 	self.bountyCounterPool = CreateFramePool("FRAME", self, "WQT_BountyCounterTemplate");
 
-
-	self.dataprovider = _questDataProvider
-
 	self:SetFrameLevel(self:GetParent():GetFrameLevel()+4);
 	self.Blocker:SetFrameLevel(self:GetFrameLevel()+4);
 	
@@ -3037,6 +2203,20 @@ function WQT_CoreMixin:OnLoad()
 	frame:EnableMouse(true);
 	ADD:Initialize(frame, function(self, level) WQT:InitTrackDropDown(self, level) end, "MENU");
 	
+	
+	self.dataProvider = _dataProvider;
+	self.dataProvider:OnLoad()
+	
+	self.dataProvider:HookWaitingRoomUpdate(function() 
+			WQT:debugPrint("Waitingroom Update callback")
+			WQT_QuestScrollFrame:ApplySort();
+			WQT_QuestScrollFrame:UpdateQuestFilters();
+			if WQT_WorldQuestFrame:GetAlpha() > 0 then 
+				WQT_QuestScrollFrame:DisplayQuestList();
+			else
+				WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
+			end
+		end)
 
 	self:RegisterEvent("PLAYER_REGEN_DISABLED");
 	self:RegisterEvent("PLAYER_REGEN_ENABLED");
@@ -3045,11 +2225,21 @@ function WQT_CoreMixin:OnLoad()
 	self:RegisterEvent("ADDON_LOADED");
 	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
 	self:RegisterEvent("QUEST_LOG_UPDATE");
-	self:SetScript("OnEvent", function(self, event, ...) if self[event] then self[event](self, ...) else debugPrint("WQT missing function for:",event); end end)
+	self:SetScript("OnEvent", function(self, event, ...) 
+			if	(self.dataProvider) then
+				self.dataProvider:OnEvent(event, ...);
+			end
+			if (self[event]) then 
+				self[event](self, ...) 
+			else 
+				WQT:debugPrint("WQT missing function for:",event); 
+			end 
+
+		end)
 
 	-- Refresh the list every 60 seconds to update time remaining and check for new quests.
 	-- I want this replaced with a function hook or event call. QUEST_LOG_UPDATE triggers too often
-	self.ticker = C_Timer.NewTicker(WQT_REFRESH_DEFAULT, function() self.ScrollFrame:UpdateQuestList(); end)
+	self.ticker = C_Timer.NewTicker(_V["WQT_REFRESH_DEFAULT"], function() self.ScrollFrame:UpdateQuestList(); end)
 
 	SLASH_WQTSLASH1 = '/wqt';
 	SLASH_WQTSLASH2 = '/worldquesttab';
@@ -3100,15 +2290,21 @@ function WQT_CoreMixin:OnLoad()
 		end)
 	
 	WorldMapFrame:HookScript("OnShow", function() 
+			local mapAreaID = WorldMapFrame.mapID;
+			_dataProvider:LoadQuestsInZone(mapAreaID);
 			self.ScrollFrame:UpdateQuestList();
 			self:SelectTab(self.selectedTab); 
 			
 			-- If emissaryOnly was automaticaly set, and there's none in the current list, turn it off again.
-			if WQT_WorldQuestFrame.autoEmisarryId and not WQT_WorldQuestFrame.dataprovider:ListContainsEmissary() then
+			if WQT_WorldQuestFrame.autoEmisarryId and not WQT_WorldQuestFrame.dataProvider:ListContainsEmissary() then
 				WQT_WorldQuestFrame.autoEmisarryId = nil;
 				WQT_QuestScrollFrame:DisplayQuestList();
 			end
 			
+		end)
+		
+	WorldMapFrame:HookScript("OnHide", function() 
+			_dataProvider:ClearData();
 		end)
 
 	QuestScrollFrame:SetScript("OnShow", function() 
@@ -3123,6 +2319,7 @@ function WQT_CoreMixin:OnLoad()
 		local mapAreaID = WorldMapFrame.mapID;
 	
 		if (self.currentMapId ~= mapAreaID) then
+			_dataProvider:LoadQuestsInZone(mapAreaID);
 			self.currentMapId = mapAreaID;
 			self.currentMapInfo = C_Map.GetMapInfo(mapAreaID);
 			ADD:HideDropDownMenu(1);
@@ -3171,7 +2368,7 @@ function WQT_CoreMixin:OnLoad()
 		end)
 	
 	-- Auto emisarry when clicking on one of the buttons
-	local bountyBoard = WorldMapFrame.overlayFrames[WQT_BOUNDYBOARD_OVERLAYID];
+	local bountyBoard = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]];
 	self.bountyBoard = bountyBoard;
 	
 	hooksecurefunc(bountyBoard, "OnTabClick", function(self, tab) 
@@ -3422,9 +2619,9 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 			end 
 		end
 		WQT.FlightMapList = {};
-		-- Load quest list once on show, the dataprovider will update the rewards if needed
+		-- Load quest list once on show, the dataProvider will update the rewards if needed
 		hooksecurefunc(WQT.FlightmapPins, "OnShow", function() 
-				_questDataProvider:LoadQuestsInZone(GetTaxiMapID());
+				_dataProvider:LoadQuestsInZone(GetTaxiMapID());
 				self.pinHandler:UpdateFlightMapPins() 
 			end);
 		hooksecurefunc(WQT.FlightmapPins, "RefreshAllData", function() self.pinHandler:UpdateFlightMapPins() end);
@@ -3465,7 +2662,7 @@ function WQT_CoreMixin:QUEST_TURNED_IN(questId)
 	if (QuestUtils_IsQuestWorldQuest(questId) or WQT_WorldQuestFrame.autoEmisarryId == questId) then
 		-- Remove TomTom arrow if tracked
 		if (_TomTomLoaded and WQT.settings.useTomTom and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
-			local questInfo = WQT_WorldQuestFrame.dataprovider:GetQuestById(questId);
+			local questInfo = WQT_WorldQuestFrame.dataProvider:GetQuestById(questId);
 			if questInfo and questInfo.isValid then
 				local mapId = questInfo.mapInfo.mapID;
 				local key = TomTom:GetKeyArgs(mapId, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, questInfo.title);
@@ -3510,7 +2707,7 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 end
 
 function WQT_CoreMixin:QUEST_LOG_UPDATE()
-	WQT_WorldQuestFrame.dataprovider:UpdateWaitingRoom();
+	--WQT_WorldQuestFrame.dataProvider:UpdateWaitingRoom();
 	WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
 	--Do a delayed update because things can mess up if this add-on is set as OptionalDeps for another add-on
 	C_Timer.NewTicker(0.1, function() WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); end, 1); 
@@ -3522,8 +2719,8 @@ end
 function WQT_CoreMixin:SetCvarValue(flagKey, value)
 	value = (value == nil) and true or value;
 
-	if WQT_CVAR_LIST[flagKey] then
-		SetCVar(WQT_CVAR_LIST[flagKey], value);
+	if _V["WQT_CVAR_LIST"][flagKey] then
+		SetCVar(_V["WQT_CVAR_LIST"][flagKey], value);
 		self.ScrollFrame:DisplayQuestList();
 		WQT:UpdateFilterIndicator();
 		return true;
@@ -3674,8 +2871,8 @@ local function ShowDebugHistory()
 		line:Show();
 		line.Fill:SetStartPoint("BOTTOMLEFT", l_debug, (i-1)*2*scale, current/10*scale);
 		line.Fill:SetEndPoint("BOTTOMLEFT", l_debug, i*2*scale, l_debug.history[i+1]/10*scale);
-		local fade = (current/ 500)-1;
-		line.Fill:SetVertexColor(fade, 1-fade, 0);
+		local fade = ((current-500)/ 500)*2;
+		line.Fill:SetVertexColor(fade, 2-fade, 0);
 		line.Fill:Show();
 	end
 	l_debug.text:SetText(mem)
