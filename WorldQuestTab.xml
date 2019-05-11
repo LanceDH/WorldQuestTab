@@ -15,7 +15,7 @@
 	<Frame name="WQT_DebugLine" parentArray="DependencyLines" virtual="true">
 		<Layers>
 			<Layer level="OVERLAY" textureSubLevel="-2">
-				<Line parentKey="Fill" file="Interface/Artifacts/_Artifacts-DependencyBar-Fill" thickness="4" horizTile="true" alpha="1" />
+				<Line parentKey="Fill" file="Interface/TARGETINGFRAME/UI-TargetingFrame-BarFill" thickness="2" horizTile="true" alpha="1" />
 			</Layer>
 		</Layers>
 	</Frame>

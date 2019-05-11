@@ -305,7 +305,7 @@ function WQT_DataProvider:UpdateWaitingRoom()
 	
 	for i = #self.waitingRoomQuest, 1, -1 do
 		local questInfo = self.waitingRoomQuest[i];
-		if HaveQuestData(questInfo.questId) then
+		if (questInfo.questId and HaveQuestData(questInfo.questId)) then
 			WQT:debugPrint("Fixed", questInfo.questId);
 			SetQuestData(questInfo);
 			if HaveQuestRewardData(questInfo.questId) then	
@@ -323,7 +323,7 @@ function WQT_DataProvider:UpdateWaitingRoom()
 	
 	for i = #self.waitingRoomRewards, 1, -1 do
 		questInfo = self.waitingRoomRewards[i];
-		if HaveQuestRewardData(questInfo.questId) then
+		if ( questInfo.questId and HaveQuestRewardData(questInfo.questId)) then
 			WQT:debugPrint("Fixed", questInfo.questId, "reward");
 			SetQuestReward(questInfo);
 			SetSubReward(questInfo);
@@ -341,7 +341,8 @@ function WQT_DataProvider:UpdateWaitingRoom()
 end
 
 function WQT_DataProvider:LoadQuestsInZone(zoneId)
-	self.pool:ReleaseAll();
+	self:ClearData();
+	
 	if not (WorldMapFrame:IsShown() or (FlightMapFrame and FlightMapFrame:IsShown())) then return; end
 	-- If the flight map is open, we want all quests no matter what
 	if (FlightMapFrame and FlightMapFrame:IsShown()) then 
@@ -360,10 +361,6 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 	local continentId = currentMapInfo.parentMapID;
 	local missingRewardData = false;
 	local questsById, quest;
-	
-	-- Wipe the waiting room. Either they will be updated now, or it's a new zone and we no longer care
-	wipe(self.waitingRoomRewards)
-	wipe(self.waitingRoomQuest)
 
 	if (WQT.settings.alwaysAllQuests and currentMapInfo.mapType ~= Enum.UIMapType.World) then
 	
@@ -421,7 +418,7 @@ function WQT_DataProvider:AddQuestsInZone(zoneID, continentId)
 	
 	for k, info in ipairs(questsById) do
 		if info.mapID == zoneID then
-			--quest = self:AddQuest(info, zoneID, continentId);
+			quest = self:AddQuest(info, zoneID, continentId);
 			if not quest then 
 				missingData = true;
 			end;

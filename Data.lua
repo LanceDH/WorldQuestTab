@@ -2,7 +2,7 @@
 
 
 addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
-addon.debug = true;
+addon.debug = false;
 addon.variables = {};
 local _L = addon.L;
 local _V = addon.variables;

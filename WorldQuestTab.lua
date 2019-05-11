@@ -1424,6 +1424,7 @@ function WQT_ListButtonMixin:OnClick(button)
 			end
 		end
 		WorldMapFrame:SetMapID(self.zoneId);
+		
 		if WQT_WorldQuestFrame:GetAlpha() > 0 then 
 			WQT_QuestScrollFrame:DisplayQuestList();
 		end
@@ -1795,13 +1796,9 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 
 	-- Ring stuff
 	if (WQT.settings.showPinRing) then
-		--if (quest.reward.type == WQT_REWARDTYPE.missing) then
-		--	self.Ring:SetVertexColor(WQT_COLOR_MISSING:GetRGB());
-		--else
-			self.Ring:SetVertexColor(quest.reward.color:GetRGB());
-		--end
+		self.Ring:SetVertexColor(quest.reward.color:GetRGB());
 	else
-		self.Ring:SetVertexColor(WQT_COLOR_RINGDEFAULT:GetRGB());
+		self.Ring:SetVertexColor(_V["WQT_COLOR_CURRENCY"]:GetRGB());
 	end
 	self.Ring:SetAlpha((WQT.settings.showPinReward or WQT.settings.showPinRing) and 1 or 0);
 	
@@ -2854,109 +2851,131 @@ end
 
 if _debug then
 
-local l_debug = CreateFrame("frame", addonName .. "Debug", UIParent);
-WQT.debug = l_debug;
+	local l_debug = CreateFrame("frame", addonName .. "Debug", UIParent);
+	WQT.debug = l_debug;
 
-l_debug.linePool = CreateFramePool("FRAME", l_debug, "WQT_DebugLine");
+	l_debug.linePool = CreateFramePool("FRAME", l_debug, "WQT_DebugLine");
 
-local function ShowDebugHistory()
-	local mem = floor(l_debug.history[#l_debug.history]*100)/100;
-	local scale = l_debug:GetScale();
-	local current = 0;
-	local line = nil;
-	l_debug.linePool:ReleaseAll();
-	for i=1, #l_debug.history-1, 1 do
-		line = l_debug.linePool:Acquire();
-		current = l_debug.history[i];
-		line:Show();
-		line.Fill:SetStartPoint("BOTTOMLEFT", l_debug, (i-1)*2*scale, current/10*scale);
-		line.Fill:SetEndPoint("BOTTOMLEFT", l_debug, i*2*scale, l_debug.history[i+1]/10*scale);
-		local fade = ((current-500)/ 500)*2;
-		line.Fill:SetVertexColor(fade, 2-fade, 0);
-		line.Fill:Show();
-	end
-	l_debug.text:SetText(mem)
-end
-
-l_debug:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-      edgeFile = nil,
-	  tileSize = 0, edgeSize = 16,
-      insets = { left = 0, right = 0, top = 0, bottom = 0 }
-	  })
-l_debug:SetFrameLevel(5)
-l_debug:SetMovable(true)
-l_debug:SetPoint("Center", 250, 0)
-l_debug:RegisterForDrag("LeftButton")
-l_debug:EnableMouse(true);
-l_debug:SetScript("OnDragStart", l_debug.StartMoving)
-l_debug:SetScript("OnDragStop", l_debug.StopMovingOrSizing)
-l_debug:SetWidth(100)
-l_debug:SetHeight(100)
-l_debug:SetClampedToScreen(true)
-l_debug.text = l_debug:CreateFontString(nil, nil, "GameFontWhiteSmall")
-l_debug.text:SetPoint("BOTTOMLEFT", 2, 2)
-l_debug.text:SetText("0000")
-l_debug.text:SetJustifyH("left")
-l_debug.time = 0;
-l_debug.interval = 0.2;
-l_debug.history = {}
-l_debug.callCounters = {}
-
-l_debug:SetScript("OnUpdate", function(self,elapsed) 
-		self.time = self.time + elapsed;
-		if(self.time >= self.interval) then
-			self.time = self.time - self.interval;
-			UpdateAddOnMemoryUsage();
-			table.insert(self.history, GetAddOnMemoryUsage(addonName));
-			if(#self.history > 50) then
-				table.remove(self.history, 1)
-			end
-			ShowDebugHistory()
-
-			if(l_debug.showTT) then
-				GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
-				GameTooltip:SetText("Function calls", nil, nil, nil, nil, true);
-				for k, v in pairs(l_debug.callCounters) do
-					local t = time();
-					local ts = 0;
-					local mem = 0;
-					local memtot = 0;
-					local latest = 0;
-					
-					for i = #v, 1, -1 do
-						ts, mem = v[i]:match("(%d+)|(%d+)");
-						ts = tonumber(ts);
-						
-						mem = tonumber(mem);
-						if ts then
-							if (t - ts> 20) then
-								table.remove(v, i);
-							elseif (ts > latest) then
-								latest = ts;
-							end
-							memtot = memtot + mem;
-						end
-					end
-						
-					if #v > 0 then
-						local color = (t - latest <=1) and NORMAL_FONT_COLOR or DISABLED_FONT_COLOR;
-						GameTooltip:AddDoubleLine(k, #v .. " (" .. floor(memtot/10)/10 .. ")", color.r, color.g, color.b, color.r, color.g, color.b);		
-					end
-				end
-				GameTooltip:Show();
+	local function ShowDebugHistory()
+		local highest = 1000;
+		for k, v in ipairs(l_debug.history) do
+			if (v > highest) then
+				highest = v;
 			end
 		end
-	end)
-
-l_debug:SetScript("OnEnter", function(self,elapsed) 
-		l_debug.showTT = true;
 		
-	end)
+		
+		local mem = floor(l_debug.history[#l_debug.history]*100)/100;
+		local scale = l_debug:GetScale();
+		local yScale = 1000 / highest ;
+		local current = 0;
+		local following = 0;
+		local line = nil;
+		l_debug.linePool:ReleaseAll();
+		
+		for i=1, highest/1000 do
+			local scaleLine = l_debug.linePool:Acquire();
+			scaleLine:Show();
+			scaleLine.Fill:SetStartPoint("BOTTOMLEFT", l_debug, 0, i*100*scale* yScale);
+			scaleLine.Fill:SetEndPoint("BOTTOMLEFT", l_debug, 100*scale, i*100*scale* yScale);
+			scaleLine.Fill:SetVertexColor(0.5, 0.5, 0.5, 0.5);
+			scaleLine.Fill:Show();
+		end
+		
+		for i=1, #l_debug.history, 1 do
+			line = l_debug.linePool:Acquire();
+			current = l_debug.history[i];
+			following = i == # l_debug.history and  current or l_debug.history[i+1];
 	
-l_debug:SetScript("OnLeave", function(self,elapsed) 
-		l_debug.showTT = false;
-		GameTooltip:Hide();
-	end)
-l_debug:Show()
+			line:Show();
+			line.Fill:SetStartPoint("BOTTOMLEFT", l_debug, (i-1)*2*scale, current/10*scale * yScale);
+			line.Fill:SetEndPoint("BOTTOMLEFT", l_debug, i*2*scale, following/10*scale * yScale);
+			local fade = ((current-500)/ 500)*2;
+			line.Fill:SetVertexColor(fade, 2-fade, 0, 1);
+			line.Fill:Show();
+		end
+		l_debug.text:SetText(mem)
+	end
+
+	l_debug:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+		  edgeFile = nil,
+		  tileSize = 0, edgeSize = 16,
+		  insets = { left = 0, right = 0, top = 0, bottom = 0 }
+		  })
+	l_debug:SetFrameLevel(5)
+	l_debug:SetMovable(true)
+	l_debug:SetPoint("Center", 250, 0)
+	l_debug:RegisterForDrag("LeftButton")
+	l_debug:EnableMouse(true);
+	l_debug:SetScript("OnDragStart", l_debug.StartMoving)
+	l_debug:SetScript("OnDragStop", l_debug.StopMovingOrSizing)
+	l_debug:SetWidth(100)
+	l_debug:SetHeight(100)
+	l_debug:SetClampedToScreen(true)
+	l_debug.text = l_debug:CreateFontString(nil, nil, "GameFontWhiteSmall")
+	l_debug.text:SetPoint("BOTTOMLEFT", 2, 2)
+	l_debug.text:SetText("0000")
+	l_debug.text:SetJustifyH("left")
+	l_debug.time = 0;
+	l_debug.interval = 0.2;
+	l_debug.history = {}
+	l_debug.callCounters = {}
+
+	l_debug:SetScript("OnUpdate", function(self,elapsed) 
+			self.time = self.time + elapsed;
+			if(self.time >= self.interval) then
+				self.time = self.time - self.interval;
+				UpdateAddOnMemoryUsage();
+				table.insert(self.history, GetAddOnMemoryUsage(addonName));
+				if(#self.history > 50) then
+					table.remove(self.history, 1)
+				end
+				ShowDebugHistory()
+
+				if(l_debug.showTT) then
+					GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
+					GameTooltip:SetText("Function calls", nil, nil, nil, nil, true);
+					for k, v in pairs(l_debug.callCounters) do
+						local t = time();
+						local ts = 0;
+						local mem = 0;
+						local memtot = 0;
+						local latest = 0;
+						
+						for i = #v, 1, -1 do
+							ts, mem = v[i]:match("(%d+)|(%d+)");
+							ts = tonumber(ts);
+							
+							mem = tonumber(mem);
+							if ts then
+								if (t - ts> 20) then
+									table.remove(v, i);
+								elseif (ts > latest) then
+									latest = ts;
+								end
+								memtot = memtot + mem;
+							end
+						end
+							
+						if #v > 0 then
+							local color = (t - latest <=1) and NORMAL_FONT_COLOR or DISABLED_FONT_COLOR;
+							GameTooltip:AddDoubleLine(k, #v .. " (" .. floor(memtot/10)/10 .. ")", color.r, color.g, color.b, color.r, color.g, color.b);		
+						end
+					end
+					GameTooltip:Show();
+				end
+			end
+		end)
+
+	l_debug:SetScript("OnEnter", function(self,elapsed) 
+			l_debug.showTT = true;
+			
+		end)
+		
+	l_debug:SetScript("OnLeave", function(self,elapsed) 
+			l_debug.showTT = false;
+			GameTooltip:Hide();
+		end)
+	l_debug:Show()
 
 end
