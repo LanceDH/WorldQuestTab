@@ -1,4 +1,4 @@
-local MAJOR, MINOR = "AddonDropDown-1.0", 5
+local MAJOR, MINOR = "AddonDropDown-1.0", 6
 local ADD, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not ADD then return end -- No Upgrade needed.
@@ -203,7 +203,7 @@ info.func = [function()]  --  The function that is called when you click the but
 info.checked = [nil, true, function]  --  Check the button if true or function returns true
 info.isNotRadio = [nil, true]  --  Check the button uses radial image if false check box image if true
 info.isTitle = [nil, true]  --  If it's a title the button is disabled and the font color is set to yellow
-info.disabled = [nil, true]  --  Disable the button and show an invisible button that still traps the mouseover event so menu doesn't time out
+info.disabled = [nil, true, function]  --  Disable the button and show an invisible button that still traps the mouseover event so menu doesn't time out
 info.tooltipWhileDisabled = [nil, 1] -- Show the tooltip, even when the button is disabled.
 info.hasArrow = [nil, true]  --  Show the expand arrow for multilevel menus
 info.hasColorSwatch = [nil, true]  --  Show color swatch or not, for color selection
@@ -356,20 +356,25 @@ function ADD:AddButton(info, level)
 	invisibleButton:Hide();
 	button:Enable();
 
+	local disabled = info.disabled;
+	if (info.disabled and type(info.disabled) == "function") then
+		disabled = info.disabled(button);
+	end
+	
 	-- If not clickable then disable the button and set it white
 	if ( info.notClickable ) then
-		info.disabled = true;
+		disabled = true;
 		button:SetDisabledFontObject(GameFontHighlightSmallLeft);
 	end
 
 	-- Set the text color and disable it if its a title
 	if ( info.isTitle ) then
-		info.disabled = true;
+		disabled = true;
 		button:SetDisabledFontObject(GameFontNormalSmallLeft);
 	end
 
 	-- Disable the button if disabled and turn off the color code
-	if ( info.disabled ) then
+	if ( disabled ) then
 		button:Disable();
 		invisibleButton:Show();
 		info.colorCode = nil;
@@ -475,7 +480,7 @@ function ADD:AddButton(info, level)
 
 	local expandArrow = _G[listFrameName.."Button"..index.."ExpandArrow"];
 	expandArrow:SetShown(info.hasArrow);
-	expandArrow:SetEnabled(not info.disabled);
+	expandArrow:SetEnabled(not disabled);
 
 	button.hasArrow = info.hasArrow;
 
@@ -535,7 +540,7 @@ function ADD:AddButton(info, level)
 	end
 
 	if not info.notCheckable then
-		if ( info.disabled ) then
+		if ( disabled ) then
 			_G[listFrameName.."Button"..index.."Check"]:SetDesaturated(true);
 			_G[listFrameName.."Button"..index.."Check"]:SetAlpha(0.5);
 			_G[listFrameName.."Button"..index.."UnCheck"]:SetDesaturated(true);
@@ -575,6 +580,7 @@ function ADD:AddButton(info, level)
 		_G[listFrameName.."Button"..index.."Check"]:Hide();
 		_G[listFrameName.."Button"..index.."UnCheck"]:Hide();
 	end
+	button.disabled = info.disabled;
 	button.checked = info.checked;
 
 	-- If has a colorswatch, show it and vertex color it
@@ -743,6 +749,14 @@ function ADD:Refresh(frame, useValue, dropdownLevel)
 			width = ADD:GetButtonWidth(button);
 			if ( width > maxWidth ) then
 				maxWidth = width;
+			end
+		end
+		
+		if (button.disabled and type(button.disabled) =="function") then
+			if (button.disabled(button)) then
+				self:DisableButton(dropdownLevel, button:GetID());
+			else
+				self:EnableButton(dropdownLevel, button:GetID());
 			end
 		end
 	end

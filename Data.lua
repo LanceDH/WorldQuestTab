@@ -2,7 +2,7 @@
 
 
 addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
-addon.debug = false;
+addon.debug = true;
 addon.variables = {};
 local _L = addon.L;
 local _V = addon.variables;
@@ -62,6 +62,10 @@ local WQT_LEGION = {
 ------------------------
 -- SHARED
 ------------------------
+
+_V["RINGTYPE_NONE"] = 1;
+_V["RINGTYPE_REWARD"] = 2;
+_V["RINGTYPE_TIMY"] = 3;
 
 _V["WQT_COLOR_ARMOR"] =  CreateColor(0.85, 0.5, 0.95) ;
 _V["WQT_COLOR_ARTIFACT"] = CreateColor(0, 0.75, 0);

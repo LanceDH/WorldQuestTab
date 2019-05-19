@@ -48,6 +48,8 @@ local _playerFaction = GetPlayerFactionGroup();
 local _TomTomLoaded = IsAddOnLoaded("TomTom");
 local _CIMILoaded = IsAddOnLoaded("CanIMogIt");
 local _WFMLoaded = IsAddOnLoaded("WorldFlightMap");
+
+local time = time;
 	
 local WQT_DEFAULTS = {
 	global = {	
@@ -62,7 +64,7 @@ local WQT_DEFAULTS = {
 		disablePoI = false;
 		showPinReward = true;
 		showPinRing = true;
-		showPinTime = true;
+		showPinTime = false;
 		funQuests = true;
 		emissaryOnly = false;
 		preciseFilter = true;
@@ -72,7 +74,7 @@ local WQT_DEFAULTS = {
 		autoEmisarry = true;
 		questCounter = true;
 		bountyCounter = true;
-		
+		ringType = _V["RINGTYPE_TIME"];
 		useTomTom = true;
 		TomTomAutoArrow = true;
 		
@@ -673,6 +675,7 @@ function WQT:InitFilter(self, level)
 	info.tooltipWhileDisabled = true;
 	info.tooltipOnButton = true;
 	info.motionScriptsWhileDisabled = true;
+	info.disabled = nil;
 	
 	if level == 1 then
 		info.checked = 	nil;
@@ -996,8 +999,6 @@ function WQT:InitFilter(self, level)
 				info.tooltipTitle = _L["PIN_DISABLE"];
 				info.tooltipText = _L["PIN_DISABLE_TT"];
 				info.func = function(_, _, _, value)
-						-- Update these numbers when adding new options !
-						local start, stop = 2, 5;
 						WQT.settings.disablePoI = value;
 						if (value) then
 							-- Reset alpha on official pins
@@ -1009,22 +1010,16 @@ function WQT:InitFilter(self, level)
 								PoI.TrackedCheck:SetAlpha(1);
 							end
 							WQT_WorldQuestFrame.pinHandler:ReleaseAllPools();
-							
-							for i = start, stop do
-								ADD:DisableButton(3, i);
-							end
-						else
-							for i = start, stop do
-								ADD:EnableButton(3, i);
-							end
 						end
+						ADD:Refresh(self, 1, 3);
 						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(true)
 					end
 				info.checked = function() return WQT.settings.disablePoI end;
 				ADD:AddButton(info, level);
 				
+				info.disabled = function() return WQT.settings.disablePoI end;
+				
 				info.text = _L["FILTER_PINS"];
-				info.disabled = WQT.settings.disablePoI;
 				info.tooltipTitle = _L["FILTER_PINS"];
 				info.tooltipText = _L["FILTER_PINS_TT"];
 				info.func = function(_, _, _, value)
@@ -1035,7 +1030,6 @@ function WQT:InitFilter(self, level)
 				ADD:AddButton(info, level);
 				
 				info.text = _L["PIN_REWARDS"];
-				info.disabled = WQT.settings.disablePoI;
 				info.tooltipTitle = _L["PIN_REWARDS"];
 				info.tooltipText = _L["PIN_REWARDS_TT"];
 				info.func = function(_, _, _, value)
@@ -1045,19 +1039,17 @@ function WQT:InitFilter(self, level)
 				info.checked = function() return WQT.settings.showPinReward end;
 				ADD:AddButton(info, level);
 				
-				info.text = _L["PIN_COLOR"];
-				info.disabled = WQT.settings.disablePoI;
-				info.tooltipTitle = _L["PIN_COLOR"];
-				info.tooltipText = _L["PIN_COLOR_TT"];
+				info.text = _L["PIN_BIGGER"];
+				info.tooltipTitle = _L["PIN_BIGGER"];
+				info.tooltipText = _L["PIN_BIGGER_TT"];
 				info.func = function(_, _, _, value)
-						WQT.settings.showPinRing = value;
+						WQT.settings.bigPoI = value;
 						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
 					end
-				info.checked = function() return WQT.settings.showPinRing end;
+				info.checked = function() return WQT.settings.bigPoI end;
 				ADD:AddButton(info, level);
 				
 				info.text = _L["PIN_TIME"];
-				info.disabled = WQT.settings.disablePoI;
 				info.tooltipTitle = _L["PIN_TIME"];
 				info.tooltipText = _L["PIN_TIME_TT"];
 				info.func = function(_, _, _, value)
@@ -1067,6 +1059,54 @@ function WQT:InitFilter(self, level)
 				info.checked = function() return WQT.settings.showPinTime end;
 				ADD:AddButton(info, level);
 				
+				info.notClickable = true;
+				info.notCheckable = true;
+				
+				info.text = _L["PIN_RING_TITLE"];
+				info.tooltipTitle = nil;
+				info.tooltipText = nil;
+				ADD:AddButton(info, level);
+				
+				info.isNotRadio = false;
+				info.notClickable = false;
+				info.notCheckable = false;
+				info.disabled = function() return WQT.settings.disablePoI end;
+				
+				info.text = _L["PIN_RING_NONE"];
+				info.tooltipTitle = _L["PIN_RING_NONE"];
+				info.tooltipText = _L["PIN_RIMG_NONE_TT"];
+				info.func = function(_, _, _, value)
+						WQT.settings.ringType = _V["RINGTYPE_NONE"];
+						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
+						ADD:Refresh(self, 1, 3);
+					end
+				info.checked = function() return  WQT.settings.ringType == _V["RINGTYPE_NONE"]; end;
+				ADD:AddButton(info, level);
+				
+				info.text = _L["PIN_RING_COLOR"];
+				info.tooltipTitle = _L["PIN_RING_COLOR"];
+				info.tooltipText = _L["PIN_RING_COLOR_TT"];
+				info.func = function(_, _, _, value)
+						WQT.settings.ringType = _V["RINGTYPE_REWARD"];
+						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
+						ADD:Refresh(self, 1, 3);
+					end
+				info.checked = function() return WQT.settings.ringType == _V["RINGTYPE_REWARD"]; end;
+				ADD:AddButton(info, level);
+				
+				info.text = _L["PIN_RING_TIME"];
+				info.tooltipTitle = _L["PIN_RING_TIME"];
+				info.tooltipText = _L["PIN_RIMG_TIME_TT"];
+				info.func = function(_, _, _, value)
+						WQT.settings.ringType = _V["RINGTYPE_TIME"];
+						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
+						ADD:Refresh(self, 1, 3);
+					end
+				info.checked = function() return  WQT.settings.ringType == _V["RINGTYPE_TIME"]; end;
+				ADD:AddButton(info, level);
+				
+				info.disabled = nil;
+
 		elseif ADD.MENU_VALUE == 303 then -- TomTom
 			info.text = _L["USE_TOMTOM"];
 			info.tooltipTitle = _L["USE_TOMTOM"];
@@ -1727,8 +1767,8 @@ local function OnPinRelease(pool, pin)
 end
 
 function WQT_PinHandlerMixin:OnLoad()
-	self.pinPool = CreateFramePool("FRAME", WorldMapPOIFrame, "WQT_PinTemplate", OnPinRelease);
-	self.pinPoolFlightMap = CreateFramePool("FRAME", WorldMapPOIFrame, "WQT_PinTemplate", OnPinRelease);
+	self.pinPool = CreateFramePool("COOLDOWN", WorldMapPOIFrame, "WQT_PinTemplate", OnPinRelease);
+	self.pinPoolFlightMap = CreateFramePool("COOLDOWN", WorldMapPOIFrame, "WQT_PinTemplate", OnPinRelease);
 end
 
 function WQT_PinHandlerMixin:ReleaseAllPools()
@@ -1782,6 +1822,10 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 	local bh = PoI:GetHeight();
 	self:SetParent(PoI);
 	self:SetAllPoints();
+	local margin = WQT.settings.bigPoI and 8 or 4;
+	
+	self:SetPoint("TOPLEFT", -margin, margin);
+	self:SetPoint("BOTTOMRIGHT", margin, -margin);
 	self:Show();
 	
 	if not flightPinNr then
@@ -1793,15 +1837,50 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 	PoI.TrackedCheck:SetAlpha(0);
 
 	self.TrackedCheck:SetAlpha(IsWorldQuestWatched(quest.questId) and 1 or 0);
-
-	-- Ring stuff
-	if (WQT.settings.showPinRing) then
-		self.Ring:SetVertexColor(quest.reward.color:GetRGB());
-	else
-		self.Ring:SetVertexColor(_V["WQT_COLOR_CURRENCY"]:GetRGB());
-	end
-	self.Ring:SetAlpha((WQT.settings.showPinReward or WQT.settings.showPinRing) and 1 or 0);
 	
+	-- Ring stuff
+	local ringType = WQT.settings.ringType;
+	local now = time();
+	local r, g, b = _V["WQT_COLOR_CURRENCY"]:GetRGB();
+	self:SetCooldownUNIX(now, now);
+	self.Pointer:SetAlpha(0);
+	
+	if (ringType ==  _V["RINGTYPE_TIME"]) then
+		r, g, b = quest.time.color:GetRGB();
+		local start = 0
+		local timeLeft = quest.time.minutes;
+		local offset =0
+		if (timeLeft > 0) then
+			if timeLeft > 1440 then
+				offset = 5760*60;
+				start = (5760-timeLeft)*60;
+				timeLeft = timeLeft+1440/2
+			elseif timeLeft > 60 then
+				offset = 1440*60;
+				start = (1440-timeLeft)*60;
+				timeLeft = timeLeft +60/2
+			elseif timeLeft > 15 then
+				offset = 60*60;
+				start = (60-timeLeft)*60;
+				timeLeft = timeLeft+15/2
+			else
+				offset = 15*60;
+				start = (15-timeLeft)*60;
+			end
+			timeLeft = timeLeft * 60;
+			
+			self:SetCooldownUNIX(now-start,  start + timeLeft);
+			self.Pointer:SetAlpha(1);
+			self.Pointer:SetVertexColor(r*1.1, g*1.1, b*1.1);
+			self.Pointer:SetRotation((timeLeft)/(offset)*6.2831);
+		end
+	elseif (ringType ==  _V["RINGTYPE_REWARD"]) then
+		r, g, b = quest.time.color:GetRGB();
+	end
+	
+	self.Ring:SetVertexColor(r*0.35, g*0.35, b*0.35);
+	self:SetSwipeColor(r*.8, g*.8, b*.8);
+
 	-- Icon stuff
 	local showIcon = WQT.settings.showPinReward and (quest.reward.type == WQT_REWARDTYPE.missing or quest.reward.texture ~= "")
 	self.Icon:SetAlpha(showIcon and 1 or 0);
@@ -2534,6 +2613,8 @@ function WQT_CoreMixin:ShowHighlightOnMapFilters()
 	WQT_PoISelectIndicator:SetPoint("CENTER", self.worldMapFilter, 0, 1);
 	WQT_PoISelectIndicator:SetFrameLevel(self.worldMapFilter:GetFrameLevel()+1);
 	WQT_PoISelectIndicator:Show();
+	local size = WQT.settings.bigPoI and 50 or 40;
+	WQT_PoISelectIndicator:SetSize(size, size);
 	WQT_PoISelectIndicator:SetScale(0.40);
 end
 
@@ -2546,6 +2627,8 @@ function WQT_CoreMixin:ShowHighlightOnPin(pin, scale)
 	WQT_PoISelectIndicator.pin = pin;
 	pin:SetFrameLevel(3000);
 	WQT_PoISelectIndicator:Show();
+	local size = WQT.settings.bigPoI and 50 or 40;
+	WQT_PoISelectIndicator:SetSize(size, size);
 	WQT_PoISelectIndicator:SetScale(scale or 1);
 end
 
@@ -2885,7 +2968,7 @@ if _debug then
 		for i=1, #l_debug.history, 1 do
 			line = l_debug.linePool:Acquire();
 			current = l_debug.history[i];
-			following = i == # l_debug.history and  current or l_debug.history[i+1];
+			following = i == # l_debug.history and  current or l_debug.history[i+1]; 
 	
 			line:Show();
 			line.Fill:SetStartPoint("BOTTOMLEFT", l_debug, (i-1)*2*scale, current/10*scale * yScale);

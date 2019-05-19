@@ -127,9 +127,14 @@
 		</Member>
 	</FontFamily>
 	
-	 <Frame name="WQT_PinTemplate" mixin="WQT_PinMixin" virtual="true" >
+	 <Cooldown name="WQT_PinTemplate" mixin="WQT_PinMixin" virtual="true" flattenRenderLayers="true">
+		<Anchors>
+			<Anchor point="TOPLEFT" x="-3" y="3"/>
+			<Anchor point="BOTTOMRIGHT" x="3" y="-3"/>
+		</Anchors>
+		
 		<Layers>
-			<Layer level="OVERLAY" textureSubLevel="7">
+			<Layer level="BACKGROUND" textureSubLevel="7">
 				 <FontString parentKey="Time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE">
 					<size y="18" />
 					<Anchors>
@@ -138,7 +143,7 @@
 				</FontString>
 				
 			</Layer>
-			<Layer level="OVERLAY" textureSubLevel="6">
+			<Layer level="ARTWORK" textureSubLevel="6">
 				<Texture parentKey="TrackedCheck" atlas="worldquest-emissary-tracker-checkmark">
 					<Size x="42" y="37"/>
 					<Anchors>
@@ -146,23 +151,21 @@
 					</Anchors>
 				</Texture>
 			</Layer>
-			<Layer level="OVERLAY" textureSubLevel="5">
-				<Texture parentKey="Ring" alpha="0.5" file="Interface\Addons\WorldQuestTab\Images\PoIRing">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="-2" y="2"/>
-						<Anchor point="BOTTOMRIGHT" x="2" y="-2"/>
-					</Anchors>
-				</Texture>
+			<Layer level="BACKGROUND" textureSubLevel="5">
+				<Texture parentKey="Ring" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRing" />
 			</Layer>
-			<Layer level="OVERLAY" textureSubLevel="4">
+			<Layer level="OVERLAY" textureSubLevel="6">
+				<Texture parentKey="Pointer" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingPointer" />
+			</Layer>
+			<Layer level="BACKGROUND" textureSubLevel="4">
 				<Texture parentKey="Icon">
 					<Anchors>
-						<Anchor point="TOPLEFT"/>
-						<Anchor point="BOTTOMRIGHT"/>
+						<Anchor point="TOPLEFT" x="2" y="-2"/>
+						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
 					</Anchors>
 				</Texture>
 			</Layer>
-			<Layer level="OVERLAY" textureSubLevel="3">
+			<Layer level="BACKGROUND" textureSubLevel="3">
 				<Texture parentKey="TimeBg" file="Interface/COMMON/NameShadow">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.Time" y="5"/>
@@ -171,8 +174,78 @@
 					<TexCoords left="0.05" right="0.95" top="0.8" bottom="0"/>
 				</Texture>
 			</Layer>
+			
 		</Layers>
-	 </Frame>
+		
+		
+		
+		<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing"/>
+		
+		<Scripts>
+			<OnLoad>
+				self:SetCooldown(GetTime()-10, 120);
+				self:Show();
+				self.Ring:SetVertexColor(0.5, 0.5, 0.5);
+			</OnLoad>
+		</Scripts>
+	 </Cooldown>
+	 
+	 <Cooldown name="WQT_Pin" mixin="WQT_PinMixin" flattenRenderLayers="true">
+		<size x="40" y="40"/>
+		<Anchors>
+			<Anchor point="CENTER" x="-2" y="2"/>
+		</Anchors>
+		
+		<Layers>
+			<Layer level="BACKGROUND" textureSubLevel="7">
+				 <FontString parentKey="Time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE">
+					<size y="18" />
+					<Anchors>
+						<Anchor point="TOP" relativePoint="BOTTOM" x="2" y="2"/>
+					</Anchors>
+				</FontString>
+				
+			</Layer>
+			<Layer level="BACKGROUND" textureSubLevel="5">
+				<Texture parentKey="Ring" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRing">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="0" y="0"/>
+						<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="BACKGROUND" textureSubLevel="4">
+				<Texture parentKey="Icon">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="2" y="-2"/>
+						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="BACKGROUND" textureSubLevel="3">
+				<Texture parentKey="TimeBg" file="Interface/COMMON/NameShadow">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.Time" y="5"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Time" x="-3" y="5" />
+					</Anchors>
+					<TexCoords left="0.05" right="0.95" top="0.8" bottom="0"/>
+				</Texture>
+			</Layer>
+			
+		</Layers>
+		
+		
+		
+		<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing"/>
+		
+		<Scripts>
+			<OnLoad>
+				self:SetCooldown(GetTime()-10, 120);
+				self:Show();
+				self.Ring:SetVertexColor(0.5, 0.5, 0.5);
+			</OnLoad>
+		</Scripts>
+	 </Cooldown>
 
 	<Button name="WQT_TabTemplate" virtual="true">
 		<Size x="33" y="35"/>
@@ -863,25 +936,18 @@
 	<Frame name="WQT_PoISelectIndicator" hidden="true" flattenRenderLayers="true">
 		<Size x="40" y="40"/>
 		<Layers>
-			<Layer level="ARTWORK">
+			<Layer level="OVERLAY">
 				<Texture parentKey="PingStatic" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="1">
-					<Size x="70" y="70"/>
 					<Anchors>
-						<Anchor point="CENTER" y="1"/>
+						<Anchor point="TOPPLEFT" x="-15" y="16"/>
+						<Anchor point="BOTTOMRIGHT" x="15" y="-14"/>
 					</Anchors>
 				</Texture>
 				<Texture parentKey="Ping" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="0">
-					<Size x="60" y="60"/>
 					<Anchors>
-						<Anchor point="CENTER" y="1"/>
+						<Anchor point="TOPPLEFT" x="-10" y="11"/>
+						<Anchor point="BOTTOMRIGHT" x="10" y="-9"/>
 					</Anchors>
-				</Texture>
-				<Texture parentKey="Icon" file="Interface/WorldMap/UI-QuestPoi-NumberIcons" alpha="0.6" alphaMode="ADD">
-				<Size x="70" y="70"/>
-					<Anchors>
-						<Anchor point="CENTER" y="1"/>
-					</Anchors>
-					<TexCoords left="0.625" right="0.75" top="0.875" bottom="1"/>
 				</Texture>
 			</Layer>
 		</Layers>

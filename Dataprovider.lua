@@ -85,7 +85,7 @@ local function GetQuestTimeString(questId)
 	local timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(questId);
 	local timeString = "";
 	local timeStringShort = "";
-	local color = _V["WQT_WHITE_FONT_COLOR"];
+	local color = _V["WQT_COLOR_CURRENCY"];--  _V["WQT_WHITE_FONT_COLOR"];
 	if ( timeLeftMinutes ) then
 		if ( timeLeftMinutes <= WORLD_QUESTS_TIME_CRITICAL_MINUTES ) then
 			color = RED_FONT_COLOR;
