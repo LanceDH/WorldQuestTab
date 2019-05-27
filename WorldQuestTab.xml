@@ -134,70 +134,45 @@
 		</Anchors>
 		
 		<Layers>
-			<Layer level="BACKGROUND" textureSubLevel="7">
-				 <FontString parentKey="Time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE">
-					<size y="18" />
+			<Layer level="BACKGROUND" textureSubLevel="4">
+				<Texture parentKey="Icon">
 					<Anchors>
-						<Anchor point="TOP" relativePoint="BOTTOM" x="2" y="2"/>
+						<Anchor point="TOPLEFT" x="2" y="-2"/>
+						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
 					</Anchors>
-				</FontString>
-				
+				</Texture>
 			</Layer>
-			<Layer level="ARTWORK" textureSubLevel="6">
+			
+			<Layer level="ARTWORK" textureSubLevel="-1">
+				<Texture parentKey="Ring" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRing" />
+				</Layer>
+			<Layer level="ARTWORK" textureSubLevel="1">
 				<Texture parentKey="TrackedCheck" atlas="worldquest-emissary-tracker-checkmark">
 					<Size x="42" y="37"/>
 					<Anchors>
-						<Anchor point="BOTTOM" relativePoint="BOTTOMRIGHT" x="-2" y="-8"/>
+						<Anchor point="CENTER" relativePoint="CENTER" x="25" y="-15"/>
 					</Anchors>
 				</Texture>
 			</Layer>
-			<Layer level="BACKGROUND" textureSubLevel="5">
-				<Texture parentKey="Ring" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRing" />
+			<Layer level="ARTWORK" textureSubLevel="2" >
+				<Texture parentKey="Pointer" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingPointer"/>
 			</Layer>
-			<Layer level="OVERLAY" textureSubLevel="6">
-				<Texture parentKey="Pointer" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingPointer" />
-			</Layer>
-			<Layer level="BACKGROUND" textureSubLevel="4">
-				<Texture parentKey="Icon">
+			<Layer level="ARTWORK" textureSubLevel="3">
+				
+				<Texture parentKey="TypeIcon" atlas="dungeon">
+					<Size x="25" y="25"/>
 					<Anchors>
-						<Anchor point="TOPLEFT" x="2" y="-2"/>
-						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
+						<Anchor point="CENTER" relativePoint="CENTER" x="0" y="-27"/>
 					</Anchors>
 				</Texture>
-			</Layer>
-			<Layer level="BACKGROUND" textureSubLevel="3">
-				<Texture parentKey="TimeBg" file="Interface/COMMON/NameShadow">
+				<Texture parentKey="RewardIcon" atlas="Auctioneer">
+					<Size x="26" y="26"/>
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.Time" y="5"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Time" x="-3" y="5" />
+						<Anchor point="CENTER" relativePoint="CENTER" x="-25" y="-15"/>
 					</Anchors>
-					<TexCoords left="0.05" right="0.95" top="0.8" bottom="0"/>
 				</Texture>
 			</Layer>
-			
-		</Layers>
-		
-		
-		
-		<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing"/>
-		
-		<Scripts>
-			<OnLoad>
-				self:SetCooldown(GetTime()-10, 120);
-				self:Show();
-				self.Ring:SetVertexColor(0.5, 0.5, 0.5);
-			</OnLoad>
-		</Scripts>
-	 </Cooldown>
-	 
-	 <Cooldown name="WQT_Pin" mixin="WQT_PinMixin" flattenRenderLayers="true">
-		<size x="40" y="40"/>
-		<Anchors>
-			<Anchor point="CENTER" x="-2" y="2"/>
-		</Anchors>
-		
-		<Layers>
-			<Layer level="BACKGROUND" textureSubLevel="7">
+			<Layer level="ARTWORK" textureSubLevel="5">
 				 <FontString parentKey="Time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE">
 					<size y="18" />
 					<Anchors>
@@ -206,23 +181,7 @@
 				</FontString>
 				
 			</Layer>
-			<Layer level="BACKGROUND" textureSubLevel="5">
-				<Texture parentKey="Ring" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRing">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="0" y="0"/>
-						<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-			<Layer level="BACKGROUND" textureSubLevel="4">
-				<Texture parentKey="Icon">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="2" y="-2"/>
-						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-			<Layer level="BACKGROUND" textureSubLevel="3">
+			<Layer level="ARTWORK" textureSubLevel="4">
 				<Texture parentKey="TimeBg" file="Interface/COMMON/NameShadow">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.Time" y="5"/>
@@ -234,17 +193,8 @@
 			
 		</Layers>
 		
-		
-		
 		<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing"/>
-		
-		<Scripts>
-			<OnLoad>
-				self:SetCooldown(GetTime()-10, 120);
-				self:Show();
-				self.Ring:SetVertexColor(0.5, 0.5, 0.5);
-			</OnLoad>
-		</Scripts>
+
 	 </Cooldown>
 
 	<Button name="WQT_TabTemplate" virtual="true">
@@ -364,6 +314,26 @@
 								<Anchor point="TOPLEFT" x="4" y="-4"/>
 								<Anchor point="BOTTOMRIGHT" x="-4" y="4"/>
 							</Anchors>
+						</Texture>
+						<MaskTexture parentKey="CircleMask" file="Interface\CharacterFrame\TempPortraitAlphaMask" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE">
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent.Icon"/>
+								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Icon"/>
+							</Anchors>
+							<MaskedTextures>
+								<MaskedTexture childKey="Icon"/>
+							</MaskedTextures>
+						</MaskTexture>
+					</Layer>
+				</Layers>
+				<Layers>
+					<Layer level="OVERLAY">
+						<Texture parentKey="Ring" atlas="GarrMission_PartyBuffAbilityBorder" useAtlasSize="false">	<!-- ChallengeMode-AffixRing-Sm services-ring -->
+							<Anchors>
+								<Anchor point="TOPLEFT" x="-1" y="1"/>
+								<Anchor point="BOTTOMRIGHT" x="1" y="-1"/>
+							</Anchors>
+							<Color r="0.75" g="0.75" b="0.75"/>
 						</Texture>
 					</Layer>
 				</Layers>
@@ -936,7 +906,7 @@
 	<Frame name="WQT_PoISelectIndicator" hidden="true" flattenRenderLayers="true">
 		<Size x="40" y="40"/>
 		<Layers>
-			<Layer level="OVERLAY">
+			<Layer level="BACKGROUND">
 				<Texture parentKey="PingStatic" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="1">
 					<Anchors>
 						<Anchor point="TOPPLEFT" x="-15" y="16"/>
@@ -1144,7 +1114,6 @@
 				self:SetParent(LFGListFrame.SearchPanel.SearchBox);
 				self:SetFrameLevel(LFGListFrame.SearchPanel.SearchBox:GetFrameLevel()+5);
 				self:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "BOTTOMLEFT", -2, -3);
-				<!--self:SetPoint("TOPRIGHT", LFGListFrame.SearchPanel.SearchBox, "BOTTOMRIGHT", -15, -3);-->
 				self:SetPoint("RIGHT", LFGListFrame.SearchPanel, "RIGHT", -30, 0);
 			</OnLoad>
 			<OnShow>

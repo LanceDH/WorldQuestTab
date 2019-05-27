@@ -59,13 +59,6 @@ local WQT_DEFAULTS = {
 		showTypeIcon = true;
 		showFactionIcon = true;
 		saveFilters = true;
-		filterPoI = true;
-		bigPoI = false;
-		disablePoI = false;
-		showPinReward = true;
-		showPinRing = true;
-		showPinTime = false;
-		funQuests = true;
 		emissaryOnly = false;
 		preciseFilter = true;
 		rewardAmountColors = true;
@@ -74,7 +67,17 @@ local WQT_DEFAULTS = {
 		autoEmisarry = true;
 		questCounter = true;
 		bountyCounter = true;
+		
+		pinType = true;
+		pinRewardType = true;
+		filterPoI = true;
+		bigPoI = false;
+		disablePoI = false;
+		showPinReward = true;
+		showPinRing = true;
+		showPinTime = false;
 		ringType = _V["RINGTYPE_TIME"];
+		
 		useTomTom = true;
 		TomTomAutoArrow = true;
 		
@@ -350,19 +353,19 @@ local function slashcmd(msg, editbox)
 		if _debug then
 		--This is to get the zone coords for highlights so I don't have to retype it every time
 		
-		-- local x, y = GetCursorPosition();
+		 local x, y = GetCursorPosition();
 		
-		-- local WorldMapButton = WorldMapFrame.ScrollContainer.Child;
-		-- x = x / WorldMapButton:GetEffectiveScale();
-		-- y = y / WorldMapButton:GetEffectiveScale();
+		 local WorldMapButton = WorldMapFrame.ScrollContainer.Child;
+		 x = x / WorldMapButton:GetEffectiveScale();
+		 y = y / WorldMapButton:GetEffectiveScale();
 	
-		-- local centerX, centerY = WorldMapButton:GetCenter();
-		-- local width = WorldMapButton:GetWidth();
-		-- local height = WorldMapButton:GetHeight();
-		-- local adjustedY = (centerY + (height/2) - y ) / height;
-		-- local adjustedX = (x - (centerX - (width/2))) / width;
-		-- print(WorldMapFrame.mapID)
-		-- print("{\[\"x\"\] = " .. floor(adjustedX*100)/100 .. ", \[\"y\"\] = " .. floor(adjustedY*100)/100 .. "} ")
+		 local centerX, centerY = WorldMapButton:GetCenter();
+		 local width = WorldMapButton:GetWidth();
+		 local height = WorldMapButton:GetHeight();
+		 local adjustedY = (centerY + (height/2) - y ) / height;
+		 local adjustedX = (x - (centerX - (width/2))) / width;
+		 print(WorldMapFrame.mapID)
+		 print("{\[\"x\"\] = " .. floor(adjustedX*100)/100 .. ", \[\"y\"\] = " .. floor(adjustedY*100)/100 .. "} ")
 		
 		local debugfr = WQT.debug;
 		debugfr.mem = GetAddOnMemoryUsage(addonName);
@@ -588,18 +591,25 @@ local function SortQuestListByReward(a, b)
 	return a.reward.type < b.reward.type;
 end
 
-local function ConvertOldSettings()
-	WQT.settings.filters[3].flags.Resources = nil;
-	WQT.settings.versionCheck = "1";
-end
-
-local function ConvertToBfASettings()
-	-- In 8.0.01 factions use ids rather than name
-	local repFlags = WQT.settings.filters[1].flags;
-	for name, value in pairs(repFlags) do
-		if (type(name) == "string" and name ~=OTHER and name ~= _L["NO_FACTION"]) then
-			repFlags[name] = nil;
+local function ConvertOldSettings(version)
+	if (not version) then
+		WQT.settings.filters[3].flags.Resources = nil;
+		WQT.settings.versionCheck = "1";
+	end
+	-- BfA
+	if (version < "8.0.1") then
+		-- In 8.0.01 factions use ids rather than name
+		local repFlags = WQT.settings.filters[1].flags;
+		for name, value in pairs(repFlags) do
+			if (type(name) == "string" and name ~=OTHER and name ~= _L["NO_FACTION"]) then
+				repFlags[name] = nil;
+			end
 		end
+	end
+	-- Pin rework, turn off pin time by default
+	if (version < "8.2.01")  then
+		WQT.settings.showPinTime = false;
+		WQT.settings.showPinReward = false;
 	end
 end
 
@@ -895,6 +905,16 @@ function WQT:InitFilter(self, level)
 				info.checked = function() return WQT.settings.showFactionIcon end;
 				ADD:AddButton(info, level);		
 				
+				info.text = _L["AMOUNT_COLORS"];
+				info.tooltipTitle = _L["AMOUNT_COLORS"];
+				info.tooltipText = _L["AMOUNT_COLORS_TT"];
+				info.func = function(_, _, _, value)
+						WQT.settings.rewardAmountColors = value;
+						WQT_QuestScrollFrame:DisplayQuestList(true, true);
+					end
+				info.checked = function() return WQT.settings.rewardAmountColors end;
+				ADD:AddButton(info, level);		
+				
 				info.keepShownOnClick = true;	
 				info.text = _L["ALWAYS_ALL"];
 				info.tooltipTitle = _L["ALWAYS_ALL"];
@@ -1035,8 +1055,33 @@ function WQT:InitFilter(self, level)
 				info.func = function(_, _, _, value)
 						WQT.settings.showPinReward = value;
 						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
+						ADD:Refresh(self, 1, 3);
 					end
 				info.checked = function() return WQT.settings.showPinReward end;
+				ADD:AddButton(info, level);
+				
+				info.disabled = function() return WQT.settings.disablePoI or not WQT.settings.showPinReward end;
+				
+				info.text = _L["PIN_TYPE"];
+				info.tooltipTitle = _L["PIN_TYPE"];
+				info.tooltipText = _L["PIN_TYPE_TT"];
+				info.func = function(_, _, _, value)
+						WQT.settings.pinType = value;
+						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
+					end
+				info.checked = function() return WQT.settings.pinType end;
+				ADD:AddButton(info, level);
+				
+				info.disabled = function() return WQT.settings.disablePoI end;
+				
+				info.text = _L["PIN_REWARD_TYPE"];
+				info.tooltipTitle = _L["PIN_REWARD_TYPE"];
+				info.tooltipText = _L["PIN_REWARD_TYPE_TT"];
+				info.func = function(_, _, _, value)
+						WQT.settings.pinRewardType = value;
+						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
+					end
+				info.checked = function() return WQT.settings.pinRewardType end;
 				ADD:AddButton(info, level);
 				
 				info.text = _L["PIN_BIGGER"];
@@ -1354,14 +1399,8 @@ function WQT:OnInitialize()
 	self.db = LibStub("AceDB-3.0"):New("BWQDB", WQT_DEFAULTS, true);
 	self.settings = self.db.global;
 	
-	if (not WQT.settings.versionCheck) then
-		ConvertOldSettings()
-	end
-	if (WQT.settings.versionCheck < "8.0.1") then
-		ConvertToBfASettings();
-	end
+	ConvertOldSettings(WQT.settings.versionCheck)
 	WQT.settings.versionCheck  = GetAddOnMetadata(addonName, "version");
-	
 end
 
 function WQT:OnEnable()
@@ -1648,6 +1687,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	if WQT.settings.showFactionIcon then
 		self.Faction:Show();
 		local factionData = GetFactionData(questInfo.factionId);
+		local texture = factionData.icon;
 		
 		self.Faction.Icon:SetTexture(factionData.icon);
 		self.Faction:SetWidth(self.Faction:GetHeight());
@@ -1683,16 +1723,24 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	
 		if questInfo.reward.amount and questInfo.reward.amount > 1  then
 			self.Reward.Amount:SetText(GetLocalizedAbreviatedNumber(questInfo.reward.amount));
-			r, g, b = 1, 1, 1;
 			if questInfo.reward.type == WQT_REWARDTYPE.relic then
 				self.Reward.Amount:SetText("+" .. questInfo.reward.amount);
-			elseif questInfo.reward.type == WQT_REWARDTYPE.artifact then
-				r, g, b = GetItemQualityColor(2);
 			elseif questInfo.reward.type == WQT_REWARDTYPE.equipment then
 				if questInfo.reward.canUpgrade then
 					self.Reward.Amount:SetText(questInfo.reward.amount.."+");
 				end
-				r, g, b = questInfo.reward.color:GetRGB();
+			end
+			
+			r, g, b = 1, 1, 1;
+			if ( WQT.settings.rewardAmountColors) then
+				if questInfo.reward.type == WQT_REWARDTYPE.artifact then
+					r, g, b = GetItemQualityColor(2);
+				elseif questInfo.reward.type == WQT_REWARDTYPE.equipment then
+					if questInfo.reward.canUpgrade then
+						self.Reward.Amount:SetText(questInfo.reward.amount.."+");
+					end
+					r, g, b = questInfo.reward.color:GetRGB();
+				end
 			end
 	
 			self.Reward.Amount:SetVertexColor(r, g, b);
@@ -1704,7 +1752,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	
 	if GetSuperTrackedQuestID() == questInfo.questId or IsWorldQuestWatched(questInfo.questId) then
 		self.TrackedBorder:Show();
-		self.TrackedBorder:SetAlpha(IsWorldQuestHardWatched(questInfo.questId) and 1 or 0.6);
+		self.TrackedBorder:SetAlpha(IsWorldQuestHardWatched(questInfo.questId) and 0.6 or 1);
 	else
 		self.TrackedBorder:Hide();
 	end
@@ -1822,7 +1870,8 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 	local bh = PoI:GetHeight();
 	self:SetParent(PoI);
 	self:SetAllPoints();
-	local margin = WQT.settings.bigPoI and 8 or 4;
+	local margin = WQT.settings.bigPoI and 10 or 5;
+	local iconDistance =  WQT.settings.bigPoI and 34 or 30;
 	
 	self:SetPoint("TOPLEFT", -margin, margin);
 	self:SetPoint("BOTTOMRIGHT", margin, -margin);
@@ -1840,8 +1889,10 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 	
 	-- Ring stuff
 	local ringType = WQT.settings.ringType;
-	local now = time();
+	local hideRing = WQT.settings.ringType ==  _V["RINGTYPE_NONE"] and not WQT.settings.showPinReward;
+	local now = hideRing and 0 or time();
 	local r, g, b = _V["WQT_COLOR_CURRENCY"]:GetRGB();
+	self.Ring:SetAlpha(hideRing and 0 or 1);
 	self:SetCooldownUNIX(now, now);
 	self.Pointer:SetAlpha(0);
 	
@@ -1849,37 +1900,62 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 		r, g, b = quest.time.color:GetRGB();
 		local start = 0
 		local timeLeft = quest.time.minutes;
-		local offset =0
+		local total =0
+		local maxTime, offset;
 		if (timeLeft > 0) then
-			if timeLeft > 1440 then
-				offset = 5760*60;
-				start = (5760-timeLeft)*60;
-				timeLeft = timeLeft+1440/2
-			elseif timeLeft > 60 then
-				offset = 1440*60;
-				start = (1440-timeLeft)*60;
-				timeLeft = timeLeft +60/2
+			if timeLeft >= 1440 then
+				maxTime = 5760;
+				offset = -720;
+			elseif timeLeft >= 60 then
+				maxTime = 1440;
+				offset = 60;
 			elseif timeLeft > 15 then
-				offset = 60*60;
-				start = (60-timeLeft)*60;
-				timeLeft = timeLeft+15/2
+				maxTime= 60;
+				offset = -10;
 			else
-				offset = 15*60;
-				start = (15-timeLeft)*60;
+				maxTime = 15;
+				offset = 0;
 			end
-			timeLeft = timeLeft * 60;
+			start = (maxTime - timeLeft) * 60;
+			total = (maxTime + offset) * 60;
+			timeLeft = (timeLeft + offset) * 60;
 			
 			self:SetCooldownUNIX(now-start,  start + timeLeft);
 			self.Pointer:SetAlpha(1);
 			self.Pointer:SetVertexColor(r*1.1, g*1.1, b*1.1);
-			self.Pointer:SetRotation((timeLeft)/(offset)*6.2831);
+			self.Pointer:SetRotation((timeLeft)/(total)*6.2831);
 		end
 	elseif (ringType ==  _V["RINGTYPE_REWARD"]) then
-		r, g, b = quest.time.color:GetRGB();
+		r, g, b = quest.reward.color:GetRGB();
 	end
 	
-	self.Ring:SetVertexColor(r*0.35, g*0.35, b*0.35);
+	self.Ring:SetVertexColor(r*0.25, g*0.25, b*0.25);
 	self:SetSwipeColor(r*.8, g*.8, b*.8);
+	
+	-- Quest Type Icon
+	local showtypeIcon = WQT.settings.showPinReward and WQT.settings.pinType and quest.type > 0 and quest.type ~= LE_QUEST_TAG_TYPE_NORMAL;
+	local typeAtlas =  showtypeIcon and _dataProvider:GetCachedTypeIconData(quest.type, quest.tradeskill) --_V["QUEST_TYPE_ATLAS"][quest.type];
+	self.TypeIcon:SetAlpha(typeAtlas and 1 or 0);
+	if (typeAtlas) then
+		local typeSize = WQT.settings.bigPoI and 32 or 26;
+		typeSize = typeSize * (quest.type == LE_QUEST_TAG_TYPE_PVP and 0.8 or 1)
+		self.TypeIcon:SetSize(typeSize, typeSize);
+		self.TypeIcon:SetAtlas(typeAtlas);
+		self.TypeIcon:SetPoint("CENTER", 0, 3-iconDistance);
+	end
+	
+	-- Reward Type Icon
+	local rewardTypeAtlas =   WQT.settings.pinRewardType and _V["REWARD_TYPE_ATLAS"][quest.reward.type];
+	self.RewardIcon:SetAlpha(rewardTypeAtlas and 1 or 0);
+	if (rewardTypeAtlas) then
+		local typeSize = WQT.settings.bigPoI and 32 or 26;
+		local posX = iconDistance * cos(215);
+		local posY = iconDistance * sin(215);
+		typeSize = typeSize * rewardTypeAtlas.scale;
+		self.RewardIcon:SetSize(typeSize, typeSize);
+		self.RewardIcon:SetAtlas(rewardTypeAtlas.texture);
+		self.RewardIcon:SetPoint("CENTER", posX, posY);
+	end
 
 	-- Icon stuff
 	local showIcon = WQT.settings.showPinReward and (quest.reward.type == WQT_REWARDTYPE.missing or quest.reward.texture ~= "")
@@ -1902,7 +1978,6 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 	end
 	
 end
-
 
 WQT_ScrollListMixin = {};
 
@@ -2218,7 +2293,7 @@ end
 
 function WQT_QuestCounterMixin:InfoOnEnter(frame)
 	-- If it's hidden, don't show tooltip
-	if frame.isHidden then return end;
+	if (frame.isHidden) then return end;
 	
 	GameTooltip:SetOwner(frame, "ANCHOR_RIGHT");
 	GameTooltip:SetText(_L["QUEST_COUNTER_TITLE"], nil, nil, nil, nil, true);
@@ -2874,11 +2949,13 @@ function WQT_CoreMixin:SelectTab(tab)
 		self.FilterButton:EnableMouse(true);
 	end
 
+	WQT_QuestLogFiller.HiddenInfo:EnableMouse(false);
 	WQT_TabWorld:EnableMouse(true);
 	WQT_TabNormal:EnableMouse(true);
 
 	if (not QuestScrollFrame.Contents:IsShown() and not QuestMapFrame.DetailsFrame:IsShown()) or id == 1 then
 		-- Default questlog
+		WQT_QuestLogFiller.HiddenInfo:EnableMouse(true);
 		self:SetAlpha(0);
 		WQT_TabNormal.Hider:SetAlpha(0);
 		WQT_QuestLogFiller:SetAlpha(1);

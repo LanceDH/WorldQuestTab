@@ -123,23 +123,29 @@ local function SetQuestReward(questInfo)
 		if GetNumQuestLogRewards(questInfo.questId) > 0 then
 			_, texture, numItems, quality, _, itemId = GetQuestLogRewardInfo(1, questInfo.questId);
 			if itemId then
-				local itemType = select(6, GetItemInfo(itemId));
-				if (itemType == ARMOR or itemType == WEAPON) then -- Gear
+				local _, _, _, ilvl, _, _, _, _, _, _, price, typeID, subTypeID  = GetItemInfo(itemId);
+				if (typeID == 4 or typeID == 2) then -- Gear (4 = armor, 2 = weapon)
 					local result = ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+?)$");
 					if result then
 						numItems = tonumber(result:match("(%d+)"));
 						canUpgrade = result:match("(%+)") and true;
 					end
-					rewardType = WQT_REWARDTYPE.equipment;
+					rewardType = typeID == 4 and WQT_REWARDTYPE.equipment or  WQT_REWARDTYPE.weapon;
 					color = _V["WQT_COLOR_ARMOR"];
-				elseif IsArtifactRelicItem(itemId) then
+				elseif (typeID == 3 and subTypeID == 11) then
 					-- Because getting a link of the itemID only shows the base item
 					numItems = tonumber(ScanTooltipRewardForPattern(questInfo.questId, "^%+(%d+)"));
 					rewardType = WQT_REWARDTYPE.relic;	
 					color = _V["WQT_COLOR_RELIC"];
 				else	-- Normal items
-					rewardType = WQT_REWARDTYPE.item;
-					color = _V["WQT_COLOR_ITEM"];
+					if (typeID == 0 and subTypeID == 8 and price == 0 and ilvl > 100) then -- Item converting into equipment
+						rewardType = WQT_REWARDTYPE.equipment;
+						color = _V["WQT_COLOR_ARMOR"];
+						numItems = ilvl;
+					else
+						rewardType = WQT_REWARDTYPE.item;
+						color = _V["WQT_COLOR_ITEM"];
+					end
 				end
 			end
 		elseif GetQuestLogRewardHonor(questInfo.questId) > 0 then

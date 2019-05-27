@@ -7,6 +7,8 @@ addon.variables = {};
 local _L = addon.L;
 local _V = addon.variables;
 
+local _playerFaction = UnitFactionGroup("Player");
+
 ------------------------
 -- PUBLIC
 ------------------------
@@ -14,15 +16,16 @@ local _V = addon.variables;
 WQT_REWARDTYPE = {
 	["missing"] = 100
 	,["equipment"] = 1
-	,["relic"] = 2
-	,["artifact"] = 3
-	,["item"] = 4
-	,["gold"] = 5
-	,["currency"] = 6
-	,["honor"] = 7
-	,["reputation"] = 8
-	,["xp"] = 9
-	,["none"] = 10
+	,["weapon"] = 2
+	,["relic"] = 3
+	,["artifact"] = 4
+	,["item"] = 5
+	,["gold"] = 6
+	,["currency"] = 7
+	,["honor"] = 8
+	,["reputation"] = 9
+	,["xp"] = 10
+	,["none"] = 11
 };
 
 WQT_GROUP_INFO = _L["GROUP_SEARCH_INFO"];
@@ -43,6 +46,8 @@ local WQT_KULTIRAS = {
 	,[895] = {["x"] = 0.56, ["y"] = 0.54} -- Tiragarde Sound
 	,[1161] = {["x"] = 0.56, ["y"] = 0.54} -- Boralus
 	,[1169] = {["x"] = 0.78, ["y"] = 0.61} -- Tol Dagor
+	,[1335] = {["x"] = 0.86, ["y"] = 0.14} -- Nazjatar
+	,[1462] = {["x"] = 0.17, ["y"] = 0.28} -- Mechagon
 }
 local WQT_LEGION = {
 	[630] =  {["x"] = 0.33, ["y"] = 0.58} -- Azsuna
@@ -70,7 +75,7 @@ _V["RINGTYPE_TIMY"] = 3;
 _V["WQT_COLOR_ARMOR"] =  CreateColor(0.85, 0.5, 0.95) ;
 _V["WQT_COLOR_ARTIFACT"] = CreateColor(0, 0.75, 0);
 _V["WQT_COLOR_CURRENCY"] = CreateColor(0.6, 0.4, 0.1) ;
-_V["WQT_COLOR_GOLD"] = CreateColor(0.85, 0.7, 0) ;
+_V["WQT_COLOR_GOLD"] = CreateColor(0.95, 0.8, 0) ;
 _V["WQT_COLOR_HONOR"] = CreateColor(0.8, 0.26, 0);
 _V["WQT_COLOR_ITEM"] = CreateColor(0.85, 0.85, 0.85) ;
 _V["WQT_COLOR_MISSING"] = CreateColor(0.7, 0.1, 0.1);
@@ -88,7 +93,7 @@ _V["WQT_REFRESH_DEFAULT"] = 60;
 _V["WQT_QUESTIONMARK"] = "Interface/ICONS/INV_Misc_QuestionMark";
 _V["WQT_EXPERIENCE"] = "Interface/ICONS/XP_ICON";
 _V["WQT_HONOR"] = "Interface/ICONS/Achievement_LegionPVPTier4";
-_V["WQT_FACTIONUNKNOWN"] = "Interface/addons/WorldQuestTab/Images/FactionUnknown";
+_V["WQT_FACTIONUNKNOWN"] = "Interface/ICONS/INV_Misc_QuestionMark";
 
 _V["WQT_CVAR_LIST"] = {
 		["Petbattle"] = "showTamers"
@@ -106,6 +111,19 @@ _V["WQT_TYPEFLAG_LABELS"] = {
 
 _V["WQT_SORT_OPTIONS"] = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD}
 	
+_V["REWARD_TYPE_ATLAS"] = {
+		[1] = {["texture"] = "Warfronts-BaseMapIcons-Empty-Heroes-Minimap", ["scale"] = 1.7} -- Armor
+		,[2] = {["texture"] = "Warfronts-BaseMapIcons-Empty-Barracks-Minimap", ["scale"] = 1.7} -- Weapon
+		,[3] = {["texture"] = "poi-scrapper", ["scale"] = 1} -- Relic
+		,[4] = {["texture"] = "Islands-AzeriteChest", ["scale"] = 1.8} -- Azerite
+		,[5] = {["texture"] = "Banker", ["scale"] = 1.1} -- Item
+		,[6] = {["texture"] = "Auctioneer", ["scale"] = 1} -- Gold
+		,[7] = {["texture"] = "legionmission-icon-currency" --[["VignetteLoot"]], ["scale"] = 1.2} -- Resources
+		,[8] = {["texture"] = _playerFaction == "Alliance" and "poi-alliance" or "poi-horde", ["scale"] = 1} -- Honor
+		,[9] = {["texture"] = "QuestRepeatableTurnin", ["scale"] = 1.2} -- Rep
+		,[10] = {["texture"] = "poi-door-arrow-up", ["scale"] = .9} -- xp
+	}	
+
 _V["WQT_FILTER_FUNCTIONS"] = {
 		[2] = { -- Types
 			function(quest, flags) return (flags["PvP"] and quest.type == LE_QUEST_TAG_TYPE_PVP); end 
@@ -116,12 +134,10 @@ _V["WQT_FILTER_FUNCTIONS"] = {
 			,function(quest, flags) return (flags["Invasion"] and quest.type == LE_QUEST_TAG_TYPE_INVASION); end 
 			,function(quest, flags) return (flags["Assault"] and quest.type == LE_QUEST_TAG_TYPE_FACTION_ASSAULT); end 
 			,function(quest, flags) return (flags["Elite"] and (quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.isElite)); end 
-			,function(quest, flags) return (flags["Default"] and (quest.type ~= LE_QUEST_TAG_TYPE_PVP and quest.type ~= LE_QUEST_TAG_TYPE_PET_BATTLE and quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON 
-					and quest.type ~= _V["WQT_TYPE_BONUSOBJECTIVE"]  and quest.type ~= LE_QUEST_TAG_TYPE_PROFESSION and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.type ~= LE_QUEST_TAG_TYPE_INVASION 
-					and quest.type ~= LE_QUEST_TAG_TYPE_FACTION_ASSAULT and not quest.isElite)); end 
+			,function(quest, flags) return (flags["Default"] and (quest.type ~= LE_QUEST_TAG_TYPE_NORMAL and not quest.isElite)); end 
 			}
 		,[3] = { -- Reward filters
-			function(quest, flags) return (flags["Armor"] and quest.reward.type == WQT_REWARDTYPE.equipment); end 
+			function(quest, flags) return (flags["Armor"] and (quest.reward.type == WQT_REWARDTYPE.equipment or quest.reward.type == WQT_REWARDTYPE.weapon)); end 
 			,function(quest, flags) return (flags["Relic"] and quest.reward.type == WQT_REWARDTYPE.relic); end 
 			,function(quest, flags) return (flags["Item"] and quest.reward.type == WQT_REWARDTYPE.item); end 
 			,function(quest, flags) return (flags["Artifact"] and quest.reward.type == WQT_REWARDTYPE.artifact); end 
@@ -286,7 +302,7 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 		} -- All of Azeroth
 	}
 
-_V["WQT_NO_FACTION_DATA"] = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/FactionNone", ["name"]=_L["NO_FACTION"] } -- No faction
+_V["WQT_NO_FACTION_DATA"] = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/DialogFrame/UI-DialogBox-Background", ["name"]=_L["NO_FACTION"] } -- No faction
 _V["WQT_FACTION_DATA"] = {
 	[1894] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Warden" }
 	,[1859] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_NightFallen" }
@@ -298,15 +314,15 @@ _V["WQT_FACTION_DATA"] = {
 	,[2045] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Legionfall" } -- This isn't in until 7.3
 	,[2165] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_ArmyoftheLight" }
 	,[2170] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_ArgussianReach" }
-	,[609] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction609" } -- Cenarion Circle - Call of the Scarab
-	,[910] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction910" } -- Brood of Nozdormu - Call of the Scarab
-	,[1515] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1515" } -- Dreanor Arakkoa Outcasts
-	,[1681] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1681" } -- Dreanor Vol'jin's Spear
-	,[1682] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1682" } -- Dreanor Wrynn's Vanguard
-	,[1731] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1731" } -- Dreanor Council of Exarchs
-	,[1445] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction1445" } -- Draenor Frostwolf Orcs
-	,[67] = 		{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction67" } -- Horde
-	,[469] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/Addons/WorldQuestTab/Images/Faction469" } -- Alliance
+	,[609] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/ICONS/DRUID_STAGSTATUE01" } -- Cenarion Circle - Call of the Scarab
+	,[910] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/ICONS/Ability_Mount_Drake_Bronze" } -- Brood of Nozdormu - Call of the Scarab
+	,[1515] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/ICONS/Achievement_Dungeon_ArakkoaSpires"} -- Dreanor Arakkoa Outcasts
+	,[1681] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Tabard_A_77VoljinsSpear" } -- Dreanor Vol'jin's Spear
+	,[1682] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Tabard_A_78WrynnVanguard" } -- Dreanor Wrynn's Vanguard
+	,[1731] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/ICONS/inv_tabard_a_81exarchs" } -- Dreanor Council of Exarchs
+	,[1445] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Jewelry_FrostwolfTrinket_01" } -- Draenor Frostwolf Orcs
+	,[67] = 		{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_HordeWarEffort" } -- Horde
+	,[469] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_AllianceWarEffort" } -- Alliance
 	-- BfA                                                         
 	,[2164] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Faction_Championsofazeroth_Round" } -- Champions of Azeroth
 	,[2156] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Horde" ,["icon"] = 2058211 } -- Talanji's Expedition
@@ -318,6 +334,8 @@ _V["WQT_FACTION_DATA"] = {
 	,[2160] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_ProudmooreAdmiralty_Round" } -- Proudmoore Admirality
 	,[2161] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_OrderofEmbers_Round" } -- Order of Embers
 	,[2159] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_AllianceWarEffort_Round" } -- 7th Legion
+	,[2373] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Circle_Faction_Unshackled" } -- Unshackled
+	,[2391] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Faction_Rustbolt" } -- Rustbolt
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
