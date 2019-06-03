@@ -2,7 +2,7 @@
 
 
 addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
-addon.debug = true;
+addon.debug = false;
 addon.variables = {};
 local _L = addon.L;
 local _V = addon.variables;
@@ -15,8 +15,8 @@ local _playerFaction = UnitFactionGroup("Player");
 
 WQT_REWARDTYPE = {
 	["missing"] = 100
-	,["equipment"] = 1
-	,["weapon"] = 2
+	,["weapon"] = 1
+	,["equipment"] = 2
 	,["relic"] = 3
 	,["artifact"] = 4
 	,["item"] = 5
@@ -39,6 +39,7 @@ local WQT_ZANDALAR = {
 	,[863] = {["x"] = 0.57, ["y"] = 0.28} -- Nazmir
 	,[862] = {["x"] = 0.55, ["y"] = 0.61} -- Zuldazar
 	,[1165] = {["x"] = 0.55, ["y"] = 0.61} -- Dazar'alor
+	,[1335] = {["x"] = 0.86, ["y"] = 0.14} -- Nazjatar
 }
 local WQT_KULTIRAS = {
 	[942] =  {["x"] = 0.55, ["y"] = 0.25} -- Stromsong Valley
@@ -83,7 +84,7 @@ _V["WQT_COLOR_RELIC"] = CreateColor(0.3, 0.7, 1);
 _V["WQT_WHITE_FONT_COLOR"] = CreateColor(0.8, 0.8, 0.8);
 _V["WQT_ORANGE_FONT_COLOR"] = CreateColor(1, 0.6, 0);
 _V["WQT_GREEN_FONT_COLOR"] = CreateColor(0, 0.75, 0);
-_V["WQT_BLUE_FONT_COLOR"] = CreateColor(0.1, 0.68, 1);
+_V["WQT_BLUE_FONT_COLOR"] = CreateColor(0.2, 0.60, 1);
 
 _V["WQT_BOUNDYBOARD_OVERLAYID"] = 3;
 _V["WQT_TYPE_BONUSOBJECTIVE"] = 99;
@@ -112,13 +113,13 @@ _V["WQT_TYPEFLAG_LABELS"] = {
 _V["WQT_SORT_OPTIONS"] = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD}
 	
 _V["REWARD_TYPE_ATLAS"] = {
-		[1] = {["texture"] = "Warfronts-BaseMapIcons-Empty-Heroes-Minimap", ["scale"] = 1.7} -- Armor
-		,[2] = {["texture"] = "Warfronts-BaseMapIcons-Empty-Barracks-Minimap", ["scale"] = 1.7} -- Weapon
+		[1] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.211, ["r"] = 0.277, ["t"] = 0.246, ["b"] = 0.277} -- Weapon
+		,[2] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.847, ["r"] = 0.91, ["t"] = 0.459, ["b"] = 0.49} -- Armor
 		,[3] = {["texture"] = "poi-scrapper", ["scale"] = 1} -- Relic
-		,[4] = {["texture"] = "Islands-AzeriteChest", ["scale"] = 1.8} -- Azerite
+		,[4] = {["texture"] = "AzeriteReady", ["scale"] = 1.4} -- Azerite
 		,[5] = {["texture"] = "Banker", ["scale"] = 1.1} -- Item
 		,[6] = {["texture"] = "Auctioneer", ["scale"] = 1} -- Gold
-		,[7] = {["texture"] = "legionmission-icon-currency" --[["VignetteLoot"]], ["scale"] = 1.2} -- Resources
+		,[7] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.4921875, ["r"] = 0.55859375, ["t"] = 0.0390625, ["b"] = 0.068359375, ["color"] = CreateColor(0.7, 0.52, 0.43)} -- Resources
 		,[8] = {["texture"] = _playerFaction == "Alliance" and "poi-alliance" or "poi-horde", ["scale"] = 1} -- Honor
 		,[9] = {["texture"] = "QuestRepeatableTurnin", ["scale"] = 1.2} -- Rep
 		,[10] = {["texture"] = "poi-door-arrow-up", ["scale"] = .9} -- xp

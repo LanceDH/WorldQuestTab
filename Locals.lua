@@ -54,6 +54,8 @@ L["TOMTOM_AUTO_ARROW"]		= "Waypoint On Track"
 L["TOMTOM_AUTO_ARROW_TT"]	= "Hard tracking a quests by shift clicking, or by using the option in the dropdown, will automatically create a TomTom waypoint."
 L["AUTO_EMISARRY"] = "Auto Emissary Only"
 L["AUTO_EMISARRY_TT"] = "Clicking on an emisarry on the world map bounty board, will temporarily enable the 'Emisarry Only' filter."
+L["CONTAINER_DRAG"] = "Move"
+L["CONTAINER_DRAG_TT"] = "Drag to a different corner."
 
 L["TYPE_INVASION"]	= "Invasion";
 L["TYPE_EMISSARY"]	= "Emissary Only";
@@ -390,5 +392,10 @@ L["TYPE_INVASION"] = "침공"
 
 L["IS_AZIAN_CLIENT"]	= true
 end
+
+
+WQT_CONTAINER_DRAG = L["CONTAINER_DRAG"];
+WQT_CONTAINER_DRAG_TT = L["CONTAINER_DRAG_TT"];
+
 
 addon.L = L;

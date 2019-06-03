@@ -158,7 +158,6 @@
 				<Texture parentKey="Pointer" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingPointer"/>
 			</Layer>
 			<Layer level="ARTWORK" textureSubLevel="3">
-				
 				<Texture parentKey="TypeIcon" atlas="dungeon">
 					<Size x="25" y="25"/>
 					<Anchors>
@@ -169,6 +168,20 @@
 					<Size x="26" y="26"/>
 					<Anchors>
 						<Anchor point="CENTER" relativePoint="CENTER" x="-25" y="-15"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="ARTWORK" textureSubLevel="2" >
+				<Texture parentKey="RewardBG" alpha="1" file="Interface\GLUES\Models\UI_MainMenu_Legion\UI_Legion_Shadow">
+					<Size x="26" y="26"/>
+					<Anchors>
+						<Anchor point="CENTER" relativePoint="CENTER" relativeKey="$parent.RewardIcon"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="TypeBG" alpha="1" file="Interface\GLUES\Models\UI_MainMenu_Legion\UI_Legion_Shadow">
+					<Size x="26" y="26"/>
+					<Anchors>
+						<Anchor point="CENTER" relativePoint="CENTER" relativeKey="$parent.TypeIcon"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -341,7 +354,7 @@
 					<OnEnter>
 						self:GetParent().Highlight:Show();
 						if self:GetParent().info.faction then
-							GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
+							GameTooltip:SetOwner(self, "ANCHOR_RIGHT", -5, -10);
 							GameTooltip:SetText(self:GetParent().info.faction, nil, nil, nil, nil, true);
 						end
 					</OnEnter>
@@ -467,14 +480,12 @@
 					<Size x="60" y="0"/>
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.Title" relativePoint="BOTTOMLEFT" x="5" y="-2"/>
-						<!-- <Anchor point="BOTTOMLEFT" x="60" y="6"/> -->
 					</Anchors>
 					<Color r="0.75" g="0.61" b="0"/>
 				</FontString>
 				<FontString parentKey="Extra" inherits="GameFontNormalSmall" maxLines="1" justifyH="LEFT">
 					<Size x="95" y="0"/>
 					<Anchors>
-						<!-- <Anchor point="BOTTOMLEFT" x="58" y="6"/> -->
 						<Anchor point="TOPLEFT" relativeKey="$parent.Time" relativePoint="TOPRIGHT" x="6"/>
 					</Anchors>
 					<Color r="0.8" g="0.8" b="0.8"/>
@@ -483,37 +494,22 @@
 		</Layers>
 
 		<Scripts>
-			<OnClick>
-				self:OnClick(button);
-			</OnClick>
+			<OnClick method="OnClick" />
 			<OnLoad>
 				self.TrackedBorder:SetFrameLevel(self:GetFrameLevel() + 2);
 				self.Highlight:SetFrameLevel(self:GetFrameLevel() + 2);
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 				self:EnableKeyboard(false);
 				self.UpdateTooltip = self.OnEnter;
-				self.reward = self.Reward <!-- deprecated -->
 			</OnLoad>
-			<OnEnter>
-				self:OnEnter();
-			</OnEnter>
-			<OnLeave>
-				self:OnLeave();
-			</OnLeave>
+			<OnEnter method="OnEnter" />
+			<OnLeave method="OnLeave" />
 		</Scripts>
 	</Button>
 	
 	<Frame name="WQT_BountyCounterTemplate" virtual="true" hidden="false">
 		<Size x="10" y="10"/>
-		<Layers>
-		<!--
-			<Layer level="ARTWORK" textureSubLevel="1">
-				<Texture parentKey="highlight" file="Interface\COMMON\ReputationStar" setAllPoints="true">
-					<TexCoords left="0" right="0.5" top="0.5" bottom="1"/>
-				</Texture>
-			</Layer>
-			-->
-		
+		<Layers>		
 			<Layer level="ARTWORK">
 				<Texture parentKey="icon" file="Interface\COMMON\ReputationStar" setAllPoints="true">
 					<TexCoords left="0" right="0.5" top="0.5" bottom="1"/>
@@ -522,6 +518,233 @@
 		</Layers>
 	</Frame>
 	
+	<Frame name="WQT_ContainerTemplate" virtual="true">
+		<Size x="296" y="518"/>
+		<Backdrop edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+			<EdgeSize>
+				<AbsValue val="12"/>
+			</EdgeSize>
+			<TileSize>
+				<AbsValue val="16"/>
+			</TileSize>
+			<BackgroundInsets>
+				<AbsInset left="0" right="0" top="5" bottom="5"/>
+			</BackgroundInsets>
+		</Backdrop>
+		<Frames>
+			<Frame parentKey="Inset" inherits="ShadowOverlaySmallTemplate">
+				<Anchors>
+					<Anchor point="TOPLEFT" x="4" y="-4"/>
+					<Anchor point="BOTTOMRIGHT" x="-4" y="4"/>
+				</Anchors>
+			</Frame>
+		</Frames>
+	</Frame>
+	
+	<Frame name="WQT_FlightMapContainer" inherits="WQT_ContainerTemplate" hidden="false" alpha="0">
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Background" file="Interface\FrameGeneral\UI-Background-Rock" horizTile="true" vertTile="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="2" y="-2"/>
+						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+	</Frame>
+	
+	<Frame name="WQT_WorldMapContainer" inherits="WQT_ContainerTemplate" mixin="WQT_FullScreenContainerMixin" parent="WorldMapFrame" hidden="false" alpha="1" enableMouse="true" movable="true">
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Background" file="Interface\Tooltips\CHATBUBBLE-BACKGROUND" horizTile="true" vertTile="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="2" y="-2"/>
+						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Frame parentKey="DragFrame" enableMouse="true" movable="true">
+				<Size x="38" y="38" />
+				<Anchors>
+					<Anchor point="TOPLEFT" x="8" y="-4"/>
+				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture file="Interface/BUTTONS/UI-SliderBar-Button-Vertical">
+							<size x="26" y="26" />
+							<Anchors>
+								<Anchor point="RIGHT"/>
+							</Anchors>
+						</Texture>
+						<Texture file="Interface/BUTTONS/UI-SliderBar-Button-Vertical">
+							<size x="26" y="26" />
+							<Anchors>
+								<Anchor point="LEFT"/>
+							</Anchors>
+							<TexCoords left="1" right="0"/>
+						</Texture>
+						<Texture file="Interface/BUTTONS/UI-SliderBar-Button-Horizontal">
+							<size x="26" y="26" />
+							<Anchors>
+								<Anchor point="TOP"/>
+							</Anchors>
+						</Texture>
+						<Texture file="Interface/BUTTONS/UI-SliderBar-Button-Horizontal">
+							<size x="26" y="26" />
+							<Anchors>
+								<Anchor point="BOTTOM"/>
+							</Anchors>
+							<TexCoords top="1" bottom="0"/>
+						</Texture>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnLoad>
+						self:RegisterForDrag("LeftButton")
+					</OnLoad>
+					<OnMouseDown>
+						self:SetPoint("TOPLEFT", WQT_WorldMapContainer, "TOPLEFT", 9, -5);
+					</OnMouseDown>
+					<OnMouseUp>
+						self:SetPoint("TOPLEFT", WQT_WorldMapContainer, "TOPLEFT", 8, -4);
+					</OnMouseUp>
+					<OnDragStart>
+						self:GetParent():StartMoving()
+					</OnDragStart>
+					<OnDragStop>
+						self:SetPoint("TOPLEFT", WQT_WorldMapContainer, "TOPLEFT", 8, -4);
+						self:GetParent():StopMovingOrSizing()
+					</OnDragStop>
+					<OnUpdate>
+						if (self:IsDragging()) then
+							self:GetParent():DragButtonOnUpdate(self);
+						end
+					</OnUpdate>
+					<OnEnter>
+						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+						GameTooltip:SetText(WQT_CONTAINER_DRAG, 1, 1, 1, 1, true);
+						GameTooltip:AddLine(WQT_CONTAINER_DRAG_TT, nil, nil, nil, nil, true);
+						GameTooltip:Show();
+					</OnEnter>	
+					<OnLeave>
+						GameTooltip:Hide();
+					</OnLeave>
+				</Scripts>
+				
+			</Frame>
+		</Frames>
+		
+		<Scripts>
+			<OnLoad>
+				self:SetParent(WorldMapFrame.ScrollContainer);
+				self.anchorPoint = "BOTTOMRIGHT";
+				self:SetPoint(self.anchorPoint, WorldMapFrame.ScrollContainer);
+			</OnLoad>
+		</Scripts>
+	</Frame>
+	
+	<Button name="WQT_ContainerButtonTemplate" virtual="true">
+		<Size x="36" y="36"/> 
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Background">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="2" y="-2"/>
+						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
+					</Anchors>
+					<Color r="0" g="0" b="0" a="1"/>
+				</Texture>
+			</Layer>
+			<Layer level="ARTWORK">
+				<Texture parentKey="Border" inherits="ActionBarFlyoutButton-IconFrame" />
+				<Texture parentKey="Shadow" inherits="ActionBarFlyoutButton-IconShadow">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="-3" y="3"/>
+						<Anchor point="BOTTOMRIGHT" x="3" y="-3"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY">
+				<Texture parentKey="Selected" file="Interface/BUTTONS/CheckButtonHilight" alphaMode="ADD" alpha="0">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="0" y="-0"/>
+						<Anchor point="BOTTOMRIGHT" x="-0" y="0"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<NormalTexture file="Interface/Worldmap/UI-World-Icon">
+			<Anchors>
+				<Anchor point="TOPLEFT" x="4" y="-4"/>
+				<Anchor point="BOTTOMRIGHT" x="-4" y="4"/>
+			</Anchors>
+		</NormalTexture>
+		<PushedTexture file="Interface/Worldmap/UI-World-Icon">
+			<Anchors>
+				<Anchor point="TOPLEFT" x="5" y="-5"/>
+				<Anchor point="BOTTOMRIGHT" x="-3" y="3"/>
+			</Anchors>
+		</PushedTexture>
+		<HighlightTexture file="Interface\Buttons\UI-Common-MouseHilight" alphaMode="ADD" alpha=".5"/>
+		
+		<Scripts>
+			<OnClick>
+				self.isSelected = not self.isSelected;
+				if (self.container) then
+					if (self.isSelected) then
+						self.container:SetAlpha(1);
+						self.Selected:SetAlpha(0.5);
+						WQT_WorldQuestFrame:SelectTab(WQT_TabWorld);
+					else
+						self.container:SetAlpha(0);
+						self.Selected:SetAlpha(0);
+						WQT_WorldQuestFrame:SelectTab(WQT_TabNormal);
+					end
+				end
+			</OnClick>
+			<OnEnter>
+				GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+				GameTooltip:SetText(TRACKER_HEADER_WORLD_QUESTS, nil, nil, nil, nil, true);
+				GameTooltip:Show();
+			</OnEnter>	
+			<OnLeave>
+				GameTooltip:Hide();
+			</OnLeave>
+		</Scripts>
+		
+	</Button>
+	
+	<Button name="WQT_FlightMapContainerButton" inherits="WQT_ContainerButtonTemplate" hidden="false" alpha="1">
+		<Scripts>
+			<OnLoad>
+				self.container = WQT_FlightMapContainer;
+			</OnLoad>
+		</Scripts>
+	</Button>
+	
+	<Button name="WQT_WorldMapContainerButton" inherits="WQT_ContainerButtonTemplate" hidden="false" alpha="1">
+		<Scripts>
+			<OnLoad>
+				self.container = WQT_WorldMapContainer;
+				self:SetParent(WorldMapFrame.ScrollContainer);
+				self:SetPoint("TOPRIGHT", WorldMapFrame.ScrollContainer, "TOPRIGHT", -40, -5);
+			</OnLoad>
+			<OnClick inherit="prepend">
+				if (self.isSelected) then
+					WQT_WorldMapContainer:EnableMouse(true);
+					WQT_WorldMapContainer.DragFrame:EnableMouse(true);
+					WQT_WorldMapContainer:SetAlpha(1);
+				else
+					WQT_WorldMapContainer:EnableMouse(false);
+					WQT_WorldMapContainer.DragFrame:EnableMouse(false);
+					WQT_WorldMapContainer:SetAlpha(0);
+				end
+			</OnClick>
+		</Scripts>
+	</Button>
 	 
 	<Frame name="WQT_WorldQuestFrame" mixin="WQT_CoreMixin" parent="QuestMapFrame" inherits="SecureFrameTemplate" enableMouse="true" hidden="false">
 		<Size x="287" y="468"/>
@@ -531,7 +754,6 @@
 		<Layers>
 			<Layer level="BACKGROUND">
 				<Texture parentKey="Background" atlas="QuestLogBackground" useAtlasSize="true">
-					<!--<Size x="287" y="464"/>-->
 					<Anchors>
 						<Anchor point="TOPLEFT" x="2" y="0"/>
 						<Anchor point="BOTTOMRIGHT" x="0" y="2"/>
@@ -659,9 +881,8 @@
 				</Frames>
 				
 				<Scripts>
-					<OnLoad>
-						self:OnLoad();
-					</OnLoad>
+					<OnLoad method="OnLoad" />
+					<OnSizeChanged method="OnSizeChanged" />
 				</Scripts>
 			</ScrollFrame>
 			<Frame parentKey="Blocker" enableMouse="false" hidden="true">
@@ -787,9 +1008,6 @@
 		<Anchors>
 			<Anchor point="LEFT" relativeTo="WQT_TabNormal" relativePoint="RIGHT" x="4"/>
 		</Anchors>
-		
-		
-		
 		<Scripts>
 			<OnLoad>
 				self:SetFrameLevel(self:GetParent():GetFrameLevel());

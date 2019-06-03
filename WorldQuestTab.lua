@@ -49,6 +49,8 @@ local _TomTomLoaded = IsAddOnLoaded("TomTom");
 local _CIMILoaded = IsAddOnLoaded("CanIMogIt");
 local _WFMLoaded = IsAddOnLoaded("WorldFlightMap");
 
+local _anchors = {["flight"] = 1, ["world"] = 2, ["full"] = 3};
+
 local time = time;
 	
 local WQT_DEFAULTS = {
@@ -69,7 +71,7 @@ local WQT_DEFAULTS = {
 		bountyCounter = true;
 		
 		pinType = true;
-		pinRewardType = true;
+		pinRewardType = false;
 		filterPoI = true;
 		bigPoI = false;
 		disablePoI = false;
@@ -351,8 +353,11 @@ local function slashcmd(msg, editbox)
 		print(_L["OPTIONS_INFO"]);
 	else
 		if _debug then
-		--This is to get the zone coords for highlights so I don't have to retype it every time
+
 		
+		
+		--This is to get the zone coords for highlights so I don't have to retype it every time
+		--[[
 		 local x, y = GetCursorPosition();
 		
 		 local WorldMapButton = WorldMapFrame.ScrollContainer.Child;
@@ -366,7 +371,7 @@ local function slashcmd(msg, editbox)
 		 local adjustedX = (x - (centerX - (width/2))) / width;
 		 print(WorldMapFrame.mapID)
 		 print("{\[\"x\"\] = " .. floor(adjustedX*100)/100 .. ", \[\"y\"\] = " .. floor(adjustedY*100)/100 .. "} ")
-		
+		]]
 		local debugfr = WQT.debug;
 		debugfr.mem = GetAddOnMemoryUsage(addonName);
 		local frames = {WQT_WorldQuestFrame, WQT_QuestScrollFrame, WQT_WorldQuestFrame.pinHandler, WQT_WorldQuestFrame.dataProvider, WQT};
@@ -609,7 +614,6 @@ local function ConvertOldSettings(version)
 	-- Pin rework, turn off pin time by default
 	if (version < "8.2.01")  then
 		WQT.settings.showPinTime = false;
-		WQT.settings.showPinReward = false;
 	end
 end
 
@@ -1326,11 +1330,16 @@ function WQT:isUsingFilterNr(id)
 end
 
 function WQT:PassesMapFilter(questInfo)
-	if (WQT_WorldQuestFrame.currentMapInfo and WQT_WorldQuestFrame.currentMapInfo.mapType == Enum.UIMapType.World) then return true; end
-
-	if (WorldMapFrame.mapID == questInfo.mapInfo.mapID) then return true; end
+	local mapID = WorldMapFrame.mapID;
+	if (FlightMapFrame and FlightMapFrame:IsShown()) then
+		mapID = GetTaxiMapID();
+	else
+		if (WQT_WorldQuestFrame.currentMapInfo and WQT_WorldQuestFrame.currentMapInfo.mapType == Enum.UIMapType.World) then return true; end
+	end
 	
-	if (_V["WQT_ZONE_MAPCOORDS"][WorldMapFrame.mapID] and _V["WQT_ZONE_MAPCOORDS"][WorldMapFrame.mapID][questInfo.mapInfo.mapID]) then return true; end
+	if (mapID == questInfo.mapInfo.mapID) then return true; end
+	
+	if (_V["WQT_ZONE_MAPCOORDS"][mapID] and _V["WQT_ZONE_MAPCOORDS"][mapID][questInfo.mapInfo.mapID]) then return true; end
 end
 
 function WQT:PassesAllFilters(questInfo)
@@ -1455,10 +1464,6 @@ function WQT:OnEnable()
 				end
 			end);
 	end
-end
-
-function WQT:ClearBountyIcons()
-
 end
 
 ----------------------
@@ -1932,28 +1937,51 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 	self.Ring:SetVertexColor(r*0.25, g*0.25, b*0.25);
 	self:SetSwipeColor(r*.8, g*.8, b*.8);
 	
+	
+	local showTypeIcon = WQT.settings.showPinReward and WQT.settings.pinType and quest.type > 0 and quest.type ~= LE_QUEST_TAG_TYPE_NORMAL;
+	local showRewardIcon = WQT.settings.pinRewardType;
+	
 	-- Quest Type Icon
-	local showtypeIcon = WQT.settings.showPinReward and WQT.settings.pinType and quest.type > 0 and quest.type ~= LE_QUEST_TAG_TYPE_NORMAL;
-	local typeAtlas =  showtypeIcon and _dataProvider:GetCachedTypeIconData(quest.type, quest.tradeskill) --_V["QUEST_TYPE_ATLAS"][quest.type];
+	local typeAtlas =  showTypeIcon and _dataProvider:GetCachedTypeIconData(quest.type, quest.tradeskill);
 	self.TypeIcon:SetAlpha(typeAtlas and 1 or 0);
+	self.TypeBG:SetAlpha(typeAtlas and 1 or 0);
 	if (typeAtlas) then
 		local typeSize = WQT.settings.bigPoI and 32 or 26;
+		local angle = 270 + (showRewardIcon and 30 or 0)
+		local posX = iconDistance * cos(angle);
+		local posY = iconDistance * sin(angle);
+		self.TypeBG:SetSize(typeSize+11, typeSize+11);
 		typeSize = typeSize * (quest.type == LE_QUEST_TAG_TYPE_PVP and 0.8 or 1)
 		self.TypeIcon:SetSize(typeSize, typeSize);
 		self.TypeIcon:SetAtlas(typeAtlas);
-		self.TypeIcon:SetPoint("CENTER", 0, 3-iconDistance);
+		self.TypeIcon:SetPoint("CENTER", posX, posY);
 	end
 	
 	-- Reward Type Icon
-	local rewardTypeAtlas =   WQT.settings.pinRewardType and _V["REWARD_TYPE_ATLAS"][quest.reward.type];
+	local rewardTypeAtlas =  showRewardIcon and _V["REWARD_TYPE_ATLAS"][quest.reward.type];
 	self.RewardIcon:SetAlpha(rewardTypeAtlas and 1 or 0);
+	self.RewardBG:SetAlpha(rewardTypeAtlas and 1 or 0);
 	if (rewardTypeAtlas) then
 		local typeSize = WQT.settings.bigPoI and 32 or 26;
-		local posX = iconDistance * cos(215);
-		local posY = iconDistance * sin(215);
+		local angle = 270 - (showTypeIcon and 30 or 0)
+		local posX = iconDistance * cos(angle);
+		local posY = iconDistance * sin(angle);
+		self.RewardBG:SetSize(typeSize+11, typeSize+11);
 		typeSize = typeSize * rewardTypeAtlas.scale;
 		self.RewardIcon:SetSize(typeSize, typeSize);
-		self.RewardIcon:SetAtlas(rewardTypeAtlas.texture);
+		if (rewardTypeAtlas.r) then
+			self.RewardIcon:SetTexture(rewardTypeAtlas.texture);
+			self.RewardIcon:SetTexCoord(rewardTypeAtlas.l, rewardTypeAtlas.r, rewardTypeAtlas.t, rewardTypeAtlas.b);
+		else
+			self.RewardIcon:SetAtlas(rewardTypeAtlas.texture);
+			self.RewardIcon:SetTexCoord(0, 1, 0, 1);
+		end
+		if (rewardTypeAtlas.color) then
+			self.RewardIcon:SetVertexColor(rewardTypeAtlas.color:GetRGB());
+		else
+			self.RewardIcon:SetVertexColor(1, 1, 1);
+		end
+		
 		self.RewardIcon:SetPoint("CENTER", posX, posY);
 	end
 
@@ -1967,12 +1995,14 @@ function WQT_PinMixin:Update(PoI, quest, flightPinNr)
 	end
 	
 	-- Time
+	local timeDistance = (showTypeIcon or showRewardIcon) and 0 or 5; 
 	self.Time:SetAlpha((WQT.settings.showPinTime and quest.time.short ~= "")and 1 or 0);
 	self.TimeBg:SetAlpha((WQT.settings.showPinTime and quest.time.short ~= "") and 0.65 or 0);
-	self.Time:SetFontObject(flightPinNr and "WQT_NumberFontOutlineBig" or "WQT_NumberFontOutline");
-	self.Time:SetScale(flightPinNr and 1 or 2.5);
-	self.Time:SetHeight(flightPinNr and 32 or 16);
 	if(WQT.settings.showPinTime) then
+		self.Time:SetFontObject(flightPinNr and "WQT_NumberFontOutlineBig" or "WQT_NumberFontOutline");
+		self.Time:SetScale(flightPinNr and 1 or 2.5);
+		self.Time:SetHeight(flightPinNr and 32 or 16);
+		self.Time:SetPoint("TOP", self.Time:GetParent(), "BOTTOM", 2, timeDistance);
 		self.Time:SetText(quest.time.short)
 		self.Time:SetVertexColor(quest.time.color.r, quest.time.color.g, quest.time.color.b) 
 	end
@@ -1981,15 +2011,18 @@ end
 
 WQT_ScrollListMixin = {};
 
+function WQT_ScrollListMixin:OnSizeChanged(...)
+	if (not self.buttons) then
+		HybridScrollFrame_CreateButtons(self, "WQT_QuestTemplate", 1, 0);
+	end
+end
+
+
 function WQT_ScrollListMixin:OnLoad()
 	self.questList = {};
 	self.questListDisplay = {};
 	self.scrollBar.trackBG:Hide();
-	
 	self.scrollBar.doNotHide = true;
-	HybridScrollFrame_CreateButtons(self, "WQT_QuestTemplate", 1, 0);
-	HybridScrollFrame_Update(self, 200, self:GetHeight());
-		
 	self.update = function() self:DisplayQuestList(true) end;
 end
 
@@ -2208,7 +2241,10 @@ function WQT_ScrollListMixin:UpdateQuestFilters()
 end
 
 function WQT_ScrollListMixin:UpdateQuestList()
-	if (not WorldMapFrame:IsShown() or InCombatLockdown()) then return end	
+	local flightShown = FlightMapFrame and FlightMapFrame:IsShown();
+	local worldShown = WorldMapFrame:IsShown();
+	
+	if (not (flightShown or worldShown) or InCombatLockdown()) then return end	
 	self.questList = _dataProvider:GetIterativeList();
 
 	self:UpdateQuestFilters();
@@ -2220,9 +2256,13 @@ function WQT_ScrollListMixin:UpdateQuestList()
 end
 
 function WQT_ScrollListMixin:DisplayQuestList(skipPins, skipFilter)
-	local mapInfo = C_Map.GetMapInfo(WorldMapFrame.mapID or 0);
-	
-	if not mapInfo or InCombatLockdown() or not WorldMapFrame:IsShown() or WQT_WorldQuestFrame:GetAlpha() < 1 or not WQT_WorldQuestFrame.selectedTab or WQT_WorldQuestFrame.selectedTab:GetID() ~= 2 then 
+	local mapID = WorldMapFrame.mapID;
+	if (FlightMapFrame and FlightMapFrame:IsShown()) then 
+		local taxiId = GetTaxiMapID()
+		mapID = (taxiId and taxiId > 0) and taxiId or mapID;
+	end
+	local mapInfo = C_Map.GetMapInfo(mapID or 0);
+	if not mapInfo or InCombatLockdown() or --[[not WorldMapFrame:IsShown() or]] WQT_WorldQuestFrame:GetAlpha() < 1 or not WQT_WorldQuestFrame.selectedTab or WQT_WorldQuestFrame.selectedTab:GetID() ~= 2 then 
 		if (not skipPins and mapInfo and mapInfo.mapType ~= Enum.UIMapType.Continent) then	
 			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
 		end
@@ -2231,6 +2271,7 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins, skipFilter)
 	
 	local offset = HybridScrollFrame_GetOffset(self);
 	local buttons = self.buttons;
+	
 	if buttons == nil then return; end
 
 	local shouldShowZone = WQT.settings.alwaysAllQuests or (mapInfo and (mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World)); 
@@ -2241,7 +2282,6 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins, skipFilter)
 		self:UpdateFilterDisplay();
 	end
 	local list = self.questListDisplay;
-	local mapInfo = C_Map.GetMapInfo(WorldMapFrame.mapID);
 	self:GetParent():HideOverlayMessage();
 	for i=1, #buttons do
 		local button = buttons[i];
@@ -2264,12 +2304,15 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins, skipFilter)
 		WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
 	end
 	
-	if (IsAddOnLoaded("Aurora")) then
+	if (IsAddOnLoaded("Aurora") or WorldMapFrame.isMaximized) then
 		WQT_WorldQuestFrame.Background:SetAlpha(0);
-	elseif (#list == 0) then
-		WQT_WorldQuestFrame.Background:SetAtlas("NoQuestsBackground", true);
 	else
-		WQT_WorldQuestFrame.Background:SetAtlas("QuestLogBackground", true);
+		WQT_WorldQuestFrame.Background:SetAlpha(1);
+		if (#list == 0) then
+			WQT_WorldQuestFrame.Background:SetAtlas("NoQuestsBackground", true);
+		else
+			WQT_WorldQuestFrame.Background:SetAtlas("QuestLogBackground", true);
+		end
 	end
 end
 
@@ -2320,6 +2363,81 @@ function WQT_QuestCounterMixin:UpdateText()
 	self.HiddenInfo.isHidden = not showIcon;
 end
 
+
+
+WQT_FullScreenContainerMixin = {}
+
+function WQT_FullScreenContainerMixin:DragButtonOnUpdate()
+	-- local x, y = GetCursorPosition();
+	
+	-- local WorldMapButton = WorldMapFrame.ScrollContainer;
+	-- x = x / WorldMapButton:GetEffectiveScale();
+	-- y = y / WorldMapButton:GetEffectiveScale();
+	
+	-- local centerX, centerY = WorldMapButton:GetCenter();
+	-- local width = WorldMapButton:GetWidth();
+	-- local height = WorldMapButton:GetHeight();
+	-- local adjustedY = (centerY + (height/2) - y ) / height;
+	-- local adjustedX = (x - (centerX - (width/2))) / width;
+
+	-- local anchorPoint
+	-- local offsetX, offsetY = 0, 0;
+	-- if (adjustedX <= 0.3 and adjustedY <= 0.3) then
+		-- anchorPoint = "TOPLEFT";
+	-- elseif (adjustedX >= 0.7 and adjustedY <= 0.3) then
+		-- anchorPoint = "TOPRIGHT";
+		-- offsetY = "-35";
+	-- elseif (adjustedX <= 0.3 and adjustedY >= 0.4) then
+		-- anchorPoint = "BOTTOMLEFT";
+		-- offsetY = "2";
+	-- elseif (adjustedX >= 0.7 and adjustedY >= 0.4) then
+		-- anchorPoint = "BOTTOMRIGHT";
+		-- offsetY = "2";
+	-- end
+	-- if (anchorPoint and anchorPoint ~= self.anchorPoint) then
+		-- self.anchorPoint = anchorPoint;
+		-- self:Anchor();
+	-- end
+	
+	local WorldMapButton = WorldMapFrame.ScrollContainer;
+	local scale = WorldMapButton:GetEffectiveScale();
+	local l1, b1, w1, h1 = self:GetRect();
+	local l2, b2, w2, h2 = WorldMapFrame.ScrollContainer:GetRect();
+	local left = (l1-l2);
+	local bottom = (b1-b2);
+	local right = (l2+w2) - (l1+w1);
+	local top = (b2+h2) - (b1+h1);
+	left = max(0, left);
+	bottom = max(0, bottom);
+	left = right < 0 and (w2-w1) or left;
+	bottom = top < 0 and (h2-h1) or bottom;
+	
+	print(right, cright, (l2+w2-w1))
+	self:ClearAllPoints();
+	self:SetPoint("BOTTOMLEFT",WorldMapButton, "BOTTOMLEFT", left, bottom);
+	self.left = left;
+	self.bottom = bottom;
+end
+
+function WQT_FullScreenContainerMixin:Anchor()
+	local anchorPoint = self.anchorPoint or "BOTTOMRIGHT";
+	local offsetX, offsetY = 0, 0;
+	local bountyBoard = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]];
+	
+	if (anchorPoint == "TOPLEFT") then
+	
+	elseif (anchorPoint == "TOPRIGHT") then
+		offsetY = "-45";
+	elseif (anchorPoint == "BOTTOMLEFT") then
+		local bb = bountyBoard:IsShown() and bountyBoard:GetPoint(1) == "BOTTOMLEFT";
+		offsetY = bb and "122" or "2";
+	elseif (anchorPoint == "BOTTOMRIGHT") then
+		local bb = bountyBoard:IsShown() and bountyBoard:GetPoint(1) == "BOTTOMRIGHT";
+		offsetY = bb and "122" or "2";
+	end
+	self:ClearAllPoints();
+	self:SetPoint(anchorPoint, WorldMapFrame.ScrollContainer, anchorPoint, offsetX, offsetY);
+end
 
 
 WQT_CoreMixin = {}
@@ -2441,6 +2559,7 @@ function WQT_CoreMixin:OnLoad()
 		end)
 	
 	WorldMapFrame:HookScript("OnShow", function() 
+			WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.world);
 			local mapAreaID = WorldMapFrame.mapID;
 			_dataProvider:LoadQuestsInZone(mapAreaID);
 			self.ScrollFrame:UpdateQuestList();
@@ -2476,8 +2595,19 @@ function WQT_CoreMixin:OnLoad()
 			ADD:HideDropDownMenu(1);
 			self.ScrollFrame:UpdateQuestList();
 			self.pinHandler:UpdateMapPoI();
+			if (WorldMapFrame.isMaximized) then
+				WQT_WorldMapContainer:Anchor();
+			end
 		end
 	end)
+	
+	hooksecurefunc(WorldMapFrame.BorderFrame.MaximizeMinimizeFrame, "Maximize", function() 
+			WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.full);
+		end);
+	
+	hooksecurefunc(WorldMapFrame.BorderFrame.MaximizeMinimizeFrame, "Minimize", function() 
+			WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.world);
+		end);
 	
 	-- Update filters when stuff happens to the world map filters
 	local worldMapFilter;
@@ -2776,8 +2906,9 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 		WQT.FlightMapList = {};
 		-- Load quest list once on show, the dataProvider will update the rewards if needed
 		hooksecurefunc(WQT.FlightmapPins, "OnShow", function() 
+				WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.flight);
 				_dataProvider:LoadQuestsInZone(GetTaxiMapID());
-				self.pinHandler:UpdateFlightMapPins() 
+				self.pinHandler:UpdateFlightMapPins() ;
 			end);
 		hooksecurefunc(WQT.FlightmapPins, "RefreshAllData", function() self.pinHandler:UpdateFlightMapPins() end);
 		hooksecurefunc(WQT.FlightmapPins, "OnHide", function() 
@@ -2786,8 +2917,15 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 					WQT.FlightMapList[id] = nil;
 				end 
 			end)
-
-		-- find worldmap's world quest data provider
+		
+		WQT_FlightMapContainer:SetParent(FlightMapFrame);
+		WQT_FlightMapContainer:SetAlpha(0);
+		WQT_FlightMapContainer:SetPoint("BOTTOMLEFT", FlightMapFrame, "BOTTOMRIGHT", -6, 0);
+		WQT_FlightMapContainerButton:SetParent(FlightMapFrame);
+		WQT_FlightMapContainerButton:SetAlpha(1);
+		WQT_FlightMapContainerButton:SetPoint("BOTTOMRIGHT", FlightMapFrame, "BOTTOMRIGHT", -8, 8);
+		WQT_FlightMapContainerButton:SetFrameLevel(FlightMapFrame:GetFrameLevel()+2);
+		
 		self:UnregisterEvent("ADDON_LOADED");
 	elseif (loaded == "TomTom") then
 		_TomTomLoaded = true;
@@ -3003,6 +3141,54 @@ function WQT_CoreMixin:SelectTab(tab)
 	WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
 end
 
+function WQT_CoreMixin:ChangeAnchorLocation(anchor)
+	if (self.anchor == anchor) then return; end
+	
+	if (self.anchor == _anchors.world) then
+		self.tabBeforeAnchor = self.selectedTab;
+	end
+	
+	self.anchor = anchor;
+	
+	if (anchor == _anchors.flight) then
+		WQT_WorldQuestFrame:ClearAllPoints(); 
+		WQT_WorldQuestFrame:SetPoint("BOTTOMLEFT", WQT_FlightMapContainer, "BOTTOMLEFT", 3, 5);
+		WQT_WorldQuestFrame:SetParent(WQT_FlightMapContainer);
+		if (WQT_FlightMapContainer:GetAlpha() == 0) then
+			WQT_WorldQuestFrame:SelectTab(WQT_TabNormal);
+		else
+			WQT_WorldQuestFrame:SelectTab(WQT_TabWorld);
+		end
+	elseif (anchor == _anchors.world) then
+		WQT_WorldQuestFrame:ClearAllPoints(); 
+		WQT_WorldQuestFrame:SetPoint("TOPLEFT", QuestMapFrame, "TOPLEFT", 0, -2);
+		WQT_WorldQuestFrame:SetParent(QuestMapFrame);
+		WQT_WorldQuestFrame:SelectTab(self.tabBeforeAnchor);
+		WQT_WorldMapContainer:EnableMouse(false);
+		WQT_WorldMapContainer.DragFrame:EnableMouse(false);
+		WQT_WorldMapContainer:SetAlpha(0);
+		WQT_WorldMapContainerButton:EnableMouse(false);
+		WQT_WorldMapContainerButton:SetAlpha(0);
+	elseif (anchor == _anchors.full) then
+		WQT_WorldQuestFrame:ClearAllPoints(); 
+		WQT_WorldMapContainer:Anchor();
+		WQT_WorldQuestFrame:SetParent(WQT_WorldMapContainer);
+		WQT_WorldQuestFrame:SetPoint("BOTTOMLEFT", WQT_WorldMapContainer, "BOTTOMLEFT", 3, 5);
+		WQT_WorldMapContainerButton:EnableMouse(true);
+		WQT_WorldMapContainerButton:SetAlpha(1);
+		if (WQT_WorldMapContainerButton.isSelected) then
+			WQT_WorldQuestFrame:SelectTab(WQT_TabWorld);
+			WQT_WorldMapContainer:EnableMouse(true);
+			WQT_WorldMapContainer.DragFrame:EnableMouse(true);
+			WQT_WorldMapContainer:SetAlpha(1);
+		else
+			WQT_WorldQuestFrame:SelectTab(WQT_TabNormal);
+			WQT_WorldMapContainer:EnableMouse(false);
+			WQT_WorldMapContainer.DragFrame:EnableMouse(false);
+			WQT_WorldMapContainer:SetAlpha(0);
+		end
+	end
+end
 
 --------
 -- Debug stuff to monitor mem usage
