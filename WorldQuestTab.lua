@@ -69,6 +69,7 @@ local WQT_DEFAULTS = {
 		autoEmisarry = true;
 		questCounter = true;
 		bountyCounter = true;
+		updateSeen = false;
 		
 		pinType = true;
 		pinRewardType = false;
@@ -159,6 +160,12 @@ function WQT:GetObjectiveTrackerWQModule()
 	end
 
 	return nil;
+end
+
+function WQT:GetFlightMapPin(questId)
+	if not WQT.FlightmapPins then return nil end;
+	
+	return WQT.FlightmapPins.activePins[questId];
 end
 
 local function GetMapWQProvider()
@@ -615,6 +622,11 @@ local function ConvertOldSettings(version)
 	if (version < "8.2.01")  then
 		WQT.settings.showPinTime = false;
 	end
+	
+	-- Hightlight 'what's new'
+	if (version < GetAddOnMetadata(addonName, "version")) then
+		WQT.settings.updateSeen = false;
+	end
 end
 
 local function AddDebugToTooltip(tooltip, questInfo)
@@ -732,6 +744,16 @@ function WQT:InitFilter(self, level)
 		info.text = SETTINGS;
 		info.value = 0;
 		ADD:AddButton(info, level)
+		
+		info.hasArrow = false;
+		local newText = WQT.settings.updateSeen and "" or "|TInterface\\FriendsFrame\\InformationIcon:14|t ";
+		
+		info.text = newText .. _L["WHATS_NEW"];
+		info.func = function()
+						WQT_WorldQuestFrame:ShowOverlayMessage(_V["LATEST_UPDATE"], true);
+					end
+		ADD:AddButton(info, level)
+		
 	elseif level == 2 then
 		info.hasArrow = false;
 		info.isNotRadio = true;
@@ -1438,6 +1460,7 @@ function WQT:OnEnable()
 	
 	-- Show default tab depending on setting
 	WQT_WorldQuestFrame:SelectTab((UnitLevel("player") >= 110 and self.settings.defaultTab) and WQT_TabWorld or WQT_TabNormal);
+	WQT_WorldQuestFrame.tabBeforeAnchor = WQT_WorldQuestFrame.selectedTab;
 	
 	-- Show quest log counter
 	WQT_QuestLogFiller:SetShown(self.settings.questCounter);
@@ -1535,7 +1558,6 @@ function WQT_ListButtonMixin:SetEnabled(value)
 		self:Disable();
 	end
 	
-	
 	self:EnableMouse(value);
 	self.Faction:EnableMouse(value);
 end
@@ -1559,9 +1581,19 @@ function WQT_ListButtonMixin:OnLeave()
 			WQT_PoISelectIndicator.questId = nil;
 		end, 1)
 	
-	WQT_MapZoneHightlight:Hide();
+	
+	if (FlightMapFrame and FlightMapFrame:IsShown() and self.flightPin) then
+		local keepVisible = FlightMapFrame.ScrollContainer.targetScale  > 0.5;
+		keepVisible = keepVisible or GetSuperTrackedQuestID() == self.questId or IsWorldQuestWatched(self.questId);
+		self.flightPin:SetAlpha(keepVisible and 1 or 0);
+		self.flightPin = nil;
+	else
+		WQT_MapZoneHightlight:Hide();
+	end
 	
 end
+
+fuck = nil;
 
 function WQT_ListButtonMixin:OnEnter()
 	-- Cancel the timer if we are an a button before it ends so highlight doesn't get hidden
@@ -1591,9 +1623,16 @@ function WQT_ListButtonMixin:OnEnter()
 	end
 	
 	WQT_QuestScrollFrame:ShowQuestTooltip(self, questInfo);
-	
-	-- If we are on a continent, we want to highlight the relevant zone
-	self:ShowWorldmapHighlight(questInfo.mapInfo.mapID);
+
+	if (FlightMapFrame and FlightMapFrame:IsShown()) then
+		self.flightPin =  WQT:GetFlightMapPin(questInfo.questId)
+		self.flightPin:SetAlpha(1);
+		self.flightPin:Show();
+		fuck = self.flightPin
+	else
+		-- If we are on a continent, we want to highlight the relevant zone
+		self:ShowWorldmapHighlight(questInfo.mapInfo.mapID);
+	end
 end
 
 function WQT_ListButtonMixin:UpdateQuestType(questInfo)
@@ -1863,7 +1902,6 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 				PoI:SetShown(quest.passedFilter);
 			end
 		end
-		
 	end
 end
 
@@ -2012,9 +2050,7 @@ end
 WQT_ScrollListMixin = {};
 
 function WQT_ScrollListMixin:OnSizeChanged(...)
-	if (not self.buttons) then
-		HybridScrollFrame_CreateButtons(self, "WQT_QuestTemplate", 1, 0);
-	end
+	
 end
 
 
@@ -2024,6 +2060,7 @@ function WQT_ScrollListMixin:OnLoad()
 	self.scrollBar.trackBG:Hide();
 	self.scrollBar.doNotHide = true;
 	self.update = function() self:DisplayQuestList(true) end;
+	HybridScrollFrame_CreateButtons(self, "WQT_QuestTemplate", 1, 0);
 end
 
 function WQT_ScrollListMixin:HookButtonUpdates(func)
@@ -2262,16 +2299,14 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins, skipFilter)
 		mapID = (taxiId and taxiId > 0) and taxiId or mapID;
 	end
 	local mapInfo = C_Map.GetMapInfo(mapID or 0);
-	if not mapInfo or InCombatLockdown() or --[[not WorldMapFrame:IsShown() or]] WQT_WorldQuestFrame:GetAlpha() < 1 or not WQT_WorldQuestFrame.selectedTab or WQT_WorldQuestFrame.selectedTab:GetID() ~= 2 then 
+	if not mapInfo or InCombatLockdown() or WQT_WorldQuestFrame:GetAlpha() < 1 or not WQT_WorldQuestFrame.selectedTab or WQT_WorldQuestFrame.selectedTab:GetID() ~= 2 then 
 		if (not skipPins and mapInfo and mapInfo.mapType ~= Enum.UIMapType.Continent) then	
 			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
 		end
 		return 
 	end
-	
 	local offset = HybridScrollFrame_GetOffset(self);
 	local buttons = self.buttons;
-	
 	if buttons == nil then return; end
 
 	local shouldShowZone = WQT.settings.alwaysAllQuests or (mapInfo and (mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World)); 
@@ -2297,7 +2332,6 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins, skipFilter)
 			button.info = nil;
 		end
 	end
-	
 	HybridScrollFrame_Update(self, #list * _V["WQT_LISTITTEM_HEIGHT"], self:GetHeight());
 
 	if (not skipPins and mapInfo.mapType ~= Enum.UIMapType.Continent) then	
@@ -2407,12 +2441,18 @@ function WQT_FullScreenContainerMixin:DragButtonOnUpdate()
 	local bottom = (b1-b2);
 	local right = (l2+w2) - (l1+w1);
 	local top = (b2+h2) - (b1+h1);
+	
+	if (self.FirstPlacement) then
+		left = 0;
+		bottom = 2000;
+		self.FirstPlacement = nil;
+	end
+	
 	left = max(0, left);
 	bottom = max(0, bottom);
 	left = right < 0 and (w2-w1) or left;
 	bottom = top < 0 and (h2-h1) or bottom;
-	
-	print(right, cright, (l2+w2-w1))
+
 	self:ClearAllPoints();
 	self:SetPoint("BOTTOMLEFT",WorldMapButton, "BOTTOMLEFT", left, bottom);
 	self.left = left;
@@ -2420,23 +2460,26 @@ function WQT_FullScreenContainerMixin:DragButtonOnUpdate()
 end
 
 function WQT_FullScreenContainerMixin:Anchor()
-	local anchorPoint = self.anchorPoint or "BOTTOMRIGHT";
-	local offsetX, offsetY = 0, 0;
-	local bountyBoard = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]];
+	self:DragButtonOnUpdate();
+	--self.left = left;
+	--self.bottom = bottom;
+	-- local anchorPoint = self.anchorPoint or "BOTTOMRIGHT";
+	-- local offsetX, offsetY = 0, 0;
+	-- local bountyBoard = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]];
 	
-	if (anchorPoint == "TOPLEFT") then
+	-- if (anchorPoint == "TOPLEFT") then
 	
-	elseif (anchorPoint == "TOPRIGHT") then
-		offsetY = "-45";
-	elseif (anchorPoint == "BOTTOMLEFT") then
-		local bb = bountyBoard:IsShown() and bountyBoard:GetPoint(1) == "BOTTOMLEFT";
-		offsetY = bb and "122" or "2";
-	elseif (anchorPoint == "BOTTOMRIGHT") then
-		local bb = bountyBoard:IsShown() and bountyBoard:GetPoint(1) == "BOTTOMRIGHT";
-		offsetY = bb and "122" or "2";
-	end
-	self:ClearAllPoints();
-	self:SetPoint(anchorPoint, WorldMapFrame.ScrollContainer, anchorPoint, offsetX, offsetY);
+	-- elseif (anchorPoint == "TOPRIGHT") then
+		-- offsetY = "-45";
+	-- elseif (anchorPoint == "BOTTOMLEFT") then
+		-- local bb = bountyBoard:IsShown() and bountyBoard:GetPoint(1) == "BOTTOMLEFT";
+		-- offsetY = bb and "122" or "2";
+	-- elseif (anchorPoint == "BOTTOMRIGHT") then
+		-- local bb = bountyBoard:IsShown() and bountyBoard:GetPoint(1) == "BOTTOMRIGHT";
+		-- offsetY = bb and "122" or "2";
+	-- end
+	-- self:ClearAllPoints();
+	-- self:SetPoint(anchorPoint, WorldMapFrame.ScrollContainer, anchorPoint, offsetX, offsetY);
 end
 
 
@@ -2557,20 +2600,36 @@ function WQT_CoreMixin:OnLoad()
 	hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
 			self:SelectTab(WQT_TabNormal);
 		end)
+		
+	for k, v in pairs(WorldMapFrame.dataProviders) do 
+		if k.pin and k.pin.HighlightTexture  then
+			hooksecurefunc(k.pin.HighlightTexture, "Show", function() 
+				if (MouseIsOver(WQT_WorldMapContainer)) then
+					k.pin.HighlightTexture:Hide();
+				end
+			end);
+			break;
+		end
+	end
 	
 	WorldMapFrame:HookScript("OnShow", function() 
-			WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.world);
+			--WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.world);
 			local mapAreaID = WorldMapFrame.mapID;
 			_dataProvider:LoadQuestsInZone(mapAreaID);
 			self.ScrollFrame:UpdateQuestList();
 			self:SelectTab(self.selectedTab); 
+			
+			if (WorldMapFrame.isMaximized) then
+				WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.full);
+			else
+				WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.world);
+			end
 			
 			-- If emissaryOnly was automaticaly set, and there's none in the current list, turn it off again.
 			if WQT_WorldQuestFrame.autoEmisarryId and not WQT_WorldQuestFrame.dataProvider:ListContainsEmissary() then
 				WQT_WorldQuestFrame.autoEmisarryId = nil;
 				WQT_QuestScrollFrame:DisplayQuestList();
 			end
-			
 		end)
 		
 	WorldMapFrame:HookScript("OnHide", function() 
@@ -2595,9 +2654,11 @@ function WQT_CoreMixin:OnLoad()
 			ADD:HideDropDownMenu(1);
 			self.ScrollFrame:UpdateQuestList();
 			self.pinHandler:UpdateMapPoI();
+			--[[
 			if (WorldMapFrame.isMaximized) then
 				WQT_WorldMapContainer:Anchor();
 			end
+			]]
 		end
 	end)
 	
@@ -3021,14 +3082,43 @@ function WQT_CoreMixin:SetCvarValue(flagKey, value)
 	return false;
 end
 
-function WQT_CoreMixin:ShowOverlayMessage(message)
+function WQT_CoreMixin:ShowOverlayMessage(message, manualClose)
+	manualClose = manualClose or false;
 	message = message or "";
+	if (manualClose and InCombatLockdown()) then return end;
+	
+	local blocker = self.Blocker;
+	local scrollFrame = blocker.ScrollFrame;
+	local blockerText = scrollFrame.Text;
+	self.manualCloseOverlay = manualClose;
+	
 	self:SetCombatEnabled(false);
 	ShowUIPanel(self.Blocker);
-	self.Blocker.Text:SetText(message);
+
+	-- Update Background
+	blocker.UpdatesBG:SetAlpha(manualClose and 1 or 0);
+	blocker.CombatBG:SetAlpha(manualClose and 0 or 1);
+	blocker.CombatText:SetAlpha(manualClose and 0 or 1);
+	scrollFrame:SetAlpha(manualClose and 1 or 0);
+	scrollFrame.CloseButton:SetEnabled(manualClose and 1 or 0)
+
+	if (manualClose) then
+		local text = "<html><body>" .. message .. "</body></html>";
+		blockerText:SetText(text);
+		blockerText:SetHeight(blockerText:GetContentHeight());
+		scrollFrame.limit = max(0, blockerText:GetHeight() - scrollFrame:GetHeight());
+		scrollFrame.scrollBar:SetMinMaxValues(0, scrollFrame.limit)
+		scrollFrame.scrollBar:SetValue(0);
+		
+		WQT.settings.updateSeen = true;
+	else
+		blocker.CombatText:SetText(message)
+	end
+	ADD:HideDropDownMenu(1);
 end
 
-function WQT_CoreMixin:HideOverlayMessage()
+function WQT_CoreMixin:HideOverlayMessage(force)
+	if (self.manualCloseOverlay and not force) then return end;
 	self:SetCombatEnabled(true);
 	HideUIPanel(self.Blocker);
 end
@@ -3117,7 +3207,7 @@ function WQT_CoreMixin:SelectTab(tab)
 		HideUIPanel(QuestScrollFrame);
 		self.ScrollFrame:DisplayQuestList();
 		
-		if not InCombatLockdown() then
+		if (not InCombatLockdown() and not self.Blocker:IsShown()) then
 			self:SetFrameLevel(self:GetParent():GetFrameLevel()+3);
 			self:SetCombatEnabled(true);
 		end
@@ -3174,6 +3264,7 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 		WQT_WorldMapContainer:Anchor();
 		WQT_WorldQuestFrame:SetParent(WQT_WorldMapContainer);
 		WQT_WorldQuestFrame:SetPoint("BOTTOMLEFT", WQT_WorldMapContainer, "BOTTOMLEFT", 3, 5);
+		WQT_WorldQuestFrame:SetFrameLevel(WQT_WorldMapContainer:GetFrameLevel()+2);
 		WQT_WorldMapContainerButton:EnableMouse(true);
 		WQT_WorldMapContainerButton:SetAlpha(1);
 		if (WQT_WorldMapContainerButton.isSelected) then
@@ -3188,6 +3279,8 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 			WQT_WorldMapContainer:SetAlpha(0);
 		end
 	end
+	
+	WQT_WorldQuestFrame.ScrollFrame:DisplayQuestList();
 end
 
 --------

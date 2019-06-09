@@ -343,5 +343,21 @@ for k, v in pairs(_V["WQT_FACTION_DATA"]) do
 	v.name = GetFactionInfoByID(k);
 end
 
+_V["LATEST_UPDATE"] = 
+	[[
+	<h1>8.2.01</h1> 
+	<h2>New:</h2>
+	<p>- 'What's new' window</p>
+	<p>- Map pin features:</p>
+	<p>&#160;&#160;* 'Time left' ring</p>
+	<p>&#160;&#160;* Reward type icon</p>
+	<p>&#160;&#160;* Quest type icon</p>
+	<p>&#160;&#160;* Bigger pins</p>
+	<p>- New default pin layout. Check settings to customize.</p>
+	<p>- Quest list for full screen and flight map.</p>
+	<p>- Support for Mechagon and Nazjatar.</p>
+	]]
+
+
 
 

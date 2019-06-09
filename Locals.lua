@@ -55,7 +55,7 @@ L["TOMTOM_AUTO_ARROW_TT"]	= "Hard tracking a quests by shift clicking, or by usi
 L["AUTO_EMISARRY"] = "Auto Emissary Only"
 L["AUTO_EMISARRY_TT"] = "Clicking on an emisarry on the world map bounty board, will temporarily enable the 'Emisarry Only' filter."
 L["CONTAINER_DRAG"] = "Move"
-L["CONTAINER_DRAG_TT"] = "Drag to a different corner."
+L["CONTAINER_DRAG_TT"] = "Drag to a different location."
 
 L["TYPE_INVASION"]	= "Invasion";
 L["TYPE_EMISSARY"]	= "Emissary Only";
@@ -82,7 +82,7 @@ L["GROUP_SEARCH_INFO"] = "Blizzard prevents add-ons from automatically looking f
 L["FORMAT_GROUP_SEARCH"] = "Type |cFFFFFFFF%d|r to search for a group for this quest. Or type its name: |cFFFFFFFF%s|r.";
 L["FORMAT_GROUP_CREATE"] = "Type |cFFFFFFFF%d|r to create a group for this quest. Or type its name: |cFFFFFFFF%s|r. Consider using both so players without add-ons can also find your group.";
 L["FORMAT_GROUP_TYPO"] = "It appears to have made a typo. Type either |cFFFFFFFF%d|r, or |cFFFFFFFF%s|r.";
-
+L["WHATS_NEW"] = "What's New";
 
 
 if locale == "deDE" then
