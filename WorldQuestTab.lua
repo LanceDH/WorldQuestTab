@@ -563,7 +563,7 @@ local function SortQuestListByType(a, b)
 			end
 			return a.rarity < b.rarity;
 		end
-		return a.type < b.type;
+		return a.type > b.type;
 	end
 	return aIsCriteria and not bIsCriteria;
 end
@@ -1570,6 +1570,7 @@ function WQT_ListButtonMixin:OnLeave()
 	-- Small delay to prevent the animation from resetting every time the list updates
 	WQT_PoISelectIndicator.delayTicker = C_Timer.NewTicker(0.05, function() 
 			WQT_PoISelectIndicator:Hide(); 
+			WQT_PoISelectIndicatorFlight:Hide();
 			if (self.resetLabel) then
 				WorldMapFrame.ScrollContainer:GetMap():TriggerEvent("ClearAreaLabel", MAP_AREA_LABEL_TYPE.POI);
 				self.resetLabel = false;
@@ -1592,8 +1593,6 @@ function WQT_ListButtonMixin:OnLeave()
 	end
 	
 end
-
-fuck = nil;
 
 function WQT_ListButtonMixin:OnEnter()
 	-- Cancel the timer if we are an a button before it ends so highlight doesn't get hidden
@@ -1618,17 +1617,24 @@ function WQT_ListButtonMixin:OnEnter()
 			WQT_PoISelectIndicator:Hide();
 		end
 	
-		WQT_WorldQuestFrame:ShowHighlightOnPin(pin, scale);
-		WQT_PoISelectIndicator.questId = questInfo.questId;
+		if (WorldMapFrame:IsShown()) then
+			WQT_WorldQuestFrame:ShowHighlightOnPin(pin, scale, WQT_PoISelectIndicator);
+			WQT_PoISelectIndicator.questId = questInfo.questId;
+		end
 	end
 	
 	WQT_QuestScrollFrame:ShowQuestTooltip(self, questInfo);
 
 	if (FlightMapFrame and FlightMapFrame:IsShown()) then
 		self.flightPin =  WQT:GetFlightMapPin(questInfo.questId)
-		self.flightPin:SetAlpha(1);
-		self.flightPin:Show();
-		fuck = self.flightPin
+		if(self.flightPin) then
+			self.flightPin:SetAlpha(1);
+			self.flightPin:Show();
+			if (self.flightPin ~= WQT_PoISelectIndicatorFlight.pin) then
+				WQT_PoISelectIndicatorFlight:Hide();
+			end
+			WQT_WorldQuestFrame:ShowHighlightOnPin(self.flightPin, 1, WQT_PoISelectIndicatorFlight, false);
+		end
 	else
 		-- If we are on a continent, we want to highlight the relevant zone
 		self:ShowWorldmapHighlight(questInfo.mapInfo.mapID);
@@ -1777,10 +1783,10 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 			
 			r, g, b = 1, 1, 1;
 			if ( WQT.settings.rewardAmountColors) then
-				if questInfo.reward.type == WQT_REWARDTYPE.artifact then
+				if (questInfo.reward.type == WQT_REWARDTYPE.artifact) then
 					r, g, b = GetItemQualityColor(2);
-				elseif questInfo.reward.type == WQT_REWARDTYPE.equipment then
-					if questInfo.reward.canUpgrade then
+				elseif (questInfo.reward.type == WQT_REWARDTYPE.equipment or questInfo.reward.type == WQT_REWARDTYPE.weapon) then
+					if (questInfo.reward.canUpgrade) then
 						self.Reward.Amount:SetText(questInfo.reward.amount.."+");
 					end
 					r, g, b = questInfo.reward.color:GetRGB();
@@ -2338,7 +2344,7 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins, skipFilter)
 		WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
 	end
 	
-	if (IsAddOnLoaded("Aurora") or WorldMapFrame.isMaximized) then
+	if (IsAddOnLoaded("Aurora") or (WorldMapFrame:IsShown() and WorldMapFrame.isMaximized)) then
 		WQT_WorldQuestFrame.Background:SetAlpha(0);
 	else
 		WQT_WorldQuestFrame.Background:SetAlpha(1);
@@ -2613,7 +2619,6 @@ function WQT_CoreMixin:OnLoad()
 	end
 	
 	WorldMapFrame:HookScript("OnShow", function() 
-			--WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.world);
 			local mapAreaID = WorldMapFrame.mapID;
 			_dataProvider:LoadQuestsInZone(mapAreaID);
 			self.ScrollFrame:UpdateQuestList();
@@ -2884,18 +2889,22 @@ function WQT_CoreMixin:ShowHighlightOnMapFilters()
 	WQT_PoISelectIndicator:SetScale(0.40);
 end
 
-function WQT_CoreMixin:ShowHighlightOnPin(pin, scale)
-	WQT_PoISelectIndicator:SetParent(pin);
-	WQT_PoISelectIndicator:ClearAllPoints();
-	WQT_PoISelectIndicator:SetPoint("CENTER", pin, 0, -1);
-	WQT_PoISelectIndicator:SetFrameLevel(pin:GetFrameLevel()+1);
-	WQT_PoISelectIndicator.pinLevel = pin:GetFrameLevel();
-	WQT_PoISelectIndicator.pin = pin;
-	pin:SetFrameLevel(3000);
-	WQT_PoISelectIndicator:Show();
-	local size = WQT.settings.bigPoI and 50 or 40;
-	WQT_PoISelectIndicator:SetSize(size, size);
-	WQT_PoISelectIndicator:SetScale(scale or 1);
+function WQT_CoreMixin:ShowHighlightOnPin(pin, scale, selector, pushForward)
+	pushForward = pushForward == nil and true or pushForward;
+	selector = selector or WQT_PoISelectIndicator;
+	selector:SetParent(pin);
+	selector:ClearAllPoints();
+	selector:SetPoint("CENTER", pin, 0, -1);
+	selector:SetFrameLevel(pin:GetFrameLevel());
+	selector.pinLevel = pin:GetFrameLevel();
+	selector.pin = pin;
+	selector:Show();
+	local size = WQT.settings.bigPoI and 54 or 44;
+	selector:SetSize(size, size);
+	selector:SetScale(scale or 1);
+	if (pushForward) then
+		pin:SetFrameLevel(3000);
+	end
 end
 
 function WQT_CoreMixin:FilterClearButtonOnClick()

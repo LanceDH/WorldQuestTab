@@ -345,17 +345,24 @@ end
 
 _V["LATEST_UPDATE"] = 
 	[[
+	<h3>&#160;</h3>
 	<h1>8.2.01</h1> 
 	<h2>New:</h2>
-	<p>- 'What's new' window</p>
-	<p>- Map pin features:</p>
-	<p>&#160;&#160;* 'Time left' ring</p>
-	<p>&#160;&#160;* Reward type icon</p>
-	<p>&#160;&#160;* Quest type icon</p>
-	<p>&#160;&#160;* Bigger pins</p>
-	<p>- New default pin layout. Check settings to customize.</p>
-	<p>- Quest list for full screen and flight map.</p>
-	<p>- Support for Mechagon and Nazjatar.</p>
+	<p>* 'What's new' window</p>
+	<p>* Map pin features:</p>
+	<p>&#160;&#160;- 'Time left' on ring</p>
+	<p>&#160;&#160;- Reward type icon</p>
+	<p>&#160;&#160;- Quest type icon</p>
+	<p>&#160;&#160;- Bigger pins</p>
+	<p>* New default pin layout. Check settings to customize.</p>
+	<p>* Quest list for full-screen world map. Click the globe in the top right.</p>
+	<p>* Quest list for flight map. Click the globe in the bottom right.</p>
+	<p>* Support for Mechagon and Nazjatar.</p>
+	<h3>&#160;</h3>
+	<h2>Changed:</h2>
+	<p>* Switched list 'selected' and 'tracker' highlight brightness.</p>
+	<p>* Swapped order of 'type' sort.</p>
+	<h3>&#160;</h3>
 	]]
 
 
