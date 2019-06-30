@@ -19,13 +19,14 @@ WQT_REWARDTYPE = {
 	,["equipment"] = 2
 	,["relic"] = 3
 	,["artifact"] = 4
-	,["item"] = 5
-	,["gold"] = 6
-	,["currency"] = 7
-	,["honor"] = 8
-	,["reputation"] = 9
-	,["xp"] = 10
-	,["none"] = 11
+	,["spell"] = 5
+	,["item"] = 6
+	,["gold"] = 7
+	,["currency"] = 8
+	,["honor"] = 9
+	,["reputation"] = 10
+	,["xp"] = 11
+	,["none"] = 12
 };
 
 WQT_GROUP_INFO = _L["GROUP_SEARCH_INFO"];
@@ -39,7 +40,7 @@ local WQT_ZANDALAR = {
 	,[863] = {["x"] = 0.57, ["y"] = 0.28} -- Nazmir
 	,[862] = {["x"] = 0.55, ["y"] = 0.61} -- Zuldazar
 	,[1165] = {["x"] = 0.55, ["y"] = 0.61} -- Dazar'alor
-	,[1335] = {["x"] = 0.86, ["y"] = 0.14} -- Nazjatar
+	,[1355] = {["x"] = 0.86, ["y"] = 0.14} -- Nazjatar
 }
 local WQT_KULTIRAS = {
 	[942] =  {["x"] = 0.55, ["y"] = 0.25} -- Stromsong Valley
@@ -47,7 +48,7 @@ local WQT_KULTIRAS = {
 	,[895] = {["x"] = 0.56, ["y"] = 0.54} -- Tiragarde Sound
 	,[1161] = {["x"] = 0.56, ["y"] = 0.54} -- Boralus
 	,[1169] = {["x"] = 0.78, ["y"] = 0.61} -- Tol Dagor
-	,[1335] = {["x"] = 0.86, ["y"] = 0.14} -- Nazjatar
+	,[1355] = {["x"] = 0.86, ["y"] = 0.14} -- Nazjatar
 	,[1462] = {["x"] = 0.17, ["y"] = 0.28} -- Mechagon
 }
 local WQT_LEGION = {
@@ -73,7 +74,8 @@ _V["RINGTYPE_NONE"] = 1;
 _V["RINGTYPE_REWARD"] = 2;
 _V["RINGTYPE_TIMY"] = 3;
 
-_V["WQT_COLOR_ARMOR"] =  CreateColor(0.85, 0.5, 0.95) ;
+_V["WQT_COLOR_ARMOR"] =  CreateColor(0.85, 0.6, 1) ;
+_V["WQT_COLOR_WEAPON"] =  CreateColor(1, 0.40, 1) ;
 _V["WQT_COLOR_ARTIFACT"] = CreateColor(0, 0.75, 0);
 _V["WQT_COLOR_CURRENCY"] = CreateColor(0.6, 0.4, 0.1) ;
 _V["WQT_COLOR_GOLD"] = CreateColor(0.95, 0.8, 0) ;
@@ -113,16 +115,17 @@ _V["WQT_TYPEFLAG_LABELS"] = {
 _V["WQT_SORT_OPTIONS"] = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD}
 	
 _V["REWARD_TYPE_ATLAS"] = {
-		[1] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.211, ["r"] = 0.277, ["t"] = 0.246, ["b"] = 0.277} -- Weapon
-		,[2] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.847, ["r"] = 0.91, ["t"] = 0.459, ["b"] = 0.49} -- Armor
-		,[3] = {["texture"] = "poi-scrapper", ["scale"] = 1} -- Relic
-		,[4] = {["texture"] = "AzeriteReady", ["scale"] = 1.4} -- Azerite
-		,[5] = {["texture"] = "Banker", ["scale"] = 1.1} -- Item
-		,[6] = {["texture"] = "Auctioneer", ["scale"] = 1} -- Gold
-		,[7] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.4921875, ["r"] = 0.55859375, ["t"] = 0.0390625, ["b"] = 0.068359375, ["color"] = CreateColor(0.7, 0.52, 0.43)} -- Resources
-		,[8] = {["texture"] = _playerFaction == "Alliance" and "poi-alliance" or "poi-horde", ["scale"] = 1} -- Honor
-		,[9] = {["texture"] = "QuestRepeatableTurnin", ["scale"] = 1.2} -- Rep
-		,[10] = {["texture"] = "poi-door-arrow-up", ["scale"] = .9} -- xp
+		[WQT_REWARDTYPE.weapon] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.211, ["r"] = 0.277, ["t"] = 0.246, ["b"] = 0.277} -- Weapon
+		,[WQT_REWARDTYPE.equipment] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.847, ["r"] = 0.91, ["t"] = 0.459, ["b"] = 0.49} -- Armor
+		,[WQT_REWARDTYPE.relic] = {["texture"] = "poi-scrapper", ["scale"] = 1} -- Relic
+		,[WQT_REWARDTYPE.artifact] = {["texture"] = "AzeriteReady", ["scale"] = 1.4} -- Azerite
+		,[WQT_REWARDTYPE.item] = {["texture"] = "Banker", ["scale"] = 1.1} -- Item
+		,[WQT_REWARDTYPE.gold] = {["texture"] = "Auctioneer", ["scale"] = 1} -- Gold
+		,[WQT_REWARDTYPE.currency] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.4921875, ["r"] = 0.55859375, ["t"] = 0.0390625, ["b"] = 0.068359375, ["color"] = CreateColor(0.7, 0.52, 0.43)} -- Resources
+		,[WQT_REWARDTYPE.honor] = {["texture"] = _playerFaction == "Alliance" and "poi-alliance" or "poi-horde", ["scale"] = 1} -- Honor
+		,[WQT_REWARDTYPE.reputation] = {["texture"] = "QuestRepeatableTurnin", ["scale"] = 1.2} -- Rep
+		,[WQT_REWARDTYPE.xp] = {["texture"] = "poi-door-arrow-up", ["scale"] = .9} -- xp
+		,[WQT_REWARDTYPE.spell] = {["texture"] = "Banker", ["scale"] = 1.1}  -- spell acts like item
 	}	
 
 _V["WQT_FILTER_FUNCTIONS"] = {
@@ -135,18 +138,18 @@ _V["WQT_FILTER_FUNCTIONS"] = {
 			,function(quest, flags) return (flags["Invasion"] and quest.type == LE_QUEST_TAG_TYPE_INVASION); end 
 			,function(quest, flags) return (flags["Assault"] and quest.type == LE_QUEST_TAG_TYPE_FACTION_ASSAULT); end 
 			,function(quest, flags) return (flags["Elite"] and (quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.isElite)); end 
-			,function(quest, flags) return (flags["Default"] and (quest.type ~= LE_QUEST_TAG_TYPE_NORMAL and not quest.isElite)); end 
+			,function(quest, flags) return (flags["Default"] and (quest.type == LE_QUEST_TAG_TYPE_NORMAL and not quest.isElite)); end 
 			}
 		,[3] = { -- Reward filters
 			function(quest, flags) return (flags["Armor"] and (quest.reward.type == WQT_REWARDTYPE.equipment or quest.reward.type == WQT_REWARDTYPE.weapon)); end 
 			,function(quest, flags) return (flags["Relic"] and quest.reward.type == WQT_REWARDTYPE.relic); end 
-			,function(quest, flags) return (flags["Item"] and quest.reward.type == WQT_REWARDTYPE.item); end 
+			,function(quest, flags) return (flags["Item"] and (quest.reward.type == WQT_REWARDTYPE.item or quest.reward.type == WQT_REWARDTYPE.spell)); end -- treat spells like items for now
 			,function(quest, flags) return (flags["Artifact"] and quest.reward.type == WQT_REWARDTYPE.artifact); end 
 			,function(quest, flags) return (flags["Honor"] and (quest.reward.type == WQT_REWARDTYPE.honor or quest.reward.subType == WQT_REWARDTYPE.honor)); end 
 			,function(quest, flags) return (flags["Gold"] and (quest.reward.type == WQT_REWARDTYPE.gold or quest.reward.subType == WQT_REWARDTYPE.gold) ); end 
 			,function(quest, flags) return (flags["Currency"] and (quest.reward.type == WQT_REWARDTYPE.currency or quest.reward.subType == WQT_REWARDTYPE.currency)); end 
 			,function(quest, flags) return (flags["Experience"] and quest.reward.type == WQT_REWARDTYPE.xp); end 
-			,function(quest, flags) return (flags["Reputation"] and quest.reward.type == WQT_REWARDTYPE.reputation or quest.reward.subType == WQT_REWARDTYPE.reputation); end
+			,function(quest, flags) return (flags["Reputation"] and (quest.reward.type == WQT_REWARDTYPE.reputation or quest.reward.subType == WQT_REWARDTYPE.reputation)); end
 			,function(quest, flags) return (flags["None"] and quest.reward.type == WQT_REWARDTYPE.none); end
 			}
 	};
@@ -154,7 +157,10 @@ _V["WQT_FILTER_FUNCTIONS"] = {
 
 _V["WQT_CONTINENT_GROUPS"] = {
 		[875]	= {876} 
+		,[1011]	= {876}  -- Zandalar flightmap
 		,[876]	= {875}
+		,[1014]	= {875} -- Kul Tiras flightmap
+		,[1504]	= {875, 876} -- Nazjatar flightmap
 	}
 
 _V["WQT_ZONE_EXPANSIONS"] = {
@@ -169,6 +175,8 @@ _V["WQT_ZONE_EXPANSIONS"] = {
 		,[895] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Tiragarde Sound
 		,[1161] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Boralus
 		,[1169] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Tol Dagor
+		,[1355] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Nazjatar
+		,[1462] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Mechagon
 		-- Classic zones with BfA WQ
 		,[14] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Arathi Highlands
 		,[62] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Darkshore
@@ -193,6 +201,9 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 		,[1011]	= WQT_ZANDALAR -- Zandalar flightmap
 		,[876]	= WQT_KULTIRAS -- Kul Tiras
 		,[1014]	= WQT_KULTIRAS -- Kul Tiras flightmap
+		,[1504]	= { -- Nazjatar flightmap
+			[1355] = {["x"] = 0, ["y"] = 0} -- Nazjatar
+		}
 
 		,[619] 	= WQT_LEGION -- Legion
 		,[993] 	= WQT_LEGION -- Legion flightmap	
@@ -335,7 +346,8 @@ _V["WQT_FACTION_DATA"] = {
 	,[2160] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_ProudmooreAdmiralty_Round" } -- Proudmoore Admirality
 	,[2161] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_OrderofEmbers_Round" } -- Order of Embers
 	,[2159] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_AllianceWarEffort_Round" } -- 7th Legion
-	,[2373] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Circle_Faction_Unshackled" } -- Unshackled
+	,[2373] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Horde" ,["icon"] = "Interface/ICONS/INV_Circle_Faction_Unshackled" } -- Unshackled
+	,[2400] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Circle_Faction_Akoan" } -- Waveblade Ankoan
 	,[2391] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Faction_Rustbolt" } -- Rustbolt
 }
 -- Add localized faction names
@@ -345,6 +357,26 @@ end
 
 _V["LATEST_UPDATE"] = 
 	[[
+	<h3>&#160;</h3>
+	<h1>8.2.01c</h1> 
+	<h2>Changed:</h2>
+	<p>* Removed 'precise filter'. It was broken for ages.</p>
+	<p>* Sorting will now fall back to sorting by reward, rather than just by title.</p>
+	<h3>&#160;</h3>
+	<h2>Fixes:</h2>
+	<p>* Fixed the quest list not showing when the world map is set to full screen and opened using 'L'.</p>
+	<p>* Fixed Nazjatar quests not showing on other continents.</p>
+	<p>* Fixed Alliance Nazjatar factions.</p>
+	<p>* Fixed Nazjatar 'bonus objectives'.</p>
+	<p>* Fixed compatibility with WorldFlightMap.</p>
+	<p>* Fixed issues related to 'Always All Quests'.</p>
+	<p>* Fixed filter for 'default' quests.</p>
+	<p>* Fixed order of 'Type' sort to prioritize elite and rare over common.</p>
+	<h3>&#160;</h3>
+	<h1>8.2.01b</h1> 
+	<h2>Fixes:</h2>
+	<p>* Fixed unintended cooldown times on map pins.</p>
+	<p>* Fixed add-on showing as outdated.</p>
 	<h3>&#160;</h3>
 	<h1>8.2.01</h1> 
 	<h2>New:</h2>

@@ -115,25 +115,23 @@ end
 
 local function SetQuestReward(questInfo)
 	local reward = questInfo.reward;
-	local _, texture, numItems, quality, rewardType, color, rewardId, itemId, canUpgrade = nil, nil, 0, 1, WQT_REWARDTYPE.missing, _V["WQT_COLOR_MISSING"], nil, nil, nil;
+	local _, texture, numItems, quality, rewardType, color, rewardId, canUpgrade = nil, nil, 0, 1, WQT_REWARDTYPE.missing, _V["WQT_COLOR_MISSING"], nil, nil;
 	
 	local haveData = HaveQuestRewardData(questInfo.questId);
 	
 	if haveData then
-		if GetNumQuestLogRewards(questInfo.questId) > 0 then
-			_, texture, numItems, quality, _, itemId = GetQuestLogRewardInfo(1, questInfo.questId);
-			if itemId then
-				local _, _, _, ilvl, _, _, _, _, _, _, price, typeID, subTypeID  = GetItemInfo(itemId);
+		if (GetNumQuestLogRewards(questInfo.questId) > 0) then
+			local ilvl;
+			_, texture, numItems, quality, _, rewardId, ilvl = GetQuestLogRewardInfo(1, questInfo.questId);
+			if rewardId then
+				local price, typeID, subTypeID = select(11, GetItemInfo(rewardId));
 				if (typeID == 4 or typeID == 2) then -- Gear (4 = armor, 2 = weapon)
-					local result = ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+?)$");
-					if result then
-						numItems = tonumber(result:match("(%d+)"));
-						canUpgrade = result:match("(%+)") and true;
-					end
+					canUpgrade =ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+)$") and true;
+					numItems = ilvl;
 					rewardType = typeID == 4 and WQT_REWARDTYPE.equipment or  WQT_REWARDTYPE.weapon;
-					color = _V["WQT_COLOR_ARMOR"];
+					color = typeID == 4 and _V["WQT_COLOR_ARMOR"] or _V["WQT_COLOR_WEAPON"];
 				elseif (typeID == 3 and subTypeID == 11) then
-					-- Because getting a link of the itemID only shows the base item
+					-- Find updagade amount as C_ArtifactUI.GetItemLevelIncreaseProvidedByRelic doesn't scale
 					numItems = tonumber(ScanTooltipRewardForPattern(questInfo.questId, "^%+(%d+)"));
 					rewardType = WQT_REWARDTYPE.relic;	
 					color = _V["WQT_COLOR_RELIC"];
@@ -148,6 +146,10 @@ local function SetQuestReward(questInfo)
 					end
 				end
 			end
+		elseif (GetQuestLogRewardSpell(1, questInfo.questId)) then
+			texture, _, _, _, _, _, _, _, rewardId = GetQuestLogRewardSpell(1, questInfo.questId);
+			rewardType = WQT_REWARDTYPE.spell;
+			color = _V["WQT_COLOR_ITEM"];
 		elseif GetQuestLogRewardHonor(questInfo.questId) > 0 then
 			numItems = GetQuestLogRewardHonor(questInfo.questId);
 			texture = _V["WQT_HONOR"];
@@ -159,14 +161,15 @@ local function SetQuestReward(questInfo)
 			rewardType = WQT_REWARDTYPE.gold;
 			color = _V["WQT_COLOR_GOLD"];
 		elseif GetNumQuestLogRewardCurrencies(questInfo.questId) > 0 then
-			_, texture, numItems, rewardId = GetQuestLogRewardCurrencyInfo(GetNumQuestLogRewardCurrencies(questInfo.questId), questInfo.questId)
+			local currenyId;
+			_, texture, numItems, currenyId = GetQuestLogRewardCurrencyInfo(GetNumQuestLogRewardCurrencies(questInfo.questId), questInfo.questId)
 			-- Because azerite is currency but is treated as an item
 			local azuriteID = C_CurrencyInfo.GetAzeriteCurrencyID();
-			if rewardId ~= azuriteID then
-				local name, _, apTex, _, _, _, _, apQuality = GetCurrencyInfo(rewardId);
-				name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(rewardId, numItems, name, texture, apQuality); 
+			if currenyId ~= azuriteID then
+				local name, _, apTex, _, _, _, _, apQuality = GetCurrencyInfo(currenyId);
+				name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(currenyId, numItems, name, texture, apQuality); 
 				
-				if	C_CurrencyInfo.GetFactionGrantedByCurrency(rewardId) then
+				if	C_CurrencyInfo.GetFactionGrantedByCurrency(currenyId) then
 					rewardType = WQT_REWARDTYPE.reputation;
 					quality = 0;
 				else
@@ -194,7 +197,7 @@ local function SetQuestReward(questInfo)
 		end
 	end
 
-	questInfo.reward.id = itemId;
+	questInfo.reward.id = rewardId;
 	questInfo.reward.quality = quality or 1;
 	questInfo.reward.texture = texture or _V["WQT_QUESTIONMARK"];
 	questInfo.reward.amount = numItems or 0;
@@ -223,8 +226,7 @@ local function SetQuestData(questInfo)
 	local zoneId = questInfo.mapInfo.mapID;
 	
 	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questId);
-	
-	worldQuestType = not QuestUtils_IsQuestWorldQuest(questId) and _V["WQT_TYPE_BONUSOBJECTIVE"] or worldQuestType;
+	worldQuestType = worldQuestType or _V["WQT_TYPE_BONUSOBJECTIVE"];
 	local minutes, timeString, color, timeStringShort = GetQuestTimeString(questId);
 	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questId);
 	
@@ -346,6 +348,24 @@ function WQT_DataProvider:UpdateWaitingRoom()
 	end
 end
 
+function WQT_DataProvider:AddContinentMapQuests(continentZones, continentId)
+	if continentZones then
+		for zoneID, zoneData  in pairs(continentZones) do
+			self:AddQuestsInZone(zoneID, continentId or zoneID);
+		end
+	end
+end
+
+function WQT_DataProvider:AddWorldMapQuests(worldContinents)
+	if worldContinents then
+		for contID, contData in pairs(worldContinents) do
+			-- Every ID is a continent, get every zone on every continent
+			local continentZones = _V["WQT_ZONE_MAPCOORDS"][contID];
+			self:AddContinentMapQuests(continentZones, contID)
+		end
+	end
+end
+
 function WQT_DataProvider:LoadQuestsInZone(zoneId)
 	self:ClearData();
 	
@@ -362,53 +382,35 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 	
 	local currentMapInfo = C_Map.GetMapInfo(zoneId);
 	if not currentMapInfo then return end;
-	
-	local continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneId];
-	local continentId = currentMapInfo.parentMapID;
-	local missingRewardData = false;
-	local questsById, quest;
 
 	if (WQT.settings.alwaysAllQuests and currentMapInfo.mapType ~= Enum.UIMapType.World) then
-	
-		local highestMapId = WQT:GetFirstContinent(zoneId);
-		continentZones = _V["WQT_ZONE_MAPCOORDS"][highestMapId];
-		if continentZones then
+		
+		local highestMapId, mapType = WQT:GetFirstContinent(zoneId);
+		local continentZones = _V["WQT_ZONE_MAPCOORDS"][highestMapId];
+		if (mapType ~= Enum.UIMapType.World) then
+			self:AddContinentMapQuests(continentZones);
 			
-			for ID, data in pairs(continentZones) do	
-				self:AddQuestsInZone(ID, ID);
-			end
-		end
-
-		local relatedMaps = _V["WQT_CONTINENT_GROUPS"][highestMapId];
-		if relatedMaps then
-			for k, mapId in pairs(relatedMaps) do	
-				continentZones = _V["WQT_ZONE_MAPCOORDS"][mapId];
-				if continentZones then
-					for ID, data in pairs(continentZones) do	
-						self:AddQuestsInZone(ID, ID);
-					end
+			local relatedMaps = _V["WQT_CONTINENT_GROUPS"][highestMapId];
+			if relatedMaps then
+				for k, mapId in pairs(relatedMaps) do	
+					self:AddContinentMapQuests(_V["WQT_ZONE_MAPCOORDS"][mapId]);
 				end
 			end
+		else
+			self:AddWorldMapQuests(continentZones);
 		end
 		return;
 	end
+	
+	local continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneId];
 
 	if currentMapInfo.mapType == Enum.UIMapType.Continent  and continentZones then
-		-- All zones in a continent
-		for ID, data in pairs(continentZones) do	
-			 self:AddQuestsInZone(ID, ID);
-		end
+		self:AddContinentMapQuests(continentZones);
 	elseif (currentMapInfo.mapType == Enum.UIMapType.World) then
-		for contID, contData in pairs(continentZones) do
-			-- Every ID is a continent, get every zone on every continent
-			continentZones = _V["WQT_ZONE_MAPCOORDS"][contID];
-			for zoneID, zoneData  in pairs(continentZones) do
-				self:AddQuestsInZone(zoneID, contID);
-			end
-		end
+		self:AddWorldMapQuests(continentZones);
 	else
 		-- Simple zone map
-		self:AddQuestsInZone(zoneId, continentId);
+		self:AddQuestsInZone(zoneId, currentMapInfo.parentMapID);
 	end
 	
 	for k, func in ipairs(self.callbacks.questsLoaded) do
@@ -454,6 +456,7 @@ function WQT_DataProvider:AddQuest(qInfo, zoneId, continentId)
 	local questInfo = self.pool:Acquire();
 	
 	questInfo.isValid = false;
+	questInfo.alwaysHide = not MapUtil.ShouldShowTask(zoneId, qInfo);
 	questInfo.questId = qInfo.questId;
 	questInfo.mapInfo = C_Map.GetMapInfo(zoneId);
 	questInfo.mapInfo.mapX = qInfo.x;
@@ -479,6 +482,10 @@ function WQT_DataProvider:AddQuest(qInfo, zoneId, continentId)
 	
 	if not questInfo.isValid then
 		WQT:debugPrint("|cFFFF0000Invalid:",questInfo.title,"(",questInfo.mapInfo.name,")|r");
+	end
+	
+	if questInfo.alwaysHide then
+		WQT:debugPrint("|cFFFF00FFAlways hide:",questInfo.title,"(",questInfo.mapInfo.name,")|r");
 	end
 	
 	if not haveRewardData then
@@ -562,9 +569,3 @@ function WQT_DataProvider:GetCachedTypeIconData(questType, tradeskillLineIndex)
 	
 	return self.cachedTypeData[questType].texture, self.cachedTypeData[questType].x, self.cachedTypeData[questType].y;
 end
-
-
-
-
-
-

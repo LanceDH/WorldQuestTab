@@ -62,7 +62,6 @@ local WQT_DEFAULTS = {
 		showFactionIcon = true;
 		saveFilters = true;
 		emissaryOnly = false;
-		preciseFilter = true;
 		rewardAmountColors = true;
 		alwaysAllQuests = false;
 		useLFGButtons = false;
@@ -243,14 +242,14 @@ local function GetMapWQProvider()
 	return WQT.mapWQProvider;
 end
 
-function WQT:GetFirstContinent(a) 
-	local i = C_Map.GetMapInfo(a) 
-	if not i then return a; end
-	local p = i.parentMapID;
-	if not p or i.mapType <= Enum.UIMapType.Continent then 
-		return a 
+function WQT:GetFirstContinent(mapId) 
+	local info = C_Map.GetMapInfo(mapId) 
+	if not info then return mapId; end
+	local parent = info.parentMapID;
+	if not parent or info.mapType <= Enum.UIMapType.Continent then 
+		return mapId, info.mapType
 	end 
-	return self:GetFirstContinent(p) 
+	return self:GetFirstContinent(parent) 
 end
 
 function WQT:GetMapPinForWorldQuest(questID)
@@ -360,9 +359,6 @@ local function slashcmd(msg, editbox)
 		print(_L["OPTIONS_INFO"]);
 	else
 		if _debug then
-
-		
-		
 		--This is to get the zone coords for highlights so I don't have to retype it every time
 		--[[
 		 local x, y = GetCursorPosition();
@@ -480,6 +476,34 @@ local function GetSortedFilterOrder(filterId)
 	return tbl;
 end
 
+local function SortQuestListByReward(a, b) 
+	if not a.isValid or not b.isValid then
+		return a.isValid and not b.isValid;
+	end
+	if a.reward.type == b.reward.type then
+		if not a.reward.quality or not b.reward.quality or a.reward.quality == b.reward.quality then
+			if not a.reward.amount or not b.reward.amount or a.reward.amount == b.reward.amount then
+				if (a.reward.canUpgrade == b.reward.canUpgrade) then
+					-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
+					if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
+						if a.title ==  b.title then
+							return a.questId < b.questId;
+						end
+						return a.title < b.title;
+					end	
+					return a.time.minutes < b.time.minutes;
+				end
+				return a.reward.canUpgrade and not b.reward.canUpgrade;
+			end
+			return a.reward.amount > b.reward.amount;
+		end
+		return a.reward.quality > b.reward.quality;
+	elseif a.reward.type == 0 or b.reward.type == 0 then
+		return a.reward.type > b.reward.type;
+	end
+	return a.reward.type < b.reward.type;
+end
+
 local function SortQuestList(a, b) 
 	if not a.isValid or not b.isValid then
 		return a.isValid and not b.isValid;
@@ -487,10 +511,7 @@ local function SortQuestList(a, b)
 	-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
 	if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
 		if a.expantionLevel ==  b.expantionLevel then
-			if a.title ==  b.title then
-				return a.questId < b.questId;
-			end
-			return a.title < b.title;
+			return  SortQuestListByReward(a, b);
 		end
 		return a.expantionLevel > b.expantionLevel;
 	end	
@@ -502,16 +523,9 @@ local function SortQuestListByZone(a, b)
 		return a.isValid and not b.isValid;
 	end
 	if a.mapInfo.mapID == b.mapInfo.mapID then
-		-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-		if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
-			if a.title ==  b.title then
-				return a.questId < b.questId;
-			end
-			return a.title < b.title;
-		end	
-		return a.time.minutes < b.time.minutes;
+		return  SortQuestListByReward(a, b);
 	end
-	if WQT.settings.alwaysAllQuests then
+	if (WQT.settings.alwaysAllQuests or _WFMLoaded) then
 		if a.mapInfo.mapID == WorldMapFrame.mapID or b.mapInfo.mapID == WorldMapFrame.mapID then
 			return a.mapInfo.mapID == WorldMapFrame.mapID and b.mapInfo.mapID ~= WorldMapFrame.mapID;
 		end
@@ -526,14 +540,7 @@ local function SortQuestListByFaction(a, b)
 	end
 	if a.expantionLevel ==  b.expantionLevel then
 		if a.faction == b.faction then
-			-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-			if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
-				if a.title ==  b.title then
-					return a.questId < b.questId;
-				end
-				return a.title < b.title;
-			end	
-			return a.time.minutes < b.time.minutes;
+			return  SortQuestListByReward(a, b);
 		end
 		return a.faction > b.faction;
 	end
@@ -549,19 +556,12 @@ local function SortQuestListByType(a, b)
 	if aIsCriteria == bIsCriteria then
 		if a.type == b.type then
 			if a.rarity == b.rarity then
-				if (a.isElite and b.isElite) or (not a.isElite and not b.isElite) then
-					-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-					if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
-						if a.title ==  b.title then
-							return a.questId < b.questId;
-						end
-						return a.title < b.title;
-					end	
-					return a.time.minutes < b.time.minutes;
+				if (a.isElite == b.isElite)then
+					return  SortQuestListByReward(a, b);
 				end
-				return b.isElite;
+				return a.isElite and  not b.isElite;
 			end
-			return a.rarity < b.rarity;
+			return a.rarity > b.rarity;
 		end
 		return a.type > b.type;
 	end
@@ -578,30 +578,6 @@ local function SortQuestListByName(a, b)
 	return a.title < b.title;
 end
 
-local function SortQuestListByReward(a, b) 
-	if not a.isValid or not b.isValid then
-		return a.isValid and not b.isValid;
-	end
-	if a.reward.type == b.reward.type then
-		if not a.reward.quality or not b.reward.quality or a.reward.quality == b.reward.quality then
-			if not a.reward.amount or not b.reward.amount or a.reward.amount == b.reward.amount then
-				-- if both times are not showing actual minutes, check if they are within 2 minutes, else just check if they are the same
-				if (a.time.minutes == b.time.minutes or (a.time.minutes > 60 and b.time.minutes > 60 and math.abs(a.time.minutes - b.time.minutes) < 2)) then
-					if a.title ==  b.title then
-						return a.questId < b.questId;
-					end
-					return a.title < b.title;
-				end	
-				return a.time.minutes < b.time.minutes;
-			end
-			return a.reward.amount > b.reward.amount;
-		end
-		return a.reward.quality > b.reward.quality;
-	elseif a.reward.type == 0 or b.reward.type == 0 then
-		return a.reward.type > b.reward.type;
-	end
-	return a.reward.type < b.reward.type;
-end
 
 local function ConvertOldSettings(version)
 	if (not version) then
@@ -895,20 +871,6 @@ function WQT:InitFilter(self, level)
 				info.checked = function() return WQT.settings.saveFilters end;
 				ADD:AddButton(info, level);	
 				
-				info.text = _L["PRECISE_FILTER"];
-				info.tooltipTitle = _L["PRECISE_FILTER"];
-				info.tooltipText = _L["PRECISE_FILTER_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.preciseFilter = value;
-						WQT_QuestScrollFrame:DisplayQuestList();
-						if (WQT.settings.filterPoI) then
-							WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
-						end
-					end
-				info.checked = function() return WQT.settings.preciseFilter end;
-				ADD:AddButton(info, level);	
-				
-				
 				info.disabled = false;
 				
 				info.text = _L["SHOW_TYPE"];
@@ -947,6 +909,9 @@ function WQT:InitFilter(self, level)
 				info.tooltipText = _L["ALWAYS_ALL_TT"];
 				info.func = function(_, _, _, value)
 						WQT.settings.alwaysAllQuests = value;
+						local mapAreaID = WorldMapFrame.mapID;
+						_dataProvider:LoadQuestsInZone(mapAreaID);
+						
 						WQT_QuestScrollFrame:UpdateQuestList();
 					end
 				info.checked = function() return WQT.settings.alwaysAllQuests end;
@@ -1352,6 +1317,7 @@ function WQT:isUsingFilterNr(id)
 end
 
 function WQT:PassesMapFilter(questInfo)
+	if (_WFMLoaded or WQT.settings.alwaysAllQuests) then return true; end
 	local mapID = WorldMapFrame.mapID;
 	if (FlightMapFrame and FlightMapFrame:IsShown()) then
 		mapID = GetTaxiMapID();
@@ -1365,8 +1331,6 @@ function WQT:PassesMapFilter(questInfo)
 end
 
 function WQT:PassesAllFilters(questInfo)
-	if questInfo.questId < 0 or not questInfo.isValid then return true; end
-	
 	if not self:PassesMapFilter(questInfo) then return false; end
 	
 	if not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) then return false; end
@@ -1375,26 +1339,11 @@ function WQT:PassesAllFilters(questInfo)
 		return WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
 	end
 	
-	local precise = WQT.settings.preciseFilter;
-	local passed = true;
+	if WQT:isUsingFilterNr(1) and WQT:PassesFactionFilter(questInfo) then return true; end
+	if WQT:isUsingFilterNr(2) and WQT:PassesFlagId(2, questInfo) then return true; end
+	if WQT:isUsingFilterNr(3) and WQT:PassesFlagId(3, questInfo) then return true; end
 	
-	if precise then
-		if WQT:isUsingFilterNr(1) then 
-			passed = WQT:PassesFactionFilter(questInfo) and true or false; 
-		end
-		if (WQT:isUsingFilterNr(2) and passed) then
-			passed = WQT:PassesFlagId(2, questInfo) and true or false;
-		end
-		if (WQT:isUsingFilterNr(3) and passed) then
-			passed = WQT:PassesFlagId(3, questInfo) and true or false;
-		end
-	else
-		if WQT:isUsingFilterNr(1) and WQT:PassesFactionFilter(questInfo) then return true; end
-		if WQT:isUsingFilterNr(2) and WQT:PassesFlagId(2, questInfo) then return true; end
-		if WQT:isUsingFilterNr(3) and WQT:PassesFlagId(3, questInfo) then return true; end
-	end
-	
-	return precise and passed or false;
+	return  false;
 end
 
 function WQT:PassesFactionFilter(questInfo)
@@ -1595,11 +1544,6 @@ function WQT_ListButtonMixin:OnLeave()
 end
 
 function WQT_ListButtonMixin:OnEnter()
-	-- Cancel the timer if we are an a button before it ends so highlight doesn't get hidden
-	if WQT_PoISelectIndicator.delayTicker then
-		WQT_PoISelectIndicator.delayTicker:Cancel();
-	end
-
 	ShowUIPanel(self.Highlight);
 	
 	local questInfo = self.info;
@@ -1608,6 +1552,7 @@ function WQT_ListButtonMixin:OnEnter()
 	local scale = 1;
 	local pin = WQT:GetMapPinForWorldQuest(questInfo.questId);
 	if not pin then
+	
 		 pin = WQT:GetMapPinForBonusObjective(questInfo.questId);
 		 scale = 0.5;
 	end
@@ -1621,8 +1566,13 @@ function WQT_ListButtonMixin:OnEnter()
 			WQT_WorldQuestFrame:ShowHighlightOnPin(pin, scale, WQT_PoISelectIndicator);
 			WQT_PoISelectIndicator.questId = questInfo.questId;
 		end
+		
+		-- Cancel the timer if we are an a button before it ends so highlight doesn't get hidden
+		if (WQT_PoISelectIndicator.delayTicker) then
+			WQT_PoISelectIndicator.delayTicker:Cancel();
+		end
 	end
-	
+
 	WQT_QuestScrollFrame:ShowQuestTooltip(self, questInfo);
 
 	if (FlightMapFrame and FlightMapFrame:IsShown()) then
@@ -1836,7 +1786,7 @@ function WQT_ListButtonMixin:ShowWorldmapHighlight(zoneId)
 			WQT_MapZoneHightlight.Texture:SetAtlas(atlasID, true, "TRILINEAR");
 			scrollChildX = ((scrollChildX + 0.5*textureX) - 0.5) * width;
 			scrollChildY = -((scrollChildY + 0.5*textureY) - 0.5) * height;
-			WQT_MapZoneHightlight:SetPoint("CENTER", scrollChildX, scrollChildY);
+			WQT_MapZoneHightlight.Texture:SetPoint("CENTER", scrollChildX, scrollChildY);
 			WQT_MapZoneHightlight:Show();
 		else
 			WQT_MapZoneHightlight.Texture:SetTexture(fileDataID, nil, nil, "LINEAR");
@@ -2274,9 +2224,9 @@ function WQT_ScrollListMixin:UpdateQuestFilters()
 	
 	local isfiltering = WQT:IsWorldMapFiltering() or WQT:IsFiltering();
 	for k, questInfo in ipairs(self.questList) do
-		if (questInfo.isValid) then
+		if (questInfo.isValid and not questInfo.alwaysHide) then
 			questInfo.passedFilter = isfiltering and WQT:PassesAllFilters(questInfo) or not isfiltering;
-			if questInfo.passedFilter then
+			if (questInfo.passedFilter) then
 				table.insert(self.questListDisplay, questInfo);
 			end
 		end
@@ -2623,17 +2573,19 @@ function WQT_CoreMixin:OnLoad()
 			_dataProvider:LoadQuestsInZone(mapAreaID);
 			self.ScrollFrame:UpdateQuestList();
 			self:SelectTab(self.selectedTab); 
-			
-			if (WorldMapFrame.isMaximized) then
-				WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.full);
-			else
-				WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.world);
-			end
-			
+
 			-- If emissaryOnly was automaticaly set, and there's none in the current list, turn it off again.
 			if WQT_WorldQuestFrame.autoEmisarryId and not WQT_WorldQuestFrame.dataProvider:ListContainsEmissary() then
 				WQT_WorldQuestFrame.autoEmisarryId = nil;
 				WQT_QuestScrollFrame:DisplayQuestList();
+			end
+		end)
+		
+	hooksecurefunc(WorldMapFrame,"SynchronizeDisplayState", function() 
+			if (WorldMapFrame:IsMaximized()) then
+				WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.full);
+			else
+				WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.world);
 			end
 		end)
 		
