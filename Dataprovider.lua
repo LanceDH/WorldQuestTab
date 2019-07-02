@@ -68,7 +68,9 @@ local function ScanTooltipRewardForPattern(questID, pattern)
 	
 	GameTooltip_AddQuestRewardsToTooltip(WQT_Tooltip, questID);
 	for i=2, 6 do
-		local lineText = _G["WQT_TooltipTooltipTextLeft"..i]:GetText() or "";
+		local line = _G["WQT_TooltipTooltipTextLeft"..i];
+		if not line then break; end
+		local lineText = line:GetText() or "";
 		result = lineText:match(pattern);
 		if result then break; end
 	end

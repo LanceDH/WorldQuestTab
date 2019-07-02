@@ -358,6 +358,11 @@ end
 _V["LATEST_UPDATE"] = 
 	[[
 	<h3>&#160;</h3>
+	<h1>8.2.01d</h1> 
+	<h2>Fixes:</h2>
+	<p>* Fixed an empty list when some official filters are enabled.</p>
+	<p>* Fixed an error related to the dataprovider.</p>
+	<h3>&#160;</h3>
 	<h1>8.2.01c</h1> 
 	<h2>Changed:</h2>
 	<p>* Removed 'precise filter'. It was broken for ages.</p>

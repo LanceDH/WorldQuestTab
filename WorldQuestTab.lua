@@ -646,7 +646,7 @@ end
 
 function WQT:UpdateFilterIndicator() 
 	if (InCombatLockdown()) then return; end
-	if (GetCVarBool("showTamers") and GetCVarBool("worldQuestFilterArtifactPower") and GetCVarBool("worldQuestFilterResources") and GetCVarBool("worldQuestFilterGold") and GetCVarBool("worldQuestFilterEquipment")) then
+	if (C_CVar.GetCVarBool("showTamers") and C_CVar.GetCVarBool("worldQuestFilterArtifactPower") and C_CVar.GetCVarBool("worldQuestFilterResources") and C_CVar.GetCVarBool("worldQuestFilterGold") and C_CVar.GetCVarBool("worldQuestFilterEquipment")) then
 		WQT_WorldQuestFrame.FilterButton.Indicator:Hide();
 	else
 		WQT_WorldQuestFrame.FilterButton.Indicator:Show();
@@ -661,8 +661,8 @@ function WQT:SetAllFilterTo(id, value)
 end
 
 function WQT:FilterIsWorldMapDisabled(filter)
-	if (filter == "Petbattle" and not GetCVarBool("showTamers")) or (filter == "Artifact" and not GetCVarBool("worldQuestFilterArtifactPower")) or (filter == "Currency" and not GetCVarBool("worldQuestFilterResources"))
-		or (filter == "Gold" and not GetCVarBool("worldQuestFilterGold")) or (filter == "Armor" and not GetCVarBool("worldQuestFilterEquipment")) then
+	if (filter == "Petbattle" and not C_CVar.GetCVarBool("showTamers")) or (filter == "Artifact" and not C_CVar.GetCVarBool("worldQuestFilterArtifactPower")) or (filter == "Currency" and not C_CVar.GetCVarBool("worldQuestFilterResources"))
+		or (filter == "Gold" and not C_CVar.GetCVarBool("worldQuestFilterGold")) or (filter == "Armor" and not C_CVar.GetCVarBool("worldQuestFilterEquipment")) then
 		
 		return true;
 	end
@@ -1288,7 +1288,7 @@ end
 
 function WQT:IsWorldMapFiltering()
 	for k, cVar in pairs(_V["WQT_CVAR_LIST"]) do
-		if not GetCVarBool(cVar) then
+		if not C_CVar.GetCVarBool(cVar) then
 			return true;
 		end
 	end
@@ -1333,8 +1333,6 @@ end
 function WQT:PassesAllFilters(questInfo)
 	if not self:PassesMapFilter(questInfo) then return false; end
 	
-	if not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) then return false; end
-
 	if WQT.settings.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId then 
 		return WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
 	end
@@ -2084,7 +2082,7 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 		
 		-- reposition compare frame
 		if((questInfo.reward.type == WQT_REWARDTYPE.equipment) and WQT_Tooltip.ItemTooltip:IsShown()) then
-			if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
+			if IsModifiedClick("COMPAREITEMS") or C_CVar.GetCVarBool("alwaysCompareItems") then
 				-- Setup compare tootltips
 				GameTooltip_ShowCompareItem(WQT_Tooltip.ItemTooltip.Tooltip);
 				
@@ -2222,10 +2220,16 @@ end
 function WQT_ScrollListMixin:UpdateQuestFilters()
 	wipe(self.questListDisplay);
 	
-	local isfiltering = WQT:IsWorldMapFiltering() or WQT:IsFiltering();
+	local WQTFiltering = WQT:IsFiltering();
+	local BlizFiltering = WQT:IsWorldMapFiltering();
 	for k, questInfo in ipairs(self.questList) do
 		if (questInfo.isValid and not questInfo.alwaysHide) then
-			questInfo.passedFilter = isfiltering and WQT:PassesAllFilters(questInfo) or not isfiltering;
+			local pass = BlizFiltering and WorldMap_DoesWorldQuestInfoPassFilters(questInfo) or not BlizFiltering;
+			if (pass and WQTFiltering) then
+				pass = WQT:PassesAllFilters(questInfo);
+			end
+		
+			questInfo.passedFilter = pass;
 			if (questInfo.passedFilter) then
 				table.insert(self.questListDisplay, questInfo);
 			end
@@ -3246,7 +3250,6 @@ end
 
 --------
 -- Debug stuff to monitor mem usage
--- Remember to uncomment line template in xml
 --------
 
 if _debug then
@@ -3263,8 +3266,7 @@ if _debug then
 				highest = v;
 			end
 		end
-		
-		
+
 		local mem = floor(l_debug.history[#l_debug.history]*100)/100;
 		local scale = l_debug:GetScale();
 		local yScale = 1000 / highest ;

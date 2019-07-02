@@ -213,31 +213,6 @@
 
 		<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing"/>
 	</Cooldown>
-	
-	<Cooldown name="fuck" hidden="false" setAllPoints="true" parent="UIParent" inherits="CooldownFrameTemplate">		
-		<Size x="80" y="80" />
-		<Scripts>
-			<OnLoad>
-				self:ClearAllPoints();
-				self:SetPoint("CENTER", UIParent)
-				local now = time();
-				self:SetCooldownUNIX(now, 5)
-				<!--
-				
-				self:SetSwipeColor(0, 0, 0, 0.8);
-				self:SetUseCircularEdge(true)
-				self:SetEdgeTexture("", 1, 1, 1, 0);
-				self:SetBlingTexture("Interface/CHARACTERFRAME/TemporaryPortrait-Male-NightElf");
-				self:SetSwipeColor(1, 0, 1, 0.8);
-				self:SetRotation(1.5)
-				self:SetReverse(false)
-				self:SetDrawBling(true)
-				-->
-			</OnLoad>
-			<OnCooldownDone>
-			</OnCooldownDone>
-		</Scripts>
-	</Cooldown>
 
 	<Button name="WQT_TabTemplate" virtual="true">
 		<Size x="33" y="35"/>
@@ -1127,7 +1102,7 @@
 								if (self.tooltipTitle and self.tooltipSub) then
 									GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
 									GameTooltip:SetText(self.tooltipTitle, 1, 1, 1, 1, true);
-									GameTooltip:AddLine(self.tooltipSub, nil, nil, nil, true);
+									GameTooltip:AddLine(self.tooltipSub, 1, 0.82, 0, true);
 									GameTooltip:Show();
 								end
 								WQT_WorldQuestFrame:ShowHighlightOnMapFilters();
