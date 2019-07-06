@@ -127,7 +127,7 @@
 		</Member>
 	</FontFamily>
 	
-	<Cooldown name="WQT_PinTemplate" mixin="WQT_PinMixin" virtual="true" flattenRenderLayers="true" hideCountdownNumbers="true">
+	<Cooldown name="WQT_PinTemplate" mixin="WQT_PinMixin" virtual="true" flattenRenderLayers="true" hideCountdownNumbers="true" drawBling="false">
 		<Anchors>
 			<Anchor point="TOPLEFT" x="-3" y="3"/>
 			<Anchor point="BOTTOMRIGHT" x="3" y="-3"/>
@@ -204,16 +204,17 @@
 				</Texture>
 			</Layer>
 		</Layers>
-		
-		<Scripts>
-			<OnLoad>
-				self:SetUseCircularEdge(true);
-			</OnLoad>
-		</Scripts>
 
 		<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing"/>
+		
+		<Scripts>
+			<OnUpdate inherits="prepend" method="OnUpdate"/>
+			<OnCooldownDone inherits="prepend">
+				self:Show()
+			</OnCooldownDone>
+		</Scripts>
 	</Cooldown>
-
+	
 	<Button name="WQT_TabTemplate" virtual="true">
 		<Size x="33" y="35"/>
 		<Layers>
@@ -481,14 +482,14 @@
 					<Color r="1" g="0.82" b="0" a="1"/>
 				</FontString>
 				<FontString parentKey="Time" inherits="GameFontNormalSmall" maxLines="1" justifyH="LEFT">
-					<Size x="60" y="0"/>
+					<Size x="70" y="0"/>
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.Title" relativePoint="BOTTOMLEFT" x="5" y="-2"/>
 					</Anchors>
 					<Color r="0.75" g="0.61" b="0"/>
 				</FontString>
 				<FontString parentKey="Extra" inherits="GameFontNormalSmall" maxLines="1" justifyH="LEFT">
-					<Size x="95" y="0"/>
+					<Size x="80" y="0"/>
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.Time" relativePoint="TOPRIGHT" x="6"/>
 					</Anchors>
@@ -506,6 +507,7 @@
 				self:EnableKeyboard(false);
 				self.UpdateTooltip = self.OnEnter;
 			</OnLoad>
+			<OnUpdate method="OnUpdate" />
 			<OnEnter method="OnEnter" />
 			<OnLeave method="OnLeave" />
 		</Scripts>

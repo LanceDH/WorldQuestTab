@@ -2,12 +2,65 @@
 
 
 addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
-addon.debug = false;
+addon.debug = true;
 addon.variables = {};
 local _L = addon.L;
 local _V = addon.variables;
+local WQT = addon.WQT;
 
 local _playerFaction = UnitFactionGroup("Player");
+
+------------------------
+-- DEBUG
+------------------------
+
+local _debugTable;
+if _debug then
+	_debugTable = {}
+	UIParentLoadAddOn("Blizzard_DebugTools");
+	
+	hooksecurefunc("ChatFrame_OnHyperlinkShow", function(chat, link) 
+			local tableName = link:match("WQTDebug\:(%a+)")
+			if (tableName and _debugTable[tableName]) then
+				DisplayTableInspectorWindow(_debugTable[tableName], tableName);
+			end
+		end);
+end
+
+function WQT:debugPrint(...)
+	if _debug then print(...) end
+end
+
+function WQT:debugTableInsert(name, value, key)
+	if (not _debugTable or not _debugTable[name]) then return; end
+	if (key) then
+		_debugTable[name][key] = value;
+	else
+		tinsert(_debugTable[name], value);
+	end
+end
+
+function WQT:debugTableWipe(name)
+	if (not _debugTable) then return; end
+	if (not _debugTable[name]) then
+		_debugTable[name] = {};
+	end
+	wipe(_debugTable[name]);
+end
+
+function WQT:debugAnnounceTable(name, colorHex)
+	if (not _debugTable or not _debugTable[name]) then return; end
+	local count = 0;
+	for k, v in pairs(_debugTable[name]) do
+		count = count + 1;
+	end
+	
+	if (count > 0) then
+		colorHex = colorHex or "FFFFFF";
+		local output = "|cFF%s|HWQTDebug:%s|h[WQT] %s: %d|h|r";
+		self:debugPrint(output:format(colorHex, name, name, count));
+	end
+end
 
 ------------------------
 -- PUBLIC
@@ -87,6 +140,7 @@ _V["WQT_WHITE_FONT_COLOR"] = CreateColor(0.8, 0.8, 0.8);
 _V["WQT_ORANGE_FONT_COLOR"] = CreateColor(1, 0.6, 0);
 _V["WQT_GREEN_FONT_COLOR"] = CreateColor(0, 0.75, 0);
 _V["WQT_BLUE_FONT_COLOR"] = CreateColor(0.2, 0.60, 1);
+_V["WQT_PURPLE_FONT_COLOR"] = CreateColor(0.73, 0.33, 0.82);
 
 _V["WQT_BOUNDYBOARD_OVERLAYID"] = 3;
 _V["WQT_TYPE_BONUSOBJECTIVE"] = 99;

@@ -6,6 +6,7 @@ local locale = GetLocale();
 L["IS_AZIAN_CLIENT"]	= false
 
 L["PIN_SETTINGS"]	= "Map Pin Settings";
+L["LIST_SETTINGS"]	= "List Settings";
 L["COMBATLOCK"]		= "Disabled during combat.";
 L["FILTER"] 		= "Filter: %s";
 L["OPTIONS_INFO"] 	= "[WQT] Options can be found under the filter button."
@@ -54,6 +55,8 @@ L["AUTO_EMISARRY"] = "Auto Emissary Only"
 L["AUTO_EMISARRY_TT"] = "Clicking on an emisarry on the world map bounty board, will temporarily enable the 'Emisarry Only' filter."
 L["CONTAINER_DRAG"] = "Move"
 L["CONTAINER_DRAG_TT"] = "Drag to a different location."
+L["LIST_FULL_TIME"]	= "Expand Times"
+L["LIST_FULL_TIME_TT"]	= "Includes a secondary scale to times, adding hours to days and minutes to hours."
 
 L["TYPE_INVASION"]	= "Invasion";
 L["TYPE_EMISSARY"]	= "Emissary Only";

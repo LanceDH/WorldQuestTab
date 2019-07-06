@@ -13,10 +13,6 @@ local _debug = addon.debug;
 -- LOCAL FUNCTIONS
 ----------------------------
 
-function WQT:debugPrint(...)
-	if _debug then print(...) end
-end
-
 local function UpdateWorldZones(newLevel)
 	if (newLevel and newLevel ~= 110 and newLevel ~=120) then return; end
 	 
@@ -81,38 +77,6 @@ local function ScanTooltipRewardForPattern(questID, pattern)
 	end
 	
 	return result;
-end
-
-local function GetQuestTimeString(questId)
-	local timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(questId);
-	local timeString = "";
-	local timeStringShort = "";
-	local color = _V["WQT_COLOR_CURRENCY"];--  _V["WQT_WHITE_FONT_COLOR"];
-	if ( timeLeftMinutes ) then
-		if ( timeLeftMinutes <= WORLD_QUESTS_TIME_CRITICAL_MINUTES ) then
-			color = RED_FONT_COLOR;
-			timeString = SecondsToTime(timeLeftMinutes * 60);
-		elseif timeLeftMinutes < 60  then
-			timeString = SecondsToTime(timeLeftMinutes * 60);
-			color = _V["WQT_ORANGE_FONT_COLOR"];
-		elseif timeLeftMinutes < 24 * 60  then
-			timeString = D_HOURS:format(timeLeftMinutes / 60);
-			color = _V["WQT_GREEN_FONT_COLOR"]
-		else
-			timeString = D_DAYS:format(timeLeftMinutes  / 1440);
-			color = _V["WQT_BLUE_FONT_COLOR"];
-		end
-	else 
-		timeLeftMinutes = 0;
-	end
-	-- start with default, for CN and KR
-	timeStringShort = timeString;
-	local t, str = string.match(timeString:gsub(" |4", ""), '(%d+)(%a)');
-	if t and str then
-		timeStringShort = t..str;
-	end
-	
-	return timeLeftMinutes, timeString, color, timeStringShort;
 end
 
 local function SetQuestReward(questInfo)
@@ -223,37 +187,8 @@ local function SetSubReward(questInfo)
 	questInfo.reward.subType = subType;
 end
 
-local function SetQuestData(questInfo)
-	local questId = questInfo.questId;
-	local zoneId = questInfo.mapInfo.mapID;
-	
-	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questId);
-	worldQuestType = worldQuestType or _V["WQT_TYPE_BONUSOBJECTIVE"];
-	local minutes, timeString, color, timeStringShort = GetQuestTimeString(questId);
-	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questId);
-	
-	local faction = factionId and GetFactionInfoByID(factionId) or _L["NO_FACTION"];
-	
-	local expLevel = _V["WQT_ZONE_EXPANSIONS"][zoneId] or 0;
+local function SetTime(questInfo)
 
-	questInfo.time.minutes = minutes;
-	questInfo.time.full = timeString;
-	questInfo.time.short = timeStringShort;
-	questInfo.time.color = color;
-	
-	questInfo.title = title;
-	
-	questInfo.faction = faction;
-	questInfo.factionId = factionId;
-	questInfo.type = worldQuestType or -1;
-	questInfo.rarity = rarity;
-	questInfo.isElite = isElite;
-	
-	questInfo.expantionLevel = expLevel;
-	questInfo.tradeskill = tradeskillLineIndex;
-	
-	questInfo.passedFilter = true;
-	questInfo.isCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questId);
 end
 
 local function ValidateQuest(questInfo)
@@ -282,6 +217,8 @@ function WQT_DataProvider:OnLoad()
 	}
 	
 	UpdateWorldZones(); 
+	
+	
 end
 
 function WQT_DataProvider:OnEvent(event, ...)
@@ -309,15 +246,105 @@ function WQT_DataProvider:ClearData()
 	wipe(self.waitingRoomQuest )
 end
 
+function WQT_DataProvider:GetQuestTimeString(questInfo, fullString)
+	local timeLeftMinutes = 0
+        local timeLeftSeconds = 0
+	local timeString = "";
+	local timeStringShort = "";
+	local color = _V["WQT_COLOR_CURRENCY"];
+	
+	if (not questInfo or not questInfo.questId) then return timeLeftSeconds, timeString, color ,timeStringShort, timeLeftMinutes end
+	timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(questInfo.questId) or 0;
+	timeLeftSeconds = C_TaskQuest.GetQuestTimeLeftSeconds(questInfo.questId) or 0;
+	-- Time ran out, waiting for an update
+	if (questInfo.time.seconds and questInfo.time.seconds > 0 and timeLeftSeconds < 1) then 
+		timeString = RAID_INSTANCE_EXPIRES_EXPIRED;
+		return timeLeftSeconds, timeString, color,timeStringShort , timeLeftMinutes 
+	end
+	
+	if ( timeLeftSeconds  and timeLeftSeconds > 0) then
+		if ( timeLeftSeconds <= WORLD_QUESTS_TIME_CRITICAL_MINUTES * 60 ) then
+			color = RED_FONT_COLOR;
+			timeString = SecondsToTime(timeLeftSeconds, timeLeftSeconds > 60 and true or false);
+		elseif timeLeftSeconds < 3600  then
+			timeString = SecondsToTime(timeLeftSeconds, true);
+			color = _V["WQT_ORANGE_FONT_COLOR"];
+		elseif timeLeftSeconds < 24 * 3600  then
+			if (fullString) then
+				timeString = SecondsToTime(timeLeftSeconds, true);
+			else
+				timeString = D_HOURS:format(timeLeftSeconds / 3600);
+			end
+			color = _V["WQT_GREEN_FONT_COLOR"]
+		else
+			if (fullString) then
+				timeString = SecondsToTime(timeLeftSeconds, true);
+			else
+				timeString = D_DAYS:format(timeLeftSeconds / (24*3600));
+			end
+			local isWeek = questInfo.isElite and questInfo.rarity == LE_WORLD_QUEST_QUALITY_EPIC
+			color = isWeek and _V["WQT_PURPLE_FONT_COLOR"] or _V["WQT_BLUE_FONT_COLOR"];
+		end
+	end
+	-- start with default, for CN and KR
+	timeStringShort = timeString;
+	local t, str = string.match(timeString:gsub(" |4", ""), '(%d+)(%a)');
+	if t and str then
+		timeStringShort = t..str;
+	end
+	
+	return timeLeftSeconds, timeString, color, timeStringShort ,timeLeftMinutes;
+end
+
+function WQT_DataProvider:SetQuestData(questInfo)
+	local questId = questInfo.questId;
+	local zoneId = questInfo.mapInfo.mapID;
+	
+	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questId);
+	worldQuestType = worldQuestType or _V["WQT_TYPE_BONUSOBJECTIVE"];
+	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questId);
+	
+	local faction = factionId and GetFactionInfoByID(factionId) or _L["NO_FACTION"];
+	
+	local expLevel = _V["WQT_ZONE_EXPANSIONS"][zoneId] or 0;
+
+	questInfo.title = title;
+	
+	questInfo.faction = faction;
+	questInfo.factionId = factionId;
+	questInfo.type = worldQuestType or -1;
+	questInfo.rarity = rarity;
+	questInfo.isElite = isElite;
+	
+	questInfo.expantionLevel = expLevel;
+	questInfo.tradeskill = tradeskillLineIndex;
+	
+	local seconds, timeString, color, timeStringShort, minutes = self:GetQuestTimeString(questInfo);
+	
+	questInfo.time.seconds = seconds;
+	--questInfo.time.minutes = minutes; -- deprecated
+	--questInfo.time.full = timeString; -- deprecated
+	--questInfo.time.short = timeStringShort; -- deprecated
+	--questInfo.time.color = color; -- deprecated
+	--questInfo.time.timeStamp = GetTime(); -- deprecated
+
+	questInfo.passedFilter = true;
+	questInfo.isCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questId);
+end
+
 function WQT_DataProvider:UpdateWaitingRoom()
 	local questInfo;
 	local updatedData = false;
+	local fixed = {};
+	WQT:debugTableWipe("fixedData"); -- debug
+	WQT:debugTableWipe("fixedReward"); -- debug
 	
 	for i = #self.waitingRoomQuest, 1, -1 do
 		local questInfo = self.waitingRoomQuest[i];
 		if (questInfo.questId and HaveQuestData(questInfo.questId)) then
-			WQT:debugPrint("Fixed", questInfo.questId);
-			SetQuestData(questInfo);
+			WQT:debugTableInsert("fixedData", questInfo, questInfo.questId) -- debug
+			tinsert(fixed, questInfo.questId);
+			self:SetQuestData(questInfo);
 			if HaveQuestRewardData(questInfo.questId) then	
 				SetQuestReward(questInfo);
 				SetSubReward(questInfo);
@@ -331,10 +358,11 @@ function WQT_DataProvider:UpdateWaitingRoom()
 		end
 	end
 	
+	wipe(fixed);
 	for i = #self.waitingRoomRewards, 1, -1 do
 		questInfo = self.waitingRoomRewards[i];
 		if ( questInfo.questId and HaveQuestRewardData(questInfo.questId)) then
-			WQT:debugPrint("Fixed", questInfo.questId, "reward");
+			WQT:debugTableInsert("fixedReward", questInfo, questInfo.questId) -- debug
 			SetQuestReward(questInfo);
 			SetSubReward(questInfo);
 			ValidateQuest(questInfo);
@@ -343,6 +371,9 @@ function WQT_DataProvider:UpdateWaitingRoom()
 		end
 	end
 
+	WQT:debugAnnounceTable("fixedData"); -- debug
+	WQT:debugAnnounceTable("fixedReward"); -- debug
+	
 	if (updatedData) then
 		for k, func in ipairs(self.callbacks.waitingRoom) do
 			func();
@@ -370,6 +401,9 @@ end
 
 function WQT_DataProvider:LoadQuestsInZone(zoneId)
 	self:ClearData();
+	zoneId = zoneId or self.latestZoneId
+	if (not zoneId) then return end;
+	self.latestZoneId = zoneId
 	
 	if not (WorldMapFrame:IsShown() or (FlightMapFrame and FlightMapFrame:IsShown())) then return; end
 	-- If the flight map is open, we want all quests no matter what
@@ -385,6 +419,11 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 	local currentMapInfo = C_Map.GetMapInfo(zoneId);
 	if not currentMapInfo then return end;
 
+	WQT:debugTableWipe("duplicate"); -- debug
+	WQT:debugTableWipe("invalid"); -- debug
+	WQT:debugTableWipe("missingData"); -- debug
+	WQT:debugTableWipe("alwaysHide"); -- debug
+	
 	if (WQT.settings.alwaysAllQuests and currentMapInfo.mapType ~= Enum.UIMapType.World) then
 		
 		local highestMapId, mapType = WQT:GetFirstContinent(zoneId);
@@ -401,19 +440,23 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 		else
 			self:AddWorldMapQuests(continentZones);
 		end
-		return;
+	else
+		local continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneId];
+
+		if currentMapInfo.mapType == Enum.UIMapType.Continent  and continentZones then
+			self:AddContinentMapQuests(continentZones);
+		elseif (currentMapInfo.mapType == Enum.UIMapType.World) then
+			self:AddWorldMapQuests(continentZones);
+		else
+			-- Simple zone map
+			self:AddQuestsInZone(zoneId, currentMapInfo.parentMapID);
+		end
 	end
 	
-	local continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneId];
-
-	if currentMapInfo.mapType == Enum.UIMapType.Continent  and continentZones then
-		self:AddContinentMapQuests(continentZones);
-	elseif (currentMapInfo.mapType == Enum.UIMapType.World) then
-		self:AddWorldMapQuests(continentZones);
-	else
-		-- Simple zone map
-		self:AddQuestsInZone(zoneId, currentMapInfo.parentMapID);
-	end
+	WQT:debugAnnounceTable("duplicate", "FFFF00"); -- debug
+	WQT:debugAnnounceTable("invalid", "FF0000"); -- debug
+	WQT:debugAnnounceTable("missingData", "00FFFF"); -- debug
+	WQT:debugAnnounceTable("alwaysHide", "FF66FF"); -- debug
 	
 	for k, func in ipairs(self.callbacks.questsLoaded) do
 		func();
@@ -450,7 +493,7 @@ function WQT_DataProvider:AddQuest(qInfo, zoneId, continentId)
 			duplicate.mapInfo.mapY = qInfo.y;
 		end
 		
-		WQT:debugPrint("|cFFFFFF00Duplicate:", duplicate.title or duplicate.questId, "(", duplicate.mapInfo.name ,")|r");
+		WQT:debugTableInsert("duplicate", duplicate, duplicate.questId) -- debug
 		
 		return duplicate;
 	end
@@ -466,12 +509,12 @@ function WQT_DataProvider:AddQuest(qInfo, zoneId, continentId)
 	questInfo.numObjectives = qInfo.numObjectives;
 	
 	if not HaveQuestData(qInfo.questId) then
-		WQT:debugPrint("|cFF00FFFFMissing data:", questInfo.questId,"|r");
+		WQT:debugTableInsert("missingData", questInfo, questInfo.questId) -- debug
 		tinsert(self.waitingRoomQuest, questInfo);
 		return nil;
 	end
 	
-	SetQuestData(questInfo);
+	self:SetQuestData(questInfo);
 	
 	local haveRewardData = SetQuestReward(questInfo);
 	if haveRewardData then
@@ -483,11 +526,11 @@ function WQT_DataProvider:AddQuest(qInfo, zoneId, continentId)
 	ValidateQuest(questInfo);
 	
 	if not questInfo.isValid then
-		WQT:debugPrint("|cFFFF0000Invalid:",questInfo.title,"(",questInfo.mapInfo.name,")|r");
+		WQT:debugTableInsert("invalid", questInfo, questInfo.questId) -- debug
 	end
 	
 	if questInfo.alwaysHide then
-		WQT:debugPrint("|cFFFF00FFAlways hide:",questInfo.title,"(",questInfo.mapInfo.name,")|r");
+		WQT:debugTableInsert("alwaysHide", questInfo, questInfo.questId) -- debug
 	end
 	
 	if not haveRewardData then
