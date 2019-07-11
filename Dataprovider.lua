@@ -460,7 +460,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 	WQT:debugTableWipe("missingData"); -- debug
 	WQT:debugTableWipe("alwaysHide"); -- debug
 	
-	if (WQT.settings.alwaysAllQuests and currentMapInfo.mapType ~= Enum.UIMapType.World) then
+	if (WQT.settings.list.alwaysAllQuests and currentMapInfo.mapType ~= Enum.UIMapType.World) then
 		
 		local highestMapId, mapType = WQT:GetFirstContinent(zoneId);
 		local continentZones = _V["WQT_ZONE_MAPCOORDS"][highestMapId];
