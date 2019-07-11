@@ -7,7 +7,8 @@
 local WQT = addon.WQT;
 local _L = addon.L;
 local _V = addon.variables;
-local _debug = addon.debug;
+
+local _WFMLoaded = IsAddOnLoaded("WorldFlightMap");
 
 ----------------------------
 -- LOCAL FUNCTIONS
@@ -198,6 +199,7 @@ end
 ----------------------------
 -- MIXIN
 ----------------------------
+local QUEST_LOG_UPDATE_CD = 1;
 
 WQT_DataProvider = {}
 
@@ -208,6 +210,7 @@ function WQT_DataProvider:OnLoad()
 	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room
 	self.waitingRoomRewards = {};
 	self.waitingRoomQuest = {};
+	self.lastUpdate = 0;
 	
 	self.cachedTypeData = {};
 	
@@ -218,12 +221,39 @@ function WQT_DataProvider:OnLoad()
 	
 	UpdateWorldZones(); 
 	
-	
+	hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
+		local mapAreaID = WorldMapFrame.mapID;
+		if (self.currentMapId ~= mapAreaID) then
+			self.mapChanged = true;
+			self.currentMapId = mapAreaID;
+			self.currentMapInfo = C_Map.GetMapInfo(mapAreaID);
+			self:UpdateData();
+		end
+	end)
+end
+
+function WQT_DataProvider:UpdateData()
+	local now = GetTime();
+	local elapsed = now - self.lastUpdate;
+	if  (self.mapChanged or elapsed > QUEST_LOG_UPDATE_CD) then
+		self.lastUpdate = now;
+		self.mapChanged = false;
+		self:LoadQuestsInZone(self.currentMapId);
+		if (self.dataTicker) then
+			self.dataTicker:Cancel();
+			self.dataTicker = nil;
+		end
+	else
+		self:UpdateWaitingRoom();
+		if (not self.dataTicker) then
+			self.dataTicker =  C_Timer.NewTicker(QUEST_LOG_UPDATE_CD - elapsed+0.05, function() self:UpdateData() end, 1);
+		end
+	end
 end
 
 function WQT_DataProvider:OnEvent(event, ...)
 	if (event == "QUEST_LOG_UPDATE") then
-		self:UpdateWaitingRoom();
+		self:UpdateData();
 	elseif (event == "PLAYER_LEVEL_UP") then
 		local level = ...;
 		UpdateWorldZones(level); 
@@ -246,7 +276,7 @@ function WQT_DataProvider:ClearData()
 	wipe(self.waitingRoomQuest )
 end
 
-function WQT_DataProvider:GetQuestTimeString(questInfo, fullString)
+function WQT_DataProvider:GetQuestTimeString(questInfo, fullString, unabreviated)
 	local timeLeftMinutes = 0
         local timeLeftSeconds = 0
 	local timeString = "";
@@ -256,6 +286,7 @@ function WQT_DataProvider:GetQuestTimeString(questInfo, fullString)
 	if (not questInfo or not questInfo.questId) then return timeLeftSeconds, timeString, color ,timeStringShort, timeLeftMinutes end
 	timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(questInfo.questId) or 0;
 	timeLeftSeconds = C_TaskQuest.GetQuestTimeLeftSeconds(questInfo.questId) or 0;
+
 	-- Time ran out, waiting for an update
 	if (questInfo.time.seconds and questInfo.time.seconds > 0 and timeLeftSeconds < 1) then 
 		timeString = RAID_INSTANCE_EXPIRES_EXPIRED;
@@ -263,24 +294,29 @@ function WQT_DataProvider:GetQuestTimeString(questInfo, fullString)
 	end
 	
 	if ( timeLeftSeconds  and timeLeftSeconds > 0) then
+		local displayTime = timeLeftSeconds
+		if (displayTime < 3600 and displayTime >= 60) then
+			displayTime = displayTime + 60;
+		end
+	
 		if ( timeLeftSeconds <= WORLD_QUESTS_TIME_CRITICAL_MINUTES * 60 ) then
 			color = RED_FONT_COLOR;
-			timeString = SecondsToTime(timeLeftSeconds, timeLeftSeconds > 60 and true or false);
-		elseif timeLeftSeconds < 3600  then
-			timeString = SecondsToTime(timeLeftSeconds, true);
+			timeString = SecondsToTime(displayTime, displayTime > 60 and true or false, unabreviated);
+		elseif displayTime < 3600  then
+			timeString = SecondsToTime(displayTime, true);
 			color = _V["WQT_ORANGE_FONT_COLOR"];
-		elseif timeLeftSeconds < 24 * 3600  then
+		elseif displayTime < 24 * 3600  then
 			if (fullString) then
-				timeString = SecondsToTime(timeLeftSeconds, true);
+				timeString = SecondsToTime(displayTime, true, unabreviated);
 			else
-				timeString = D_HOURS:format(timeLeftSeconds / 3600);
+				timeString = D_HOURS:format(displayTime / 3600);
 			end
 			color = _V["WQT_GREEN_FONT_COLOR"]
 		else
 			if (fullString) then
-				timeString = SecondsToTime(timeLeftSeconds, true);
+				timeString = SecondsToTime(displayTime, true, unabreviated);
 			else
-				timeString = D_DAYS:format(timeLeftSeconds / (24*3600));
+				timeString = D_DAYS:format(displayTime / (24*3600));
 			end
 			local isWeek = questInfo.isElite and questInfo.rarity == LE_WORLD_QUEST_QUALITY_EPIC
 			color = isWeek and _V["WQT_PURPLE_FONT_COLOR"] or _V["WQT_BLUE_FONT_COLOR"];
@@ -322,11 +358,11 @@ function WQT_DataProvider:SetQuestData(questInfo)
 	local seconds, timeString, color, timeStringShort, minutes = self:GetQuestTimeString(questInfo);
 	
 	questInfo.time.seconds = seconds;
-	--questInfo.time.minutes = minutes; -- deprecated
-	--questInfo.time.full = timeString; -- deprecated
-	--questInfo.time.short = timeStringShort; -- deprecated
-	--questInfo.time.color = color; -- deprecated
-	--questInfo.time.timeStamp = GetTime(); -- deprecated
+	questInfo.time.minutes = minutes; -- deprecated
+	questInfo.time.full = timeString; -- deprecated
+	questInfo.time.short = timeStringShort; -- deprecated
+	questInfo.time.color = color; -- deprecated
+	questInfo.time.timeStamp = GetTime(); -- deprecated
 
 	questInfo.passedFilter = true;
 	questInfo.isCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questId);
@@ -407,7 +443,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 	
 	if not (WorldMapFrame:IsShown() or (FlightMapFrame and FlightMapFrame:IsShown())) then return; end
 	-- If the flight map is open, we want all quests no matter what
-	if (FlightMapFrame and FlightMapFrame:IsShown()) then 
+	if (FlightMapFrame and FlightMapFrame:IsShown() and not _WFMLoaded) then 
 		local taxiId = GetTaxiMapID()
 		zoneId = (taxiId and taxiId > 0) and taxiId or zoneId;
 		-- World Flight Map  add-on overwrite

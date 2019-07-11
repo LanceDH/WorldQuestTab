@@ -2,11 +2,11 @@
 
 
 addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
-addon.debug = true;
 addon.variables = {};
 local _L = addon.L;
 local _V = addon.variables;
 local WQT = addon.WQT;
+local _debug = false;
 
 local _playerFaction = UnitFactionGroup("Player");
 
@@ -25,6 +25,130 @@ if _debug then
 				DisplayTableInspectorWindow(_debugTable[tableName], tableName);
 			end
 		end);
+	
+	-- This thing is janky as hell
+	local l_debug = CreateFrame("frame", addonName .. "Debug", UIParent);
+	WQT.debug = l_debug;
+
+	l_debug.linePool = CreateFramePool("FRAME", l_debug, "WQT_DebugLine");
+
+	local function ShowDebugHistory()
+		local highest = 1000;
+		for k, v in ipairs(l_debug.history) do
+			if (v > highest) then
+				highest = v;
+			end
+		end
+
+		
+		local scale = l_debug:GetScale();
+		local yScale = 1000 / highest ;
+		local current = 0;
+		local following = 0;
+		local line = nil;
+		l_debug.linePool:ReleaseAll();
+		
+		for i=1, highest/1000 do
+			local scaleLine = l_debug.linePool:Acquire();
+			scaleLine:Show();
+			scaleLine.Fill:SetStartPoint("BOTTOMLEFT", l_debug, 0, i*100*scale* yScale);
+			scaleLine.Fill:SetEndPoint("BOTTOMLEFT", l_debug, 100*scale, i*100*scale* yScale);
+			scaleLine.Fill:SetVertexColor(0.5, 0.5, 0.5, 0.5);
+			scaleLine.Fill:Show();
+		end
+		
+		for i=1, #l_debug.history, 1 do
+			line = l_debug.linePool:Acquire();
+			current = l_debug.history[i];
+			following = i == # l_debug.history and  current or l_debug.history[i+1]; 
+	
+			line:Show();
+			line.Fill:SetStartPoint("BOTTOMLEFT", l_debug, (i-1)*2*scale, current/10*scale * yScale);
+			line.Fill:SetEndPoint("BOTTOMLEFT", l_debug, i*2*scale, following/10*scale * yScale);
+			local fade = ((current-500)/ 500)*2;
+			line.Fill:SetVertexColor(fade, 2-fade, 0, 1);
+			line.Fill:Show();
+		end
+		
+		for i=1, #l_debug.gpuHistory, 1 do
+			line = l_debug.linePool:Acquire();
+			current = l_debug.gpuHistory[i];
+			following = i == # l_debug.gpuHistory and current or l_debug.gpuHistory[i+1]; 
+	
+			line:Show();
+			line.Fill:SetStartPoint("BOTTOMLEFT", l_debug, (i-1)*2*scale, current/5*scale);
+			line.Fill:SetEndPoint("BOTTOMLEFT", l_debug, i*2*scale, following/5*scale);
+			line.Fill:SetVertexColor(1, 0, 1, 1);
+			line.Fill:Show();
+		end
+		
+	end
+
+	l_debug:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+		  edgeFile = nil,
+		  tileSize = 0, edgeSize = 16,
+		  insets = { left = 0, right = 0, top = 0, bottom = 0 }
+		  })
+	l_debug:SetFrameLevel(5)
+	l_debug:SetMovable(true)
+	l_debug:SetPoint("Center", 250, 0)
+	l_debug:RegisterForDrag("LeftButton")
+	l_debug:EnableMouse(true);
+	l_debug:SetScript("OnDragStart", l_debug.StartMoving)
+	l_debug:SetScript("OnDragStop", l_debug.StopMovingOrSizing)
+	l_debug:SetWidth(100)
+	l_debug:SetHeight(100)
+	l_debug:SetClampedToScreen(true)
+	
+	l_debug.text = l_debug:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
+	l_debug.text:SetPoint("TOPLEFT",l_debug, "BOTTOMLEFT" , 2, -2)
+	l_debug.text:SetText("0000")
+	l_debug.text:SetJustifyH("left")
+	
+	l_debug.time = 0;
+	l_debug.interval = 0.2;
+	l_debug.history = {}
+	l_debug.gpuHistory = {}
+	l_debug.callCounters = {}
+	l_debug.lastGPU = 0;
+
+	l_debug:SetScript("OnUpdate", function(self,elapsed) 
+			self.time = self.time + elapsed;
+			if(self.time >= self.interval) then
+				self.time = self.time - self.interval;
+				UpdateAddOnMemoryUsage();
+				table.insert(self.history, GetAddOnMemoryUsage(addonName));
+				if(#self.history > 50) then
+					table.remove(self.history, 1)
+				end
+
+				local mem = floor(l_debug.history[#l_debug.history]*100)/100;
+				if mem >10000 then
+					mem = mem/10000 .."M"
+				end
+				UpdateAddOnCPUUsage()
+				local gpuNow = GetAddOnCPUUsage(addonName)
+				local gpuDiff = floor((gpuNow - l_debug.lastGPU)*100)/100
+				table.insert(self.gpuHistory, gpuDiff);
+				if(#self.gpuHistory > 50) then
+					table.remove(self.gpuHistory, 1)
+				end
+				l_debug.lastGPU = gpuNow;
+				mem = mem .. "\ncur: " .. gpuDiff .."ms"
+				local highest = 0
+				for k, v in ipairs(l_debug.gpuHistory) do
+					if (v > highest) then
+						highest = v;
+					end
+				end
+				mem = mem .. "\ntop: " .. highest .."ms"
+				
+				l_debug.text:SetText(mem)
+				
+				ShowDebugHistory()
+			end
+		end)
+	l_debug:Show()
 end
 
 function WQT:debugPrint(...)
@@ -59,6 +183,41 @@ function WQT:debugAnnounceTable(name, colorHex)
 		colorHex = colorHex or "FFFFFF";
 		local output = "|cFF%s|HWQTDebug:%s|h[WQT] %s: %d|h|r";
 		self:debugPrint(output:format(colorHex, name, name, count));
+	end
+end
+
+function WQT:AddDebugToTooltip(tooltip, questInfo, deprecated)
+	if (not _debug) then return end;
+	deprecated = deprecated or _emptyTable;
+	local color = NORMAL_FONT_COLOR;
+	-- First all non table values;
+	for key, value in pairs(questInfo) do
+		local isDeprecated = deprecated[key] and type(deprecated[key]) ~= "table";
+		color = isDeprecated and GRAY_FONT_COLOR or NORMAL_FONT_COLOR;
+		
+		if (type(value) ~= "table") then
+			tooltip:AddDoubleLine(key, tostring(value), color.r, color.g, color.b, color.r, color.g, color.b);
+		elseif (type(value) == "table" and value.GetRGBA) then
+			tooltip:AddDoubleLine(key, value.r .. "/" .. value.g .. "/" .. value.b, color.r, color.g, color.b, color.r, color.g, color.b);
+		end
+	end
+	
+	-- Actual tables
+	for key, value in pairs(questInfo) do
+		if (type(value) == "table" and not value.GetRGBA) then
+			tooltip:AddDoubleLine(key, "");
+			for key2, value2 in pairs(value) do
+				local isDeprecated = deprecated[key] and deprecated[key][key2] and type(deprecated[key][key2]) ~= "table";
+				color = isDeprecated and GRAY_FONT_COLOR or NORMAL_FONT_COLOR;
+				if (type(value2) == "table" and value2.GetRGBA) then-- colors
+					tooltip:AddDoubleLine("    " .. key2, value2.r .. "/" .. value2.g .. "/" .. value2.b, color.r, color.g, color.b, color.r, color.g, color.b);
+				elseif (type(value2) ~= "table") then
+					tooltip:AddDoubleLine("    " .. key2, tostring(value2), color.r, color.g, color.b, color.r, color.g, color.b);
+				else
+					AddDebugToTooltip(tooltip, questInfo, deprecated[key])
+				end
+			end
+		end
 	end
 end
 
@@ -412,30 +571,21 @@ end
 _V["LATEST_UPDATE"] = 
 	[[
 	<h3>&#160;</h3>
-	<h1>8.2.01d</h1> 
+	<h1>8.2.02</h1> 
+	<p> Behind the scenes rework resulting in the quest list being more accurate and less likely to miss quests.</p>
+	<h2>New:</h2>
+	<p>* New settings for the quest list:</p>
+	<p>&#160;&#160;- 'Show zone' setting (default on): Show zone label when quests from multiple zones are shown.</p>
+	<p>&#160;&#160;- 'Expand times' setting (default off): Adds a secondary scale to timers in the quest list. I.e. adding minutes to hours.</p>
+	<h2>Changes:</h2>
+	<p>* Like pin settings, moved quest list settings to a separate group.</p>
+	<p>* Times for quests with a total duration over 4 days are now purple.</p>
+	<p>* Times update in real-time rather than when data is updated.</p>
+	<p>* Timers below 1 minute will now show as seconds.</p>
+	<p>* Using WorldFightMap will now act like the default map. To revert, enable Settings -> List Settings -> Always All Quests</p>
 	<h2>Fixes:</h2>
-	<p>* Fixed an empty list when some official filters are enabled.</p>
-	<p>* Fixed an error related to the dataprovider.</p>
-	<h3>&#160;</h3>
-	<h1>8.2.01c</h1> 
-	<h2>Changed:</h2>
-	<p>* Removed 'precise filter'. It was broken for ages.</p>
-	<p>* Sorting will now fall back to sorting by reward, rather than just by title.</p>
-	<h3>&#160;</h3>
-	<h2>Fixes:</h2>
-	<p>* Fixed the quest list not showing when the world map is set to full screen and opened using 'L'.</p>
-	<p>* Fixed Nazjatar quests not showing on other continents.</p>
-	<p>* Fixed Alliance Nazjatar factions.</p>
-	<p>* Fixed Nazjatar 'bonus objectives'.</p>
-	<p>* Fixed compatibility with WorldFlightMap.</p>
-	<p>* Fixed issues related to 'Always All Quests'.</p>
-	<p>* Fixed filter for 'default' quests.</p>
-	<p>* Fixed order of 'Type' sort to prioritize elite and rare over common.</p>
-	<h3>&#160;</h3>
-	<h1>8.2.01b</h1> 
-	<h2>Fixes:</h2>
-	<p>* Fixed unintended cooldown times on map pins.</p>
-	<p>* Fixed add-on showing as outdated.</p>
+	<p>* Fixed pin ring timers for quests with a duration over 4 days.</p>
+	<p>* Fixed map highlights for WorldFightMap users.</p>
 	<h3>&#160;</h3>
 	<h1>8.2.01</h1> 
 	<h2>New:</h2>
@@ -453,6 +603,10 @@ _V["LATEST_UPDATE"] =
 	<h2>Changed:</h2>
 	<p>* Switched list 'selected' and 'tracker' highlight brightness.</p>
 	<p>* Swapped order of 'type' sort.</p>
+	<p>* Removed 'precise filter'. It was broken for ages.</p>
+	<p>* Sorting will now fall back to sorting by reward, rather than just by title.</p>
+	<h2>Fixes:</h2>
+	<p>* Fixed order of 'Type' sort to prioritize elite and rare over common.</p>
 	<h3>&#160;</h3>
 	]]
 

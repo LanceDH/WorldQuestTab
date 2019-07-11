@@ -32,7 +32,7 @@
 --		canUpgrade				[boolean, nullable] true if item has a chance to upgrade (e.g. ilvl 285+)
 
 --
--- Deprecated
+-- Deprecated 
 --
 -- time						
 --		short					Use WQT_DataProvider:GetQuestTimeString(questInfo) instead
@@ -42,14 +42,14 @@
 --		timeStamp				Use WQT_DataProvider:GetQuestTimeString(questInfo) instead
 
 local addonName, addon = ...
-local deprecated = {["time"] = {["short"] = true, ["full"] = true, ["minutes"] = true, ["color"] = true, ["timeStamp"] = true}}
+local _deprecated = {["time"] = {["short"] = true, ["full"] = true, ["minutes"] = true, ["color"] = true, ["timeStamp"] = true}}
+local _emptyTable = {};
 
 local WQT = addon.WQT;
 local ADD = LibStub("AddonDropDown-1.0");
 
 local _L = addon.L
 local _V = addon.variables;
-local _debug = addon.debug
 local _playerFaction = GetPlayerFactionGroup();
 
 local _TomTomLoaded = IsAddOnLoaded("TomTom");
@@ -57,7 +57,6 @@ local _CIMILoaded = IsAddOnLoaded("CanIMogIt");
 local _WFMLoaded = IsAddOnLoaded("WorldFlightMap");
 
 local _anchors = {["flight"] = 1, ["world"] = 2, ["full"] = 3};
-local QUEST_LOG_UPDATE_CD = 1;
 
 local time = time;
 	
@@ -79,6 +78,7 @@ local WQT_DEFAULTS = {
 		rewardAmountColors = true;
 		alwaysAllQuests = false;
 		listFullTime = false;
+		listShowZone = true;
 		
 		pinType = true;
 		pinRewardType = false;
@@ -364,79 +364,7 @@ local function GetLocalizedAbreviatedNumber(number)
 end
 
 local function slashcmd(msg, editbox)
-	if msg == "options" then
-		print(_L["OPTIONS_INFO"]);
-	else
-		if _debug then
-		--This is to get the zone coords for highlights so I don't have to retype it every time
-		--[[
-		 local x, y = GetCursorPosition();
-		
-		 local WorldMapButton = WorldMapFrame.ScrollContainer.Child;
-		 x = x / WorldMapButton:GetEffectiveScale();
-		 y = y / WorldMapButton:GetEffectiveScale();
-	
-		 local centerX, centerY = WorldMapButton:GetCenter();
-		 local width = WorldMapButton:GetWidth();
-		 local height = WorldMapButton:GetHeight();
-		 local adjustedY = (centerY + (height/2) - y ) / height;
-		 local adjustedX = (x - (centerX - (width/2))) / width;
-		 print(WorldMapFrame.mapID)
-		 print("{\[\"x\"\] = " .. floor(adjustedX*100)/100 .. ", \[\"y\"\] = " .. floor(adjustedY*100)/100 .. "} ")
-		]]
-		local debugfr = WQT.debug;
-		debugfr.mem = GetAddOnMemoryUsage(addonName);
-		local frames = {WQT_WorldQuestFrame, WQT_QuestScrollFrame, WQT_WorldQuestFrame.pinHandler, WQT_WorldQuestFrame.dataProvider, WQT};
-		for key, frame in pairs(frames) do
-			for k, v in pairs(frame) do
-				if type(v) == "function" then
-					local name = frame.GetName and  frame:GetName() .. ":" or ""
-					debugfr.callCounters[name .. k] = {};
-					hooksecurefunc(frame, k, function(self) 
-							local mem = GetAddOnMemoryUsage(addonName) - debugfr.mem;
-							tinsert(debugfr.callCounters[name .. k], time().."|"..mem);
-						end)
-				end
-			end
-		end
-	
-		debugfr.callCounters["OnMapChanged"] = {};
-		hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
-			local mem = GetAddOnMemoryUsage(addonName) - debugfr.mem;
-			tinsert(debugfr.callCounters["OnMapChanged"], time().."|"..mem);
-		end)
-			
-		debugfr.callCounters["QuestMapFrame_ShowQuestDetails"] = {};
-		hooksecurefunc("QuestMapFrame_ShowQuestDetails", function()
-				local mem = GetAddOnMemoryUsage(addonName) - debugfr.mem;
-				tinsert(debugfr.callCounters["QuestMapFrame_ShowQuestDetails"], time().."|"..mem);
-			end)
-		
-		debugfr.callCounters["QuestMapFrame_ReturnFromQuestDetails"] = {};
-		hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
-				local mem = GetAddOnMemoryUsage(addonName) - debugfr.mem;
-				tinsert(debugfr.callCounters["QuestMapFrame_ReturnFromQuestDetails"], time().."|"..mem);
-			end)
-			
-			debugfr.callCounters["ToggleDropDownMenu"] = {};
-		hooksecurefunc("ToggleDropDownMenu", function()
-				local mem = GetAddOnMemoryUsage(addonName) - debugfr.mem;
-				tinsert(debugfr.callCounters["ToggleDropDownMenu"], time().."|"..mem);
-			end);
-			
-			debugfr.callCounters["QuestMapFrame_ShowQuestDetails"] = {};
-		hooksecurefunc("QuestMapFrame_ShowQuestDetails", function(self)
-				local mem = GetAddOnMemoryUsage(addonName) - debugfr.mem;
-				tinsert(debugfr.callCounters["QuestMapFrame_ShowQuestDetails"], time().."|"..mem);
-			end)
-			
-			debugfr.callCounters["LFGListSearchPanel_UpdateResults"] = {};
-		hooksecurefunc("LFGListSearchPanel_UpdateResults", function(self)
-				local mem = GetAddOnMemoryUsage(addonName) - debugfr.mem;
-				tinsert(debugfr.callCounters["LFGListSearchPanel_UpdateResults"], time().."|"..mem);
-			end)
-		end
-	end
+	print(_L["OPTIONS_INFO"]);
 end
 
 local function IsRelevantFilter(filterID, key)
@@ -532,7 +460,7 @@ local function SortQuestListByZone(a, b)
 	if a.mapInfo.mapID == b.mapInfo.mapID then
 		return  SortQuestListByReward(a, b);
 	end
-	if (WQT.settings.alwaysAllQuests or _WFMLoaded) then
+	if (WQT.settings.alwaysAllQuests) then
 		if a.mapInfo.mapID == WorldMapFrame.mapID or b.mapInfo.mapID == WorldMapFrame.mapID then
 			return a.mapInfo.mapID == WorldMapFrame.mapID and b.mapInfo.mapID ~= WorldMapFrame.mapID;
 		end
@@ -609,44 +537,6 @@ local function ConvertOldSettings(version)
 	-- Hightlight 'what's new'
 	if (version < GetAddOnMetadata(addonName, "version")) then
 		WQT.settings.updateSeen = false;
-	end
-end
-
-local function AddDebugToTooltip(tooltip, questInfo)
-	-- First all non table values;
-	for key, value in pairs(questInfo) do
-		if (not deprecated[key]) then
-			if (type(value) ~= "table") then
-				tooltip:AddDoubleLine(key, tostring(value));
-			elseif (type(value) == "table" and value.GetRGBA) then
-				tooltip:AddDoubleLine(key, value.r .. "/" .. value.g .. "/" .. value.b );
-			end
-		end
-	end
-
-	-- Actual tables
-	for key, value in pairs(questInfo) do
-		if (type(value) == "table" and not value.GetRGBA) then
-			tooltip:AddDoubleLine(key, "");
-			for key2, value2 in pairs(value) do
-				if (type(value2) == "table" and value2.GetRGBA) then-- colors
-					tooltip:AddDoubleLine("    " .. key2, value2.r .. "/" .. value2.g .. "/" .. value2.b );
-				else
-					tooltip:AddDoubleLine("    " .. key2, tostring(value2));
-				end
-			end
-		end
-	end
-	
-	-- Deprecated values
-	for key, value in pairs(questInfo) do
-		if (deprecated[key]) then
-			if (type(value) ~= "table") then
-				tooltip:AddDoubleLine(key, tostring(value) , 0.5, 0.5, 0.5, 0.5, 0.5, 0.5);
-			elseif (type(value) == "table" and value.GetRGBA) then
-				tooltip:AddDoubleLine(key, value.r .. "/" .. value.g .. "/" .. value.b , 0.5, 0.5, 0.5, 0.5, 0.5, 0.5);
-			end
-		end
 	end
 end
 
@@ -998,6 +888,16 @@ function WQT:InitFilter(self, level)
 			info.checked = function() return WQT.settings.showFactionIcon end;
 			ADD:AddButton(info, level);		
 			
+			info.text = _L["SHOW_ZONE"];
+			info.tooltipTitle = _L["SHOW_ZONE"];
+			info.tooltipText = _L["SHOW_ZONE_TT"];
+			info.func = function(_, _, _, value)
+					WQT.settings.listShowZone = value;
+					WQT_QuestScrollFrame:DisplayQuestList(true, true);
+				end
+			info.checked = function() return WQT.settings.listShowZone end;
+			ADD:AddButton(info, level);		
+
 			info.text = _L["AMOUNT_COLORS"];
 			info.tooltipTitle = _L["AMOUNT_COLORS"];
 			info.tooltipText = _L["AMOUNT_COLORS_TT"];
@@ -1347,12 +1247,12 @@ function WQT:isUsingFilterNr(id)
 end
 
 function WQT:PassesMapFilter(questInfo)
-	if (_WFMLoaded or WQT.settings.alwaysAllQuests) then return true; end
+	if (WQT.settings.alwaysAllQuests) then return true; end
 	local mapID = WorldMapFrame.mapID;
 	if (FlightMapFrame and FlightMapFrame:IsShown()) then
 		mapID = GetTaxiMapID();
 	else
-		if (WQT_WorldQuestFrame.currentMapInfo and WQT_WorldQuestFrame.currentMapInfo.mapType == Enum.UIMapType.World) then return true; end
+		if (_dataProvider.currentMapInfo and _dataProvider.currentMapInfo.mapType == Enum.UIMapType.World) then return true; end
 	end
 	
 	if (mapID == questInfo.mapInfo.mapID) then return true; end
@@ -1541,11 +1441,8 @@ end
 
 function WQT_ListButtonMixin:OnUpdate(elapsed)
 	if (not self.info or not self:IsShown() or self.info.seconds == 0) then return; end
-	local seconds, timeString, color, _ = _dataProvider:GetQuestTimeString(self.info, WQT.settings.listFullTime)
+	local seconds, timeString, color, _ = _dataProvider:GetQuestTimeString(self.info, WQT.settings.listFullTime);
 	self.Time:SetTextColor(color.r, color.g, color.b, 1);
-	--if (seconds < 1) then
-	--	timeString = RAID_INSTANCE_EXPIRES_EXPIRED;
-	--end
 	self.Time:SetText(timeString);
 end
 
@@ -1613,7 +1510,7 @@ function WQT_ListButtonMixin:OnEnter()
 
 	WQT_QuestScrollFrame:ShowQuestTooltip(self, questInfo);
 
-	if (FlightMapFrame and FlightMapFrame:IsShown()) then
+	if (FlightMapFrame and FlightMapFrame:IsShown() and not _WFMLoaded) then
 		self.flightPin =  WQT:GetFlightMapPin(questInfo.questId)
 		if(self.flightPin) then
 			self.flightPin:SetAlpha(1);
@@ -1699,10 +1596,16 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 
 	local extraSpace = WQT.settings.showFactionIcon and 0 or 14;
 	extraSpace = extraSpace + (WQT.settings.showTypeIcon and 0 or 14);
-	self.Time:SetWidth(extraSpace + (WQT.settings.listFullTime and 70 or 60))
-	self.Extra:SetWidth(extraSpace + (WQT.settings.listFullTime and 80 or 90))
+	local timeWidth = extraSpace + (WQT.settings.listFullTime and 70 or 60);
+	local zoneWidth = extraSpace + (WQT.settings.listFullTime and 80 or 90);
+	if (not shouldShowZone) then
+		timeWidth = timeWidth + zoneWidth;
+		zoneWidth = 0.1;
+	end
+	self.Time:SetWidth(timeWidth)
+	self.Extra:SetWidth(zoneWidth)
 	
-	self.Extra:SetText(self.showZone and questInfo.mapInfo.name or "");
+	self.Extra:SetText(shouldShowZone and questInfo.mapInfo.name or "");
 	
 	if (self:IsMouseOver() or self.Faction:IsMouseOver() or (WQT_QuestScrollFrame.PoIHoverId and WQT_QuestScrollFrame.PoIHoverId > 0 and WQT_QuestScrollFrame.PoIHoverId == questInfo.questId)) then
 		self.Highlight:Show();
@@ -1810,7 +1713,7 @@ function WQT_ListButtonMixin:ShowWorldmapHighlight(zoneId)
 		coords = _V["WQT_ZONE_MAPCOORDS"][947][mapInfo.parentMapID];
 		mapInfo = C_Map.GetMapInfo(mapInfo.parentMapID);
 	end
-
+	
 	if not coords then return; end;
 
 	WorldMapFrame.ScrollContainer:GetMap():TriggerEvent("SetAreaLabel", MAP_AREA_LABEL_TYPE.POI, mapInfo.name);
@@ -2081,11 +1984,6 @@ end
 
 WQT_ScrollListMixin = {};
 
-function WQT_ScrollListMixin:OnSizeChanged(...)
-	
-end
-
-
 function WQT_ScrollListMixin:OnLoad()
 	self.questList = {};
 	self.questListDisplay = {};
@@ -2112,16 +2010,12 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 		WQT_Tooltip:SetText(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
 		WQT_Tooltip.recalculatePadding = true;
 			-- Add debug lines
-	if _debug then
-		AddDebugToTooltip(WQT_Tooltip, questInfo);
-	end
 		WQT_Tooltip:Show();
 		return;
 	end
 	
 	local title, factionID, capped = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
-	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questInfo.questId);
-	local color = WORLD_QUEST_QUALITY_COLORS[rarity or 1];
+	local color = WORLD_QUEST_QUALITY_COLORS[questInfo.rarity or 1];
 	
 	WQT_Tooltip:SetText(title, color.r, color.g, color.b);
 	
@@ -2139,8 +2033,10 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 	-- Add time
 	local seconds, timeString = _dataProvider:GetQuestTimeString(questInfo)
 	if (seconds > 0) then
-		local timeString = seconds > 60 and SecondsToTime(seconds, true, true) or SecondsToTime(seconds, false, true);
-		WQT_Tooltip:AddLine(BONUS_OBJECTIVE_TIME_LEFT:format(timeString), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+		--local displayTime = 
+		local seconds, timeString, color = _dataProvider:GetQuestTimeString(questInfo, true, true);
+		color = seconds <= 3600  and color or NORMAL_FONT_COLOR;
+		WQT_Tooltip:AddLine(BONUS_OBJECTIVE_TIME_LEFT:format(timeString), color.r, color.g, color.b);
 	end
 
 	for objectiveIndex = 1, questInfo.numObjectives do
@@ -2192,10 +2088,7 @@ function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
 		end
 	end
 	
-	-- Add debug lines
-	if _debug then
-		AddDebugToTooltip(WQT_Tooltip, questInfo);
-	end
+	WQT:AddDebugToTooltip(WQT_Tooltip, questInfo, _deprecated);
 
 	-- CanIMogIt functionality
 	-- Partial copy of addToTooltip in tooltips.lua
@@ -2334,7 +2227,7 @@ end
 
 function WQT_ScrollListMixin:DisplayQuestList(skipPins, skipFilter)
 	local mapID = WorldMapFrame.mapID;
-	if (FlightMapFrame and FlightMapFrame:IsShown()) then 
+	if (FlightMapFrame and FlightMapFrame:IsShown() and not _WFMLoaded) then 
 		local taxiId = GetTaxiMapID()
 		mapID = (taxiId and taxiId > 0) and taxiId or mapID;
 	end
@@ -2349,7 +2242,7 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins, skipFilter)
 	local buttons = self.buttons;
 	if buttons == nil then return; end
 
-	local shouldShowZone = WQT.settings.alwaysAllQuests or (mapInfo and (mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World)); 
+	local shouldShowZone = WQT.settings.listShowZone and (WQT.settings.alwaysAllQuests or (mapInfo and (mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World))); 
 
 	if not skipFilter then
 		self:UpdateQuestFilters();
@@ -2363,15 +2256,13 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins, skipFilter)
 		local displayIndex = i + offset;
 
 		if ( displayIndex <= #list) then
-			button.showZone = shouldShowZone;
-			button:Update(list[displayIndex]);
+			button:Update(list[displayIndex], shouldShowZone);
 		else
 			button.Reward.Amount:Hide();
 			button.TrackedBorder:Hide();
 			button.Highlight:Hide();
 			button:Hide();
 			button.info = nil;
-			button.showZone = nil;
 		end
 	end
 	HybridScrollFrame_Update(self, #list * _V["WQT_LISTITTEM_HEIGHT"], self:GetHeight());
@@ -2521,6 +2412,14 @@ function WQT_CoreMixin:OnLoad()
 				WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(); 
 			end
 		end)
+		
+	self.dataProvider:HookQuestsLoaded(function() 
+			WQT:debugPrint("Quests Update callback")
+			self.ScrollFrame:UpdateQuestList(); 
+			self.pinHandler:UpdateMapPoI(); 
+			-- Update the quest number counter
+			WQT_QuestLogFiller:UpdateText();
+		end)
 
 	self:RegisterEvent("PLAYER_REGEN_DISABLED");
 	self:RegisterEvent("PLAYER_REGEN_ENABLED");
@@ -2528,7 +2427,7 @@ function WQT_CoreMixin:OnLoad()
 	self:RegisterEvent("WORLD_QUEST_COMPLETED_BY_SPELL"); -- Class hall items
 	self:RegisterEvent("ADDON_LOADED");
 	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
-	self:RegisterEvent("QUEST_LOG_UPDATE");
+	self:RegisterEvent("QUEST_LOG_UPDATE"); -- Dataprovider only
 	self:SetScript("OnEvent", function(self, event, ...) 
 			if	(self.dataProvider) then
 				self.dataProvider:OnEvent(event, ...);
@@ -2540,13 +2439,6 @@ function WQT_CoreMixin:OnLoad()
 			end 
 
 		end)
-
-	-- Refresh the list every 60 seconds to update time remaining and check for new quests.
-	-- I want this replaced with a function hook or event call. QUEST_LOG_UPDATE triggers too often
-	--self.ticker = C_Timer.NewTicker(_V["WQT_REFRESH_DEFAULT"], function() 
-	--		_dataProvider:LoadQuestsInZone();
-	--		self.ScrollFrame:UpdateQuestList(); 
-	--	end)
 
 	SLASH_WQTSLASH1 = '/wqt';
 	SLASH_WQTSLASH2 = '/worldquesttab';
@@ -2639,15 +2531,6 @@ function WQT_CoreMixin:OnLoad()
 				self:SelectTab(WQT_TabNormal); 
 			end
 		end)
-		
-	hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
-		local mapAreaID = WorldMapFrame.mapID;
-		if (self.currentMapId ~= mapAreaID) then
-			self.mapChanged = true;
-			self.currentMapId = mapAreaID;
-			self.currentMapInfo = C_Map.GetMapInfo(mapAreaID);
-		end
-	end)
 	
 	hooksecurefunc(WorldMapFrame.BorderFrame.MaximizeMinimizeFrame, "Maximize", function() 
 			WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.full);
@@ -3026,6 +2909,10 @@ function WQT_CoreMixin:WORLD_QUEST_COMPLETED_BY_SPELL(...)
 	self.ScrollFrame:UpdateQuestList();
 end
 
+function WQT_CoreMixin:QUEST_LOG_UPDATE()
+	-- This does nothing
+end
+
 function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 	local questId, added = ...;
 	-- step 1: Get all the tracked quests before any changes happen
@@ -3038,7 +2925,7 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 			self.trackedQuests[k] = true
 		end
 	end
-		
+
 	self.ScrollFrame:DisplayQuestList();
 
 	if questId and added and _TomTomLoaded and WQT.settings.useTomTom and WQT.settings.TomTomAutoArrow and IsWorldQuestHardWatched(questId) then
@@ -3049,40 +2936,6 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 			local uId = TomTom:AddWaypoint(zoneId, x, y, {["title"] = title})
 		end
 	end
-end
-
-function WQT_CoreMixin:ReloadData()
-	self.lastUpdate = self.lastUpdate or 0;
-	
-	local now = GetTime();
-	local elapsed = now - self.lastUpdate;
-	if  (self.mapChanged or elapsed > QUEST_LOG_UPDATE_CD) then
-		
-		--print(elapsed)
-		self.lastUpdate = now;
-		self.mapChanged = false;
-		_dataProvider:LoadQuestsInZone(self.currentMapId);
-		if (self.dataTicker) then
-			print("ticker canceled")
-			self.dataTicker:Cancel();
-			self.dataTicker = nil;
-		end
-	else
-		if (not self.dataTicker) then
-			print("Update in ", QUEST_LOG_UPDATE_CD - elapsed)
-			self.dataTicker =  C_Timer.NewTicker(QUEST_LOG_UPDATE_CD - elapsed+0.05, function() print("custom update"); self:ReloadData() end, 1);
-		end
-		print("prevented")
-	end
-	
-	self.ScrollFrame:UpdateQuestList(); 
-	self.pinHandler:UpdateMapPoI(); 
-	-- Update the count number counter
-	WQT_QuestLogFiller:UpdateText();
-end
-
-function WQT_CoreMixin:QUEST_LOG_UPDATE()
-	self:ReloadData();
 end
 
 function WQT_CoreMixin:SetCvarValue(flagKey, value)
@@ -3294,154 +3147,9 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 			WQT_WorldMapContainer:SetAlpha(0);
 		end
 	end
-	
-	WQT_WorldQuestFrame.ScrollFrame:DisplayQuestList();
 end
 
 --------
 -- Debug stuff to monitor mem usage
 --------
 
-if _debug then
-	local l_debug = CreateFrame("frame", addonName .. "Debug", UIParent);
-	WQT.debug = l_debug;
-
-	l_debug.linePool = CreateFramePool("FRAME", l_debug, "WQT_DebugLine");
-
-	local function ShowDebugHistory()
-		local highest = 1000;
-		for k, v in ipairs(l_debug.history) do
-			if (v > highest) then
-				highest = v;
-			end
-		end
-
-		local mem = floor(l_debug.history[#l_debug.history]*100)/100;
-		local scale = l_debug:GetScale();
-		local yScale = 1000 / highest ;
-		local current = 0;
-		local following = 0;
-		local line = nil;
-		l_debug.linePool:ReleaseAll();
-		
-		for i=1, highest/1000 do
-			local scaleLine = l_debug.linePool:Acquire();
-			scaleLine:Show();
-			scaleLine.Fill:SetStartPoint("BOTTOMLEFT", l_debug, 0, i*100*scale* yScale);
-			scaleLine.Fill:SetEndPoint("BOTTOMLEFT", l_debug, 100*scale, i*100*scale* yScale);
-			scaleLine.Fill:SetVertexColor(0.5, 0.5, 0.5, 0.5);
-			scaleLine.Fill:Show();
-		end
-		
-		for i=1, #l_debug.history, 1 do
-			line = l_debug.linePool:Acquire();
-			current = l_debug.history[i];
-			following = i == # l_debug.history and  current or l_debug.history[i+1]; 
-	
-			line:Show();
-			line.Fill:SetStartPoint("BOTTOMLEFT", l_debug, (i-1)*2*scale, current/10*scale * yScale);
-			line.Fill:SetEndPoint("BOTTOMLEFT", l_debug, i*2*scale, following/10*scale * yScale);
-			local fade = ((current-500)/ 500)*2;
-			line.Fill:SetVertexColor(fade, 2-fade, 0, 1);
-			line.Fill:Show();
-		end
-		if mem >10000 then
-			mem = mem/10000 .."M"
-		end
-		l_debug.text:SetText(mem)
-		
-		local color = GREEN_FONT_COLOR;
-		if (GetTime() - WQT_WorldQuestFrame.lastUpdate < QUEST_LOG_UPDATE_CD) then
-			color = RED_FONT_COLOR;
-		end
-		l_debug.updateStatus:SetColorTexture(color:GetRGB())
-	end
-
-	l_debug:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-		  edgeFile = nil,
-		  tileSize = 0, edgeSize = 16,
-		  insets = { left = 0, right = 0, top = 0, bottom = 0 }
-		  })
-	l_debug:SetFrameLevel(5)
-	l_debug:SetMovable(true)
-	l_debug:SetPoint("Center", 250, 0)
-	l_debug:RegisterForDrag("LeftButton")
-	l_debug:EnableMouse(true);
-	l_debug:SetScript("OnDragStart", l_debug.StartMoving)
-	l_debug:SetScript("OnDragStop", l_debug.StopMovingOrSizing)
-	l_debug:SetWidth(100)
-	l_debug:SetHeight(100)
-	l_debug:SetClampedToScreen(true)
-	
-	l_debug.text = l_debug:CreateFontString(nil, nil, "GameFontWhiteSmall")
-	l_debug.text:SetPoint("BOTTOMLEFT", 2, 2)
-	l_debug.text:SetText("0000")
-	l_debug.text:SetJustifyH("left")
-	
-	l_debug.updateStatus = l_debug:CreateTexture(nil, "ARTWORK")
-	l_debug.updateStatus:SetSize(7, 7);
-	l_debug.updateStatus:SetPoint("BOTTOMRIGHT",-2, 2)
-	
-	l_debug.time = 0;
-	l_debug.interval = 0.2;
-	l_debug.history = {}
-	l_debug.callCounters = {}
-
-	l_debug:SetScript("OnUpdate", function(self,elapsed) 
-			self.time = self.time + elapsed;
-			if(self.time >= self.interval) then
-				self.time = self.time - self.interval;
-				UpdateAddOnMemoryUsage();
-				table.insert(self.history, GetAddOnMemoryUsage(addonName));
-				if(#self.history > 50) then
-					table.remove(self.history, 1)
-				end
-				ShowDebugHistory()
-
-				if(l_debug.showTT) then
-					GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
-					GameTooltip:SetText("Function calls", nil, nil, nil, nil, true);
-					for k, v in pairs(l_debug.callCounters) do
-						local t = time();
-						local ts = 0;
-						local mem = 0;
-						local memtot = 0;
-						local latest = 0;
-						
-						for i = #v, 1, -1 do
-							ts, mem = v[i]:match("(%d+)|(%d+)");
-							ts = tonumber(ts);
-							
-							mem = tonumber(mem);
-							if ts then
-								if (t - ts> 20) then
-									table.remove(v, i);
-								elseif (ts > latest) then
-									latest = ts;
-								end
-								memtot = memtot + mem;
-							end
-						end
-							
-						if #v > 0 then
-							local color = (t - latest <=1) and NORMAL_FONT_COLOR or DISABLED_FONT_COLOR;
-							GameTooltip:AddDoubleLine(k, #v .. " (" .. floor(memtot/10)/10 .. ")", color.r, color.g, color.b, color.r, color.g, color.b);		
-						end
-					end
-					GameTooltip:Show();
-				end
-			end
-		end)
-
-	l_debug:SetScript("OnEnter", function(self,elapsed) 
-			l_debug.showTT = true;
-			
-		end)
-		
-	l_debug:SetScript("OnLeave", function(self,elapsed) 
-			l_debug.showTT = false;
-			GameTooltip:Hide();
-		end)
-	l_debug:Show()
-
-end
