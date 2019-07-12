@@ -34,15 +34,17 @@
 --
 -- Deprecated 
 --
--- time						
---		short					Use WQT_DataProvider:GetQuestTimeString(questInfo) instead
--- 		full					Use WQT_DataProvider:GetQuestTimeString(questInfo) instead
---		minutes					Use WQT_DataProvider:GetQuestTimeString(questInfo) instead
---		color					Use WQT_DataProvider:GetQuestTimeString(questInfo) instead
---		timeStamp				Use WQT_DataProvider:GetQuestTimeString(questInfo) instead
+local _deprecated = {
+	["time"] = {
+		["short"] = true			-- Use WQT_DataProvider:GetQuestTimeString(questInfo) instead
+		,["full"] = true			-- Use WQT_DataProvider:GetQuestTimeString(questInfo) instead
+		,["minutes"] = true		-- Use WQT_DataProvider:GetQuestTimeString(questInfo) instead
+		,["color"] = true		-- Use WQT_DataProvider:GetQuestTimeString(questInfo) instead
+		,["timeStamp"] = true	-- Use WQT_DataProvider:GetQuestTimeString(questInfo) instead
+		}
+	}
 
 local addonName, addon = ...
-local _deprecated = {["time"] = {["short"] = true, ["full"] = true, ["minutes"] = true, ["color"] = true, ["timeStamp"] = true}}
 local _emptyTable = {};
 
 local WQT = addon.WQT;
@@ -419,104 +421,30 @@ local function GetSortedFilterOrder(filterId)
 	return tbl;
 end
 
-local function SortQuestListByReward(a, b) 
-	if not a.isValid or not b.isValid then
-		return a.isValid and not b.isValid;
+local function SortQuestList(a, b, sortID)
+	local order = _V["SORT_OPTION_ORDER"][sortID];
+	if (not order) then
+		order = _emptyTable;
+		WQT:debugPrint("No sort order for", sortID);
 	end
-	if a.reward.type == b.reward.type then
-		if not a.reward.quality or not b.reward.quality or a.reward.quality == b.reward.quality then
-			if not a.reward.amount or not b.reward.amount or a.reward.amount == b.reward.amount then
-				if (a.reward.canUpgrade == b.reward.canUpgrade) then
-					if (a.time.seconds == b.time.seconds) then
-						if a.title ==  b.title then
-							return a.questId < b.questId;
-						end
-						return a.title < b.title;
-					end	
-					return a.time.seconds < b.time.seconds;
-				end
-				return a.reward.canUpgrade and not b.reward.canUpgrade;
-			end
-			return a.reward.amount > b.reward.amount;
-		end
-		return a.reward.quality > b.reward.quality;
-	elseif a.reward.type == 0 or b.reward.type == 0 then
-		return a.reward.type > b.reward.type;
-	end
-	return a.reward.type < b.reward.type;
-end
 
-local function SortQuestList(a, b) 
 	if not a.isValid or not b.isValid then
 		return a.isValid and not b.isValid;
 	end
-	if (a.time.seconds == b.time.seconds) then
-		if a.expantionLevel ==  b.expantionLevel then
-			return  SortQuestListByReward(a, b);
-		end
-		return a.expantionLevel > b.expantionLevel;
-	end	
-	return a.time.seconds < b.time.seconds;
-end
-
-local function SortQuestListByZone(a, b) 
-	if not a.isValid or not b.isValid then
-		return a.isValid and not b.isValid;
-	end
-	if a.mapInfo.mapID == b.mapInfo.mapID then
-		return  SortQuestListByReward(a, b);
-	end
-	if (WQT.settings.list.alwaysAllQuests) then
-		if a.mapInfo.mapID == WorldMapFrame.mapID or b.mapInfo.mapID == WorldMapFrame.mapID then
-			return a.mapInfo.mapID == WorldMapFrame.mapID and b.mapInfo.mapID ~= WorldMapFrame.mapID;
+	
+	for k, criteria in ipairs(order) do
+		if(_V["SORT_FUNCTIONS"][criteria]) then
+			local result = _V["SORT_FUNCTIONS"][criteria](a, b);
+			if (result ~= nil) then 
+				return result 
+			end;
+		else
+			WQT:debugPrint("Invalid sort criteria", criteria);
 		end
 	end
 	
-	return (a.mapInfo.name or "zz") < (b.mapInfo.name or "zz");
-end
-
-local function SortQuestListByFaction(a, b) 
-	if not a.isValid or not b.isValid then
-		return a.isValid and not b.isValid;
-	end
-	if a.expantionLevel ==  b.expantionLevel then
-		if a.faction == b.faction then
-			return  SortQuestListByReward(a, b);
-		end
-		return a.faction > b.faction;
-	end
-	return a.expantionLevel > b.expantionLevel;
-end
-
-local function SortQuestListByType(a, b) 
-	if not a.isValid or not b.isValid then
-		return a.isValid and not b.isValid;
-	end
-	local aIsCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(a.questId);
-	local bIsCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(b.questId);
-	if aIsCriteria == bIsCriteria then
-		if a.type == b.type then
-			if a.rarity == b.rarity then
-				if (a.isElite == b.isElite)then
-					return  SortQuestListByReward(a, b);
-				end
-				return a.isElite and  not b.isElite;
-			end
-			return a.rarity > b.rarity;
-		end
-		return a.type > b.type;
-	end
-	return aIsCriteria and not bIsCriteria;
-end
-
-local function SortQuestListByName(a, b) 
-	if not a.isValid or not b.isValid then
-		return a.isValid and not b.isValid;
-	end
-	if a.title ==  b.title then
-		return a.questId < b.questId;
-	end
-	return a.title < b.title;
+	-- Worst case fallback
+	return a.questId < b.questId;
 end
 
 local function GetNewSettingData(old, default)
@@ -2186,22 +2114,7 @@ end
 function WQT_ScrollListMixin:ApplySort()
 	local list = self.questList;
 	local sortOption = ADD:GetSelectedValue(WQT_WorldQuestFrame.sortButton);
-	local sortFunction;
-	if sortOption == 2 then -- faction
-		sortFunction = SortQuestListByFaction;
-	elseif sortOption == 3 then -- type
-		sortFunction = SortQuestListByType;
-	elseif sortOption == 4 then -- zone
-		sortFunction = SortQuestListByZone;
-	elseif sortOption == 5 then -- name
-		sortFunction = SortQuestListByName;
-	elseif sortOption == 6 then -- reward
-		sortFunction = SortQuestListByReward;
-	else -- time or anything else
-		sortFunction = SortQuestList;
-	end
-	
-	table.sort(list, sortFunction);
+	table.sort(list, function (a, b) return SortQuestList(a, b, sortOption); end);
 end
 
 function WQT_ScrollListMixin:UpdateFilterDisplay()

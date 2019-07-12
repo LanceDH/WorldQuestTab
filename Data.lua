@@ -15,140 +15,8 @@ local _playerFaction = UnitFactionGroup("Player");
 ------------------------
 
 local _debugTable;
-if _debug then
-	_debugTable = {}
-	UIParentLoadAddOn("Blizzard_DebugTools");
-	
-	hooksecurefunc("ChatFrame_OnHyperlinkShow", function(chat, link) 
-			local tableName = link:match("WQTDebug\:(%a+)")
-			if (tableName and _debugTable[tableName]) then
-				DisplayTableInspectorWindow(_debugTable[tableName], tableName);
-			end
-		end);
-	
-	-- This thing is janky as hell
-	local l_debug = CreateFrame("frame", addonName .. "Debug", UIParent);
-	WQT.debug = l_debug;
-
-	l_debug.linePool = CreateFramePool("FRAME", l_debug, "WQT_DebugLine");
-
-	local function ShowDebugHistory()
-		local highest = 1000;
-		for k, v in ipairs(l_debug.history) do
-			if (v > highest) then
-				highest = v;
-			end
-		end
-
-		
-		local scale = l_debug:GetScale();
-		local yScale = 1000 / highest ;
-		local current = 0;
-		local following = 0;
-		local line = nil;
-		l_debug.linePool:ReleaseAll();
-		
-		for i=1, highest/1000 do
-			local scaleLine = l_debug.linePool:Acquire();
-			scaleLine:Show();
-			scaleLine.Fill:SetStartPoint("BOTTOMLEFT", l_debug, 0, i*100*scale* yScale);
-			scaleLine.Fill:SetEndPoint("BOTTOMLEFT", l_debug, 100*scale, i*100*scale* yScale);
-			scaleLine.Fill:SetVertexColor(0.5, 0.5, 0.5, 0.5);
-			scaleLine.Fill:Show();
-		end
-		
-		for i=1, #l_debug.history, 1 do
-			line = l_debug.linePool:Acquire();
-			current = l_debug.history[i];
-			following = i == # l_debug.history and  current or l_debug.history[i+1]; 
-	
-			line:Show();
-			line.Fill:SetStartPoint("BOTTOMLEFT", l_debug, (i-1)*2*scale, current/10*scale * yScale);
-			line.Fill:SetEndPoint("BOTTOMLEFT", l_debug, i*2*scale, following/10*scale * yScale);
-			local fade = ((current-500)/ 500)*2;
-			line.Fill:SetVertexColor(fade, 2-fade, 0, 1);
-			line.Fill:Show();
-		end
-		
-		for i=1, #l_debug.gpuHistory, 1 do
-			line = l_debug.linePool:Acquire();
-			current = l_debug.gpuHistory[i];
-			following = i == # l_debug.gpuHistory and current or l_debug.gpuHistory[i+1]; 
-	
-			line:Show();
-			line.Fill:SetStartPoint("BOTTOMLEFT", l_debug, (i-1)*2*scale, current/5*scale);
-			line.Fill:SetEndPoint("BOTTOMLEFT", l_debug, i*2*scale, following/5*scale);
-			line.Fill:SetVertexColor(1, 0, 1, 1);
-			line.Fill:Show();
-		end
-		
-	end
-
-	l_debug:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-		  edgeFile = nil,
-		  tileSize = 0, edgeSize = 16,
-		  insets = { left = 0, right = 0, top = 0, bottom = 0 }
-		  })
-	l_debug:SetFrameLevel(5)
-	l_debug:SetMovable(true)
-	l_debug:SetPoint("Center", 250, 0)
-	l_debug:RegisterForDrag("LeftButton")
-	l_debug:EnableMouse(true);
-	l_debug:SetScript("OnDragStart", l_debug.StartMoving)
-	l_debug:SetScript("OnDragStop", l_debug.StopMovingOrSizing)
-	l_debug:SetWidth(100)
-	l_debug:SetHeight(100)
-	l_debug:SetClampedToScreen(true)
-	
-	l_debug.text = l_debug:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
-	l_debug.text:SetPoint("TOPLEFT",l_debug, "BOTTOMLEFT" , 2, -2)
-	l_debug.text:SetText("0000")
-	l_debug.text:SetJustifyH("left")
-	
-	l_debug.time = 0;
-	l_debug.interval = 0.2;
-	l_debug.history = {}
-	l_debug.gpuHistory = {}
-	l_debug.callCounters = {}
-	l_debug.lastGPU = 0;
-
-	l_debug:SetScript("OnUpdate", function(self,elapsed) 
-			self.time = self.time + elapsed;
-			if(self.time >= self.interval) then
-				self.time = self.time - self.interval;
-				UpdateAddOnMemoryUsage();
-				table.insert(self.history, GetAddOnMemoryUsage(addonName));
-				if(#self.history > 50) then
-					table.remove(self.history, 1)
-				end
-
-				local mem = floor(l_debug.history[#l_debug.history]*100)/100;
-				if mem >10000 then
-					mem = mem/10000 .."M"
-				end
-				UpdateAddOnCPUUsage()
-				local gpuNow = GetAddOnCPUUsage(addonName)
-				local gpuDiff = floor((gpuNow - l_debug.lastGPU)*100)/100
-				table.insert(self.gpuHistory, gpuDiff);
-				if(#self.gpuHistory > 50) then
-					table.remove(self.gpuHistory, 1)
-				end
-				l_debug.lastGPU = gpuNow;
-				mem = mem .. "\ncur: " .. gpuDiff .."ms"
-				local highest = 0
-				for k, v in ipairs(l_debug.gpuHistory) do
-					if (v > highest) then
-						highest = v;
-					end
-				end
-				mem = mem .. "\ntop: " .. highest .."ms"
-				
-				l_debug.text:SetText(mem)
-				
-				ShowDebugHistory()
-			end
-		end)
-	l_debug:Show()
+if _debug and LDHDebug then
+	LDHDebug:Monitor(addonName);
 end
 
 function WQT:debugPrint(...)
@@ -325,7 +193,40 @@ _V["WQT_TYPEFLAG_LABELS"] = {
 			, ["Relic"] = RELICSLOT, ["None"] = NONE, ["Experience"] = POWER_TYPE_EXPERIENCE, ["Honor"] = HONOR, ["Reputation"] = REPUTATION}
 	};
 
-_V["WQT_SORT_OPTIONS"] = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD}
+_V["WQT_SORT_OPTIONS"] = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD, [7] = QUALITY}
+_V["SORT_OPTION_ORDER"] = {
+	[1] = {"seconds", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "title"}
+	,[2] = {"faction", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "seconds", "title"}
+	,[3] = {"criteria", "questType", "questRarity", "elite", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "seconds", "title"}
+	,[4] = {"zone", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "seconds", "title"}
+	,[5] = {"title", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "seconds"}
+	,[6] = {"rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "seconds", "title"}
+	,[7] = {"rewardQuality", "rewardType", "rewardAmount", "canUpgrade", "seconds", "title"}
+}
+_V["SORT_FUNCTIONS"] = {
+	["rewardType"] = function(a, b) if (a.reward.type ~= b.reward.type) then return a.reward.type < b.reward.type; end end
+	,["rewardAmount"] = function(a, b) if (a.reward.amount ~= b.reward.amount) then return a.reward.amount > b.reward.amount; end end
+	,["rewardQuality"] = function(a, b) if (a.reward.quality and b.reward.quality and a.reward.quality ~= b.reward.quality) then return a.reward.quality > b.reward.quality; end end
+	,["canUpgrade"] = function(a, b) if (a.reward.canUpgrade ~= b.reward.canUpgrade) then return a.reward.canUpgrade and not b.reward.canUpgrade; end end
+	,["faction"] = function(a, b) if (a.faction ~= b.faction) then return a.faction < b.faction; end end
+	,["questType"] = function(a, b) if (a.type ~= b.type) then return a.type > b.type; end end
+	,["questRarity"] = function(a, b) if (a.rarity ~= b.rarity) then return a.rarity > b.rarity; end end
+	,["title"] = function(a, b) if (a.title ~= b.title) then return a.title < b.title; end end
+	,["elite"] = function(a, b) if (a.isElite ~= b.isElite) then return a.isElite and not b.isElite; end end
+	,["seconds"] = function(a, b) if (a.time.seconds ~= b.time.seconds) then return a.time.seconds < b.time.seconds; end end
+	,["criteria"] = function(a, b) 
+			local aIsCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(a.questId);
+			local bIsCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(b.questId);
+			if (aIsCriteria ~= bIsCriteria) then return aIsCriteria and not bIsCriteria; end end
+	,["zone"] = function(a, b) 
+			if (a.mapInfo.name and b.mapInfo.name and a.mapInfo.mapID ~= b.mapInfo.mapID) then 
+				if (WQT.settings.list.alwaysAllQuests and (a.mapInfo.mapID == WorldMapFrame.mapID or b.mapInfo.mapID == WorldMapFrame.mapID)) then 
+					return a.mapInfo.mapID == WorldMapFrame.mapID and b.mapInfo.mapID ~= WorldMapFrame.mapID;
+				end
+				return a.mapInfo.name < b.mapInfo.name;
+			end
+		end
+}
 	
 _V["REWARD_TYPE_ATLAS"] = {
 		[WQT_REWARDTYPE.weapon] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.211, ["r"] = 0.277, ["t"] = 0.246, ["b"] = 0.277} -- Weapon
@@ -574,6 +475,7 @@ _V["LATEST_UPDATE"] =
 	<h1>8.2.02</h1> 
 	<p> Behind the scenes rework resulting in the quest list being more accurate and less likely to miss quests.</p>
 	<h2>New:</h2>
+	<p>* New 'Quality' sorting option: Sorts the list by reward quality (epic > rare > ...) before sorting by reward type (equipement > azerite > ...)</p>
 	<p>* New settings for the quest list:</p>
 	<p>&#160;&#160;- 'Show zone' setting (default on): Show zone label when quests from multiple zones are shown.</p>
 	<p>&#160;&#160;- 'Expand times' setting (default off): Adds a secondary scale to timers in the quest list. I.e. adding minutes to hours.</p>
@@ -582,6 +484,7 @@ _V["LATEST_UPDATE"] =
 	<p>* Times for quests with a total duration over 4 days are now purple.</p>
 	<p>* Times update in real-time rather than when data is updated.</p>
 	<p>* Timers below 1 minute will now show as seconds.</p>
+	<p>* Flipped faction sorting to ascending.</p>
 	<p>* Using WorldFightMap will now act like the default map. To revert, enable Settings -> List Settings -> Always All Quests</p>
 	<h2>Fixes:</h2>
 	<p>* Fixed pin ring timers for quests with a duration over 4 days.</p>

@@ -11,15 +11,6 @@
 	<Script file="Data.lua"/>
 	<Script file="Dataprovider.lua"/>
 	<Script file="WorldQuestTab.lua"/>
-
-	<Frame name="WQT_DebugLine" parentArray="DependencyLines" virtual="true">
-		<Layers>
-			<Layer level="OVERLAY" textureSubLevel="-2">
-				<Line parentKey="Fill" file="Interface/TARGETINGFRAME/UI-TargetingFrame-BarFill" thickness="2" horizTile="true" alpha="1" />
-			</Layer>
-		</Layers>
-	</Frame>
-	
 	
 	<FontFamily name="WQT_NumberFontOutline" virtual="true">
 		<Member alphabet="roman">
