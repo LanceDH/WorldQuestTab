@@ -124,7 +124,7 @@ local function SetQuestReward(questInfo)
 			rewardType = WQT_REWARDTYPE.honor;
 		elseif GetQuestLogRewardMoney(questInfo.questId) > 0 then
 			numItems = floor(abs(GetQuestLogRewardMoney(questInfo.questId) / 10000))
-			texture = "Interface/ICONS/INV_Misc_Coin_01";
+			texture = 133784; --"Interface/ICONS/INV_Misc_Coin_01";
 			rewardType = WQT_REWARDTYPE.gold;
 			color = _V["WQT_COLOR_GOLD"];
 		elseif GetNumQuestLogRewardCurrencies(questInfo.questId) > 0 then

@@ -103,18 +103,18 @@ local WQT_DEFAULTS = {
 
 		["filters"] = {
 				[1] = {["name"] = FACTION
-				, ["flags"] = {[OTHER] = false, [_L["NO_FACTION"]] = false}}
+				, ["flags"] = {[OTHER] = true, [_L["NO_FACTION"]] = true}}
 				,[2] = {["name"] = TYPE
-						, ["flags"] = {["Default"] = false, ["Elite"] = false, ["PvP"] = false, ["Petbattle"] = false, ["Dungeon"] = false, ["Raid"] = false, ["Profession"] = false, ["Invasion"] = false, ["Assault"] = false}}--, ["Emissary"] = false}}
+						, ["flags"] = {["Default"] = true, ["Elite"] = true, ["PvP"] = true, ["Petbattle"] = true, ["Dungeon"] = true, ["Raid"] = true, ["Profession"] = true, ["Invasion"] = true, ["Assault"] = true}}
 				,[3] = {["name"] = REWARD
-						, ["flags"] = {["Item"] = false, ["Armor"] = false, ["Gold"] = false, ["Currency"] = false, ["Artifact"] = false, ["Relic"] = false, ["None"] = false, ["Experience"] = false, ["Honor"] = false, ["Reputation"] = false}}
+						, ["flags"] = {["Item"] = true, ["Armor"] = true, ["Gold"] = true, ["Currency"] = true, ["Artifact"] = true, ["Relic"] = true, ["None"] = true, ["Experience"] = true, ["Honor"] = true, ["Reputation"] = true}}
 			}
 	}
 }
 
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
 	if v.expansion >= LE_EXPANSION_LEGION then
-		WQT_DEFAULTS.global.filters[1].flags[k] = false;
+		WQT_DEFAULTS.global.filters[1].flags[k] = true;
 	end
 end
 	
@@ -372,6 +372,12 @@ local function GetLocalizedAbreviatedNumber(number)
 end
 
 local function slashcmd(msg, editbox)
+	if (msg == "debug") then
+		addon.debug = not addon.debug;
+		print("WQT: debug", addon.debug and "enabled" or "disabled");
+		return;
+	end
+
 	print(_L["OPTIONS_INFO"]);
 end
 
@@ -513,6 +519,10 @@ local function ConvertOldSettings(version)
 		WQT.settings.sortBy = sortBy;
 		WQT.settings.updateSeen = updateSeen;
 		
+		-- New filters
+		for flagId, data in pairs(WQT.settings.filters) do
+			WQT:SetAllFilterTo(index, true);
+		end
 	end
 	-- Hightlight 'what's new'
 	if (version < GetAddOnMetadata(addonName, "version")) then
@@ -607,6 +617,7 @@ function WQT:InitFilter(self, level)
 		ADD:AddButton(info, level)
 		
 	elseif level == 2 then
+		info.keepShownOnClick = true;
 		info.hasArrow = false;
 		info.isNotRadio = true;
 		if ADD.MENU_VALUE then
@@ -1209,7 +1220,7 @@ function WQT:IsFiltering()
 	if WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId then return true; end
 	for k, category in pairs(WQT.settings.filters)do
 		for k2, flag in pairs(category.flags) do
-			if flag and IsRelevantFilter(k, k2) then 
+			if not flag and IsRelevantFilter(k, k2) then 
 				return true;
 			end
 		end
@@ -1221,7 +1232,7 @@ function WQT:isUsingFilterNr(id)
 	if not WQT.settings.filters[id] then return false end
 	local flags = WQT.settings.filters[id].flags;
 	for k, flag in pairs(flags) do
-		if flag then return true; end
+		if (not flag) then return true; end
 	end
 	return false;
 end
@@ -1247,11 +1258,11 @@ function WQT:PassesAllFilters(questInfo)
 		return WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
 	end
 	
-	if WQT:isUsingFilterNr(1) and WQT:PassesFactionFilter(questInfo) then return true; end
-	if WQT:isUsingFilterNr(2) and WQT:PassesFlagId(2, questInfo) then return true; end
-	if WQT:isUsingFilterNr(3) and WQT:PassesFlagId(3, questInfo) then return true; end
+	if WQT:isUsingFilterNr(1) and not WQT:PassesFactionFilter(questInfo) then return false; end
+	if WQT:isUsingFilterNr(2) and not WQT:PassesFlagId(2, questInfo) then return false; end
+	if WQT:isUsingFilterNr(3) and not WQT:PassesFlagId(3, questInfo) then return false; end
 	
-	return  false;
+	return  true;
 end
 
 function WQT:PassesFactionFilter(questInfo)
@@ -2142,17 +2153,35 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 	else
 		for kO, option in pairs(WQT.settings.filters) do
 			haveLabels = (_V["WQT_TYPEFLAG_LABELS"][kO] ~= nil);
+			local active = 0;
+			local total = 0;
+			
 			for kF, flag in pairs(option.flags) do
-				if (flag and IsRelevantFilter(kO, kF)) then
-					local label = haveLabels and _V["WQT_TYPEFLAG_LABELS"][kO][kF] or kF;
-					label = type(kF) == "number" and GetFactionInfoByID(kF) or label;
-					filterList = filterList == "" and label or string.format("%s, %s", filterList, label);
-				end
+				if (flag) then active = active + 1; end
+				total = total + 1;
 			end
+
+			if (active < total) then
+				filterList = filterList == "" and option.name or string.format("%s, %s", filterList, option.name);
+			end
+			
+			-- if (active < total) then
+				-- local label = string.format("%s (%d)", option.name, total-active);
+				-- filterList = filterList == "" and label or string.format("%s, %s", filterList, label);
+			-- end
 		end
 	end
-
-	WQT_WorldQuestFrame.FilterBar.Text:SetText(_L["FILTER"]:format(filterList)); 
+	
+	local numHidden = 0;
+	for k, questInfo in ipairs(self.questList) do
+		if (questInfo.isValid and questInfo.reward.type ~= WQT_REWARDTYPE.missing and questInfo.passedFilter) then
+			numHidden = numHidden + 1;
+		end	
+	end
+	
+	local filterFormat = "(%d/%d) "..FILTERS..": %s"
+	
+	WQT_WorldQuestFrame.FilterBar.Text:SetText(filterFormat:format(numHidden, #self.questList, filterList)); 
 end
 
 function WQT_ScrollListMixin:UpdateQuestFilters()
@@ -2744,7 +2773,7 @@ function WQT_CoreMixin:FilterClearButtonOnClick()
 		WQT.settings.general.emissaryOnly = false;
 	else
 		for k, v in pairs(WQT.settings.filters) do
-			WQT:SetAllFilterTo(k, false);
+			WQT:SetAllFilterTo(k, true);
 		end
 	end
 	self.ScrollFrame:UpdateQuestList();

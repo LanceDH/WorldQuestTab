@@ -8,7 +8,6 @@ L["IS_AZIAN_CLIENT"]	= false
 L["PIN_SETTINGS"]	= "Map Pin Settings";
 L["LIST_SETTINGS"]	= "List Settings";
 L["COMBATLOCK"]		= "Disabled during combat.";
-L["FILTER"] 		= "Filter: %s";
 L["OPTIONS_INFO"] 	= "[WQT] Options can be found under the filter button."
 L["NO_FACTION"] 	= "No Faction";
 L["TIME"]			= "Time";
@@ -93,7 +92,6 @@ L["COMBATLOCK"] = "Nicht verfügbar während eines Kampfes."
 L["DEFAULT_TAB"] = "Standardtab"
 L["DEFAULT_TAB_TT"] = [=[Aktiviert WQT als Standardtab nach dem Einloggen.
 Nicht aktiv für Charaktere unter Level 110.]=]
-L["FILTER"] = "Filter: %s"
 L["NO_FACTION"] = "Keine Fraktion"
 L["NUMBERS_FIRST"] = "%gk"
 L["NUMBERS_SECOND"] = "%gm"
@@ -121,7 +119,6 @@ L["COMBATLOCK"] = "Desativado durante combate."
 L["DEFAULT_TAB"] = "Aba Padrão"
 L["DEFAULT_TAB_TT"] = [=[Definir o WQT como aba padrão quando você logar.
  Isso não se aplica a personagens abaixo do nível 110.]=]
-L["FILTER"] = "Filtro: %s"
 L["FILTER_PINS"] = "Filtrar marcações no mapa"
 L["FILTER_PINS_TT"] = [=[Aplica filtros às
 marcações no mapa.]=]
@@ -188,7 +185,6 @@ L["COMBATLOCK"] = "Отключено во время боя."
 L["DEFAULT_TAB"] = "По умолчанию"
 L["DEFAULT_TAB_TT"] = [=[Установить WQT как панель по умолчанию.
 Не применяется к персонажам ниже 110 уровня.]=]
-L["FILTER"] = "Фильтр: %s"
 L["FILTER_PINS"] = "Фильтр меток"
 L["FILTER_PINS_TT"] = "Применить фильтры к меткaм на карте"
 L["NO_FACTION"] = "Без фрaкции"
@@ -235,7 +231,6 @@ L["DEFAULT_TAB_TT"] = [=[设置WQT作为你登录后的默认选项卡。
 不会对110级以下的角色生效。]=]
 L["EMISSARY_COUNTER"] = "大使任务计数器"
 L["EMISSARY_COUNTER_TT"] = "在大使任务标签上添加计数器来标识每个大使任务的完成进度"
-L["FILTER"] = "过滤：%s"
 L["FILTER_PINS"] = "过滤地图显示"
 L["FILTER_PINS_TT"] = "在地图上显示过滤后的任务信息。"
 L["FORMAT_GROUP_CREATE"] = "输入 |cFFFFFFFF%d|r 来在组队查找器中创建此任务，或者输入他的名字：|cFFFFFFFF%s|r。考虑同时采取这两种操作来确保不用插件的玩家也可以在组队查找器中发现你创建的任务。"
@@ -303,7 +298,6 @@ L["DEFAULT_TAB_TT"] = [=[將WQT設定為預設啟用標籤。
 這不適用於等級110以下角色。]=]
 L["EMISSARY_COUNTER"] = "特使任務計數器"
 L["EMISSARY_COUNTER_TT"] = "在特使標籤添加計數以指示你每個特使任務的進度。"
-L["FILTER"] = "過濾: %s"
 L["FILTER_PINS"] = "過濾地圖顯示"
 L["FILTER_PINS_TT"] = "將過濾套用到地圖上的任務點"
 L["FORMAT_GROUP_CREATE"] = "輸入|cFFFFFFFF%d|r 為此任務建立一個隊伍。 或輸入其名稱：|cFFFFFFFF%s|r。考慮兩者兼用，讓沒有插件的玩家也可以找到你的隊伍。"
@@ -373,7 +367,6 @@ L["COMBATLOCK"] = "전투 중엔 비활성됩니다."
 L["DEFAULT_TAB"] = "기본 탭"
 L["DEFAULT_TAB_TT"] = [=[로그인 했을 때 WQT를 기본 탭으로 설정합니다.
 110 레벨 미만의 캐릭터엔 적용하지 않습니다.]=]
-L["FILTER"] = "필터: %s"
 L["FILTER_PINS"] = "지도 표시 필터"
 L["FILTER_PINS_TT"] = [=[지도 상의 표시에
 필터를 적용합니다.]=]

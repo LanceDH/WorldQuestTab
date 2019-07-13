@@ -3,10 +3,11 @@
 
 addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 addon.variables = {};
+addon.debug = false;
 local _L = addon.L;
 local _V = addon.variables;
 local WQT = addon.WQT;
-local _debug = false;
+local _emptyTable = {};
 
 local _playerFaction = UnitFactionGroup("Player");
 
@@ -15,12 +16,14 @@ local _playerFaction = UnitFactionGroup("Player");
 ------------------------
 
 local _debugTable;
-if _debug and LDHDebug then
+if (addon.debug and LDHDebug) then
 	LDHDebug:Monitor(addonName);
 end
 
 function WQT:debugPrint(...)
-	if _debug then print(...) end
+	if (addon.debug and LDHDebug) then 
+		LDHDebug:Print(...);
+	end
 end
 
 function WQT:debugTableInsert(name, value, key)
@@ -54,37 +57,33 @@ function WQT:debugAnnounceTable(name, colorHex)
 	end
 end
 
-function WQT:AddDebugToTooltip(tooltip, questInfo, deprecated)
-	if (not _debug) then return end;
+local function AddIndentedDoubleLine(tooltip, a, b, level, color)
+	local indented = string.rep("    ", level) .. a;
+	tooltip:AddDoubleLine(indented, b, color.r, color.g, color.b, color.r, color.g, color.b);
+end
+
+function WQT:AddDebugToTooltip(tooltip, questInfo, deprecated, level)
+	if (not addon.debug) then return end;
+	level = level or 0;
 	deprecated = deprecated or _emptyTable;
 	local color = NORMAL_FONT_COLOR;
 	-- First all non table values;
 	for key, value in pairs(questInfo) do
 		local isDeprecated = deprecated[key] and type(deprecated[key]) ~= "table";
-		color = isDeprecated and GRAY_FONT_COLOR or NORMAL_FONT_COLOR;
-		
+		color = isDeprecated and GRAY_FONT_COLOR or LIGHTBLUE_FONT_COLOR;
 		if (type(value) ~= "table") then
-			tooltip:AddDoubleLine(key, tostring(value), color.r, color.g, color.b, color.r, color.g, color.b);
+			AddIndentedDoubleLine(tooltip, key, tostring(value), level, color);
 		elseif (type(value) == "table" and value.GetRGBA) then
-			tooltip:AddDoubleLine(key, value.r .. "/" .. value.g .. "/" .. value.b, color.r, color.g, color.b, color.r, color.g, color.b);
+			AddIndentedDoubleLine(tooltip, key, value.r .. "/" .. value.g .. "/" .. value.b, level, color);
 		end
 	end
 	
+	color = LIGHTBLUE_FONT_COLOR;
 	-- Actual tables
 	for key, value in pairs(questInfo) do
 		if (type(value) == "table" and not value.GetRGBA) then
-			tooltip:AddDoubleLine(key, "");
-			for key2, value2 in pairs(value) do
-				local isDeprecated = deprecated[key] and deprecated[key][key2] and type(deprecated[key][key2]) ~= "table";
-				color = isDeprecated and GRAY_FONT_COLOR or NORMAL_FONT_COLOR;
-				if (type(value2) == "table" and value2.GetRGBA) then-- colors
-					tooltip:AddDoubleLine("    " .. key2, value2.r .. "/" .. value2.g .. "/" .. value2.b, color.r, color.g, color.b, color.r, color.g, color.b);
-				elseif (type(value2) ~= "table") then
-					tooltip:AddDoubleLine("    " .. key2, tostring(value2), color.r, color.g, color.b, color.r, color.g, color.b);
-				else
-					AddDebugToTooltip(tooltip, questInfo, deprecated[key])
-				end
-			end
+			AddIndentedDoubleLine(tooltip, key, "", level, color);
+			self:AddDebugToTooltip(tooltip, value, deprecated[key], level + 1)
 		end
 	end
 end
@@ -480,9 +479,10 @@ _V["LATEST_UPDATE"] =
 	<p>&#160;&#160;- 'Show zone' setting (default on): Show zone label when quests from multiple zones are shown.</p>
 	<p>&#160;&#160;- 'Expand times' setting (default off): Adds a secondary scale to timers in the quest list. I.e. adding minutes to hours.</p>
 	<h2>Changes:</h2>
+	<p>* Filter settings now work more like Blizzard's filters. All checked by default, all off means nothing passes. This change resulted in a one time reset of your filters. My apologies.</p>
 	<p>* Like pin settings, moved quest list settings to a separate group.</p>
 	<p>* Times for quests with a total duration over 4 days are now purple.</p>
-	<p>* Times update in real-time rather than when data is updated.</p>
+	<p>* Timers update in real-time rather than when data is updated.</p>
 	<p>* Timers below 1 minute will now show as seconds.</p>
 	<p>* Flipped faction sorting to ascending.</p>
 	<p>* Using WorldFightMap will now act like the default map. To revert, enable Settings -> List Settings -> Always All Quests</p>
