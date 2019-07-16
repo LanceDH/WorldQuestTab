@@ -337,7 +337,7 @@
 				</Layers>
 				<Layers>
 					<Layer level="OVERLAY">
-						<Texture parentKey="Ring" atlas="GarrMission_PartyBuffAbilityBorder" useAtlasSize="false">	<!-- ChallengeMode-AffixRing-Sm services-ring -->
+						<Texture parentKey="Ring" atlas="GarrMission_PartyBuffAbilityBorder" useAtlasSize="false">
 							<Anchors>
 								<Anchor point="TOPLEFT" x="-1" y="1"/>
 								<Anchor point="BOTTOMRIGHT" x="1" y="-1"/>
@@ -348,11 +348,7 @@
 				</Layers>
 				<Scripts>
 					<OnEnter>
-						self:GetParent().Highlight:Show();
-						if self:GetParent().info.faction then
-							GameTooltip:SetOwner(self, "ANCHOR_RIGHT", -5, -10);
-							GameTooltip:SetText(self:GetParent().info.faction, nil, nil, nil, nil, true);
-						end
+						self:GetParent():FactionOnEnter(self);
 					</OnEnter>
 					<OnLeave>
 						self:GetParent().Highlight:Hide();
@@ -922,7 +918,6 @@
 								<Anchor point="CENTER" x="-10"/>
 							</Anchors>
 							<TexCoords left="0" right="0.8984375" top="0" bottom="0.5986328125"/>
-							<!--<Color r="1" g="1" b="1" a="0.95"/>-->
 						</Texture>
 						<Texture parentKey="CombatBG" file="Interface/ENCOUNTERJOURNAL/AdventureGuide">
 							<Size x="224" y="107"/>

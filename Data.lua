@@ -4,6 +4,8 @@
 addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 addon.variables = {};
 addon.debug = false;
+addon.WQT_Utils = {};
+local WQT_Utils = addon.WQT_Utils;
 local _L = addon.L;
 local _V = addon.variables;
 local WQT = addon.WQT;
@@ -26,66 +28,71 @@ function WQT:debugPrint(...)
 	end
 end
 
-function WQT:debugTableInsert(name, value, key)
-	if (not _debugTable or not _debugTable[name]) then return; end
-	if (key) then
-		_debugTable[name][key] = value;
-	else
-		tinsert(_debugTable[name], value);
-	end
-end
-
-function WQT:debugTableWipe(name)
-	if (not _debugTable) then return; end
-	if (not _debugTable[name]) then
-		_debugTable[name] = {};
-	end
-	wipe(_debugTable[name]);
-end
-
-function WQT:debugAnnounceTable(name, colorHex)
-	if (not _debugTable or not _debugTable[name]) then return; end
-	local count = 0;
-	for k, v in pairs(_debugTable[name]) do
-		count = count + 1;
-	end
-	
-	if (count > 0) then
-		colorHex = colorHex or "FFFFFF";
-		local output = "|cFF%s|HWQTDebug:%s|h[WQT] %s: %d|h|r";
-		self:debugPrint(output:format(colorHex, name, name, count));
-	end
-end
-
 local function AddIndentedDoubleLine(tooltip, a, b, level, color)
 	local indented = string.rep("    ", level) .. a;
+	if (type(b) == "table" and b.GetRGBA) then
+		b = b.r .. "/" .. b.g .. "/" .. b.b;
+	elseif (type(b) == "boolean") then
+		b = b and "true" or "false";
+	elseif (b == nil) then
+		b = "nil";
+	end
 	tooltip:AddDoubleLine(indented, b, color.r, color.g, color.b, color.r, color.g, color.b);
 end
 
-function WQT:AddDebugToTooltip(tooltip, questInfo, deprecated, level)
+function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 	if (not addon.debug) then return end;
 	level = level or 0;
-	deprecated = deprecated or _emptyTable;
-	local color = NORMAL_FONT_COLOR;
+	local color = LIGHTBLUE_FONT_COLOR;
 	-- First all non table values;
 	for key, value in pairs(questInfo) do
-		local isDeprecated = deprecated[key] and type(deprecated[key]) ~= "table";
-		color = isDeprecated and GRAY_FONT_COLOR or LIGHTBLUE_FONT_COLOR;
-		if (type(value) ~= "table") then
-			AddIndentedDoubleLine(tooltip, key, tostring(value), level, color);
-		elseif (type(value) == "table" and value.GetRGBA) then
-			AddIndentedDoubleLine(tooltip, key, value.r .. "/" .. value.g .. "/" .. value.b, level, color);
+		if (type(value) ~= "table" or value.GetRGBA) then
+			AddIndentedDoubleLine(tooltip, key, value, level, color);
+		end
+	end
+	-- Actual tables
+	for key, value in pairs(questInfo) do
+		if (type(value) == "table" and not value.GetRGBA and key ~= "debug") then
+			AddIndentedDoubleLine(tooltip, key, "", level, color);
+			self:AddDebugToTooltip(tooltip, value, level + 1)
 		end
 	end
 	
-	color = LIGHTBLUE_FONT_COLOR;
-	-- Actual tables
-	for key, value in pairs(questInfo) do
-		if (type(value) == "table" and not value.GetRGBA) then
-			AddIndentedDoubleLine(tooltip, key, "", level, color);
-			self:AddDebugToTooltip(tooltip, value, deprecated[key], level + 1)
-		end
+	if(level == 0 and questInfo.questId) then
+		color = GRAY_FONT_COLOR;
+		
+		AddIndentedDoubleLine(tooltip, "debug", "", 0, color);
+		local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
+		AddIndentedDoubleLine(tooltip, "title", title, 1, color);
+		local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex, displayTimeLeft = GetQuestTagInfo(questInfo.questId);
+		AddIndentedDoubleLine(tooltip, "worldQuestType", worldQuestType, 1, color);
+		AddIndentedDoubleLine(tooltip, "rarity", rarity, 1, color);
+		AddIndentedDoubleLine(tooltip, "isElite", isElite, 1, color);
+		AddIndentedDoubleLine(tooltip, "tradeskillLineIndex", tradeskillLineIndex, 1, color);
+		-- Time
+		local seconds, timeString, timeColor, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo, true, true);
+		AddIndentedDoubleLine(tooltip, "time", "", 1, color);
+		AddIndentedDoubleLine(tooltip, "seconds", seconds, 2, color);
+		AddIndentedDoubleLine(tooltip, "timeString", timeString, 2, color);
+		AddIndentedDoubleLine(tooltip, "color", timeColor, 2, color);
+		AddIndentedDoubleLine(tooltip, "timeStringShort", timeStringShort, 2, color);
+		-- Faction
+		local factionInfo = WQT_Utils:GetFactionDataInternal(factionId);
+		AddIndentedDoubleLine(tooltip, "faction", "", 1, color);
+		AddIndentedDoubleLine(tooltip, "factionId", factionId, 2, color);
+		AddIndentedDoubleLine(tooltip, "name", factionInfo.name, 2, color);
+		AddIndentedDoubleLine(tooltip, "playerFaction", factionInfo.playerFaction, 2, color);
+		AddIndentedDoubleLine(tooltip, "texture", factionInfo.texture, 2, color);
+		AddIndentedDoubleLine(tooltip, "expansion", factionInfo.expansion, 2, color);
+		-- MapInfo
+		local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questId);
+		AddIndentedDoubleLine(tooltip, "mapInfo", "", 1, color);
+		AddIndentedDoubleLine(tooltip, "name", mapInfo.name, 2, color);
+		AddIndentedDoubleLine(tooltip, "mapID", mapInfo.mapID, 2, color);
+		AddIndentedDoubleLine(tooltip, "parentMapID", mapInfo.parentMapID, 2, color);
+		AddIndentedDoubleLine(tooltip, "mapType", mapInfo.mapType, 2, color);
 	end
+	
 end
 
 ------------------------
@@ -171,12 +178,6 @@ _V["WQT_PURPLE_FONT_COLOR"] = CreateColor(0.73, 0.33, 0.82);
 _V["WQT_BOUNDYBOARD_OVERLAYID"] = 3;
 _V["WQT_TYPE_BONUSOBJECTIVE"] = 99;
 _V["WQT_LISTITTEM_HEIGHT"] = 32;
-_V["WQT_REFRESH_DEFAULT"] = 60;
-
-_V["WQT_QUESTIONMARK"] = "Interface/ICONS/INV_Misc_QuestionMark";
-_V["WQT_EXPERIENCE"] = "Interface/ICONS/XP_ICON";
-_V["WQT_HONOR"] = "Interface/ICONS/Achievement_LegionPVPTier4";
-_V["WQT_FACTIONUNKNOWN"] = "Interface/ICONS/INV_Misc_QuestionMark";
 
 _V["WQT_CVAR_LIST"] = {
 		["Petbattle"] = "showTamers"
@@ -206,23 +207,57 @@ _V["SORT_FUNCTIONS"] = {
 	["rewardType"] = function(a, b) if (a.reward.type ~= b.reward.type) then return a.reward.type < b.reward.type; end end
 	,["rewardAmount"] = function(a, b) if (a.reward.amount ~= b.reward.amount) then return a.reward.amount > b.reward.amount; end end
 	,["rewardQuality"] = function(a, b) if (a.reward.quality and b.reward.quality and a.reward.quality ~= b.reward.quality) then return a.reward.quality > b.reward.quality; end end
-	,["canUpgrade"] = function(a, b) if (a.reward.canUpgrade ~= b.reward.canUpgrade) then return a.reward.canUpgrade and not b.reward.canUpgrade; end end
-	,["faction"] = function(a, b) if (a.faction ~= b.faction) then return a.faction < b.faction; end end
-	,["questType"] = function(a, b) if (a.type ~= b.type) then return a.type > b.type; end end
-	,["questRarity"] = function(a, b) if (a.rarity ~= b.rarity) then return a.rarity > b.rarity; end end
-	,["title"] = function(a, b) if (a.title ~= b.title) then return a.title < b.title; end end
-	,["elite"] = function(a, b) if (a.isElite ~= b.isElite) then return a.isElite and not b.isElite; end end
+	,["canUpgrade"] = function(a, b) if (a.reward.canUpgrade and b.reward.canUpgrade and a.reward.canUpgrade ~= b.reward.canUpgrade) then return a.reward.canUpgrade and not b.reward.canUpgrade; end end
 	,["seconds"] = function(a, b) if (a.time.seconds ~= b.time.seconds) then return a.time.seconds < b.time.seconds; end end
+	,["faction"] = function(a, b) 
+			local _, factionIdA = C_TaskQuest.GetQuestInfoByQuestID(a.questId);
+			local _, factionIdB = C_TaskQuest.GetQuestInfoByQuestID(b.questId);
+			if (factionIdA ~= factionIdB) then 
+				local factionA = WQT_Utils:GetFactionDataInternal(factionIdA);
+				local factionB = WQT_Utils:GetFactionDataInternal(factionIdB);
+				return factionA.name < factionB.name; 
+			end 
+		end
+	,["questType"] = function(a, b) 
+			local _, _, typeA = GetQuestTagInfo(a.questId);
+			local _, _, typeB = GetQuestTagInfo(b.questId);
+			if (typeA and typeB and typeA ~= typeB) then 
+				return typeA >typeB; 
+			end 
+		end
+	,["questRarity"] = function(a, b)
+			local _, _, _, rarityA = GetQuestTagInfo(a.questId);
+			local _, _, _, rarityB = GetQuestTagInfo(b.questId);
+			if (rarityA and rarityB and rarityA ~= rarityB) then 
+				return rarityA > rarityB; 
+			end
+		end
+	,["title"] = function(a, b)
+			local titleA = C_TaskQuest.GetQuestInfoByQuestID(a.questId);
+			local titleB = C_TaskQuest.GetQuestInfoByQuestID(b.questId);
+			if (titleA ~= titleB) then 
+				return titleA < titleB;
+			end 
+		end
+	,["elite"] = function(a, b) 
+			local _, _, _, _, isEliteA = GetQuestTagInfo(a.questId);
+			local _, _, _, _, isEliteB = GetQuestTagInfo(b.questId);
+			if (isEliteA ~= isEliteB) then 
+				return isEliteA and not isEliteB; 
+			end 
+		end
 	,["criteria"] = function(a, b) 
 			local aIsCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(a.questId);
 			local bIsCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(b.questId);
 			if (aIsCriteria ~= bIsCriteria) then return aIsCriteria and not bIsCriteria; end end
 	,["zone"] = function(a, b) 
-			if (a.mapInfo.name and b.mapInfo.name and a.mapInfo.mapID ~= b.mapInfo.mapID) then 
-				if (WQT.settings.list.alwaysAllQuests and (a.mapInfo.mapID == WorldMapFrame.mapID or b.mapInfo.mapID == WorldMapFrame.mapID)) then 
-					return a.mapInfo.mapID == WorldMapFrame.mapID and b.mapInfo.mapID ~= WorldMapFrame.mapID;
+			local mapInfoA = WQT_Utils:GetMapInfoForQuest(a.questId);
+			local mapInfoB = WQT_Utils:GetMapInfoForQuest(b.questId);
+			if (mapInfoA and mapInfoA.name and mapInfoB and mapInfoB.name and mapInfoA.mapID ~= mapInfoB.mapID) then 
+				if (WQT.settings.list.alwaysAllQuests and (mapInfoA.mapID == WorldMapFrame.mapID or mapInfoB.mapID == WorldMapFrame.mapID)) then 
+					return mapInfoA.mapID == WorldMapFrame.mapID and mapInfoB.mapID ~= WorldMapFrame.mapID;
 				end
-				return a.mapInfo.name < b.mapInfo.name;
+				return mapInfoA.name < mapInfoB.name;
 			end
 		end
 }
@@ -241,32 +276,31 @@ _V["REWARD_TYPE_ATLAS"] = {
 		,[WQT_REWARDTYPE.spell] = {["texture"] = "Banker", ["scale"] = 1.1}  -- spell acts like item
 	}	
 
-_V["WQT_FILTER_FUNCTIONS"] = {
+_V["FILTER_FUNCTIONS"] = {
 		[2] = { -- Types
-			function(quest, flags) return (flags["PvP"] and quest.type == LE_QUEST_TAG_TYPE_PVP); end 
-			,function(quest, flags) return (flags["Petbattle"] and quest.type == LE_QUEST_TAG_TYPE_PET_BATTLE); end 
-			,function(quest, flags) return (flags["Dungeon"] and quest.type == LE_QUEST_TAG_TYPE_DUNGEON); end 
-			,function(quest, flags) return (flags["Raid"] and quest.type == LE_QUEST_TAG_TYPE_RAID); end 
-			,function(quest, flags) return (flags["Profession"] and quest.type == LE_QUEST_TAG_TYPE_PROFESSION); end 
-			,function(quest, flags) return (flags["Invasion"] and quest.type == LE_QUEST_TAG_TYPE_INVASION); end 
-			,function(quest, flags) return (flags["Assault"] and quest.type == LE_QUEST_TAG_TYPE_FACTION_ASSAULT); end 
-			,function(quest, flags) return (flags["Elite"] and (quest.type ~= LE_QUEST_TAG_TYPE_DUNGEON and quest.type ~= LE_QUEST_TAG_TYPE_RAID and quest.isElite)); end 
-			,function(quest, flags) return (flags["Default"] and (quest.type == LE_QUEST_TAG_TYPE_NORMAL and not quest.isElite)); end 
+			["PvP"] 			= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_PVP; end 
+			,["Petbattle"] 	= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_PET_BATTLE; end 
+			,["Dungeon"] 	= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_DUNGEON; end 
+			,["Raid"] 		= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_RAID; end 
+			,["Profession"] 	= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_PROFESSION; end 
+			,["Invasion"] 	= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_INVASION; end 
+			,["Assault"]	= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_FACTION_ASSAULT; end 
+			,["Elite"]		= function(questId, questType, rewardType, rewardSubType) return select(5, GetQuestTagInfo(questId)); end
+			,["Default"]	= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_NORMAL; end 
 			}
 		,[3] = { -- Reward filters
-			function(quest, flags) return (flags["Armor"] and (quest.reward.type == WQT_REWARDTYPE.equipment or quest.reward.type == WQT_REWARDTYPE.weapon)); end 
-			,function(quest, flags) return (flags["Relic"] and quest.reward.type == WQT_REWARDTYPE.relic); end 
-			,function(quest, flags) return (flags["Item"] and (quest.reward.type == WQT_REWARDTYPE.item or quest.reward.type == WQT_REWARDTYPE.spell)); end -- treat spells like items for now
-			,function(quest, flags) return (flags["Artifact"] and quest.reward.type == WQT_REWARDTYPE.artifact); end 
-			,function(quest, flags) return (flags["Honor"] and (quest.reward.type == WQT_REWARDTYPE.honor or quest.reward.subType == WQT_REWARDTYPE.honor)); end 
-			,function(quest, flags) return (flags["Gold"] and (quest.reward.type == WQT_REWARDTYPE.gold or quest.reward.subType == WQT_REWARDTYPE.gold) ); end 
-			,function(quest, flags) return (flags["Currency"] and (quest.reward.type == WQT_REWARDTYPE.currency or quest.reward.subType == WQT_REWARDTYPE.currency)); end 
-			,function(quest, flags) return (flags["Experience"] and quest.reward.type == WQT_REWARDTYPE.xp); end 
-			,function(quest, flags) return (flags["Reputation"] and (quest.reward.type == WQT_REWARDTYPE.reputation or quest.reward.subType == WQT_REWARDTYPE.reputation)); end
-			,function(quest, flags) return (flags["None"] and quest.reward.type == WQT_REWARDTYPE.none); end
+			["Armor"]		= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.equipment or rewardType == WQT_REWARDTYPE.weapon; end 
+			,["Relic"]		= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.relic; end 
+			,["Item"]		= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.item or rewardType == WQT_REWARDTYPE.spell; end -- treat spells like items for now
+			,["Artifact"]	= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.artifact; end 
+			,["Honor"]		= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.honor or rewardSubType == WQT_REWARDTYPE.honor; end 
+			,["Gold"]		= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.gold or rewardSubType == WQT_REWARDTYPE.gold; end 
+			,["Currency"]	= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.currency or rewardSubType == WQT_REWARDTYPE.currency; end 
+			,["Experience"]	= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.xp; end 
+			,["Reputation"]	= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.reputation or rewardSubType == WQT_REWARDTYPE.reputation; end
+			,["None"]		= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.none; end
 			}
 	};
-
 
 _V["WQT_CONTINENT_GROUPS"] = {
 		[875]	= {876} 
@@ -427,41 +461,40 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 		} -- All of Azeroth
 	}
 
-_V["WQT_NO_FACTION_DATA"] = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/DialogFrame/UI-DialogBox-Background", ["name"]=_L["NO_FACTION"] } -- No faction
+_V["WQT_NO_FACTION_DATA"] = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L["NO_FACTION"] } -- No faction
 _V["WQT_FACTION_DATA"] = {
-	[1894] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Warden" }
-	,[1859] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_NightFallen" }
-	,[1900] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_CourtofFarnodis" }
-	,[1948] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Valarjar" }
-	,[1828] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_HightmountainTribes" }
-	,[1883] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_DreamWeavers" }
-	,[1090] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_KirinTor" }
-	,[2045] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_Legionfall" } -- This isn't in until 7.3
-	,[2165] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_ArmyoftheLight" }
-	,[2170] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_LegionCircle_Faction_ArgussianReach" }
-	,[609] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/ICONS/DRUID_STAGSTATUE01" } -- Cenarion Circle - Call of the Scarab
-	,[910] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/ICONS/Ability_Mount_Drake_Bronze" } -- Brood of Nozdormu - Call of the Scarab
-	,[1515] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/ICONS/Achievement_Dungeon_ArakkoaSpires"} -- Dreanor Arakkoa Outcasts
-	,[1681] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Tabard_A_77VoljinsSpear" } -- Dreanor Vol'jin's Spear
-	,[1682] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Tabard_A_78WrynnVanguard" } -- Dreanor Wrynn's Vanguard
-	,[1731] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/ICONS/inv_tabard_a_81exarchs" } -- Dreanor Council of Exarchs
-	,[1445] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Jewelry_FrostwolfTrinket_01" } -- Draenor Frostwolf Orcs
-	,[67] = 		{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_HordeWarEffort" } -- Horde
-	,[469] = 	{ ["expansion"] = 0 ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_AllianceWarEffort" } -- Alliance
-	-- BfA                                                         
-	,[2164] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Faction_Championsofazeroth_Round" } -- Champions of Azeroth
-	,[2156] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Horde" ,["icon"] = 2058211 } -- Talanji's Expedition
-	,[2103] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Horde" ,["icon"] = 2058217 } -- Zandalari Empire
-	,[2158] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Horde" ,["icon"] = "Interface/ICONS/INV_Faction_Voldunai_Round" } -- Voldunai
-	,[2157] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Horde" ,["icon"] = "Interface/ICONS/INV_Faction_HordeWarEffort_Round" } -- The Honorbound
-	,[2163] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = nil ,["icon"] = 2058212 } -- Tortollan Seekers
-	,[2162] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_Stormswake_Round" } -- Storm's Wake
-	,[2160] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_ProudmooreAdmiralty_Round" } -- Proudmoore Admirality
-	,[2161] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_OrderofEmbers_Round" } -- Order of Embers
-	,[2159] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Faction_AllianceWarEffort_Round" } -- 7th Legion
-	,[2373] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Horde" ,["icon"] = "Interface/ICONS/INV_Circle_Faction_Unshackled" } -- Unshackled
-	,[2400] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = "Alliance" ,["icon"] = "Interface/ICONS/INV_Circle_Faction_Akoan" } -- Waveblade Ankoan
-	,[2391] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["faction"] = nil ,["icon"] = "Interface/ICONS/INV_Faction_Rustbolt" } -- Rustbolt
+	[67] = 		{ ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 2203914 } -- Horde
+	,[469] = 	{ ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 2203912 } -- Alliance
+	,[609] = 	{ ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 1396983 } -- Cenarion Circle - Call of the Scarab
+	,[910] = 	{ ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 236232 } -- Brood of Nozdormu - Call of the Scarab
+	,[1090] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1450997 } -- Kirin Tor
+	,[1445] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["playerFaction"] = nil ,["texture"] = 133283 } -- Draenor Frostwolf Orcs
+	,[1515] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["playerFaction"] = nil ,["texture"] = 1002596 } -- Dreanor Arakkoa Outcasts
+	,[1731] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["playerFaction"] = nil ,["texture"] = 1048727 } -- Dreanor Council of Exarchs
+	,[1681] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["playerFaction"] = nil ,["texture"] = 1042727 } -- Dreanor Vol'jin's Spear
+	,[1682] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["playerFaction"] = nil ,["texture"] = 1042294 } -- Dreanor Wrynn's Vanguard
+	,[1828] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1450996 } -- Highmountain Tribes
+	,[1859] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1450998 } -- Nightfallen
+	,[1883] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1450995 } -- Dreamweavers
+	,[1894] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1451000 } -- Wardens
+	,[1900] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1450994 } -- Court of Farnodis
+	,[1948] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1450999 } -- Valarjar
+	,[2045] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1708507 } -- Legionfall
+	,[2103] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Horde" ,["texture"] = 2058217 } -- Zandalari Empire
+	,[2165] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1708506 } -- Army of the Light
+	,[2170] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1708505 } -- Argussian Reach
+	,[2156] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Horde" ,["texture"] = 2058211 } -- Talanji's Expedition
+	,[2157] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Horde" ,["texture"] = 2058207 } -- The Honorbound
+	,[2158] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Horde" ,["texture"] = 2058213 } -- Voldunai
+	,[2159] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Alliance" ,["texture"] = 2058204 } -- 7th Legion
+	,[2160] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Alliance" ,["texture"] = 2058209 } -- Proudmoore Admirality
+	,[2161] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Alliance" ,["texture"] = 2058208 } -- Order of Embers
+	,[2162] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Alliance" ,["texture"] = 2058210 } -- Storm's Wake
+	,[2163] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 2058212 } -- Tortollan Seekers
+	,[2164] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 2058205 } -- Champions of Azeroth
+	,[2373] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Horde" ,["texture"] = 2909044 } -- Unshackled
+	,[2391] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 2909316 } -- Rustbolt
+	,[2400] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Alliance" ,["texture"] = 2909043 } -- Waveblade Ankoan
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
@@ -488,6 +521,7 @@ _V["LATEST_UPDATE"] =
 	<p>* Using WorldFightMap will now act like the default map. To revert, enable Settings -> List Settings -> Always All Quests</p>
 	<h2>Fixes:</h2>
 	<p>* Fixed pin ring timers for quests with a duration over 4 days.</p>
+	<p>* Fixed certain error messages in chat while in combat.</p>
 	<p>* Fixed map highlights for WorldFightMap users.</p>
 	<h3>&#160;</h3>
 	<h1>8.2.01</h1> 

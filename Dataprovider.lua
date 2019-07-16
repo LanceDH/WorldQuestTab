@@ -7,6 +7,7 @@
 local WQT = addon.WQT;
 local _L = addon.L;
 local _V = addon.variables;
+local WQT_Utils = addon.WQT_Utils;
 
 local _WFMLoaded = IsAddOnLoaded("WorldFlightMap");
 
@@ -38,7 +39,7 @@ local function UpdateWorldZones(newLevel)
 end
 
 local function QuestCreationFunc(pool)
-	local questInfo = {["time"] = {}, ["reward"] = {}};
+	local questInfo = {["time"] = {}, ["reward"] = {}, ["mapInfo"] = {}};
 	return questInfo;
 end
 
@@ -82,7 +83,13 @@ end
 
 local function SetQuestReward(questInfo)
 	local reward = questInfo.reward;
-	local _, texture, numItems, quality, rewardType, color, rewardId, canUpgrade = nil, nil, 0, 1, WQT_REWARDTYPE.missing, _V["WQT_COLOR_MISSING"], nil, nil;
+	local _, rewardId, canUpgrade;
+	local texture = 134400; -- Questonmark
+	local numItems = 0;
+	local quality = 1;
+	local rewardType = WQT_REWARDTYPE.missing;
+	local color = _V["WQT_COLOR_MISSING"];
+	local canUpgrade = false;
 	
 	local haveData = HaveQuestRewardData(questInfo.questId);
 	
@@ -93,7 +100,8 @@ local function SetQuestReward(questInfo)
 			if rewardId then
 				local price, typeID, subTypeID = select(11, GetItemInfo(rewardId));
 				if (typeID == 4 or typeID == 2) then -- Gear (4 = armor, 2 = weapon)
-					canUpgrade =ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+)$") and true;
+					
+					canUpgrade = ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+)$") and true or false;
 					numItems = ilvl;
 					rewardType = typeID == 4 and WQT_REWARDTYPE.equipment or  WQT_REWARDTYPE.weapon;
 					color = typeID == 4 and _V["WQT_COLOR_ARMOR"] or _V["WQT_COLOR_WEAPON"];
@@ -119,12 +127,12 @@ local function SetQuestReward(questInfo)
 			color = _V["WQT_COLOR_ITEM"];
 		elseif GetQuestLogRewardHonor(questInfo.questId) > 0 then
 			numItems = GetQuestLogRewardHonor(questInfo.questId);
-			texture = _V["WQT_HONOR"];
+			texture = 1455894;
 			color = _V["WQT_COLOR_HONOR"];
 			rewardType = WQT_REWARDTYPE.honor;
 		elseif GetQuestLogRewardMoney(questInfo.questId) > 0 then
 			numItems = floor(abs(GetQuestLogRewardMoney(questInfo.questId) / 10000))
-			texture = 133784; --"Interface/ICONS/INV_Misc_Coin_01";
+			texture = 133784;
 			rewardType = WQT_REWARDTYPE.gold;
 			color = _V["WQT_COLOR_GOLD"];
 		elseif GetNumQuestLogRewardCurrencies(questInfo.questId) > 0 then
@@ -154,7 +162,7 @@ local function SetQuestReward(questInfo)
 			end
 		elseif haveData and GetQuestLogRewardXP(questInfo.questId) > 0 then
 			numItems = GetQuestLogRewardXP(questInfo.questId);
-			texture = _V["WQT_EXPERIENCE"];
+			texture = 894556;
 			color = _V["WQT_COLOR_ITEM"];
 			rewardType = WQT_REWARDTYPE.xp;
 		elseif GetNumQuestLogRewards(questInfo.questId) == 0 then
@@ -163,15 +171,15 @@ local function SetQuestReward(questInfo)
 			rewardType = WQT_REWARDTYPE.none;
 		end
 	end
-
+	
 	questInfo.reward.id = rewardId;
 	questInfo.reward.quality = quality or 1;
-	questInfo.reward.texture = texture or _V["WQT_QUESTIONMARK"];
+	questInfo.reward.texture = texture;
 	questInfo.reward.amount = numItems or 0;
 	questInfo.reward.type = rewardType or 0;
 	questInfo.reward.color = color;
 	questInfo.reward.canUpgrade = canUpgrade;
-	
+
 	return haveData;
 end
 
@@ -188,95 +196,82 @@ local function SetSubReward(questInfo)
 	questInfo.reward.subType = subType;
 end
 
-local function SetTime(questInfo)
-
-end
-
 local function ValidateQuest(questInfo)
-	questInfo.isValid = not (not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) and questInfo.time.minutes == 0 and questInfo.reward.type == WQT_REWARDTYPE.missing and not questInfo.factionId);
+	local _, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
+	local seconds = WQT_Utils:GetQuestTimeString(questInfo);
+	questInfo.isValid = not questInfo.alwaysHide and not (not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) and seconds == 0 and questInfo.reward.type == WQT_REWARDTYPE.missing and not factionId);
 end
 
 ----------------------------
--- MIXIN
+-- SHARED
 ----------------------------
-local QUEST_LOG_UPDATE_CD = 1;
 
-WQT_DataProvider = {}
+local cachedTypeData = {};
+local cachedZoneInfo = {};
 
-function WQT_DataProvider:OnLoad()
-	self.pool = CreateObjectPool(QuestCreationFunc, QuestResetFunc);
-	self.iterativeList = {};
-	self.keyList = {};
-	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room
-	self.waitingRoomRewards = {};
-	self.waitingRoomQuest = {};
-	self.lastUpdate = 0;
-	
-	self.cachedTypeData = {};
-	
-	self.callbacks = {
-		["waitingRoom"] = {}
-		,["questsLoaded"] = {}
-	}
-	
-	UpdateWorldZones(); 
-	
-	hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
-		local mapAreaID = WorldMapFrame.mapID;
-		if (self.currentMapId ~= mapAreaID) then
-			self.mapChanged = true;
-			self.currentMapId = mapAreaID;
-			self.currentMapInfo = C_Map.GetMapInfo(mapAreaID);
-			self:UpdateData();
-		end
-	end)
-end
-
-function WQT_DataProvider:UpdateData()
-	local now = GetTime();
-	local elapsed = now - self.lastUpdate;
-	if  (self.mapChanged or elapsed > QUEST_LOG_UPDATE_CD) then
-		self.lastUpdate = now;
-		self.mapChanged = false;
-		self:LoadQuestsInZone(self.currentMapId);
-		if (self.dataTicker) then
-			self.dataTicker:Cancel();
-			self.dataTicker = nil;
-		end
-	else
-		self:UpdateWaitingRoom();
-		if (not self.dataTicker) then
-			self.dataTicker =  C_Timer.NewTicker(QUEST_LOG_UPDATE_CD - elapsed+0.05, function() self:UpdateData() end, 1);
+function WQT_Utils:GetCachedMapInfo(zoneId)
+	zoneId = zoneId or 0;
+	local zoneInfo = cachedZoneInfo[zoneId];
+	if (not zoneInfo) then
+		zoneInfo = C_Map.GetMapInfo(zoneId);
+		if (zoneInfo and zoneInfo.name) then
+			cachedZoneInfo[zoneId] = zoneInfo;
 		end
 	end
+	
+	return zoneInfo;
 end
 
-function WQT_DataProvider:OnEvent(event, ...)
-	if (event == "QUEST_LOG_UPDATE") then
-		self:UpdateData();
-	elseif (event == "PLAYER_LEVEL_UP") then
-		local level = ...;
-		UpdateWorldZones(level); 
+function WQT_Utils:GetFactionDataInternal(id)
+	if (not id) then  
+		-- No faction
+		return _V["WQT_NO_FACTION_DATA"];
+	end;
+	local factionData = _V["WQT_FACTION_DATA"];
+
+	if (not factionData[id]) then
+		-- Add new faction in case it's not in our data yet
+		factionData[id] = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = 134400 } -- Questionmark icon
+		factionData[id].name = GetFactionInfoByID(id) or "Unknown Faction";
+		WQT:debugPrint("Added new faction", id,factionData[id].name);
 	end
+	
+	return factionData[id];
 end
 
-function WQT_DataProvider:HookWaitingRoomUpdate(func)
-	tinsert(self.callbacks.waitingRoom, func);
+function WQT_Utils:GetCachedTypeIconData(questType, tradeskillLineIndex)
+	local isNew = false;
+	local originalType = questType;
+	questType = questType or _V["WQT_TYPE_BONUSOBJECTIVE"];
+	
+	if (not cachedTypeData[questType]) then 
+		cachedTypeData[questType] = {};
+		isNew = true;
+	end
+	if (tradeskillLineIndex and not cachedTypeData[questType][tradeskillLineIndex]) then 
+		cachedTypeData[questType][tradeskillLineIndex] = {};
+		isNew = true;
+	end
+	
+	if (isNew) then
+		local atlasTexture, sizeX, sizeY  = QuestUtil.GetWorldQuestAtlasInfo(originalType, false, tradeskillLineIndex);
+		if (tradeskillLineIndex) then
+			cachedTypeData[questType][tradeskillLineIndex] = {["texture"] = atlasTexture, ["x"] = sizeX, ["y"] = sizeY};
+		else
+			cachedTypeData[questType] = {["texture"] = atlasTexture, ["x"] = sizeX, ["y"] = sizeY};
+		end
+	end
+	
+	if (tradeskillLineIndex) then
+		local data = cachedTypeData[questType][tradeskillLineIndex];
+		return data.texture, data.x, data.y;
+	end
+	
+	local data = cachedTypeData[questType];
+	return data.texture, data.x, data.y;
 end
 
-function WQT_DataProvider:HookQuestsLoaded(func)
-	tinsert(self.callbacks.questsLoaded, func);
-end
-
-function WQT_DataProvider:ClearData()
-	self.pool:ReleaseAll();
-	wipe(self.iterativeList);
-	wipe(self.keyList);
-	wipe(self.waitingRoomRewards);
-	wipe(self.waitingRoomQuest )
-end
-
-function WQT_DataProvider:GetQuestTimeString(questInfo, fullString, unabreviated)
+function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 	local timeLeftMinutes = 0
         local timeLeftSeconds = 0
 	local timeString = "";
@@ -318,7 +313,8 @@ function WQT_DataProvider:GetQuestTimeString(questInfo, fullString, unabreviated
 			else
 				timeString = D_DAYS:format(displayTime / (24*3600));
 			end
-			local isWeek = questInfo.isElite and questInfo.rarity == LE_WORLD_QUEST_QUALITY_EPIC
+			local _, _, _, rarity, isElite = GetQuestTagInfo(questInfo.questId);
+			local isWeek = isElite and rarity == LE_WORLD_QUEST_QUALITY_EPIC
 			color = isWeek and _V["WQT_PURPLE_FONT_COLOR"] or _V["WQT_BLUE_FONT_COLOR"];
 		end
 	end
@@ -332,38 +328,103 @@ function WQT_DataProvider:GetQuestTimeString(questInfo, fullString, unabreviated
 	return timeLeftSeconds, timeString, color, timeStringShort ,timeLeftMinutes;
 end
 
+function WQT_Utils:GetMapInfoForQuest(questId)
+	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
+	return WQT_Utils:GetCachedMapInfo(zoneId);
+end
+
+----------------------------
+-- MIXIN
+----------------------------
+local QUEST_LOG_UPDATE_CD = 1;
+
+WQT_DataProvider = {}
+
+function WQT_DataProvider:OnLoad()
+	self.pool = CreateObjectPool(QuestCreationFunc, QuestResetFunc);
+	self.iterativeList = {};
+	self.keyList = {};
+	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room
+	self.waitingRoomRewards = {};
+	self.waitingRoomQuest = {};
+	self.lastUpdate = 0;
+	
+	self.callbacks = {
+		["waitingRoom"] = {}
+		,["questsLoaded"] = {}
+	}
+	
+	UpdateWorldZones(); 
+	
+	hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
+		local mapAreaID = WorldMapFrame.mapID;
+		if (self.currentMapId ~= mapAreaID) then
+			self.mapChanged = true;
+			self.currentMapId = mapAreaID;
+			self.currentMapInfo = WQT_Utils:GetCachedMapInfo(mapAreaID);
+			self:UpdateData();
+		end
+	end)
+end
+
+function WQT_DataProvider:UpdateData()
+	local now = GetTime();
+	local elapsed = now - self.lastUpdate;
+	if  (self.mapChanged or elapsed > QUEST_LOG_UPDATE_CD) then
+		self.lastUpdate = now;
+		self.mapChanged = false;
+		self:LoadQuestsInZone(self.currentMapId);
+		if (self.dataTicker) then
+			self.dataTicker:Cancel();
+			self.dataTicker = nil;
+		end
+	else
+		self:UpdateWaitingRoom();
+		if (not self.dataTicker) then
+			self.dataTicker =  C_Timer.NewTicker(QUEST_LOG_UPDATE_CD - elapsed+0.05, function() self:UpdateData() end, 1);
+		end
+	end
+end
+
+function WQT_DataProvider:OnEvent(event, ...)
+	if (event == "QUEST_LOG_UPDATE") then
+		self:UpdateData();
+	elseif (event == "PLAYER_LEVEL_UP") then
+		local level = ...;
+		UpdateWorldZones(level); 
+	end
+end
+
+function WQT_DataProvider:HookWaitingRoomUpdate(func)
+	tinsert(self.callbacks.waitingRoom, func);
+end
+
+function WQT_DataProvider:HookQuestsLoaded(func)
+	tinsert(self.callbacks.questsLoaded, func);
+end
+
+function WQT_DataProvider:TriggerCallbacks(event)
+	if (not self.callbacks[event]) then 
+		WQT:debugPrint("Tried to trigger incalid callback event:", event);
+		return
+	end;
+	for k, func in ipairs(self.callbacks[event]) do
+		func();
+	end
+end
+
+function WQT_DataProvider:ClearData()
+	self.pool:ReleaseAll();
+	wipe(self.iterativeList);
+	wipe(self.keyList);
+	wipe(self.waitingRoomRewards);
+	wipe(self.waitingRoomQuest )
+end
+
 function WQT_DataProvider:SetQuestData(questInfo)
 	local questId = questInfo.questId;
-	local zoneId = questInfo.mapInfo.mapID;
 	
-	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questId);
-	worldQuestType = worldQuestType or _V["WQT_TYPE_BONUSOBJECTIVE"];
-	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questId);
-	
-	local faction = factionId and GetFactionInfoByID(factionId) or _L["NO_FACTION"];
-	
-	local expLevel = _V["WQT_ZONE_EXPANSIONS"][zoneId] or 0;
-
-	questInfo.title = title;
-	
-	questInfo.faction = faction;
-	questInfo.factionId = factionId;
-	questInfo.type = worldQuestType or -1;
-	questInfo.rarity = rarity;
-	questInfo.isElite = isElite;
-	
-	questInfo.expantionLevel = expLevel;
-	questInfo.tradeskill = tradeskillLineIndex;
-	
-	local seconds, timeString, color, timeStringShort, minutes = self:GetQuestTimeString(questInfo);
-	
-	questInfo.time.seconds = seconds;
-	questInfo.time.minutes = minutes; -- deprecated
-	questInfo.time.full = timeString; -- deprecated
-	questInfo.time.short = timeStringShort; -- deprecated
-	questInfo.time.color = color; -- deprecated
-	questInfo.time.timeStamp = GetTime(); -- deprecated
-
+	questInfo.time.seconds = WQT_Utils:GetQuestTimeString(questInfo);
 	questInfo.passedFilter = true;
 	questInfo.isCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questId);
 end
@@ -372,13 +433,10 @@ function WQT_DataProvider:UpdateWaitingRoom()
 	local questInfo;
 	local updatedData = false;
 	local fixed = {};
-	WQT:debugTableWipe("fixedData"); -- debug
-	WQT:debugTableWipe("fixedReward"); -- debug
 	
 	for i = #self.waitingRoomQuest, 1, -1 do
 		local questInfo = self.waitingRoomQuest[i];
 		if (questInfo.questId and HaveQuestData(questInfo.questId)) then
-			WQT:debugTableInsert("fixedData", questInfo, questInfo.questId) -- debug
 			tinsert(fixed, questInfo.questId);
 			self:SetQuestData(questInfo);
 			if HaveQuestRewardData(questInfo.questId) then	
@@ -398,7 +456,6 @@ function WQT_DataProvider:UpdateWaitingRoom()
 	for i = #self.waitingRoomRewards, 1, -1 do
 		questInfo = self.waitingRoomRewards[i];
 		if ( questInfo.questId and HaveQuestRewardData(questInfo.questId)) then
-			WQT:debugTableInsert("fixedReward", questInfo, questInfo.questId) -- debug
 			SetQuestReward(questInfo);
 			SetSubReward(questInfo);
 			ValidateQuest(questInfo);
@@ -407,13 +464,8 @@ function WQT_DataProvider:UpdateWaitingRoom()
 		end
 	end
 
-	WQT:debugAnnounceTable("fixedData"); -- debug
-	WQT:debugAnnounceTable("fixedReward"); -- debug
-	
 	if (updatedData) then
-		for k, func in ipairs(self.callbacks.waitingRoom) do
-			func();
-		end
+		self:TriggerCallbacks("waitingRoom");
 	end
 end
 
@@ -452,13 +504,8 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 		end
 	end
 	
-	local currentMapInfo = C_Map.GetMapInfo(zoneId);
+	local currentMapInfo = WQT_Utils:GetCachedMapInfo(zoneId);
 	if not currentMapInfo then return end;
-
-	WQT:debugTableWipe("duplicate"); -- debug
-	WQT:debugTableWipe("invalid"); -- debug
-	WQT:debugTableWipe("missingData"); -- debug
-	WQT:debugTableWipe("alwaysHide"); -- debug
 	
 	if (WQT.settings.list.alwaysAllQuests and currentMapInfo.mapType ~= Enum.UIMapType.World) then
 		
@@ -489,14 +536,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 		end
 	end
 	
-	WQT:debugAnnounceTable("duplicate", "FFFF00"); -- debug
-	WQT:debugAnnounceTable("invalid", "FF0000"); -- debug
-	WQT:debugAnnounceTable("missingData", "00FFFF"); -- debug
-	WQT:debugAnnounceTable("alwaysHide", "FF66FF"); -- debug
-	
-	for k, func in ipairs(self.callbacks.questsLoaded) do
-		func();
-	end
+	self:TriggerCallbacks("questsLoaded");
 end
 
 function WQT_DataProvider:AddQuestsInZone(zoneID, continentId)
@@ -523,13 +563,9 @@ function WQT_DataProvider:AddQuest(qInfo, zoneId, continentId)
 	if (duplicate) then
 		-- Check if the new zone is the 'official' zone, if so, use that one instead
 		if (zoneId == C_TaskQuest.GetQuestZoneID(qInfo.questId) ) then
-			local mapInfo = C_Map.GetMapInfo(zoneId);
-			duplicate.mapInfo = mapInfo;
 			duplicate.mapInfo.mapX = qInfo.x;
 			duplicate.mapInfo.mapY = qInfo.y;
 		end
-		
-		WQT:debugTableInsert("duplicate", duplicate, duplicate.questId) -- debug
 		
 		return duplicate;
 	end
@@ -537,17 +573,13 @@ function WQT_DataProvider:AddQuest(qInfo, zoneId, continentId)
 	local questInfo = self.pool:Acquire();
 	
 	questInfo.isValid = false;
-	questInfo.alwaysHide = not MapUtil.ShouldShowTask(zoneId, qInfo);
+	questInfo.alwaysHide = not MapUtil.ShouldShowTask(zoneId, qInfo) or qInfo.isQuestStart;
 	questInfo.questId = qInfo.questId;
-	questInfo.mapInfo = C_Map.GetMapInfo(zoneId);
 	questInfo.mapInfo.mapX = qInfo.x;
 	questInfo.mapInfo.mapY = qInfo.y;
-	questInfo.numObjectives = qInfo.numObjectives;
 	
-	if not HaveQuestData(qInfo.questId) then
-		WQT:debugTableInsert("missingData", questInfo, questInfo.questId) -- debug
+	if (not HaveQuestData(qInfo.questId)) then
 		tinsert(self.waitingRoomQuest, questInfo);
-		return nil;
 	end
 	
 	self:SetQuestData(questInfo);
@@ -560,14 +592,6 @@ function WQT_DataProvider:AddQuest(qInfo, zoneId, continentId)
 	
 	-- Filter out invalid quests like "Tracking Quest" in nazmir
 	ValidateQuest(questInfo);
-	
-	if not questInfo.isValid then
-		WQT:debugTableInsert("invalid", questInfo, questInfo.questId) -- debug
-	end
-	
-	if questInfo.alwaysHide then
-		WQT:debugTableInsert("alwaysHide", questInfo, questInfo.questId) -- debug
-	end
 	
 	if not haveRewardData then
 		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
@@ -622,31 +646,4 @@ function WQT_DataProvider:ListContainsEmissary()
 		if questInfo.isCriteria then return true; end
 	end
 	return false
-end
-
-function WQT_DataProvider:GetCachedTypeIconData(questType, tradeskillLineIndex)
-	local isNew = false;
-	if (not self.cachedTypeData[questType]) then 
-		self.cachedTypeData[questType] = {};
-		isNew = true;
-	end
-	if (tradeskillLineIndex and not self.cachedTypeData[questType][tradeskillLineIndex]) then 
-		self.cachedTypeData[questType][tradeskillLineIndex] = {};
-		isNew = true;
-	end
-	
-	if (isNew) then
-		local atlasTexture, sizeX, sizeY  = QuestUtil.GetWorldQuestAtlasInfo(questType, false, tradeskillLineIndex);
-		if (tradeskillLineIndex) then
-			self.cachedTypeData[questType][tradeskillLineIndex] = {["texture"] = atlasTexture, ["x"] = sizeX, ["y"] = sizeY};
-		else
-			self.cachedTypeData[questType] = {["texture"] = atlasTexture, ["x"] = sizeX, ["y"] = sizeY};
-		end
-	end
-	
-	if (tradeskillLineIndex) then
-		return self.cachedTypeData[questType][tradeskillLineIndex].texture, self.cachedTypeData[questType][tradeskillLineIndex].x, self.cachedTypeData[questType][tradeskillLineIndex].y;
-	end
-	
-	return self.cachedTypeData[questType].texture, self.cachedTypeData[questType].x, self.cachedTypeData[questType].y;
 end
