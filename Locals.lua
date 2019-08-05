@@ -1,4 +1,4 @@
-﻿local addonName, addon = ...
+﻿local _, addon = ...
 
 local L = {}
 local locale = GetLocale();
@@ -58,6 +58,9 @@ L["CONTAINER_DRAG"] = "Move"
 L["CONTAINER_DRAG_TT"] = "Drag to a different location."
 L["LIST_FULL_TIME"]	= "Expand Times"
 L["LIST_FULL_TIME_TT"]	= "Includes a secondary scale to times, adding hours to days and minutes to hours."
+L["LOAD_UTILITIES"] = "Load Utilities"
+L["LOAD_UTILITIES_TT"] = "Load utility features such as talliesa and distance sorting.\n|cFFFF5555A reload is required when disabling this feature.|r\n|cFFFF5555Enabling these features can increase memory usage.|r"
+L["LOAD_UTILITIES_TT_DISABLED"] = "|cFFFF5555World Quest Tab Utilities is not enabled in your add-on list.|r"
 
 L["TYPE_INVASION"]	= "Invasion";
 L["TYPE_EMISSARY"]	= "Emissary Only";
@@ -406,10 +409,6 @@ L["TYPE_INVASION"] = "침공"
 
 L["IS_AZIAN_CLIENT"]	= true
 end
-
-
-WQT_CONTAINER_DRAG = L["CONTAINER_DRAG"];
-WQT_CONTAINER_DRAG_TT = L["CONTAINER_DRAG_TT"];
 
 
 addon.L = L;

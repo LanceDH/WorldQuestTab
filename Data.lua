@@ -3,7 +3,7 @@
 
 addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 addon.variables = {};
-addon.debug = false;
+addon.debug = true;
 addon.WQT_Utils = {};
 local WQT_Utils = addon.WQT_Utils;
 local _L = addon.L;
@@ -32,12 +32,29 @@ local function AddIndentedDoubleLine(tooltip, a, b, level, color)
 	local indented = string.rep("    ", level) .. a;
 	if (type(b) == "table" and b.GetRGBA) then
 		b = b.r .. "/" .. b.g .. "/" .. b.b;
+	elseif (type(b) == "table" and b.GetXY) then
+		b = "{" ..floor(b.x*100)/100 .. " | " .. floor(b.y*100)/100 .. "}";
 	elseif (type(b) == "boolean") then
 		b = b and "true" or "false";
+	elseif  (type(a) == "string" and a:find("Bits") and type(b) == "number" and b > 0) then
+		local bits = b;
+		local o = "";
+		local index = 0;
+		while (bits > 0) do
+			local rest = bits% 2
+			if (rest > 0) then
+				o = o .. (o == "" and "" or ", ") .. 2^index;
+			end
+			bits = (bits - rest) / 2
+			index = index + 1;
+		end
+		b = string.format("%s (%s)", b, o);
 	elseif (b == nil) then
 		b = "nil";
 	end
 	tooltip:AddDoubleLine(indented, b, color.r, color.g, color.b, color.r, color.g, color.b);
+	
+	
 end
 
 function WQT:AddDebugToTooltip(tooltip, questInfo, level)
@@ -46,7 +63,7 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 	local color = LIGHTBLUE_FONT_COLOR;
 	-- First all non table values;
 	for key, value in pairs(questInfo) do
-		if (type(value) ~= "table" or value.GetRGBA) then
+		if ((type(value) ~= "table" or value.GetRGBA) and type(value) ~= "function") then
 			AddIndentedDoubleLine(tooltip, key, value, level, color);
 		end
 	end
@@ -61,10 +78,11 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 	if(level == 0 and questInfo.questId) then
 		color = GRAY_FONT_COLOR;
 		
-		AddIndentedDoubleLine(tooltip, "debug", "", 0, color);
+		AddIndentedDoubleLine(tooltip, "debug only", "", 0, color);
 		local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
 		AddIndentedDoubleLine(tooltip, "title", title, 1, color);
-		local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex, displayTimeLeft = GetQuestTagInfo(questInfo.questId);
+		local _, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questInfo.questId);
+		AddIndentedDoubleLine(tooltip, "tagName", tagName, 1, color);
 		AddIndentedDoubleLine(tooltip, "worldQuestType", worldQuestType, 1, color);
 		AddIndentedDoubleLine(tooltip, "rarity", rarity, 1, color);
 		AddIndentedDoubleLine(tooltip, "isElite", isElite, 1, color);
@@ -100,22 +118,24 @@ end
 ------------------------
 
 WQT_REWARDTYPE = {
-	["missing"] = 100
-	,["weapon"] = 1
-	,["equipment"] = 2
-	,["relic"] = 3
-	,["artifact"] = 4
-	,["spell"] = 5
-	,["item"] = 6
-	,["gold"] = 7
-	,["currency"] = 8
-	,["honor"] = 9
-	,["reputation"] = 10
-	,["xp"] = 11
-	,["none"] = 12
+	["none"] = 			0
+	,["weapon"] = 		2^0
+	,["equipment"] =		2^1
+	,["relic"] = 		2^2
+	,["artifact"] = 		2^3
+	,["spell"] = 		2^4
+	,["item"] = 			2^5
+	,["gold"] = 			2^6
+	,["currency"] = 		2^7
+	,["honor"] = 		2^8
+	,["reputation"] =	2^9
+	,["xp"] = 			2^10
+	,["missing"] = 		2^11
 };
 
 WQT_GROUP_INFO = _L["GROUP_SEARCH_INFO"];
+WQT_CONTAINER_DRAG = _L["CONTAINER_DRAG"];
+WQT_CONTAINER_DRAG_TT = _L["CONTAINER_DRAG_TT"];
 
 ------------------------
 -- LOCAL
@@ -170,7 +190,7 @@ _V["WQT_COLOR_ITEM"] = CreateColor(0.85, 0.85, 0.85) ;
 _V["WQT_COLOR_MISSING"] = CreateColor(0.7, 0.1, 0.1);
 _V["WQT_COLOR_RELIC"] = CreateColor(0.3, 0.7, 1);
 _V["WQT_WHITE_FONT_COLOR"] = CreateColor(0.8, 0.8, 0.8);
-_V["WQT_ORANGE_FONT_COLOR"] = CreateColor(1, 0.6, 0);
+_V["WQT_ORANGE_FONT_COLOR"] = CreateColor(1, 0.5, 0);
 _V["WQT_GREEN_FONT_COLOR"] = CreateColor(0, 0.75, 0);
 _V["WQT_BLUE_FONT_COLOR"] = CreateColor(0.2, 0.60, 1);
 _V["WQT_PURPLE_FONT_COLOR"] = CreateColor(0.73, 0.33, 0.82);
@@ -178,6 +198,12 @@ _V["WQT_PURPLE_FONT_COLOR"] = CreateColor(0.73, 0.33, 0.82);
 _V["WQT_BOUNDYBOARD_OVERLAYID"] = 3;
 _V["WQT_TYPE_BONUSOBJECTIVE"] = 99;
 _V["WQT_LISTITTEM_HEIGHT"] = 32;
+
+_V["WARMODE_BONUS_REWARD_TYPES"] = {
+		[WQT_REWARDTYPE.artifact] = true;
+		[WQT_REWARDTYPE.gold] = true;
+		[WQT_REWARDTYPE.currency] = true;
+	}
 
 _V["WQT_CVAR_LIST"] = {
 		["Petbattle"] = "showTamers"
@@ -188,27 +214,48 @@ _V["WQT_CVAR_LIST"] = {
 	}
 	
 _V["WQT_TYPEFLAG_LABELS"] = {
-		[2] = {["Default"] = DEFAULT, ["Elite"] = ELITE, ["PvP"] = PVP, ["Petbattle"] = PET_BATTLE_PVP_QUEUE, ["Dungeon"] = TRACKER_HEADER_DUNGEON, ["Raid"] = RAID, ["Profession"] = BATTLE_PET_SOURCE_4, ["Invasion"] = _L["TYPE_INVASION"], ["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE}
+		[2] = {["Default"] = DEFAULT, ["Elite"] = ELITE, ["PvP"] = PVP, ["Petbattle"] = PET_BATTLE_PVP_QUEUE, ["Dungeon"] = TRACKER_HEADER_DUNGEON, ["Raid"] = RAID, ["Profession"] = BATTLE_PET_SOURCE_4, ["Invasion"] = _L["TYPE_INVASION"], ["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE, ["Daily"] = DAILY}
 		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = WORLD_QUEST_REWARD_FILTERS_RESOURCES, ["Artifact"] = ITEM_QUALITY6_DESC
 			, ["Relic"] = RELICSLOT, ["None"] = NONE, ["Experience"] = POWER_TYPE_EXPERIENCE, ["Honor"] = HONOR, ["Reputation"] = REPUTATION}
 	};
 
 _V["WQT_SORT_OPTIONS"] = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD, [7] = QUALITY}
 _V["SORT_OPTION_ORDER"] = {
-	[1] = {"seconds", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "title"}
-	,[2] = {"faction", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "seconds", "title"}
-	,[3] = {"criteria", "questType", "questRarity", "elite", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "seconds", "title"}
-	,[4] = {"zone", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "seconds", "title"}
-	,[5] = {"title", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "seconds"}
-	,[6] = {"rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "seconds", "title"}
-	,[7] = {"rewardQuality", "rewardType", "rewardAmount", "canUpgrade", "seconds", "title"}
+	[1] = {"seconds", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "title"}
+	,[2] = {"faction", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"}
+	,[3] = {"criteria", "questType", "questRarity", "elite", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"}
+	,[4] = {"zone", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"}
+	,[5] = {"title", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds"}
+	,[6] = {"rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"}
+	,[7] = {"rewardQuality", "rewardType", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"}
 }
 _V["SORT_FUNCTIONS"] = {
 	["rewardType"] = function(a, b) if (a.reward.type ~= b.reward.type) then return a.reward.type < b.reward.type; end end
-	,["rewardAmount"] = function(a, b) if (a.reward.amount ~= b.reward.amount) then return a.reward.amount > b.reward.amount; end end
 	,["rewardQuality"] = function(a, b) if (a.reward.quality and b.reward.quality and a.reward.quality ~= b.reward.quality) then return a.reward.quality > b.reward.quality; end end
 	,["canUpgrade"] = function(a, b) if (a.reward.canUpgrade and b.reward.canUpgrade and a.reward.canUpgrade ~= b.reward.canUpgrade) then return a.reward.canUpgrade and not b.reward.canUpgrade; end end
 	,["seconds"] = function(a, b) if (a.time.seconds ~= b.time.seconds) then return a.time.seconds < b.time.seconds; end end
+	,["rewardAmount"] = function(a, b) 
+			local amountA = a.reward.amount;
+			local amountB = b.reward.amount;
+			if (C_PvP.IsWarModeDesired()) then
+				local bonus = C_PvP.GetWarModeRewardBonus() / 100;
+				if (_V["WARMODE_BONUS_REWARD_TYPES"][a.reward.type] and C_QuestLog.QuestHasWarModeBonus(a.questId)) then
+					amountA = amountA + floor(amountA * bonus);
+				end
+				if (_V["WARMODE_BONUS_REWARD_TYPES"][b.reward.type] and C_QuestLog.QuestHasWarModeBonus(b.questId)) then
+					amountB = amountB + floor(amountB * bonus);
+				end
+			end
+
+			if (amountA ~= amountB) then 
+				return amountA > amountB;
+			end 
+		end
+	,["rewardId"] = function(a, b)
+			if (a.reward.id and b.reward.id and a.reward.id ~= b.reward.id) then 
+				return a.reward.id < b.reward.id; 
+			end 
+		end
 	,["faction"] = function(a, b) 
 			local _, factionIdA = C_TaskQuest.GetQuestInfoByQuestID(a.questId);
 			local _, factionIdB = C_TaskQuest.GetQuestInfoByQuestID(b.questId);
@@ -219,6 +266,13 @@ _V["SORT_FUNCTIONS"] = {
 			end 
 		end
 	,["questType"] = function(a, b) 
+			if (a.isQuestStart ~= b.isQuestStart) then
+				return a.isQuestStart and not b.isQuestStart;
+			end		
+			if (a.isDaily ~= b.isDaily) then
+				return a.isDaily and not b.isDaily;
+			end			
+	
 			local _, _, typeA = GetQuestTagInfo(a.questId);
 			local _, _, typeB = GetQuestTagInfo(b.questId);
 			if (typeA and typeB and typeA ~= typeB) then 
@@ -249,7 +303,8 @@ _V["SORT_FUNCTIONS"] = {
 	,["criteria"] = function(a, b) 
 			local aIsCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(a.questId);
 			local bIsCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(b.questId);
-			if (aIsCriteria ~= bIsCriteria) then return aIsCriteria and not bIsCriteria; end end
+			if (aIsCriteria ~= bIsCriteria) then return aIsCriteria and not bIsCriteria; end 
+		end
 	,["zone"] = function(a, b) 
 			local mapInfoA = WQT_Utils:GetMapInfoForQuest(a.questId);
 			local mapInfoB = WQT_Utils:GetMapInfoForQuest(b.questId);
@@ -278,27 +333,28 @@ _V["REWARD_TYPE_ATLAS"] = {
 
 _V["FILTER_FUNCTIONS"] = {
 		[2] = { -- Types
-			["PvP"] 			= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_PVP; end 
-			,["Petbattle"] 	= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_PET_BATTLE; end 
-			,["Dungeon"] 	= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_DUNGEON; end 
-			,["Raid"] 		= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_RAID; end 
-			,["Profession"] 	= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_PROFESSION; end 
-			,["Invasion"] 	= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_INVASION; end 
-			,["Assault"]	= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_FACTION_ASSAULT; end 
-			,["Elite"]		= function(questId, questType, rewardType, rewardSubType) return select(5, GetQuestTagInfo(questId)); end
-			,["Default"]	= function(questId, questType, rewardType, rewardSubType) return questType == LE_QUEST_TAG_TYPE_NORMAL; end 
+			["PvP"] 			= function(questInfo, questType) return questType == LE_QUEST_TAG_TYPE_PVP; end 
+			,["Petbattle"] 	= function(questInfo, questType) return questType == LE_QUEST_TAG_TYPE_PET_BATTLE; end 
+			,["Dungeon"] 	= function(questInfo, questType) return questType == LE_QUEST_TAG_TYPE_DUNGEON; end 
+			,["Raid"] 		= function(questInfo, questType) return questType == LE_QUEST_TAG_TYPE_RAID; end 
+			,["Profession"] 	= function(questInfo, questType) return questType == LE_QUEST_TAG_TYPE_PROFESSION; end 
+			,["Invasion"] 	= function(questInfo, questType) return questType == LE_QUEST_TAG_TYPE_INVASION; end 
+			,["Assault"]	= function(questInfo, questType) return questType == LE_QUEST_TAG_TYPE_FACTION_ASSAULT; end 
+			,["Elite"]		= function(questInfo, questType) return select(5, GetQuestTagInfo(questInfo.questId)); end
+			,["Default"]	= function(questInfo, questType) return questType == LE_QUEST_TAG_TYPE_NORMAL; end 
+			,["Daily"]		= function(questInfo, questType) return questInfo.isDaily; end 
 			}
 		,[3] = { -- Reward filters
-			["Armor"]		= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.equipment or rewardType == WQT_REWARDTYPE.weapon; end 
-			,["Relic"]		= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.relic; end 
-			,["Item"]		= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.item or rewardType == WQT_REWARDTYPE.spell; end -- treat spells like items for now
-			,["Artifact"]	= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.artifact; end 
-			,["Honor"]		= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.honor or rewardSubType == WQT_REWARDTYPE.honor; end 
-			,["Gold"]		= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.gold or rewardSubType == WQT_REWARDTYPE.gold; end 
-			,["Currency"]	= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.currency or rewardSubType == WQT_REWARDTYPE.currency; end 
-			,["Experience"]	= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.xp; end 
-			,["Reputation"]	= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.reputation or rewardSubType == WQT_REWARDTYPE.reputation; end
-			,["None"]		= function(questId, questType, rewardType, rewardSubType) return rewardType == WQT_REWARDTYPE.none; end
+			["Armor"]		= function(questInfo, questType) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.equipment + WQT_REWARDTYPE.weapon) > 0; end
+			,["Relic"]		= function(questInfo, questType) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.relic) > 0; end
+			,["Item"]		= function(questInfo, questType) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.spell + WQT_REWARDTYPE.item) > 0; end
+			,["Artifact"]	= function(questInfo, questType) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.artifact) > 0; end
+			,["Honor"]		= function(questInfo, questType) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.honor) > 0; end
+			,["Gold"]		= function(questInfo, questType) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.gold) > 0; end
+			,["Currency"]	= function(questInfo, questType) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.currency) > 0; end
+			,["Experience"]	= function(questInfo, questType) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.xp) > 0; end
+			,["Reputation"]	= function(questInfo, questType) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.reputation) > 0; end
+			,["None"]		= function(questInfo, questType) return questInfo.reward.typeBits == 0; end
 			}
 	};
 
@@ -501,52 +557,114 @@ for k, v in pairs(_V["WQT_FACTION_DATA"]) do
 	v.name = GetFactionInfoByID(k);
 end
 
-_V["LATEST_UPDATE"] = 
-	[[
-	<h3>&#160;</h3>
-	<h1>8.2.02</h1> 
-	<p> Behind the scenes rework resulting in the quest list being more accurate and less likely to miss quests.</p>
-	<h2>New:</h2>
-	<p>* New 'Quality' sorting option: Sorts the list by reward quality (epic > rare > ...) before sorting by reward type (equipement > azerite > ...)</p>
-	<p>* New settings for the quest list:</p>
-	<p>&#160;&#160;- 'Show zone' setting (default on): Show zone label when quests from multiple zones are shown.</p>
-	<p>&#160;&#160;- 'Expand times' setting (default off): Adds a secondary scale to timers in the quest list. I.e. adding minutes to hours.</p>
-	<h2>Changes:</h2>
-	<p>* Filter settings now work more like Blizzard's filters. All checked by default, all off means nothing passes. This change resulted in a one time reset of your filters. My apologies.</p>
-	<p>* Like pin settings, moved quest list settings to a separate group.</p>
-	<p>* Times for quests with a total duration over 4 days are now purple.</p>
-	<p>* Timers update in real-time rather than when data is updated.</p>
-	<p>* Timers below 1 minute will now show as seconds.</p>
-	<p>* Flipped faction sorting to ascending.</p>
-	<p>* Using WorldFightMap will now act like the default map. To revert, enable Settings -> List Settings -> Always All Quests</p>
-	<h2>Fixes:</h2>
-	<p>* Fixed pin ring timers for quests with a duration over 4 days.</p>
-	<p>* Fixed certain error messages in chat while in combat.</p>
-	<p>* Fixed map highlights for WorldFightMap users.</p>
-	<h3>&#160;</h3>
-	<h1>8.2.01</h1> 
-	<h2>New:</h2>
-	<p>* 'What's new' window</p>
-	<p>* Map pin features:</p>
-	<p>&#160;&#160;- 'Time left' on ring</p>
-	<p>&#160;&#160;- Reward type icon</p>
-	<p>&#160;&#160;- Quest type icon</p>
-	<p>&#160;&#160;- Bigger pins</p>
-	<p>* New default pin layout. Check settings to customize.</p>
-	<p>* Quest list for full-screen world map. Click the globe in the top right.</p>
-	<p>* Quest list for flight map. Click the globe in the bottom right.</p>
-	<p>* Support for Mechagon and Nazjatar.</p>
-	<h3>&#160;</h3>
-	<h2>Changed:</h2>
-	<p>* Switched list 'selected' and 'tracker' highlight brightness.</p>
-	<p>* Swapped order of 'type' sort.</p>
-	<p>* Removed 'precise filter'. It was broken for ages.</p>
-	<p>* Sorting will now fall back to sorting by reward, rather than just by title.</p>
-	<h2>Fixes:</h2>
-	<p>* Fixed order of 'Type' sort to prioritize elite and rare over common.</p>
-	<h3>&#160;</h3>
-	]]
+-- This is just easier to maintain than changing the entire string every time
+local _patchNotes = {
+		{["version"] = "8.2.03"
+			,["new"] = {
+				"New 'Daily' quest type filter: can be used to filter daily quests from the list."
+			}
+			,["changes"] = {
+				"Certain daily quests are once again part of the list with their own type icon."
+				,"Reward amounts in the list will now take warmode bonuses into account."
+				,"Quest rewards will prioritize their most impressive reward to display. I.e. showing manapears over gold rewards."
+				,"Made this window bigger and tried to improve its readability."
+			}
+			,["fixes"] = {
+				"Fixed support for quests with more then 2 reward types."
+				,"Fixed a filtering issue related to zones."
+				,"Fixed quest type filters."
+				,"Fixed tooltips when hovering over quests in the list. This will also fix interractions with other add-ons such as TipTac."
+			}
+		}
+		,{["version"] = "8.2.02"
+			,["intro"] = {"Behind the scenes rework resulting in the quest list being more accurate and less likely to miss quests."}
+			,["new"] = {
+				"New 'Quality' sorting option: Sorts the list by reward quality (epic > rare > ...) before sorting by reward type (equipement > azerite > ...)"
+				,"New settings for the quest list:"
+				,"- 'Show zone' setting (default on): Show zone label when quests from multiple zones are shown."
+				,"- 'Expand times' setting (default off): Adds a secondary scale to timers in the quest list. I.e. adding minutes to hours."
+			}
+			,["changes"] = {
+				"Filter settings now work more like Blizzard's filters. All checked by default, all off means nothing passes. This change resulted in a one time reset of your filters. My apologies."
+				,"Like pin settings, moved quest list settings to a separate group."
+				,"Times for quests with a total duration over 4 days are now purple."
+				,"Timers update in real-time rather than when data is updated."
+				,"Timers below 1 minute will now show as seconds."
+				,"Flipped faction sorting to ascending."
+				,"Using WorldFightMap will now act like the default map. To revert, enable Settings -> List Settings -> Always All Quests."
+			}
+			,["fixes"] = {
+				"Fixed pin ring timers for quests with a duration over 4 days."
+				,"Fixed certain error messages in chat while in combat."
+				,"Fixed map highlights for WorldFightMap users."
+			}
+		}
+		,{["version"] = "8.2.01"
+			,["new"] = {
+				"This 'What's new' window."
+				,"New map pin features:"
+				,"- 'Time left' on ring"
+				,"- Reward type icon"
+				,"- Quest type icon"
+				,"- Bigger pins"
+				,"New default pin layout. Check settings to customize."
+				,"Quest list for full-screen world map. Click the globe in the top right."
+				,"Quest list for flight map. Click the globe in the bottom right."
+				,"Support for Mechagon and Nazjatar."
+			}
+			,["changes"] = {
+				"Switched list 'selected' and 'tracker' highlight brightness."
+				,"Swapped order of 'type' sort."
+				,"Removed 'precise filter'. It was broken for ages."
+				,"Sorting will now fall back to sorting by reward, rather than just by title."
+			}
+			,["fixes"] = {
+				"Fixed order of 'Type' sort to prioritize elite and rare over common."
+			}
+		}
+	}
 
+local FORMAT_H1 = "%s<h1 align='center'>%s</h1>";
+local FORMAT_H2 = "%s<h2>%s:</h2>";
+local FORMAT_p = "%s<p>%s</p>";
+local FORMAT_WHITESPACE = "%s<h3>&#160;</h3>"
 
+local function DeepWipeTable(t)
+	for k, v in pairs(t) do
+		if (type(v) == "table") then
+			 DeepWipeTable(v)
+		end
+	end
+	wipe(t);
+	t = nil;
+end
 
+local function AddNotes(updateMessage, title, notes)
+	if (not notes) then return updateMessage; end
+	if (title) then
+		updateMessage = FORMAT_H2:format(updateMessage, title);
+	end
+	for k, note in ipairs(notes) do
+		updateMessage = FORMAT_p:format(updateMessage, note);
+		updateMessage = FORMAT_WHITESPACE:format(updateMessage);
+	end
+	updateMessage = FORMAT_WHITESPACE:format(updateMessage);
+	return updateMessage;
+end
+
+local updateMessage = "<h3>&#160;</h3>";
+for i=1, #_patchNotes do
+	local patch = _patchNotes[i];
+	updateMessage = FORMAT_H1:format(updateMessage, patch.version);
+	updateMessage = AddNotes(updateMessage, nil, patch.intro);
+	updateMessage = AddNotes(updateMessage, "New", patch.new);
+	updateMessage = AddNotes(updateMessage, "Changes", patch.changes);
+	updateMessage = AddNotes(updateMessage, "Fixes", patch.fixes);
+end
+
+DeepWipeTable(_patchNotes);
+AddNotes = nil;
+DeepWipeTable = nil;
+
+_V["LATEST_UPDATE"] = updateMessage;
 

@@ -1,4 +1,4 @@
-local MAJOR, MINOR = "AddonDropDownTemplates-1.0", 5
+local MAJOR, MINOR = "AddonDropDownTemplates-1.0", 6
 local ADDT, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not ADDT then return end -- No Upgrade needed.
@@ -246,7 +246,7 @@ function ADDT:CreateListTemplate(lib, name, id)
 	
 	-- Menu buttons
 	for i = 1, 8 do
-		local b = self:CreateButtonTemplate(lib, name .. "Button" .. i, button, i)--CreateFrame("BUTTON", name .. "Button" .. i, button, nil, i); -- TODO: Make UIDropDownMenuButtonTemplate
+		self:CreateButtonTemplate(lib, name .. "Button" .. i, button, i)
 	end
 	
 	-- Scripts

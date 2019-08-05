@@ -199,10 +199,7 @@
 		<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing"/>
 		
 		<Scripts>
-			<OnUpdate inherits="prepend" method="OnUpdate"/>
-			<OnCooldownDone inherits="prepend">
-				self:Show()
-			</OnCooldownDone>
+			<OnUpdate inherit="append" method="OnUpdate"/>
 		</Scripts>
 	</Cooldown>
 	
@@ -540,13 +537,13 @@
 			<Layer level="BACKGROUND">
 				<Texture parentKey="PingStatic" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="1">
 					<Anchors>
-						<Anchor point="TOPPLEFT" x="-15" y="16"/>
+						<Anchor point="TOPLEFT" x="-15" y="16"/>
 						<Anchor point="BOTTOMRIGHT" x="15" y="-14"/>
 					</Anchors>
 				</Texture>
 				<Texture parentKey="Ping" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="0">
 					<Anchors>
-						<Anchor point="TOPPLEFT" x="-10" y="11"/>
+						<Anchor point="TOPLEFT" x="-10" y="11"/>
 						<Anchor point="BOTTOMRIGHT" x="10" y="-9"/>
 					</Anchors>
 				</Texture>
@@ -694,11 +691,11 @@
 					</OnDragStart>
 					<OnDragStop>
 						self:GetParent():StopMovingOrSizing()
-						self:GetParent():DragButtonOnUpdate();
+						self:GetParent():ConstrainPosition();
 					</OnDragStop>
 					<OnUpdate>
 						if (self:IsDragging()) then
-							self:GetParent():DragButtonOnUpdate();
+							self:GetParent():ConstrainPosition();
 						end
 					</OnUpdate>
 					<OnEnter>
@@ -753,7 +750,7 @@
 					WQT_WorldMapContainer.DragFrame:EnableMouse(false);
 					WQT_WorldMapContainer:SetAlpha(0);
 				end
-				WQT_WorldMapContainer:DragButtonOnUpdate();
+				WQT_WorldMapContainer:ConstrainPosition();
 			</OnClick>
 		</Scripts>
 	</Button>
@@ -840,7 +837,7 @@
 				<Size x="259" y="462"/>
 				<Anchors>
 					<Anchor point="TOP" relativeKey="$parent.FilterBar" relativePoint="BOTTOM" x="0" y="-2"/>
-					<Anchor point="BOTTOM" relativePoint="WQT_WorldQuestFrame" x="0" y="3"/>
+					<Anchor point="BOTTOM" relativeTo="WQT_WorldQuestFrame" x="0" y="3"/>
 				</Anchors>
 				<Frames>
 					<Slider name="$parentScrollBar" inherits="MinimalHybridScrollBarTemplate" parentKey="scrollBar">
@@ -883,12 +880,12 @@
 							<Layer level="ARTWORK" textureSubLevel="2">
 								<Texture parentKey="BottomDetail" atlas="QuestLog_BottomDetail" useAtlasSize="true">
 									<Anchors>
-										<Anchor point="BOTTOM" x="1" y="-4"/>
+										<Anchor point="BOTTOM" x="0" y="-4"/>
 									</Anchors>
 								</Texture>
 								<Texture parentKey="TopDetail" atlas="QuestLog_TopDetail" useAtlasSize="true">
 									<Anchors>
-										<Anchor point="TOP" x="1" y="9"/>
+										<Anchor point="TOP" x="0" y="9"/>
 									</Anchors>
 								</Texture>
 							</Layer>
@@ -913,10 +910,6 @@
 					</Layer>
 					<Layer level="BORDER">
 						<Texture parentKey="UpdatesBG" file="Interface/Artifacts/ArtifactForge">
-							<Size x="250" y="300"/>
-							<Anchors>
-								<Anchor point="CENTER" x="-10"/>
-							</Anchors>
 							<TexCoords left="0" right="0.8984375" top="0" bottom="0.5986328125"/>
 						</Texture>
 						<Texture parentKey="CombatBG" file="Interface/ENCOUNTERJOURNAL/AdventureGuide">
@@ -948,7 +941,7 @@
 								<Size x="4"/>
 								<HitRectInsets left="-5" right="-4" />
 								<Anchors>
-									<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="5" y="-20"/>
+									<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="5" y="-27"/>
 									<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="5" y="0"/>
 								</Anchors>
 								<Layers>
@@ -968,34 +961,30 @@
 								</ThumbTexture>
 								<Scripts>
 									<OnValueChanged>
-										self.offset = value;
-										self:GetParent().Text:SetPoint("TOPLEFT", 0, self.offset);
+										local parent = self:GetParent();
+										parent.offset = value;
+										self:GetParent().Text:SetPoint("TOPLEFT", 0, parent.offset);
 									</OnValueChanged>
 									<OnMouseWheel>
 										local parent = self:GetParent();
-										local change = delta*10;
+										local change = delta*30;
 										parent.offset = parent.offset - change;
 										parent.offset = max(0, parent.offset);
 										parent.offset = min(parent.offset, parent.limit);
 										
 										parent.scrollBar:SetValue(parent.offset);
+										
 									</OnMouseWheel>
 								</Scripts>
 							</Slider>
 							<Button parentKey="CloseButton" hidden="false">
-								<Size x="18" y="18"/>
+								<Size x="20" y="20"/>
 								<Anchors>
-									<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="-2" y="2"/>
+									<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="-4" y="-2"/>
 								</Anchors>
 								<Layers>
 									<Layer level="ARTWORK">
 										<Texture file="Interface\FriendsFrame\ClearBroadcastIcon" alpha="0.5" parentKey="texture">
-											<Size>
-												<AbsDimension x="17" y="17"/>
-											</Size>
-											<Anchors>
-												<Anchor point="TOPLEFT" x="0" y="0"/>
-											</Anchors>
 											<TexCoords right="0.9" bottom="0.9" />
 										</Texture>
 									</Layer>
@@ -1023,11 +1012,11 @@
 						</Frames>
 						<ScrollChild>
 							<SimpleHTML parentKey="Text">
-								<Size x="222" y="400" />
+								<Size x="250" y="400" />
 								<FontString inherits="GameFontNormal" spacing="2" wordwrap="true"/>
-								<FontStringHeader1 inherits="QuestFont_Huge" spacing="4"/>
-								<FontStringHeader2 inherits="GameFontWhite" spacing="4"/>
-								<FontStringHeader3 inherits="GameFontNormalSmall" spacing="0"/>
+								<FontStringHeader1 inherits="Fancy24Font" spacing="5"/>
+								<FontStringHeader2 inherits="Fancy16Font" spacing="4"/>
+								<FontStringHeader3 inherits="GameFontNormalTiny" spacing="0"/>
 							</SimpleHTML>
 						</ScrollChild>
 						<Scripts>
@@ -1039,7 +1028,7 @@
 								self.scrollBar:SetValue(0);
 							</OnLoad>
 							<OnMouseWheel>
-								local change = delta*10;
+								local change = delta*30;
 								self.offset = self.offset - change;
 								self.offset = max(0, self.offset);
 								self.offset = min(self.offset, self.limit);
@@ -1127,7 +1116,7 @@
 	
 	<Button name="WQT_TabNormal" inherits="WQT_TabTemplate" parent="QuestMapFrame" enableMouse="true" id="1">
 		<Anchors>
-			<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="3" y="-1"/>
+			<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="3" y="4"/>
 		</Anchors>
 		<Scripts>
 			<OnLoad>
@@ -1164,7 +1153,7 @@
 		<Size y="40"/>
 		<Anchors>
 			<Anchor point="LEFT" relativeTo="WQT_TabWorld" relativePoint="RIGHT" x="1"/>
-			<Anchor point="BOTTOMRIGHT"  relativePoint="TOPRIGHT" y="-1"/>
+			<Anchor point="BOTTOMRIGHT"  relativePoint="TOPRIGHT" y="4"/>
 		</Anchors>
 		<Layers>
 		
@@ -1195,7 +1184,7 @@
 				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
-				<Texture name="DecorLeft" file="Interface\ItemSocketingFrame\UI-ItemSockets" desaturated="true">
+				<Texture parentKey="DecorLeft" file="Interface\ItemSocketingFrame\UI-ItemSockets" desaturated="true">
 					<Size x="35" y="27"/>
 					<Anchors>
 						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BoxLeft" relativePoint="BOTTOMLEFT" x="6" y="-2"/>
@@ -1204,7 +1193,7 @@
 					
 					<Color r="0.85" g="0.75" b="0.7" />
 				</Texture>
-				<Texture name="DecorRight" file="Interface\ItemSocketingFrame\UI-ItemSockets" desaturated="true">
+				<Texture parentKey="DecorRight" file="Interface\ItemSocketingFrame\UI-ItemSockets" desaturated="true">
 					<Size x="35" y="27"/>
 					<Anchors>
 						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BoxRight" relativePoint="BOTTOMRIGHT" x="-6" y="-2"/>
@@ -1212,7 +1201,7 @@
 					<TexCoords left="0.28515625" right="0.565" top="0" bottom="0.21484375"/>
 					<Color r="0.85" g="0.75" b="0.7" />
 				</Texture>
-				<Texture name="DecorRight2" file="Interface\ItemSocketingFrame\UI-ItemSockets" desaturated="true">
+				<Texture parentKey="DecorRight2" file="Interface\ItemSocketingFrame\UI-ItemSockets" desaturated="true">
 					<Size x="35" y="27"/>
 					<Anchors>
 						<Anchor point="BOTTOMRIGHT" x="5" y="0"/>
@@ -1260,6 +1249,7 @@
 	<Frame name="WQT_PoISelectIndicator" inherits="WQT_PoISelectTemplate" />
 	<Frame name="WQT_PoISelectIndicatorFlight" inherits="WQT_PoISelectTemplate" />
 	
+	<!-- This exists for tooltip scanning -->
 	<GameTooltip name="WQT_CompareTooltip1" clampedToScreen="true"  frameStrata="TOOLTIP" hidden="true" parent="UIParent" inherits="ShoppingTooltipTemplate"/>
 	<GameTooltip name="WQT_CompareTooltip2" clampedToScreen="true" frameStrata="TOOLTIP" hidden="true" parent="UIParent" inherits="ShoppingTooltipTemplate"/>
 	<GameTooltip name="WQT_Tooltip" frameStrata="TOOLTIP" hidden="true" parent="UIParent" inherits="GameTooltipTemplate">
@@ -1321,8 +1311,6 @@
 			</Layer>
 		</Layers>
 	</Frame>
- 
-
  
 	<Frame name="WQT_GroupSearch" hidden="true" enableMouse="true">
 		<Size y="28" />

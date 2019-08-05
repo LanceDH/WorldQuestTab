@@ -1,4 +1,4 @@
-﻿local addonName, addon = ...
+﻿local _, addon = ...
 
 ----------------------------
 -- VARIABLES
@@ -10,6 +10,7 @@ local _V = addon.variables;
 local WQT_Utils = addon.WQT_Utils;
 
 local _WFMLoaded = IsAddOnLoaded("WorldFlightMap");
+local _azuriteID = C_CurrencyInfo.GetAzeriteCurrencyID();
 
 ----------------------------
 -- LOCAL FUNCTIONS
@@ -38,7 +39,7 @@ local function UpdateWorldZones(newLevel)
 	end
 end
 
-local function QuestCreationFunc(pool)
+local function QuestCreationFunc()
 	local questInfo = {["time"] = {}, ["reward"] = {}, ["mapInfo"] = {}};
 	return questInfo;
 end
@@ -74,126 +75,121 @@ local function ScanTooltipRewardForPattern(questID, pattern)
 	end
 	
 	-- Force hide compare tooltips as they's show up for people with alwaysCompareItems set to 1
-	for k, tooltip in ipairs(WQT_Tooltip.shoppingTooltips) do
+	for _, tooltip in ipairs(WQT_Tooltip.shoppingTooltips) do
 		tooltip:Hide();
 	end
 	
 	return result;
 end
 
-local function SetQuestReward(questInfo)
-	local reward = questInfo.reward;
-	local _, rewardId, canUpgrade;
-	local texture = 134400; -- Questonmark
-	local numItems = 0;
-	local quality = 1;
-	local rewardType = WQT_REWARDTYPE.missing;
-	local color = _V["WQT_COLOR_MISSING"];
-	local canUpgrade = false;
-	
+local function GetMostImpressiveCurrency(questInfo)
+	local numCurrencies = GetNumQuestLogRewardCurrencies(questInfo.questId);
+	local bestType = WQT_REWARDTYPE.missing;
+	local best, bestAmount, highestQuality, bestTex;
+	for i=1, numCurrencies do
+		local _, _, amount, currencyId = GetQuestLogRewardCurrencyInfo(i, questInfo.questId);
+		if (currencyId) then
+			local name, _, texture, _, _, _, _, quality = GetCurrencyInfo(currencyId);
+			local isRep = C_CurrencyInfo.GetFactionGrantedByCurrency(currencyId) ~= nil;
+			name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(currencyId, amount, name, texture, quality); 
+			local currType = currencyId == _azuriteID and WQT_REWARDTYPE.artifact or  (isRep and WQT_REWARDTYPE.reputation or WQT_REWARDTYPE.currency);
+			if (currType < bestType or highestQuality < quality) then
+				highestQuality = quality;
+				bestAmount = amount;
+				bestTex = texture;
+				bestType = currType;
+				best = currencyId;
+			end
+		end
+	end
+	return best, bestType, highestQuality, bestAmount, bestTex;
+end
+
+local function AddQuestReward(questInfo, rewardType, amount, texture, quality, color, id, canUpgrade)
+	if (not questInfo.reward.type) then
+		amount = amount or 1;
+		questInfo.reward.id = id;
+		questInfo.reward.type = rewardType;
+		questInfo.reward.amount = amount;
+		questInfo.reward.texture = texture;
+		questInfo.reward.quality = quality;
+		questInfo.reward.color = color;
+		questInfo.reward.canUpgrade = canUpgrade;
+	end
+	questInfo.reward.typeBits = bit.bor(questInfo.reward.typeBits, rewardType);
+end
+
+local function SetQuestRewards(questInfo)
 	local haveData = HaveQuestRewardData(questInfo.questId);
+	questInfo.reward.typeBits = 0;
+	
 	
 	if haveData then
+		local currencyId, currencyType, currencyQuality, currencyAmount, currencyTexture = GetMostImpressiveCurrency(questInfo);
 		if (GetNumQuestLogRewards(questInfo.questId) > 0) then
-			local ilvl;
-			_, texture, numItems, quality, _, rewardId, ilvl = GetQuestLogRewardInfo(1, questInfo.questId);
+			local _, texture, numItems, quality, _, rewardId, ilvl = GetQuestLogRewardInfo(1, questInfo.questId);
 			if rewardId then
 				local price, typeID, subTypeID = select(11, GetItemInfo(rewardId));
 				if (typeID == 4 or typeID == 2) then -- Gear (4 = armor, 2 = weapon)
-					
-					canUpgrade = ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+)$") and true or false;
-					numItems = ilvl;
-					rewardType = typeID == 4 and WQT_REWARDTYPE.equipment or  WQT_REWARDTYPE.weapon;
-					color = typeID == 4 and _V["WQT_COLOR_ARMOR"] or _V["WQT_COLOR_WEAPON"];
+					local canUpgrade = ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+)$") and true or false;
+					local rewardType = typeID == 4 and WQT_REWARDTYPE.equipment or  WQT_REWARDTYPE.weapon;
+					local color = typeID == 4 and _V["WQT_COLOR_ARMOR"] or _V["WQT_COLOR_WEAPON"];
+					AddQuestReward(questInfo, rewardType, ilvl, texture, quality, color, rewardId, canUpgrade);
 				elseif (typeID == 3 and subTypeID == 11) then
 					-- Find updagade amount as C_ArtifactUI.GetItemLevelIncreaseProvidedByRelic doesn't scale
-					numItems = tonumber(ScanTooltipRewardForPattern(questInfo.questId, "^%+(%d+)"));
-					rewardType = WQT_REWARDTYPE.relic;	
-					color = _V["WQT_COLOR_RELIC"];
+					local numItems = tonumber(ScanTooltipRewardForPattern(questInfo.questId, "^%+(%d+)"));
+					AddQuestReward(questInfo, WQT_REWARDTYPE.relic, numItems, texture, quality, _V["WQT_COLOR_RELIC"], rewardId);
 				else	-- Normal items
 					if (typeID == 0 and subTypeID == 8 and price == 0 and ilvl > 100) then -- Item converting into equipment
-						rewardType = WQT_REWARDTYPE.equipment;
-						color = _V["WQT_COLOR_ARMOR"];
-						numItems = ilvl;
+						AddQuestReward(questInfo, WQT_REWARDTYPE.equipment, ilvl, texture, quality, _V["WQT_COLOR_ARMOR"], rewardId);
 					else
-						rewardType = WQT_REWARDTYPE.item;
-						color = _V["WQT_COLOR_ITEM"];
+						AddQuestReward(questInfo, WQT_REWARDTYPE.item, numItems, texture, quality, _V["WQT_COLOR_ITEM"], rewardId);
 					end
 				end
 			end
-		elseif (GetQuestLogRewardSpell(1, questInfo.questId)) then
-			texture, _, _, _, _, _, _, _, rewardId = GetQuestLogRewardSpell(1, questInfo.questId);
-			rewardType = WQT_REWARDTYPE.spell;
-			color = _V["WQT_COLOR_ITEM"];
-		elseif GetQuestLogRewardHonor(questInfo.questId) > 0 then
-			numItems = GetQuestLogRewardHonor(questInfo.questId);
-			texture = 1455894;
-			color = _V["WQT_COLOR_HONOR"];
-			rewardType = WQT_REWARDTYPE.honor;
-		elseif GetQuestLogRewardMoney(questInfo.questId) > 0 then
-			numItems = floor(abs(GetQuestLogRewardMoney(questInfo.questId) / 10000))
-			texture = 133784;
-			rewardType = WQT_REWARDTYPE.gold;
-			color = _V["WQT_COLOR_GOLD"];
-		elseif GetNumQuestLogRewardCurrencies(questInfo.questId) > 0 then
-			local currenyId;
-			_, texture, numItems, currenyId = GetQuestLogRewardCurrencyInfo(GetNumQuestLogRewardCurrencies(questInfo.questId), questInfo.questId)
-			-- Because azerite is currency but is treated as an item
-			local azuriteID = C_CurrencyInfo.GetAzeriteCurrencyID();
-			if currenyId ~= azuriteID then
-				local name, _, apTex, _, _, _, _, apQuality = GetCurrencyInfo(currenyId);
-				name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(currenyId, numItems, name, texture, apQuality); 
-				
-				if	C_CurrencyInfo.GetFactionGrantedByCurrency(currenyId) then
-					rewardType = WQT_REWARDTYPE.reputation;
-					quality = 0;
-				else
-					rewardType = WQT_REWARDTYPE.currency;
-				end
-				
-				color = _V["WQT_COLOR_CURRENCY"];
-			else
-				-- We want azerite to act like AP
-				local name, _, apTex, _, _, _, _, apQuality = GetCurrencyInfo(azuriteID);
-				name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(azuriteID, numItems, name, texture, apQuality); 
-				
-				rewardType = WQT_REWARDTYPE.artifact;
-				color = _V["WQT_COLOR_ARTIFACT"];
-			end
-		elseif haveData and GetQuestLogRewardXP(questInfo.questId) > 0 then
-			numItems = GetQuestLogRewardXP(questInfo.questId);
-			texture = 894556;
-			color = _V["WQT_COLOR_ITEM"];
-			rewardType = WQT_REWARDTYPE.xp;
-		elseif GetNumQuestLogRewards(questInfo.questId) == 0 then
-			texture = "";
-			color = _V["WQT_COLOR_ITEM"];
-			rewardType = WQT_REWARDTYPE.none;
 		end
+		if (GetQuestLogRewardSpell(1, questInfo.questId)) then
+			local texture, _, _, _, _, _, _, _, rewardId = GetQuestLogRewardSpell(1, questInfo.questId);
+			AddQuestReward(questInfo, WQT_REWARDTYPE.spell, 1, texture, 1, _V["WQT_COLOR_ITEM"], rewardId);
+		end
+		if GetQuestLogRewardHonor(questInfo.questId) > 0 then
+			local numItems = GetQuestLogRewardHonor(questInfo.questId);
+			AddQuestReward(questInfo, WQT_REWARDTYPE.honor, numItems, 1455894, 1, _V["WQT_COLOR_HONOR"]);
+		end
+		if (currencyId and (currencyType < WQT_REWARDTYPE.gold or currencyQuality > 1)) then
+			local color = currencyType == WQT_REWARDTYPE.artifact and _V["WQT_COLOR_ARTIFACT"] or  _V["WQT_COLOR_CURRENCY"];
+			AddQuestReward(questInfo, currencyType, currencyAmount, currencyTexture, currencyQuality, color, currencyId);
+		end
+		if GetQuestLogRewardMoney(questInfo.questId) > 0 then
+			local numItems = floor(abs(GetQuestLogRewardMoney(questInfo.questId) / 10000))
+			AddQuestReward(questInfo, WQT_REWARDTYPE.gold, numItems, 133784, 1, _V["WQT_COLOR_GOLD"]);
+		end
+		if (currencyId) then
+			local color = currencyType == WQT_REWARDTYPE.artifact and _V["WQT_COLOR_ARTIFACT"] or  _V["WQT_COLOR_CURRENCY"];
+			AddQuestReward(questInfo, currencyType, currencyAmount, currencyTexture, currencyQuality, color, currencyId);
+			
+			local numCurrencies = GetNumQuestLogRewardCurrencies(questInfo.questId);
+			for i=1, numCurrencies do
+				local _, _, _, currencyId = GetQuestLogRewardCurrencyInfo(i, questInfo.questId);
+				if (currencyId) then
+					local isRep = C_CurrencyInfo.GetFactionGrantedByCurrency(currencyId) ~= nil;
+					local currType = currencyId == _azuriteID and WQT_REWARDTYPE.artifact or  (isRep and WQT_REWARDTYPE.reputation or WQT_REWARDTYPE.currency);
+					questInfo.reward.typeBits = bit.bor(questInfo.reward.typeBits, currType);
+				end
+			end
+		end
+		if haveData and GetQuestLogRewardXP(questInfo.questId) > 0 then
+			local numItems = GetQuestLogRewardXP(questInfo.questId);
+			AddQuestReward(questInfo, WQT_REWARDTYPE.xp, numItems, 894556, 1, _V["WQT_COLOR_ITEM"]);
+		end
+		if (questInfo.reward.type == 0) then
+			AddQuestReward(questInfo, WQT_REWARDTYPE.none, 1, "", 1, _V["WQT_COLOR_ITEM"]);
+		end
+	else
+		AddQuestReward(questInfo, WQT_REWARDTYPE.missing, 0, 134400, 1, _V["WQT_COLOR_MISSING"]);
 	end
-	
-	questInfo.reward.id = rewardId;
-	questInfo.reward.quality = quality or 1;
-	questInfo.reward.texture = texture;
-	questInfo.reward.amount = numItems or 0;
-	questInfo.reward.type = rewardType or 0;
-	questInfo.reward.color = color;
-	questInfo.reward.canUpgrade = canUpgrade;
 
 	return haveData;
-end
-
-local function SetSubReward(questInfo) 
-	local subType = nil;
-	if questInfo.reward.type ~= WQT_REWARDTYPE.currency and questInfo.reward.type ~= WQT_REWARDTYPE.artifact and questInfo.reward.type ~= WQT_REWARDTYPE.reputation and GetNumQuestLogRewardCurrencies(questInfo.questId) > 0 then
-		subType = WQT_REWARDTYPE.currency;
-	elseif questInfo.reward.type ~= WQT_REWARDTYPE.honor and GetQuestLogRewardHonor(questInfo.questId) > 0 then
-		subType = WQT_REWARDTYPE.honor;
-	elseif questInfo.reward.type ~= WQT_REWARDTYPE.gold and GetQuestLogRewardMoney(questInfo.questId) > 0 then
-		subType = WQT_REWARDTYPE.gold;
-	end
-	
-	questInfo.reward.subType = subType;
 end
 
 local function ValidateQuest(questInfo)
@@ -208,6 +204,27 @@ end
 
 local cachedTypeData = {};
 local cachedZoneInfo = {};
+
+function WQT_Utils:GetSetting(...)
+	local settings =  WQT.settings;
+	local index = 1;
+	local param = select(index, ...);
+	
+	while (param ~= nil) do
+		if(settings[param] == nil) then 
+			return nil 
+		end;
+		settings = settings[param];
+		index = index + 1;
+		param = select(index, ...);
+	end
+	
+	if (type(settings) == "table") then
+		return nil 
+	end;
+	
+	return settings;
+end
 
 function WQT_Utils:GetCachedMapInfo(zoneId)
 	zoneId = zoneId or 0;
@@ -239,7 +256,17 @@ function WQT_Utils:GetFactionDataInternal(id)
 	return factionData[id];
 end
 
-function WQT_Utils:GetCachedTypeIconData(questType, tradeskillLineIndex)
+function WQT_Utils:GetCachedTypeIconData(questInfo)
+	local _, _, questType, _, _, tradeskillLineIndex = GetQuestTagInfo(questInfo.questId);
+	if (questInfo.isDaily)	then
+		return "QuestDaily", 17, 17, true;
+	elseif (questInfo.isQuestStart) then
+		return "QuestNormal", 17, 17, true;
+	elseif (not questType) then
+		return "QuestBonusObjective", 21, 21, true;
+	end
+	
+	
 	local isNew = false;
 	local originalType = questType;
 	questType = questType or _V["WQT_TYPE_BONUSOBJECTIVE"];
@@ -440,8 +467,7 @@ function WQT_DataProvider:UpdateWaitingRoom()
 			tinsert(fixed, questInfo.questId);
 			self:SetQuestData(questInfo);
 			if HaveQuestRewardData(questInfo.questId) then	
-				SetQuestReward(questInfo);
-				SetSubReward(questInfo);
+				SetQuestRewards(questInfo);
 				ValidateQuest(questInfo);
 			else
 				WQT:debugPrint(questInfo.questId, "still missing reward");
@@ -456,8 +482,7 @@ function WQT_DataProvider:UpdateWaitingRoom()
 	for i = #self.waitingRoomRewards, 1, -1 do
 		questInfo = self.waitingRoomRewards[i];
 		if ( questInfo.questId and HaveQuestRewardData(questInfo.questId)) then
-			SetQuestReward(questInfo);
-			SetSubReward(questInfo);
+			SetQuestRewards(questInfo);
 			ValidateQuest(questInfo);
 			table.remove(self.waitingRoomRewards, i);
 			updatedData = true;
@@ -471,7 +496,7 @@ end
 
 function WQT_DataProvider:AddContinentMapQuests(continentZones, continentId)
 	if continentZones then
-		for zoneID, zoneData  in pairs(continentZones) do
+		for zoneID  in pairs(continentZones) do
 			self:AddQuestsInZone(zoneID, continentId or zoneID);
 		end
 	end
@@ -479,7 +504,7 @@ end
 
 function WQT_DataProvider:AddWorldMapQuests(worldContinents)
 	if worldContinents then
-		for contID, contData in pairs(worldContinents) do
+		for contID in pairs(worldContinents) do
 			-- Every ID is a continent, get every zone on every continent
 			local continentZones = _V["WQT_ZONE_MAPCOORDS"][contID];
 			self:AddContinentMapQuests(continentZones, contID)
@@ -547,7 +572,7 @@ function WQT_DataProvider:AddQuestsInZone(zoneID, continentId)
 	
 	for k, info in ipairs(questsById) do
 		if info.mapID == zoneID then
-			quest = self:AddQuest(info, zoneID, continentId);
+			quest = self:AddQuest(info, zoneID);
 			if not quest then 
 				missingData = true;
 			end;
@@ -557,7 +582,7 @@ function WQT_DataProvider:AddQuestsInZone(zoneID, continentId)
 	return missingData;
 end
 
-function WQT_DataProvider:AddQuest(qInfo, zoneId, continentId)
+function WQT_DataProvider:AddQuest(qInfo, zoneId)
 	local duplicate = self:FindDuplicate(qInfo.questId);
 	-- If there is a duplicate, we don't want to go through all the info again
 	if (duplicate) then
@@ -573,7 +598,9 @@ function WQT_DataProvider:AddQuest(qInfo, zoneId, continentId)
 	local questInfo = self.pool:Acquire();
 	
 	questInfo.isValid = false;
-	questInfo.alwaysHide = not MapUtil.ShouldShowTask(zoneId, qInfo) or qInfo.isQuestStart;
+	questInfo.alwaysHide = not MapUtil.ShouldShowTask(zoneId, qInfo)-- or qInfo.isQuestStart;
+	questInfo.isDaily = qInfo.isDaily;
+	questInfo.isAllyQuest = qInfo.isCombatAllyQuest;
 	questInfo.questId = qInfo.questId;
 	questInfo.mapInfo.mapX = qInfo.x;
 	questInfo.mapInfo.mapY = qInfo.y;
@@ -584,12 +611,8 @@ function WQT_DataProvider:AddQuest(qInfo, zoneId, continentId)
 	
 	self:SetQuestData(questInfo);
 	
-	local haveRewardData = SetQuestReward(questInfo);
-	if haveRewardData then
-		-- If the quest as a second reward e.g. Mark of Honor + Honor points
-		SetSubReward(questInfo);
-	end
-	
+	local haveRewardData = SetQuestRewards(questInfo);
+
 	-- Filter out invalid quests like "Tracking Quest" in nazmir
 	ValidateQuest(questInfo);
 	
@@ -615,7 +638,7 @@ end
 function WQT_DataProvider:GetIterativeList()
 	wipe(self.iterativeList);
 	
-	for questInfo, v in self.pool:EnumerateActive() do
+	for questInfo in self.pool:EnumerateActive() do
 		table.insert(self.iterativeList, questInfo);
 	end
 	
@@ -623,7 +646,7 @@ function WQT_DataProvider:GetIterativeList()
 end
 
 function WQT_DataProvider:GetKeyList()
-	for id, questInfo in pairs(self.keyList) do
+	for id in pairs(self.keyList) do
 		self.keyList[id] = nil;
 	end
 	
@@ -635,7 +658,7 @@ function WQT_DataProvider:GetKeyList()
 end
 
 function WQT_DataProvider:GetQuestById(id)
-	for questInfo, v in self.pool:EnumerateActive() do
+	for questInfo in self.pool:EnumerateActive() do
 		if questInfo.questId == id then return questInfo; end
 	end
 	return nil;

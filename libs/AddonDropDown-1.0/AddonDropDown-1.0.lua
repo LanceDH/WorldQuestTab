@@ -1,4 +1,4 @@
-local MAJOR, MINOR = "AddonDropDown-1.0", 6
+local MAJOR, MINOR = "AddonDropDown-1.0", 7
 local ADD, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not ADD then return end -- No Upgrade needed.
@@ -32,7 +32,7 @@ button:SetFrameStrata("FULLSCREEN_DIALOG");
 button:SetToplevel(true);
 button:SetSize(180, 10);
 button:SetScript("OnLoad", function() 
-		local fontName, fontHeight, fontFlags = _G["ADD_DropDownList1Button1NormalText"]:GetFont();
+		local _, fontHeight = _G["ADD_DropDownList1Button1NormalText"]:GetFont();
 		ADD.DEFAULT_TEXT_HEIGHT = fontHeight;
 	end)
 
@@ -685,7 +685,7 @@ end
 
 
 function ADD:Refresh(frame, useValue, dropdownLevel)
-	local button, checked, checkImage, uncheckImage, normalText, width;
+	local button, checked, checkImage, uncheckImage, width;
 	local maxWidth = 0;
 	local somethingChecked = nil;
 	if ( not dropdownLevel ) then
@@ -862,20 +862,20 @@ function ADD:OnClick(self)
 	end
 
 
-	if ( self.keepShownOnClick ) then
-		if not self.notCheckable then
-			if ( checked ) then
-				_G[self:GetName().."Check"]:Hide();
-				_G[self:GetName().."UnCheck"]:Show();
-				checked = false;
-			else
-				_G[self:GetName().."Check"]:Show();
-				_G[self:GetName().."UnCheck"]:Hide();
-				checked = true;
-			end
-		end
-	else
+	if ( not self.keepShownOnClick ) then
 		self:GetParent():Hide();
+	end
+	
+	if not self.notCheckable then
+		if ( checked ) then
+			_G[self:GetName().."Check"]:Hide();
+			_G[self:GetName().."UnCheck"]:Show();
+			checked = false;
+		else
+			_G[self:GetName().."Check"]:Show();
+			_G[self:GetName().."UnCheck"]:Hide();
+			checked = true;
+		end
 	end
 
 	if ( type (self.checked) ~= "function" ) then
