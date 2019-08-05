@@ -59,7 +59,6 @@ local _playerName = UnitName("player");
 local utilitiesStatus = select(5, GetAddOnInfo("WorldQuestTabUtilities"))
 local _utilitiesInstalled = not utilitiesStatus or utilitiesStatus ~= "MISSING";
 
-local _TomTom = IsAddOnLoaded("TomTom");
 local _WFMLoaded = IsAddOnLoaded("WorldFlightMap");
 
 local _anchors = {["flight"] = 1, ["world"] = 2, ["full"] = 3};
@@ -603,22 +602,22 @@ function WQT:InitTrackDropDown(self, level)
 	info.notCheckable = true;	
 	
 	-- TomTom functionality
-	if (_TomTom and WQT.settings.general.useTomTom) then
+	if (TomTom and WQT.settings.general.useTomTom) then
 	
-		if (_TomTom.WaypointExists and _TomTom.AddWaypoint and _TomTom.GetKeyArgs and _TomTom.RemoveWaypoint and _TomTom.waypoints) then
+		if (TomTom.WaypointExists and TomTom.AddWaypoint and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
 			local title = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
 			-- All required functions are found
-			if (not _TomTom:WaypointExists(mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, title)) then
+			if (not TomTom:WaypointExists(mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, title)) then
 				info.text = _L["TRACKDD_TOMTOM"];
 				info.func = function()
-					_TomTom:AddWaypoint(mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, {["title"] = title})
+					TomTom:AddWaypoint(mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, {["title"] = title})
 				end
 			else
 				info.text = _L["TRACKDD_TOMTOM_REMOVE"];
 				info.func = function()
-					local key = _TomTom:GetKeyArgs(mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, title);
-					local wp = _TomTom.waypoints[mapInfo.mapID] and _TomTom.waypoints[mapInfo.mapID][key];
-					_TomTom:RemoveWaypoint(wp);
+					local key = TomTom:GetKeyArgs(mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, title);
+					local wp = TomTom.waypoints[mapInfo.mapID] and TomTom.waypoints[mapInfo.mapID][key];
+					TomTom:RemoveWaypoint(wp);
 				end
 			end
 		else
@@ -2150,7 +2149,7 @@ function WQT_CoreMixin:InitFilter(self, level)
 				ADD:AddButton(info, level)
 				
 				-- TomTom compatibility
-				if _TomTom then
+				if TomTom then
 					info.tooltipTitle = nil;
 					info.tooltipText = nil;
 					info.hasArrow = true;
@@ -2567,16 +2566,16 @@ function WQT_CoreMixin:OnLoad()
 					
 					local questId = self.recentlyUntrackedQuest;
 					-- If we have auto arrow handling turned on, remove it if it exists
-					if (questId and _TomTom and WQT.settings.general.useTomTom and WQT.settings.general.TomTomAutoArrow) then
+					if (questId and TomTom and WQT.settings.general.useTomTom and WQT.settings.general.TomTomAutoArrow) then
 						local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
 						local zoneId = C_TaskQuest.GetQuestZoneID(questId);
 						if (title and zoneId) then
 							local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
 							if (x and y) then
-								local key = _TomTom:GetKeyArgs(zoneId, x, y, title);
-								local wp = _TomTom.waypoints[zoneId] and _TomTom.waypoints[zoneId][key];
+								local key = TomTom:GetKeyArgs(zoneId, x, y, title);
+								local wp = TomTom.waypoints[zoneId] and TomTom.waypoints[zoneId][key];
 								if wp then
-									_TomTom:RemoveWaypoint(wp);
+									TomTom:RemoveWaypoint(wp);
 								end
 								
 							end
@@ -2962,7 +2961,7 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 		
 		self:UnregisterEvent("ADDON_LOADED");
 	elseif (loaded == "TomTom") then
-		_TomTom = TomTom;
+		TomTom = TomTom;
 	elseif (loaded == "WorldFlightMap") then
 		_WFMLoaded = true;
 	elseif (loaded == "WorldQuestTabUtilities") then
@@ -2986,25 +2985,20 @@ function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
 end
 
 function WQT_CoreMixin:QUEST_TURNED_IN(questId)
-	if (QuestUtils_IsQuestWorldQuest(questId) or WQT_WorldQuestFrame.autoEmisarryId == questId) then
-		
-		-- Remove TomTom arrow if tracked
-		if (_TomTom and WQT.settings.general.useTomTom and _TomTom.GetKeyArgs and _TomTom.RemoveWaypoint and _TomTom.waypoints) then
-			local questInfo = WQT_WorldQuestFrame.dataProvider:GetQuestById(questId);
-			if questInfo and questInfo.isValid then
-				local mapInfo = WQT_Utils:GetMapInfoForQuest(questId);
-				if (mapInfo) then
-					local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
-					local key = _TomTom:GetKeyArgs(mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, title);
-					local wp = _TomTom.waypoints[mapInfo.mapID] and _TomTom.waypoints[mapInfo.mapID][key];
-					if wp then
-						_TomTom:RemoveWaypoint(wp);
-					end
+	-- Remove TomTom arrow if tracked
+	if (TomTom and WQT.settings.general.useTomTom and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
+		local questInfo = WQT_WorldQuestFrame.dataProvider:GetQuestById(questId);
+		if questInfo and questInfo.isValid then
+			local mapInfo = WQT_Utils:GetMapInfoForQuest(questId);
+			if (mapInfo) then
+				local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+				local key = TomTom:GetKeyArgs(mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, title);
+				local wp = TomTom.waypoints[mapInfo.mapID] and TomTom.waypoints[mapInfo.mapID][key];
+				if wp then
+					TomTom:RemoveWaypoint(wp);
 				end
 			end
 		end
-
-		self.ScrollFrame:UpdateQuestList();
 	end
 end
 
@@ -3026,7 +3020,7 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 	-- check ObjectiveTracker_Update hook for step 2
 	self.recentlyUntrackedQuest = nil;
 	local wqModule = WQT:GetObjectiveTrackerWQModule();
-	if wqModule then
+	if (wqModule) then
 		wipe(self.trackedQuests);
 		for k, v in pairs(wqModule.usedBlocks) do
 			self.trackedQuests[k] = true
@@ -3035,12 +3029,12 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 
 	self.ScrollFrame:DisplayQuestList();
 
-	if questId and added and _TomTom and WQT.settings.general.useTomTom and WQT.settings.general.TomTomAutoArrow and IsWorldQuestHardWatched(questId) then
+	if (questId and added and TomTom and WQT.settings.general.useTomTom and WQT.settings.general.TomTomAutoArrow and IsWorldQuestHardWatched(questId)) then
 		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
 		local zoneId = C_TaskQuest.GetQuestZoneID(questId);
 		local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
 		if (title and zoneId and x and y) then
-			_TomTom:AddWaypoint(zoneId, x, y, {["title"] = title})
+			TomTom:AddWaypoint(zoneId, x, y, {["title"] = title})
 		end
 	end
 end

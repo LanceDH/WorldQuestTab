@@ -43,7 +43,7 @@ local function AddIndentedDoubleLine(tooltip, a, b, level, color)
 		while (bits > 0) do
 			local rest = bits% 2
 			if (rest > 0) then
-				o = o .. (o == "" and "" or ", ") .. 2^index;
+				o = o .. (o == "" and "" or ", ") .. index;
 			end
 			bits = (bits - rest) / 2
 			index = index + 1;
