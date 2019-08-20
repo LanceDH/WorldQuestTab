@@ -52,6 +52,9 @@ L["USE_TOMTOM"]		= "Allow TomTom"
 L["USE_TOMTOM_TT"]	= "Add TomTom functionality to the add-on."
 L["TOMTOM_AUTO_ARROW"]		= "Waypoint On Track"
 L["TOMTOM_AUTO_ARROW_TT"]	= "Hard tracking a quests by shift clicking, or by using the option in the dropdown, will automatically create a TomTom waypoint."
+L["TOMTOM_CLICK_ARROW"]		= "Waypoint On Click"
+L["TOMTOM_CLICK_ARROW_TT"]		= "Show a TomTom waypoint for the last clicked world quest. Removes the previous waypoint added in this way."
+
 L["AUTO_EMISARRY"] = "Auto Emissary Only"
 L["AUTO_EMISARRY_TT"] = "Clicking on an emisarry on the world map bounty board, will temporarily enable the 'Emisarry Only' filter."
 L["CONTAINER_DRAG"] = "Move"
@@ -59,7 +62,7 @@ L["CONTAINER_DRAG_TT"] = "Drag to a different location."
 L["LIST_FULL_TIME"]	= "Expand Times"
 L["LIST_FULL_TIME_TT"]	= "Includes a secondary scale to times, adding hours to days and minutes to hours."
 L["LOAD_UTILITIES"] = "Load Utilities"
-L["LOAD_UTILITIES_TT"] = "Load utility features such as talliesa and distance sorting.\n|cFFFF5555A reload is required when disabling this feature.|r\n|cFFFF5555Enabling these features can increase memory usage.|r"
+L["LOAD_UTILITIES_TT"] = "Load utility features such as tallies and distance sorting.\n|cFFFF5555A reload is required when disabling this feature.|r\n|cFFFF5555Enabling these features can increase memory usage.|r"
 L["LOAD_UTILITIES_TT_DISABLED"] = "|cFFFF5555World Quest Tab Utilities is not enabled in your add-on list.|r"
 
 L["TYPE_INVASION"]	= "Invasion";
@@ -88,6 +91,7 @@ L["FORMAT_GROUP_SEARCH"] = "Type |cFFFFFFFF%d|r to search for a group for this q
 L["FORMAT_GROUP_CREATE"] = "Type |cFFFFFFFF%d|r to create a group for this quest. Or type its name: |cFFFFFFFF%s|r. Consider using both so players without add-ons can also find your group.";
 L["FORMAT_GROUP_TYPO"] = "It appears to have made a typo. Type either |cFFFFFFFF%d|r, or |cFFFFFFFF%s|r.";
 L["WHATS_NEW"] = "What's New";
+L["WHATS_NEW_TT"] = "View World Quest Tab patch notes."
 
 
 if locale == "deDE" then

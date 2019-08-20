@@ -317,28 +317,28 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 	
 	if ( timeLeftSeconds  and timeLeftSeconds > 0) then
 		local displayTime = timeLeftSeconds
-		if (displayTime < 3600 and displayTime >= 60) then
-			displayTime = displayTime + 60;
+		if (displayTime < SECONDS_PER_HOUR  and displayTime >= SECONDS_PER_MIN ) then
+			displayTime = displayTime + SECONDS_PER_MIN ;
 		end
 	
-		if ( timeLeftSeconds <= WORLD_QUESTS_TIME_CRITICAL_MINUTES * 60 ) then
+		if ( timeLeftSeconds <= WORLD_QUESTS_TIME_CRITICAL_MINUTES * SECONDS_PER_MIN  ) then
 			color = RED_FONT_COLOR;
-			timeString = SecondsToTime(displayTime, displayTime > 60 and true or false, unabreviated);
-		elseif displayTime < 3600  then
+			timeString = SecondsToTime(displayTime, displayTime > SECONDS_PER_MIN  and true or false, unabreviated);
+		elseif displayTime < SECONDS_PER_HOUR   then
 			timeString = SecondsToTime(displayTime, true);
 			color = _V["WQT_ORANGE_FONT_COLOR"];
-		elseif displayTime < 24 * 3600  then
+		elseif displayTime < SECONDS_PER_DAY   then
 			if (fullString) then
 				timeString = SecondsToTime(displayTime, true, unabreviated);
 			else
-				timeString = D_HOURS:format(displayTime / 3600);
+				timeString = D_HOURS:format(displayTime / SECONDS_PER_HOUR);
 			end
 			color = _V["WQT_GREEN_FONT_COLOR"]
 		else
 			if (fullString) then
 				timeString = SecondsToTime(displayTime, true, unabreviated);
 			else
-				timeString = D_DAYS:format(displayTime / (24*3600));
+				timeString = D_DAYS:format(displayTime / SECONDS_PER_DAY );
 			end
 			local _, _, _, rarity, isElite = GetQuestTagInfo(questInfo.questId);
 			local isWeek = isElite and rarity == LE_WORLD_QUEST_QUALITY_EPIC
@@ -353,6 +353,39 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 	end
 	
 	return timeLeftSeconds, timeString, color, timeStringShort ,timeLeftMinutes;
+end
+
+function WQT_Utils:GetPinTime(questInfo)
+	local seconds, _, color, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
+	local start = 0
+	local timeLeft = seconds
+	local total =0
+	local maxTime, offset;
+	if (timeLeft > 0) then
+		if timeLeft >= 1440*60 then
+			maxTime = 5760*60;
+			offset = -720*60;
+			local _, _, _, rarity, isElite = GetQuestTagInfo(questInfo.questId);
+			if (timeLeft > maxTime or (isElite and rarity == LE_WORLD_QUEST_QUALITY_EPIC)) then
+				maxTime = 1440 * 7*60;
+				offset = 0;
+			end
+			
+		elseif timeLeft >= 60*60 then
+			maxTime = 1440*60;
+			offset = 60*60;
+		elseif timeLeft > 15*60 then
+			maxTime= 60*60;
+			offset = -10*60;
+		else
+			maxTime = 15*60;
+			offset = 0;
+		end
+		start = (maxTime - timeLeft);
+		total = (maxTime + offset);
+		timeLeft = (timeLeft + offset);
+	end
+	return start, total, timeLeft, seconds, color, timeStringShort;
 end
 
 function WQT_Utils:GetMapInfoForQuest(questId)
@@ -430,13 +463,13 @@ function WQT_DataProvider:HookQuestsLoaded(func)
 	tinsert(self.callbacks.questsLoaded, func);
 end
 
-function WQT_DataProvider:TriggerCallbacks(event)
+function WQT_DataProvider:TriggerCallbacks(event, ...)
 	if (not self.callbacks[event]) then 
 		WQT:debugPrint("Tried to trigger incalid callback event:", event);
 		return
 	end;
 	for k, func in ipairs(self.callbacks[event]) do
-		func();
+		func(event, ...);
 	end
 end
 
@@ -514,11 +547,11 @@ end
 
 function WQT_DataProvider:LoadQuestsInZone(zoneId)
 	self:ClearData();
-	zoneId = zoneId or self.latestZoneId
+	zoneId = zoneId or self.latestZoneId or C_Map.GetBestMapForUnit("player");
 	if (not zoneId) then return end;
 	self.latestZoneId = zoneId
 	
-	if not (WorldMapFrame:IsShown() or (FlightMapFrame and FlightMapFrame:IsShown())) then return; end
+	--if not (WorldMapFrame:IsShown() or (FlightMapFrame and FlightMapFrame:IsShown())) then return; end
 	-- If the flight map is open, we want all quests no matter what
 	if (FlightMapFrame and FlightMapFrame:IsShown() and not _WFMLoaded) then 
 		local taxiId = GetTaxiMapID()

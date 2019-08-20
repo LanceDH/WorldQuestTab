@@ -1,4 +1,4 @@
-local MAJOR, MINOR = "AddonDropDownTemplates-1.0", 6
+local MAJOR, MINOR = "AddonDropDownTemplates-1.0", 7
 local ADDT, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not ADDT then return end -- No Upgrade needed.
@@ -283,22 +283,25 @@ function ADDT:CreateMenuTemplate(lib, name, parent, id, frameType)
 	button.Left = tex;
 	tex:SetTexture("Interface/Glues/CharacterCreate/CharacterCreate-LabelFrame");
 	tex:SetSize(25, 64);
-	tex:SetPoint("TOPLEFT", 0, 17);
+	tex:SetPoint("TOPLEFT", -15, 17);
 	tex:SetTexCoord(0, 0.1953125, 0, 1);
-	-- parentMiddle
-	tex = button:CreateTexture(name .. "Middle", "ARTWORK");
-	button.Middle = tex;
-	tex:SetTexture("Interface/Glues/CharacterCreate/CharacterCreate-LabelFrame");
-	tex:SetSize(115, 64);
-	tex:SetPoint("LEFT", button.Left, "RIGHT");
-	tex:SetTexCoord(0.1953125, 0.8046875, 0, 1);
+	
 	-- parentRight
 	tex = button:CreateTexture(name .. "Right", "ARTWORK");
 	button.Right = tex;
 	tex:SetTexture("Interface/Glues/CharacterCreate/CharacterCreate-LabelFrame");
 	tex:SetSize(25, 64);
-	tex:SetPoint("LEFT", button.Middle, "RIGHT");
+	tex:SetPoint("TOPRIGHT", 15, 17);
 	tex:SetTexCoord(0.8046875, 1, 0, 1);
+	
+	-- parentMiddle
+	tex = button:CreateTexture(name .. "Middle", "ARTWORK");
+	button.Middle = tex;
+	tex:SetTexture("Interface/Glues/CharacterCreate/CharacterCreate-LabelFrame");
+	tex:SetPoint("TOPLEFT", button.Left, "TOPRIGHT");
+	tex:SetPoint("BOTTOMRIGHT", button.Right, "BOTTOMLEFT");
+	tex:SetTexCoord(0.1953125, 0.8046875, 0, 1);
+	
 	--parentText
 	local fontString = button:CreateFontString(name.."Text", "ARTWORK");
 	button.Text = fontString;
@@ -363,6 +366,14 @@ function ADDT:CreateMenuTemplate(lib, name, parent, id, frameType)
 	-- End of parentButton
 	
 	button:SetScript("OnHide", function(self) lib:CloseDropDownMenus(); end);
+	
+	button:SetScript("OnEnable", function(self) 
+			button.Text:SetVertexColor(WHITE_FONT_COLOR:GetRGB());
+		end);
+		
+	button:SetScript("OnDisable", function(self) 
+			button.Text:SetVertexColor(DISABLED_FONT_COLOR:GetRGB());
+		end);
 	 
 	return button;
 end

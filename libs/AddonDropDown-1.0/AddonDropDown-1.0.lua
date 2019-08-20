@@ -1177,6 +1177,7 @@ function ADD:SetWidth(frame, width, padding)
 	frame.noResize = 1;
 end
 
+
 function ADD:SetButtonWidth(frame, width)
 	local frameName = frame:GetName();
 	if ( width == "TEXT" ) then

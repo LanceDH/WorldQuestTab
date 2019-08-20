@@ -654,7 +654,7 @@
 		</Layers>
 	</Frame>
 	
-	<Frame name="WQT_WorldMapContainer" inherits="WQT_ContainerTemplate" mixin="WQT_FullScreenContainerMixin" parent="WorldMapFrame" hidden="false" alpha="1" enableMouse="true" movable="true">
+	<Frame name="WQT_WorldMapContainer" inherits="WQT_ContainerTemplate" mixin="WQT_FullScreenConstrainMixin" parent="WorldMapFrame" hidden="false" alpha="1" enableMouse="true" movable="true">
 		<Layers>
 			<Layer level="BACKGROUND">
 				<Texture parentKey="Background"  horizTile="true" vertTile="true">
@@ -687,16 +687,14 @@
 						self:RegisterForDrag("LeftButton")
 					</OnLoad>
 					<OnDragStart>
-						self:GetParent():StartMoving()
+						self:GetParent():OnDragStart();
+						GameTooltip:Hide();
 					</OnDragStart>
 					<OnDragStop>
-						self:GetParent():StopMovingOrSizing()
-						self:GetParent():ConstrainPosition();
+						self:GetParent():OnDragStop();
 					</OnDragStop>
 					<OnUpdate>
-						if (self:IsDragging()) then
-							self:GetParent():ConstrainPosition();
-						end
+						self:GetParent():OnUpdate();
 					</OnUpdate>
 					<OnEnter>
 						GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
@@ -714,12 +712,9 @@
 		
 		<Scripts>
 			<OnLoad>
-				self.FirstPlacement = true;
-				self.left = 0;
-				self.bottom = 0;
 				self:SetParent(WorldMapFrame.ScrollContainer);
-				self.anchorPoint = "BOTTOMLEFT";
-				self:SetPoint(self.anchorPoint, WorldMapFrame.ScrollContainer);
+				self:SetPoint("BOTTOMLEFT", WorldMapFrame.ScrollContainer, 0, 2000);
+				self:OnLoad("TOPLEFT");
 			</OnLoad>
 		</Scripts>
 	</Frame>
@@ -732,13 +727,16 @@
 		</Scripts>
 	</Button>
 	
-	<Button name="WQT_WorldMapContainerButton" inherits="WQT_ContainerButtonTemplate" hidden="false" alpha="1">
+	<Button name="WQT_WorldMapContainerButton" inherits="WQT_ContainerButtonTemplate" mixin="WQT_FullScreenConstrainMixin" hidden="false" alpha="1" movable="true">
 		<Scripts>
 			<OnLoad>
+				self:RegisterForDrag("RightButton")
 				self.container = WQT_WorldMapContainer;
 				self:SetParent(WorldMapFrame.ScrollContainer);
-				self:SetPoint("TOPRIGHT", WorldMapFrame.ScrollContainer, "TOPRIGHT", -40, -5);
+				self:SetPoint("TOPRIGHT", WorldMapFrame.ScrollContainer, -40, -5);
+				
 				self:SetFrameLevel(WorldMapFrame.ScrollContainer:GetFrameLevel()+10);
+				self:OnLoad("TOPRIGHT", -40, -5);
 			</OnLoad>
 			<OnClick inherit="prepend">
 				if (self.isSelected) then
@@ -752,6 +750,9 @@
 				end
 				WQT_WorldMapContainer:ConstrainPosition();
 			</OnClick>
+			<OnDragStart method="OnDragStart"/>
+			<OnDragStop method="OnDragStop"/>
+			<OnUpdate method="OnUpdate"/>
 		</Scripts>
 	</Button>
 	
@@ -769,7 +770,7 @@
 				<Texture parentKey="Background" atlas="QuestLogBackground" useAtlasSize="true">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="2" y="0"/>
-						<Anchor point="BOTTOMRIGHT" x="0" y="2"/>
+						<Anchor point="BOTTOMRIGHT" x="1" y="-3"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -897,9 +898,9 @@
 					<OnLoad method="OnLoad" />
 				</Scripts>
 			</ScrollFrame>
-			<Frame parentKey="Blocker" enableMouse="false" hidden="true">
+			<Frame name="WQTU_OverlayFrame" parentKey="Blocker" enableMouse="false" hidden="true">
 				<Anchors>
-					<Anchor point="TOPLEFT"/>
+					<Anchor point="TOPLEFT" x="2"/>
 					<Anchor point="BOTTOMRIGHT"/>
 				</Anchors>
 				<Layers>
@@ -925,120 +926,71 @@
 						<FontString parentKey="CombatText" inherits="GameFontNormalHugeBlack" justifyH="CENTER" justifyV="MIDDLE">
 							<Size x="200" y="80"/>
 							<Anchors>
-								<Anchor point="CENTER" x="-10"/>
+								<Anchor point="TOPLEFT" relativeKey="$parent.CombatBG"/>
+								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.CombatBG"/>
 							</Anchors>
 						</FontString>
 					</Layer>
 				</Layers>
 				<Frames>
-					<ScrollFrame parentKey="ScrollFrame" inherits="HybridScrollFrameTemplate">
+					<Button parentKey="CloseButton" hidden="false">
+						<Size x="20" y="20"/>
 						<Anchors>
-							<Anchor point="TOPLEFT" relativeKey="$parent.UpdatesBG" x="10" y="-3"/>
-							<Anchor point="BOTTOMRIGHT" relativeKey="$parent.UpdatesBG" x="-18" y="3"/>
+							<Anchor point="TOPRIGHT" relativePoint="TOPRIGHT" x="-2" y="-4"/>
 						</Anchors>
-						<Frames>
-							<Slider parentKey="scrollBar">	
-								<Size x="4"/>
-								<HitRectInsets left="-5" right="-4" />
-								<Anchors>
-									<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="5" y="-27"/>
-									<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="5" y="0"/>
-								</Anchors>
-								<Layers>
-									<Layer level="BACKGROUND">
-										<Texture name="$parentTrack" parentKey="trackBG">
-											<Anchors>
-												<Anchor point="TOPLEFT" x="0" y="0"/>
-												<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
-											</Anchors>
-											<Color r="0" g="0" b="0" a="1"/>
-										</Texture>
-									</Layer>
-								</Layers>
-								<ThumbTexture name="$parentThumbTexture" inherits="HybridScrollBarButton" file="Interface\Buttons\UI-ScrollBar-Knob" parentKey="thumbTexture">
-									<Size x="18" y="24"/>
-									<TexCoords left="0.20" right="0.80" top="0.125" bottom="0.875"/>
-								</ThumbTexture>
-								<Scripts>
-									<OnValueChanged>
-										local parent = self:GetParent();
-										parent.offset = value;
-										self:GetParent().Text:SetPoint("TOPLEFT", 0, parent.offset);
-									</OnValueChanged>
-									<OnMouseWheel>
-										local parent = self:GetParent();
-										local change = delta*30;
-										parent.offset = parent.offset - change;
-										parent.offset = max(0, parent.offset);
-										parent.offset = min(parent.offset, parent.limit);
-										
-										parent.scrollBar:SetValue(parent.offset);
-										
-									</OnMouseWheel>
-								</Scripts>
-							</Slider>
-							<Button parentKey="CloseButton" hidden="false">
-								<Size x="20" y="20"/>
-								<Anchors>
-									<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="-4" y="-2"/>
-								</Anchors>
-								<Layers>
-									<Layer level="ARTWORK">
-										<Texture file="Interface\FriendsFrame\ClearBroadcastIcon" alpha="0.5" parentKey="texture">
-											<TexCoords right="0.9" bottom="0.9" />
-										</Texture>
-									</Layer>
-								</Layers>
-								<Scripts>
-									<OnClick>
-										WQT_WorldQuestFrame:HideOverlayMessage(true);
-									</OnClick>
-									<OnEnter>
-										self.texture:SetAlpha(1.0);
-									</OnEnter>
-									<OnLeave>
-										self.texture:SetAlpha(0.5);
-									</OnLeave>
-									<OnMouseDown>
-										if self:IsEnabled() then
-											self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 1, -1);
-										end
-									</OnMouseDown>
-									<OnMouseUp>
-										self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 0);
-									</OnMouseUp>
-								</Scripts>
-							</Button>
-						</Frames>
-						<ScrollChild>
-							<SimpleHTML parentKey="Text">
-								<Size x="250" y="400" />
-								<FontString inherits="GameFontNormal" spacing="2" wordwrap="true"/>
-								<FontStringHeader1 inherits="Fancy24Font" spacing="5"/>
-								<FontStringHeader2 inherits="Fancy16Font" spacing="4"/>
-								<FontStringHeader3 inherits="GameFontNormalTiny" spacing="0"/>
-							</SimpleHTML>
-						</ScrollChild>
+						<Layers>
+							<Layer level="ARTWORK">
+								<Texture file="Interface\FriendsFrame\ClearBroadcastIcon" alpha="0.5" parentKey="texture">
+									<TexCoords right="0.9" bottom="0.9" />
+								</Texture>
+							</Layer>
+						</Layers>
 						<Scripts>
 							<OnLoad>
-								self.offset = 0;
-								self.limit = max(0, self.Text:GetHeight() - self:GetHeight());
-								self.scrollBar.doNotHide = true;
-								self.scrollBar:SetMinMaxValues(0, self.limit)
-								self.scrollBar:SetValue(0);
+								self:SetFrameLevel(self:GetParent():GetFrameLevel() + 20);
 							</OnLoad>
-							<OnMouseWheel>
-								local change = delta*30;
-								self.offset = self.offset - change;
-								self.offset = max(0, self.offset);
-								self.offset = min(self.offset, self.limit);
-								
-								self.scrollBar:SetValue(self.offset);
-							</OnMouseWheel>
+							<OnClick>
+								WQT_WorldQuestFrame:HideOverlayFrame();
+							</OnClick>
+							<OnEnter>
+								self.texture:SetAlpha(1.0);
+							</OnEnter>
+							<OnLeave>
+								self.texture:SetAlpha(0.5);
+							</OnLeave>
+							<OnMouseDown>
+								if self:IsEnabled() then
+									self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 1, -1);
+								end
+							</OnMouseDown>
+							<OnMouseUp>
+								self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 0);
+							</OnMouseUp>
 						</Scripts>
-					</ScrollFrame>
-				
-					
+					</Button>
+					<Frame parentKey="DetailFrame" setAllPoints="true">
+						<Layers>
+							<Layer level="ARTWORK" textureSubLevel="2">
+								<Texture parentKey="TopDetail" atlas="QuestLog_TopDetail" useAtlasSize="true">
+									<Anchors>
+										<Anchor point="TOPLEFT" x="-1" y="6"/>
+										<Anchor point="TOPRIGHT" x="0" y="6"/>
+									</Anchors>
+								</Texture>
+								<Texture parentKey="BottomDetail" atlas="QuestLog_BottomDetail" useAtlasSize="true">
+									<Anchors>
+										<Anchor point="BOTTOMLEFT" x="-1" y="-1"/>
+										<Anchor point="BOTTOMRIGHT" x="0" y="-1"/>
+									</Anchors>
+								</Texture>
+							</Layer>
+						</Layers>
+						<Scripts>
+							<OnLoad>
+								self:SetFrameLevel(self:GetParent():GetFrameLevel() + 20);
+							</OnLoad>
+						</Scripts>
+					</Frame>
 				</Frames>
 			</Frame>
 			
@@ -1105,12 +1057,13 @@
 			</Button>
 		</Frames>
 		<Scripts>
-			<OnLoad>
-				self:OnLoad();
-			</OnLoad>
+			<OnLoad method="OnLoad"/>
 			<OnShow>
 				self.ScrollFrame:UpdateQuestList();
 			</OnShow>
+			<OnUpdate>
+				self.pinHandler:KeepHightlightedOnTop();
+			</OnUpdate>
 		</Scripts>
 	</Frame>
 	
@@ -1247,7 +1200,6 @@
 	</Frame>
 
 	<Frame name="WQT_PoISelectIndicator" inherits="WQT_PoISelectTemplate" />
-	<Frame name="WQT_PoISelectIndicatorFlight" inherits="WQT_PoISelectTemplate" />
 	
 	<!-- This exists for tooltip scanning -->
 	<GameTooltip name="WQT_CompareTooltip1" clampedToScreen="true"  frameStrata="TOOLTIP" hidden="true" parent="UIParent" inherits="ShoppingTooltipTemplate"/>
@@ -1455,5 +1407,80 @@
 
 		</Scripts>
 	</Button>
+	
+	<ScrollFrame name="WQTU_VersionFrame" parent="WQTU_OverlayFrame" parentKey="ScrollFrame" hidden="true" inherits="HybridScrollFrameTemplate">
+		<Anchors>
+			<Anchor point="TOPLEFT" x="10" y="-3"/>
+			<Anchor point="BOTTOMRIGHT" x="-18" y="3"/>
+		</Anchors>
+		<Frames>
+			<Slider parentKey="scrollBar">	
+				<Size x="4"/>
+				<HitRectInsets left="-5" right="-4" />
+				<Anchors>
+					<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="5" y="-27"/>
+					<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="5" y="0"/>
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture name="$parentTrack" parentKey="trackBG">
+							<Anchors>
+								<Anchor point="TOPLEFT" x="0" y="0"/>
+								<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
+							</Anchors>
+							<Color r="0" g="0" b="0" a="1"/>
+						</Texture>
+					</Layer>
+				</Layers>
+				<ThumbTexture name="$parentThumbTexture" inherits="HybridScrollBarButton" file="Interface\Buttons\UI-ScrollBar-Knob" parentKey="thumbTexture">
+					<Size x="18" y="24"/>
+					<TexCoords left="0.20" right="0.80" top="0.125" bottom="0.875"/>
+				</ThumbTexture>
+				<Scripts>
+					<OnValueChanged>
+						local parent = self:GetParent();
+						parent.offset = value;
+						self:GetParent().Text:SetPoint("TOPLEFT", 0, parent.offset);
+					</OnValueChanged>
+					<OnMouseWheel>
+						local parent = self:GetParent();
+						local change = delta*30;
+						parent.offset = parent.offset - change;
+						parent.offset = max(0, parent.offset);
+						parent.offset = min(parent.offset, parent.limit);
+						
+						parent.scrollBar:SetValue(parent.offset);
+						
+					</OnMouseWheel>
+				</Scripts>
+			</Slider>
+		</Frames>
+		<ScrollChild>
+			<SimpleHTML parentKey="Text">
+				<Size x="250" y="400" />
+				<FontString inherits="GameFontNormal" spacing="2" wordwrap="true"/>
+				<FontStringHeader1 inherits="Fancy24Font" spacing="5"/>
+				<FontStringHeader2 inherits="Fancy16Font" spacing="4"/>
+				<FontStringHeader3 inherits="GameFontNormalTiny" spacing="0"/>
+			</SimpleHTML>
+		</ScrollChild>
+		<Scripts>
+			<OnLoad>
+				self.offset = 0;
+				self.limit = max(0, self.Text:GetHeight() - self:GetHeight());
+				self.scrollBar.doNotHide = true;
+				self.scrollBar:SetMinMaxValues(0, self.limit)
+				self.scrollBar:SetValue(0);
+			</OnLoad>
+			<OnMouseWheel>
+				local change = delta*30;
+				self.offset = self.offset - change;
+				self.offset = max(0, self.offset);
+				self.offset = min(self.offset, self.limit);
+				
+				self.scrollBar:SetValue(self.offset);
+			</OnMouseWheel>
+		</Scripts>
+	</ScrollFrame>
  </Ui>
  

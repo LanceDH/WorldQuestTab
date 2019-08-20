@@ -113,6 +113,25 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 	
 end
 
+
+local FORMAT_H1 = "%s<h1 align='center'>%s</h1>";
+local FORMAT_H2 = "%s<h2>%s:</h2>";
+local FORMAT_p = "%s<p>%s</p>";
+local FORMAT_WHITESPACE = "%s<h3>&#160;</h3>"
+
+local function AddNotes(updateMessage, title, notes)
+	if (not notes) then return updateMessage; end
+	if (title) then
+		updateMessage = FORMAT_H2:format(updateMessage, title);
+	end
+	for k, note in ipairs(notes) do
+		updateMessage = FORMAT_p:format(updateMessage, note);
+		updateMessage = FORMAT_WHITESPACE:format(updateMessage);
+	end
+	updateMessage = FORMAT_WHITESPACE:format(updateMessage);
+	return updateMessage;
+end
+
 ------------------------
 -- PUBLIC
 ------------------------
@@ -136,6 +155,32 @@ WQT_REWARDTYPE = {
 WQT_GROUP_INFO = _L["GROUP_SEARCH_INFO"];
 WQT_CONTAINER_DRAG = _L["CONTAINER_DRAG"];
 WQT_CONTAINER_DRAG_TT = _L["CONTAINER_DRAG_TT"];
+
+function WQT_Utils:DeepWipeTable(t)
+	for k, v in pairs(t) do
+		if (type(v) == "table") then
+			self:DeepWipeTable(v)
+		end
+	end
+	wipe(t);
+	t = nil;
+end
+
+function WQT_Utils:FormatPatchNotes(notes, title)
+	local updateMessage = "<html><body><h3>&#160;</h3>";
+	updateMessage = FORMAT_H1:format(updateMessage, title);
+	updateMessage = FORMAT_WHITESPACE:format(updateMessage);
+	for i=1, #notes do
+		local patch = notes[i];
+		updateMessage = FORMAT_H1:format(updateMessage, patch.version);
+		updateMessage = AddNotes(updateMessage, nil, patch.intro);
+		updateMessage = AddNotes(updateMessage, "New", patch.new);
+		updateMessage = AddNotes(updateMessage, "Changes", patch.changes);
+		updateMessage = AddNotes(updateMessage, "Fixes", patch.fixes);
+	end
+	return updateMessage .. "</body></html>";
+end
+
 
 ------------------------
 -- LOCAL
@@ -560,6 +605,7 @@ end
 -- This is just easier to maintain than changing the entire string every time
 local _patchNotes = {
 		{["version"] = "8.2.03"
+			,["intro"] = {"Introducing |cFFFFFFFFWorld Quest Tab Utilities|r, available on both WowInterface and Curse.<br/>This is a plug-in for World Quest Tab which adds some additional features. These include an overview of total reward sums for certain quest rewards in the list (i.e. gold or currencies), a sort option by distance to the quest, and a 14 day history graph of rewards from world quests.<br/>It is open for feature suggestions which might be concidered 'out of scope' for default World Quest Tab."}
 			,["new"] = {
 				"New 'Daily' quest type filter: can be used to filter daily quests from the list."
 			}
@@ -574,6 +620,8 @@ local _patchNotes = {
 				,"Fixed a filtering issue related to zones."
 				,"Fixed quest type filters."
 				,"Fixed tooltips when hovering over quests in the list. This will also fix interractions with other add-ons such as TipTac."
+				,"Fixed sort button text not greying out when being disabled."
+				,"Fixed dragging of the fullscreen quest list when the cursor goes outside the borders of the map."
 			}
 		}
 		,{["version"] = "8.2.02"
@@ -624,47 +672,6 @@ local _patchNotes = {
 		}
 	}
 
-local FORMAT_H1 = "%s<h1 align='center'>%s</h1>";
-local FORMAT_H2 = "%s<h2>%s:</h2>";
-local FORMAT_p = "%s<p>%s</p>";
-local FORMAT_WHITESPACE = "%s<h3>&#160;</h3>"
-
-local function DeepWipeTable(t)
-	for k, v in pairs(t) do
-		if (type(v) == "table") then
-			 DeepWipeTable(v)
-		end
-	end
-	wipe(t);
-	t = nil;
-end
-
-local function AddNotes(updateMessage, title, notes)
-	if (not notes) then return updateMessage; end
-	if (title) then
-		updateMessage = FORMAT_H2:format(updateMessage, title);
-	end
-	for k, note in ipairs(notes) do
-		updateMessage = FORMAT_p:format(updateMessage, note);
-		updateMessage = FORMAT_WHITESPACE:format(updateMessage);
-	end
-	updateMessage = FORMAT_WHITESPACE:format(updateMessage);
-	return updateMessage;
-end
-
-local updateMessage = "<h3>&#160;</h3>";
-for i=1, #_patchNotes do
-	local patch = _patchNotes[i];
-	updateMessage = FORMAT_H1:format(updateMessage, patch.version);
-	updateMessage = AddNotes(updateMessage, nil, patch.intro);
-	updateMessage = AddNotes(updateMessage, "New", patch.new);
-	updateMessage = AddNotes(updateMessage, "Changes", patch.changes);
-	updateMessage = AddNotes(updateMessage, "Fixes", patch.fixes);
-end
-
-DeepWipeTable(_patchNotes);
-AddNotes = nil;
-DeepWipeTable = nil;
-
-_V["LATEST_UPDATE"] = updateMessage;
+_V["LATEST_UPDATE"] =  WQT_Utils:FormatPatchNotes(_patchNotes, "World Quest Tab");
+WQT_Utils:DeepWipeTable(_patchNotes);
 
