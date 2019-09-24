@@ -24,7 +24,7 @@
 --
 -- local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questId);
 -- local zoneInfo = WQT_Utils:GetCachedMapInfo(zoneId); 	| zoneInfo = {[mapID] = number, [name] = string, [parenMapID] = number, [mapType] = Enum.UIMapType};
--- local zoneInfo = WQT_Utils:GetMapInfoForQuest(questId); 	| Quick function that gets the zoneId from the questId first
+-- local mapInfo = WQT_Utils:GetMapInfoForQuest(questId); 	| Quick function that gets the zoneId from the questId first
 -- local factionInfo = WQT_Utils:GetFactionDataInternal(factionId); 	| factionInfo = {[name] = string, [texture] = string/number, [playerFaction] = string, [expansion] = number}
 -- local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex, displayTimeLeft = GetQuestTagInfo(questId);
 -- local texture, sizeX, sizeY = WQT_Utils:GetCachedTypeIconData(worldQuestType, tradeskillLineIndex);
@@ -40,6 +40,7 @@
 -- "WaitingRoomUpdated"	() After data in the dataprovider's waitingroom got updated
 -- "SortChanged"		(category) After sort category was changed to a different one
 -- "ListButtonUpdate"	(button) After a button was updated and shown
+-- "AnchorChanged"		(anchor) After the anchor of the quest list has changed
 
 local addonName, addon = ...
 
@@ -60,8 +61,6 @@ local utilitiesStatus = select(5, GetAddOnInfo("WorldQuestTabUtilities"))
 local _utilitiesInstalled = not utilitiesStatus or utilitiesStatus ~= "MISSING";
 
 local _WFMLoaded = IsAddOnLoaded("WorldFlightMap");
-
-local _anchors = {["flight"] = 1, ["world"] = 2, ["full"] = 3};
 
 local WQT_DEFAULTS = {
 	global = {	
@@ -138,6 +137,30 @@ local function QuestIsWatched(questID)
 	return false;
 end
 
+local function AddTomTomArrowByQuestId(questId)
+	if (not questId --[[or not QuestUtils_IsQuestWorldQuest(questId)]]) then return; end
+	local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
+	local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
+	if (title and zoneId and x and y) then
+		TomTom:AddWaypoint(zoneId, x, y, {["title"] = title, ["crazy"] = true});
+	end
+end
+
+local function RemoveTomTomArrowbyQuestId(questId)
+	if (not questId --[[or not QuestUtils_IsQuestWorldQuest(questId)]]) then return; end
+	local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
+	local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
+	if (title and zoneId and x and y) then
+		local key = TomTom:GetKeyArgs(zoneId, x, y, title);
+		local wp = TomTom.waypoints[zoneId] and TomTom.waypoints[zoneId][key];
+		if (wp) then
+			TomTom:RemoveWaypoint(wp);
+		end
+	end
+end
+
 local function GetQuestLogInfo(hiddenList)
 	local numEntries = GetNumQuestLogEntries();
 	local maxQuests = C_QuestLog.GetMaxNumQuestsCanAccept();
@@ -189,6 +212,8 @@ function WQT:GetFlightMapPin(questId)
 	return WQT.FlightmapPins.activePins[questId];
 end
 
+ WQT_MapDP = nil;
+
 local function GetMapWQProvider()
 	if WQT.mapWQProvider then return WQT.mapWQProvider; end
 	
@@ -196,11 +221,12 @@ local function GetMapWQProvider()
 		for k1 in pairs(k) do
 			if k1=="IsMatchingWorldMapFilters" then 
 				WQT.mapWQProvider = k; 
+				WQT_MapDP = k;
 				break;
 			end 
 		end 
 	end
-	
+
 	if not WQT.hookedWQProvider then
 	-- We hook it here because we can't hook it during addonloaded for some reason
 	hooksecurefunc(WQT.mapWQProvider, "RefreshAllData", function() 
@@ -234,6 +260,26 @@ local function GetMapWQProvider()
 						end
 							
 					end)
+				end
+			end
+			-- Bonus Objective pins
+			if (WorldMapFrame.pinPools.BonusObjectivePinTemplate) then
+				for pin in pairs(WorldMapFrame.pinPools.BonusObjectivePinTemplate.activeObjects) do
+					if (not pin.WQTHooked) then
+						pin.WQTHooked = true;
+						hooksecurefunc(pin, "OnClick", function(self, button) 
+							if (button == "RightButton") then
+								-- Show the tracker dropdown
+								if WQT_TrackDropDown:GetParent() ~= self then
+									-- If the dropdown is linked to another button, we must move and close it first
+									WQT_TrackDropDown:SetParent(self);
+									ADD:HideDropDownMenu(1);
+								end
+								ADD:ToggleDropDownMenu(1, nil, WQT_TrackDropDown, self, -10, 0, nil, nil, 2);
+							end
+								
+						end)
+					end
 				end
 			end
 
@@ -419,6 +465,9 @@ local function InitFilter(self, level)
 		local newText = WQT.settings.updateSeen and "" or "|TInterface\\FriendsFrame\\InformationIcon:14|t ";
 		
 		info.text = newText .. _L["WHATS_NEW"];
+		info.tooltipTitle = _L["WHATS_NEW"];
+		info.tooltipText =  _L["WHATS_NEW_TT"];
+		
 		info.func = function()
 						local scrollFrame = WQTU_VersionFrame;
 						local blockerText = scrollFrame.Text;
@@ -449,7 +498,7 @@ local function InitFilter(self, level)
 				info.func = function()
 								WQT:SetAllFilterTo(1, true);
 								ADD:Refresh(self, 1, 2);
-								WQT_QuestScrollFrame:UpdateQuestList()();
+								WQT_QuestScrollFrame:UpdateQuestList();
 							end
 				ADD:AddButton(info, level)
 				
@@ -457,7 +506,7 @@ local function InitFilter(self, level)
 				info.func = function()
 								WQT:SetAllFilterTo(1, false);
 								ADD:Refresh(self, 1, 2);
-								WQT_QuestScrollFrame:UpdateQuestList()();
+								WQT_QuestScrollFrame:UpdateQuestList();
 							end
 				ADD:AddButton(info, level)
 			
@@ -475,7 +524,7 @@ local function InitFilter(self, level)
 											if (value) then
 												WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
 											end
-											WQT_QuestScrollFrame:UpdateQuestList()();
+											WQT_QuestScrollFrame:UpdateQuestList();
 										end
 						info.checked = function() return options[flagKey] end;
 						ADD:AddButton(info, level);			
@@ -770,140 +819,148 @@ local function InitFilter(self, level)
 			info.tooltipOnButton = true;
 			info.keepShownOnClick = true;	
 			info.text = _L["PIN_DISABLE"];
-				info.tooltipTitle = _L["PIN_DISABLE"];
-				info.tooltipText = _L["PIN_DISABLE_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.pin.disablePoI = value;
-						if (value) then
-							-- Reset alpha on official pins
-							local WQProvider = GetMapWQProvider();
-							for _, PoI in pairs(WQProvider.activePins) do
-								PoI.BountyRing:SetAlpha(1);
-								PoI.TimeLowFrame:SetAlpha(1);
-								PoI.TrackedCheck:SetAlpha(1);
-							end
-							WQT_WorldQuestFrame.pinHandler:ReleaseAllPools();
+			info.tooltipTitle = _L["PIN_DISABLE"];
+			info.tooltipText = _L["PIN_DISABLE_TT"];
+			info.func = function(_, _, _, value)
+					WQT.settings.pin.disablePoI = value;
+					if (value) then
+						-- Reset alpha on official pins
+						local WQProvider = GetMapWQProvider();
+						for _, PoI in pairs(WQProvider.activePins) do
+							PoI.BountyRing:SetAlpha(1);
+							PoI.TimeLowFrame:SetAlpha(1);
+							PoI.TrackedCheck:SetAlpha(1);
+							PoI.Texture:SetAlpha(1);
 						end
-						ADD:Refresh(self, 1, 3);
-						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(true)
+						-- Bonus objectives and dailies
+						if(WorldMapFrame.pinPools.BonusObjectivePinTemplate) then
+							for mapPin in pairs(WorldMapFrame.pinPools.BonusObjectivePinTemplate.activeObjects) do
+								mapPin.Texture:SetAlpha(1);
+							end
+						end
+						
+						WQT_WorldQuestFrame.pinHandler:ReleaseAllPools();
 					end
-				info.checked = function() return WQT.settings.pin.disablePoI end;
-				ADD:AddButton(info, level);
-				
-				info.disabled = function() return WQT.settings.pin.disablePoI end;
-				
-				info.text = _L["FILTER_PINS"];
-				info.tooltipTitle = _L["FILTER_PINS"];
-				info.tooltipText = _L["FILTER_PINS_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.pin.filterPoI = value;
-						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
-					end
-				info.checked = function() return WQT.settings.pin.filterPoI end;
-				ADD:AddButton(info, level);
-				
-				info.text = _L["PIN_REWARDS"];
-				info.tooltipTitle = _L["PIN_REWARDS"];
-				info.tooltipText = _L["PIN_REWARDS_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.pin.reward = value;
-						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
-						ADD:Refresh(self, 1, 3);
-					end
-				info.checked = function() return WQT.settings.pin.reward end;
-				ADD:AddButton(info, level);
-				
-				info.disabled = function() return WQT.settings.pin.disablePoI or not WQT.settings.pin.reward end;
-				
-				info.text = _L["PIN_TYPE"];
-				info.tooltipTitle = _L["PIN_TYPE"];
-				info.tooltipText = _L["PIN_TYPE_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.pin.typeIcon = value;
-						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
-					end
-				info.checked = function() return WQT.settings.pin.typeIcon end;
-				ADD:AddButton(info, level);
-				
-				info.disabled = function() return WQT.settings.pin.disablePoI end;
-				
-				info.text = _L["PIN_REWARD_TYPE"];
-				info.tooltipTitle = _L["PIN_REWARD_TYPE"];
-				info.tooltipText = _L["PIN_REWARD_TYPE_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.pin.rewardTypeIcon = value;
-						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
-					end
-				info.checked = function() return WQT.settings.pin.rewardTypeIcon end;
-				ADD:AddButton(info, level);
-				
-				info.text = _L["PIN_BIGGER"];
-				info.tooltipTitle = _L["PIN_BIGGER"];
-				info.tooltipText = _L["PIN_BIGGER_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.pin.bigPoI = value;
-						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
-					end
-				info.checked = function() return WQT.settings.pin.bigPoI end;
-				ADD:AddButton(info, level);
-				
-				info.text = _L["PIN_TIME"];
-				info.tooltipTitle = _L["PIN_TIME"];
-				info.tooltipText = _L["PIN_TIME_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.pin.timeLabel  = value;
-						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
-					end
-				info.checked = function() return WQT.settings.pin.timeLabel  end;
-				ADD:AddButton(info, level);
-				
-				info.notClickable = true;
-				info.notCheckable = true;
-				
-				info.text = _L["PIN_RING_TITLE"];
-				info.tooltipTitle = nil;
-				info.tooltipText = nil;
-				ADD:AddButton(info, level);
-				
-				info.isNotRadio = false;
-				info.notClickable = false;
-				info.notCheckable = false;
-				info.disabled = function() return WQT.settings.pin.disablePoI end;
-				
-				info.text = _L["PIN_RING_NONE"];
-				info.tooltipTitle = _L["PIN_RING_NONE"];
-				info.tooltipText = _L["PIN_RIMG_NONE_TT"];
-				info.func = function()
-						WQT.settings.pin.ringType = _V["RINGTYPE_NONE"];
-						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
-						ADD:Refresh(self, 1, 3);
-					end
-				info.checked = function() return  WQT.settings.pin.ringType == _V["RINGTYPE_NONE"]; end;
-				ADD:AddButton(info, level);
-				
-				info.text = _L["PIN_RING_COLOR"];
-				info.tooltipTitle = _L["PIN_RING_COLOR"];
-				info.tooltipText = _L["PIN_RING_COLOR_TT"];
-				info.func = function()
-						WQT.settings.pin.ringType = _V["RINGTYPE_REWARD"];
-						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
-						ADD:Refresh(self, 1, 3);
-					end
-				info.checked = function() return WQT.settings.pin.ringType == _V["RINGTYPE_REWARD"]; end;
-				ADD:AddButton(info, level);
-				
-				info.text = _L["PIN_RING_TIME"];
-				info.tooltipTitle = _L["PIN_RING_TIME"];
-				info.tooltipText = _L["PIN_RIMG_TIME_TT"];
-				info.func = function()
-						WQT.settings.pin.ringType = _V["RINGTYPE_TIME"];
-						WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
-						ADD:Refresh(self, 1, 3);
-					end
-				info.checked = function() return  WQT.settings.pin.ringType == _V["RINGTYPE_TIME"]; end;
-				ADD:AddButton(info, level);
-				
-				info.disabled = nil;
+					ADD:Refresh(self, 1, 3);
+					WQT_WorldQuestFrame.pinHandler:UpdateMapPoI(true)
+				end
+			info.checked = function() return WQT.settings.pin.disablePoI end;
+			ADD:AddButton(info, level);
+			
+			info.disabled = function() return WQT.settings.pin.disablePoI end;
+			
+			info.text = _L["FILTER_PINS"];
+			info.tooltipTitle = _L["FILTER_PINS"];
+			info.tooltipText = _L["FILTER_PINS_TT"];
+			info.func = function(_, _, _, value)
+					WQT.settings.pin.filterPoI = value;
+					WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
+				end
+			info.checked = function() return WQT.settings.pin.filterPoI end;
+			ADD:AddButton(info, level);
+			
+			info.text = _L["PIN_REWARDS"];
+			info.tooltipTitle = _L["PIN_REWARDS"];
+			info.tooltipText = _L["PIN_REWARDS_TT"];
+			info.func = function(_, _, _, value)
+					WQT.settings.pin.reward = value;
+					WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
+					ADD:Refresh(self, 1, 3);
+				end
+			info.checked = function() return WQT.settings.pin.reward end;
+			ADD:AddButton(info, level);
+			
+			info.disabled = function() return WQT.settings.pin.disablePoI or not WQT.settings.pin.reward end;
+			
+			info.text = _L["PIN_TYPE"];
+			info.tooltipTitle = _L["PIN_TYPE"];
+			info.tooltipText = _L["PIN_TYPE_TT"];
+			info.func = function(_, _, _, value)
+					WQT.settings.pin.typeIcon = value;
+					WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
+				end
+			info.checked = function() return WQT.settings.pin.typeIcon end;
+			ADD:AddButton(info, level);
+			
+			info.disabled = function() return WQT.settings.pin.disablePoI end;
+			
+			info.text = _L["PIN_REWARD_TYPE"];
+			info.tooltipTitle = _L["PIN_REWARD_TYPE"];
+			info.tooltipText = _L["PIN_REWARD_TYPE_TT"];
+			info.func = function(_, _, _, value)
+					WQT.settings.pin.rewardTypeIcon = value;
+					WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
+				end
+			info.checked = function() return WQT.settings.pin.rewardTypeIcon end;
+			ADD:AddButton(info, level);
+			
+			info.text = _L["PIN_BIGGER"];
+			info.tooltipTitle = _L["PIN_BIGGER"];
+			info.tooltipText = _L["PIN_BIGGER_TT"];
+			info.func = function(_, _, _, value)
+					WQT.settings.pin.bigPoI = value;
+					WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
+				end
+			info.checked = function() return WQT.settings.pin.bigPoI end;
+			ADD:AddButton(info, level);
+			
+			info.text = _L["PIN_TIME"];
+			info.tooltipTitle = _L["PIN_TIME"];
+			info.tooltipText = _L["PIN_TIME_TT"];
+			info.func = function(_, _, _, value)
+					WQT.settings.pin.timeLabel  = value;
+					WQT_WorldQuestFrame.pinHandler:UpdateMapPoI()
+				end
+			info.checked = function() return WQT.settings.pin.timeLabel  end;
+			ADD:AddButton(info, level);
+			
+			info.notClickable = true;
+			info.notCheckable = true;
+			
+			info.text = _L["PIN_RING_TITLE"];
+			info.tooltipTitle = nil;
+			info.tooltipText = nil;
+			ADD:AddButton(info, level);
+			
+			info.isNotRadio = false;
+			info.notClickable = false;
+			info.notCheckable = false;
+			info.disabled = function() return WQT.settings.pin.disablePoI end;
+			
+			info.text = _L["PIN_RING_NONE"];
+			info.tooltipTitle = _L["PIN_RING_NONE"];
+			info.tooltipText = _L["PIN_RIMG_NONE_TT"];
+			info.func = function()
+					WQT.settings.pin.ringType = _V["RINGTYPE_NONE"];
+					WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
+					ADD:Refresh(self, 1, 3);
+				end
+			info.checked = function() return  WQT.settings.pin.ringType == _V["RINGTYPE_NONE"]; end;
+			ADD:AddButton(info, level);
+			
+			info.text = _L["PIN_RING_COLOR"];
+			info.tooltipTitle = _L["PIN_RING_COLOR"];
+			info.tooltipText = _L["PIN_RING_COLOR_TT"];
+			info.func = function()
+					WQT.settings.pin.ringType = _V["RINGTYPE_REWARD"];
+					WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
+					ADD:Refresh(self, 1, 3);
+				end
+			info.checked = function() return WQT.settings.pin.ringType == _V["RINGTYPE_REWARD"]; end;
+			ADD:AddButton(info, level);
+			
+			info.text = _L["PIN_RING_TIME"];
+			info.tooltipTitle = _L["PIN_RING_TIME"];
+			info.tooltipText = _L["PIN_RIMG_TIME_TT"];
+			info.func = function()
+					WQT.settings.pin.ringType = _V["RINGTYPE_TIME"];
+					WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
+					ADD:Refresh(self, 1, 3);
+				end
+			info.checked = function() return  WQT.settings.pin.ringType == _V["RINGTYPE_TIME"]; end;
+			ADD:AddButton(info, level);
+			
+			info.disabled = nil;
 
 		elseif ADD.MENU_VALUE == 304 then -- TomTom
 			info.text = _L["USE_TOMTOM"];
@@ -939,6 +996,11 @@ local function InitFilter(self, level)
 			info.tooltipText = _L["TOMTOM_CLICK_ARROW_TT"];
 			info.func = function(_, _, _, value)
 					WQT.settings.general.TomTomArrowOnClick = value;
+					
+					if (not value and WQT_WorldQuestFrame.softTomTomArrow and not IsWorldQuestHardWatched(WQT_WorldQuestFrame.softTomTomArrow)) then
+						RemoveTomTomArrowbyQuestId(WQT_WorldQuestFrame.softTomTomArrow);
+					end
+
 					WQT_QuestScrollFrame:UpdateQuestList();
 				end
 			info.checked = function() return WQT.settings.general.TomTomArrowOnClick end;
@@ -1159,30 +1221,35 @@ end
 function WQT:InitTrackDropDown(self, level)
 
 	if not self:GetParent() or not self:GetParent().info then return; end
-	local questId = self:GetParent().info.questId;
 	local questInfo = self:GetParent().info;
+	local questId = questInfo.questId;
 	local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questId);
 	local info = ADD:CreateInfo();
 	local _, _, worldQuestType = GetQuestTagInfo(questId);
 	info.notCheckable = true;	
 	
+	-- Title
+	local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+	info.text = title;
+	info.isTitle = true;
+	ADD:AddButton(info, level);
+	
+	info.isTitle = false;
+	
 	-- TomTom functionality
 	if (TomTom and WQT.settings.general.useTomTom) then
 	
 		if (TomTom.WaypointExists and TomTom.AddWaypoint and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
-			local title = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
 			-- All required functions are found
-			if (not TomTom:WaypointExists(mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, title)) then
+			if ( not TomTom:WaypointExists(mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, title)) then
 				info.text = _L["TRACKDD_TOMTOM"];
 				info.func = function()
-					TomTom:AddWaypoint(mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, {["title"] = title})
+					AddTomTomArrowByQuestId(questId);
 				end
 			else
 				info.text = _L["TRACKDD_TOMTOM_REMOVE"];
 				info.func = function()
-					local key = TomTom:GetKeyArgs(mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, title);
-					local wp = TomTom.waypoints[mapInfo.mapID] and TomTom.waypoints[mapInfo.mapID][key];
-					TomTom:RemoveWaypoint(wp);
+					RemoveTomTomArrowbyQuestId(questId);
 				end
 			end
 		else
@@ -1196,8 +1263,8 @@ function WQT:InitTrackDropDown(self, level)
 		ADD:AddButton(info, level);
 	end
 	
-	-- Don't allow tracking and LFG for bonus objective, Blizzard UI can't handle it
-	if (worldQuestType ~= _V["WQT_TYPE_BONUSOBJECTIVE"]) then
+	-- Don't allow tracking for quests that don't support it in the ObjectiveTrackerFrame
+	if (worldQuestType) then
 		-- Tracking
 		if (QuestIsWatched(questId)) then
 			info.text = UNTRACK_QUEST;
@@ -1217,16 +1284,15 @@ function WQT:InitTrackDropDown(self, level)
 					end
 		end	
 		ADD:AddButton(info, level)
-		
-		
-		-- LFG if possible
-		if (WQT_WorldQuestFrame:ShouldAllowLFG(questInfo)) then
-			info.text = OBJECTIVES_FIND_GROUP;
-			info.func = function()
-				WQT_WorldQuestFrame:SearchGroup(questInfo);
-			end
-			ADD:AddButton(info, level);
+	end
+	
+	-- LFG if possible
+	if (WQT_WorldQuestFrame:ShouldAllowLFG(questInfo)) then
+		info.text = OBJECTIVES_FIND_GROUP;
+		info.func = function()
+			WQT_WorldQuestFrame:SearchGroup(questInfo);
 		end
+		ADD:AddButton(info, level);
 	end
 	
 	info.text = CANCEL;
@@ -1394,6 +1460,12 @@ function WQT:OnEnable()
 				end
 			end);
 	end
+	
+	-- Load externals
+	for k, func in ipairs(addon.externals) do
+		local name, success = func();
+		WQT:debugPrint("WQT external", name, success and "Success" or "Failed");
+	end
 end
 
 ------------------------------------------
@@ -1448,7 +1520,9 @@ function WQT_ListButtonMixin:OnClick(button)
 				AddWorldQuestWatch(self.questId, true);
 			end
 		end
-		WorldMapFrame:SetMapID(self.zoneId);
+		if (WorldMapFrame:IsShown()) then
+			WorldMapFrame:SetMapID(self.zoneId);
+		end
 		
 		if WQT_WorldQuestFrame:GetAlpha() > 0 then 
 			WQT_QuestScrollFrame:DisplayQuestList();
@@ -1760,7 +1834,7 @@ function WQT_PinHandlerMixin:ReleaseAllPools()
 end
 
 function WQT_PinHandlerMixin:UpdateFlightMapPins()
-	if not FlightMapFrame:IsShown() or WQT.settings.pin.disablePoI then return; end
+	if (not FlightMapFrame:IsShown() or WQT.settings.pin.disablePoI or not WQT.FlightmapPins) then return; end
 	WQT.FlightMapList = _dataProvider:GetKeyList()
 	
 	self.pinPoolFlightMap:ReleaseAll();
@@ -1794,6 +1868,21 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 			end
 		end
 	end
+	if(WorldMapFrame.pinPools.BonusObjectivePinTemplate) then
+		for mapPin in pairs(WorldMapFrame.pinPools.BonusObjectivePinTemplate.activeObjects) do
+			questInfo = _dataProvider:GetQuestById(mapPin.questID );
+			if (questInfo and questInfo.isValid) then
+				local pin = self.pinPool:Acquire();
+				pin.info = questInfo;
+				pin.questID = qID;
+				pin:Update(mapPin, questInfo, nil, true);
+				mapPin:SetShown(true);
+				if (WQT.settings.pin.filterPoI) then
+					mapPin:SetShown(questInfo.passedFilter);
+				end
+			end
+		end
+	end
 end
 
 function  WQT_PinHandlerMixin:ShowHighlightOnPinForQuestId(questId)
@@ -1810,7 +1899,13 @@ function  WQT_PinHandlerMixin:ShowHighlightOnPinForQuestId(questId)
 	
 	if not pin then
 		pin = WQT:GetMapPinForBonusObjective(questId);
-		scale = 0.5;
+		
+		local questInfo = _dataProvider:GetQuestById(questId);
+		if (questInfo and questInfo.isDaily) then
+			scale = 0.45;
+		else
+			scale = 0.5;
+		end
 	end
 	 
 	if (pin) then
@@ -1838,7 +1933,7 @@ function  WQT_PinHandlerMixin:ShowHighlightOnPinForQuestId(questId)
 		highlight:SetParent(pin);
 		highlight:ClearAllPoints();
 		highlight:SetPoint("CENTER", pin, 0, -1);
-		highlight:SetFrameLevel(pin:GetFrameLevel());
+		highlight:SetFrameLevel(pin:GetFrameLevel()+1);
 		highlight.pinLevel = pin:GetFrameLevel();
 		highlight.pin = pin;
 		highlight:Show();
@@ -1854,6 +1949,7 @@ function  WQT_PinHandlerMixin:ShowHighlightOnPinForQuestId(questId)
 end
 
 function  WQT_PinHandlerMixin:HideHighlightOnPinForQuestId(questId)
+
 	local highlight = self.questHighlights[questId]; 
 	
 	if (not highlight) then 
@@ -1861,8 +1957,9 @@ function  WQT_PinHandlerMixin:HideHighlightOnPinForQuestId(questId)
 	end
 	
 	local pin = highlight.pin;
-	
-	if (FlightMapFrame and pin.owningMap == FlightMapFrame) then
+
+	-- We have to check on name because in WorldFlightMap WorldMapFrame == FlightMapFrame
+	if (FlightMapFrame and pin.owningMap and pin.owningMap:GetName() == "FlightMapFrame") then
 		local keepVisible = FlightMapFrame.ScrollContainer.targetScale  > 0.5;
 		keepVisible = keepVisible or GetSuperTrackedQuestID() == questId or IsWorldQuestWatched(questId);
 		pin:SetAlpha(keepVisible and 1 or 0);
@@ -1906,25 +2003,45 @@ function WQT_PinMixin:OnUpdate()
 	end
 end
 
-function WQT_PinMixin:Update(PoI, questInfo, flightPinNr)
+function WQT_PinMixin:Update(PoI, questInfo, flightPinNr, isBonus)
 	self:SetParent(PoI);
+	self:SetFrameLevel(PoI:GetFrameLevel()+2);
 	self:SetAllPoints();
+	
+	local scale = 1;
 	local margin = WQT.settings.pin.bigPoI and 10 or 5;
 	local iconDistance =  WQT.settings.pin.bigPoI and 34 or 30;
 	local seconds, _, color, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
 	local _, _, worldQuestType = GetQuestTagInfo(questInfo.questId);
 	
+	if(isBonus) then
+		if (questInfo.isDaily) then
+			-- Daily quests
+			margin = WQT.settings.pin.bigPoI and 0 or -5;
+			scale = 0.45;
+		else
+			-- Actual bonus objectives
+			margin = WQT.settings.pin.bigPoI and 6 or 1;
+			scale = 0.55;
+		end
+	end
+	
 	self:SetPoint("TOPLEFT", -margin, margin);
 	self:SetPoint("BOTTOMRIGHT", margin, -margin);
+	self:SetScale(scale);
 	self:Show();
+	
+	PoI.Texture:SetAlpha(0);
 	
 	if not flightPinNr then
 		PoI.info = questInfo;
 	end
 	
-	PoI.BountyRing:SetAlpha(0);
-	PoI.TimeLowFrame:SetAlpha(0);
-	PoI.TrackedCheck:SetAlpha(0);
+	if (PoI.BountyRing) then
+		PoI.BountyRing:SetAlpha(0);
+		PoI.TimeLowFrame:SetAlpha(0);
+		PoI.TrackedCheck:SetAlpha(0);
+	end
 
 	self.TrackedCheck:SetAlpha(IsWorldQuestWatched(questInfo.questId) and 1 or 0);
 	
@@ -1953,8 +2070,7 @@ function WQT_PinMixin:Update(PoI, questInfo, flightPinNr)
 	
 	self.Ring:SetVertexColor(r*0.25, g*0.25, b*0.25);
 	self:SetSwipeColor(r*.8, g*.8, b*.8);
-	
-	local showTypeIcon = WQT.settings.pin.reward and WQT.settings.pin.typeIcon and worldQuestType > 0 and worldQuestType ~= LE_QUEST_TAG_TYPE_NORMAL;
+	local showTypeIcon = WQT.settings.pin.reward and WQT.settings.pin.typeIcon and (isBonus or (worldQuestType > 0 and worldQuestType ~= LE_QUEST_TAG_TYPE_NORMAL));
 	local showRewardIcon = WQT.settings.pin.rewardTypeIcon;
 	
 	-- Quest Type Icon
@@ -2222,6 +2338,7 @@ function WQT_ScrollListMixin:FilterQuestList()
 			if (pass and WQTFiltering) then
 				pass = WQT:PassesAllFilters(questInfo);
 			end
+			
 			questInfo.passedFilter = pass;
 			if (questInfo.passedFilter) then
 				table.insert(self.questListDisplay, questInfo);
@@ -2237,7 +2354,7 @@ function WQT_ScrollListMixin:FilterQuestList()
 end
 
 function WQT_ScrollListMixin:UpdateQuestList()
-	local flightShown = FlightMapFrame and FlightMapFrame:IsShown();
+	local flightShown = (FlightMapFrame and FlightMapFrame:IsShown() or TaxiRouteMap:IsShown() );
 	local worldShown = WorldMapFrame:IsShown();
 	
 	if (not (flightShown or worldShown) or InCombatLockdown()) then return end	
@@ -2251,7 +2368,7 @@ end
 function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 	
 	local mapId = WorldMapFrame.mapID;
-	if (FlightMapFrame and FlightMapFrame:IsShown() and not _WFMLoaded) then 
+	if (((FlightMapFrame and FlightMapFrame:IsShown()) or TaxiRouteMap:IsShown()) and not _WFMLoaded) then 
 		local taxiId = GetTaxiMapID()
 		mapId = (taxiId and taxiId > 0) and taxiId or mapId;
 	end
@@ -2478,7 +2595,7 @@ end
 -- HideCombatOverlay(force)
 -- SetCombatEnabled(value)
 -- SelectTab(tab)		1. Default questlog  2. WQT  3. Quest details
--- ChangeAnchorLocation(anchor)		Show list on a different container using _anchors variable
+-- ChangeAnchorLocation(anchor)		Show list on a different container using _V["LIST_ANCHOR_TYPE"] variable
 -- :<event> -> ADDON_LOADED, PLAYER_REGEN_DISABLED, PLAYER_REGEN_ENABLED, QUEST_TURNED_IN, PVP_TIMER_UPDATE, WORLD_QUEST_COMPLETED_BY_SPELL, QUEST_LOG_UPDATE, QUEST_WATCH_LIST_CHANGED
 
 WQT_CoreMixin = {}
@@ -2616,6 +2733,7 @@ function WQT_CoreMixin:OnLoad()
 	self:RegisterEvent("PVP_TIMER_UPDATE"); -- Warmode toggle because WAR_MODE_STATUS_UPDATE does fuck if I know what
 	self:RegisterEvent("ADDON_LOADED");
 	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
+	self:RegisterEvent("TAXIMAP_OPENED");
 	self:RegisterEvent("QUEST_LOG_UPDATE"); -- Dataprovider only
 	self:SetScript("OnEvent", function(self, event, ...) 
 			if	(self.dataProvider) then
@@ -2635,42 +2753,6 @@ function WQT_CoreMixin:OnLoad()
 	
 	self.trackedQuests = {};
 	self.recentlyUntrackedQuest = nil;
-	
-	-- Step 2: Check compare list after changes, if quest is left == quest that was untracked
-	-- check QUEST_WATCH_LIST_CHANGED for step 1
-	hooksecurefunc("ObjectiveTracker_Update", function()
-				self.recentlyUntrackedQuest = nil;
-				local wqModule = WQT:GetObjectiveTrackerWQModule()
-				if wqModule then
-					for k, v in pairs(wqModule.usedBlocks) do
-						self.trackedQuests[k] = nil;
-					end
-					
-					-- store the untracked quest. right clicking on map PoI will retrack the quest
-					for k, v in pairs(self.trackedQuests) do
-						self.recentlyUntrackedQuest = k;
-					end
-					wipe(self.trackedQuests);
-					
-					local questId = self.recentlyUntrackedQuest;
-					-- If we have auto arrow handling turned on, remove it if it exists
-					if (questId and TomTom and WQT.settings.general.useTomTom and WQT.settings.general.TomTomAutoArrow) then
-						local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
-						local zoneId = C_TaskQuest.GetQuestZoneID(questId);
-						if (title and zoneId) then
-							local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
-							if (x and y) then
-								local key = TomTom:GetKeyArgs(zoneId, x, y, title);
-								local wp = TomTom.waypoints[zoneId] and TomTom.waypoints[zoneId][key];
-								if wp then
-									TomTom:RemoveWaypoint(wp);
-								end
-								
-							end
-						end
-					end
-				end
-		end)
 	
 	-- Show quest tab when leaving quest details
 	hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
@@ -2716,11 +2798,11 @@ function WQT_CoreMixin:OnLoad()
 		end)
 	
 	hooksecurefunc(WorldMapFrame.BorderFrame.MaximizeMinimizeFrame, "Maximize", function()
-			WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.full);
+			WQT_WorldQuestFrame:ChangeAnchorLocation(_V["LIST_ANCHOR_TYPE"].full);
 		end);
 	
 	hooksecurefunc(WorldMapFrame.BorderFrame.MaximizeMinimizeFrame, "Minimize", function() 
-			WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.world);
+			WQT_WorldQuestFrame:ChangeAnchorLocation(_V["LIST_ANCHOR_TYPE"].world);
 		end);
 	
 	-- Update filters when stuff happens to the world map filters
@@ -2852,6 +2934,27 @@ function WQT_CoreMixin:OnLoad()
 				WQT_GroupSearch:Show();
 			end
 		end)
+		
+	-- Add quest info to daily quests
+	hooksecurefunc("TaskPOI_OnEnter", function(self) 
+			local questInfo = _dataProvider:GetQuestById(self.questID);
+			if(questInfo and (questInfo.isDaily)) then
+				WorldMap_AddQuestTimeToTooltip(self.questID);
+				for objectiveIndex = 1, self.numObjectives do
+					local objectiveText, objectiveType, finished, numFulfilled, numRequired = GetQuestObjectiveInfo(self.questID, objectiveIndex, false);
+					if(self.shouldShowObjectivesAsStatusBar) then 
+						local percent = math.floor((numFulfilled/numRequired) * 100);
+						GameTooltip_ShowProgressBar(GameTooltip, 0, numRequired, numFulfilled, PERCENTAGE_STRING:format(percent));
+					elseif ( objectiveText and #objectiveText > 0 ) then
+						local color = finished and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
+						GameTooltip:AddLine(QUEST_DASH .. objectiveText, color.r, color.g, color.b, true);
+					end
+				end
+			
+				GameTooltip_AddQuestRewardsToTooltip(GameTooltip, self.questID);
+				GameTooltip:Show();
+			end
+		end);
 
 	-- Shift questlog around to make room for the tabs
 	local a,b,c,d =QuestMapFrame:GetPoint(1);
@@ -2980,10 +3083,13 @@ end
 function WQT_CoreMixin:ShouldAllowLFG(questInfo)
 	local questId = questInfo;
 	if type(questInfo) == "table" then
+		if (questInfo.isDaily) then 
+			return false; 
+		end
 		questId = questInfo.questId;
 	end
 	local questType = select(3, GetQuestTagInfo(questId));
-	return not (questType == LE_QUEST_TAG_TYPE_PET_BATTLE or questType == LE_QUEST_TAG_TYPE_DUNGEON or questType == LE_QUEST_TAG_TYPE_PROFESSION or questType == LE_QUEST_TAG_TYPE_RAID);
+	return questType and not (questType == LE_QUEST_TAG_TYPE_PET_BATTLE or questType == LE_QUEST_TAG_TYPE_DUNGEON or questType == LE_QUEST_TAG_TYPE_PROFESSION or questType == LE_QUEST_TAG_TYPE_RAID);
 end
 
 function WQT_CoreMixin:ADDON_LOADED(loaded)
@@ -3000,12 +3106,6 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 			end 
 		end
 		WQT.FlightMapList = {};
-		-- Load quest list once on show, the dataProvider will update the rewards if needed
-		hooksecurefunc(WQT.FlightmapPins, "OnShow", function() 
-				WQT_WorldQuestFrame:ChangeAnchorLocation(_anchors.flight);
-				_dataProvider:LoadQuestsInZone(GetTaxiMapID());
-				self.pinHandler:UpdateFlightMapPins() ;
-			end);
 		hooksecurefunc(WQT.FlightmapPins, "RefreshAllData", function() self.pinHandler:UpdateFlightMapPins() end);
 		hooksecurefunc(WQT.FlightmapPins, "OnHide", function() 
 				for id in pairs(WQT.FlightMapList) do
@@ -3053,18 +3153,7 @@ function WQT_CoreMixin:QUEST_TURNED_IN(questId)
 
 	-- Remove TomTom arrow if tracked
 	if (TomTom and WQT.settings.general.useTomTom and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
-		local questInfo = WQT_WorldQuestFrame.dataProvider:GetQuestById(questId);
-		if questInfo and questInfo.isValid then
-			local mapInfo = WQT_Utils:GetMapInfoForQuest(questId);
-			if (mapInfo) then
-				local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
-				local key = TomTom:GetKeyArgs(mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, title);
-				local wp = TomTom.waypoints[mapInfo.mapID] and TomTom.waypoints[mapInfo.mapID][key];
-				if wp then
-					TomTom:RemoveWaypoint(wp);
-				end
-			end
-		end
+		RemoveTomTomArrowbyQuestId(questId);
 	end
 end
 
@@ -3082,27 +3171,43 @@ end
 
 function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 	local questId, added = ...;
-	-- step 1: Get all the tracked quests before any changes happen
-	-- check ObjectiveTracker_Update hook for step 2
-	self.recentlyUntrackedQuest = nil;
-	local wqModule = WQT:GetObjectiveTrackerWQModule();
-	if (wqModule) then
-		wipe(self.trackedQuests);
-		for k, v in pairs(wqModule.usedBlocks) do
-			self.trackedQuests[k] = true
-		end
-	end
 
 	self.ScrollFrame:DisplayQuestList();
+	
+	local autoArrow = WQT.settings.general.TomTomAutoArrow;
+	local clickArrow = WQT.settings.general.TomTomArrowOnClick;
 
-	if (questId and added and TomTom and WQT.settings.general.useTomTom and WQT.settings.general.TomTomAutoArrow and IsWorldQuestHardWatched(questId)) then
-		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
-		local zoneId = C_TaskQuest.GetQuestZoneID(questId);
-		local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
-		if (title and zoneId and x and y) then
-			TomTom:AddWaypoint(zoneId, x, y, {["title"] = title})
+	if (questId and added and TomTom and WQT.settings.general.useTomTom and (clickArrow or autoArrow) and QuestUtils_IsQuestWorldQuest(questId)) then
+		
+		if (added) then
+			if (clickArrow or IsWorldQuestHardWatched(questId)) then
+				AddTomTomArrowByQuestId(questId);
+				--If click arrow is active, we want to clear the previous click arrow
+				if (clickArrow and self.softTomTomArrow and not IsWorldQuestHardWatched(self.softTomTomArrow)) then
+					RemoveTomTomArrowbyQuestId(self.softTomTomArrow);
+				end
+				
+				if (clickArrow and not IsWorldQuestHardWatched(questId)) then
+					self.softTomTomArrow = questId;
+				end
+			end
+			
+		else
+			RemoveTomTomArrowbyQuestId(questId)
 		end
 	end
+end
+
+function WQT_CoreMixin:TAXIMAP_OPENED(system)
+	local anchor = _V["LIST_ANCHOR_TYPE"].taxi;
+	if (system == 2) then
+		-- It's the new flight map
+		anchor = _V["LIST_ANCHOR_TYPE"].flight;
+		self.pinHandler:UpdateFlightMapPins() ;
+	end
+	
+	WQT_WorldQuestFrame:ChangeAnchorLocation(anchor);
+	_dataProvider:LoadQuestsInZone(GetTaxiMapID());
 end
 
 function WQT_CoreMixin:SetCvarValue(flagKey, value)
@@ -3132,6 +3237,7 @@ function WQT_CoreMixin:ShowOverlayFrame(frame, offsetLeft, offsetRight, offsetTo
 	
 	blocker:Show();
 	blocker.CombatBG:SetAlpha(0);
+	blocker.CombatText:SetAlpha(0);
 	blocker.UpdatesBG:SetAlpha(1);
 	blocker.CloseButton:SetAlpha(1);
 	blocker.CloseButton:SetEnabled(true);
@@ -3298,13 +3404,13 @@ end
 function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	if (self.anchor == anchor) then return; end
 	
-	if (self.anchor == _anchors.world) then
+	if (self.anchor == _V["LIST_ANCHOR_TYPE"].world) then
 		self.tabBeforeAnchor = self.selectedTab;
 	end
 	
 	self.anchor = anchor;
 	
-	if (anchor == _anchors.flight) then
+	if (anchor == _V["LIST_ANCHOR_TYPE"].flight) then
 		WQT_WorldQuestFrame:ClearAllPoints(); 
 		WQT_WorldQuestFrame:SetPoint("BOTTOMLEFT", WQT_FlightMapContainer, "BOTTOMLEFT", 3, 5);
 		WQT_WorldQuestFrame:SetParent(WQT_FlightMapContainer);
@@ -3313,7 +3419,16 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 		else
 			WQT_WorldQuestFrame:SelectTab(WQT_TabWorld);
 		end
-	elseif (anchor == _anchors.world) then
+	elseif (anchor == _V["LIST_ANCHOR_TYPE"].taxi) then
+		WQT_WorldQuestFrame:ClearAllPoints(); 
+		WQT_WorldQuestFrame:SetPoint("BOTTOMLEFT", WQT_OldTaxiMapContainer, "BOTTOMLEFT", 3, 5);
+		WQT_WorldQuestFrame:SetParent(WQT_OldTaxiMapContainer);
+		if (WQT_OldTaxiMapContainer:GetAlpha() == 0) then
+			WQT_WorldQuestFrame:SelectTab(WQT_TabNormal);
+		else
+			WQT_WorldQuestFrame:SelectTab(WQT_TabWorld);
+		end
+	elseif (anchor == _V["LIST_ANCHOR_TYPE"].world) then
 		WQT_WorldQuestFrame:ClearAllPoints(); 
 		WQT_WorldQuestFrame:SetPoint("TOPLEFT", QuestMapFrame, "TOPLEFT", -2, 3);
 		WQT_WorldQuestFrame:SetParent(QuestMapFrame);
@@ -3323,7 +3438,7 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 		WQT_WorldMapContainer:SetAlpha(0);
 		WQT_WorldMapContainerButton:EnableMouse(false);
 		WQT_WorldMapContainerButton:SetAlpha(0);
-	elseif (anchor == _anchors.full) then
+	elseif (anchor == _V["LIST_ANCHOR_TYPE"].full) then
 		WQT_WorldQuestFrame:ClearAllPoints(); 
 		WQT_WorldMapContainer:ConstrainPosition();
 		WQT_WorldMapContainerButton:ConstrainPosition();
@@ -3344,4 +3459,8 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 			WQT_WorldMapContainer:SetAlpha(0);
 		end
 	end
+	
+	WQT_WorldQuestFrame:TriggerEvent("AnchorChanged", self, anchor);
 end
+
+

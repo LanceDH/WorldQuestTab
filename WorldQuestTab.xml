@@ -11,6 +11,7 @@
 	<Script file="Data.lua"/>
 	<Script file="Dataprovider.lua"/>
 	<Script file="WorldQuestTab.lua"/>
+	<Include file="External\External.xml"/>
 	
 	<FontFamily name="WQT_NumberFontOutline" virtual="true">
 		<Member alphabet="roman">
@@ -632,7 +633,7 @@
 			</OnClick>
 			<OnEnter>
 				GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-				GameTooltip:SetText(TRACKER_HEADER_WORLD_QUESTS, nil, nil, nil, nil, true);
+				GameTooltip:SetText(TRACKER_HEADER_WORLD_QUESTS, 1, 1, 1, true);
 				GameTooltip:Show();
 			</OnEnter>	
 			<OnLeave>
@@ -640,6 +641,27 @@
 			</OnLeave>
 		</Scripts>
 	</Button>
+	
+	<Frame name="WQT_OldTaxiMapContainer" inherits="WQT_ContainerTemplate" hidden="false" alpha="0" parent="TaxiFrame">
+		<Anchors>
+			<Anchor point="BOTTOMLEFT" relativeTo="TaxiFrame" relativePoint="BOTTOMRIGHT" x="-6" y="0"/>
+		</Anchors>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Background" file="Interface\FrameGeneral\UI-Background-Rock" horizTile="true" vertTile="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="2" y="-2"/>
+						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad>
+				self:SetFrameLevel(TaxiFrame:GetFrameLevel()-1);
+			</OnLoad>
+		</Scripts>
+	</Frame>
 	
 	<Frame name="WQT_FlightMapContainer" inherits="WQT_ContainerTemplate" hidden="false" alpha="0">
 		<Layers>
@@ -698,8 +720,8 @@
 					</OnUpdate>
 					<OnEnter>
 						GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
-						GameTooltip:SetText(WQT_CONTAINER_DRAG, 1, 1, 1, 1, true);
-						GameTooltip:AddLine(WQT_CONTAINER_DRAG_TT, nil, nil, nil, nil, true);
+						GameTooltip:SetText(WQT_CONTAINER_DRAG, 1, 1, 1, true);
+						GameTooltip:AddLine(WQT_CONTAINER_DRAG_TT, nil, nil, nil, true);
 						GameTooltip:Show();
 					</OnEnter>	
 					<OnLeave>
@@ -718,6 +740,17 @@
 			</OnLoad>
 		</Scripts>
 	</Frame>
+	
+	<Button name="WQT_OldTaxiMapContainerButton" inherits="WQT_ContainerButtonTemplate" hidden="false" alpha="1" parent="TaxiFrame">
+		<Anchors>
+			<Anchor point="BOTTOMRIGHT" relativeTo="TaxiFrame" relativePoint="BOTTOMRIGHT" x="-8" y="8"/>
+		</Anchors>
+		<Scripts>
+			<OnLoad>
+				self.container = WQT_OldTaxiMapContainer;
+			</OnLoad>
+		</Scripts>
+	</Button>
 	
 	<Button name="WQT_FlightMapContainerButton" inherits="WQT_ContainerButtonTemplate" hidden="false" alpha="1">
 		<Scripts>
@@ -750,6 +783,12 @@
 				end
 				WQT_WorldMapContainer:ConstrainPosition();
 			</OnClick>
+			<OnEnter>
+				GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+				GameTooltip:SetText(TRACKER_HEADER_WORLD_QUESTS, 1, 1, 1, true);
+				GameTooltip:AddLine(WQT_FULLSCREEN_BUTTON_TT, nil, nil, nil, true);
+				GameTooltip:Show();
+			</OnEnter>	
 			<OnDragStart method="OnDragStart"/>
 			<OnDragStop method="OnDragStop"/>
 			<OnUpdate method="OnUpdate"/>

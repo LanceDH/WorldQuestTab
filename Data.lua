@@ -2,8 +2,9 @@
 
 
 addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
+addon.externals = {};
 addon.variables = {};
-addon.debug = true;
+addon.debug = false;
 addon.WQT_Utils = {};
 local WQT_Utils = addon.WQT_Utils;
 local _L = addon.L;
@@ -155,6 +156,7 @@ WQT_REWARDTYPE = {
 WQT_GROUP_INFO = _L["GROUP_SEARCH_INFO"];
 WQT_CONTAINER_DRAG = _L["CONTAINER_DRAG"];
 WQT_CONTAINER_DRAG_TT = _L["CONTAINER_DRAG_TT"];
+WQT_FULLSCREEN_BUTTON_TT = _L["WQT_FULLSCREEN_BUTTON_TT"];
 
 function WQT_Utils:DeepWipeTable(t)
 	for k, v in pairs(t) do
@@ -216,10 +218,107 @@ local WQT_LEGION = {
 	,[885]	= {["x"] = 0.86, ["y"] = 0.15} -- Antoran Wastes
 	,[882]	= {["x"] = 0.86, ["y"] = 0.15} -- Mac'Aree
 }
+local WQT_KALIMDOR = { 
+	[81] 	= {["x"] = 0.42, ["y"] = 0.82} -- Silithus
+	,[64]	= {["x"] = 0.5, ["y"] = 0.72} -- Thousand Needles
+	,[249]	= {["x"] = 0.47, ["y"] = 0.91} -- Uldum
+	,[71]	= {["x"] = 0.55, ["y"] = 0.84} -- Tanaris
+	,[78]	= {["x"] = 0.5, ["y"] = 0.81} -- Ungoro
+	,[69]	= {["x"] = 0.43, ["y"] = 0.7} -- Feralas
+	,[70]	= {["x"] = 0.55, ["y"] = 0.67} -- Dustwallow
+	,[199]	= {["x"] = 0.51, ["y"] = 0.67} -- S Barrens
+	,[7]	= {["x"] = 0.47, ["y"] = 0.6} -- Mulgore
+	,[66]	= {["x"] = 0.41, ["y"] = 0.57} -- Desolace
+	,[65]	= {["x"] = 0.43, ["y"] = 0.46} -- Stonetalon
+	,[10]	= {["x"] = 0.52, ["y"] = 0.5} -- N Barrens
+	,[1]	= {["x"] = 0.58, ["y"] = 0.5} -- Durotar
+	,[63]	= {["x"] = 0.49, ["y"] = 0.41} -- Ashenvale
+	,[62]	= {["x"] = 0.46, ["y"] = 0.23} -- Dakshore
+	,[76]	= {["x"] = 0.59, ["y"] = 0.37} -- Azshara
+	,[198]	= {["x"] = 0.54, ["y"] = 0.32} -- Hyjal
+	,[77]	= {["x"] = 0.49, ["y"] = 0.25} -- Felwood
+	,[80]	= {["x"] = 0.53, ["y"] = 0.19} -- Moonglade
+	,[83]	= {["x"] = 0.58, ["y"] = 0.23} -- Winterspring
+	,[57]	= {["x"] = 0.42, ["y"] = 0.1} -- Teldrassil
+	,[97]	= {["x"] = 0.33, ["y"] = 0.27} -- Azuremyst
+	,[106]	= {["x"] = 0.3, ["y"] = 0.18} -- Bloodmyst
+}
+local WQT_EASTERN_KINGDOMS = {
+	[210]	= {["x"] = 0.47, ["y"] = 0.87} -- Cape of STV
+	,[50]	= {["x"] = 0.47, ["y"] = 0.87} -- N STV
+	,[17]	= {["x"] = 0.54, ["y"] = 0.89} -- Blasted Lands
+	,[51]	= {["x"] = 0.54, ["y"] = 0.78} -- Swamp of Sorrow
+	,[42]	= {["x"] = 0.49, ["y"] = 0.79} -- Deadwind
+	,[47]	= {["x"] = 0.45, ["y"] = 0.8} -- Duskwood
+	,[52]	= {["x"] = 0.4, ["y"] = 0.79} -- Westfall
+	,[37]	= {["x"] = 0.47, ["y"] = 0.75} -- Elwynn
+	,[49]	= {["x"] = 0.51, ["y"] = 0.75} -- Redridge
+	,[36]	= {["x"] = 0.49, ["y"] = 0.7} -- Burning Steppes
+	,[32]	= {["x"] = 0.47, ["y"] = 0.65} -- Searing Gorge
+	,[15]	= {["x"] = 0.52, ["y"] = 0.65} -- Badlands
+	,[27]	= {["x"] = 0.44, ["y"] = 0.61} -- Dun Morogh
+	,[48]	= {["x"] = 0.52, ["y"] = 0.6} -- Loch Modan
+	,[241]	= {["x"] = 0.56, ["y"] = 0.55} -- Twilight Highlands
+	,[56]	= {["x"] = 0.5, ["y"] = 0.53} -- Wetlands
+	,[14]	= {["x"] = 0.51, ["y"] = 0.46} -- Arathi Highlands
+	,[26]	= {["x"] = 0.57, ["y"] = 0.4} -- Hinterlands
+	,[25]	= {["x"] = 0.46, ["y"] = 0.4} -- Hillsbrad
+	,[217]	= {["x"] = 0.4, ["y"] = 0.48} -- Ruins of Gilneas
+	,[21]	= {["x"] = 0.41, ["y"] = 0.39} -- Silverpine
+	,[18]	= {["x"] = 0.39, ["y"] = 0.32} -- Tirisfall
+	,[22]	= {["x"] = 0.49, ["y"] = 0.31} -- W Plaugelands
+	,[23]	= {["x"] = 0.54, ["y"] = 0.32} -- E Plaguelands
+	,[95]	= {["x"] = 0.56, ["y"] = 0.23} -- Ghostlands
+	,[94]	= {["x"] = 0.54, ["y"] = 0.18} -- Eversong
+	,[122]	= {["x"] = 0.55, ["y"] = 0.05} -- Quel'Danas
+}
+local WQT_OUTLAND = {
+	[104]	= {["x"] = 0.74, ["y"] = 0.8} -- Shadowmoon Valley
+	,[108]	= {["x"] = 0.45, ["y"] = 0.77} -- Terrokar
+	,[107]	= {["x"] = 0.3, ["y"] = 0.65} -- Nagrand
+	,[100]	= {["x"] = 0.52, ["y"] = 0.51} -- Hellfire
+	,[102]	= {["x"] = 0.33, ["y"] = 0.47} -- Zangarmarsh
+	,[105]	= {["x"] = 0.36, ["y"] = 0.23} -- Blade's Edge
+	,[109]	= {["x"] = 0.57, ["y"] = 0.2} -- Netherstorm
+}
+local WQT_NORTHREND = {
+	[114]	= {["x"] = 0.22, ["y"] = 0.59} -- Borean Tundra
+	,[119]	= {["x"] = 0.25, ["y"] = 0.41} -- Sholazar Basin
+	,[118]	= {["x"] = 0.41, ["y"] = 0.26} -- Icecrown
+	,[127]	= {["x"] = 0.47, ["y"] = 0.55} -- Crystalsong
+	,[120]	= {["x"] = 0.61, ["y"] = 0.21} -- Stormpeaks
+	,[121]	= {["x"] = 0.77, ["y"] = 0.32} -- Zul'Drak
+	,[116]	= {["x"] = 0.71, ["y"] = 0.53} -- Grizzly Hillsbrad
+	,[113]	= {["x"] = 0.78, ["y"] = 0.74} -- Howling Fjord
+}
+local WQT_PANDARIA = {
+	[554]	= {["x"] = 0.9, ["y"] = 0.68} -- Timeless Isles
+	,[371]	= {["x"] = 0.67, ["y"] = 0.52} -- Jade Forest
+	,[418]	= {["x"] = 0.53, ["y"] = 0.75} -- Karasang
+	,[376]	= {["x"] = 0.51, ["y"] = 0.65} -- Four Winds
+	,[422]	= {["x"] = 0.35, ["y"] = 0.62} -- Dread Waste
+	,[390]	= {["x"] = 0.5, ["y"] = 0.52} -- Eternal Blossom
+	,[379]	= {["x"] = 0.45, ["y"] = 0.35} -- Kun-lai Summit
+	,[507]	= {["x"] = 0.48, ["y"] = 0.05} -- Isle of Giants
+	,[388]	= {["x"] = 0.32, ["y"] = 0.45} -- Townlong Steppes
+	,[504]	= {["x"] = 0.2, ["y"] = 0.11} -- Isle of Thunder
+}
+local WQT_DRAENOR = {
+	[550]	= {["x"] = 0.24, ["y"] = 0.49} -- Nagrand
+	,[525]	= {["x"] = 0.34, ["y"] = 0.29} -- Frostridge
+	,[543]	= {["x"] = 0.49, ["y"] = 0.21} -- Gorgrond
+	,[535]	= {["x"] = 0.43, ["y"] = 0.56} -- Talador
+	,[542]	= {["x"] = 0.46, ["y"] = 0.73} -- Spired of Arak
+	,[539]	= {["x"] = 0.58, ["y"] = 0.67} -- Shadowmoon
+	,[534]	= {["x"] = 0.58, ["y"] = 0.47} -- Tanaan Jungle
+	,[558]	= {["x"] = 0.73, ["y"] = 0.43} -- Ashran
+}
 
 ------------------------
 -- SHARED
 ------------------------
+
+_V["LIST_ANCHOR_TYPE"] = {["flight"] = 1, ["world"] = 2, ["full"] = 3, ["taxi"] = 4};
 
 _V["RINGTYPE_NONE"] = 1;
 _V["RINGTYPE_REWARD"] = 2;
@@ -452,111 +551,21 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 		,[1504]	= { -- Nazjatar flightmap
 			[1355] = {["x"] = 0, ["y"] = 0} -- Nazjatar
 		}
-
-		,[619] 	= WQT_LEGION -- Legion
-		,[993] 	= WQT_LEGION -- Legion flightmap	
-		,[905] 	= WQT_LEGION -- Legion Argus
-		
-		,[12] 	= { --Kalimdor
-			[81] 	= {["x"] = 0.42, ["y"] = 0.82} -- Silithus
-			,[64]	= {["x"] = 0.5, ["y"] = 0.72} -- Thousand Needles
-			,[249]	= {["x"] = 0.47, ["y"] = 0.91} -- Uldum
-			,[71]	= {["x"] = 0.55, ["y"] = 0.84} -- Tanaris
-			,[78]	= {["x"] = 0.5, ["y"] = 0.81} -- Ungoro
-			,[69]	= {["x"] = 0.43, ["y"] = 0.7} -- Feralas
-			,[70]	= {["x"] = 0.55, ["y"] = 0.67} -- Dustwallow
-			,[199]	= {["x"] = 0.51, ["y"] = 0.67} -- S Barrens
-			,[7]	= {["x"] = 0.47, ["y"] = 0.6} -- Mulgore
-			,[66]	= {["x"] = 0.41, ["y"] = 0.57} -- Desolace
-			,[65]	= {["x"] = 0.43, ["y"] = 0.46} -- Stonetalon
-			,[10]	= {["x"] = 0.52, ["y"] = 0.5} -- N Barrens
-			,[1]	= {["x"] = 0.58, ["y"] = 0.5} -- Durotar
-			,[63]	= {["x"] = 0.49, ["y"] = 0.41} -- Ashenvale
-			,[62]	= {["x"] = 0.46, ["y"] = 0.23} -- Dakshore
-			,[76]	= {["x"] = 0.59, ["y"] = 0.37} -- Azshara
-			,[198]	= {["x"] = 0.54, ["y"] = 0.32} -- Hyjal
-			,[77]	= {["x"] = 0.49, ["y"] = 0.25} -- Felwood
-			,[80]	= {["x"] = 0.53, ["y"] = 0.19} -- Moonglade
-			,[83]	= {["x"] = 0.58, ["y"] = 0.23} -- Winterspring
-			,[57]	= {["x"] = 0.42, ["y"] = 0.1} -- Teldrassil
-			,[97]	= {["x"] = 0.33, ["y"] = 0.27} -- Azuremyst
-			,[106]	= {["x"] = 0.3, ["y"] = 0.18} -- Bloodmyst
-		}
-		
-		,[13]	= { -- Eastern Kingdoms
-			[210]	= {["x"] = 0.47, ["y"] = 0.87} -- Cape of STV
-			,[50]	= {["x"] = 0.47, ["y"] = 0.87} -- N STV
-			,[17]	= {["x"] = 0.54, ["y"] = 0.89} -- Blasted Lands
-			,[51]	= {["x"] = 0.54, ["y"] = 0.78} -- Swamp of Sorrow
-			,[42]	= {["x"] = 0.49, ["y"] = 0.79} -- Deadwind
-			,[47]	= {["x"] = 0.45, ["y"] = 0.8} -- Duskwood
-			,[52]	= {["x"] = 0.4, ["y"] = 0.79} -- Westfall
-			,[37]	= {["x"] = 0.47, ["y"] = 0.75} -- Elwynn
-			,[49]	= {["x"] = 0.51, ["y"] = 0.75} -- Redridge
-			,[36]	= {["x"] = 0.49, ["y"] = 0.7} -- Burning Steppes
-			,[32]	= {["x"] = 0.47, ["y"] = 0.65} -- Searing Gorge
-			,[15]	= {["x"] = 0.52, ["y"] = 0.65} -- Badlands
-			,[27]	= {["x"] = 0.44, ["y"] = 0.61} -- Dun Morogh
-			,[48]	= {["x"] = 0.52, ["y"] = 0.6} -- Loch Modan
-			,[241]	= {["x"] = 0.56, ["y"] = 0.55} -- Twilight Highlands
-			,[56]	= {["x"] = 0.5, ["y"] = 0.53} -- Wetlands
-			,[14]	= {["x"] = 0.51, ["y"] = 0.46} -- Arathi Highlands
-			,[26]	= {["x"] = 0.57, ["y"] = 0.4} -- Hinterlands
-			,[25]	= {["x"] = 0.46, ["y"] = 0.4} -- Hillsbrad
-			,[217]	= {["x"] = 0.4, ["y"] = 0.48} -- Ruins of Gilneas
-			,[21]	= {["x"] = 0.41, ["y"] = 0.39} -- Silverpine
-			,[18]	= {["x"] = 0.39, ["y"] = 0.32} -- Tirisfall
-			,[22]	= {["x"] = 0.49, ["y"] = 0.31} -- W Plaugelands
-			,[23]	= {["x"] = 0.54, ["y"] = 0.32} -- E Plaguelands
-			,[95]	= {["x"] = 0.56, ["y"] = 0.23} -- Ghostlands
-			,[94]	= {["x"] = 0.54, ["y"] = 0.18} -- Eversong
-			,[122]	= {["x"] = 0.55, ["y"] = 0.05} -- Quel'Danas
-		}
-		
-		,[101]	= { -- Outland
-			[104]	= {["x"] = 0.74, ["y"] = 0.8} -- Shadowmoon Valley
-			,[108]	= {["x"] = 0.45, ["y"] = 0.77} -- Terrokar
-			,[107]	= {["x"] = 0.3, ["y"] = 0.65} -- Nagrand
-			,[100]	= {["x"] = 0.52, ["y"] = 0.51} -- Hellfire
-			,[102]	= {["x"] = 0.33, ["y"] = 0.47} -- Zangarmarsh
-			,[105]	= {["x"] = 0.36, ["y"] = 0.23} -- Blade's Edge
-			,[109]	= {["x"] = 0.57, ["y"] = 0.2} -- Netherstorm
-		}
-		
-		,[113]	= { -- Northrend
-			[114]	= {["x"] = 0.22, ["y"] = 0.59} -- Borean Tundra
-			,[119]	= {["x"] = 0.25, ["y"] = 0.41} -- Sholazar Basin
-			,[118]	= {["x"] = 0.41, ["y"] = 0.26} -- Icecrown
-			,[127]	= {["x"] = 0.47, ["y"] = 0.55} -- Crystalsong
-			,[120]	= {["x"] = 0.61, ["y"] = 0.21} -- Stormpeaks
-			,[121]	= {["x"] = 0.77, ["y"] = 0.32} -- Zul'Drak
-			,[116]	= {["x"] = 0.71, ["y"] = 0.53} -- Grizzly Hillsbrad
-			,[113]	= {["x"] = 0.78, ["y"] = 0.74} -- Howling Fjord
-		}
-		
-		,[424]	= { -- Pandaria
-			[554]	= {["x"] = 0.9, ["y"] = 0.68} -- Timeless Isles
-			,[371]	= {["x"] = 0.67, ["y"] = 0.52} -- Jade Forest
-			,[418]	= {["x"] = 0.53, ["y"] = 0.75} -- Karasang
-			,[376]	= {["x"] = 0.51, ["y"] = 0.65} -- Four Winds
-			,[422]	= {["x"] = 0.35, ["y"] = 0.62} -- Dread Waste
-			,[390]	= {["x"] = 0.5, ["y"] = 0.52} -- Eternal Blossom
-			,[379]	= {["x"] = 0.45, ["y"] = 0.35} -- Kun-lai Summit
-			,[507]	= {["x"] = 0.48, ["y"] = 0.05} -- Isle of Giants
-			,[388]	= {["x"] = 0.32, ["y"] = 0.45} -- Townlong Steppes
-			,[504]	= {["x"] = 0.2, ["y"] = 0.11} -- Isle of Thunder
-		}
-		
-		,[572]	= { -- Draenor
-			[550]	= {["x"] = 0.24, ["y"] = 0.49} -- Nagrand
-			,[525]	= {["x"] = 0.34, ["y"] = 0.29} -- Frostridge
-			,[543]	= {["x"] = 0.49, ["y"] = 0.21} -- Gorgrond
-			,[535]	= {["x"] = 0.43, ["y"] = 0.56} -- Talador
-			,[542]	= {["x"] = 0.46, ["y"] = 0.73} -- Spired of Arak
-			,[539]	= {["x"] = 0.58, ["y"] = 0.67} -- Shadowmoon
-			,[534]	= {["x"] = 0.58, ["y"] = 0.47} -- Tanaan Jungle
-			,[558]	= {["x"] = 0.73, ["y"] = 0.43} -- Ashran
-		}
+		,[619] 	= WQT_LEGION 
+		,[993] 	= WQT_LEGION -- Flightmap	
+		,[905] 	= WQT_LEGION -- Argus
+		,[12] 	= WQT_KALIMDOR 
+		,[1209] 	= WQT_KALIMDOR -- Flightmap
+		,[13]	= WQT_EASTERN_KINGDOMS
+		,[1208]	= WQT_EASTERN_KINGDOMS -- Flightmap
+		,[101]	= WQT_OUTLAND
+		,[1467]	= WQT_OUTLAND -- Flightmap
+		,[113]	= WQT_NORTHREND 
+		,[1384]	= WQT_NORTHREND  -- Flightmap
+		,[424]	= WQT_PANDARIA
+		,[989]	= WQT_PANDARIA -- Flightmap
+		,[572]	= WQT_DRAENOR
+		,[990]	= WQT_DRAENOR -- Flightmap
 		
 		,[947]		= {	
 		} -- All of Azeroth
@@ -614,6 +623,7 @@ local _patchNotes = {
 				,"Reward amounts in the list will now take warmode bonuses into account."
 				,"Quest rewards will prioritize their most impressive reward to display. I.e. showing manapears over gold rewards."
 				,"Made this window bigger and tried to improve its readability."
+				,"The full-screen button to toggle the quest list can now be dragged to a different position with the right mouse button."
 			}
 			,["fixes"] = {
 				"Fixed support for quests with more then 2 reward types."
@@ -621,7 +631,8 @@ local _patchNotes = {
 				,"Fixed quest type filters."
 				,"Fixed tooltips when hovering over quests in the list. This will also fix interractions with other add-ons such as TipTac."
 				,"Fixed sort button text not greying out when being disabled."
-				,"Fixed dragging of the fullscreen quest list when the cursor goes outside the borders of the map."
+				,"Fixed dragging of the full-screen quest list when the cursor goes outside the borders of the map."
+				,"Fixed the flight map quest list not showing quests for older continents."
 			}
 		}
 		,{["version"] = "8.2.02"

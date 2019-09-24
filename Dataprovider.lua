@@ -550,13 +550,11 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 	zoneId = zoneId or self.latestZoneId or C_Map.GetBestMapForUnit("player");
 	if (not zoneId) then return end;
 	self.latestZoneId = zoneId
-	
-	--if not (WorldMapFrame:IsShown() or (FlightMapFrame and FlightMapFrame:IsShown())) then return; end
 	-- If the flight map is open, we want all quests no matter what
-	if (FlightMapFrame and FlightMapFrame:IsShown() and not _WFMLoaded) then 
+	if ((FlightMapFrame and FlightMapFrame:IsShown()) ) then 
 		local taxiId = GetTaxiMapID()
 		zoneId = (taxiId and taxiId > 0) and taxiId or zoneId;
-		-- World Flight Map  add-on overwrite
+		-- World Flight Map add-on overwrite
 		if (_WFMLoaded) then
 			zoneId = WorldMapFrame.mapID;
 		end
@@ -564,9 +562,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 	
 	local currentMapInfo = WQT_Utils:GetCachedMapInfo(zoneId);
 	if not currentMapInfo then return end;
-	
 	if (WQT.settings.list.alwaysAllQuests and currentMapInfo.mapType ~= Enum.UIMapType.World) then
-		
 		local highestMapId, mapType = WQT:GetFirstContinent(zoneId);
 		local continentZones = _V["WQT_ZONE_MAPCOORDS"][highestMapId];
 		if (mapType ~= Enum.UIMapType.World) then
@@ -583,8 +579,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 		end
 	else
 		local continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneId];
-
-		if currentMapInfo.mapType == Enum.UIMapType.Continent  and continentZones then
+		if (currentMapInfo.mapType == Enum.UIMapType.Continent  and continentZones) then
 			self:AddContinentMapQuests(continentZones);
 		elseif (currentMapInfo.mapType == Enum.UIMapType.World) then
 			self:AddWorldMapQuests(continentZones);
@@ -604,9 +599,9 @@ function WQT_DataProvider:AddQuestsInZone(zoneID, continentId)
 	local quest;
 	
 	for k, info in ipairs(questsById) do
-		if info.mapID == zoneID then
-			quest = self:AddQuest(info, zoneID);
-			if not quest then 
+		if (info.mapID == zoneID) then
+			quest = self:AddQuest(info, info.mapID);
+			if (not quest) then 
 				missingData = true;
 			end;
 		end
@@ -620,7 +615,7 @@ function WQT_DataProvider:AddQuest(qInfo, zoneId)
 	-- If there is a duplicate, we don't want to go through all the info again
 	if (duplicate) then
 		-- Check if the new zone is the 'official' zone, if so, use that one instead
-		if (zoneId == C_TaskQuest.GetQuestZoneID(qInfo.questId) ) then
+		if (qInfo.mapID == C_TaskQuest.GetQuestZoneID(qInfo.questId) ) then
 			duplicate.mapInfo.mapX = qInfo.x;
 			duplicate.mapInfo.mapY = qInfo.y;
 		end
@@ -631,7 +626,7 @@ function WQT_DataProvider:AddQuest(qInfo, zoneId)
 	local questInfo = self.pool:Acquire();
 	
 	questInfo.isValid = false;
-	questInfo.alwaysHide = not MapUtil.ShouldShowTask(zoneId, qInfo)-- or qInfo.isQuestStart;
+	questInfo.alwaysHide = not MapUtil.ShouldShowTask(qInfo.mapID, qInfo)-- or qInfo.isQuestStart;
 	questInfo.isDaily = qInfo.isDaily;
 	questInfo.isAllyQuest = qInfo.isCombatAllyQuest;
 	questInfo.questId = qInfo.questId;
