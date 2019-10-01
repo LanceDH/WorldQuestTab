@@ -106,14 +106,15 @@ local function GetMostImpressiveCurrency(questInfo)
 end
 
 local function AddQuestReward(questInfo, rewardType, amount, texture, quality, color, id, canUpgrade)
+	-- First reward added will be our displayed reward
 	if (not questInfo.reward.type) then
 		amount = amount or 1;
 		questInfo.reward.id = id;
 		questInfo.reward.type = rewardType;
-		questInfo.reward.amount = amount;
-		questInfo.reward.texture = texture;
-		questInfo.reward.quality = quality;
-		questInfo.reward.color = color;
+		questInfo.reward.amount = amount or 0;
+		questInfo.reward.texture = texture or 0;
+		questInfo.reward.quality = quality or 1;
+		questInfo.reward.color = color or _V["WQT_COLOR_MISSING"];
 		questInfo.reward.canUpgrade = canUpgrade;
 	end
 	questInfo.reward.typeBits = bit.bor(questInfo.reward.typeBits, rewardType);
@@ -122,7 +123,6 @@ end
 local function SetQuestRewards(questInfo)
 	local haveData = HaveQuestRewardData(questInfo.questId);
 	questInfo.reward.typeBits = 0;
-	
 	
 	if haveData then
 		local currencyId, currencyType, currencyQuality, currencyAmount, currencyTexture = GetMostImpressiveCurrency(questInfo);
@@ -136,7 +136,7 @@ local function SetQuestRewards(questInfo)
 					local color = typeID == 4 and _V["WQT_COLOR_ARMOR"] or _V["WQT_COLOR_WEAPON"];
 					AddQuestReward(questInfo, rewardType, ilvl, texture, quality, color, rewardId, canUpgrade);
 				elseif (typeID == 3 and subTypeID == 11) then
-					-- Find updagade amount as C_ArtifactUI.GetItemLevelIncreaseProvidedByRelic doesn't scale
+					-- Find upgrade amount as C_ArtifactUI.GetItemLevelIncreaseProvidedByRelic doesn't scale
 					local numItems = tonumber(ScanTooltipRewardForPattern(questInfo.questId, "^%+(%d+)"));
 					AddQuestReward(questInfo, WQT_REWARDTYPE.relic, numItems, texture, quality, _V["WQT_COLOR_RELIC"], rewardId);
 				else	-- Normal items

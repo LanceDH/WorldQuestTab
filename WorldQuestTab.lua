@@ -138,25 +138,29 @@ local function QuestIsWatched(questID)
 end
 
 local function AddTomTomArrowByQuestId(questId)
-	if (not questId --[[or not QuestUtils_IsQuestWorldQuest(questId)]]) then return; end
-	local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+	if (not questId) then return; end
 	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
-	local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
-	if (title and zoneId and x and y) then
-		TomTom:AddWaypoint(zoneId, x, y, {["title"] = title, ["crazy"] = true});
+	if (zoneId) then
+		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+		local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
+		if (title and x and y) then
+			TomTom:AddWaypoint(zoneId, x, y, {["title"] = title, ["crazy"] = true});
+		end
 	end
 end
 
 local function RemoveTomTomArrowbyQuestId(questId)
-	if (not questId --[[or not QuestUtils_IsQuestWorldQuest(questId)]]) then return; end
-	local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+	if (not questId) then return; end
 	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
-	local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
-	if (title and zoneId and x and y) then
-		local key = TomTom:GetKeyArgs(zoneId, x, y, title);
-		local wp = TomTom.waypoints[zoneId] and TomTom.waypoints[zoneId][key];
-		if (wp) then
-			TomTom:RemoveWaypoint(wp);
+	if (zoneId) then
+		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+		local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
+		if (title and x and y) then
+			local key = TomTom:GetKeyArgs(zoneId, x, y, title);
+			local wp = TomTom.waypoints[zoneId] and TomTom.waypoints[zoneId][key];
+			if (wp) then
+				TomTom:RemoveWaypoint(wp);
+			end
 		end
 	end
 end
@@ -1721,12 +1725,14 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	-- display reward
 	self.Reward:Show();
 	self.Reward.Icon:Show();
-
-	if (questInfo.reward.type == WQT_REWARDTYPE.missing) then
+	
+	if (questInfo.reward.typeBits == WQT_REWARDTYPE.missing) then
 		self.Reward.IconBorder:SetVertexColor(.75, 0, 0);
 		self.Reward:SetAlpha(1);
 		self.Reward.Icon:SetColorTexture(0, 0, 0, 0.5);
 		self.Reward.Amount:Hide();
+	elseif (questInfo.reward.typeBits == WQT_REWARDTYPE.none) then
+		self.Reward:SetAlpha(0);
 	else
 		local r, g, b = GetItemQualityColor(questInfo.reward.quality);
 		self.Reward.IconBorder:SetVertexColor(r, g, b);
@@ -2120,12 +2126,8 @@ function WQT_PinMixin:Update(PoI, questInfo, flightPinNr, isBonus)
 	-- Icon stuff
 	local showIcon = WQT.settings.pin.reward and (questInfo.reward.type == WQT_REWARDTYPE.missing or questInfo.reward.texture ~= "")
 	self.Icon:SetAlpha(showIcon and 1 or 0);
-	if questInfo.reward.type == WQT_REWARDTYPE.missing or questInfo.reward.type == WQT_REWARDTYPE.none then
-		SetPortraitToTexture(self.Icon, "Interface/DialogFrame/UI-DialogBox-Background-Dark");
-	else
-		SetPortraitToTexture(self.Icon, questInfo.reward.texture);
-	end
-	
+	self.Icon:SetTexture(questInfo.reward.texture or "Interface/PETBATTLES/BattleBar-AbilityBadge-Neutral");
+
 	-- Time
 	local timeDistance = (showTypeIcon or showRewardIcon) and 0 or 5; 
 	self.Time:SetAlpha((WQT.settings.pin.timeLabel  and timeStringShort ~= "")and 1 or 0);
@@ -2366,7 +2368,6 @@ function WQT_ScrollListMixin:UpdateQuestList()
 end
 
 function WQT_ScrollListMixin:DisplayQuestList(skipPins)
-	
 	local mapId = WorldMapFrame.mapID;
 	if (((FlightMapFrame and FlightMapFrame:IsShown()) or TaxiRouteMap:IsShown()) and not _WFMLoaded) then 
 		local taxiId = GetTaxiMapID()
@@ -2500,6 +2501,8 @@ function WQT_FullScreenConstrainMixin:OnLoad(anchor, x, y)
 end
 
 function WQT_FullScreenConstrainMixin:OnDragStart()	
+	if(InCombatLockdown()) then return; end
+	
 	self:StartMoving();
 	local scale = self:GetEffectiveScale();
 	local fx = self:GetLeft();
@@ -2514,13 +2517,15 @@ function WQT_FullScreenConstrainMixin:OnDragStart()
 end
 
 function WQT_FullScreenConstrainMixin:OnDragStop()
-	self.isBeingDragged = false;
-	self:StopMovingOrSizing()
-	self:ConstrainPosition();
-	
-	if (self == WQT_WorldMapContainerButton) then
-	WQT.settings.fullScreenButtonPos.x = self.left;
-	WQT.settings.fullScreenButtonPos.y = self.bottom;
+	if(self.isBeingDragged) then
+		self.isBeingDragged = false;
+		self:StopMovingOrSizing()
+		self:ConstrainPosition();
+		
+		if (self == WQT_WorldMapContainerButton) then
+			WQT.settings.fullScreenButtonPos.x = self.left;
+			WQT.settings.fullScreenButtonPos.y = self.bottom;
+		end
 	end
 end
 
@@ -2544,7 +2549,7 @@ function WQT_FullScreenConstrainMixin:ConstrainPosition(force)
 		self:SetPoint(self.anchor, WorldMapButton, self.startX, self.startY);
 		self.FirstPlacement = nil;
 	end
-	
+
 	local l1, b1, w1, h1 = self:GetRect();
 	local l2, b2, w2, h2 = WorldMapFrame.ScrollContainer:GetRect();
 	
@@ -2796,15 +2801,28 @@ function WQT_CoreMixin:OnLoad()
 				self:SelectTab(WQT_TabNormal); 
 			end
 		end)
+		
+	-- Re-anchor list when maxi/minimizing world map
+	hooksecurefunc(WorldMapFrame, "HandleUserActionToggleSelf", function()
+			if not WorldMapFrame:IsShown() then return end
+			local anchor = WorldMapFramePortrait:IsShown() and _V["LIST_ANCHOR_TYPE"].world or _V["LIST_ANCHOR_TYPE"].full;
+			WQT_WorldQuestFrame:ChangeAnchorLocation(anchor);
+		end)
+
+	hooksecurefunc(WorldMapFrame, "HandleUserActionToggleQuestLog", function()
+			if not WorldMapFrame:IsShown() then return end
+			local anchor = _V["LIST_ANCHOR_TYPE"].world;
+			WQT_WorldQuestFrame:ChangeAnchorLocation(anchor);
+		end)
 	
-	hooksecurefunc(WorldMapFrame.BorderFrame.MaximizeMinimizeFrame, "Maximize", function()
-			WQT_WorldQuestFrame:ChangeAnchorLocation(_V["LIST_ANCHOR_TYPE"].full);
-		end);
-	
-	hooksecurefunc(WorldMapFrame.BorderFrame.MaximizeMinimizeFrame, "Minimize", function() 
+	hooksecurefunc(WorldMapFrame, "HandleUserActionMinimizeSelf", function()
 			WQT_WorldQuestFrame:ChangeAnchorLocation(_V["LIST_ANCHOR_TYPE"].world);
-		end);
-	
+		end)
+		
+	hooksecurefunc(WorldMapFrame, "HandleUserActionMaximizeSelf", function()
+			WQT_WorldQuestFrame:ChangeAnchorLocation(_V["LIST_ANCHOR_TYPE"].full);
+		end)
+		
 	-- Update filters when stuff happens to the world map filters
 	local worldMapFilter;
 	
@@ -2961,7 +2979,7 @@ function WQT_CoreMixin:OnLoad()
 	QuestMapFrame:SetPoint(a,b,c,d,-65);
 	QuestScrollFrame:SetPoint("BOTTOMRIGHT",QuestMapFrame, "BOTTOMRIGHT", 0, -2);
 	QuestScrollFrame.Background:SetPoint("BOTTOMRIGHT",QuestMapFrame, "BOTTOMRIGHT", 0, -2);
-	QuestMapFrame.DetailsFrame:SetPoint("TOPRIGHT", QuestMapFrame, "TOPRIGHT", -26, -8)
+	QuestMapFrame.DetailsFrame:SetPoint("TOPRIGHT", QuestMapFrame, "TOPRIGHT", -26, -2)
 	QuestMapFrame.VerticalSeparator:SetHeight(463);
 end
 
@@ -3134,6 +3152,7 @@ end
 
 function WQT_CoreMixin:PLAYER_REGEN_DISABLED()
 	self.ScrollFrame:ScrollFrameSetEnabled(false)
+	WQT_WorldMapContainer:EnableMouse(false);
 	self:ShowCombatOverlay();
 	ADD:HideDropDownMenu(1);
 end
@@ -3145,6 +3164,9 @@ function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
 	self.ScrollFrame:UpdateQuestList();
 	self:SelectTab(self.selectedTab);
 	WQT:UpdateFilterIndicator();
+	
+	WQT_WorldQuestFrame:ChangeAnchorLocation(WQT_WorldQuestFrame.anchor);
+	WQT_WorldMapContainer:EnableMouse(true);
 end
 
 function WQT_CoreMixin:QUEST_TURNED_IN(questId)
@@ -3255,6 +3277,10 @@ function WQT_CoreMixin:ShowOverlayFrame(frame, offsetLeft, offsetRight, offsetTo
 	
 	self.manualCloseOverlay = true;
 	ADD:HideDropDownMenu(1);
+	
+	-- Hide quest and filter to prevent bleeding through when walking around
+	WQT_QuestScrollFrame:SetAlpha(0);
+	self.FilterBar:SetAlpha(0);
 end
 
 function WQT_CoreMixin:HideOverlayFrame()
@@ -3266,6 +3292,10 @@ function WQT_CoreMixin:HideOverlayFrame()
 	WQT_QuestScrollFrame.DetailFrame:SetAlpha(1);
 	
 	blocker.CurrentOverlayFrame = nil;
+	
+	-- Show everything again
+	WQT_QuestScrollFrame:SetAlpha(1);
+	self.FilterBar:SetAlpha(1);
 end
 
 function WQT_CoreMixin:ShowCombatOverlay()
@@ -3363,9 +3393,7 @@ function WQT_CoreMixin:SelectTab(tab)
 		QuestScrollFrame:Show();
 		
 		if not InCombatLockdown() then
-			self.Blocker:EnableMouse(false);
-			self.Blocker:Hide()
-			self:SetCombatEnabled(false);
+			self:HideOverlayFrame(true)
 		end
 	elseif id == 2 then
 		-- WQT
@@ -3402,13 +3430,19 @@ function WQT_CoreMixin:SelectTab(tab)
 end
 
 function WQT_CoreMixin:ChangeAnchorLocation(anchor)
-	if (self.anchor == anchor) then return; end
-	
+	-- Store the original tab for when we come back to the world anchor
 	if (self.anchor == _V["LIST_ANCHOR_TYPE"].world) then
 		self.tabBeforeAnchor = self.selectedTab;
 	end
 	
 	self.anchor = anchor;
+
+	-- Prevent showing up when the map is minimized during combat
+	if (anchor ~= _V["LIST_ANCHOR_TYPE"].full) then
+		WQT_WorldMapContainer:SetAlpha(0);
+	end
+	
+	if (InCombatLockdown() or not anchor) then return end
 	
 	if (anchor == _V["LIST_ANCHOR_TYPE"].flight) then
 		WQT_WorldQuestFrame:ClearAllPoints(); 

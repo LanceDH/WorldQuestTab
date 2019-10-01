@@ -133,6 +133,15 @@
 						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
 					</Anchors>
 				</Texture>
+				<MaskTexture parentKey="CircleMask" file="Interface\CharacterFrame\TempPortraitAlphaMask" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.Icon"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Icon"/>
+					</Anchors>
+					<MaskedTextures>
+						<MaskedTexture childKey="Icon"/>
+					</MaskedTextures>
+				</MaskTexture>
 			</Layer>
 			
 			<Layer level="ARTWORK" textureSubLevel="-1">
@@ -618,6 +627,7 @@
 		
 		<Scripts>
 			<OnClick>
+				if (InCombatLockdown()) then return; end
 				self.isSelected = not self.isSelected;
 				if (self.container) then
 					if (self.isSelected) then
@@ -772,6 +782,7 @@
 				self:OnLoad("TOPRIGHT", -40, -5);
 			</OnLoad>
 			<OnClick inherit="prepend">
+				if (InCombatLockdown()) then return end
 				if (self.isSelected) then
 					WQT_WorldMapContainer:EnableMouse(true);
 					WQT_WorldMapContainer.DragFrame:EnableMouse(true);

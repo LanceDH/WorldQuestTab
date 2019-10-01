@@ -54,8 +54,6 @@ local function AddIndentedDoubleLine(tooltip, a, b, level, color)
 		b = "nil";
 	end
 	tooltip:AddDoubleLine(indented, b, color.r, color.g, color.b, color.r, color.g, color.b);
-	
-	
 end
 
 function WQT:AddDebugToTooltip(tooltip, questInfo, level)
@@ -114,7 +112,7 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 	
 end
 
-
+local FORMAT_VERSION_MINOR = "%s|cFF888888.%s|r"
 local FORMAT_H1 = "%s<h1 align='center'>%s</h1>";
 local FORMAT_H2 = "%s<h2>%s:</h2>";
 local FORMAT_p = "%s<p>%s</p>";
@@ -174,7 +172,8 @@ function WQT_Utils:FormatPatchNotes(notes, title)
 	updateMessage = FORMAT_WHITESPACE:format(updateMessage);
 	for i=1, #notes do
 		local patch = notes[i];
-		updateMessage = FORMAT_H1:format(updateMessage, patch.version);
+		local version = patch.minor and FORMAT_VERSION_MINOR:format(patch.version, patch.minor) or patch.version;
+		updateMessage = FORMAT_H1:format(updateMessage, version);
 		updateMessage = AddNotes(updateMessage, nil, patch.intro);
 		updateMessage = AddNotes(updateMessage, "New", patch.new);
 		updateMessage = AddNotes(updateMessage, "Changes", patch.changes);
@@ -614,6 +613,22 @@ end
 -- This is just easier to maintain than changing the entire string every time
 local _patchNotes = {
 		{["version"] = "8.2.03"
+			,["minor"] = "3"
+			,["fixes"] = {
+				"Fixed an error related to reward quality colors."
+				,"Fixed a number of issues related to combat"
+				,"Fixed an issue that could cause the quest list to dissapear completely."
+				,"Fixed the quest details frame being positioned slightly off."
+				,"Fixed the world quest list bleeding through overlay frames when moving around."
+			}
+		}
+		,{["version"] = "8.2.03"
+			,["minor"] = "2"
+			,["fixes"] = {
+				"Fixed an error for TomTom users when completing a regular quest."
+			}
+		}
+		,{["version"] = "8.2.03"
 			,["intro"] = {"Introducing |cFFFFFFFFWorld Quest Tab Utilities|r, available on both WowInterface and Curse.<br/>This is a plug-in for World Quest Tab which adds some additional features. These include an overview of total reward sums for certain quest rewards in the list (i.e. gold or currencies), a sort option by distance to the quest, and a 14 day history graph of rewards from world quests.<br/>It is open for feature suggestions which might be concidered 'out of scope' for default World Quest Tab."}
 			,["new"] = {
 				"New 'Daily' quest type filter: can be used to filter daily quests from the list."
