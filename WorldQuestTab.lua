@@ -3394,6 +3394,7 @@ function WQT_CoreMixin:SelectTab(tab)
 		
 		if not InCombatLockdown() then
 			self:HideOverlayFrame(true)
+			self:SetCombatEnabled(false);
 		end
 	elseif id == 2 then
 		-- WQT

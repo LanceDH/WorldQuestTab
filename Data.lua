@@ -613,6 +613,12 @@ end
 -- This is just easier to maintain than changing the entire string every time
 local _patchNotes = {
 		{["version"] = "8.2.03"
+			,["minor"] = "4"
+			,["fixes"] = {
+				"Fixed an issue introduced in 8.2.03.3 preventing interaction with the default quest log. A reminder to nog push out an update at 1am..."
+			}
+		}
+		,{["version"] = "8.2.03"
 			,["minor"] = "3"
 			,["fixes"] = {
 				"Fixed an error related to reward quality colors."
