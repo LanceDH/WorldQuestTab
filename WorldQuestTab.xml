@@ -124,9 +124,6 @@
 			<Anchor point="TOPLEFT" x="-3" y="3"/>
 			<Anchor point="BOTTOMRIGHT" x="3" y="-3"/>
 		</Anchors>
-		
-		
-		
 		<Layers>
 			<Layer level="BACKGROUND" textureSubLevel="3">
 				<Texture parentKey="CustomUnderlay" atlas="worldquest-questmarker-dragon">

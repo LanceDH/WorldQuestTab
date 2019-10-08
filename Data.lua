@@ -615,12 +615,12 @@ local _patchNotes = {
 		{["version"] = "8.2.03"
 			,["minor"] = "5"
 			,["changes"] = {
-				"Having reward icons disabled in combination with ring type \"Default\" will now show the default brown ring with other enabled features, rather than dissapear completely."
+				"Having reward icons disabled in combination with ring type \"Default\" will now show the default brown ring with other enabled features, rather than disappear completely."
 				,"Disabling all pin changes will now ping quests using the official ping functionality. (To the best of it's ability)"
 			}
 			,["fixes"] = {
 				"Fixed a TomTom settings option not correctly enabling/disabling."
-				,"Fixed type icons not showing when the \"Reward Texture\" is turned off."
+				,"Fixed type icons not showing when the \"Reward Texture\" setting is disabled."
 				,"Everything in relation to map pins (Official icons, official backgrounds, elite dragon, etc) will now correctly grow with the \"Bigger Pins\" setting enabled."
 			}
 		}
