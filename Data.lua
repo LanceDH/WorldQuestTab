@@ -613,6 +613,18 @@ end
 -- This is just easier to maintain than changing the entire string every time
 local _patchNotes = {
 		{["version"] = "8.2.03"
+			,["minor"] = "5"
+			,["changes"] = {
+				"Having reward icons disabled in combination with ring type \"Default\" will now show the default brown ring with other enabled features, rather than dissapear completely."
+				,"Disabling all pin changes will now ping quests using the official ping functionality. (To the best of it's ability)"
+			}
+			,["fixes"] = {
+				"Fixed a TomTom settings option not correctly enabling/disabling."
+				,"Fixed type icons not showing when the \"Reward Texture\" is turned off."
+				,"Everything in relation to map pins (Official icons, official backgrounds, elite dragon, etc) will now correctly grow with the \"Bigger Pins\" setting enabled."
+			}
+		}
+		,{["version"] = "8.2.03"
 			,["minor"] = "4"
 			,["fixes"] = {
 				"Fixed an issue introduced in 8.2.03.3 preventing interaction with the default quest log. A reminder to nog push out an update at 1am..."

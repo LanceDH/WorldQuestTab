@@ -828,21 +828,6 @@ local function InitFilter(self, level)
 			info.func = function(_, _, _, value)
 					WQT.settings.pin.disablePoI = value;
 					if (value) then
-						-- Reset alpha on official pins
-						local WQProvider = GetMapWQProvider();
-						for _, PoI in pairs(WQProvider.activePins) do
-							PoI.BountyRing:SetAlpha(1);
-							PoI.TimeLowFrame:SetAlpha(1);
-							PoI.TrackedCheck:SetAlpha(1);
-							PoI.Texture:SetAlpha(1);
-						end
-						-- Bonus objectives and dailies
-						if(WorldMapFrame.pinPools.BonusObjectivePinTemplate) then
-							for mapPin in pairs(WorldMapFrame.pinPools.BonusObjectivePinTemplate.activeObjects) do
-								mapPin.Texture:SetAlpha(1);
-							end
-						end
-						
 						WQT_WorldQuestFrame.pinHandler:ReleaseAllPools();
 					end
 					ADD:Refresh(self, 1, 3);
@@ -976,8 +961,10 @@ local function InitFilter(self, level)
 					
 					if value then
 						ADD:EnableButton(3, 2);
+						ADD:EnableButton(3, 3);
 					else 
 						ADD:DisableButton(3, 2);
+						ADD:DisableButton(3, 3);
 					end
 				end
 			info.checked = function() return WQT.settings.general.useTomTom end;
@@ -1151,10 +1138,6 @@ local function ConvertOldSettings(version)
 		for flagId in pairs(WQT.settings.filters) do
 			WQT:SetAllFilterTo(flagId, true);
 		end
-	end
-	-- Hightlight 'what's new'
-	if (version < GetAddOnMetadata(addonName, "version")) then
-		WQT.settings.updateSeen = false;
 	end
 end
 
@@ -1401,7 +1384,12 @@ function WQT:OnInitialize()
 	self.settings = self.db.global;
 	
 	ConvertOldSettings(WQT.settings.versionCheck)
-	WQT.settings.versionCheck  = GetAddOnMetadata(addonName, "version");
+	-- Hightlight 'what's new'
+	local currentVersion = GetAddOnMetadata(addonName, "version")
+	if (WQT.settings.versionCheck < currentVersion) then
+		WQT.settings.updateSeen = false;
+		WQT.settings.versionCheck  = currentVersion;
+	end
 end
 
 function WQT:OnEnable()
@@ -1822,14 +1810,15 @@ end
 function WQT_PinHandlerMixin:OnLoad()
 	self.pinPool = CreateFramePool("COOLDOWN", nil, "WQT_PinTemplate", OnPinRelease);
 	self.pinPoolFlightMap = CreateFramePool("COOLDOWN", nil, "WQT_PinTemplate", OnPinRelease);
-	self.pinHighlightPool = CreateFramePool("FRAME", nil, "WQT_PoISelectTemplate");
 	self.questHighlights = {};
 end
 
 function WQT_PinHandlerMixin:KeepHightlightedOnTop()
-	for highlight in self.pinHighlightPool:EnumerateActive() do
-		if (highlight.pin.owningMap == WorldMapFrame) then
-			 highlight.pin:SetFrameLevel(3000);
+	if (WQT.settings.pin.disablePoI) then return; end
+	
+	for pin in self.pinPool:EnumerateActive() do
+		if (pin.originParentLevel) then
+			pin:GetParent():SetFrameLevel(3000);
 		end
 	end
 end
@@ -1837,13 +1826,34 @@ end
 function WQT_PinHandlerMixin:ReleaseAllPools()
 	self.pinPool:ReleaseAll();
 	self.pinPoolFlightMap:ReleaseAll();
+
+	-- Force end all highlights
+	for questID in pairs(self.questHighlights) do
+		self:HideHighlightOnPinForQuestId(questID);
+	end
+	
+	-- Reset alpha on official pins
+	local WQProvider = GetMapWQProvider();
+	for _, PoI in pairs(WQProvider.activePins) do
+		PoI.BountyRing:SetAlpha(1);
+		PoI.TimeLowFrame:SetAlpha(1);
+		PoI.TrackedCheck:SetAlpha(1);
+		PoI.Texture:SetAlpha(1);
+	end
+	-- Bonus objectives and dailies
+	if(WorldMapFrame.pinPools.BonusObjectivePinTemplate) then
+		for mapPin in pairs(WorldMapFrame.pinPools.BonusObjectivePinTemplate.activeObjects) do
+			mapPin.Texture:SetAlpha(1);
+		end
+	end
 end
 
 function WQT_PinHandlerMixin:UpdateFlightMapPins()
 	if (not FlightMapFrame:IsShown() or WQT.settings.pin.disablePoI or not WQT.FlightmapPins) then return; end
 	WQT.FlightMapList = _dataProvider:GetKeyList()
 	
-	self.pinPoolFlightMap:ReleaseAll();
+	WQT_WorldQuestFrame.pinHandler:ReleaseAllPools();
+	
 	local quest = nil;
 	for qID, PoI in pairs(WQT.FlightmapPins.activePins) do
 		quest =  _dataProvider:GetQuestById(qID);
@@ -1855,7 +1865,8 @@ function WQT_PinHandlerMixin:UpdateFlightMapPins()
 end
 
 function WQT_PinHandlerMixin:UpdateMapPoI()
-	self.pinPool:ReleaseAll();
+	WQT_WorldQuestFrame.pinHandler:ReleaseAllPools();
+	
 	
 	if (WQT.settings.pin.disablePoI) then return; end
 	local WQProvider = GetMapWQProvider();
@@ -1865,8 +1876,6 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 		questInfo = _dataProvider:GetQuestById(qID);
 		if (questInfo and questInfo.isValid) then
 			local pin = self.pinPool:Acquire();
-			pin.info = questInfo;
-			pin.questID = qID;
 			pin:Update(PoI, questInfo);
 			PoI:SetShown(true);
 			if (WQT.settings.pin.filterPoI) then
@@ -1876,11 +1885,9 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 	end
 	if(WorldMapFrame.pinPools.BonusObjectivePinTemplate) then
 		for mapPin in pairs(WorldMapFrame.pinPools.BonusObjectivePinTemplate.activeObjects) do
-			questInfo = _dataProvider:GetQuestById(mapPin.questID );
+			questInfo = _dataProvider:GetQuestById(mapPin.questID);
 			if (questInfo and questInfo.isValid) then
 				local pin = self.pinPool:Acquire();
-				pin.info = questInfo;
-				pin.questID = qID;
 				pin:Update(mapPin, questInfo, nil, true);
 				mapPin:SetShown(true);
 				if (WQT.settings.pin.filterPoI) then
@@ -1892,92 +1899,114 @@ function WQT_PinHandlerMixin:UpdateMapPoI()
 end
 
 function  WQT_PinHandlerMixin:ShowHighlightOnPinForQuestId(questId)
-	local pin = WQT:GetMapPinForWorldQuest(questId);
-	local scale = 1;
-	
-	if (FlightMapFrame and FlightMapFrame:IsShown() and not _WFMLoaded) then
-		pin =  WQT:GetFlightMapPin(questId)
-		if(pin) then
-			pin:SetAlpha(1);
-			pin:Show();
+	if (not questId) then return; end
+	if (WQT.settings.pin.disablePoI) then 
+		if (not self.questHighlights[questId]) then
+			if (WorldMapFrame:IsShown()) then
+				local WQProvider = GetMapWQProvider();
+				WQProvider:PingQuestID(questId);
+			end
+			if (FlightMapFrame and FlightMapFrame:IsShown()) then
+				WQT.FlightmapPins:PingQuestID(questId);
+			end
+			self.questHighlights[questId] = true;
 		end
+		return; 
 	end
-	
-	if not pin then
-		pin = WQT:GetMapPinForBonusObjective(questId);
-		
-		local questInfo = _dataProvider:GetQuestById(questId);
-		if (questInfo and questInfo.isDaily) then
-			scale = 0.45;
-		else
-			scale = 0.5;
-		end
-	end
-	 
-	if (pin) then
-		local existingHighlight = self.questHighlights[questId];
-		if (existingHighlight) then
-			-- If it's the same pin, keep everything as is
-			if (existingHighlight.pin == pin) then 
+	-- Use pin's highlight
+	if (WorldMapFrame:IsShown()) then
+		for pin in self.pinPool:EnumerateActive() do
+			if (pin.questID  == questId) then
+				if (not pin.ringAnim:IsPlaying()) then
+					pin.Ping:Show();
+					pin.PingStatic:Show();
+					pin.ringAnim:Play();
+					pin.ringAnim2:Play();
+				end
+				if (not pin.originParentLevel) then
+					pin.originParentLevel = pin:GetParent():GetFrameLevel();
+					pin:GetParent():SetFrameLevel(3000);
+				end
+				self.questHighlights[questId] = true;
 				return;
 			end
-			-- Otherwise, hide the old one
-			self:HideHighlightOnPinForQuestId(questId);
 		end
-
-		local highlight;
-		for obj in self.pinHighlightPool:EnumerateActive() do
-			if (obj.pin == pin) then 
-				highlight = obj;
-				break;
+	end
+	
+	if (FlightMapFrame and FlightMapFrame:IsShown()) then
+		for pin in self.pinPoolFlightMap:EnumerateActive() do
+			if (pin.questID  == questId) then
+				if (not pin.ringAnim:IsPlaying()) then
+					pin.Ping:Show();
+					pin.PingStatic:Show();
+					pin.ringAnim:Play();
+					pin.ringAnim2:Play();
+					
+				end
+				pin:GetParent():SetAlpha(1);
+				pin:GetParent():Show();
+				self.questHighlights[questId] = true;
+				return;
 			end
 		end
-
-		highlight = highlight or self.pinHighlightPool:Acquire();
-		
-		selector = selector or WQT_PoISelectIndicator;
-		highlight:SetParent(pin);
-		highlight:ClearAllPoints();
-		highlight:SetPoint("CENTER", pin, 0, -1);
-		highlight:SetFrameLevel(pin:GetFrameLevel()+1);
-		highlight.pinLevel = pin:GetFrameLevel();
-		highlight.pin = pin;
-		highlight:Show();
-		local size = WQT.settings.pin.bigPoI and 55 or 45;
-		highlight:SetSize(size, size);
-		highlight:SetScale(scale);
-		if (pin.owningMap == FlightMapFrame) then
-			pin:SetFrameLevel(3000);
-		end
-		
-		self.questHighlights[questId] = highlight;
 	end
 end
 
 function  WQT_PinHandlerMixin:HideHighlightOnPinForQuestId(questId)
-
-	local highlight = self.questHighlights[questId]; 
-	
-	if (not highlight) then 
-		return;
+	if (not questId) then return; end
+	if (WQT.settings.pin.disablePoI) then 
+		if (WorldMapFrame:IsShown()) then
+			local WQProvider =  GetMapWQProvider();
+			if (WQProvider.pingPin) then
+				WQProvider.pingPin:Stop();
+			end
+		end
+		if (FlightMapFrame and FlightMapFrame:IsShown() and WQT.FlightmapPins.pingPin) then
+			WQT.FlightmapPins.pingPin:Stop();
+		end
+		self.questHighlights[questId] = nil;
+		return; 
 	end
 	
-	local pin = highlight.pin;
-
-	-- We have to check on name because in WorldFlightMap WorldMapFrame == FlightMapFrame
-	if (FlightMapFrame and pin.owningMap and pin.owningMap:GetName() == "FlightMapFrame") then
-		local keepVisible = FlightMapFrame.ScrollContainer.targetScale  > 0.5;
-		keepVisible = keepVisible or GetSuperTrackedQuestID() == questId or IsWorldQuestWatched(questId);
-		pin:SetAlpha(keepVisible and 1 or 0);
+	if (WorldMapFrame:IsShown()) then
+		for pin in self.pinPool:EnumerateActive() do
+			if (pin.questID  == questId) then
+				if (pin.ringAnim:IsPlaying()) then
+					pin.Ping:Hide();
+					pin.PingStatic:Hide();
+					pin.ringAnim:Stop();
+					pin.ringAnim2:Stop();
+				end
+				if (pin.originParentLevel) then
+					pin:GetParent():SetFrameLevel(pin.originParentLevel);
+					pin.originParentLevel = nil;
+				end
+				self.questHighlights[questId] = nil;
+				return;
+			end
+		end
 	end
-
-	if (highlight.pin) then
-		highlight.pin:SetFrameLevel(highlight.pinLevel);
-		highlight.pin = nil;
-	end
-	self.pinHighlightPool:Release(highlight);
 	
-	self.questHighlights[questId] = nil;
+	if (FlightMapFrame and FlightMapFrame:IsShown()) then
+		for pin in self.pinPoolFlightMap:EnumerateActive() do
+			if (pin.questID  == questId) then
+				if (pin.ringAnim:IsPlaying()) then
+					pin.Ping:Hide();
+					pin.PingStatic:Hide();
+					pin.ringAnim:Stop();
+					pin.ringAnim2:Stop();
+				end
+				
+				if (FlightMapFrame) then
+					local keepVisible = FlightMapFrame.ScrollContainer.targetScale  > 0.5;
+					keepVisible = keepVisible or GetSuperTrackedQuestID() == questId or IsWorldQuestWatched(questId);
+					pin:GetParent():SetAlpha(keepVisible and 1 or 0);
+				end
+				self.questHighlights[questId] = nil;
+				return;
+			end
+		end
+	end
 end
 
 ------------------------------------------
@@ -1990,7 +2019,7 @@ end
 WQT_PinMixin = {};
 
 function WQT_PinMixin:OnUpdate()
-	if (not self.info or (self.info and self.info.time.seconds <= 0)) then return end;
+	if (not self.info or (self.info and self.info.time.seconds and self.info.time.seconds <= 0)) then return end;
 
 	local start, total, timeLeft, seconds, color, timeStringShort = WQT_Utils:GetPinTime(self.info);
 	if (WQT.settings.pin.ringType ==  _V["RINGTYPE_TIME"] and seconds > 0) then
@@ -2010,34 +2039,29 @@ function WQT_PinMixin:OnUpdate()
 end
 
 function WQT_PinMixin:Update(PoI, questInfo, flightPinNr, isBonus)
+	self.info = questInfo;
+	self.questID = questInfo.questId;
+
 	self:SetParent(PoI);
 	self:SetFrameLevel(PoI:GetFrameLevel()+2);
-	self:SetAllPoints();
-	
+
 	local scale = 1;
-	local margin = WQT.settings.pin.bigPoI and 10 or 5;
-	local iconDistance =  WQT.settings.pin.bigPoI and 34 or 30;
+	local iconDistance =  30;
 	local seconds, _, color, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
-	local _, _, worldQuestType = GetQuestTagInfo(questInfo.questId);
-	
+	local _, _, worldQuestType, rarity, isElite = GetQuestTagInfo(questInfo.questId);
+
 	if(isBonus) then
 		if (questInfo.isDaily) then
-			-- Daily quests
-			margin = WQT.settings.pin.bigPoI and 0 or -5;
 			scale = 0.45;
 		else
-			-- Actual bonus objectives
-			margin = WQT.settings.pin.bigPoI and 6 or 1;
 			scale = 0.55;
 		end
 	end
-	
-	self:SetPoint("TOPLEFT", -margin, margin);
-	self:SetPoint("BOTTOMRIGHT", margin, -margin);
+	scale = scale * (WQT.settings.pin.bigPoI and 1.15 or 1);
+	self:SetSize(60, 60);
+	self:SetPoint("CENTER");
 	self:SetScale(scale);
 	self:Show();
-	
-	PoI.Texture:SetAlpha(0);
 	
 	if not flightPinNr then
 		PoI.info = questInfo;
@@ -2053,12 +2077,11 @@ function WQT_PinMixin:Update(PoI, questInfo, flightPinNr, isBonus)
 	
 	-- Ring stuff
 	local ringType = WQT.settings.pin.ringType;
-	local hideRing = ringType ==  _V["RINGTYPE_NONE"] and not WQT.settings.pin.reward;
-	local now = hideRing and 0 or time();
+	local now = time();
 	local r, g, b = _V["WQT_COLOR_CURRENCY"]:GetRGB();
-	self.Ring:SetAlpha(hideRing and 0 or 1);
+	self.Ring:SetShown(ringType ==  _V["RINGTYPE_TIME"] and 1 or 0);
 	self:SetCooldownUNIX(now, now);
-	self.Pointer:SetAlpha(0);
+	self.Pointer:Hide();
 	
 	if (ringType ==  _V["RINGTYPE_TIME"]) then
 		r, g, b = color:GetRGB();
@@ -2066,7 +2089,7 @@ function WQT_PinMixin:Update(PoI, questInfo, flightPinNr, isBonus)
 			local start, total, timeLeft = WQT_Utils:GetPinTime(questInfo);
 		
 			self:SetCooldownUNIX(now-start,  start + timeLeft);
-			self.Pointer:SetAlpha(1);
+			self.Pointer:Show(1);
 			self.Pointer:SetVertexColor(r*1.1, g*1.1, b*1.1);
 			self.Pointer:SetRotation((timeLeft)/(total)*6.2831);
 		end
@@ -2076,15 +2099,18 @@ function WQT_PinMixin:Update(PoI, questInfo, flightPinNr, isBonus)
 	
 	self.Ring:SetVertexColor(r*0.25, g*0.25, b*0.25);
 	self:SetSwipeColor(r*.8, g*.8, b*.8);
+	
 	local showTypeIcon = WQT.settings.pin.reward and WQT.settings.pin.typeIcon and (isBonus or (worldQuestType > 0 and worldQuestType ~= LE_QUEST_TAG_TYPE_NORMAL));
 	local showRewardIcon = WQT.settings.pin.rewardTypeIcon;
 	
 	-- Quest Type Icon
-	local typeAtlas =  showTypeIcon and WQT_Utils:GetCachedTypeIconData(questInfo);
-	self.TypeIcon:SetAlpha(typeAtlas and 1 or 0);
-	self.TypeBG:SetAlpha(typeAtlas and 1 or 0);
-	if (typeAtlas) then
-		local typeSize = WQT.settings.pin.bigPoI and 32 or 26;
+	local typeAtlas  =  WQT_Utils:GetCachedTypeIconData(questInfo);
+	showTypeIcon = typeAtlas and showTypeIcon
+	
+	self.TypeIcon:SetShown(showTypeIcon);
+	self.TypeBG:SetShown(showTypeIcon);
+	if (showTypeIcon) then
+		local typeSize = 26;
 		local angle = 270 + (showRewardIcon and 30 or 0)
 		local posX = iconDistance * cos(angle);
 		local posY = iconDistance * sin(angle);
@@ -2097,10 +2123,10 @@ function WQT_PinMixin:Update(PoI, questInfo, flightPinNr, isBonus)
 	
 	-- Reward Type Icon
 	local rewardTypeAtlas =  showRewardIcon and _V["REWARD_TYPE_ATLAS"][questInfo.reward.type];
-	self.RewardIcon:SetAlpha(rewardTypeAtlas and 1 or 0);
-	self.RewardBG:SetAlpha(rewardTypeAtlas and 1 or 0);
+	self.RewardIcon:SetShown(rewardTypeAtlas);
+	self.RewardBG:SetShown(rewardTypeAtlas);
 	if (rewardTypeAtlas) then
-		local typeSize = WQT.settings.pin.bigPoI and 32 or 26;
+		local typeSize = 26;
 		local angle = 270 - (showTypeIcon and 30 or 0)
 		local posX = iconDistance * cos(angle);
 		local posY = iconDistance * sin(angle);
@@ -2124,14 +2150,65 @@ function WQT_PinMixin:Update(PoI, questInfo, flightPinNr, isBonus)
 	end
 
 	-- Icon stuff
-	local showIcon = WQT.settings.pin.reward and (questInfo.reward.type == WQT_REWARDTYPE.missing or questInfo.reward.texture ~= "")
-	self.Icon:SetAlpha(showIcon and 1 or 0);
-	self.Icon:SetTexture(questInfo.reward.texture or "Interface/PETBATTLES/BattleBar-AbilityBadge-Neutral");
+	local showIcon = WQT.settings.pin.reward and (questInfo.reward.type == WQT_REWARDTYPE.missing or questInfo.reward.texture ~= "");
+	PoI.Texture:SetAlpha(0);
+	self.CustomTypeIcon:SetShown(not showIcon);
+	self.CustomUnderlay:SetShown(isElite);
+	
+	self.Icon:SetTexture("Interface/PETBATTLES/BattleBar-AbilityBadge-Neutral");
+	self.Icon:SetTexCoord(0.06, 0.93, 0.05, 0.93);
+	self.Icon:SetDesaturated(false);
+	
+	
+	if(showIcon) then
+		self.CustomSelectedGlow:Hide()
+		self.CustomBountyRing:Hide()
+		
+		if (questInfo.reward.texture) then
+			self.Icon:SetTexture(questInfo.reward.texture);
+			self.Icon:SetTexCoord(0, 1, 0, 1);
+		end
+	else
+		local selected = questInfo.questId == GetSuperTrackedQuestID()
+		local showSlectedGlow = not showIcon and not isBonus and rarity ~= LE_WORLD_QUEST_QUALITY_COMMON and selected;
+	
+		self.CustomBountyRing:SetShown(questInfo.isCriteria)
+		self.CustomSelectedGlow:SetShown(showSlectedGlow);
+		if (not isBonus) then
+			if (rarity == LE_WORLD_QUEST_QUALITY_RARE) then
+				self.Icon:SetAtlas("worldquest-questmarker-rare");
+				self.CustomSelectedGlow:SetAtlas("worldquest-questmarker-rare");
+			elseif (rarity == LE_WORLD_QUEST_QUALITY_EPIC) then
+				self.Icon:SetAtlas("worldquest-questmarker-epic")
+				self.CustomSelectedGlow:SetAtlas("worldquest-questmarker-epic");
+			else
+				self.Icon:SetTexture("Interface/WorldMap/UI-QuestPoi-NumberIcons");
+				if (selected) then
+					self.Icon:SetTexCoord(0.52, 0.605, 0.395, 0.48);
+				else
+					self.Icon:SetTexCoord(0.895, 0.98, 0.395, 0.48);
+				end
+			end
+		else
+			self.Icon:SetTexture("Interface/WorldMap/UI-QuestPoi-NumberIcons");
+			self.Icon:SetTexCoord(0.895, 0.98, 0.395, 0.48);
+			self.Icon:SetDesaturated(true);
+		end
+		
+		-- Mimic default icon
+		if (typeAtlas) then
+			local atlasTexture, sizeX, sizeY = WQT_Utils:GetCachedTypeIconData(questInfo);
+			self.CustomTypeIcon:SetAtlas(atlasTexture);
+			self.CustomTypeIcon:SetSize(sizeX, sizeY);
+			self.CustomTypeIcon:SetScale(2);
+		end
+	end
 
 	-- Time
-	local timeDistance = (showTypeIcon or showRewardIcon) and 0 or 5; 
-	self.Time:SetAlpha((WQT.settings.pin.timeLabel  and timeStringShort ~= "")and 1 or 0);
-	self.TimeBg:SetAlpha((WQT.settings.pin.timeLabel  and timeStringShort ~= "") and 0.65 or 0);
+	local timeDistance = (showTypeIcon or showRewardIcon) and 0 or 5;
+	local showTimeString = WQT.settings.pin.timeLabel  and timeStringShort ~= "";
+	self.Time:SetShown(showTimeString);
+	self.TimeBg:SetAlpha(showTimeString and 0.65 or 0);
 	if(WQT.settings.pin.timeLabel ) then
 		self.Time:SetFontObject(flightPinNr and "WQT_NumberFontOutlineBig" or "WQT_NumberFontOutline");
 		self.Time:SetScale(flightPinNr and 1 or 2.5);
@@ -2164,6 +2241,20 @@ function WQT_ScrollListMixin:OnLoad()
 	self.scrollBar.doNotHide = true;
 	self.update = function() self:DisplayQuestList(true) end;
 	HybridScrollFrame_CreateButtons(self, "WQT_QuestTemplate", 1, 0);
+end
+
+function WQT_ScrollListMixin:ResetButtons()
+	if (InCombatLockdown()) then return; end
+	local buttons = self.buttons;
+	if buttons == nil then return; end
+	for i=1, #buttons do
+		local button = buttons[i];
+		button.Reward.Amount:Hide();
+		button.TrackedBorder:Hide();
+		button.Highlight:Hide();
+		button:Hide();
+		button.info = nil;
+	end
 end
 
 function WQT_ScrollListMixin:ShowQuestTooltip(button, questInfo)
@@ -2359,7 +2450,7 @@ function WQT_ScrollListMixin:UpdateQuestList()
 	local flightShown = (FlightMapFrame and FlightMapFrame:IsShown() or TaxiRouteMap:IsShown() );
 	local worldShown = WorldMapFrame:IsShown();
 	
-	if (not (flightShown or worldShown) or InCombatLockdown()) then return end	
+	if (not (flightShown or worldShown)) then return end	
 	
 	self.questList = _dataProvider:GetIterativeList();
 	self:FilterQuestList();
@@ -2369,17 +2460,25 @@ end
 
 function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 	local mapId = WorldMapFrame.mapID;
+	-- Update pins
 	if (((FlightMapFrame and FlightMapFrame:IsShown()) or TaxiRouteMap:IsShown()) and not _WFMLoaded) then 
 		local taxiId = GetTaxiMapID()
 		mapId = (taxiId and taxiId > 0) and taxiId or mapId;
 	end
 	local mapInfo = WQT_Utils:GetCachedMapInfo(mapId or 0);
-	if not mapInfo or InCombatLockdown() or WQT_WorldQuestFrame:GetAlpha() < 1 or not WQT_WorldQuestFrame.selectedTab or WQT_WorldQuestFrame.selectedTab:GetID() ~= 2 then 
+	if (not mapInfo or WQT_WorldQuestFrame:GetAlpha() < 1 or not WQT_WorldQuestFrame.selectedTab or WQT_WorldQuestFrame.selectedTab:GetID() ~= 2) then 
 		if (not skipPins and mapInfo and mapInfo.mapType ~= Enum.UIMapType.Continent) then	
 			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
 		end
 		return 
 	end
+	if (not skipPins and mapInfo.mapType ~= Enum.UIMapType.Continent) then	
+		WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
+	end
+	
+	-- Actual list, which we can't update in combat
+	if (InCombatLockdown()) then return; end
+	
 	local offset = HybridScrollFrame_GetOffset(self);
 	local buttons = self.buttons;
 	if buttons == nil then return; end
@@ -2404,10 +2503,6 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 		end
 	end
 	HybridScrollFrame_Update(self, #list * _V["WQT_LISTITTEM_HEIGHT"], self:GetHeight());
-
-	if (not skipPins and mapInfo.mapType ~= Enum.UIMapType.Continent) then	
-		WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
-	end
 	
 	if (IsAddOnLoaded("Aurora") or (WorldMapFrame:IsShown() and WorldMapFrame.isMaximized)) then
 		WQT_WorldQuestFrame.Background:SetAlpha(0);
@@ -2541,7 +2636,7 @@ function WQT_FullScreenConstrainMixin:SetStartPosition(anchor, x, y)
 	self.startY = y or 0;
 end
 
-function WQT_FullScreenConstrainMixin:ConstrainPosition(force)
+function WQT_FullScreenConstrainMixin:ConstrainPosition()
 	local WorldMapButton = WorldMapFrame.ScrollContainer;
 	
 	if (self.FirstPlacement) then
@@ -2723,12 +2818,12 @@ function WQT_CoreMixin:OnLoad()
 		end)
 		
 	self.dataProvider:HookQuestsLoaded(function() 
-			if (InCombatLockdown()) then return end;
-			self.ScrollFrame:UpdateQuestList(); 
-			self.pinHandler:UpdateMapPoI(); 
+			--if (not InCombatLockdown()) then 
+				self.ScrollFrame:UpdateQuestList(); 
+			--end;
 			-- Update the quest number counter
 			WQT_QuestLogFiller:UpdateText();
-			WQT_WorldQuestFrame:TriggerEvent("QuestsLoaded", questList)
+			WQT_WorldQuestFrame:TriggerEvent("QuestsLoaded")
 		end)
 
 	self:RegisterEvent("PLAYER_REGEN_DISABLED");
@@ -2959,7 +3054,7 @@ function WQT_CoreMixin:OnLoad()
 			if(questInfo and (questInfo.isDaily)) then
 				WorldMap_AddQuestTimeToTooltip(self.questID);
 				for objectiveIndex = 1, self.numObjectives do
-					local objectiveText, objectiveType, finished, numFulfilled, numRequired = GetQuestObjectiveInfo(self.questID, objectiveIndex, false);
+					local objectiveText, _, finished, numFulfilled, numRequired = GetQuestObjectiveInfo(self.questID, objectiveIndex, false);
 					if(self.shouldShowObjectivesAsStatusBar) then 
 						local percent = math.floor((numFulfilled/numRequired) * 100);
 						GameTooltip_ShowProgressBar(GameTooltip, 0, numRequired, numFulfilled, PERCENTAGE_STRING:format(percent));
@@ -3151,6 +3246,7 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 end
 
 function WQT_CoreMixin:PLAYER_REGEN_DISABLED()
+	WQT_QuestScrollFrame:ResetButtons();
 	self.ScrollFrame:ScrollFrameSetEnabled(false)
 	WQT_WorldMapContainer:EnableMouse(false);
 	self:ShowCombatOverlay();
@@ -3298,7 +3394,7 @@ function WQT_CoreMixin:HideOverlayFrame()
 	self.FilterBar:SetAlpha(1);
 end
 
-function WQT_CoreMixin:ShowCombatOverlay()
+function WQT_CoreMixin:ShowCombatOverlay(manualClose)
 	local blocker = self.Blocker;
 	
 	self:HideOverlayFrame()

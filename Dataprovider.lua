@@ -123,7 +123,7 @@ end
 local function SetQuestRewards(questInfo)
 	local haveData = HaveQuestRewardData(questInfo.questId);
 	questInfo.reward.typeBits = 0;
-	
+
 	if haveData then
 		local currencyId, currencyType, currencyQuality, currencyAmount, currencyTexture = GetMostImpressiveCurrency(questInfo);
 		if (GetNumQuestLogRewards(questInfo.questId) > 0) then

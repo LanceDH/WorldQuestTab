@@ -125,14 +125,23 @@
 			<Anchor point="BOTTOMRIGHT" x="3" y="-3"/>
 		</Anchors>
 		
+		
+		
 		<Layers>
-			<Layer level="BACKGROUND" textureSubLevel="4">
+			<Layer level="BACKGROUND" textureSubLevel="3">
+				<Texture parentKey="CustomUnderlay" atlas="worldquest-questmarker-dragon">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="-10" y="8"/>
+						<Anchor point="BOTTOMRIGHT" x="10" y="-11"/>
+					</Anchors>
+				</Texture>
 				<Texture parentKey="Icon">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="2" y="-2"/>
 						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
 					</Anchors>
 				</Texture>
+				
 				<MaskTexture parentKey="CircleMask" file="Interface\CharacterFrame\TempPortraitAlphaMask" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.Icon"/>
@@ -144,9 +153,35 @@
 				</MaskTexture>
 			</Layer>
 			
+			<Layer level="BACKGROUND" textureSubLevel="5">
+				<Texture parentKey="CustomTypeIcon">
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="CustomBountyRing" atlas="worldquest-emissary-ring">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="2" y="-3"/>
+						<Anchor point="BOTTOMRIGHT" x="-2" y="0"/>
+					</Anchors>
+				</Texture>
+				
+			</Layer>
+			
+			<Layer level="BACKGROUND" textureSubLevel="6">
+				<Texture parentKey="CustomSelectedGlow" alphaMode="ADD">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="2" y="-2"/>
+						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			
+			
 			<Layer level="ARTWORK" textureSubLevel="-1">
+				<!-- This serves as a background for the timer -->
 				<Texture parentKey="Ring" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRing" />
-				</Layer>
+			</Layer>
 			<Layer level="ARTWORK" textureSubLevel="1">
 				<Texture parentKey="TrackedCheck" atlas="worldquest-emissary-tracker-checkmark">
 					<Size x="42" y="37"/>
@@ -205,6 +240,33 @@
 				</Texture>
 			</Layer>
 		</Layers>
+		
+		<Layers>
+			<Layer level="BACKGROUND" textureSubLevel="4">
+				<Texture parentKey="PingStatic" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="0" hidden="true" alphaMode="BLEND">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="-8" y="8"/>
+						<Anchor point="BOTTOMRIGHT" x="8" y="-8"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="Ping" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="0" hidden="true" alphaMode="BLEND">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="-8" y="8"/>
+						<Anchor point="BOTTOMRIGHT" x="8" y="-8"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Animations>
+			<AnimationGroup parentKey="ringAnim" looPing="REPEAT">
+				<Alpha parentKey="Ping" childKey="Ping" fromAlpha="0.9" toAlpha="0" smoothing="IN" Duration="1.2" order="1"  startDelay=".6" endDelay="0"/>
+				<Scale parentKey="Ping" childKey="Ping" fromScaleX="1" toScaleX="1.7" smoothing="OUT" fromScaleY="1" toScaleY="1.7" Duration="1" startDelay=".6" order="1" endDelay=".2"/>
+			</AnimationGroup>
+			<AnimationGroup parentKey="ringAnim2" looPing="NONE" setToFinalAlpha="true">
+				<Scale parentKey="PingStatic" childKey="PingStatic" fromScaleX="1.2" toScaleX="1" smoothing="IN" fromScaleY="1.2" toScaleY="1" Duration=".4" order="0"/>
+				<Alpha parentKey="PingStatic" childKey="PingStatic" fromAlpha="0.5" toAlpha="1"  Duration="0.2" order="0"/>
+			</AnimationGroup>
+		</Animations>
 
 		<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing"/>
 		
@@ -544,7 +606,7 @@
 	<Frame name="WQT_PoISelectTemplate" hidden="true" flattenRenderLayers="true" virtual="true">
 		<Size x="40" y="40"/>
 		<Layers>
-			<Layer level="BACKGROUND">
+			<Layer level="BACKGROUND" textureSubLevel="-10">
 				<Texture parentKey="PingStatic" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="1">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="-15" y="16"/>
@@ -553,18 +615,16 @@
 				</Texture>
 				<Texture parentKey="Ping" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="0">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="-10" y="11"/>
-						<Anchor point="BOTTOMRIGHT" x="10" y="-9"/>
+						<Anchor point="TOPLEFT" x="-15" y="16"/>
+						<Anchor point="BOTTOMRIGHT" x="15" y="-14"/>
 					</Anchors>
 				</Texture>
 			</Layer>
 		</Layers>
 		<Animations>
 			<AnimationGroup parentKey="ringAnim" looPing="REPEAT">
-				<Alpha parentKey="Ping" childKey="Ping" fromAlpha="0" toAlpha="0.8"  Duration="0.4" order="0" />
-				<Alpha parentKey="Ping" childKey="Ping" fromAlpha="1" toAlpha="0" smoothing="IN" Duration="1" order="1"  startDelay=".2" endDelay="0"/>
-				<Scale parentKey="Ping" childKey="Ping" fromScaleX="1" toScaleX="1.9" smoothing="OUT" fromScaleY="1" toScaleY="1.9" Duration="1" order="1" endDelay="0"/>
-				<Scale parentKey="Ping" childKey="Ping" fromScaleX="1.9" toScaleX="1" fromScaleY="1.9" toScaleY="1" Duration="0.1" order="2" endDelay="0"/>
+				<Alpha parentKey="Ping" childKey="Ping" fromAlpha="0.8" toAlpha="0" smoothing="IN" Duration="1.2" order="1"  startDelay=".6" endDelay="0"/>
+				<Scale parentKey="Ping" childKey="Ping" fromScaleX="1" toScaleX="1.7" smoothing="OUT" fromScaleY="1" toScaleY="1.7" Duration="1" startDelay=".6" order="1" endDelay=".2"/>
 			</AnimationGroup>
 			<AnimationGroup parentKey="ringAnim2" looPing="NONE">
 				<Scale parentKey="PingStatic" childKey="PingStatic" fromScaleX="1.2" toScaleX="1" smoothing="IN" fromScaleY="1.2" toScaleY="1" Duration=".4" order="0"/>
