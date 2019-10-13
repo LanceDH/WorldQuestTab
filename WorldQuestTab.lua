@@ -2101,17 +2101,16 @@ function WQT_PinMixin:Update(PoI, questInfo, flightPinNr, isBonus)
 	self:SetSwipeColor(r*.8, g*.8, b*.8);
 	
 	local showTypeIcon = WQT.settings.pin.reward and WQT.settings.pin.typeIcon and (isBonus or (worldQuestType > 0 and worldQuestType ~= LE_QUEST_TAG_TYPE_NORMAL));
-	local showRewardIcon = WQT.settings.pin.rewardTypeIcon;
+	local rewardTypeAtlas = WQT.settings.pin.rewardTypeIcon and _V["REWARD_TYPE_ATLAS"][questInfo.reward.type];
 	
 	-- Quest Type Icon
-	local typeAtlas  =  WQT_Utils:GetCachedTypeIconData(questInfo);
-	showTypeIcon = typeAtlas and showTypeIcon
-	
+	local typeAtlas, typeAtlasWidth, typeAtlasHeight =  WQT_Utils:GetCachedTypeIconData(questInfo);
+
 	self.TypeIcon:SetShown(showTypeIcon);
 	self.TypeBG:SetShown(showTypeIcon);
-	if (showTypeIcon) then
+	if (showTypeIcon and typeAtlas) then
 		local typeSize = 26;
-		local angle = 270 + (showRewardIcon and 30 or 0)
+		local angle = 270 + (rewardTypeAtlas and 30 or 0)
 		local posX = iconDistance * cos(angle);
 		local posY = iconDistance * sin(angle);
 		self.TypeBG:SetSize(typeSize+11, typeSize+11);
@@ -2122,7 +2121,6 @@ function WQT_PinMixin:Update(PoI, questInfo, flightPinNr, isBonus)
 	end
 	
 	-- Reward Type Icon
-	local rewardTypeAtlas =  showRewardIcon and _V["REWARD_TYPE_ATLAS"][questInfo.reward.type];
 	self.RewardIcon:SetShown(rewardTypeAtlas);
 	self.RewardBG:SetShown(rewardTypeAtlas);
 	if (rewardTypeAtlas) then
@@ -2196,10 +2194,9 @@ function WQT_PinMixin:Update(PoI, questInfo, flightPinNr, isBonus)
 		end
 		
 		-- Mimic default icon
-		if (typeAtlas) then
-			local atlasTexture, sizeX, sizeY = WQT_Utils:GetCachedTypeIconData(questInfo);
-			self.CustomTypeIcon:SetAtlas(atlasTexture);
-			self.CustomTypeIcon:SetSize(sizeX, sizeY);
+		if (not WQT.settings.pin.reward) then
+			self.CustomTypeIcon:SetAtlas(typeAtlas);
+			self.CustomTypeIcon:SetSize(typeAtlasWidth, typeAtlasHeight);
 			self.CustomTypeIcon:SetScale(2);
 		end
 	end
@@ -2818,9 +2815,7 @@ function WQT_CoreMixin:OnLoad()
 		end)
 		
 	self.dataProvider:HookQuestsLoaded(function() 
-			--if (not InCombatLockdown()) then 
-				self.ScrollFrame:UpdateQuestList(); 
-			--end;
+			self.ScrollFrame:UpdateQuestList(); 
 			-- Update the quest number counter
 			WQT_QuestLogFiller:UpdateText();
 			WQT_WorldQuestFrame:TriggerEvent("QuestsLoaded")
@@ -2918,6 +2913,16 @@ function WQT_CoreMixin:OnLoad()
 			WQT_WorldQuestFrame:ChangeAnchorLocation(_V["LIST_ANCHOR_TYPE"].full);
 		end)
 		
+	-- Opening quest details
+	hooksecurefunc("QuestMapFrame_ShowQuestDetails", function(questId)
+			self:SelectTab(WQT_TabDetails);
+			if QuestMapFrame.DetailsFrame.questID == nil then
+				QuestMapFrame.DetailsFrame.questID = questId;
+			end
+			-- Anchor to small map in case details were opened through clicking a quest in the obejctive tracker
+			WQT_WorldQuestFrame:ChangeAnchorLocation(_V["LIST_ANCHOR_TYPE"].world);
+		end)	
+	
 	-- Update filters when stuff happens to the world map filters
 	local worldMapFilter;
 	
@@ -2941,21 +2946,6 @@ function WQT_CoreMixin:OnLoad()
 	hooksecurefunc("ToggleDropDownMenu", function()
 			ADD:CloseDropDownMenus();
 		end);
-	
-	-- Fix for Blizzard issue with quest details not showing the first time a quest is clicked
-	-- And (un)tracking quests on the details frame closes the frame
-	local lastQuest = nil;
-	QuestMapFrame.DetailsFrame.TrackButton:HookScript("OnClick", function(self) 
-			QuestMapFrame_ShowQuestDetails(lastQuest);
-		end)
-	
-	hooksecurefunc("QuestMapFrame_ShowQuestDetails", function(questId)
-			self:SelectTab(WQT_TabDetails);
-			if QuestMapFrame.DetailsFrame.questID == nil then
-				QuestMapFrame.DetailsFrame.questID = questId;
-			end
-			lastQuest = QuestMapFrame.DetailsFrame.questID;
-		end)
 	
 	-- Auto emisarry when clicking on one of the buttons
 	local bountyBoard = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]];

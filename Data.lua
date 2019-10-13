@@ -323,6 +323,7 @@ _V["RINGTYPE_NONE"] = 1;
 _V["RINGTYPE_REWARD"] = 2;
 _V["RINGTYPE_TIMY"] = 3;
 
+_V["WQT_COLOR_NONE"] =  CreateColor(0.45, 0.45, .45) ;
 _V["WQT_COLOR_ARMOR"] =  CreateColor(0.85, 0.6, 1) ;
 _V["WQT_COLOR_WEAPON"] =  CreateColor(1, 0.40, 1) ;
 _V["WQT_COLOR_ARTIFACT"] = CreateColor(0, 0.75, 0);
@@ -373,7 +374,7 @@ _V["SORT_OPTION_ORDER"] = {
 	,[7] = {"rewardQuality", "rewardType", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"}
 }
 _V["SORT_FUNCTIONS"] = {
-	["rewardType"] = function(a, b) if (a.reward.type ~= b.reward.type) then return a.reward.type < b.reward.type; end end
+	["rewardType"] = function(a, b) if (a.reward.type and b.reward.type and a.reward.type ~= b.reward.type) then return a.reward.type < b.reward.type; end end
 	,["rewardQuality"] = function(a, b) if (a.reward.quality and b.reward.quality and a.reward.quality ~= b.reward.quality) then return a.reward.quality > b.reward.quality; end end
 	,["canUpgrade"] = function(a, b) if (a.reward.canUpgrade and b.reward.canUpgrade and a.reward.canUpgrade ~= b.reward.canUpgrade) then return a.reward.canUpgrade and not b.reward.canUpgrade; end end
 	,["seconds"] = function(a, b) if (a.time.seconds ~= b.time.seconds) then return a.time.seconds < b.time.seconds; end end
@@ -613,6 +614,13 @@ end
 -- This is just easier to maintain than changing the entire string every time
 local _patchNotes = {
 		{["version"] = "8.2.03"
+			,["minor"] = "6"
+			,["fixes"] = {
+				"Fixed the quest log dissapearing when opening a full screen map by clicking on a quest in the objectives tracker."
+				,"Fixed and error caused by the Stranglethorn Fishing Extravaganza."
+			}
+		}
+		,{["version"] = "8.2.03"
 			,["minor"] = "5"
 			,["changes"] = {
 				"Having reward icons disabled in combination with ring type \"Default\" will now show the default brown ring with other enabled features, rather than disappear completely."
