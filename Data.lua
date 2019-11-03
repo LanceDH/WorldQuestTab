@@ -613,7 +613,18 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 local _patchNotes = {
-		{["version"] = "8.2.03"
+		{["version"] = "8.2.04"
+			,["new"] = {
+				"The entire add-on now works during combat (With the exception of LFG buttons). It's crazy, I know. This became possible after fixing an error someone reported. The cause of this error was also what was preventing changes to the list during combat."
+			}
+			,["fixes"] = {
+				"Fixed errors, and the prevention of closing the map during combat using the Esc key, while using other add-ons such as Mapster."
+				,"Map pins for 'hard watched' quests, which show up on the continent maps, will now correctly get a make-over as well."
+				,"Fixed some combat error related to LFG buttons."
+				,"Fixed being able to track bonus objectives, which would result in not being able to untrack them again."
+			}
+		}
+		,{["version"] = "8.2.03"
 			,["minor"] = "6"
 			,["fixes"] = {
 				"Fixed the quest log dissapearing when opening a full screen map by clicking on a quest in the objectives tracker."

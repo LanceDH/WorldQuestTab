@@ -337,7 +337,7 @@
 		</Scripts>
 	</Button>
 	 
-	<Button name="WQT_QuestTemplate" mixin="WQT_ListButtonMixin" hidden="true" inherits="SecureFrameTemplate" virtual="true" >
+	<Button name="WQT_QuestTemplate" mixin="WQT_ListButtonMixin" hidden="true" virtual="true" >
 		<Size>
 			<AbsDimension x="260" y="32"/>
 		</Size>
@@ -867,7 +867,7 @@
 		Main frame
 	-->
 	 
-	<Frame name="WQT_WorldQuestFrame" mixin="WQT_CoreMixin" parent="QuestMapFrame" inherits="SecureFrameTemplate" enableMouse="true" hidden="false">
+	<Frame name="WQT_WorldQuestFrame" mixin="WQT_CoreMixin" parent="QuestMapFrame" enableMouse="true" hidden="false">
 		<Size x="287" y="468"/>
 		<Anchors>
 			<Anchor point="TOPLEFT" y="-2"/>

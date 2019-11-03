@@ -1142,7 +1142,7 @@ local function ConvertOldSettings(version)
 end
 
 function WQT:UpdateFilterIndicator() 
-	if (InCombatLockdown()) then return; end
+	--if (InCombatLockdown()) then return; end
 	if (C_CVar.GetCVarBool("showTamers") and C_CVar.GetCVarBool("worldQuestFilterArtifactPower") and C_CVar.GetCVarBool("worldQuestFilterResources") and C_CVar.GetCVarBool("worldQuestFilterGold") and C_CVar.GetCVarBool("worldQuestFilterEquipment")) then
 		WQT_WorldQuestFrame.FilterButton.Indicator:Hide();
 	else
@@ -1434,19 +1434,25 @@ function WQT:OnEnable()
 	if self.settings.general.useLFGButtons then
 		WQT_WorldQuestFrame.LFGButtonPool = CreateFramePool("BUTTON", nil, "WQT_LFGEyeButtonTemplate");
 	
-		hooksecurefunc("QuestObjectiveSetupBlockButton_FindGroup", function(block, questID) 
+		hooksecurefunc("ObjectiveTracker_AddBlock", function(block)
+				local questID = block.id;
+				if (not questID) then return; end
+				
 				-- release button if it exists
 				if (block.WQTButton) then
 					WQT_WorldQuestFrame.LFGButtonPool:Release(block.WQTButton);
 					block.WQTButton = nil;
 				end
 				
-				if not block.rightButton and QuestUtils_IsQuestWorldQuest(questID) then
-					if WQT_WorldQuestFrame:ShouldAllowLFG(questID) then
+				if (not (block.groupFinderButton) and QuestUtils_IsQuestWorldQuest(questID)) then
+					if (WQT_WorldQuestFrame:ShouldAllowLFG(questID)) then
 						local button = WQT_WorldQuestFrame.LFGButtonPool:Acquire();
 						button.questId = questID;
 						button:SetParent(block);
-						QuestObjectiveSetupBlockButton_AddRightButton(block, button, block.module.buttonOffsets.groupFinder);
+						button:ClearAllPoints();
+						local offsetX = (block.rightButton or block.itemButton) and -18 or 11; 
+						button:SetPoint("TOPRIGHT", block, offsetX, 4);
+						button:Show();
 						block.WQTButton = button;
 					end
 				end
@@ -1480,10 +1486,11 @@ function WQT_ListButtonMixin:OnClick(button)
 	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	if not self.questId or self.questId== -1 then return end
 	local _, _, worldQuestType = GetQuestTagInfo(self.questId);
+	local isBonus = not worldQuestType and not self.info.isDaily;
 
 	if IsModifiedClick("QUESTWATCHTOGGLE") then
 		-- Don't track bonus objectives. The object tracker doesn't like it;
-		if (worldQuestType ~= _V["WQT_TYPE_BONUSOBJECTIVE"]) then
+		if (not isBonus) then
 			-- Only do tracking if we aren't adding the link tot he chat
 			if (not ChatEdit_TryInsertQuestLinkForQuestID(self.questId)) then 
 				if (QuestIsWatched(self.questId)) then
@@ -1504,7 +1511,7 @@ function WQT_ListButtonMixin:OnClick(button)
 		
 	elseif button == "LeftButton" then
 		-- Don't track bonus objectives. The object tracker doesn't like it;
-		if (worldQuestType ~= _V["WQT_TYPE_BONUSOBJECTIVE"]) then
+		if (not isBonus) then
 			local hardWatched = IsWorldQuestHardWatched(self.questId);
 			AddWorldQuestWatch(self.questId);
 			-- if it was hard watched, keep it that way
@@ -2241,7 +2248,7 @@ function WQT_ScrollListMixin:OnLoad()
 end
 
 function WQT_ScrollListMixin:ResetButtons()
-	if (InCombatLockdown()) then return; end
+	--if (InCombatLockdown()) then return; end
 	local buttons = self.buttons;
 	if buttons == nil then return; end
 	for i=1, #buttons do
@@ -2464,17 +2471,17 @@ function WQT_ScrollListMixin:DisplayQuestList(skipPins)
 	end
 	local mapInfo = WQT_Utils:GetCachedMapInfo(mapId or 0);
 	if (not mapInfo or WQT_WorldQuestFrame:GetAlpha() < 1 or not WQT_WorldQuestFrame.selectedTab or WQT_WorldQuestFrame.selectedTab:GetID() ~= 2) then 
-		if (not skipPins and mapInfo and mapInfo.mapType ~= Enum.UIMapType.Continent) then	
+		if (not skipPins and mapInfo) then	
 			WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
 		end
 		return 
 	end
-	if (not skipPins and mapInfo.mapType ~= Enum.UIMapType.Continent) then	
+	if (not skipPins) then	
 		WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
 	end
 	
 	-- Actual list, which we can't update in combat
-	if (InCombatLockdown()) then return; end
+	--if (InCombatLockdown()) then return; end
 	
 	local offset = HybridScrollFrame_GetOffset(self);
 	local buttons = self.buttons;
@@ -2593,7 +2600,7 @@ function WQT_FullScreenConstrainMixin:OnLoad(anchor, x, y)
 end
 
 function WQT_FullScreenConstrainMixin:OnDragStart()	
-	if(InCombatLockdown()) then return; end
+	--if(InCombatLockdown()) then return; end
 	
 	self:StartMoving();
 	local scale = self:GetEffectiveScale();
@@ -2803,7 +2810,7 @@ function WQT_CoreMixin:OnLoad()
 	self.dataProvider:OnLoad()
 	
 	self.dataProvider:HookWaitingRoomUpdate(function() 
-			if (InCombatLockdown()) then return end;
+			--if (InCombatLockdown()) then return end;
 			WQT_QuestScrollFrame:ApplySort();
 			WQT_QuestScrollFrame:FilterQuestList();
 			if WQT_WorldQuestFrame:GetAlpha() > 0 then 
@@ -3018,6 +3025,15 @@ function WQT_CoreMixin:OnLoad()
 				WQT_GroupSearch:Hide();
 			end
 		end);
+	
+	hooksecurefunc("LFGListUtil_FindQuestGroup", function(questID, isFromGreenEyeButton)
+			if (isFromGreenEyeButton) then
+				WQT_GroupSearch:Hide();
+				WQT_GroupSearch.questId = nil;
+				WQT_GroupSearch.title = nil;
+			end
+		end);
+	
 		
 	LFGListSearchPanelScrollFrame.StartGroupButton:HookScript("OnClick", function() 
 			-- If we are creating a group because we couldn't find one, show the info on the create frame
@@ -3034,6 +3050,7 @@ function WQT_CoreMixin:OnLoad()
 				WQT_GroupSearch.downArrow = true;
 				WQT_GroupSearch.questId = nil;
 				WQT_GroupSearch.title = nil;
+				WQT_GroupSearch:Hide();
 				WQT_GroupSearch:Show();
 			end
 		end)
@@ -3176,6 +3193,7 @@ function WQT_CoreMixin:SearchGroup(questInfo)
 	
 		WQT_GroupSearch.Text:SetText(_L["FORMAT_GROUP_SEARCH"]:format(id, title));
 		WQT_GroupSearch.downArrow = false;
+		WQT_GroupSearch:Hide();
 		WQT_GroupSearch:Show();
 		
 		WQT_GroupSearch.questId = id;
@@ -3236,23 +3254,34 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 end
 
 function WQT_CoreMixin:PLAYER_REGEN_DISABLED()
-	WQT_QuestScrollFrame:ResetButtons();
-	self.ScrollFrame:ScrollFrameSetEnabled(false)
-	WQT_WorldMapContainer:EnableMouse(false);
-	self:ShowCombatOverlay();
+	--WQT_QuestScrollFrame:ResetButtons();
+	--self.ScrollFrame:ScrollFrameSetEnabled(false)
+	--WQT_WorldMapContainer:EnableMouse(false);
+	--self:ShowCombatOverlay();
+	for k, block in ipairs({ObjectiveTrackerBlocksFrame:GetChildren()}) do
+		if (block.WQTButton) then
+			block.WQTButton:SetEnabled(false);
+		end
+	end
+	
 	ADD:HideDropDownMenu(1);
 end
 
 function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
-	if self:GetAlpha() == 1 then
-		self.ScrollFrame:ScrollFrameSetEnabled(true)
+	for k, block in ipairs({ObjectiveTrackerBlocksFrame:GetChildren()}) do
+		if (block.WQTButton) then
+			block.WQTButton:SetEnabled(true);
+		end
 	end
-	self.ScrollFrame:UpdateQuestList();
-	self:SelectTab(self.selectedTab);
-	WQT:UpdateFilterIndicator();
+	--if self:GetAlpha() == 1 then
+	--	self.ScrollFrame:ScrollFrameSetEnabled(true)
+	--end
+	--self.ScrollFrame:UpdateQuestList();
+	--self:SelectTab(self.selectedTab);
+	--WQT:UpdateFilterIndicator();
 	
-	WQT_WorldQuestFrame:ChangeAnchorLocation(WQT_WorldQuestFrame.anchor);
-	WQT_WorldMapContainer:EnableMouse(true);
+	--WQT_WorldQuestFrame:ChangeAnchorLocation(WQT_WorldQuestFrame.anchor);
+	--WQT_WorldMapContainer:EnableMouse(true);
 end
 
 function WQT_CoreMixin:QUEST_TURNED_IN(questId)
@@ -3331,7 +3360,7 @@ function WQT_CoreMixin:SetCvarValue(flagKey, value)
 end
 
 function WQT_CoreMixin:ShowOverlayFrame(frame, offsetLeft, offsetRight, offsetTop, offsetBottom)
-	if (not frame or InCombatLockdown()) then return end
+	if (not frame) then return end -- or InCombatLockdown()) then return end
 	offsetLeft = offsetLeft or 0;
 	offsetRight = offsetRight or 0;
 	offsetTop = offsetTop or 0;
@@ -3371,7 +3400,7 @@ end
 
 function WQT_CoreMixin:HideOverlayFrame()
 	local blocker = self.Blocker;
-	if (not blocker.CurrentOverlayFrame or InCombatLockdown()) then return end
+	if (not blocker.CurrentOverlayFrame) then return end -- or InCombatLockdown()) then return end
 	self:SetCombatEnabled(true);
 	blocker:Hide();
 	blocker.CurrentOverlayFrame:Hide();
@@ -3385,6 +3414,7 @@ function WQT_CoreMixin:HideOverlayFrame()
 end
 
 function WQT_CoreMixin:ShowCombatOverlay(manualClose)
+	if true then return end
 	local blocker = self.Blocker;
 	
 	self:HideOverlayFrame()
@@ -3405,6 +3435,7 @@ function WQT_CoreMixin:ShowCombatOverlay(manualClose)
 end
 
 function WQT_CoreMixin:HideCombatOverlay(force)
+	if true then return end
 	if (self.manualCloseOverlay and not force) then return end;
 	self:SetCombatEnabled(true);
 	self.Blocker:Hide();
@@ -3446,22 +3477,19 @@ function WQT_CoreMixin:SelectTab(tab)
 	
 	self.selectedTab = tab;
 	
-	WQT_TabNormal:SetAlpha(1);
-	WQT_TabWorld:SetAlpha(1);
-	WQT_TabNormal.Hider:SetAlpha(1);
-	WQT_TabWorld.Hider:SetAlpha(1);
-	WQT_QuestLogFiller:SetAlpha(0);
+	WQT_TabNormal:Show();
+	WQT_TabWorld:Show();
+	WQT_TabNormal.Hider:Show();
+	WQT_TabWorld.Hider:Show();
+	WQT_QuestLogFiller:Hide();
 	
-	-- because hiding stuff in combat doesn't work
-	if not InCombatLockdown() then
-		WQT_TabNormal:SetFrameLevel(WQT_TabNormal:GetParent():GetFrameLevel()+(tab == WQT_TabNormal and 8 or 1));
-		WQT_TabWorld:SetFrameLevel(WQT_TabWorld:GetParent():GetFrameLevel()+(tab == WQT_TabWorld and 8 or 1));
-	 
-		self.FilterButton:SetFrameLevel(self:GetFrameLevel());
-		self.sortButton:SetFrameLevel(self:GetFrameLevel());
-		
-		self.FilterButton:EnableMouse(true);
-	end
+	WQT_TabNormal:SetFrameLevel(WQT_TabNormal:GetParent():GetFrameLevel()+(tab == WQT_TabNormal and 8 or 1));
+	WQT_TabWorld:SetFrameLevel(WQT_TabWorld:GetParent():GetFrameLevel()+(tab == WQT_TabWorld and 8 or 1));
+	
+	self.FilterButton:SetFrameLevel(self:GetFrameLevel());
+	self.sortButton:SetFrameLevel(self:GetFrameLevel());
+	
+	self.FilterButton:EnableMouse(true);
 
 	WQT_QuestLogFiller.HiddenInfo:EnableMouse(false);
 	WQT_TabWorld:EnableMouse(true);
@@ -3470,48 +3498,33 @@ function WQT_CoreMixin:SelectTab(tab)
 	if (not QuestScrollFrame.Contents:IsShown() and not QuestMapFrame.DetailsFrame:IsShown()) or id == 1 then
 		-- Default questlog
 		WQT_QuestLogFiller.HiddenInfo:EnableMouse(true);
-		self:SetAlpha(0);
-		WQT_TabNormal.Hider:SetAlpha(0);
-		WQT_QuestLogFiller:SetAlpha(1);
+		self:Hide();
+		WQT_TabNormal.Hider:Hide();
+		WQT_QuestLogFiller:Show();
 		WQT_TabNormal.Highlight:Show();
 		WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
 		WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
 		QuestScrollFrame:Show();
-		
-		if not InCombatLockdown() then
-			self:HideOverlayFrame(true)
-			self:SetCombatEnabled(false);
-		end
+		self:HideOverlayFrame(true)
 	elseif id == 2 then
 		-- WQT
-		WQT_TabWorld.Hider:SetAlpha(0);
+		WQT_TabWorld.Hider:Hide();
 		WQT_TabWorld.Highlight:Show();
-		self:SetAlpha(1);
+		self:Show();
 		WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
 		WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
 		QuestScrollFrame:Hide();
 		self.ScrollFrame:UpdateQuestList();
-		
-		if (not InCombatLockdown() and not self.Blocker:IsShown()) then
-			self:SetFrameLevel(self:GetParent():GetFrameLevel()+3);
-			self:SetCombatEnabled(true);
-		end
 	elseif id == 3 then
 		-- Quest details
-		self:SetAlpha(0);
-		WQT_TabNormal:SetAlpha(0);
-		WQT_TabWorld:SetAlpha(0);
+		self:Hide();
+		WQT_TabNormal:Hide();
+		WQT_TabWorld:Hide();
 		QuestScrollFrame:Hide();
 		QuestMapFrame.DetailsFrame:Show();
 		WQT_TabWorld:EnableMouse(false);
 		WQT_TabNormal:EnableMouse(false);
-		if not InCombatLockdown() then
-			self.Blocker:EnableMouse(false);
-			WQT_TabWorld:EnableMouse(false);
-			WQT_TabNormal:EnableMouse(false);
-			self.FilterButton:EnableMouse(false);
-			self:SetCombatEnabled(false);
-		end
+		self:HideOverlayFrame(true);
 	end
 	WQT_WorldQuestFrame.pinHandler:UpdateMapPoI();
 end
@@ -3529,7 +3542,8 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 		WQT_WorldMapContainer:SetAlpha(0);
 	end
 	
-	if (InCombatLockdown() or not anchor) then return end
+	--if (InCombatLockdown() or not anchor) then return end
+	if (not anchor) then return end
 	
 	if (anchor == _V["LIST_ANCHOR_TYPE"].flight) then
 		WQT_WorldQuestFrame:ClearAllPoints(); 
