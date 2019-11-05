@@ -295,6 +295,8 @@ function WQT_Utils:GetCachedTypeIconData(questInfo)
 		return "QuestDaily", 17, 17, true;
 	elseif (questInfo.isQuestStart) then
 		return "QuestNormal", 17, 17, true;
+	elseif (C_QuestLog.IsThreatQuest(questInfo.questId)) then
+		return "worldquest-icon-nzoth", 14, 14, true;
 	elseif (not questType) then
 		return "QuestBonusObjective", 21, 21, true;
 	end
@@ -339,15 +341,17 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 	local color = _V["WQT_COLOR_CURRENCY"];
 	
 	if (not questInfo or not questInfo.questId) then return timeLeftSeconds, timeString, color ,timeStringShort, timeLeftMinutes end
-	timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(questInfo.questId) or 0;
-	timeLeftSeconds = C_TaskQuest.GetQuestTimeLeftSeconds(questInfo.questId) or 0;
-
+	
 	-- Time ran out, waiting for an update
-	if (questInfo.time.seconds and questInfo.time.seconds > 0 and timeLeftSeconds < 1) then 
+	if (self:QuestIsExpired(questInfo)) then
 		timeString = RAID_INSTANCE_EXPIRES_EXPIRED;
-		return timeLeftSeconds, timeString, color,timeStringShort , timeLeftMinutes 
+		timeStringShort = "Exp."
+		color = GRAY_FONT_COLOR;
+		return 0, timeString, color,timeStringShort , 0, true;
 	end
 	
+	timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(questInfo.questId) or 0;
+	timeLeftSeconds =  C_TaskQuest.GetQuestTimeLeftSeconds(questInfo.questId) or 0;
 	if ( timeLeftSeconds  and timeLeftSeconds > 0) then
 		local displayTime = timeLeftSeconds
 		if (displayTime < SECONDS_PER_HOUR  and displayTime >= SECONDS_PER_MIN ) then
@@ -385,14 +389,14 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 		timeStringShort = t..str;
 	end
 	
-	return timeLeftSeconds, timeString, color, timeStringShort ,timeLeftMinutes;
+	return timeLeftSeconds, timeString, color, timeStringShort ,timeLeftMinutes, false;
 end
 
 function WQT_Utils:GetPinTime(questInfo)
-	local seconds, _, color, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
-	local start = 0
-	local timeLeft = seconds
-	local total =0
+	local seconds, _, color, timeStringShort, _, isExpired = WQT_Utils:GetQuestTimeString(questInfo);
+	local start = 0;
+	local timeLeft = seconds;
+	local total = 0;
 	local maxTime, offset;
 	if (timeLeft > 0) then
 		if timeLeft >= 1440*60 then
@@ -418,12 +422,123 @@ function WQT_Utils:GetPinTime(questInfo)
 		total = (maxTime + offset);
 		timeLeft = (timeLeft + offset);
 	end
-	return start, total, timeLeft, seconds, color, timeStringShort;
+	return start, total, timeLeft, seconds, color, timeStringShort, isExpired;
+end
+
+function WQT_Utils:QuestIsExpired(questInfo)
+	local timeLeftSeconds =  C_TaskQuest.GetQuestTimeLeftSeconds(questInfo.questId) or 0;
+	return questInfo.time.seconds and questInfo.time.seconds > 0 and timeLeftSeconds < 1;
 end
 
 function WQT_Utils:GetMapInfoForQuest(questId)
 	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
 	return WQT_Utils:GetCachedMapInfo(zoneId);
+end
+
+function WQT_Utils:ItterateAllBonusObjectivePins(func)
+	if(WorldMapFrame.pinPools.BonusObjectivePinTemplate) then
+		for mapPin in pairs(WorldMapFrame.pinPools.BonusObjectivePinTemplate.activeObjects) do
+			func(mapPin)
+		end
+	end
+	if(WorldMapFrame.pinPools.ThreatObjectivePinTemplate) then
+		for mapPin in pairs(WorldMapFrame.pinPools.ThreatObjectivePinTemplate.activeObjects) do
+			func(mapPin)
+		end
+	end
+end
+
+function WQT_Utils:ShowQuestTooltip(button, questInfo)
+	GameTooltip:SetOwner(button, "ANCHOR_RIGHT");
+
+	-- In case we somehow don't have data on this quest, even through that makes no sense at this point
+	if (not questInfo.questId or not HaveQuestData(questInfo.questId)) then
+		GameTooltip:SetText(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
+		GameTooltip.recalculatePadding = true;
+		-- Add debug lines
+		WQT:AddDebugToTooltip(GameTooltip, questInfo);
+		GameTooltip:Show();
+		return;
+	end
+	
+	local title, factionID, capped = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
+	local _, _, _, rarity = GetQuestTagInfo(questInfo.questId);
+	local qualityColor = WORLD_QUEST_QUALITY_COLORS[rarity or 1];
+	
+	GameTooltip:SetText(title, qualityColor.r, qualityColor.g, qualityColor.b, 1, true);
+	
+	if ( factionID ) then
+		local factionName = GetFactionInfoByID(factionID);
+		if ( factionName ) then
+			if (capped) then
+				GameTooltip:AddLine(factionName, GRAY_FONT_COLOR:GetRGB());
+			else
+				GameTooltip:AddLine(factionName);
+			end
+		end
+	end
+
+	-- Add time
+	local seconds, timeString, timeColor, _, _, isExpired = WQT_Utils:GetQuestTimeString(questInfo, true, true)
+	if (seconds > 0 or isExpired) then
+		timeColor = seconds <= SECONDS_PER_HOUR  and timeColor or NORMAL_FONT_COLOR;
+		GameTooltip:AddLine(BONUS_OBJECTIVE_TIME_LEFT:format(timeString), timeColor.r, timeColor.g, timeColor.b);
+	end
+
+	local numObjectives = C_QuestLog.GetNumQuestObjectives(questInfo.questId);
+	for objectiveIndex = 1, numObjectives do
+		local objectiveText, _, finished = GetQuestObjectiveInfo(questInfo.questId, objectiveIndex, false);
+		if ( objectiveText and #objectiveText > 0 ) then
+			local objectiveColor = finished and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
+			GameTooltip:AddLine(QUEST_DASH .. objectiveText, objectiveColor.r, objectiveColor.g, objectiveColor.b, true);
+		end
+	end
+
+	local percent = C_TaskQuest.GetQuestProgressBarInfo(questInfo.questId);
+	if ( percent ) then
+		GameTooltip_ShowProgressBar(GameTooltip, 0, 100, percent, PERCENTAGE_STRING:format(percent));
+	end
+
+	if (questInfo.reward.type == WQT_REWARDTYPE.missing) then
+		GameTooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
+	else
+		GameTooltip_AddQuestRewardsToTooltip(GameTooltip, questInfo.questId);
+		
+		-- reposition compare frame
+		if((questInfo.reward.type == WQT_REWARDTYPE.equipment) and GameTooltip.ItemTooltip:IsShown()) then
+			if IsModifiedClick("COMPAREITEMS") or C_CVar.GetCVarBool("alwaysCompareItems") then
+				-- Setup compare tootltips
+				GameTooltip_ShowCompareItem(GameTooltip.ItemTooltip.Tooltip);
+				
+				-- If there is room to the right, give priority to show compare tooltips to the right of the tooltip
+				local totalWidth = 0;
+				if ( ShoppingTooltip1:IsShown()  ) then
+						totalWidth = totalWidth + ShoppingTooltip1:GetWidth();
+				end
+				if ( ShoppingTooltip2:IsShown()  ) then
+						totalWidth = totalWidth + ShoppingTooltip2:GetWidth();
+				end
+				
+				if GameTooltip.ItemTooltip.Tooltip:GetRight() + totalWidth < GetScreenWidth() and ShoppingTooltip1:IsShown() then
+					ShoppingTooltip1:ClearAllPoints();
+					ShoppingTooltip1:SetPoint("TOPLEFT", GameTooltip.ItemTooltip.Tooltip, "TOPRIGHT");
+					
+					ShoppingTooltip2:ClearAllPoints();
+					ShoppingTooltip2:SetPoint("TOPLEFT", ShoppingTooltip1, "TOPRIGHT");
+				end
+				
+				-- Set higher frame level in case things overlap
+				local level = GameTooltip:GetFrameLevel();
+				ShoppingTooltip1:SetFrameLevel(level +2);
+				ShoppingTooltip2:SetFrameLevel(level +1);
+			end
+		end
+	end
+	
+	WQT:AddDebugToTooltip(GameTooltip, questInfo);
+
+	GameTooltip:Show();
+	GameTooltip.recalculatePadding = true;
 end
 
 ----------------------------

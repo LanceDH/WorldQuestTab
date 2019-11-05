@@ -4,7 +4,7 @@
 addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 addon.externals = {};
 addon.variables = {};
-addon.debug = false;
+addon.debug = true;
 addon.WQT_Utils = {};
 local WQT_Utils = addon.WQT_Utils;
 local _L = addon.L;
@@ -60,16 +60,20 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 	if (not addon.debug) then return end;
 	level = level or 0;
 	local color = LIGHTBLUE_FONT_COLOR;
+	if(level == 0) then
+		AddIndentedDoubleLine(tooltip, "WQT debug info:", "", 0, color);
+	end
+	
 	-- First all non table values;
 	for key, value in pairs(questInfo) do
 		if ((type(value) ~= "table" or value.GetRGBA) and type(value) ~= "function") then
-			AddIndentedDoubleLine(tooltip, key, value, level, color);
+			AddIndentedDoubleLine(tooltip, key, value, level+1, color);
 		end
 	end
 	-- Actual tables
 	for key, value in pairs(questInfo) do
 		if (type(value) == "table" and not value.GetRGBA and key ~= "debug") then
-			AddIndentedDoubleLine(tooltip, key, "", level, color);
+			AddIndentedDoubleLine(tooltip, key, "", level+1, color);
 			self:AddDebugToTooltip(tooltip, value, level + 1)
 		end
 	end
@@ -77,7 +81,7 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 	if(level == 0 and questInfo.questId) then
 		color = GRAY_FONT_COLOR;
 		
-		AddIndentedDoubleLine(tooltip, "debug only", "", 0, color);
+		AddIndentedDoubleLine(tooltip, "Through functions:", "", 0, color);
 		local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
 		AddIndentedDoubleLine(tooltip, "title", title, 1, color);
 		local _, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questInfo.questId);
@@ -93,6 +97,7 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		AddIndentedDoubleLine(tooltip, "timeString", timeString, 2, color);
 		AddIndentedDoubleLine(tooltip, "color", timeColor, 2, color);
 		AddIndentedDoubleLine(tooltip, "timeStringShort", timeStringShort, 2, color);
+		AddIndentedDoubleLine(tooltip, "isExpired", WQT_Utils:QuestIsExpired(questInfo), 2, color);
 		-- Faction
 		local factionInfo = WQT_Utils:GetFactionDataInternal(factionId);
 		AddIndentedDoubleLine(tooltip, "faction", "", 1, color);
@@ -109,7 +114,6 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		AddIndentedDoubleLine(tooltip, "parentMapID", mapInfo.parentMapID, 2, color);
 		AddIndentedDoubleLine(tooltip, "mapType", mapInfo.mapType, 2, color);
 	end
-	
 end
 
 local FORMAT_VERSION_MINOR = "%s|cFF888888.%s|r"
@@ -221,6 +225,7 @@ local WQT_KALIMDOR = {
 	[81] 	= {["x"] = 0.42, ["y"] = 0.82} -- Silithus
 	,[64]	= {["x"] = 0.5, ["y"] = 0.72} -- Thousand Needles
 	,[249]	= {["x"] = 0.47, ["y"] = 0.91} -- Uldum
+	,[1527]	= {["x"] = 0.47, ["y"] = 0.91} -- Uldum BfA
 	,[71]	= {["x"] = 0.55, ["y"] = 0.84} -- Tanaris
 	,[78]	= {["x"] = 0.5, ["y"] = 0.81} -- Ungoro
 	,[69]	= {["x"] = 0.43, ["y"] = 0.7} -- Feralas
@@ -301,6 +306,7 @@ local WQT_PANDARIA = {
 	,[507]	= {["x"] = 0.48, ["y"] = 0.05} -- Isle of Giants
 	,[388]	= {["x"] = 0.32, ["y"] = 0.45} -- Townlong Steppes
 	,[504]	= {["x"] = 0.2, ["y"] = 0.11} -- Isle of Thunder
+	,[1530]	= {["x"] = 0.51, ["y"] = 0.53} -- Vale Of Eternal Blossom BfA
 }
 local WQT_DRAENOR = {
 	[550]	= {["x"] = 0.24, ["y"] = 0.49} -- Nagrand
@@ -527,6 +533,8 @@ _V["WQT_ZONE_EXPANSIONS"] = {
 		-- Classic zones with BfA WQ
 		,[14] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Arathi Highlands
 		,[62] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Darkshore
+		,[1527] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Uldum
+		,[1530] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Vale of Eternam Blossom
 
 		,[619] = LE_EXPANSION_LEGION -- Broken Isles
 		,[630] = LE_EXPANSION_LEGION -- Azsuna
@@ -605,6 +613,7 @@ _V["WQT_FACTION_DATA"] = {
 	,[2373] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Horde" ,["texture"] = 2909044 } -- Unshackled
 	,[2391] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 2909316 } -- Rustbolt
 	,[2400] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Alliance" ,["texture"] = 2909043 } -- Waveblade Ankoan
+	,[2417] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 3068678 } -- Uldum Accord
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
@@ -613,18 +622,7 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 local _patchNotes = {
-		{["version"] = "8.2.04"
-			,["new"] = {
-				"The entire add-on now works during combat (With the exception of LFG buttons). It's crazy, I know. This became possible after fixing an error someone reported. The cause of this error was also what was preventing changes to the list during combat."
-			}
-			,["fixes"] = {
-				"Fixed errors, and the prevention of closing the map during combat using the Esc key, while using other add-ons such as Mapster."
-				,"Map pins for 'hard watched' quests, which show up on the continent maps, will now correctly get a make-over as well."
-				,"Fixed some combat error related to LFG buttons."
-				,"Fixed being able to track bonus objectives, which would result in not being able to untrack them again."
-			}
-		}
-		,{["version"] = "8.2.03"
+		{["version"] = "8.2.03"
 			,["minor"] = "6"
 			,["fixes"] = {
 				"Fixed the quest log dissapearing when opening a full screen map by clicking on a quest in the objectives tracker."
