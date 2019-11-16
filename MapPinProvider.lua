@@ -12,13 +12,26 @@ local _pinType = {
 	
 local _pinTypeScales = {
 		[_pinType.zone] = 1
-		,[_pinType.continent] = 0.9
+		,[_pinType.continent] = 1
 		,[_pinType.world] = 0.5
 	}
+	
+------------------------------------
+-- Locals
+------------------------------------
+	
+local function OnPinRelease(pool, pin)
+	pin.questID = nil;
+	pin.nudgeX = 0;
+	pin.nudgeY = 0;
+	pin.updateTime = 0;
+	pin.updateInterval = 1;
+	pin.isExpired = false;
+	pin.isFaded = false;
+	pin:Hide();
+	pin:ClearAllPoints();
+end
 
-------------------------------------
--- DataProvider
-------------------------------------
 local function GetPinType(parentMapFrame, mapType, questInfo, settingsContinentPins) 
 	if (not questInfo.passedFilter) then
 		return 
@@ -27,7 +40,8 @@ local function GetPinType(parentMapFrame, mapType, questInfo, settingsContinentP
 		return _pinType.zone;
 	end
 	
-	if (mapType == Enum.UIMapType.Zone) then
+	-- Anything deeper than a continent counts as a zone
+	if (mapType >= Enum.UIMapType.Zone) then
 		return _pinType.zone;
 	end
 	-- Maybe at some point
@@ -39,14 +53,39 @@ local function GetPinType(parentMapFrame, mapType, questInfo, settingsContinentP
 	end
 end
 
+------------------------------------
+-- DataProvider
+------------------------------------
+-- Init()
+-- RemoveAllData()
+-- RefreshAllData()
+-- FixOverlaps(canvasRatio, isFlightMap)
+-- UpdateAllPlacements()
+-- UpdateQuestPings()
+-- SetQuestIDPinged(questID, shouldPing)
+
 WQT_PinDataProvider = {};
+
+function WQT_PinDataProvider:Init()
+	self.pinPool = CreateFramePool("BUTTON", nil, "WQT_PinTemplate", OnPinRelease);
+	self.activePins = {};
+	self.pingedQuests = {};
+	self.hookedCanvasChanges = {};
+	
+	WQT_WorldQuestFrame:RegisterCallback("UpdateQuestList", function() 
+			self:RefreshAllData();
+		end);
+end
 
 function WQT_PinDataProvider:RemoveAllData()
 	self.pinPool:ReleaseAll();
 end
 
-function WQT_PinDataProvider:RefreshAllData(questList)
+function WQT_PinDataProvider:RefreshAllData()
 	self:RemoveAllData();
+	if (WQT_Utils:GetSetting("pin", "disablePoI")) then return; end
+	WQT_WorldQuestFrame:HideOfficialMapPins();
+	
 	local parentMapFrame;
 	local isFlightMap = false;
 	if (WorldMapFrame:IsShown()) then
@@ -56,24 +95,28 @@ function WQT_PinDataProvider:RefreshAllData(questList)
 		isFlightMap = true;
 	end
 	
-	
-	
+	-- If the Quest details are shown, keep all pins hidden.
+	if (QuestMapFrame.DetailsFrame:IsShown()) then
+		return;
+	end
+
 	if (not parentMapFrame) then return; end
 	local mapID = parentMapFrame:GetMapID();
 	local settingsContinentPins = WQT_Utils:GetSetting("pin", "continentPins");
 	local mapInfo = WQT_Utils:GetCachedMapInfo(mapID);
-
+	local questList =  WQT_WorldQuestFrame.dataProvider:GetIterativeList();
 	local canvas = parentMapFrame:GetCanvas();
-	local index = 0;
+	
+	wipe(self.activePins);
 	for k, questInfo in ipairs(questList) do
 		local pinType = GetPinType(parentMapFrame, mapInfo.mapType, questInfo, settingsContinentPins);
 		if (pinType) then
 			local posX, posY = C_TaskQuest.GetQuestLocation(questInfo.questId, mapID);
 			if (posX) then
-				index = index + 1;
 				local pin = self.pinPool:Acquire();
 				pin:SetParent(canvas);
-				pin:Setup(questInfo, index * 2, posX, posY, pinType, parentMapFrame);
+				tinsert(self.activePins, pin);
+				pin:Setup(questInfo, #self.activePins, posX, posY, pinType, parentMapFrame);
 				if (self.pingedQuests[pin.questID]) then
 					pin:Focus();
 				else
@@ -83,13 +126,58 @@ function WQT_PinDataProvider:RefreshAllData(questList)
 		end
 	end
 	
-	print(mapID, "(", index, "/", #questList, ")");
+	-- Slightly spread out overlapping pins
+	self:FixOverlaps(canvas:GetWidth()/canvas:GetHeight(), isFlightMap);
+	self:UpdateAllPlacements();
 	
+	self:UpdateQuestPings();
+	
+	print(mapID, "(", #self.activePins, "/", #questList, ")");
+
 	if (not self.hookedCanvasChanges[parentMapFrame]) then
 		hooksecurefunc(parentMapFrame, "OnCanvasScaleChanged", function() self:UpdateAllPlacements(); end);
 		self.hookedCanvasChanges[parentMapFrame] = true;
 	end
 	
+end
+
+function WQT_PinDataProvider:FixOverlaps(canvasRatio, isFlightMap)
+	local maxOverlap = 0.01 * (isFlightMap and 0.5 or 1);
+	
+	for k1, pinA in ipairs(self.activePins) do
+		for k2, pinB in ipairs(self.activePins) do
+			if (pinA ~= pinB) then
+				local aX, aY = pinA:GetNudgedPosition();
+				local bX, bY = pinB:GetNudgedPosition();
+				local distanceSquared = SquaredDistanceBetweenPoints(aX, aY, bX, bY);
+				if (distanceSquared < maxOverlap * maxOverlap) then
+					
+					local distance = math.sqrt(distanceSquared);
+					local halfDifference = (maxOverlap - distance)/2;
+					local vec;
+					if (distance == 0) then
+						-- Same position, have to just push them somewhere
+						vec = CreateVector2D(1, 0);
+					else
+						-- Push them away from the other pin
+						vec = CreateVector2D(pinA.posX - pinB.posX, pinA.posY - pinB.posY);
+						vec:Normalize();
+					end
+					vec:ScaleBy(halfDifference);
+					pinA:SetNudge(vec:GetXY())
+					-- Push the second one in the opposite direction
+					vec:ScaleBy(-1);
+					pinB:SetNudge(vec:GetXY());
+					
+					-- debug check
+					local aX, aY = pinA:GetNudgedPosition();
+					local bX, bY = pinB:GetNudgedPosition();
+					local distanceSquared = SquaredDistanceBetweenPoints(aX, aY, bX, bY);
+					print(distance, "->", math.sqrt(distanceSquared), C_TaskQuest.GetQuestInfoByQuestID(pinA.questID), C_TaskQuest.GetQuestInfoByQuestID(pinB.questID), "")
+				end
+			end
+		end
+	end
 end
 
 function WQT_PinDataProvider:UpdateAllPlacements()
@@ -98,33 +186,113 @@ function WQT_PinDataProvider:UpdateAllPlacements()
 	end
 end
 
-local function OnPinRelease(pool, pin)
-	pin.questID = nil;
-	pin:Hide();
-	pin:ClearAllPoints();
-end
+function WQT_PinDataProvider:UpdateQuestPings()
+	local settingPinFadeOnPing = WQT_Utils:GetSetting("pin", "fadeOnPing");
+	local fadeOthers = false;
+	
+	if (settingPinFadeOnPing) then
+		for pin in pairs(self.pingedQuests) do
+			fadeOthers = true;
+			break;
+		end
+	end
 
-function WQT_PinDataProvider:Init()
-	self.pinPool = CreateFramePool("BUTTON", nil, "WQT_PinTemplate", OnPinRelease);
-	self.pingedQuests = {};
-	self.hookedCanvasChanges = {}
+	if (fadeOthers) then
+		for pin in self.pinPool:EnumerateActive() do
+			if (not self.pingedQuests[pin.questID])then
+				pin:FadeOut();
+			end
+		end
+	else
+		-- Delay until next frame to prevent freezing when quickly hovering over a lot of quests
+		if (not self.delayedFadeTimer) then
+			self.delayedFadeTimer = C_Timer.NewTicker(0, function()
+					self.delayedFadeTimer = nil;
+			
+					if (settingPinFadeOnPing) then
+						for pin in pairs(self.pingedQuests) do
+							return;
+						end
+					end
+			
+					for pin in self.pinPool:EnumerateActive() do
+						if (not self.pingedQuests[pin.questID])then
+							if (pin.isFaded) then
+								pin:FadeIn();
+							end
+						end
+					end
+				end, 1);
+		end
+	end
 end
 
 function WQT_PinDataProvider:SetQuestIDPinged(questID, shouldPing)
+	if (not questID) then return; end
 	self.pingedQuests[questID] = shouldPing or nil;
 	
+	-- Official pins
+	if (WQT_Utils:GetSetting("pin", "disablePoI")) then 
+		if (not shouldPing) then return; end
+		if (WorldMapFrame:IsShown()) then
+			local WQProvider = WQT_Utils:GetMapWQProvider();
+			if (WQProvider) then
+				WQProvider:PingQuestID(questID);
+			end
+		end
+		if (FlightMapFrame and FlightMapFrame:IsShown()) then
+			local FlightWQProvider = WQT_Utils:GetFlightWQProvider();
+			if (FlightWQProvider) then
+				FlightWQProvider:PingQuestID(questID);
+			end
+		end
+		
+		return;
+	end 
+
+	-- Custom pins
 	for pin in self.pinPool:EnumerateActive() do
-		if (self.pingedQuests[pin.questID]) then
-			pin:Focus(true);
-		else
-			pin:ClearFocus();
+		if (pin.questID == questID) then
+			if (shouldPing) then
+				pin:Focus(true);
+			else
+				pin:ClearFocus();
+			end
+			break;
 		end
 	end
+	
+	self:UpdateQuestPings();
+end
+
+-- Temporary for smooth WQTU update
+function WQT_PinDataProvider:ShowHighlightOnPinForQuestId(questID)
+	self:SetQuestIDPinged(questID, true);
+end
+
+function WQT_PinDataProvider:HideHighlightOnPinForQuestId(questID)
+	self:SetQuestIDPinged(questID, false);
 end
 
 ------------------------------------
 -- Pin
 ------------------------------------
+-- OnLoad()
+-- SetupCanvasType(pinType, parentMapFrame, isWatched)
+-- Setup(questInfo, index, x, y, pinType, parentMapFrame)
+-- OnUpdate(elapsed)
+-- UpdatePinTime()
+-- UpdatePlacement()
+-- OnEnter()
+-- OnLeave()
+-- OnClick(button)
+-- ApplyScaledPosition(manualScale)
+-- Focus(playPing)
+-- ClearFocus()
+-- FadeIn()
+-- FadeOut()
+-- GetNudgedPosition()
+-- SetNudge(x, y)
 
 WQT_PinMixin = {};
 
@@ -132,12 +300,6 @@ function WQT_PinMixin:OnLoad()
 	self.UpdateTooltip = function() WQT_Utils:ShowQuestTooltip(self, self.questInfo) end;
 	self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 	self.updateTime = 0;
-end
-
-function WQT_PinMixin:OnShow()
-end
-
-function WQT_PinMixin:OnHide()
 end
 
 function WQT_PinMixin:SetupCanvasType(pinType, parentMapFrame, isWatched)
@@ -164,13 +326,12 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.questInfo = questInfo;
 	self.questID = questInfo.questId;
 
-	local scale = self.startScale;
+	local scale = (WQT_Utils:GetSetting("pin", "bigPoI") and 1.15 or 1);
 	local iconDistance =  12;
 	local seconds, _, color, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
 	local _, _, worldQuestType, rarity, isElite = GetQuestTagInfo(questInfo.questId);
 	local isBonus = not worldQuestType;
 
-	scale = scale * (WQT_Utils:GetSetting("pin", "bigPoI") and 1.15 or 1);
 	self.scale = scale
 	self:SetScale(scale);
 	self:SetAlpha(self.startAlpha);
@@ -296,26 +457,20 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	local timeDistance = (showTypeIcon or showRewardIcon) and 0 or -5;
 	local showTimeString = settingPinTimeLabel and timeStringShort ~= "";
 	self.Time:SetShown(showTimeString);
-	self.TimeBg:SetAlpha(showTimeString and 0.65 or 0);
-	if(showTimeString) then
-		self.Time:SetFontObject(flightPinNr and "WQT_TimeFontOutlineBig" or "WQT_NumberFontOutline");
-		self.Time:SetHeight(flightPinNr and 15 or 6);
-		self.Time:SetPoint("TOP", self:GetParent(), "BOTTOM", 2, -7);
-		--self.Time:SetText(timeStringShort)
-		self.Time:SetVertexColor(color.r, color.g, color.b) 
+	self.TimeBG:SetShown(showTimeString);
+	local timeOffset = 4;
+	if (showTypeIcon and rewardTypeAtlas) then
+		timeOffset = 2;
+	elseif (showTypeIcon or  rewardTypeAtlas) then
+		timeOffset = 0;
 	end
+	self.Time:SetPoint("TOP", self, "BOTTOM", 1, timeOffset);
 
 	self.posX = x;
 	self.posY = y;
 	self.baseFrameLevel = 2200 + (self.index or 0);
-	self.updateTime = 0;
-	self.updateInterval = 1;
-	self.isExpired = false;
 	self:UpdatePinTime();
 	self:UpdatePlacement();
-	
-	return;
-	
 end
 
 function WQT_PinMixin:OnUpdate(elapsed)
@@ -324,17 +479,13 @@ function WQT_PinMixin:OnUpdate(elapsed)
 	self.updateTime = self.updateTime - self.updateInterval;
 	
 	local timeLeft = self:UpdatePinTime();
+	
 	-- For the last minute we want to update every second for the time label
-	self.updateInterval = timeLeft > 61 and 60 or 1;
+	self.updateInterval = timeLeft > SECONDS_PER_MIN * 16 and 60 or 1;
 end
 
 function WQT_PinMixin:UpdatePinTime()
-	if (WQT_Utils:QuestIsExpired(self.questInfo)) then
-		self.isExpired = true;
-		return SECONDS_PER_HOUR;
-	end
-	
-	local start, total, timeLeft, seconds, color, timeStringShort = WQT_Utils:GetPinTime(self.questInfo);
+	local start, total, timeLeft, seconds, color, timeStringShort, isExpired = WQT_Utils:GetPinTime(self.questInfo);
 	
 	if (WQT_Utils:GetSetting("pin", "ringType") ==  _V["RINGTYPE_TIME"]) then
 		local r, g, b = color:GetRGB();
@@ -352,9 +503,15 @@ function WQT_PinMixin:UpdatePinTime()
 	end
 	
 	if(WQT_Utils:GetSetting("pin", "timeLabel")) then
-		--self.Time:SetText(timeStringShort)
-		self.Time:SetVertexColor(color.r, color.g, color.b) 
+		self.Time:SetText(timeStringShort);
+		self.Time:SetVertexColor(color.r, color.g, color.b);
 	end
+	
+	if (isExpired) then
+		self.isExpired = true;
+		return SECONDS_PER_HOUR;
+	end
+	
 	return timeLeft;
 end
 
@@ -429,8 +586,8 @@ end
 function WQT_PinMixin:ApplyScaledPosition(manualScale)
 	local canvas = self:GetParent();
 	local scale = manualScale or self.scale / canvas:GetScale();
-	local posX = (canvas:GetWidth() * self.posX)/scale;
-	local posY = -(canvas:GetHeight() * self.posY)/scale;
+	local posX = (canvas:GetWidth() * (self.posX + self.nudgeX))/scale;
+	local posY = -(canvas:GetHeight() * (self.posY + self.nudgeY))/scale;
 	self:ClearAllPoints();
 	self:SetPoint("CENTER", canvas, "TOPLEFT", posX, posY);
 end
@@ -439,6 +596,13 @@ function WQT_PinMixin:Focus(playPing)
 	if (not self.questID) then return; end
 	local canvas = self:GetParent();
 	local parentScaleFactor = self.scale / canvas:GetScale();
+	
+	self.fadeInAnim:Stop();
+	self.fadeOutAnim:Stop();
+	
+	self.isFaded = false;
+	
+	self.isFocussed = true;
 	self:SetAlpha(1);
 	self:SetScale(parentScaleFactor);
 	self:Show();
@@ -460,6 +624,7 @@ function WQT_PinMixin:ClearFocus()
 	self:SetScale(self.currentScale);
 	self:SetShown(self.currentAlpha > 0.05);
 	self:ApplyScaledPosition(self.currentScale);
+	self.isFocussed = false;
 	
 	if (self.ringAnim:IsPlaying()) then
 		self.Ping:Hide();
@@ -468,4 +633,35 @@ function WQT_PinMixin:ClearFocus()
 		self.ringAnim2:Stop();
 	end
 	self:SetFrameLevel(self.baseFrameLevel);
+end
+
+function WQT_PinMixin:FadeIn()
+	if(self.fadeOutAnim:IsPlaying()) then self.fadeOutAnim:Stop(); end
+
+	self.isFaded = false;
+
+	if (not self.fadeInAnim:IsPlaying()) then
+		self:SetAlpha(0.5);
+		self.fadeInAnim.Alpha:SetFromAlpha(self:GetAlpha());
+		self.fadeInAnim.Alpha:SetToAlpha(self.currentAlpha);
+		self.fadeInAnim:Play();
+	end
+end
+
+function WQT_PinMixin:FadeOut()
+	if(self.fadeInAnim:IsPlaying()) then self.fadeInAnim:Stop(); end
+	self.isFaded = true;
+	if (not self.fadeOutAnim:IsPlaying()) then
+		self.fadeOutAnim.Alpha:SetFromAlpha(self:GetAlpha());
+		self.fadeOutAnim:Play();
+	end
+end
+
+function WQT_PinMixin:GetNudgedPosition()
+	return self.posX + self.nudgeX, self.posY + self.nudgeY;
+end
+
+function WQT_PinMixin:SetNudge(x, y)
+	self.nudgeX = self.nudgeX + x;
+	self.nudgeY = self.nudgeY + y;
 end

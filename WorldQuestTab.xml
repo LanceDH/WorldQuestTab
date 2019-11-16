@@ -185,7 +185,7 @@
 		</Scripts>
 	</Button>
 	 
-	<Button name="WQT_QuestTemplate" mixin="WQT_ListButtonMixin" hidden="true" virtual="true" >
+	<Button name="WQT_QuestTemplate" mixin="WQT_ListButtonMixin" hidden="true" virtual="true" registerForClicks="LeftButtonUp, RightButtonUp" >
 		<Size>
 			<AbsDimension x="260" y="32"/>
 		</Size>
@@ -401,13 +401,7 @@
 
 		<Scripts>
 			<OnClick method="OnClick" />
-			<OnLoad>
-				self.TrackedBorder:SetFrameLevel(self:GetFrameLevel() + 2);
-				self.Highlight:SetFrameLevel(self:GetFrameLevel() + 2);
-				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
-				self:EnableKeyboard(false);
-				self.UpdateTooltip = self.OnEnter;
-			</OnLoad>
+			<OnLoad method="OnLoad"/>
 			<OnUpdate method="OnUpdate" />
 			<OnEnter method="OnEnter" />
 			<OnLeave method="OnLeave" />
@@ -532,15 +526,15 @@
 		
 		<Scripts>
 			<OnClick>
-				if (InCombatLockdown()) then return; end
 				self.isSelected = not self.isSelected;
+				
 				if (self.container) then
 					if (self.isSelected) then
-						self.container:SetAlpha(1);
+						self.container:Show();
 						self.Selected:SetAlpha(0.5);
 						WQT_WorldQuestFrame:SelectTab(WQT_TabWorld);
 					else
-						self.container:SetAlpha(0);
+						self.container:Hide();
 						self.Selected:SetAlpha(0);
 						WQT_WorldQuestFrame:SelectTab(WQT_TabNormal);
 					end
@@ -557,7 +551,7 @@
 		</Scripts>
 	</Button>
 	
-	<Frame name="WQT_OldTaxiMapContainer" inherits="WQT_ContainerTemplate" hidden="false" alpha="0" parent="TaxiFrame">
+	<Frame name="WQT_OldTaxiMapContainer" inherits="WQT_ContainerTemplate" hidden="true" parent="TaxiFrame">
 		<Anchors>
 			<Anchor point="BOTTOMLEFT" relativeTo="TaxiFrame" relativePoint="BOTTOMRIGHT" x="-6" y="0"/>
 		</Anchors>
@@ -578,7 +572,7 @@
 		</Scripts>
 	</Frame>
 	
-	<Frame name="WQT_FlightMapContainer" inherits="WQT_ContainerTemplate" hidden="false" alpha="0">
+	<Frame name="WQT_FlightMapContainer" inherits="WQT_ContainerTemplate" hidden="true">
 		<Layers>
 			<Layer level="BACKGROUND">
 				<Texture parentKey="Background" file="Interface\FrameGeneral\UI-Background-Rock" horizTile="true" vertTile="true">
@@ -591,7 +585,7 @@
 		</Layers>
 	</Frame>
 	
-	<Frame name="WQT_WorldMapContainer" inherits="WQT_ContainerTemplate" mixin="WQT_FullScreenConstrainMixin" parent="WorldMapFrame" hidden="false" alpha="1" enableMouse="true" movable="true">
+	<Frame name="WQT_WorldMapContainer" inherits="WQT_ContainerTemplate" mixin="WQT_ConstrainedChildMixin" parent="WorldMapFrame" hidden="false" enableMouse="true" movable="true">
 		<Layers>
 			<Layer level="BACKGROUND">
 				<Texture parentKey="Background"  horizTile="true" vertTile="true">
@@ -656,7 +650,7 @@
 		</Scripts>
 	</Frame>
 	
-	<Button name="WQT_OldTaxiMapContainerButton" inherits="WQT_ContainerButtonTemplate" hidden="false" alpha="1" parent="TaxiFrame">
+	<Button name="WQT_OldTaxiMapContainerButton" inherits="WQT_ContainerButtonTemplate" hidden="false" parent="TaxiFrame">
 		<Anchors>
 			<Anchor point="BOTTOMRIGHT" relativeTo="TaxiFrame" relativePoint="BOTTOMRIGHT" x="-8" y="8"/>
 		</Anchors>
@@ -667,7 +661,7 @@
 		</Scripts>
 	</Button>
 	
-	<Button name="WQT_FlightMapContainerButton" inherits="WQT_ContainerButtonTemplate" hidden="false" alpha="1">
+	<Button name="WQT_FlightMapContainerButton" inherits="WQT_ContainerButtonTemplate" hidden="false">
 		<Scripts>
 			<OnLoad>
 				self.container = WQT_FlightMapContainer;
@@ -675,7 +669,7 @@
 		</Scripts>
 	</Button>
 	
-	<Button name="WQT_WorldMapContainerButton" inherits="WQT_ContainerButtonTemplate" mixin="WQT_FullScreenConstrainMixin" hidden="false" alpha="1" movable="true">
+	<Button name="WQT_WorldMapContainerButton" inherits="WQT_ContainerButtonTemplate" mixin="WQT_ConstrainedChildMixin" hidden="false" movable="true">
 		<Scripts>
 			<OnLoad>
 				self:RegisterForDrag("RightButton")
@@ -689,13 +683,9 @@
 			<OnClick inherit="prepend">
 				if (InCombatLockdown()) then return end
 				if (self.isSelected) then
-					WQT_WorldMapContainer:EnableMouse(true);
-					WQT_WorldMapContainer.DragFrame:EnableMouse(true);
-					WQT_WorldMapContainer:SetAlpha(1);
+					WQT_WorldMapContainer:Show();
 				else
-					WQT_WorldMapContainer:EnableMouse(false);
-					WQT_WorldMapContainer.DragFrame:EnableMouse(false);
-					WQT_WorldMapContainer:SetAlpha(0);
+					WQT_WorldMapContainer:Hide();
 				end
 				WQT_WorldMapContainer:ConstrainPosition();
 			</OnClick>

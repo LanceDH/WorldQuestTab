@@ -21,6 +21,9 @@ L["FILTER_PINS"]	= "Filter Map Pins";
 L["FILTER_PINS_TT"]	= "Applies filters to pins on the map.";
 L["PIN_SHOW_CONTINENT"]	= "Pins On Continent";
 L["PIN_SHOW_CONTINENT_TT"]	= "Show all quests on continent maps.";
+L["PIN_FADE_ON_PING"]	= "Fade On Higlight";
+L["PIN_FADE_ON_PING_TT"]	= "When a map pin is being highlighted, fade out all others for better visibility.";
+
 L["PIN_REWARDS"]	= "Reward texture";
 L["PIN_REWARDS_TT"]	= "Show the texture of the reward as the pin icon.";
 L["PIN_TIME"]		= "Time Left";

@@ -103,19 +103,18 @@
 				</Texture>
 			</Layer>
 			<Layer level="ARTWORK" textureSubLevel="5">
-				 <FontString parentKey="Time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE">
-					<size y="18" />
+				 <FontString parentKey="Time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE" text="Fuck">
+					<size y="18"/>
 					<Anchors>
 						<Anchor point="TOP" relativePoint="BOTTOM" x="2" y="2"/>
 					</Anchors>
 				</FontString>
-				
 			</Layer>
 			<Layer level="ARTWORK" textureSubLevel="4">
-				<Texture parentKey="TimeBg" file="Interface/COMMON/NameShadow">
+				<Texture parentKey="TimeBG" file="Interface/COMMON/NameShadow">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.Time" y="5"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Time" x="-3" y="5" />
+						<Anchor point="TOPLEFT" relativeKey="$parent.Time" y="0"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Time" x="-2" y="4" />
 					</Anchors>
 					<TexCoords left="0.05" right="0.95" top="0.8" bottom="0"/>
 				</Texture>
@@ -154,12 +153,16 @@
 				<Scale parentKey="PingStatic" childKey="PingStatic" fromScaleX="1.2" toScaleX="1" smoothing="IN" fromScaleY="1.2" toScaleY="1" Duration=".4" order="0"/>
 				<Alpha parentKey="PingStatic" childKey="PingStatic" fromAlpha="0.5" toAlpha="1"  Duration="0.2" order="0"/>
 			</AnimationGroup>
+			<AnimationGroup parentKey="fadeOutAnim" looPing="NONE" setToFinalAlpha="true">
+				<Alpha parentKey="Alpha" Duration="0.1" toAlpha="0.5"/>
+			</AnimationGroup>
+			<AnimationGroup parentKey="fadeInAnim" looPing="NONE" setToFinalAlpha="true">
+				<Alpha parentKey="Alpha" Duration="0.1"/>
+			</AnimationGroup>
 		</Animations>
 		
 		<Scripts>
 			<OnLoad method="OnLoad"/>
-			<OnShow method="OnShow"/>
-			<OnHide method="OnHide"/>
 			<OnUpdate method="OnUpdate"/>
 			<OnEnter method="OnEnter"/>
 			<OnLeave method="OnLeave"/>

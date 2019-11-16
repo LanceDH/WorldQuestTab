@@ -95,7 +95,7 @@ local function ScanTooltipRewardForPattern(questID, pattern)
 		if result then break; end
 	end
 	
-	-- Force hide compare tooltips as they's show up for people with alwaysCompareItems set to 1
+	-- Force hide compare tooltips as they'd show up for people with alwaysCompareItems set to 1
 	for _, tooltip in ipairs(WQT_Tooltip.shoppingTooltips) do
 		tooltip:Hide();
 	end
@@ -225,12 +225,6 @@ local function SetQuestRewards(questInfo)
 	return haveData;
 end
 
-local function ValidateQuest(questInfo)
-	local _, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
-	local seconds = WQT_Utils:GetQuestTimeString(questInfo);
-	questInfo.isValid = not questInfo.alwaysHide and not (not WorldMap_DoesWorldQuestInfoPassFilters(questInfo) and seconds == 0 and questInfo.reward.type == WQT_REWARDTYPE.missing and not factionId);
-end
-
 ----------------------------
 -- SHARED
 ----------------------------
@@ -295,8 +289,8 @@ function WQT_Utils:GetCachedTypeIconData(questInfo)
 		return "QuestDaily", 17, 17, true;
 	elseif (questInfo.isQuestStart) then
 		return "QuestNormal", 17, 17, true;
-	elseif (C_QuestLog.IsThreatQuest(questInfo.questId)) then
-		return "worldquest-icon-nzoth", 14, 14, true;
+	--elseif (C_QuestLog.IsThreatQuest(questInfo.questId)) then
+	--	return "worldquest-icon-nzoth", 14, 14, true;
 	elseif (not questType) then
 		return "QuestBonusObjective", 21, 21, true;
 	end
@@ -505,7 +499,7 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo)
 		GameTooltip_AddQuestRewardsToTooltip(GameTooltip, questInfo.questId);
 		
 		-- reposition compare frame
-		if((questInfo.reward.type == WQT_REWARDTYPE.equipment) and GameTooltip.ItemTooltip:IsShown()) then
+		if((questInfo.reward.type == WQT_REWARDTYPE.equipment or questInfo.reward.type == WQT_REWARDTYPE.weapon) and GameTooltip.ItemTooltip:IsShown()) then
 			if IsModifiedClick("COMPAREITEMS") or C_CVar.GetCVarBool("alwaysCompareItems") then
 				-- Setup compare tootltips
 				GameTooltip_ShowCompareItem(GameTooltip.ItemTooltip.Tooltip);
@@ -541,6 +535,48 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo)
 	GameTooltip.recalculatePadding = true;
 end
 
+-- Climb map parents until the first continent type map it can find.
+function WQT_Utils:GetContinentForMap(mapId) 
+	local info = WQT_Utils:GetCachedMapInfo(mapId);
+	if not info then return mapId; end
+	local parent = info.parentMapID;
+	if not parent or info.mapType <= Enum.UIMapType.Continent then 
+		return mapId, info.mapType
+	end 
+	return self:GetContinentForMap(parent) 
+end
+
+function WQT_Utils:GetMapWQProvider()
+	if WQT.mapWQProvider then return WQT.mapWQProvider; end
+	
+	for k in pairs(WorldMapFrame.dataProviders) do 
+		for k1 in pairs(k) do
+			if k1=="IsMatchingWorldMapFilters" then 
+				WQT.mapWQProvider = k; 
+				break;
+			end 
+		end 
+	end
+	return WQT.mapWQProvider;
+end
+
+function WQT_Utils:GetFlightWQProvider()
+	if (WQT.FlightmapPins) then return WQT.FlightmapPins; end
+	if (not FlightMapFrame) then return nil; end
+	
+	for k in pairs(FlightMapFrame.dataProviders) do 
+		if (type(k) == "table") then 
+			for k2 in pairs(k) do 
+				if (k2 == "activePins") then 
+					WQT.FlightmapPins = k;
+					break;
+				end 
+			end 
+		end 
+	end
+	return WQT.FlightmapPins;
+end
+
 ----------------------------
 -- MIXIN
 ----------------------------
@@ -554,7 +590,6 @@ function WQT_DataProvider:OnLoad()
 	self.keyList = {};
 	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room
 	self.waitingRoomRewards = {};
-	self.waitingRoomQuest = {};
 	self.lastUpdate = 0;
 	
 	self.callbacks = {
@@ -570,33 +605,14 @@ function WQT_DataProvider:OnLoad()
 			self.mapChanged = true;
 			self.currentMapId = mapAreaID;
 			self.currentMapInfo = WQT_Utils:GetCachedMapInfo(mapAreaID);
-			self:UpdateData();
+			self:LoadQuestsInZone(self.currentMapId);
 		end
 	end)
 end
 
-function WQT_DataProvider:UpdateData()
-	local now = GetTime();
-	local elapsed = now - self.lastUpdate;
-	if  (self.mapChanged or elapsed > QUEST_LOG_UPDATE_CD) then
-		self.lastUpdate = now;
-		self.mapChanged = false;
-		self:LoadQuestsInZone(self.currentMapId);
-		if (self.dataTicker) then
-			self.dataTicker:Cancel();
-			self.dataTicker = nil;
-		end
-	else
-		self:UpdateWaitingRoom();
-		if (not self.dataTicker) then
-			self.dataTicker =  C_Timer.NewTicker(QUEST_LOG_UPDATE_CD - elapsed+0.05, function() self:UpdateData() end, 1);
-		end
-	end
-end
-
 function WQT_DataProvider:OnEvent(event, ...)
 	if (event == "QUEST_LOG_UPDATE") then
-		self:UpdateData();
+		self:LoadQuestsInZone(self.currentMapId);
 	elseif (event == "PLAYER_LEVEL_UP") then
 		local level = ...;
 		UpdateWorldZones(level); 
@@ -626,12 +642,12 @@ function WQT_DataProvider:ClearData()
 	wipe(self.iterativeList);
 	wipe(self.keyList);
 	wipe(self.waitingRoomRewards);
-	wipe(self.waitingRoomQuest )
 end
 
 function WQT_DataProvider:SetQuestData(questInfo)
 	local questId = questInfo.questId;
 	
+	questInfo.isValid = HaveQuestData(questInfo.questId);
 	questInfo.time.seconds = WQT_Utils:GetQuestTimeString(questInfo);
 	questInfo.passedFilter = true;
 	questInfo.isCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questId);
@@ -640,36 +656,16 @@ end
 function WQT_DataProvider:UpdateWaitingRoom()
 	local questInfo;
 	local updatedData = false;
-	local fixed = {};
-	
-	for i = #self.waitingRoomQuest, 1, -1 do
-		local questInfo = self.waitingRoomQuest[i];
-		if (questInfo.questId and HaveQuestData(questInfo.questId)) then
-			tinsert(fixed, questInfo.questId);
-			self:SetQuestData(questInfo);
-			if HaveQuestRewardData(questInfo.questId) then	
-				SetQuestRewards(questInfo);
-				ValidateQuest(questInfo);
-			else
-				WQT:debugPrint(questInfo.questId, "still missing reward");
-				tinsert(self.waitingRoomRewards, questInfo);
-			end
-			table.remove(self.waitingRoomQuest, i);
-			updatedData = true;
-		end
-	end
-	
-	wipe(fixed);
+
 	for i = #self.waitingRoomRewards, 1, -1 do
 		questInfo = self.waitingRoomRewards[i];
 		if ( questInfo.questId and HaveQuestRewardData(questInfo.questId)) then
 			SetQuestRewards(questInfo);
-			ValidateQuest(questInfo);
 			table.remove(self.waitingRoomRewards, i);
 			updatedData = true;
 		end
 	end
-
+	
 	if (updatedData) then
 		self:TriggerCallbacks("waitingRoom");
 	end
@@ -711,7 +707,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 	local currentMapInfo = WQT_Utils:GetCachedMapInfo(zoneId);
 	if not currentMapInfo then return end;
 	if (WQT.settings.list.alwaysAllQuests and currentMapInfo.mapType ~= Enum.UIMapType.World) then
-		local highestMapId, mapType = WQT:GetFirstContinent(zoneId);
+		local highestMapId, mapType = WQT_Utils:GetContinentForMap(zoneId);
 		local continentZones = _V["WQT_ZONE_MAPCOORDS"][highestMapId];
 		if (mapType ~= Enum.UIMapType.World) then
 			self:AddContinentMapQuests(continentZones);
@@ -773,25 +769,22 @@ function WQT_DataProvider:AddQuest(qInfo, zoneId)
 	
 	local questInfo = self.pool:Acquire();
 
-	questInfo.alwaysHide = not MapUtil.ShouldShowTask(qInfo.mapID, qInfo)-- or qInfo.isQuestStart;
+	questInfo.alwaysHide = not MapUtil.ShouldShowTask(qInfo.mapID, qInfo)
 	questInfo.isDaily = qInfo.isDaily;
 	questInfo.isAllyQuest = qInfo.isCombatAllyQuest;
 	questInfo.questId = qInfo.questId;
 	questInfo.mapInfo.mapX = qInfo.x;
 	questInfo.mapInfo.mapY = qInfo.y;
-	
-	if (not HaveQuestData(qInfo.questId)) then
-		tinsert(self.waitingRoomQuest, questInfo);
-	end
-	
+
 	self:SetQuestData(questInfo);
+	
+	if (not questInfo.isValid) then
+		WQT:debugPrint("Not valid", qInfo.questId, C_TaskQuest.GetQuestInfoByQuestID(qInfo.questId));
+	end
 	
 	local haveRewardData = SetQuestRewards(questInfo);
 
-	-- Filter out invalid quests like "Tracking Quest" in nazmir
-	ValidateQuest(questInfo);
-	
-	if not haveRewardData then
+	if (not haveRewardData) then
 		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
 		tinsert(self.waitingRoomRewards, questInfo);
 		return nil;

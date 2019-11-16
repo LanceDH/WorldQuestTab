@@ -349,6 +349,22 @@ _V["WQT_BOUNDYBOARD_OVERLAYID"] = 3;
 _V["WQT_TYPE_BONUSOBJECTIVE"] = 99;
 _V["WQT_LISTITTEM_HEIGHT"] = 32;
 
+_V["NUMBER_ABBREVIATIONS_ASIAN"] = {
+		{["value"] = 1000000000, ["format"] = _L["NUMBERS_THIRD"]}
+		,{["value"] = 100000000, ["format"] = _L["NUMBERS_SECOND"], ["decimal"] = true}
+		,{["value"] = 100000, ["format"] = _L["NUMBERS_FIRST"]}
+		,{["value"] = 1000, ["format"] = _L["NUMBERS_FIRST"], ["decimal"] = true}
+	}
+
+_V["NUMBER_ABBREVIATIONS"] = {
+		{["value"] = 10000000000, ["format"] = _L["NUMBERS_THIRD"]}
+		,{["value"] = 1000000000, ["format"] = _L["NUMBERS_THIRD"], ["decimal"] = true}
+		,{["value"] = 10000000, ["format"] = _L["NUMBERS_SECOND"]}
+		,{["value"] = 1000000, ["format"] = _L["NUMBERS_SECOND"], ["decimal"] = true}
+		,{["value"] = 10000, ["format"] = _L["NUMBERS_FIRST"]}
+		,{["value"] = 1000, ["format"] = _L["NUMBERS_FIRST"], ["decimal"] = true}
+	}
+
 _V["WARMODE_BONUS_REWARD_TYPES"] = {
 		[WQT_REWARDTYPE.artifact] = true;
 		[WQT_REWARDTYPE.gold] = true;
@@ -364,7 +380,8 @@ _V["WQT_CVAR_LIST"] = {
 	}
 	
 _V["WQT_TYPEFLAG_LABELS"] = {
-		[2] = {["Default"] = DEFAULT, ["Elite"] = ELITE, ["PvP"] = PVP, ["Petbattle"] = PET_BATTLE_PVP_QUEUE, ["Dungeon"] = TRACKER_HEADER_DUNGEON, ["Raid"] = RAID, ["Profession"] = BATTLE_PET_SOURCE_4, ["Invasion"] = _L["TYPE_INVASION"], ["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE, ["Daily"] = DAILY}
+		[2] = {["Default"] = DEFAULT, ["Elite"] = ELITE, ["PvP"] = PVP, ["Petbattle"] = PET_BATTLE_PVP_QUEUE, ["Dungeon"] = TRACKER_HEADER_DUNGEON, ["Raid"] = RAID, ["Profession"] = BATTLE_PET_SOURCE_4, ["Invasion"] = _L["TYPE_INVASION"], ["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE
+			, ["Daily"] = DAILY, ["Threat"] = REPORT_THREAT}
 		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = WORLD_QUEST_REWARD_FILTERS_RESOURCES, ["Artifact"] = ITEM_QUALITY6_DESC
 			, ["Relic"] = RELICSLOT, ["None"] = NONE, ["Experience"] = POWER_TYPE_EXPERIENCE, ["Honor"] = HONOR, ["Reputation"] = REPUTATION}
 	};
@@ -493,6 +510,7 @@ _V["FILTER_FUNCTIONS"] = {
 			,["Elite"]		= function(questInfo, questType) return select(5, GetQuestTagInfo(questInfo.questId)); end
 			,["Default"]	= function(questInfo, questType) return questType == LE_QUEST_TAG_TYPE_NORMAL; end 
 			,["Daily"]		= function(questInfo, questType) return questInfo.isDaily; end 
+			,["Threat"]		= function(questInfo, questType) return  C_QuestLog.IsThreatQuest(questInfo.questId); end 
 			}
 		,[3] = { -- Reward filters
 			["Armor"]		= function(questInfo, questType) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.equipment + WQT_REWARDTYPE.weapon) > 0; end
@@ -622,7 +640,31 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 local _patchNotes = {
-		{["version"] = "8.2.03"
+		{["version"] = "8.2.05"
+			,["new"] = {
+				"The map pin changes have been reworked to be completely custom by the add-on, resulting in some new changes:"
+				,"- New settings: Pins On Continents (default off). Allows pins to be placed on continent maps."
+				,"- New settings: Fade On Highlight (default off). When a quest is highlighted, all other quests are faded for better visibility."
+				,"- Using the 'Always All Quests' setting will now show quests in neighbouring zones. I.e. you can see Drustvar quests while looking at Tiragarde Sound."
+				,"- Flight maps will show additional pins such as daily quests."
+				,"- General improvements to existing pin functionality."
+			}
+			,["fixes"] = {
+				"Fixed the party sync block from showing through the world quest list."
+				,"Fixed dressing room previewing for quests offering weapons."
+			}
+		}
+		,{["version"] = "8.2.04"
+			,["new"] = {
+				"The entire add-on now works during combat (With the exception of LFG buttons). It's crazy, I know. This became possible after fixing an error someone reported. The cause of this error was also what was preventing changes to the list during combat."
+			}
+			,["fixes"] = {
+				"Fixed errors, and the prevention of closing the map during combat using the Esc key, while using other add-ons such as Mapster."
+				,"Map pins for 'hard watched' quests, which show up on the continent maps, will now correctly get a make-over as well."
+				,"Fixed some combat error related to LFG buttons."
+				,"Fixed being able to track bonus objectives, which would result in not being able to untrack them again."
+			}
+		},{["version"] = "8.2.03"
 			,["minor"] = "6"
 			,["fixes"] = {
 				"Fixed the quest log dissapearing when opening a full screen map by clicking on a quest in the objectives tracker."
