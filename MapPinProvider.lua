@@ -33,9 +33,6 @@ local function OnPinRelease(pool, pin)
 end
 
 local function GetPinType(parentMapFrame, mapType, questInfo, settingsContinentPins) 
-	if (not questInfo.passedFilter) then
-		return 
-	end
 	if (FlightMapFrame and parentMapFrame == FlightMapFrame) then
 		return _pinType.zone;
 	end
@@ -48,7 +45,7 @@ local function GetPinType(parentMapFrame, mapType, questInfo, settingsContinentP
 	-- if (mapType == Enum.UIMapType.World) then
 		-- return _pinType.world;
 	-- end
-	if (mapType == Enum.UIMapType.Continent and (settingsContinentPins or IsWorldQuestWatched(questInfo.questId))) then
+	if (mapType == Enum.UIMapType.Continent and settingsContinentPins) then
 		return _pinType.continent;
 	end
 end
@@ -74,6 +71,12 @@ function WQT_PinDataProvider:Init()
 	
 	WQT_WorldQuestFrame:RegisterCallback("UpdateQuestList", function() 
 			self:RefreshAllData();
+		end);
+		
+	-- Fix pings and fades when switching map
+	hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
+			wipe(self.pingedQuests);
+			self:UpdateQuestPings();
 		end);
 end
 
@@ -103,24 +106,27 @@ function WQT_PinDataProvider:RefreshAllData()
 	if (not parentMapFrame) then return; end
 	local mapID = parentMapFrame:GetMapID();
 	local settingsContinentPins = WQT_Utils:GetSetting("pin", "continentPins");
+	local settingsFilterPoI  = WQT_Utils:GetSetting("pin", "filterPoI");
 	local mapInfo = WQT_Utils:GetCachedMapInfo(mapID);
 	local questList =  WQT_WorldQuestFrame.dataProvider:GetIterativeList();
 	local canvas = parentMapFrame:GetCanvas();
 	
 	wipe(self.activePins);
 	for k, questInfo in ipairs(questList) do
-		local pinType = GetPinType(parentMapFrame, mapInfo.mapType, questInfo, settingsContinentPins);
-		if (pinType) then
-			local posX, posY = C_TaskQuest.GetQuestLocation(questInfo.questId, mapID);
-			if (posX) then
-				local pin = self.pinPool:Acquire();
-				pin:SetParent(canvas);
-				tinsert(self.activePins, pin);
-				pin:Setup(questInfo, #self.activePins, posX, posY, pinType, parentMapFrame);
-				if (self.pingedQuests[pin.questID]) then
-					pin:Focus();
-				else
-					pin:ClearFocus();
+		if (not settingsFilterPoI or questInfo.passedFilter) then
+			local pinType = GetPinType(parentMapFrame, mapInfo.mapType, questInfo, settingsContinentPins);
+			if (pinType) then
+				local posX, posY = C_TaskQuest.GetQuestLocation(questInfo.questId, mapID);
+				if (posX) then
+					local pin = self.pinPool:Acquire();
+					pin:SetParent(canvas);
+					tinsert(self.activePins, pin);
+					pin:Setup(questInfo, #self.activePins, posX, posY, pinType, parentMapFrame);
+					if (self.pingedQuests[pin.questID]) then
+						pin:Focus();
+					else
+						pin:ClearFocus();
+					end
 				end
 			end
 		end
@@ -131,8 +137,6 @@ function WQT_PinDataProvider:RefreshAllData()
 	self:UpdateAllPlacements();
 	
 	self:UpdateQuestPings();
-	
-	print(mapID, "(", #self.activePins, "/", #questList, ")");
 
 	if (not self.hookedCanvasChanges[parentMapFrame]) then
 		hooksecurefunc(parentMapFrame, "OnCanvasScaleChanged", function() self:UpdateAllPlacements(); end);
@@ -160,7 +164,7 @@ function WQT_PinDataProvider:FixOverlaps(canvasRatio, isFlightMap)
 						vec = CreateVector2D(1, 0);
 					else
 						-- Push them away from the other pin
-						vec = CreateVector2D(pinA.posX - pinB.posX, pinA.posY - pinB.posY);
+						vec = CreateVector2D(aX, aY, bX, bY);
 						vec:Normalize();
 					end
 					vec:ScaleBy(halfDifference);
@@ -168,12 +172,6 @@ function WQT_PinDataProvider:FixOverlaps(canvasRatio, isFlightMap)
 					-- Push the second one in the opposite direction
 					vec:ScaleBy(-1);
 					pinB:SetNudge(vec:GetXY());
-					
-					-- debug check
-					local aX, aY = pinA:GetNudgedPosition();
-					local bX, bY = pinB:GetNudgedPosition();
-					local distanceSquared = SquaredDistanceBetweenPoints(aX, aY, bX, bY);
-					print(distance, "->", math.sqrt(distanceSquared), C_TaskQuest.GetQuestInfoByQuestID(pinA.questID), C_TaskQuest.GetQuestInfoByQuestID(pinB.questID), "")
 				end
 			end
 		end
@@ -318,7 +316,6 @@ function WQT_PinMixin:SetupCanvasType(pinType, parentMapFrame, isWatched)
 end
 
 function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
-	local now = time();
 	local isWatched = IsWorldQuestWatched(questInfo.questId);
 	self:SetupCanvasType(pinType, parentMapFrame, isWatched);
 	
@@ -328,7 +325,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 
 	local scale = (WQT_Utils:GetSetting("pin", "bigPoI") and 1.15 or 1);
 	local iconDistance =  12;
-	local seconds, _, color, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
+	local _, _, _, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
 	local _, _, worldQuestType, rarity, isElite = GetQuestTagInfo(questInfo.questId);
 	local isBonus = not worldQuestType;
 
@@ -454,7 +451,6 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	
 	-- Time
 	local settingPinTimeLabel =  WQT_Utils:GetSetting("pin", "timeLabel");
-	local timeDistance = (showTypeIcon or showRewardIcon) and 0 or -5;
 	local showTimeString = settingPinTimeLabel and timeStringShort ~= "";
 	self.Time:SetShown(showTimeString);
 	self.TimeBG:SetShown(showTimeString);

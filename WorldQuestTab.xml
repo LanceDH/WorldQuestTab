@@ -647,6 +647,9 @@
 				self:SetPoint("BOTTOMLEFT", WorldMapFrame.ScrollContainer, 0, 2000);
 				self:OnLoad("TOPLEFT");
 			</OnLoad>
+			<OnShow>
+				WQT_QuestScrollFrame:DisplayQuestList(UpdateBackground);
+			</OnShow>
 		</Scripts>
 	</Frame>
 	
@@ -843,7 +846,7 @@
 					<OnLoad method="OnLoad" />
 				</Scripts>
 			</ScrollFrame>
-			<Frame name="WQTU_OverlayFrame" parentKey="Blocker" enableMouse="false" hidden="true">
+			<Frame name="WQTU_OverlayFrame" parentKey="Blocker" enableMouse="true" hidden="true">
 				<Anchors>
 					<Anchor point="TOPLEFT" x="2"/>
 					<Anchor point="BOTTOMRIGHT"/>
@@ -858,23 +861,6 @@
 						<Texture parentKey="UpdatesBG" file="Interface/Artifacts/ArtifactForge">
 							<TexCoords left="0" right="0.8984375" top="0" bottom="0.5986328125"/>
 						</Texture>
-						<Texture parentKey="CombatBG" file="Interface/ENCOUNTERJOURNAL/AdventureGuide">
-							<Size x="224" y="107"/>
-							<Anchors>
-								<Anchor point="CENTER" x="-10"/>
-							</Anchors>
-							<TexCoords left="0" right="0.673828125" top="0" bottom="0.322265625"/>
-							<Color r="0.85" g="0.85" b="0.85" />
-						</Texture>
-					</Layer>
-					<Layer level="ARTWORK">
-						<FontString parentKey="CombatText" inherits="GameFontNormalHugeBlack" justifyH="CENTER" justifyV="MIDDLE">
-							<Size x="200" y="80"/>
-							<Anchors>
-								<Anchor point="TOPLEFT" relativeKey="$parent.CombatBG"/>
-								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.CombatBG"/>
-							</Anchors>
-						</FontString>
 					</Layer>
 				</Layers>
 				<Frames>

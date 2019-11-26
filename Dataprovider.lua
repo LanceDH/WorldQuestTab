@@ -295,11 +295,10 @@ function WQT_Utils:GetCachedTypeIconData(questInfo)
 		return "QuestBonusObjective", 21, 21, true;
 	end
 	
-	
 	local isNew = false;
 	local originalType = questType;
 	questType = questType or _V["WQT_TYPE_BONUSOBJECTIVE"];
-	
+
 	if (not cachedTypeData[questType]) then 
 		cachedTypeData[questType] = {};
 		isNew = true;
@@ -580,8 +579,6 @@ end
 ----------------------------
 -- MIXIN
 ----------------------------
-local QUEST_LOG_UPDATE_CD = 1;
-
 WQT_DataProvider = {}
 
 function WQT_DataProvider:OnLoad()
@@ -629,7 +626,7 @@ end
 
 function WQT_DataProvider:TriggerCallbacks(event, ...)
 	if (not self.callbacks[event]) then 
-		WQT:debugPrint("Tried to trigger incalid callback event:", event);
+		WQT:debugPrint("Tried to trigger invalid callback event:", event);
 		return
 	end;
 	for k, func in ipairs(self.callbacks[event]) do
@@ -777,10 +774,6 @@ function WQT_DataProvider:AddQuest(qInfo, zoneId)
 	questInfo.mapInfo.mapY = qInfo.y;
 
 	self:SetQuestData(questInfo);
-	
-	if (not questInfo.isValid) then
-		WQT:debugPrint("Not valid", qInfo.questId, C_TaskQuest.GetQuestInfoByQuestID(qInfo.questId));
-	end
 	
 	local haveRewardData = SetQuestRewards(questInfo);
 

@@ -4,7 +4,7 @@
 addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 addon.externals = {};
 addon.variables = {};
-addon.debug = true;
+addon.debug = false;
 addon.WQT_Utils = {};
 local WQT_Utils = addon.WQT_Utils;
 local _L = addon.L;
@@ -84,8 +84,8 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		AddIndentedDoubleLine(tooltip, "Through functions:", "", 0, color);
 		local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
 		AddIndentedDoubleLine(tooltip, "title", title, 1, color);
-		local _, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questInfo.questId);
-		AddIndentedDoubleLine(tooltip, "tagName", tagName, 1, color);
+		local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questInfo.questId);
+		AddIndentedDoubleLine(tooltip, "tag", tagName.." ("..tagID..")", 1, color);
 		AddIndentedDoubleLine(tooltip, "worldQuestType", worldQuestType, 1, color);
 		AddIndentedDoubleLine(tooltip, "rarity", rarity, 1, color);
 		AddIndentedDoubleLine(tooltip, "isElite", isElite, 1, color);
@@ -397,7 +397,15 @@ _V["SORT_OPTION_ORDER"] = {
 	,[7] = {"rewardQuality", "rewardType", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"}
 }
 _V["SORT_FUNCTIONS"] = {
-	["rewardType"] = function(a, b) if (a.reward.type and b.reward.type and a.reward.type ~= b.reward.type) then return a.reward.type < b.reward.type; end end
+	["rewardType"] = function(a, b) 
+			if (a.reward.type and b.reward.type and a.reward.type ~= b.reward.type) then 
+				if (a.reward.type == WQT_REWARDTYPE.none or b.reward.type == WQT_REWARDTYPE.none) then
+					return a.reward.type > b.reward.type; 
+				end
+			
+				return a.reward.type < b.reward.type; 
+			end 
+		end
 	,["rewardQuality"] = function(a, b) if (a.reward.quality and b.reward.quality and a.reward.quality ~= b.reward.quality) then return a.reward.quality > b.reward.quality; end end
 	,["canUpgrade"] = function(a, b) if (a.reward.canUpgrade and b.reward.canUpgrade and a.reward.canUpgrade ~= b.reward.canUpgrade) then return a.reward.canUpgrade and not b.reward.canUpgrade; end end
 	,["seconds"] = function(a, b) if (a.time.seconds ~= b.time.seconds) then return a.time.seconds < b.time.seconds; end end
@@ -507,10 +515,10 @@ _V["FILTER_FUNCTIONS"] = {
 			,["Profession"] 	= function(questInfo, questType) return questType == LE_QUEST_TAG_TYPE_PROFESSION; end 
 			,["Invasion"] 	= function(questInfo, questType) return questType == LE_QUEST_TAG_TYPE_INVASION; end 
 			,["Assault"]	= function(questInfo, questType) return questType == LE_QUEST_TAG_TYPE_FACTION_ASSAULT; end 
-			,["Elite"]		= function(questInfo, questType) return select(5, GetQuestTagInfo(questInfo.questId)); end
-			,["Default"]	= function(questInfo, questType) return questType == LE_QUEST_TAG_TYPE_NORMAL; end 
+			,["Elite"]		= function(questInfo, questType) return select(5, GetQuestTagInfo(questInfo.questId)) and questType ~= LE_QUEST_TAG_TYPE_DUNGEON; end
+			,["Default"]	= function(questInfo, questType) return questType == LE_QUEST_TAG_TYPE_NORMAL and not select(5, GetQuestTagInfo(questInfo.questId)); end 
 			,["Daily"]		= function(questInfo, questType) return questInfo.isDaily; end 
-			,["Threat"]		= function(questInfo, questType) return  C_QuestLog.IsThreatQuest(questInfo.questId); end 
+			--,["Threat"]		= function(questInfo, questType) return  C_QuestLog.IsThreatQuest(questInfo.questId); end 
 			}
 		,[3] = { -- Reward filters
 			["Armor"]		= function(questInfo, questType) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.equipment + WQT_REWARDTYPE.weapon) > 0; end
@@ -631,7 +639,7 @@ _V["WQT_FACTION_DATA"] = {
 	,[2373] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Horde" ,["texture"] = 2909044 } -- Unshackled
 	,[2391] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 2909316 } -- Rustbolt
 	,[2400] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Alliance" ,["texture"] = 2909043 } -- Waveblade Ankoan
-	,[2417] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 3068678 } -- Uldum Accord
+	--,[2417] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 3068678 } -- Uldum Accord
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
@@ -642,16 +650,21 @@ end
 local _patchNotes = {
 		{["version"] = "8.2.05"
 			,["new"] = {
-				"The map pin changes have been reworked to be completely custom by the add-on, resulting in some new changes:"
+				"The map pins have been reworked to be completely custom by the add-on, resulting in some new changes:"
 				,"- New settings: Pins On Continents (default off). Allows pins to be placed on continent maps."
-				,"- New settings: Fade On Highlight (default off). When a quest is highlighted, all other quests are faded for better visibility."
+				,"- New settings: Fade On Highlight (default on). When a quest is highlighted, all other quests are faded for better visibility."
 				,"- Using the 'Always All Quests' setting will now show quests in neighbouring zones. I.e. you can see Drustvar quests while looking at Tiragarde Sound."
-				,"- Flight maps will show additional pins such as daily quests."
+				,"- Flight maps will show additional pins such as Nazjatar daily quests."
 				,"- General improvements to existing pin functionality."
 			}
+			,["changes"] = {
+					"When sorting by reward, quests with no rewards will now be at the bottom of the list."
+				}
 			,["fixes"] = {
 				"Fixed the party sync block from showing through the world quest list."
 				,"Fixed dressing room previewing for quests offering weapons."
+				,"Fixed issues between the dungeon, elite, and default type filters."
+				,"Fixed disabling 'Save Filters/Sort' turning all filters off instead of on."
 			}
 		}
 		,{["version"] = "8.2.04"
