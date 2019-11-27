@@ -46,6 +46,7 @@
 -- "SortChanged"		(category) After sort category was changed to a different one
 -- "ListButtonUpdate"	(button) After a button was updated and shown
 -- "AnchorChanged"		(anchor) After the anchor of the quest list has changed
+-- "MapPinInitialized"	(pin) After a map pin has been fully setup to be shown
 
 local addonName, addon = ...
 
@@ -62,7 +63,7 @@ local _emptyTable = {};
 local _playerFaction = GetPlayerFactionGroup();
 local _playerName = UnitName("player");
 
-local utilitiesStatus = select(5, GetAddOnInfo("WorldQuestTabUtilities"))
+local utilitiesStatus = select(5, GetAddOnInfo("WorldQuestTabUtilities"));
 local _utilitiesInstalled = not utilitiesStatus or utilitiesStatus ~= "MISSING";
 
 local _WFMLoaded = IsAddOnLoaded("WorldFlightMap");
@@ -1341,9 +1342,17 @@ function WQT:OnEnable()
 	end
 	
 	-- Load externals
-	for k, func in ipairs(addon.externals) do
-		local name, success = func();
-		WQT:debugPrint("WQT external", name, success and "Success" or "Failed");
+	self.loadableExternals = {};
+	for k, external in ipairs(addon.externals) do
+		if (external:IsLoaded()) then
+			external:Init();
+			WQT:debugPrint("External", external:GetName(), "loaded on first try.");
+		elseif (external:IsLoadable()) then
+			self.loadableExternals[external:GetName()] = external;
+			WQT:debugPrint("External", external:GetName(), "waiting for load.");
+		else
+			WQT:debugPrint("External", external:GetName(), "not installed.");
+		end
 	end
 end
 
@@ -2630,6 +2639,16 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 	elseif (loaded == "WorldQuestTabUtilities") then
 		WQT.settings.general.loadUtilities = true;
 	end
+	
+	-- Load waiting externals
+	if (WQT.loadableExternals) then
+		local external = WQT.loadableExternals[loaded];
+		if (external) then
+			external:Init();
+			WQT:debugPrint("External", external:GetName(), "delayed load.");
+			WQT.loadableExternals[loaded] = nil;
+		end
+	end
 end
 
 function WQT_CoreMixin:PLAYER_REGEN_DISABLED()
@@ -2897,7 +2916,7 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	WQT_WorldQuestFrame:SetParent(parent);
 	WQT_WorldQuestFrame:SelectTab(tab);
 	
-	WQT_WorldQuestFrame:TriggerEvent("AnchorChanged", self, anchor);
+	WQT_WorldQuestFrame:TriggerEvent("AnchorChanged", anchor);
 end
 
 

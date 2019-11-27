@@ -85,7 +85,8 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
 		AddIndentedDoubleLine(tooltip, "title", title, 1, color);
 		local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questInfo.questId);
-		AddIndentedDoubleLine(tooltip, "tag", tagName.." ("..tagID..")", 1, color);
+		local tagDisplay = tagID and tagName.." ("..tagID..")" or tagName;
+		AddIndentedDoubleLine(tooltip, "tag", tagDisplay, 1, color);
 		AddIndentedDoubleLine(tooltip, "worldQuestType", worldQuestType, 1, color);
 		AddIndentedDoubleLine(tooltip, "rarity", rarity, 1, color);
 		AddIndentedDoubleLine(tooltip, "isElite", isElite, 1, color);
@@ -186,6 +187,32 @@ function WQT_Utils:FormatPatchNotes(notes, title)
 	return updateMessage .. "</body></html>";
 end
 
+WQT_ExternalMixin = {};
+
+function WQT_ExternalMixin:GetName()
+	-- Override me
+	return "";
+end
+
+function WQT_ExternalMixin:Init()
+	-- Override me
+end
+
+function WQT_ExternalMixin:IsLoaded()
+	local name = self:GetName();
+	if (name ~= "") then
+		return IsAddOnLoaded(name);
+	end
+	return false;
+end
+
+function WQT_ExternalMixin:IsLoadable()
+	local name = self:GetName();
+	if (name ~= "") then
+		return select(2, GetAddOnInfo(name));
+	end
+	return false;
+end
 
 ------------------------
 -- LOCAL
@@ -649,6 +676,13 @@ end
 -- This is just easier to maintain than changing the entire string every time
 local _patchNotes = {
 		{["version"] = "8.2.05"
+			,["minor"] = "2"
+			,["fixes"] = {
+				"Fixed an issue that would cause official cooldown numbers to show on map pins."
+				,"Fixed an issue with pin visibility for WorldFlightMap users."
+			}
+		}
+		,{["version"] = "8.2.05"
 			,["new"] = {
 				"The map pins have been reworked to be completely custom by the add-on, resulting in some new changes:"
 				,"- New settings: Pins On Continents (default off). Allows pins to be placed on continent maps."

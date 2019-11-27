@@ -33,6 +33,11 @@ local function OnPinRelease(pool, pin)
 end
 
 local function GetPinType(parentMapFrame, mapType, questInfo, settingsContinentPins) 
+	-- No support for world pins right now
+	if (mapType <= Enum.UIMapType.World) then
+		return;
+	end
+
 	if (FlightMapFrame and parentMapFrame == FlightMapFrame) then
 		return _pinType.zone;
 	end
@@ -467,6 +472,8 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.baseFrameLevel = 2200 + (self.index or 0);
 	self:UpdatePinTime();
 	self:UpdatePlacement();
+	
+	WQT_WorldQuestFrame:TriggerEvent("MapPinInitialized", self);
 end
 
 function WQT_PinMixin:OnUpdate(elapsed)

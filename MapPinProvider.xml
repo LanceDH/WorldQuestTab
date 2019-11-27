@@ -139,7 +139,7 @@
 		</Layers>
 		
 		<Frames>
-			<Cooldown parentKey="Ring" useParentLevel="true" setAllPoints="true">
+			<Cooldown parentKey="Ring" useParentLevel="true" setAllPoints="true" hideCountdownNumbers="true">
 				<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing"/>
 			</Cooldown>
 		</Frames>
