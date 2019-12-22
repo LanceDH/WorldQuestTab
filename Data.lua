@@ -676,6 +676,13 @@ end
 -- This is just easier to maintain than changing the entire string every time
 local _patchNotes = {
 		{["version"] = "8.2.05"
+			,["minor"] = "3"
+			,["intro"] = {"Season's Greetings"}
+			,["changes"] = {
+				"Updated Localizations. If they were as outdated as I fear they are... I apologize."
+			}
+		}
+		,{["version"] = "8.2.05"
 			,["minor"] = "2"
 			,["fixes"] = {
 				"Fixed an issue that would cause official cooldown numbers to show on map pins."

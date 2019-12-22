@@ -289,8 +289,8 @@ function WQT_Utils:GetCachedTypeIconData(questInfo)
 		return "QuestDaily", 17, 17, true;
 	elseif (questInfo.isQuestStart) then
 		return "QuestNormal", 17, 17, true;
-	--elseif (C_QuestLog.IsThreatQuest(questInfo.questId)) then
-	--	return "worldquest-icon-nzoth", 14, 14, true;
+	-- elseif (C_QuestLog.IsThreatQuest(questInfo.questId)) then
+		-- return "worldquest-icon-nzoth", 14, 14, true;
 	elseif (not questType) then
 		return "QuestBonusObjective", 21, 21, true;
 	end
