@@ -382,7 +382,7 @@ local function InitFilter(self, level)
 				info.notCheckable = false;
 				local options = WQT.settings.filters[ADD.MENU_VALUE].flags;
 				local order = WQT.filterOrders[ADD.MENU_VALUE] 
-				local currExp = LE_EXPANSION_BATTLE_FOR_AZEROTH;
+				currExp = _V["CURRENT_EXPANSION"]
 				for k, flagKey in pairs(order) do
 					local factionInfo = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
 					-- factions that aren't a faction (other and no faction), are of current expansion, and are neutral of player faction
@@ -836,6 +836,17 @@ local function InitFilter(self, level)
 			info.checked = function() return  WQT.settings.pin.ringType == _V["RINGTYPE_TIME"]; end;
 			ADD:AddButton(info, level);
 			
+			info.text = QUALITY;
+			info.tooltipTitle = QUALITY;
+			info.tooltipText = _L["PIN_RING_QUALITY_TT"];
+			info.func = function()
+					WQT.settings.pin.ringType = _V["RINGTYPE_RARITY"];
+					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
+					ADD:Refresh(self, 1, 3);
+				end
+			info.checked = function() return  WQT.settings.pin.ringType == _V["RINGTYPE_RARITY"]; end;
+			ADD:AddButton(info, level);
+			
 			info.disabled = nil;
 
 		elseif ADD.MENU_VALUE == 304 then -- TomTom
@@ -1029,6 +1040,10 @@ local function ConvertOldSettings(version)
 		for flagId in pairs(WQT.settings.filters) do
 			WQT:SetAllFilterTo(flagId, true);
 		end
+	end
+	-- Fixed typo in variable name
+	if (version < "8.2.05.4")  then
+		WQT.settings.pin.ringType = WQT.settings.pin.ringType or _V["RINGTYPE_TIME"];
 	end
 end
 
@@ -2444,7 +2459,7 @@ function WQT_CoreMixin:OnLoad()
 			if(questInfo and (questInfo.isDaily)) then
 				WorldMap_AddQuestTimeToTooltip(poi.questID);
 				for objectiveIndex = 1, poi.numObjectives do
-					local objectiveText, _, finished, numFulfilled, numRequired = GetQuestObjectiveInfo(self.questID, objectiveIndex, false);
+					local objectiveText, _, finished, numFulfilled, numRequired = GetQuestObjectiveInfo(poi.questID, objectiveIndex, false);
 					if(poi.shouldShowObjectivesAsStatusBar) then 
 						local percent = math.floor((numFulfilled/numRequired) * 100);
 						GameTooltip_ShowProgressBar(GameTooltip, 0, numRequired, numFulfilled, PERCENTAGE_STRING:format(percent));

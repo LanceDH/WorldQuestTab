@@ -41,6 +41,7 @@ L["PIN_RING_COLOR"]	= "Reward Color"
 L["PIN_RING_COLOR_TT"]	= "Ring color based on reward type."
 L["PIN_RING_TIME"]	= "Time Left"
 L["PIN_RIMG_TIME_TT"]	= "Ring color based on time left."
+L["PIN_RING_QUALITY_TT"] = "Ring color based on quest quality."
 L["SHOW_TYPE"]		= "Show Type";
 L["SHOW_TYPE_TT"]	= "Show type icon in the quest list.";
 L["SHOW_FACTION"]	= "Show Faction";

@@ -21,7 +21,7 @@ local function UpdateWorldZones(newLevel)
 	 
 	newLevel = newLevel or UnitLevel("player");
 	
-	local expLevel = GetExpansionLevel();
+	local expLevel = GetAccountExpansionLevel();
 	local worldTable = _V["WQT_ZONE_MAPCOORDS"][947]
 	wipe(worldTable);
 	
@@ -704,19 +704,14 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 	local currentMapInfo = WQT_Utils:GetCachedMapInfo(zoneId);
 	if not currentMapInfo then return end;
 	if (WQT.settings.list.alwaysAllQuests and currentMapInfo.mapType ~= Enum.UIMapType.World) then
-		local highestMapId, mapType = WQT_Utils:GetContinentForMap(zoneId);
-		local continentZones = _V["WQT_ZONE_MAPCOORDS"][highestMapId];
-		if (mapType ~= Enum.UIMapType.World) then
-			self:AddContinentMapQuests(continentZones);
-			
-			local relatedMaps = _V["WQT_CONTINENT_GROUPS"][highestMapId];
-			if relatedMaps then
-				for k, mapId in pairs(relatedMaps) do	
-					self:AddContinentMapQuests(_V["WQT_ZONE_MAPCOORDS"][mapId]);
-				end
+		-- If we don't have an expansion linked to the zone, use the player's expansion level isntead
+		local zoneExpansion = _V["WQT_ZONE_EXPANSIONS"][zoneId] or GetAccountExpansionLevel();
+		local zones = _V["ZONES_BY_EXPANSION"][zoneExpansion];
+		if (zones) then
+			for key, zoneID in ipairs(zones) do	
+				local zoneInfo = WQT_Utils:GetCachedMapInfo(zoneId);
+				self:AddQuestsInZone(zoneID, zoneInfo.parentMapID);
 			end
-		else
-			self:AddWorldMapQuests(continentZones);
 		end
 	else
 		local continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneId];

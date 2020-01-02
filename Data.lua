@@ -351,10 +351,12 @@ local WQT_DRAENOR = {
 ------------------------
 
 _V["LIST_ANCHOR_TYPE"] = {["flight"] = 1, ["world"] = 2, ["full"] = 3, ["taxi"] = 4};
+_V["CURRENT_EXPANSION"] = LE_EXPANSION_BATTLE_FOR_AZEROTH;
 
 _V["RINGTYPE_NONE"] = 1;
 _V["RINGTYPE_REWARD"] = 2;
-_V["RINGTYPE_TIMY"] = 3;
+_V["RINGTYPE_TIME"] = 3;
+_V["RINGTYPE_RARITY"] = 4;
 
 _V["WQT_COLOR_NONE"] =  CreateColor(0.45, 0.45, .45) ;
 _V["WQT_COLOR_ARMOR"] =  CreateColor(0.85, 0.6, 1) ;
@@ -568,41 +570,64 @@ _V["WQT_CONTINENT_GROUPS"] = {
 		,[1014]	= {875} -- Kul Tiras flightmap
 		,[1504]	= {875, 876} -- Nazjatar flightmap
 	}
-
-_V["WQT_ZONE_EXPANSIONS"] = {
-		[875] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Zandalar
-		,[864] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Vol'dun
-		,[863] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Nazmir
-		,[862] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Zuldazar
-		,[1165] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Dazar'alor
-		,[876] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Kul Tiras
-		,[942] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Stromsong Valley
-		,[896] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Drustvar
-		,[895] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Tiragarde Sound
-		,[1161] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Boralus
-		,[1169] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Tol Dagor
-		,[1355] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Nazjatar
-		,[1462] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Mechagon
-		-- Classic zones with BfA WQ
-		,[14] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Arathi Highlands
-		,[62] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Darkshore
-		,[1527] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Uldum
-		,[1530] = LE_EXPANSION_BATTLE_FOR_AZEROTH -- Vale of Eternam Blossom
-
-		,[619] = LE_EXPANSION_LEGION -- Broken Isles
-		,[630] = LE_EXPANSION_LEGION -- Azsuna
-		,[680] = LE_EXPANSION_LEGION -- Suramar
-		,[634] = LE_EXPANSION_LEGION -- Stormheim
-		,[650] = LE_EXPANSION_LEGION -- Highmountain
-		,[641] = LE_EXPANSION_LEGION -- Val'sharah
-		,[790] = LE_EXPANSION_LEGION -- Eye of Azshara
-		,[646] = LE_EXPANSION_LEGION -- Broken Shore
-		,[627] = LE_EXPANSION_LEGION -- Dalaran
-		,[830] = LE_EXPANSION_LEGION -- Krokuun
-		,[885] = LE_EXPANSION_LEGION -- Antoran Wastes
-		,[882] = LE_EXPANSION_LEGION -- Mac'Aree
-		,[905] = LE_EXPANSION_LEGION -- Argus
+	
+_V["ZONES_BY_EXPANSION"] = {
+	[LE_EXPANSION_BATTLE_FOR_AZEROTH] = {
+		875; -- Zandalar
+		864; -- Vol'dun
+		863; -- Nazmir
+		862; -- Zuldazar
+		1165; -- Dazar'alor
+		876; -- Kul Tiras
+		942; -- Stromsong Valley
+		896; -- Drustvar
+		895; -- Tiragarde Sound
+		1161; -- Boralus
+		1169; -- Tol Dagor
+		1355; -- Nazjatar
+		1462; -- Mechagon
+		--Classic zones with BfA WQ
+		14; -- Arathi Highlands
+		62; -- Darkshore
+		1527; -- Uldum
+		1530; -- Vale of Eternam Blossom
 	}
+	,[LE_EXPANSION_LEGION] = {
+		619; -- Broken Isles
+		630; -- Azsuna
+		680; -- Suramar
+		634; -- Stormheim
+		650; -- Highmountain
+		641; -- Val'sharah
+		790; -- Eye of Azshara
+		646; -- Broken Shore
+		627; -- Dalaran
+		830; -- Krokuun
+		885; -- Antoran Wastes
+		882; -- Mac'Aree
+		905; -- Argus
+	}
+	,[LE_EXPANSION_WARLORDS_OF_DRAENOR] = {
+		572; -- Draenor
+		525; -- Frostfire Ridge
+		543; -- Gorgrond
+		534; -- Tanaan Jungle
+		535; -- Talador
+		550; -- Nagrand
+		542; -- Spires of Arak
+		588; -- Ashran
+	}
+}
+
+FUCK = _V["ZONES_BY_EXPANSION"];
+	
+_V["WQT_ZONE_EXPANSIONS"] = {}
+	
+for expansion, zones in pairs(_V["ZONES_BY_EXPANSION"]) do
+	for key, zoneID in ipairs(zones) do
+		_V["WQT_ZONE_EXPANSIONS"][zoneID] = expansion;
+	end
+end
 
 _V["WQT_ZONE_MAPCOORDS"] = {
 		[875]	= WQT_ZANDALAR -- Zandalar
@@ -676,6 +701,20 @@ end
 -- This is just easier to maintain than changing the entire string every time
 local _patchNotes = {
 		{["version"] = "8.2.05"
+			,["minor"] = "4"
+			,["new"] = {
+				"New ring type settings: Quality. Color the ring depending on the quality of the quest."
+			}
+			,["changes"] = {
+				"While using the 'Always All Quests', looking at the zone not linked to an expanion, will show all quests for the current expansion. I.e.: Wile in Stormwind you will stil lsee BfA quests."
+				,"Changed the looks of the 'tracked quest' marker on map pins."
+			}
+			,["fixes"] = {
+				"Fixed a possible error when pin changes are disabled."
+				,"Fixed 'Always All Quests' not including BfA quests in old zones."
+			}
+		}
+		,{["version"] = "8.2.05"
 			,["minor"] = "3"
 			,["intro"] = {"Season's Greetings"}
 			,["changes"] = {

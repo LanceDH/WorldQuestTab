@@ -4,6 +4,23 @@
 
 	<Script file="MapPinProvider.lua"/>
 	
+	<Frame name="WQT_PinIconTemplate" flattenRenderLayers="true" virtual="true">
+		<Size x="16" y="16" />
+		<Layers>
+			<Layer level="ARTWORK" textureSubLevel="3">
+				<Texture parentKey="Icon" atlas="dungeon">
+					<Size x="11" y="11"/>
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="ARTWORK" textureSubLevel="2" setAllPoints="true">
+				<Texture parentKey="BG" alpha="0.75" file="Interface\GLUES\Models\UI_MainMenu_Legion\UI_Legion_Shadow" setAllPoints="true"/>
+			</Layer>
+		</Layers>
+	</Frame>
+	
 	<Button name="WQT_PinTemplate" mixin="WQT_PinMixin" flattenRenderLayers="true" virtual="true" frameStrata="MEDIUM">
 		<Size x="25" y="25" />
 		<HitRectInsets left="3" right="3" top="3" bottom="3"/>
@@ -63,44 +80,9 @@
 				<!-- This serves as a background for the timer -->
 				<Texture parentKey="RingBG" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRing" />
 			</Layer>
-			<Layer level="ARTWORK" textureSubLevel="3">
-				<Texture parentKey="TrackedCheck" atlas="worldquest-emissary-tracker-checkmark">
-					<Size x="16" y="13"/>
-					<Anchors>
-						<Anchor point="CENTER" relativePoint="CENTER" x="10" y="-3"/>
-					</Anchors>
-				</Texture>
-			</Layer>
 			<Layer level="ARTWORK" textureSubLevel="2" >
+				<!-- Edge highlight of the timer. Custom so it can be colored -->
 				<Texture parentKey="Pointer" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingPointer"/>
-			</Layer>
-			<Layer level="ARTWORK" textureSubLevel="3">
-				<Texture parentKey="TypeIcon" atlas="dungeon">
-					<Size x="12" y="12"/>
-					<Anchors>
-						<Anchor point="CENTER" relativePoint="CENTER" x="0" y="-14"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="RewardIcon" atlas="Auctioneer">
-					<Size x="12" y="12"/>
-					<Anchors>
-						<Anchor point="CENTER" relativePoint="CENTER" x="-13" y="-7"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-			<Layer level="ARTWORK" textureSubLevel="2" >
-				<Texture parentKey="RewardBG" alpha="1" file="Interface\GLUES\Models\UI_MainMenu_Legion\UI_Legion_Shadow">
-					<Size x="12" y="12"/>
-					<Anchors>
-						<Anchor point="CENTER" relativePoint="CENTER" relativeKey="$parent.RewardIcon"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="TypeBG" alpha="1" file="Interface\GLUES\Models\UI_MainMenu_Legion\UI_Legion_Shadow">
-					<Size x="12" y="12"/>
-					<Anchors>
-						<Anchor point="CENTER" relativePoint="CENTER" relativeKey="$parent.TypeIcon"/>
-					</Anchors>
-				</Texture>
 			</Layer>
 			<Layer level="ARTWORK" textureSubLevel="5">
 				 <FontString parentKey="Time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE" text="Fuck">

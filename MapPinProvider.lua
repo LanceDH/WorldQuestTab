@@ -16,9 +16,21 @@ local _pinTypeScales = {
 		,[_pinType.world] = 0.5
 	}
 	
+local ICON_ANGLE_START = 270;
+local ICON_ANGLE_DISTANCE = 55;
+local ICON_CENTER_DISTANCE = 13;
+	
 ------------------------------------
 -- Locals
 ------------------------------------
+	
+local function OnPinIconRelease(pool, iconFrame)
+	iconFrame:Hide();
+	iconFrame.BG:Show();
+	iconFrame.Icon:SetScale(1);
+	iconFrame.Icon:SetTexCoord(0, 1, 0, 1);
+	iconFrame.Icon:SetVertexColor(1, 1, 1);
+end
 	
 local function OnPinRelease(pool, pin)
 	pin.questID = nil;
@@ -303,6 +315,8 @@ function WQT_PinMixin:OnLoad()
 	self.UpdateTooltip = function() WQT_Utils:ShowQuestTooltip(self, self.questInfo) end;
 	self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 	self.updateTime = 0;
+	self.iconPool =  CreateFramePool("FRAME", self, "WQT_PinIconTemplate", OnPinIconRelease);
+	self.icons = {};
 end
 
 function WQT_PinMixin:SetupCanvasType(pinType, parentMapFrame, isWatched)
@@ -320,6 +334,32 @@ function WQT_PinMixin:SetupCanvasType(pinType, parentMapFrame, isWatched)
 	end
 end
 
+function WQT_PinMixin:PlaceIcons()
+	local title = C_TaskQuest.GetQuestInfoByQuestID(self.questID);
+	local numIcons = #self.icons;
+	if (numIcons > 0) then
+		local angle = ICON_ANGLE_START - (ICON_ANGLE_DISTANCE*(numIcons-1))/2
+		local index = 1;
+		for key, iconFrame in ipairs(self.icons) do
+			iconFrame:SetPoint("CENTER", ICON_CENTER_DISTANCE * cos(angle), ICON_CENTER_DISTANCE * sin(angle));
+			iconFrame:Show();
+			angle = angle + ICON_ANGLE_DISTANCE;
+		end
+	end
+end
+
+function WQT_PinMixin:AddIcon(texture, left, right, top, bottom)
+	local iconFrame = self.iconPool:Acquire();
+	if (left) then
+		iconFrame.Icon:SetTexture(texture);
+		iconFrame.Icon:SetTexCoord(left, right, top, bottom);
+	else
+		iconFrame.Icon:SetAtlas(texture);
+	end
+	tinsert(self.icons, iconFrame);
+	return iconFrame;
+end
+
 function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	local isWatched = IsWorldQuestWatched(questInfo.questId);
 	self:SetupCanvasType(pinType, parentMapFrame, isWatched);
@@ -329,7 +369,6 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.questID = questInfo.questId;
 
 	local scale = (WQT_Utils:GetSetting("pin", "bigPoI") and 1.15 or 1);
-	local iconDistance =  12;
 	local _, _, _, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
 	local _, _, worldQuestType, rarity, isElite = GetQuestTagInfo(questInfo.questId);
 	local isBonus = not worldQuestType;
@@ -337,9 +376,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.scale = scale
 	self:SetScale(scale);
 	self:SetAlpha(self.startAlpha);
-	
-	self.TrackedCheck:SetShown(isWatched);
-	
+
 	-- Ring stuff
 	local ringType = WQT_Utils:GetSetting("pin", "ringType");
 	local now = time();
@@ -349,58 +386,48 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.Pointer:Hide();
 	if (ringType ==  _V["RINGTYPE_REWARD"]) then
 		r, g, b = questInfo.reward.color:GetRGB();
+	elseif (rarity and ringType ==  _V["RINGTYPE_RARITY"]) then
+		if (rarity > 1 and WORLD_QUEST_QUALITY_COLORS[rarity]) then
+			r, g, b = WORLD_QUEST_QUALITY_COLORS[rarity].color:GetRGB();
+		end
 	end
 	
 	self.RingBG:SetVertexColor(r*0.25, g*0.25, b*0.25);
 	self.Ring:SetSwipeColor(r*.8, g*.8, b*.8);
 
+	
+	
+	self.iconPool:ReleaseAll();
+	wipe(self.icons);
+	
 	local showTypeIcon = WQT_Utils:GetSetting("pin", "reward") and WQT_Utils:GetSetting("pin", "typeIcon") and (isBonus or (worldQuestType > 0 and worldQuestType ~= LE_QUEST_TAG_TYPE_NORMAL));
 	local rewardTypeAtlas = WQT_Utils:GetSetting("pin", "rewardTypeIcon") and _V["REWARD_TYPE_ATLAS"][questInfo.reward.type];
 	
 	-- Quest Type Icon
 	local typeAtlas, typeAtlasWidth, typeAtlasHeight =  WQT_Utils:GetCachedTypeIconData(questInfo);
-	self.TypeIcon:SetShown(showTypeIcon);
-	self.TypeBG:SetShown(showTypeIcon);
 	if (showTypeIcon and typeAtlas) then
-		local typeSize = 11;
-		local angle = 270 + (rewardTypeAtlas and 30 or 0)
-		local posX = iconDistance * cos(angle);
-		local posY = iconDistance * sin(angle);
-		self.TypeBG:SetSize(typeSize+5, typeSize+5);
-		typeSize = typeSize * (worldQuestType == LE_QUEST_TAG_TYPE_PVP and 0.8 or 1)
-		self.TypeIcon:SetSize(typeSize, typeSize);
-		self.TypeIcon:SetAtlas(typeAtlas);
-		self.TypeIcon:SetPoint("CENTER", posX, posY);
+		local iconFrame = self:AddIcon(typeAtlas);
+		iconFrame.Icon:SetScale(worldQuestType == LE_QUEST_TAG_TYPE_PVP and 0.8 or 1);
 	end
 	
 	-- Reward Type Icon
-	self.RewardIcon:SetShown(rewardTypeAtlas);
-	self.RewardBG:SetShown(rewardTypeAtlas);
 	if (rewardTypeAtlas) then
-		local typeSize = 11;
-		local angle = 270 - (showTypeIcon and 30 or 0)
-		local posX = iconDistance * cos(angle);
-		local posY = iconDistance * sin(angle);
-		self.RewardBG:SetSize(typeSize+5, typeSize+5);
-		typeSize = typeSize * rewardTypeAtlas.scale;
-		self.RewardIcon:SetSize(typeSize, typeSize);
-		if (rewardTypeAtlas.r) then
-			self.RewardIcon:SetTexture(rewardTypeAtlas.texture);
-			self.RewardIcon:SetTexCoord(rewardTypeAtlas.l, rewardTypeAtlas.r, rewardTypeAtlas.t, rewardTypeAtlas.b);
-		else
-			self.RewardIcon:SetAtlas(rewardTypeAtlas.texture);
-			self.RewardIcon:SetTexCoord(0, 1, 0, 1);
-		end
-		if (rewardTypeAtlas.color) then
-			self.RewardIcon:SetVertexColor(rewardTypeAtlas.color:GetRGB());
-		else
-			self.RewardIcon:SetVertexColor(1, 1, 1);
-		end
+		local iconFrame = self:AddIcon(rewardTypeAtlas.texture, rewardTypeAtlas.l, rewardTypeAtlas.r, rewardTypeAtlas.t, rewardTypeAtlas.b);
 		
-		self.RewardIcon:SetPoint("CENTER", posX, posY);
+		if (rewardTypeAtlas.color) then
+			iconFrame.Icon:SetVertexColor(rewardTypeAtlas.color:GetRGB());
+		end
 	end
 	
-	-- Icon stuff
+	-- Quest tracked icon
+	if (isWatched) then
+		local iconFrame = self:AddIcon("worldquest-emissary-tracker-checkmark");
+		iconFrame.Icon:SetScale(1.1);
+	end
+	
+	self:PlaceIcons();
+	
+	-- Main Icon
 	local settingPinReward = WQT_Utils:GetSetting("pin", "reward");
 	local showIcon = settingPinReward and (questInfo.reward.type == WQT_REWARDTYPE.missing or questInfo.reward.texture ~= "");
 	self.CustomTypeIcon:SetShown(not showIcon);
@@ -460,10 +487,8 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.Time:SetShown(showTimeString);
 	self.TimeBG:SetShown(showTimeString);
 	local timeOffset = 4;
-	if (showTypeIcon and rewardTypeAtlas) then
-		timeOffset = 2;
-	elseif (showTypeIcon or  rewardTypeAtlas) then
-		timeOffset = 0;
+	if(#self.icons > 0) then
+		timeOffset = (#self.icons % 2 == 0) and 2 or 0;
 	end
 	self.Time:SetPoint("TOP", self, "BOTTOM", 1, timeOffset);
 
