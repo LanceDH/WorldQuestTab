@@ -721,7 +721,7 @@ local _patchNotes = {
 				,"New pin icon: Time Remaining (default off). Adds an icon on the pin with a general indication of the time remaining."
 			}
 			,["changes"] = {
-				"While using the 'Always All Quests', looking at the zone not linked to an expanion, will show all quests for the current expansion. I.e.: Wile in Stormwind you will stil lsee BfA quests."
+				"While using the 'Always All Quests', looking at the zone not linked to an expansion, will show all quests for the current expansion. I.e.: While in Stormwind you will still see BfA quests."
 				,"Changed the looks of the 'tracked quest' marker on map pins."
 			}
 			,["fixes"] = {
