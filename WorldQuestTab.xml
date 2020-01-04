@@ -846,7 +846,7 @@
 					<OnLoad method="OnLoad" />
 				</Scripts>
 			</ScrollFrame>
-			<Frame name="WQTU_OverlayFrame" parentKey="Blocker" enableMouse="true" hidden="true">
+			<Frame name="WQT_OverlayFrame" parentKey="Blocker" enableMouse="true" hidden="true">
 				<Anchors>
 					<Anchor point="TOPLEFT" x="2"/>
 					<Anchor point="BOTTOMRIGHT"/>
@@ -1333,7 +1333,7 @@
 		</Scripts>
 	</Button>
 	
-	<ScrollFrame name="WQTU_VersionFrame" parent="WQTU_OverlayFrame" parentKey="ScrollFrame" hidden="true" inherits="HybridScrollFrameTemplate">
+	<ScrollFrame name="WQT_VersionFrame" parent="WQT_OverlayFrame" parentKey="ScrollFrame" hidden="true" inherits="HybridScrollFrameTemplate">
 		<Anchors>
 			<Anchor point="TOPLEFT" x="10" y="-3"/>
 			<Anchor point="BOTTOMRIGHT" x="-18" y="3"/>

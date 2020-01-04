@@ -32,7 +32,7 @@
 -- local factionInfo = WQT_Utils:GetFactionDataInternal(factionId); 	| factionInfo = {[name] = string, [texture] = string/number, [playerFaction] = string, [expansion] = number}
 -- local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex, displayTimeLeft = GetQuestTagInfo(questId);
 -- local texture, sizeX, sizeY = WQT_Utils:GetCachedTypeIconData(worldQuestType, tradeskillLineIndex);
--- local timeLeftSeconds, timeString, color, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated);
+-- local timeLeftSeconds, timeString, color, timeStringShort, category = WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated);
 
 --
 -- Callbacks (WQT_WorldQuestFrame:RegisterCallback(event, func))
@@ -103,6 +103,8 @@ local WQT_DEFAULTS = {
 		["pin"] = {
 			typeIcon = true;
 			rewardTypeIcon = false;
+			rarityIcon = false;
+			timeIcon = false;
 			filterPoI = true;
 			bigPoI = false;
 			disablePoI = false;
@@ -110,7 +112,7 @@ local WQT_DEFAULTS = {
 			timeLabel = false;
 			continentPins = false;
 			fadeOnPing = true;
-			ringType = _V["RINGTYPE_TIME"];
+			ringType = _V["RING_TYPES"].time;
 		};
 
 		["filters"] = {
@@ -338,7 +340,7 @@ local function InitFilter(self, level)
 		info.tooltipText =  _L["WHATS_NEW_TT"];
 		
 		info.func = function()
-						local scrollFrame = WQTU_VersionFrame;
+						local scrollFrame = WQT_VersionFrame;
 						local blockerText = scrollFrame.Text;
 						
 						blockerText:SetText(_V["LATEST_UPDATE"]);
@@ -758,7 +760,27 @@ local function InitFilter(self, level)
 			info.checked = function() return WQT.settings.pin.typeIcon end;
 			ADD:AddButton(info, level);
 			
+			info.text = _L["PIN_RARITY_ICON"];
+			info.tooltipTitle = _L["PIN_RARITY_ICON"];
+			info.tooltipText = _L["PIN_RARITY_ICON_TT"];
+			info.func = function(_, _, _, value)
+					WQT.settings.pin.rarityIcon = value;
+					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
+				end
+			info.checked = function() return WQT.settings.pin.rarityIcon end;
+			ADD:AddButton(info, level);
+			
 			info.disabled = function() return WQT.settings.pin.disablePoI end;
+			
+			info.text = _L["PIN_TIME_ICON"];
+			info.tooltipTitle = _L["PIN_TIME_ICON"];
+			info.tooltipText = _L["PIN_TIME_ICON_TT"];
+			info.func = function(_, _, _, value)
+					WQT.settings.pin.timeIcon = value;
+					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
+				end
+			info.checked = function() return WQT.settings.pin.timeIcon end;
+			ADD:AddButton(info, level);
 			
 			info.text = _L["PIN_REWARD_TYPE"];
 			info.tooltipTitle = _L["PIN_REWARD_TYPE"];
@@ -769,7 +791,7 @@ local function InitFilter(self, level)
 				end
 			info.checked = function() return WQT.settings.pin.rewardTypeIcon end;
 			ADD:AddButton(info, level);
-			
+
 			info.text = _L["PIN_BIGGER"];
 			info.tooltipTitle = _L["PIN_BIGGER"];
 			info.tooltipText = _L["PIN_BIGGER_TT"];
@@ -807,44 +829,44 @@ local function InitFilter(self, level)
 			info.tooltipTitle = _L["PIN_RING_NONE"];
 			info.tooltipText = _L["PIN_RIMG_NONE_TT"];
 			info.func = function()
-					WQT.settings.pin.ringType = _V["RINGTYPE_NONE"];
+					WQT.settings.pin.ringType = _V["RING_TYPES"].default;
 					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 					ADD:Refresh(self, 1, 3);
 				end
-			info.checked = function() return  WQT.settings.pin.ringType == _V["RINGTYPE_NONE"]; end;
+			info.checked = function() return  WQT.settings.pin.ringType == _V["RING_TYPES"].default; end;
 			ADD:AddButton(info, level);
 			
 			info.text = _L["PIN_RING_COLOR"];
 			info.tooltipTitle = _L["PIN_RING_COLOR"];
 			info.tooltipText = _L["PIN_RING_COLOR_TT"];
 			info.func = function()
-					WQT.settings.pin.ringType = _V["RINGTYPE_REWARD"];
+					WQT.settings.pin.ringType = _V["RING_TYPES"].reward;
 					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 					ADD:Refresh(self, 1, 3);
 				end
-			info.checked = function() return WQT.settings.pin.ringType == _V["RINGTYPE_REWARD"]; end;
+			info.checked = function() return WQT.settings.pin.ringType == _V["RING_TYPES"].reward; end;
 			ADD:AddButton(info, level);
 			
 			info.text = _L["PIN_RING_TIME"];
 			info.tooltipTitle = _L["PIN_RING_TIME"];
 			info.tooltipText = _L["PIN_RIMG_TIME_TT"];
 			info.func = function()
-					WQT.settings.pin.ringType = _V["RINGTYPE_TIME"];
+					WQT.settings.pin.ringType = _V["RING_TYPES"].time;
 					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 					ADD:Refresh(self, 1, 3);
 				end
-			info.checked = function() return  WQT.settings.pin.ringType == _V["RINGTYPE_TIME"]; end;
+			info.checked = function() return  WQT.settings.pin.ringType == _V["RING_TYPES"].time; end;
 			ADD:AddButton(info, level);
 			
-			info.text = QUALITY;
-			info.tooltipTitle = QUALITY;
+			info.text = RARITY;
+			info.tooltipTitle = RARITY;
 			info.tooltipText = _L["PIN_RING_QUALITY_TT"];
 			info.func = function()
-					WQT.settings.pin.ringType = _V["RINGTYPE_RARITY"];
+					WQT.settings.pin.ringType = _V["RING_TYPES"].rarity;
 					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 					ADD:Refresh(self, 1, 3);
 				end
-			info.checked = function() return  WQT.settings.pin.ringType == _V["RINGTYPE_RARITY"]; end;
+			info.checked = function() return  WQT.settings.pin.ringType == _V["RING_TYPES"].rarity; end;
 			ADD:AddButton(info, level);
 			
 			info.disabled = nil;
@@ -1019,7 +1041,7 @@ local function ConvertOldSettings(version)
 		WQT.settings.pin.disablePoI =			GetNewSettingData(WQT.settings.disablePoI, false);
 		WQT.settings.pin.reward =				GetNewSettingData(WQT.settings.showPinReward, true);
 		WQT.settings.pin.timeLabel =				GetNewSettingData(WQT.settings.showPinTime, false);
-		WQT.settings.pin.ringType =				GetNewSettingData(WQT.settings.ringType, _V["RINGTYPE_TIME"]);
+		WQT.settings.pin.ringType =				GetNewSettingData(WQT.settings.ringType, _V["RING_TYPES"].time);
 		
 		-- Clean up old data
 		local version = WQT.settings.versionCheck;
@@ -1040,10 +1062,6 @@ local function ConvertOldSettings(version)
 		for flagId in pairs(WQT.settings.filters) do
 			WQT:SetAllFilterTo(flagId, true);
 		end
-	end
-	-- Fixed typo in variable name
-	if (version < "8.2.05.4")  then
-		WQT.settings.pin.ringType = WQT.settings.pin.ringType or _V["RINGTYPE_TIME"];
 	end
 end
 
@@ -1540,7 +1558,6 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 
 	self:Show();
 	self.questInfo = questInfo;
-	self.info = questInfo; -- Temporary for smooth transition with WQTU update
 	self.zoneId = C_TaskQuest.GetQuestZoneID(questInfo.questId);
 	self.questId = questInfo.questId;
 
@@ -2185,7 +2202,6 @@ function WQT_CoreMixin:OnLoad()
 	-- Pin Dataprovider
 	self.pinDataProvider = CreateFromMixins(WQT_PinDataProvider);
 	self.pinDataProvider:Init();
-	self.pinHandler = self.pinDataProvider; -- Temporary for smooth WQTU update
 	self.bountyCounterPool = CreateFramePool("FRAME", self, "WQT_BountyCounterTemplate");
 	
 	self:SetFrameLevel(self:GetParent():GetFrameLevel()+4);

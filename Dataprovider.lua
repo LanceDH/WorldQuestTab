@@ -332,15 +332,16 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 	local timeString = "";
 	local timeStringShort = "";
 	local color = _V["WQT_COLOR_CURRENCY"];
+	local category = _V["TIME_REMAINING_CATEGORY"].none;
 	
-	if (not questInfo or not questInfo.questId) then return timeLeftSeconds, timeString, color ,timeStringShort, timeLeftMinutes end
+	if (not questInfo or not questInfo.questId) then return timeLeftSeconds, timeString, color ,timeStringShort, timeLeftMinutes, category end
 	
 	-- Time ran out, waiting for an update
 	if (self:QuestIsExpired(questInfo)) then
 		timeString = RAID_INSTANCE_EXPIRES_EXPIRED;
 		timeStringShort = "Exp."
 		color = GRAY_FONT_COLOR;
-		return 0, timeString, color,timeStringShort , 0, true;
+		return 0, timeString, color,timeStringShort , 0, _V["TIME_REMAINING_CATEGORY"].expired;
 	end
 	
 	timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(questInfo.questId) or 0;
@@ -354,16 +355,19 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 		if ( timeLeftSeconds <= WORLD_QUESTS_TIME_CRITICAL_MINUTES * SECONDS_PER_MIN  ) then
 			color = RED_FONT_COLOR;
 			timeString = SecondsToTime(displayTime, displayTime > SECONDS_PER_MIN  and true or false, unabreviated);
+			category = _V["TIME_REMAINING_CATEGORY"].critical;
 		elseif displayTime < SECONDS_PER_HOUR   then
 			timeString = SecondsToTime(displayTime, true);
 			color = _V["WQT_ORANGE_FONT_COLOR"];
+			category = _V["TIME_REMAINING_CATEGORY"].short
 		elseif displayTime < SECONDS_PER_DAY   then
 			if (fullString) then
 				timeString = SecondsToTime(displayTime, true, unabreviated);
 			else
 				timeString = D_HOURS:format(displayTime / SECONDS_PER_HOUR);
 			end
-			color = _V["WQT_GREEN_FONT_COLOR"]
+			color = _V["WQT_GREEN_FONT_COLOR"];
+			category = _V["TIME_REMAINING_CATEGORY"].medium;
 		else
 			if (fullString) then
 				timeString = SecondsToTime(displayTime, true, unabreviated);
@@ -373,6 +377,7 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 			local _, _, _, rarity, isElite = GetQuestTagInfo(questInfo.questId);
 			local isWeek = isElite and rarity == LE_WORLD_QUEST_QUALITY_EPIC
 			color = isWeek and _V["WQT_PURPLE_FONT_COLOR"] or _V["WQT_BLUE_FONT_COLOR"];
+			category = isWeek and _V["TIME_REMAINING_CATEGORY"].veryLong or _V["TIME_REMAINING_CATEGORY"].long;
 		end
 	end
 	-- start with default, for CN and KR
@@ -382,11 +387,11 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 		timeStringShort = t..str;
 	end
 	
-	return timeLeftSeconds, timeString, color, timeStringShort ,timeLeftMinutes, false;
+	return timeLeftSeconds, timeString, color, timeStringShort ,timeLeftMinutes, category;
 end
 
 function WQT_Utils:GetPinTime(questInfo)
-	local seconds, _, color, timeStringShort, _, isExpired = WQT_Utils:GetQuestTimeString(questInfo);
+	local seconds, _, color, timeStringShort, _, category = WQT_Utils:GetQuestTimeString(questInfo);
 	local start = 0;
 	local timeLeft = seconds;
 	local total = 0;
@@ -415,7 +420,7 @@ function WQT_Utils:GetPinTime(questInfo)
 		total = (maxTime + offset);
 		timeLeft = (timeLeft + offset);
 	end
-	return start, total, timeLeft, seconds, color, timeStringShort, isExpired;
+	return start, total, timeLeft, seconds, color, timeStringShort, category;
 end
 
 function WQT_Utils:QuestIsExpired(questInfo)
@@ -472,8 +477,8 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo)
 	end
 
 	-- Add time
-	local seconds, timeString, timeColor, _, _, isExpired = WQT_Utils:GetQuestTimeString(questInfo, true, true)
-	if (seconds > 0 or isExpired) then
+	local seconds, timeString, timeColor, _, _, category = WQT_Utils:GetQuestTimeString(questInfo, true, true)
+	if (seconds > 0 or category == _V["TIME_REMAINING_CATEGORY"].expired) then
 		timeColor = seconds <= SECONDS_PER_HOUR  and timeColor or NORMAL_FONT_COLOR;
 		GameTooltip:AddLine(BONUS_OBJECTIVE_TIME_LEFT:format(timeString), timeColor.r, timeColor.g, timeColor.b);
 	end

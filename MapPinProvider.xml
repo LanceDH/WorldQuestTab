@@ -7,16 +7,21 @@
 	<Frame name="WQT_PinIconTemplate" flattenRenderLayers="true" virtual="true">
 		<Size x="16" y="16" />
 		<Layers>
-			<Layer level="ARTWORK" textureSubLevel="3">
+			<Layer level="ARTWORK" textureSubLevel="10">
 				<Texture parentKey="Icon" atlas="dungeon">
-					<Size x="11" y="11"/>
+					<Size x="10" y="10"/>
 					<Anchors>
 						<Anchor point="CENTER"/>
 					</Anchors>
 				</Texture>
 			</Layer>
-			<Layer level="ARTWORK" textureSubLevel="2" setAllPoints="true">
-				<Texture parentKey="BG" alpha="0.75" file="Interface\GLUES\Models\UI_MainMenu_Legion\UI_Legion_Shadow" setAllPoints="true"/>
+			<Layer level="BACKGROUND" textureSubLevel="9" setAllPoints="true">
+				<Texture parentKey="BG" alpha="0.75" file="Interface\GLUES\Models\UI_MainMenu_Legion\UI_Legion_Shadow" setAllPoints="true">
+					<Size x="16" y="16"/>
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
 			</Layer>
 		</Layers>
 	</Frame>

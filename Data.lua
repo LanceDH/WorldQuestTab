@@ -350,13 +350,9 @@ local WQT_DRAENOR = {
 -- SHARED
 ------------------------
 
+_V["PATH_CUSTOM_ICONS"] = "Interface/Addons/WorldQuestTab/Images/CustomIcons";
 _V["LIST_ANCHOR_TYPE"] = {["flight"] = 1, ["world"] = 2, ["full"] = 3, ["taxi"] = 4};
 _V["CURRENT_EXPANSION"] = LE_EXPANSION_BATTLE_FOR_AZEROTH;
-
-_V["RINGTYPE_NONE"] = 1;
-_V["RINGTYPE_REWARD"] = 2;
-_V["RINGTYPE_TIME"] = 3;
-_V["RINGTYPE_RARITY"] = 4;
 
 _V["WQT_COLOR_NONE"] =  CreateColor(0.45, 0.45, .45) ;
 _V["WQT_COLOR_ARMOR"] =  CreateColor(0.85, 0.6, 1) ;
@@ -377,6 +373,23 @@ _V["WQT_PURPLE_FONT_COLOR"] = CreateColor(0.73, 0.33, 0.82);
 _V["WQT_BOUNDYBOARD_OVERLAYID"] = 3;
 _V["WQT_TYPE_BONUSOBJECTIVE"] = 99;
 _V["WQT_LISTITTEM_HEIGHT"] = 32;
+
+_V["TIME_REMAINING_CATEGORY"] = {
+	["none"] = 0
+	,["expired"] = 1
+	,["critical"] = 2 -- <15m
+	,["short"] = 3 -- 1h
+	,["medium"] = 4 -- 24h
+	,["long"] = 5 -- 3d
+	,["veryLong"] = 6 -- >3d
+}
+
+_V["RING_TYPES"] = {
+	["default"] = 1
+	,["reward"] = 2
+	,["time"] = 3
+	,["rarity"] = 4
+}
 
 _V["NUMBER_ABBREVIATIONS_ASIAN"] = {
 		{["value"] = 1000000000, ["format"] = _L["NUMBERS_THIRD"]}
@@ -525,7 +538,7 @@ _V["REWARD_TYPE_ATLAS"] = {
 		[WQT_REWARDTYPE.weapon] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.211, ["r"] = 0.277, ["t"] = 0.246, ["b"] = 0.277} -- Weapon
 		,[WQT_REWARDTYPE.equipment] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.847, ["r"] = 0.91, ["t"] = 0.459, ["b"] = 0.49} -- Armor
 		,[WQT_REWARDTYPE.relic] = {["texture"] = "poi-scrapper", ["scale"] = 1} -- Relic
-		,[WQT_REWARDTYPE.artifact] = {["texture"] = "AzeriteReady", ["scale"] = 1.4} -- Azerite
+		,[WQT_REWARDTYPE.artifact] = {["texture"] = "AzeriteReady", ["scale"] = 1.3} -- Azerite
 		,[WQT_REWARDTYPE.item] = {["texture"] = "Banker", ["scale"] = 1.1} -- Item
 		,[WQT_REWARDTYPE.gold] = {["texture"] = "Auctioneer", ["scale"] = 1} -- Gold
 		,[WQT_REWARDTYPE.currency] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.4921875, ["r"] = 0.55859375, ["t"] = 0.0390625, ["b"] = 0.068359375, ["color"] = CreateColor(0.7, 0.52, 0.43)} -- Resources
@@ -703,7 +716,9 @@ local _patchNotes = {
 		{["version"] = "8.2.05"
 			,["minor"] = "4"
 			,["new"] = {
-				"New ring type settings: Quality. Color the ring depending on the quality of the quest."
+				"New ring type settings: Rarity. Color the ring depending on the rarity of the quest."
+				,"New pin icon: Quest Rarity (default off). Adds a colored icon to rare and epic quests."
+				,"New pin icon: Time Remaining (default off). Adds an icon on the pin with a general indication of the time remaining."
 			}
 			,["changes"] = {
 				"While using the 'Always All Quests', looking at the zone not linked to an expanion, will show all quests for the current expansion. I.e.: Wile in Stormwind you will stil lsee BfA quests."
