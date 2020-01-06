@@ -141,8 +141,10 @@ function WQT_SettingsSliderMixin:SetDisabled(value)
 	WQT_SettingsBaseMixin.SetDisabled(self, value);
 	if (value) then
 		self.Slider:Disable();
+		self.TextBox:Disable();
 	else
 		self.Slider:Enable();
+		self.TextBox:Enable();
 	end
 end
 
@@ -176,6 +178,15 @@ function WQT_SettingsDropDownMixin:OnLoad()
 	self.DropDown:SetScript("OnClick", function() PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); end);
 	self.DropDown:SetScript("OnEnter", function() self:OnEnter(self.DropDown) end);
 	self.DropDown:SetScript("OnLeave", function() self:OnLeave() end);
+end
+
+function WQT_SettingsDropDownMixin:SetDisabled(value)
+	WQT_SettingsBaseMixin.SetDisabled(self, value);
+	if (value) then
+		self.DropDown:Disable();
+	else
+		self.DropDown:Enable();
+	end
 end
 
 function WQT_SettingsDropDownMixin:Init(data)
@@ -216,6 +227,8 @@ function WQT_SettingsDropDownMixin:Init(data)
 			ADD:SetText(self.DropDown, label);
 		end
 	end
+	
+	self:UpdateState();
 end
 
 --------------------------------
@@ -259,102 +272,126 @@ WQT_SettingsFrameMixin = {};
 
 function WQT_SettingsFrameMixin:OnLoad()
 	-- Because we can't destroy frames, keep a pool of each type to re-use
-	self.categoryPool = CreateFramePool("FRAME", self.ScrollFrame.scrollChild, "WQT_SettingCategoryTemplate");
+	self.categoryPool = CreateFramePool("BUTTON", self.ScrollFrame.scrollChild, "WQT_SettingCategoryTemplate");
 	self.checkBoxPool = CreateFramePool("FRAME", self.ScrollFrame.scrollChild, "WQT_SettingCheckboxTemplate", function(pool, frame) frame:Reset(); end);
 	self.subTitlePool = CreateFramePool("FRAME", self.ScrollFrame.scrollChild, "WQT_SettingSubTitleTemplate", function(pool, frame) frame:Reset(); end);
 	self.sliderPool = CreateFramePool("FRAME", self.ScrollFrame.scrollChild, "WQT_SettingSliderTemplate", function(pool, frame) frame:Reset(); end);
 	self.dropDownPool = CreateFramePool("FRAME", self.ScrollFrame.scrollChild, "WQT_SettingDropDownTemplate", function(pool, frame) frame:Reset(); end);
-	self.frameList = {};
 	
 	self.ScrollFrame.buttonHeight = 40;
 	self.ScrollFrame.scrollChild:SetWidth(self.ScrollFrame:GetWidth());
 	self.ScrollFrame.scrollChild:SetPoint("RIGHT", self.ScrollFrame)
 	self.ScrollFrame.scrollBar:SetValueStep(40);
+	
+	self.categoryless = {};
+	self.categories = {};
+	self.categoriesLookup = {};
 end
 
-function WQT_SettingsFrameMixin:AddCategory(title)
-	local category = self.categoryPool:Acquire();
-	category.Title:SetText(title)
-	tinsert(self.frameList, category);
-end
-
-function WQT_SettingsFrameMixin:AddSubTitle(data)
-	local frame = self.subTitlePool:Acquire();
-	frame:Init(data);
-	tinsert(self.frameList, frame);
-end
-
-function WQT_SettingsFrameMixin:AddCheckBox(data)
-	local frame = self.checkBoxPool:Acquire();
-	frame:Init(data);
-	if (data.getValueFunc) then
-		frame.CheckBox:SetChecked(data.getValueFunc());
+function WQT_SettingsFrameMixin:RegisterCategory(id, label)
+	if (self.categoriesLookup[id]) then
+		print("A setting with id", id, "already exists");
+		return;
 	end
 	
-	tinsert(self.frameList, frame);
+	local category =  self:CreateCategory(id, label)
+	tinsert(self.categories, category);
+	self.categoriesLookup[id] = category;
 end
 
-function WQT_SettingsFrameMixin:AddSlider(data)
-	local frame = self.sliderPool:Acquire();
-	frame:Init(data);
-	tinsert(self.frameList, frame);
-end
-
-function WQT_SettingsFrameMixin:AddDropDown(data)
-	local frame = self.dropDownPool:Acquire();
-	frame:Init(data);
-	tinsert(self.frameList, frame);
+function WQT_SettingsFrameMixin:CreateCategory(id, title)
+	local category = self.categoryPool:Acquire();
+	category.Title:SetText(title)
+	category.id = id;
+	category.isExpanded = true;
+	category.settings = {};
+	return category;
 end
 
 function WQT_SettingsFrameMixin:UpdateList()
-	for k, setting in ipairs(self.frameList) do
+	for k, setting in ipairs(self.categoryless) do
 		if (setting.UpdateState) then
 			setting:UpdateState();
 		end
 	end
+	
+	for k, category in ipairs(self.categories) do
+		for k2, setting in ipairs(category.settings) do
+			if (setting.UpdateState) then
+				setting:UpdateState();
+			end
+		end
+	end
 end
 
-function WQT_SettingsFrameMixin:CreateList()
-	self.categoryPool:ReleaseAll();
-	self.checkBoxPool:ReleaseAll();
-	self.subTitlePool:ReleaseAll();
-	self.sliderPool:ReleaseAll();
-	self.dropDownPool:ReleaseAll();
-	wipe(self.frameList);
-	
-	local totalHeight = SETTINGS_PADDING_TOP + SETTINGS_PADDING_BOTTOM;
-	
-	-- Setup all settings using manually defined list
-	for k, entry in ipairs(_V["SETTING_LIST"]) do
-		if (entry.type == _V["SETTING_TYPES"].category) then
-			self:AddCategory(entry.label);
-		elseif (entry.type == _V["SETTING_TYPES"].checkBox) then
-			self:AddCheckBox(entry);
-		elseif (entry.type == _V["SETTING_TYPES"].subTitle) then
-			self:AddSubTitle(entry);
-		elseif (entry.type == _V["SETTING_TYPES"].slider) then
-			self:AddSlider(entry);
-		elseif (entry.type == _V["SETTING_TYPES"].dropDown) then
-			self:AddDropDown(entry);
-		end
-	end
-	
-	local previous;
-	for i = 1, #self.frameList do
-		local current = self.frameList[i];
-		current:ClearAllPoints();
-		if (previous) then
-			current:SetPoint("TOPLEFT", previous, "BOTTOMLEFT");
-		else
-			current:SetPoint("TOPLEFT", self.ScrollFrame.scrollChild, 0, -SETTINGS_PADDING_TOP);
-		end
-		current:SetPoint("RIGHT", self.ScrollFrame.scrollChild);
-		current:Show();
-		
-		previous = current;
-		totalHeight = totalHeight + current:GetHeight();
+function WQT_SettingsFrameMixin:AddSetting(data)
+	local pool;
+	-- Get the frame pool depending on the type of setting
+	if (data.type == _V["SETTING_TYPES"].checkBox) then
+		pool = self.checkBoxPool;
+	elseif (data.type == _V["SETTING_TYPES"].subTitle) then
+		pool = self.subTitlePool;
+	elseif (data.type == _V["SETTING_TYPES"].slider) then
+		pool = self.sliderPool;
+	elseif (data.type == _V["SETTING_TYPES"].dropDown) then
+		pool = self.dropDownPool;
 	end
 
-	self.ScrollFrame:SetChildHeight(totalHeight);
-	self.ScrollFrame.scrollBar:Show()
+	-- Get a frame from the pool, initialize it, and link it to a category
+	if (pool) then
+		local frame = pool:Acquire();
+		frame:Init(data);
+		local category = self.categoriesLookup[data.categoryID];
+		local list = category and category.settings or self.categoryless;
+		tinsert(list, frame);
+	end
+end
+
+function WQT_SettingsFrameMixin:AddSettingList(list)
+	for k, setting in ipairs(list) do
+		self:AddSetting(setting);
+	end
+	self:PlaceAllSettings();
+end
+
+function WQT_SettingsFrameMixin:PlaceSetting(setting)
+	setting:ClearAllPoints();
+	if (self.previous) then
+		setting:SetPoint("TOPLEFT", self.previous, "BOTTOMLEFT");
+	else
+		setting:SetPoint("TOPLEFT", self.ScrollFrame.scrollChild, 0, -SETTINGS_PADDING_TOP);
+	end
+	setting:SetPoint("RIGHT", self.ScrollFrame.scrollChild);
+	setting:Show();
+	
+	self.previous = setting;
+	self.totalHeight = self.totalHeight + setting:GetHeight();
+end
+
+function WQT_SettingsFrameMixin:PlaceAllSettings()
+	self.totalHeight = SETTINGS_PADDING_TOP + SETTINGS_PADDING_BOTTOM;
+
+	self.previous = nil;
+	for i = 1, #self.categoryless do
+		local current = self.categoryless[i];
+		self:PlaceSetting(current);
+	end
+	
+	for i = 1, #self.categories do
+		local category = self.categories[i];
+		if (#category.settings > 0) then
+			self:PlaceSetting(category);
+			
+			for k, setting in ipairs(category.settings) do
+				if (category.isExpanded) then
+					self:PlaceSetting(setting);
+				else
+					setting:ClearAllPoints();
+					setting:Hide();
+				end
+			end
+		end
+	end
+	
+	self.ScrollFrame:SetChildHeight(self.totalHeight);
 end

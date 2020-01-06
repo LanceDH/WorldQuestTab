@@ -287,11 +287,15 @@ local function InitFilter(self, level)
 			ADD:AddButton(info, level)
 		end
 		
+		info.hasArrow = false;
+		
 		info.text = SETTINGS;
-		info.value = 0;
+		info.func = function()
+				WQT_WorldQuestFrame:ShowOverlayFrame(WQT_SettingsFrame);
+			end
+		
 		ADD:AddButton(info, level)
 		
-		info.hasArrow = false;
 		local newText = WQT.settings.updateSeen and "" or "|TInterface\\FriendsFrame\\InformationIcon:14|t ";
 		
 		info.text = newText .. _L["WHATS_NEW"];
@@ -518,7 +522,6 @@ local function InitFilter(self, level)
 					info.func = nil;
 					ADD:AddButton(info, level)
 				end
-				
 				
 				if (_utilitiesInstalled) then
 					-- Utilities
@@ -1352,7 +1355,11 @@ function WQT:OnEnable()
 		end
 	end
 	
-	WQT_SettingsFrame:CreateList();
+	for k, category in ipairs(_V["SETTING_CATEGORIES"]) do
+		WQT_SettingsFrame:RegisterCategory(category.id, category.label);
+	end
+	
+	WQT_SettingsFrame:AddSettingList(_V["SETTING_LIST"]);
 end
 
 ------------------------------------------
@@ -2811,8 +2818,8 @@ function WQT_CoreMixin:SetCustomEnabled(value)
 	WQT_QuestScrollFrame.scrollBar:EnableMouse(value);
 	WQT_QuestScrollFrameScrollChild:EnableMouseWheel(value);
 	WQT_QuestScrollFrameScrollChild:EnableMouse(value);
-	WQT_WorldQuestFrameSortButtonButton:EnableMouse(value);
-	self.FilterButton:EnableMouse(value);
+	--WQT_WorldQuestFrameSortButton.Button:EnableMouse(value);
+	--self.FilterButton:EnableMouse(value);
 	if value then
 		self.FilterButton:Enable();
 		self.sortButton:Enable();

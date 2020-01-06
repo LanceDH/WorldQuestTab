@@ -369,10 +369,12 @@ function ADDT:CreateMenuTemplate(lib, name, parent, id, frameType)
 	
 	button:SetScript("OnEnable", function(self) 
 			button.Text:SetVertexColor(WHITE_FONT_COLOR:GetRGB());
+			button.Button:Enable();
 		end);
 		
 	button:SetScript("OnDisable", function(self) 
 			button.Text:SetVertexColor(DISABLED_FONT_COLOR:GetRGB());
+			button.Button:Disable();
 		end);
 	 
 	return button;

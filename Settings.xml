@@ -4,7 +4,7 @@
 
 	<Script file="Settings.lua"/>
 	
-	<Frame name="WQT_SettingCategoryTemplate" virtual="true">
+	<Button name="WQT_SettingCategoryTemplate" virtual="true">
 		<Size y="40"/>	
 		<Layers>
 			<Layer level="BORDER">
@@ -53,8 +53,23 @@
 					</Anchors>
 				</FontString>
 			</Layer>
+			
+			<Layer level="HIGHLIGHT">
+				<Texture parentKey="Highlight" atlas="groupfinder-highlightbar-blue" alphaMode="ADD">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.BGLeft" x="0" y="-1"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BGRight" x="-30" y="8"/>
+					</Anchors>
+				</Texture>
+			</Layer>
 		</Layers>
-	</Frame>
+		<Scripts>
+			<OnClick>
+				self.isExpanded = not self.isExpanded;
+				WQT_SettingsFrame:PlaceAllSettings();
+			</OnClick>
+		</Scripts>
+	</Button>
 	
 	<Frame name="WQT_SettingCheckboxTemplate" mixin="WQT_SettingsCheckboxMixin" virtual="true">
 		<Size y="30"/>	
@@ -164,9 +179,9 @@
 				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
-				<FontString parentKey="Label" inherits="GameFontHighlight" maxLines="1" justifyH="LEFT">
+				<FontString parentKey="Label" inherits="GameFontHighlight" maxLines="1" justifyH="CENTER">
 					<Anchors>
-						<Anchor point="LEFT" x="40" y="2"/>
+						<Anchor point="LEFT" x="15" y="2"/>
 						<Anchor point="RIGHT" x="-15" y="2"/>
 					</Anchors>
 				</FontString>
