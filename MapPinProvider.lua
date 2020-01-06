@@ -370,11 +370,12 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.questInfo = questInfo;
 	self.questID = questInfo.questId;
 
-	local scale = (WQT_Utils:GetSetting("pin", "bigPoI") and 1.15 or 1);
+	local scale = WQT_Utils:GetSetting("pin", "scale")
 	local _, _, _, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
 	local _, _, worldQuestType, rarity, isElite = GetQuestTagInfo(questInfo.questId);
 	local isBonus = not worldQuestType;
 	local settingPinReward = WQT_Utils:GetSetting("pin", "reward");
+	local settingCenterType = WQT_Utils:GetSetting("pin", "centerType");
 
 	self.scale = scale
 	self:SetScale(scale);
@@ -404,14 +405,14 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	
 	-- Quest Type Icon
 	local typeAtlas, typeAtlasWidth, typeAtlasHeight =  WQT_Utils:GetCachedTypeIconData(questInfo);
-	local showTypeIcon = settingPinReward and WQT_Utils:GetSetting("pin", "typeIcon") and (isBonus or (worldQuestType > 0 and worldQuestType ~= LE_QUEST_TAG_TYPE_NORMAL));
+	local showTypeIcon = WQT_Utils:GetSetting("pin", "typeIcon") and (isBonus or (worldQuestType > 0 and worldQuestType ~= LE_QUEST_TAG_TYPE_NORMAL));
 	if (showTypeIcon and typeAtlas) then
 		local iconFrame = self:AddIcon(typeAtlas);
 		iconFrame.Icon:SetScale(worldQuestType == LE_QUEST_TAG_TYPE_PVP and 0.8 or 1);
 	end
 	
 	-- Quest rarity Icon
-	if (settingPinReward and rarity and rarity > 1 and WQT_Utils:GetSetting("pin", "rarityIcon")) then
+	if (rarity and rarity > 1 and WQT_Utils:GetSetting("pin", "rarityIcon")) then
 		local color = WORLD_QUEST_QUALITY_COLORS[rarity];
 		if (color) then
 			local iconFrame = self:AddIcon(_V["PATH_CUSTOM_ICONS"], 0, 0.25, 0, 0.5);
@@ -461,26 +462,26 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self:PlaceIcons();
 	
 	-- Main Icon
-	local showIcon = settingPinReward and (questInfo.reward.type == WQT_REWARDTYPE.missing or questInfo.reward.texture ~= "");
-	self.CustomTypeIcon:SetShown(not showIcon);
+	local showIcon = (questInfo.reward.type == WQT_REWARDTYPE.missing or questInfo.reward.texture ~= "");
+	self.CustomTypeIcon:SetShown(false);
 	self.CustomUnderlay:SetShown(isElite);
+	self.CustomSelectedGlow:Hide()
+	self.CustomBountyRing:Hide()
 	
 	self.Icon:SetTexture("Interface/PETBATTLES/BattleBar-AbilityBadge-Neutral");
 	self.Icon:SetTexCoord(0.06, 0.93, 0.05, 0.93);
 	self.Icon:SetDesaturated(false);
-	
-	
-	if(showIcon) then
-		self.CustomSelectedGlow:Hide()
-		self.CustomBountyRing:Hide()
-		
+	self.Icon:Show();
+
+	if(settingCenterType == _V["PIN_CENTER_TYPES"].reward) then
 		if (questInfo.reward.texture) then
 			self.Icon:SetTexture(questInfo.reward.texture);
 			self.Icon:SetTexCoord(0, 1, 0, 1);
 		end
-	else
+	elseif(settingCenterType == _V["PIN_CENTER_TYPES"].blizzard) then
+		self.CustomTypeIcon:SetShown(true);
 		local selected = questInfo.questId == GetSuperTrackedQuestID()
-		local showSlectedGlow = not showIcon and not isBonus and rarity ~= LE_WORLD_QUEST_QUALITY_COMMON and selected;
+		local showSlectedGlow = not isBonus and rarity ~= LE_WORLD_QUEST_QUALITY_COMMON and selected;
 	
 		self.CustomBountyRing:SetShown(questInfo.isCriteria)
 		self.CustomSelectedGlow:SetShown(showSlectedGlow);
@@ -506,11 +507,11 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 		end
 		
 		-- Mimic default icon
-		if (not settingPinReward) then
-			self.CustomTypeIcon:SetAtlas(typeAtlas);
-			self.CustomTypeIcon:SetSize(typeAtlasWidth, typeAtlasHeight);
-			self.CustomTypeIcon:SetScale(.8);
-		end
+		self.CustomTypeIcon:SetAtlas(typeAtlas);
+		self.CustomTypeIcon:SetSize(typeAtlasWidth, typeAtlasHeight);
+		self.CustomTypeIcon:SetScale(.8);
+	elseif(settingCenterType == _V["PIN_CENTER_TYPES"].none) then
+		self.Icon:Hide();
 	end
 	
 	-- Time

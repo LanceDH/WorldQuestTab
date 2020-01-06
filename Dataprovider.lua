@@ -289,8 +289,8 @@ function WQT_Utils:GetCachedTypeIconData(questInfo)
 		return "QuestDaily", 17, 17, true;
 	elseif (questInfo.isQuestStart) then
 		return "QuestNormal", 17, 17, true;
-	-- elseif (C_QuestLog.IsThreatQuest(questInfo.questId)) then
-		-- return "worldquest-icon-nzoth", 14, 14, true;
+	elseif (C_QuestLog.IsThreatQuest(questInfo.questId)) then
+		 return "worldquest-icon-nzoth", 14, 14, true;
 	elseif (not questType) then
 		return "QuestBonusObjective", 21, 21, true;
 	end
@@ -352,7 +352,7 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 			displayTime = displayTime + SECONDS_PER_MIN ;
 		end
 	
-		if ( timeLeftSeconds <= WORLD_QUESTS_TIME_CRITICAL_MINUTES * SECONDS_PER_MIN  ) then
+		if ( timeLeftSeconds < WORLD_QUESTS_TIME_CRITICAL_MINUTES * SECONDS_PER_MIN  ) then
 			color = RED_FONT_COLOR;
 			timeString = SecondsToTime(displayTime, displayTime > SECONDS_PER_MIN  and true or false, unabreviated);
 			category = _V["TIME_REMAINING_CATEGORY"].critical;
@@ -406,10 +406,10 @@ function WQT_Utils:GetPinTime(questInfo)
 				offset = 0;
 			end
 			
-		elseif timeLeft >= 60*60 then
+		elseif timeLeft >= 60*59 then --Minute display doesn't start until 59min left
 			maxTime = 1440*60;
 			offset = 60*60;
-		elseif timeLeft > 15*60 then
+		elseif timeLeft >= 15*60 then
 			maxTime= 60*60;
 			offset = -10*60;
 		else
@@ -579,6 +579,50 @@ function WQT_Utils:GetFlightWQProvider()
 		end 
 	end
 	return WQT.FlightmapPins;
+end
+
+function WQT_Utils:RefreshOfficialDataProviders()
+	-- Have to force remove the WQ data from the map because RefreshAllData doesn't do it
+	local mapWQProvider = WQT_Utils:GetMapWQProvider();
+	mapWQProvider:RemoveAllData();
+
+	WorldMapFrame:RefreshAllDataProviders();
+	
+	-- Flight map world quests
+	local flightWQProvider = WQT_Utils:GetFlightWQProvider();
+	if (flightWQProvider) then
+		flightWQProvider:RemoveAllData();
+		flightWQProvider:RefreshAllData();
+	end
+end
+
+-- Compatibility with the TomTom add-on
+function WQT_Utils:AddTomTomArrowByQuestId(questId)
+	if (not questId) then return; end
+	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
+	if (zoneId) then
+		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+		local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
+		if (title and x and y) then
+			TomTom:AddWaypoint(zoneId, x, y, {["title"] = title, ["crazy"] = true});
+		end
+	end
+end
+
+function WQT_Utils:RemoveTomTomArrowbyQuestId(questId)
+	if (not questId) then return; end
+	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
+	if (zoneId) then
+		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+		local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
+		if (title and x and y) then
+			local key = TomTom:GetKeyArgs(zoneId, x, y, title);
+			local wp = TomTom.waypoints[zoneId] and TomTom.waypoints[zoneId][key];
+			if (wp) then
+				TomTom:RemoveWaypoint(wp);
+			end
+		end
+	end
 end
 
 ----------------------------

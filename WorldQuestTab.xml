@@ -11,8 +11,9 @@
 	<Script file="Data.lua"/>
 	<Script file="Dataprovider.lua"/>
 	<Script file="WorldQuestTab.lua"/>
-	<Include file="External\External.xml"/>
 	<Include file="MapPinProvider.xml"/>
+	<Include file="Settings.xml"/>
+	<Include file="External\External.xml"/>
 	
 	<FontFamily name="WQT_NumberFontOutline" virtual="true">
 		<Member alphabet="roman">

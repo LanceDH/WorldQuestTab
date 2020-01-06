@@ -106,20 +106,23 @@ local WQT_DEFAULTS = {
 			rarityIcon = false;
 			timeIcon = false;
 			filterPoI = true;
-			bigPoI = false;
+			scale = 1;
 			disablePoI = false;
-			reward = true;
 			timeLabel = false;
 			continentPins = false;
 			fadeOnPing = true;
 			ringType = _V["RING_TYPES"].time;
+			centerType = _V["PIN_CENTER_TYPES"].reward;
+			
+			bigPoI = false;
+			reward = true;
 		};
 
 		["filters"] = {
 				[1] = {["name"] = FACTION
 				, ["flags"] = {[OTHER] = true, [_L["NO_FACTION"]] = true}}
 				,[2] = {["name"] = TYPE
-						, ["flags"] = {["Default"] = true, ["Elite"] = true, ["PvP"] = true, ["Petbattle"] = true, ["Dungeon"] = true, ["Raid"] = true, ["Profession"] = true, ["Invasion"] = true, ["Assault"] = true, ["Daily"] = true}}--, ["Threat"] = true}}
+						, ["flags"] = {["Default"] = true, ["Elite"] = true, ["PvP"] = true, ["Petbattle"] = true, ["Dungeon"] = true, ["Raid"] = true, ["Profession"] = true, ["Invasion"] = true, ["Assault"] = true, ["Daily"] = true, ["Threat"] = true}}
 				,[3] = {["name"] = REWARD
 						, ["flags"] = {["Item"] = true, ["Armor"] = true, ["Gold"] = true, ["Currency"] = true, ["Artifact"] = true, ["Relic"] = true, ["None"] = true, ["Experience"] = true, ["Honor"] = true, ["Reputation"] = true}}
 			}
@@ -129,35 +132,6 @@ local WQT_DEFAULTS = {
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
 	if v.expansion >= LE_EXPANSION_LEGION then
 		WQT_DEFAULTS.global.filters[1].flags[k] = true;
-	end
-end
-	
--- Compatibility with the TomTom add-on
-local function AddTomTomArrowByQuestId(questId)
-	if (not questId) then return; end
-	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
-	if (zoneId) then
-		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
-		local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
-		if (title and x and y) then
-			TomTom:AddWaypoint(zoneId, x, y, {["title"] = title, ["crazy"] = true});
-		end
-	end
-end
-
-local function RemoveTomTomArrowbyQuestId(questId)
-	if (not questId) then return; end
-	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
-	if (zoneId) then
-		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
-		local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
-		if (title and x and y) then
-			local key = TomTom:GetKeyArgs(zoneId, x, y, title);
-			local wp = TomTom.waypoints[zoneId] and TomTom.waypoints[zoneId][key];
-			if (wp) then
-				TomTom:RemoveWaypoint(wp);
-			end
-		end
 	end
 end
 
@@ -218,21 +192,6 @@ local function GetQuestLogInfo(hiddenList)
 	end
 	
 	return questCount, maxQuests, color;
-end
-
-local function RefreshOfficialDataProviders()
-	-- Have to force remove the WQ data from the map because RefreshAllData doesn't do it
-	local mapWQProvider = WQT_Utils:GetMapWQProvider();
-	mapWQProvider:RemoveAllData();
-
-	WorldMapFrame:RefreshAllDataProviders();
-	
-	-- Flight map world quests
-	local flightWQProvider = WQT_Utils:GetFlightWQProvider();
-	if (flightWQProvider) then
-		flightWQProvider:RemoveAllData();
-		flightWQProvider:RefreshAllData();
-	end
 end
 
 -- Custom number abbreviation to fit inside reward icons in the list.
@@ -909,7 +868,7 @@ local function InitFilter(self, level)
 					WQT.settings.general.TomTomArrowOnClick = value;
 					
 					if (not value and WQT_WorldQuestFrame.softTomTomArrow and not IsWorldQuestHardWatched(WQT_WorldQuestFrame.softTomTomArrow)) then
-						RemoveTomTomArrowbyQuestId(WQT_WorldQuestFrame.softTomTomArrow);
+						WQT_Utils:RemoveTomTomArrowbyQuestId(WQT_WorldQuestFrame.softTomTomArrow);
 					end
 
 					WQT_QuestScrollFrame:UpdateQuestList();
@@ -1063,6 +1022,11 @@ local function ConvertOldSettings(version)
 			WQT:SetAllFilterTo(flagId, true);
 		end
 	end
+	
+	if (version < "8.3.01")  then
+		WQT.settings.pin.scale = WQT.settings.pin.bigPoI and 1.15 or 1;
+		WQT.settings.pin.centerType = WQT.settings.pin.reward and _V["PIN_CENTER_TYPES"].reward or _V["PIN_CENTER_TYPES"].blizzard;
+	end
 end
 
 -- Display an indicator on the filter if some official map filters might hide quest
@@ -1155,12 +1119,12 @@ function WQT:InitTrackDropDown(self, level)
 			if ( not TomTom:WaypointExists(mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, title)) then
 				info.text = _L["TRACKDD_TOMTOM"];
 				info.func = function()
-					AddTomTomArrowByQuestId(questId);
+					WQT_Utils:AddTomTomArrowByQuestId(questId);
 				end
 			else
 				info.text = _L["TRACKDD_TOMTOM_REMOVE"];
 				info.func = function()
-					RemoveTomTomArrowbyQuestId(questId);
+					WQT_Utils:RemoveTomTomArrowbyQuestId(questId);
 				end
 			end
 		else
@@ -1387,6 +1351,8 @@ function WQT:OnEnable()
 			WQT:debugPrint("External", external:GetName(), "not installed.");
 		end
 	end
+	
+	WQT_SettingsFrame:CreateList();
 end
 
 ------------------------------------------
@@ -2194,7 +2160,14 @@ function WQT_CoreMixin:OnLoad()
 	self.callbacks = {};
 	self.WQT_Utils = WQT_Utils;
 	self.variables = addon.variables;
-	
+
+	-- Add utilities options to the settings if it's installed but not enabled
+	if (_utilitiesInstalled) then
+		for k, setting in ipairs(_V["SETTING_UTILITIES_LIST"]) do
+			tinsert(_V["SETTING_LIST"], setting);
+		end
+	end
+
 	-- Quest Dataprovider
 	self.dataProvider = CreateFromMixins(WQT_DataProvider);
 	self.dataProvider:OnLoad();
@@ -2704,7 +2677,7 @@ end
 function WQT_CoreMixin:QUEST_TURNED_IN(questId)
 	-- Remove TomTom arrow if tracked
 	if (TomTom and WQT.settings.general.useTomTom and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
-		RemoveTomTomArrowbyQuestId(questId);
+		WQT_Utils:RemoveTomTomArrowbyQuestId(questId);
 	end
 end
 
@@ -2734,10 +2707,10 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 		
 		if (added) then
 			if (clickArrow or IsWorldQuestHardWatched(questId)) then
-				AddTomTomArrowByQuestId(questId);
+				WQT_Utils:AddTomTomArrowByQuestId(questId);
 				--If click arrow is active, we want to clear the previous click arrow
 				if (clickArrow and self.softTomTomArrow and not IsWorldQuestHardWatched(self.softTomTomArrow)) then
-					RemoveTomTomArrowbyQuestId(self.softTomTomArrow);
+					WQT_Utils:RemoveTomTomArrowbyQuestId(self.softTomTomArrow);
 				end
 				
 				if (clickArrow and not IsWorldQuestHardWatched(questId)) then
@@ -2746,7 +2719,7 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 			end
 			
 		else
-			RemoveTomTomArrowbyQuestId(questId)
+			WQT_Utils:RemoveTomTomArrowbyQuestId(questId)
 		end
 	end
 end

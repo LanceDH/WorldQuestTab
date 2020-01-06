@@ -1,4 +1,4 @@
-local MAJOR, MINOR = "AddonDropDownTemplates-1.0", 7
+local MAJOR, MINOR = "AddonDropDownTemplates-1.0", 8
 local ADDT, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not ADDT then return end -- No Upgrade needed.
@@ -279,7 +279,7 @@ function ADDT:CreateMenuTemplate(lib, name, parent, id, frameType)
 	button:SetSize(40, 32);
 	
 	-- parentLeft
-	local tex = button:CreateTexture(name .. "Left", "ARTWORK");
+	local tex = button:CreateTexture(nil, "ARTWORK");
 	button.Left = tex;
 	tex:SetTexture("Interface/Glues/CharacterCreate/CharacterCreate-LabelFrame");
 	tex:SetSize(25, 64);
@@ -287,7 +287,7 @@ function ADDT:CreateMenuTemplate(lib, name, parent, id, frameType)
 	tex:SetTexCoord(0, 0.1953125, 0, 1);
 	
 	-- parentRight
-	tex = button:CreateTexture(name .. "Right", "ARTWORK");
+	tex = button:CreateTexture(nil, "ARTWORK");
 	button.Right = tex;
 	tex:SetTexture("Interface/Glues/CharacterCreate/CharacterCreate-LabelFrame");
 	tex:SetSize(25, 64);
@@ -295,7 +295,7 @@ function ADDT:CreateMenuTemplate(lib, name, parent, id, frameType)
 	tex:SetTexCoord(0.8046875, 1, 0, 1);
 	
 	-- parentMiddle
-	tex = button:CreateTexture(name .. "Middle", "ARTWORK");
+	tex = button:CreateTexture(nil, "ARTWORK");
 	button.Middle = tex;
 	tex:SetTexture("Interface/Glues/CharacterCreate/CharacterCreate-LabelFrame");
 	tex:SetPoint("TOPLEFT", button.Left, "TOPRIGHT");
@@ -303,7 +303,7 @@ function ADDT:CreateMenuTemplate(lib, name, parent, id, frameType)
 	tex:SetTexCoord(0.1953125, 0.8046875, 0, 1);
 	
 	--parentText
-	local fontString = button:CreateFontString(name.."Text", "ARTWORK");
+	local fontString = button:CreateFontString(nil, "ARTWORK");
 	button.Text = fontString;
 	fontString:SetFontObject(GameFontHighlightSmall);
 	fontString:SetNonSpaceWrap(false);
@@ -311,14 +311,14 @@ function ADDT:CreateMenuTemplate(lib, name, parent, id, frameType)
 	fontString:SetSize(0, 10);
 	fontString:SetPoint("RIGHT", button.Right, "RIGHT", -43, 2);
 	--parentIcon
-	tex = button:CreateTexture(name .. "Icon", "OVERLAY");
+	tex = button:CreateTexture(nil, "OVERLAY");
 	button.Icon = tex;
 	tex:Hide();
 	tex:SetSize(16, 16);
 	tex:SetPoint("LEFT", 30, 2);
 	
 	-- parentButton
-	local frame = CreateFrame("BUTTON", name.."Button", button);
+	local frame = CreateFrame("BUTTON", nil, button);
 	button.Button = frame;
 	frame:SetMotionScriptsWhileDisabled(true);
 	frame:SetSize(24, 24);

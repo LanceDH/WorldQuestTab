@@ -1,0 +1,268 @@
+ <Ui xmlns="http://www.blizzard.com/wow/ui/"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ../../FrameXML/UI.xsd">
+
+	<Script file="Settings.lua"/>
+	
+	<Frame name="WQT_SettingCategoryTemplate" virtual="true">
+		<Size y="40"/>	
+		<Layers>
+			<Layer level="BORDER">
+				<Texture parentKey="BGLeft" atlas="PetJournal-BattleSlotTitle-Left" useAtlasSize="true" desaturated="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="3"/>
+					</Anchors>
+					<Color r="0.75" g="0.75" b="0.75"/>
+				</Texture>
+				<Texture parentKey="BGRight" atlas="PetJournal-BattleSlotTitle-Right" useAtlasSize="true" desaturated="true">
+					<Anchors>
+						<Anchor point="TOPRIGHT" x="0"/>
+					</Anchors>
+					<Color r="0.75" g="0.75" b="0.75"/>
+				</Texture>
+				<Texture parentKey="BGMiddle" atlas="_BattleSlotTitle-Mid" horizTile="true" desaturated="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.BGLeft" relativePoint="TOPRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BGRight" relativePoint="BOTTOMLEFT"/>
+					</Anchors>
+					<Color r="0.75" g="0.75" b="0.75"/>
+				</Texture>
+			<!--
+				<Texture parentKey="Background" atlas="UI-Character-Info-Title">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="0"/>
+						<Anchor point="BOTTOMRIGHT" x="-5"/>
+					</Anchors>
+				</Texture>
+				-->
+			</Layer>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="BGLeft" atlas="_BattleSlotTitle-BG" horizTile="true" desaturated="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.BGLeft" x="30" y="-7"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BGRight" x="-30" y="7"/>
+					</Anchors>
+					<Color r="0.75" g="0.75" b="0.75"/>
+				</Texture>
+			</Layer>
+			
+			<Layer level="ARTWORK">
+				<FontString parentKey="Title" inherits="GameFontHighlight" text="testing">
+					<Anchors>
+						<Anchor point="CENTER" x="0" y="1"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+	</Frame>
+	
+	<Frame name="WQT_SettingCheckboxTemplate" mixin="WQT_SettingsCheckboxMixin" virtual="true">
+		<Size y="30"/>	
+		<Frames>
+			<CheckButton parentKey="CheckBox" inherits="UICheckButtonTemplate">
+				<Size x="25" y="25"/>
+				<HitRectInsets right="-150"/>
+				<Anchors>
+					<Anchor point="LEFT" x="25"/>
+				</Anchors>
+				<Scripts>
+					<OnEnter>
+						self:GetParent():OnEnter(self);
+					</OnEnter>
+					<OnLeave>
+						self:GetParent():OnLeave();
+					</OnLeave>
+					<OnClick>
+						self:GetParent():OnValueChanged(self:GetChecked(), true);
+					</OnClick>
+				</Scripts>
+			</CheckButton>
+		</Frames>
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="2" justifyH="LEFT">
+					<Anchors>
+						<Anchor point="LEFT" relativeKey="$parent.CheckBox" relativePoint="RIGHT" x="5"/>
+						<Anchor point="RIGHT" x="-15"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+	</Frame>
+	
+	<Frame name="WQT_SettingSliderTemplate" mixin="WQT_SettingsSliderMixin" virtual="true">
+		<Size y="47"/>	
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="2" justifyH="LEFT">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="30" y="-7"/>
+						<Anchor point="RIGHT" x="-15"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Slider parentKey="Slider" inherits="HorizontalSliderTemplate">
+				<Size y="17"/>
+				<Anchors>
+					<Anchor point="BOTTOMLEFT" x="30" y="5"/>
+					<Anchor point="RIGHT" x="-75"/>
+				</Anchors>
+				<Scripts>
+					<OnEnter>
+						self:GetParent():OnEnter(self);
+					</OnEnter>
+					<OnLeave>
+						self:GetParent():OnLeave();
+					</OnLeave>
+					<OnValueChanged>
+						self:GetParent():OnValueChanged(value, userInput)
+					</OnValueChanged>
+				</Scripts>
+			</Slider>
+			<EditBox parentKey="TextBox" inherits="InputBoxTemplate" autoFocus="false">
+				<Size x="30" y="20"/>
+				<HitRectInsets left="-10"/>
+				<Anchors>
+					<Anchor point="LEFT" relativeKey="$parent.Slider" relativePoint="RIGHT" x="10" y="1"/>
+					<Anchor point="RIGHT" x="-35" y="1"/>
+				</Anchors>
+				<FontString inherits="NumberFont_Shadow_Small"/>
+				<Scripts>
+					<OnEnter>
+						self:GetParent():OnEnter(self:GetParent().Slider);
+					</OnEnter>
+					<OnLeave>
+						self:GetParent():OnLeave();
+					</OnLeave>
+					<OnEnterPressed>
+						self:ClearFocus();
+					</OnEnterPressed>
+					<OnEditFocusLost>
+						self:GetParent():OnValueChanged(self:GetText(), true);
+					</OnEditFocusLost>
+				</Scripts>
+			</EditBox>
+		</Frames>
+		
+	</Frame>
+	
+	<Frame name="WQT_SettingSubTitleTemplate" mixin="WQT_SettingsBaseMixin" virtual="true">
+		<Size y="30"/>	
+		<KeyValues>
+			<KeyValue key="staticLabelFont" value="true" type="boolean"/>
+		</KeyValues>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Background" file="Interface\ACHIEVEMENTFRAME\UI-Achievement-RecentHeader" desaturated="true" alpha="0.5">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="0" y="-5"/>
+						<Anchor point="BOTTOMRIGHT" x="-5" y="5"/>
+					</Anchors>
+					<TexCoords bottom="0.75"/>
+				</Texture>
+			</Layer>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Label" inherits="GameFontHighlight" maxLines="1" justifyH="LEFT">
+					<Anchors>
+						<Anchor point="LEFT" x="40" y="2"/>
+						<Anchor point="RIGHT" x="-15" y="2"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+	</Frame>
+	
+	
+	<Frame name="WQT_SettingDropDownTemplate" mixin="WQT_SettingsDropDownMixin" virtual="true">
+		<Size y="55"/>	
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="2" justifyH="LEFT">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="30" y="-7"/>
+						<Anchor point="RIGHT" x="-15"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+		</Scripts>
+	</Frame>
+	
+	<Frame name="WQT_SettingsFrame" parent="UIParent" mixin="WQT_SettingsFrameMixin" hidden="false">
+		<Size x="257" y="462" />
+		<Anchors>
+			<Anchor point="CENTER" relativeTo="UIParent"/>
+		</Anchors>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="BG">
+					<Anchors>
+						<Anchor point="TOPLEFT" y="0"/>
+						<Anchor point="BOTTOMRIGHT" y="0"/>
+					</Anchors>
+					<Color r="0.05" g="0.05" b=".05" a="0.75"/>
+				</Texture>
+			</Layer>
+		</Layers>
+		
+		<Frames>
+			<ScrollFrame parentKey="ScrollFrame" mixin="WQT_ScrollFrameMixin">
+				<Anchors>
+					<Anchor point="TOPLEFT"/>
+					<Anchor point="BOTTOMRIGHT" x="-20"/>
+				</Anchors>
+
+				<Frames>
+					<Slider parentKey="scrollBar">	
+						<Size x="4"/>
+						<HitRectInsets left="-5" right="-4" />
+						<Anchors>
+							<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="5" y="-27"/>
+							<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="5" y="0"/>
+						</Anchors>
+						<Layers>
+							<Layer level="BACKGROUND">
+								<Texture name="$parentTrack" parentKey="trackBG">
+									<Anchors>
+										<Anchor point="TOPLEFT" x="0" y="0"/>
+										<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
+									</Anchors>
+									<Color r="0" g="0" b="0" a="1"/>
+								</Texture>
+							</Layer>
+						</Layers>
+						<ThumbTexture name="$parentThumbTexture" inherits="HybridScrollBarButton" file="Interface\Buttons\UI-ScrollBar-Knob" parentKey="thumbTexture">
+							<Size x="18" y="24"/>
+							<TexCoords left="0.20" right="0.80" top="0.125" bottom="0.875"/>
+						</ThumbTexture>
+						<Scripts>
+							<OnValueChanged>
+							
+							</OnValueChanged>
+						</Scripts>
+					</Slider>
+				</Frames>
+				
+				<ScrollChild>
+					<Frame parentKey="scrollChild">
+						<Anchors>
+							<Anchor point="TOPLEFT" x="0" y="0"/>
+							<Anchor point="RIGHT"/>
+						</Anchors>
+					</Frame>
+				</ScrollChild>
+				<Scripts>
+					<OnLoad method="OnLoad"/>
+					<OnMouseWheel method="OnMouseWheel"/>
+				</Scripts>
+			</ScrollFrame>
+		</Frames>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+		</Scripts>
+	</Frame>
+ </Ui>
