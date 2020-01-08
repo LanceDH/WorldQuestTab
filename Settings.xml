@@ -3,7 +3,7 @@
      xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ../../FrameXML/UI.xsd">
 
 	<Script file="Settings.lua"/>
-	
+
 	<Button name="WQT_SettingCategoryTemplate" virtual="true">
 		<Size y="40"/>	
 		<Layers>
@@ -27,14 +27,6 @@
 					</Anchors>
 					<Color r="0.75" g="0.75" b="0.75"/>
 				</Texture>
-			<!--
-				<Texture parentKey="Background" atlas="UI-Character-Info-Title">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="0"/>
-						<Anchor point="BOTTOMRIGHT" x="-5"/>
-					</Anchors>
-				</Texture>
-				-->
 			</Layer>
 			<Layer level="BACKGROUND">
 				<Texture parentKey="BGLeft" atlas="_BattleSlotTitle-BG" horizTile="true" desaturated="true">
@@ -47,11 +39,18 @@
 			</Layer>
 			
 			<Layer level="ARTWORK">
-				<FontString parentKey="Title" inherits="GameFontHighlight" text="testing">
+				<FontString parentKey="Title" inherits="GameFontHighlight" maxLines="1" justifyH="CENTER" text="testing">
 					<Anchors>
-						<Anchor point="CENTER" x="0" y="1"/>
+						<Anchor point="LEFT" relativeKey="$parent.BGMiddle" x="15" y="1"/>
+						<Anchor point="RIGHT" relativeKey="$parent.BGMiddle" x="-15" y="1"/>
 					</Anchors>
 				</FontString>
+				<Texture parentKey="ExpandIcon" atlas="friendslist-categorybutton-arrow-right" useAtlasSize="true" desaturated="true">
+					<Anchors>
+						<Anchor point="CENTER" relativeKey="$parent.BGMiddle" relativePoint="LEFT" x="10" y="-1"/>
+					</Anchors>
+				</Texture>
+				
 			</Layer>
 			
 			<Layer level="HIGHLIGHT">
@@ -65,18 +64,39 @@
 		</Layers>
 		<Scripts>
 			<OnClick>
-				self.isExpanded = not self.isExpanded;
-				WQT_SettingsFrame:PlaceAllSettings();
+				WQT_SettingsFrame:SetCategoryExpanded(self.id, not self.isExpanded);
+				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 			</OnClick>
 		</Scripts>
 	</Button>
+	
+	<Frame name="WQT_SettingsQuestListPreview" mixin="WQT_SettingsQuestListMixin" hidden="true">
+		<Size y="36"/>	
+		<Frames>
+			<Button parentKey="Preview" inherits="WQT_QuestTemplate" enableMouse="false" hidden="false">
+				<Anchors>
+					<Anchor point="LEFT"/>
+				</Anchors>
+				<Scripts>
+					<OnClick />
+					<OnLoad />
+					<OnUpdate />
+					<OnEnter />
+					<OnLeave />
+				</Scripts>
+			</Button>
+		</Frames>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+		</Scripts>
+	</Frame>
 	
 	<Frame name="WQT_SettingCheckboxTemplate" mixin="WQT_SettingsCheckboxMixin" virtual="true">
 		<Size y="30"/>	
 		<Frames>
 			<CheckButton parentKey="CheckBox" inherits="UICheckButtonTemplate">
 				<Size x="25" y="25"/>
-				<HitRectInsets right="-150"/>
+				<HitRectInsets right="-75"/>
 				<Anchors>
 					<Anchor point="LEFT" x="25"/>
 				</Anchors>
@@ -89,13 +109,14 @@
 					</OnLeave>
 					<OnClick>
 						self:GetParent():OnValueChanged(self:GetChecked(), true);
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 					</OnClick>
 				</Scripts>
 			</CheckButton>
 		</Frames>
 		<Layers>
 			<Layer level="ARTWORK">
-				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="2" justifyH="LEFT">
+				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="LEFT">
 					<Anchors>
 						<Anchor point="LEFT" relativeKey="$parent.CheckBox" relativePoint="RIGHT" x="5"/>
 						<Anchor point="RIGHT" x="-15"/>
@@ -109,7 +130,7 @@
 		<Size y="47"/>	
 		<Layers>
 			<Layer level="ARTWORK">
-				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="2" justifyH="LEFT">
+				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="LEFT">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="30" y="-7"/>
 						<Anchor point="RIGHT" x="-15"/>
@@ -132,7 +153,7 @@
 						self:GetParent():OnLeave();
 					</OnLeave>
 					<OnValueChanged>
-						self:GetParent():OnValueChanged(value, userInput)
+						self:GetParent():OnValueChanged(value, userInput);
 					</OnValueChanged>
 				</Scripts>
 			</Slider>
@@ -170,10 +191,10 @@
 		</KeyValues>
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="Background" file="Interface\ACHIEVEMENTFRAME\UI-Achievement-RecentHeader" desaturated="true" alpha="0.5">
+				<Texture parentKey="Background" file="Interface\ACHIEVEMENTFRAME\UI-Achievement-RecentHeader" desaturated="true" alpha="0.75">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="0" y="-5"/>
-						<Anchor point="BOTTOMRIGHT" x="-5" y="5"/>
+						<Anchor point="TOPLEFT" x="15" y="-5"/>
+						<Anchor point="BOTTOMRIGHT" x="-20" y="5"/>
 					</Anchors>
 					<TexCoords bottom="0.75"/>
 				</Texture>
@@ -189,12 +210,11 @@
 		</Layers>
 	</Frame>
 	
-	
 	<Frame name="WQT_SettingDropDownTemplate" mixin="WQT_SettingsDropDownMixin" virtual="true">
 		<Size y="55"/>	
 		<Layers>
 			<Layer level="ARTWORK">
-				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="2" justifyH="LEFT">
+				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="LEFT">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="30" y="-7"/>
 						<Anchor point="RIGHT" x="-15"/>
@@ -207,23 +227,49 @@
 		</Scripts>
 	</Frame>
 	
-	<Frame name="WQT_SettingsFrame" parent="UIParent" mixin="WQT_SettingsFrameMixin" hidden="false">
+	<Frame name="WQT_SettingButtonTemplate" mixin="WQT_SettingsButtonMixin" virtual="true">
+		<Size y="30"/>
+		<Frames>
+			<Button parentKey="Button" inherits="UIMenuButtonStretchTemplate">
+				<Size x="150" y="26"/>
+				<Anchors>
+					<Anchor point="LEFT" x="27" y="0"/>
+				</Anchors>
+				
+				<Layers>
+					<Layer level="ARTWORK">
+						<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="CENTER">
+							<Size x="120" y="25"/>
+							<Anchors>
+								<Anchor point="CENTER" y="1"/>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnMouseDown inherit="prepend">
+						self.Label:SetPoint("CENTER", self, 2, -1);
+					</OnMouseDown>
+					<OnMouseUp inherit="prepend">
+						self.Label:SetPoint("CENTER", self, 0, 1);
+					</OnMouseUp>
+					<OnClick> 
+						self:GetParent():OnValueChanged(nil, true);
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+					</OnClick>	
+				</Scripts>		
+				<HighlightTexture file="Interface\Buttons\UI-Silver-Button-Highlight" alphaMode="ADD" alpha="0.5">
+					<TexCoords left="0" right="1.0" top="0.03" bottom="0.7175"/>
+				</HighlightTexture>
+			</Button>
+		</Frames>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+		</Scripts>
+	</Frame>
+	
+	<Frame name="WQT_SettingsFrame" parent="WQT_OverlayFrame" mixin="WQT_SettingsFrameMixin" hidden="true">
 		<Size x="257" y="462" />
-		<Anchors>
-			<Anchor point="CENTER" relativeTo="UIParent"/>
-		</Anchors>
-		<Layers>
-			<Layer level="BACKGROUND">
-				<Texture parentKey="BG">
-					<Anchors>
-						<Anchor point="TOPLEFT" y="0"/>
-						<Anchor point="BOTTOMRIGHT" y="0"/>
-					</Anchors>
-					<Color r="0.05" g="0.05" b=".05" a="0.75"/>
-				</Texture>
-			</Layer>
-		</Layers>
-		
 		<Frames>
 			<ScrollFrame parentKey="ScrollFrame" mixin="WQT_ScrollFrameMixin">
 				<Anchors>
@@ -256,7 +302,7 @@
 						</ThumbTexture>
 						<Scripts>
 							<OnValueChanged>
-							
+								self:GetParent():ScrollValueChanged(value);
 							</OnValueChanged>
 						</Scripts>
 					</Slider>

@@ -94,7 +94,7 @@ local WQT_DEFAULTS = {
 		["list"] = {
 			typeIcon = true;
 			factionIcon = true;
-			zone = true;
+			showZone = true;
 			amountColors = true;
 			alwaysAllQuests = false;
 			fullTime = false;
@@ -113,9 +113,6 @@ local WQT_DEFAULTS = {
 			fadeOnPing = true;
 			ringType = _V["RING_TYPES"].time;
 			centerType = _V["PIN_CENTER_TYPES"].reward;
-			
-			bigPoI = false;
-			reward = true;
 		};
 
 		["filters"] = {
@@ -259,6 +256,7 @@ local function InitFilter(self, level)
 		info.hasArrow = false;
 		info.notCheckable = false;
 		
+		-- Emisarry only filter
 		info.text = _L["TYPE_EMISSARY"];
 		info.tooltipTitle = _L["TYPE_EMISSARY"];
 		info.tooltipText =  _L["TYPE_EMISSARY_TT"];
@@ -281,6 +279,7 @@ local function InitFilter(self, level)
 		info.tooltipTitle = nil;
 		info.tooltipText = nil;
 		
+		-- Faction, reward, and type filters
 		for k, v in pairs(WQT.settings.filters) do
 			info.text = v.name;
 			info.value = k;
@@ -289,6 +288,7 @@ local function InitFilter(self, level)
 		
 		info.hasArrow = false;
 		
+		-- Settings button
 		info.text = SETTINGS;
 		info.func = function()
 				WQT_WorldQuestFrame:ShowOverlayFrame(WQT_SettingsFrame);
@@ -296,6 +296,7 @@ local function InitFilter(self, level)
 		
 		ADD:AddButton(info, level)
 		
+		-- What's new
 		local newText = WQT.settings.updateSeen and "" or "|TInterface\\FriendsFrame\\InformationIcon:14|t ";
 		
 		info.text = newText .. _L["WHATS_NEW"];
@@ -320,10 +321,12 @@ local function InitFilter(self, level)
 		ADD:AddButton(info, level)
 		
 	elseif level == 2 then
+		-- Filters
 		info.keepShownOnClick = true;
 		info.hasArrow = false;
 		info.isNotRadio = true;
 		if ADD.MENU_VALUE then
+			-- Faction filters
 			if ADD.MENU_VALUE == 1 then
 			
 				info.notCheckable = true;
@@ -369,7 +372,7 @@ local function InitFilter(self, level)
 				info.func = nil;
 				ADD:AddButton(info, level)
 				
-			
+			-- Type and reward filters
 			elseif WQT.settings.filters[ADD.MENU_VALUE] then
 				
 				info.notCheckable = true;
@@ -428,124 +431,6 @@ local function InitFilter(self, level)
 					
 					ADD:AddButton(info, level);			
 				end
-				
-			elseif ADD.MENU_VALUE == 0 then
-				info.notCheckable = false;
-				info.tooltipWhileDisabled = true;
-				info.tooltipOnButton = true;
-				info.keepShownOnClick = true;	
-				
-				info.text = _L["DEFAULT_TAB"];
-				info.tooltipTitle = _L["DEFAULT_TAB"];
-				info.tooltipText = _L["DEFAULT_TAB_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.general.defaultTab = value;
-
-					end
-				info.checked = function() return WQT.settings.general.defaultTab end;
-				ADD:AddButton(info, level);			
-
-				info.text = _L["SAVE_SETTINGS"];
-				info.tooltipTitle = _L["SAVE_SETTINGS"];
-				info.tooltipText = _L["SAVE_SETTINGS_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.general.saveFilters = value;
-					end
-				info.checked = function() return WQT.settings.general.saveFilters end;
-				ADD:AddButton(info, level);	
-				
-				info.disabled = false;
-
-				info.text = _L["LFG_BUTTONS"];
-				info.tooltipTitle = _L["LFG_BUTTONS"];
-				info.tooltipText = _L["LFG_BUTTONS_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.general.useLFGButtons = value;
-					end
-				info.checked = function() return WQT.settings.general.useLFGButtons end;
-				ADD:AddButton(info, level);		
-				
-				info.text = _L["AUTO_EMISARRY"];
-				info.tooltipTitle = _L["AUTO_EMISARRY"];
-				info.tooltipText = _L["AUTO_EMISARRY_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.general.autoEmisarry = value;
-					end
-				info.checked = function() return WQT.settings.general.autoEmisarry end;
-				ADD:AddButton(info, level);		
-				
-				info.text = _L["QUEST_COUNTER"];
-				info.tooltipTitle = _L["QUEST_COUNTER"];
-				info.tooltipText = _L["QUEST_COUNTER_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.general.questCounter = value;
-						WQT_QuestLogFiller:UpdateVisibility();
-					end
-				info.checked = function() return WQT.settings.general.questCounter end;
-				ADD:AddButton(info, level);		
-				
-				info.text = _L["EMISSARY_COUNTER"];
-				info.tooltipTitle = _L["EMISSARY_COUNTER"];
-				info.tooltipText = _L["EMISSARY_COUNTER_TT"];
-				info.func = function(_, _, _, value)
-						WQT.settings.general.bountyCounter = value;
-						WQT_WorldQuestFrame:UpdateBountyCounters();
-						WQT_WorldQuestFrame:RepositionBountyTabs();
-					end
-				info.checked = function() return WQT.settings.general.bountyCounter end;
-				ADD:AddButton(info, level);	
-				
-				
-				-- List Settings
-				info.tooltipTitle = nil;
-				info.tooltipText = nil;
-				info.hasArrow = true;
-				info.notCheckable = true;
-				info.text = _L["LIST_SETTINGS"];
-				info.value = 302;
-				info.func = nil;
-				ADD:AddButton(info, level)
-				
-				-- Map Pin Settings
-				info.text = _L["PIN_SETTINGS"];
-				info.value = 303;
-				ADD:AddButton(info, level)
-				
-				-- TomTom compatibility
-				if TomTom then
-					info.tooltipTitle = nil;
-					info.tooltipText = nil;
-					info.hasArrow = true;
-					info.notCheckable = true;
-					info.text = "TomTom";
-					info.value = 304;
-					info.func = nil;
-					ADD:AddButton(info, level)
-				end
-				
-				if (_utilitiesInstalled) then
-					-- Utilities
-					ADD:AddSeparator(level);
-					
-					local utilitiesEnabled = GetAddOnEnableState(_playerName, "WorldQuestTabUtilities");
-					info.hasArrow = false;
-					info.notCheckable = false;
-					info.value = nil;
-					info.disabled = utilitiesEnabled == 0;
-					info.text = _L["LOAD_UTILITIES"];
-					info.tooltipTitle = _L["LOAD_UTILITIES"];
-					info.tooltipText = utilitiesEnabled == 0 and _L["LOAD_UTILITIES_TT_DISABLED"] or _L["LOAD_UTILITIES_TT"];
-					info.func = function(_, _, _, value)
-							WQT.settings.general.loadUtilities = value;
-							if (value and not IsAddOnLoaded("WorldQuestTabUtilities")) then
-								LoadAddOn("WorldQuestTabUtilities");
-								WQT_QuestScrollFrame:UpdateQuestList();
-								ADD:CloseDropDownMenus();
-							end
-						end
-					info.checked = function() return WQT.settings.general.loadUtilities end;
-					ADD:AddButton(info, level);	
-				end
 			end
 		end
 	elseif level == 3 then
@@ -570,314 +455,6 @@ local function InitFilter(self, level)
 					ADD:AddButton(info, level);			
 				end
 			end
-		elseif ADD.MENU_VALUE == 302 then -- List settings
-			info.tooltipWhileDisabled = true;
-			info.tooltipOnButton = true;
-			info.keepShownOnClick = true;	
-			
-			info.text = _L["SHOW_TYPE"];
-			info.tooltipTitle = _L["SHOW_TYPE"];
-			info.tooltipText = _L["SHOW_TYPE_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.list.typeIcon = value;
-					WQT_QuestScrollFrame:DisplayQuestList();
-				end
-			info.checked = function() return WQT.settings.list.typeIcon end;
-			ADD:AddButton(info, level);		
-			
-			info.text = _L["SHOW_FACTION"];
-			info.tooltipTitle = _L["SHOW_FACTION"];
-			info.tooltipText = _L["SHOW_FACTION_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.list.factionIcon = value;
-					WQT_QuestScrollFrame:DisplayQuestList();
-				end
-			info.checked = function() return WQT.settings.list.factionIcon end;
-			ADD:AddButton(info, level);		
-			
-			info.text = _L["SHOW_ZONE"];
-			info.tooltipTitle = _L["SHOW_ZONE"];
-			info.tooltipText = _L["SHOW_ZONE_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.list.showZone = value;
-					WQT_QuestScrollFrame:DisplayQuestList();
-				end
-			info.checked = function() return WQT.settings.list.showZone end;
-			ADD:AddButton(info, level);		
-
-			info.text = _L["AMOUNT_COLORS"];
-			info.tooltipTitle = _L["AMOUNT_COLORS"];
-			info.tooltipText = _L["AMOUNT_COLORS_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.list.amountColors = value;
-					WQT_QuestScrollFrame:DisplayQuestList();
-				end
-			info.checked = function() return WQT.settings.list.amountColors end;
-			ADD:AddButton(info, level);		
-			
-			info.text = _L["LIST_FULL_TIME"];
-			info.tooltipTitle = _L["LIST_FULL_TIME"];
-			info.tooltipText = _L["LIST_FULL_TIME_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.list.fullTime = value;
-					WQT_QuestScrollFrame:DisplayQuestList();
-				end
-			info.checked = function() return WQT.settings.list.fullTime end;
-			ADD:AddButton(info, level);	
-			
-			info.keepShownOnClick = true;	
-			info.text = _L["ALWAYS_ALL"];
-			info.tooltipTitle = _L["ALWAYS_ALL"];
-			info.tooltipText = _L["ALWAYS_ALL_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.list.alwaysAllQuests = value;
-					local mapAreaID = WorldMapFrame.mapID;
-					WQT_WorldQuestFrame.dataProvider:LoadQuestsInZone(mapAreaID);
-					ADD:Refresh(self);
-					WQT_QuestScrollFrame:UpdateQuestList();
-				end
-			info.checked = function() return WQT.settings.list.alwaysAllQuests end;
-			ADD:AddButton(info, level);		
-			
-		elseif ADD.MENU_VALUE == 303 then -- Map pins settings
-			info.tooltipWhileDisabled = true;
-			info.tooltipOnButton = true;
-			info.keepShownOnClick = true;	
-			info.text = _L["PIN_DISABLE"];
-			info.tooltipTitle = _L["PIN_DISABLE"];
-			info.tooltipText = _L["PIN_DISABLE_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.pin.disablePoI = value;
-					ADD:Refresh(self, 1, 3);
-					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-					if (value) then
-						RefreshOfficialDataProviders();
-					end
-				end
-			info.checked = function() return WQT.settings.pin.disablePoI end;
-			ADD:AddButton(info, level);
-			
-			info.disabled = function() return WQT.settings.pin.disablePoI end;
-			
-			info.text = _L["FILTER_PINS"];
-			info.tooltipTitle = _L["FILTER_PINS"];
-			info.tooltipText = _L["FILTER_PINS_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.pin.filterPoI = value;
-					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-				end
-			info.checked = function() return WQT.settings.pin.filterPoI end;
-			ADD:AddButton(info, level);
-			
-			info.text = _L["PIN_SHOW_CONTINENT"];
-			info.tooltipTitle = _L["PIN_SHOW_CONTINENT"];
-			info.tooltipText = _L["PIN_SHOW_CONTINENT_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.pin.continentPins = value;
-					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-				end
-			info.checked = function() return WQT.settings.pin.continentPins end;
-			ADD:AddButton(info, level);
-			
-			info.text = _L["PIN_FADE_ON_PING"];
-			info.tooltipTitle = _L["PIN_FADE_ON_PING"];
-			info.tooltipText = _L["PIN_FADE_ON_PING_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.pin.fadeOnPing = value;
-				end
-			info.checked = function() return WQT.settings.pin.fadeOnPing end;
-			ADD:AddButton(info, level);
-			
-			info.notClickable = true;
-			info.notCheckable = true;
-			
-			info.text = APPEARANCE_LABEL;
-			info.tooltipTitle = nil;
-			info.tooltipText = nil;
-			ADD:AddButton(info, level);
-			
-			info.notClickable = false;
-			info.notCheckable = false;
-			
-			info.text = _L["PIN_REWARDS"];
-			info.tooltipTitle = _L["PIN_REWARDS"];
-			info.tooltipText = _L["PIN_REWARDS_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.pin.reward = value;
-					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-					ADD:Refresh(self, 1, 3);
-				end
-			info.checked = function() return WQT.settings.pin.reward end;
-			ADD:AddButton(info, level);
-			
-			info.disabled = function() return WQT.settings.pin.disablePoI or not WQT.settings.pin.reward end;
-			
-			info.text = _L["PIN_TYPE"];
-			info.tooltipTitle = _L["PIN_TYPE"];
-			info.tooltipText = _L["PIN_TYPE_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.pin.typeIcon = value;
-					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-				end
-			info.checked = function() return WQT.settings.pin.typeIcon end;
-			ADD:AddButton(info, level);
-			
-			info.text = _L["PIN_RARITY_ICON"];
-			info.tooltipTitle = _L["PIN_RARITY_ICON"];
-			info.tooltipText = _L["PIN_RARITY_ICON_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.pin.rarityIcon = value;
-					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-				end
-			info.checked = function() return WQT.settings.pin.rarityIcon end;
-			ADD:AddButton(info, level);
-			
-			info.disabled = function() return WQT.settings.pin.disablePoI end;
-			
-			info.text = _L["PIN_TIME_ICON"];
-			info.tooltipTitle = _L["PIN_TIME_ICON"];
-			info.tooltipText = _L["PIN_TIME_ICON_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.pin.timeIcon = value;
-					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-				end
-			info.checked = function() return WQT.settings.pin.timeIcon end;
-			ADD:AddButton(info, level);
-			
-			info.text = _L["PIN_REWARD_TYPE"];
-			info.tooltipTitle = _L["PIN_REWARD_TYPE"];
-			info.tooltipText = _L["PIN_REWARD_TYPE_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.pin.rewardTypeIcon = value;
-					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-				end
-			info.checked = function() return WQT.settings.pin.rewardTypeIcon end;
-			ADD:AddButton(info, level);
-
-			info.text = _L["PIN_BIGGER"];
-			info.tooltipTitle = _L["PIN_BIGGER"];
-			info.tooltipText = _L["PIN_BIGGER_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.pin.bigPoI = value;
-					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-				end
-			info.checked = function() return WQT.settings.pin.bigPoI end;
-			ADD:AddButton(info, level);
-			
-			info.text = _L["PIN_TIME"];
-			info.tooltipTitle = _L["PIN_TIME"];
-			info.tooltipText = _L["PIN_TIME_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.pin.timeLabel  = value;
-					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-				end
-			info.checked = function() return WQT.settings.pin.timeLabel  end;
-			ADD:AddButton(info, level);
-			
-			info.notClickable = true;
-			info.notCheckable = true;
-			
-			info.text = _L["PIN_RING_TITLE"];
-			info.tooltipTitle = nil;
-			info.tooltipText = nil;
-			ADD:AddButton(info, level);
-			
-			info.isNotRadio = false;
-			info.notClickable = false;
-			info.notCheckable = false;
-			info.disabled = function() return WQT.settings.pin.disablePoI end;
-			
-			info.text = _L["PIN_RING_NONE"];
-			info.tooltipTitle = _L["PIN_RING_NONE"];
-			info.tooltipText = _L["PIN_RIMG_NONE_TT"];
-			info.func = function()
-					WQT.settings.pin.ringType = _V["RING_TYPES"].default;
-					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
-					ADD:Refresh(self, 1, 3);
-				end
-			info.checked = function() return  WQT.settings.pin.ringType == _V["RING_TYPES"].default; end;
-			ADD:AddButton(info, level);
-			
-			info.text = _L["PIN_RING_COLOR"];
-			info.tooltipTitle = _L["PIN_RING_COLOR"];
-			info.tooltipText = _L["PIN_RING_COLOR_TT"];
-			info.func = function()
-					WQT.settings.pin.ringType = _V["RING_TYPES"].reward;
-					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
-					ADD:Refresh(self, 1, 3);
-				end
-			info.checked = function() return WQT.settings.pin.ringType == _V["RING_TYPES"].reward; end;
-			ADD:AddButton(info, level);
-			
-			info.text = _L["PIN_RING_TIME"];
-			info.tooltipTitle = _L["PIN_RING_TIME"];
-			info.tooltipText = _L["PIN_RIMG_TIME_TT"];
-			info.func = function()
-					WQT.settings.pin.ringType = _V["RING_TYPES"].time;
-					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
-					ADD:Refresh(self, 1, 3);
-				end
-			info.checked = function() return  WQT.settings.pin.ringType == _V["RING_TYPES"].time; end;
-			ADD:AddButton(info, level);
-			
-			info.text = RARITY;
-			info.tooltipTitle = RARITY;
-			info.tooltipText = _L["PIN_RING_QUALITY_TT"];
-			info.func = function()
-					WQT.settings.pin.ringType = _V["RING_TYPES"].rarity;
-					WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
-					ADD:Refresh(self, 1, 3);
-				end
-			info.checked = function() return  WQT.settings.pin.ringType == _V["RING_TYPES"].rarity; end;
-			ADD:AddButton(info, level);
-			
-			info.disabled = nil;
-
-		elseif ADD.MENU_VALUE == 304 then -- TomTom
-			info.text = _L["USE_TOMTOM"];
-			info.tooltipTitle = _L["USE_TOMTOM"];
-			info.tooltipText = _L["USE_TOMTOM_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.general.useTomTom = value;
-					WQT_QuestScrollFrame:UpdateQuestList();
-					
-					if value then
-						ADD:EnableButton(3, 2);
-						ADD:EnableButton(3, 3);
-					else 
-						ADD:DisableButton(3, 2);
-						ADD:DisableButton(3, 3);
-					end
-				end
-			info.checked = function() return WQT.settings.general.useTomTom end;
-			ADD:AddButton(info, level);	
-			
-			info.disabled = not WQT.settings.general.useTomTom;
-			info.text = _L["TOMTOM_AUTO_ARROW"];
-			info.tooltipTitle = _L["TOMTOM_AUTO_ARROW"];
-			info.tooltipText = _L["TOMTOM_AUTO_ARROW_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.general.TomTomAutoArrow = value;
-					WQT_QuestScrollFrame:UpdateQuestList();
-				end
-			info.checked = function() return WQT.settings.general.TomTomAutoArrow end;
-			ADD:AddButton(info, level);	
-			
-			info.disabled = not WQT.settings.general.useTomTom;
-			info.text = _L["TOMTOM_CLICK_ARROW"];
-			info.tooltipTitle = _L["TOMTOM_CLICK_ARROW"];
-			info.tooltipText = _L["TOMTOM_CLICK_ARROW_TT"];
-			info.func = function(_, _, _, value)
-					WQT.settings.general.TomTomArrowOnClick = value;
-					
-					if (not value and WQT_WorldQuestFrame.softTomTomArrow and not IsWorldQuestHardWatched(WQT_WorldQuestFrame.softTomTomArrow)) then
-						WQT_Utils:RemoveTomTomArrowbyQuestId(WQT_WorldQuestFrame.softTomTomArrow);
-					end
-
-					WQT_QuestScrollFrame:UpdateQuestList();
-				end
-			info.checked = function() return WQT.settings.general.TomTomArrowOnClick end;
-			ADD:AddButton(info, level);	
 		end
 	end
 	
@@ -991,7 +568,7 @@ local function ConvertOldSettings(version)
 		
 		WQT.settings.list.typeIcon = 			GetNewSettingData(WQT.settings.showTypeIcon, true);
 		WQT.settings.list.factionIcon = 			GetNewSettingData(WQT.settings.showFactionIcon, true);
-		WQT.settings.list.zone = 				GetNewSettingData(WQT.settings.listShowZone, true);
+		WQT.settings.list.showZone = 			GetNewSettingData(WQT.settings.listShowZone, true);
 		WQT.settings.list.amountColors = 		GetNewSettingData(WQT.settings.rewardAmountColors, true);
 		WQT.settings.list.alwaysAllQuests =		GetNewSettingData(WQT.settings.alwaysAllQuests, false);
 		WQT.settings.list.fullTime = 			GetNewSettingData(WQT.settings.listFullTime, false);
@@ -1027,7 +604,7 @@ local function ConvertOldSettings(version)
 	end
 	
 	if (version < "8.3.01")  then
-		WQT.settings.pin.scale = WQT.settings.pin.bigPoI and 1.15 or 1;
+		WQT.settings.pin.scale =	 WQT.settings.pin.bigPoI and 1.15 or 1;
 		WQT.settings.pin.centerType = WQT.settings.pin.reward and _V["PIN_CENTER_TYPES"].reward or _V["PIN_CENTER_TYPES"].blizzard;
 	end
 end
@@ -1355,11 +932,8 @@ function WQT:OnEnable()
 		end
 	end
 	
-	for k, category in ipairs(_V["SETTING_CATEGORIES"]) do
-		WQT_SettingsFrame:RegisterCategory(category.id, category.label);
-	end
-	
-	WQT_SettingsFrame:AddSettingList(_V["SETTING_LIST"]);
+	-- Load settings
+	WQT_SettingsFrame:LoadWQTSettings();
 end
 
 ------------------------------------------
@@ -2818,8 +2392,6 @@ function WQT_CoreMixin:SetCustomEnabled(value)
 	WQT_QuestScrollFrame.scrollBar:EnableMouse(value);
 	WQT_QuestScrollFrameScrollChild:EnableMouseWheel(value);
 	WQT_QuestScrollFrameScrollChild:EnableMouse(value);
-	--WQT_WorldQuestFrameSortButton.Button:EnableMouse(value);
-	--self.FilterButton:EnableMouse(value);
 	if value then
 		self.FilterButton:Enable();
 		self.sortButton:Enable();
@@ -2842,6 +2414,8 @@ function WQT_CoreMixin:SelectTab(tab)
 	
 	WQT_TabNormal:Show();
 	WQT_TabWorld:Show();
+	WQT_TabNormal:SetFrameLevel(2);
+	WQT_TabWorld:SetFrameLevel(2);
 	WQT_TabNormal.Hider:Show();
 	WQT_TabWorld.Hider:Show();
 
@@ -2852,6 +2426,7 @@ function WQT_CoreMixin:SelectTab(tab)
 	if (not QuestScrollFrame.Contents:IsShown() and not QuestMapFrame.DetailsFrame:IsShown()) or id == 1 then
 		-- Default questlog
 		self:Hide();
+		WQT_TabNormal:SetFrameLevel(10);
 		WQT_TabNormal.Hider:Hide();
 		WQT_TabNormal.Highlight:Show();
 		WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
@@ -2860,6 +2435,7 @@ function WQT_CoreMixin:SelectTab(tab)
 		self:HideOverlayFrame(true);
 	elseif id == 2 then
 		-- WQT
+		WQT_TabWorld:SetFrameLevel(10);
 		WQT_TabWorld.Hider:Hide();
 		WQT_TabWorld.Highlight:Show();
 		self:Show();

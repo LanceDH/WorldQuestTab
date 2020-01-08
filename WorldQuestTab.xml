@@ -12,7 +12,6 @@
 	<Script file="Dataprovider.lua"/>
 	<Script file="WorldQuestTab.lua"/>
 	<Include file="MapPinProvider.xml"/>
-	<Include file="Settings.xml"/>
 	<Include file="External\External.xml"/>
 	
 	<FontFamily name="WQT_NumberFontOutline" virtual="true">
@@ -187,9 +186,7 @@
 	</Button>
 	 
 	<Button name="WQT_QuestTemplate" mixin="WQT_ListButtonMixin" hidden="true" virtual="true" registerForClicks="LeftButtonUp, RightButtonUp" >
-		<Size>
-			<AbsDimension x="260" y="32"/>
-		</Size>
+		<Size x="260" y="32"/>
 		<Frames>
 			<Frame parentKey="Type" hidden="true">
 				<Size x="28" y="28" />
@@ -974,7 +971,9 @@
 						</Scripts>				
 					</Frame>
 				</Frames>
-				
+				<HighlightTexture file="Interface\Buttons\UI-Silver-Button-Highlight" alphaMode="ADD" alpha="0.5">
+					<TexCoords left="0" right="1.0" top="0.03" bottom="0.7175"/>
+				</HighlightTexture>
 				<Scripts>
 					<OnLoad>
 						local text = _G[self:GetName() .. "Text"];

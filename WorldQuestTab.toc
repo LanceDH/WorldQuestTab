@@ -6,3 +6,5 @@
 ## SavedVariables: BWQDB
 
 WorldQuestTab.xml
+## <Include file="Settings.xml"/>
+Settings.xml

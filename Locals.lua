@@ -116,7 +116,6 @@ L["WHATS_NEW_TT"] = "View World Quest Tab patch notes."
 
 L["WQT_FULLSCREEN_BUTTON_TT"] = "Left click to toggle the world quest list. Right click and drag to change position."
 
-
 if locale == "deDE" then
 L["COMBATLOCK"] = "Nicht verfügbar während eines Kampfes."
 L["DEFAULT_TAB"] = "Standardtab"
