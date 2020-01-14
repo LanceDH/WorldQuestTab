@@ -159,7 +159,7 @@ function WQT_SettingsQuestListMixin:UpdateState()
 	-- 74160s == 20h 36m
 	local timeString;
 	if (WQT.settings.list.fullTime) then
-		timeString = SecondsToTime(74160, true, true);
+		timeString = SecondsToTime(74160, true, false);
 	else
 		timeString = D_HOURS:format(74160 / SECONDS_PER_HOUR);
 	end
@@ -356,46 +356,6 @@ function WQT_SettingsButtonMixin:Init(data)
 end
 
 --------------------------------
--- WQT_ScrollFrameMixin
---------------------------------
-
-WQT_ScrollFrameMixin = {};
-
-function WQT_ScrollFrameMixin:OnLoad()
-	self.offset = 0;
-	self.scrollStep = 30;
-	self.max = 0;
-	self.scrollBar:SetMinMaxValues(0, 0);
-	self.scrollBar:SetValue(0);
-end
-
-function WQT_ScrollFrameMixin:UpdateChildFramePosition()
-	if (self.scrollChild) then
-		self.scrollChild:SetPoint("TOPLEFT", self, 0, self.offset);
-	end
-end
-
-function WQT_ScrollFrameMixin:ScrollValueChanged(value)
-	self.offset = max(0, min(value, self.max));
-	self:UpdateChildFramePosition();
-end
-
-function WQT_ScrollFrameMixin:OnMouseWheel(delta)
-	self.offset = self.offset - delta * self.scrollStep;
-	self.offset = max(0, min(self.offset, self.max));
-	self:UpdateChildFramePosition();
-	self.scrollBar:SetValue(self.offset);
-end
-
-function WQT_ScrollFrameMixin:SetChildHeight(height)
-	self.scrollChild:SetHeight(height);
-	self.max = max(0, height - self:GetHeight());
-	self.offset = min(self.offset, self.max);
-	
-	self.scrollBar:SetMinMaxValues(0, self.max);
-end
-
---------------------------------
 -- WQT_SettingsFrameMixin
 --------------------------------
 
@@ -403,16 +363,12 @@ WQT_SettingsFrameMixin = {};
 
 function WQT_SettingsFrameMixin:OnLoad()
 	-- Because we can't destroy frames, keep a pool of each type to re-use
-	self.categoryPool = CreateFramePool("BUTTON", self.ScrollFrame.scrollChild, "WQT_SettingCategoryTemplate");
-	self.checkBoxPool = CreateFramePool("FRAME", self.ScrollFrame.scrollChild, "WQT_SettingCheckboxTemplate", function(pool, frame) frame:Reset(); end);
-	self.subTitlePool = CreateFramePool("FRAME", self.ScrollFrame.scrollChild, "WQT_SettingSubTitleTemplate", function(pool, frame) frame:Reset(); end);
-	self.sliderPool = CreateFramePool("FRAME", self.ScrollFrame.scrollChild, "WQT_SettingSliderTemplate", function(pool, frame) frame:Reset(); end);
-	self.dropDownPool = CreateFramePool("FRAME", self.ScrollFrame.scrollChild, "WQT_SettingDropDownTemplate", function(pool, frame) frame:Reset(); end);
-	self.buttonPool = CreateFramePool("FRAME", self.ScrollFrame.scrollChild, "WQT_SettingButtonTemplate", function(pool, frame) frame:Reset(); end);
-	
-	self.ScrollFrame.buttonHeight = 40;
-	self.ScrollFrame.scrollChild:SetWidth(self.ScrollFrame:GetWidth());
-	self.ScrollFrame.scrollChild:SetPoint("RIGHT", self.ScrollFrame)
+	self.categoryPool = CreateFramePool("BUTTON", self.ScrollFrame.ScrollChild, "WQT_SettingCategoryTemplate");
+	self.checkBoxPool = CreateFramePool("FRAME", self.ScrollFrame.ScrollChild, "WQT_SettingCheckboxTemplate", function(pool, frame) frame:Reset(); end);
+	self.subTitlePool = CreateFramePool("FRAME", self.ScrollFrame.ScrollChild, "WQT_SettingSubTitleTemplate", function(pool, frame) frame:Reset(); end);
+	self.sliderPool = CreateFramePool("FRAME", self.ScrollFrame.ScrollChild, "WQT_SettingSliderTemplate", function(pool, frame) frame:Reset(); end);
+	self.dropDownPool = CreateFramePool("FRAME", self.ScrollFrame.ScrollChild, "WQT_SettingDropDownTemplate", function(pool, frame) frame:Reset(); end);
+	self.buttonPool = CreateFramePool("FRAME", self.ScrollFrame.ScrollChild, "WQT_SettingButtonTemplate", function(pool, frame) frame:Reset(); end);
 	
 	self.categoryless = {};
 	self.categories = {};
@@ -475,7 +431,7 @@ function WQT_SettingsFrameMixin:CreateCategory(data)
 	if (data.previewFrame) then
 		local frame = _G[data.previewFrame];
 		if (frame) then
-			frame:SetParent(self.ScrollFrame.scrollChild);
+			frame:SetParent(self.ScrollFrame.ScrollChild);
 			if (frame.UpdateState) then
 				frame:UpdateState();
 			end
@@ -556,9 +512,9 @@ function WQT_SettingsFrameMixin:PlaceSetting(setting)
 	if (self.previous) then
 		setting:SetPoint("TOPLEFT", self.previous, "BOTTOMLEFT");
 	else
-		setting:SetPoint("TOPLEFT", self.ScrollFrame.scrollChild, 0, -SETTINGS_PADDING_TOP);
+		setting:SetPoint("TOPLEFT", self.ScrollFrame.ScrollChild, 0, -SETTINGS_PADDING_TOP);
 	end
-	setting:SetPoint("RIGHT", self.ScrollFrame.scrollChild);
+	setting:SetPoint("RIGHT", self.ScrollFrame.ScrollChild);
 	setting:Show();
 	
 	self.previous = setting;

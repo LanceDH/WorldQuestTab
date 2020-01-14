@@ -15,7 +15,7 @@
 					</Anchors>
 				</Texture>
 			</Layer>
-			<Layer level="BACKGROUND" textureSubLevel="9" setAllPoints="true">
+			<Layer level="BACKGROUND" textureSubLevel="9">
 				<Texture parentKey="BG" alpha="0.75" file="Interface\GLUES\Models\UI_MainMenu_Legion\UI_Legion_Shadow" setAllPoints="true">
 					<Size x="16" y="16"/>
 					<Anchors>

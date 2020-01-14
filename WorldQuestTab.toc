@@ -1,10 +1,9 @@
-﻿## Interface: 80205
+﻿## Interface: 80300
 ## Title: World Quest Tab
 ## Notes: Creates a new quest tab to keep track of world quests.
 ## Author: LanceDH
-## Version: 8.2.05.4
+## Version: 8.3.01
 ## SavedVariables: BWQDB
 
 WorldQuestTab.xml
-## <Include file="Settings.xml"/>
 Settings.xml

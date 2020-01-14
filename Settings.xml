@@ -75,7 +75,7 @@
 		<Frames>
 			<Button parentKey="Preview" inherits="WQT_QuestTemplate" enableMouse="false" hidden="false">
 				<Anchors>
-					<Anchor point="LEFT"/>
+					<Anchor point="LEFT" x="1"/>
 				</Anchors>
 				<Scripts>
 					<OnClick />
@@ -271,55 +271,11 @@
 	<Frame name="WQT_SettingsFrame" parent="WQT_OverlayFrame" mixin="WQT_SettingsFrameMixin" hidden="true">
 		<Size x="257" y="462" />
 		<Frames>
-			<ScrollFrame parentKey="ScrollFrame" mixin="WQT_ScrollFrameMixin">
+			<ScrollFrame inherits="WQT_OverlayScrollFrameTemplate" parentKey="ScrollFrame">
 				<Anchors>
 					<Anchor point="TOPLEFT"/>
 					<Anchor point="BOTTOMRIGHT" x="-20"/>
 				</Anchors>
-
-				<Frames>
-					<Slider parentKey="scrollBar">	
-						<Size x="4"/>
-						<HitRectInsets left="-5" right="-4" />
-						<Anchors>
-							<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="5" y="-27"/>
-							<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="5" y="0"/>
-						</Anchors>
-						<Layers>
-							<Layer level="BACKGROUND">
-								<Texture name="$parentTrack" parentKey="trackBG">
-									<Anchors>
-										<Anchor point="TOPLEFT" x="0" y="0"/>
-										<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
-									</Anchors>
-									<Color r="0" g="0" b="0" a="1"/>
-								</Texture>
-							</Layer>
-						</Layers>
-						<ThumbTexture name="$parentThumbTexture" inherits="HybridScrollBarButton" file="Interface\Buttons\UI-ScrollBar-Knob" parentKey="thumbTexture">
-							<Size x="18" y="24"/>
-							<TexCoords left="0.20" right="0.80" top="0.125" bottom="0.875"/>
-						</ThumbTexture>
-						<Scripts>
-							<OnValueChanged>
-								self:GetParent():ScrollValueChanged(value);
-							</OnValueChanged>
-						</Scripts>
-					</Slider>
-				</Frames>
-				
-				<ScrollChild>
-					<Frame parentKey="scrollChild">
-						<Anchors>
-							<Anchor point="TOPLEFT" x="0" y="0"/>
-							<Anchor point="RIGHT"/>
-						</Anchors>
-					</Frame>
-				</ScrollChild>
-				<Scripts>
-					<OnLoad method="OnLoad"/>
-					<OnMouseWheel method="OnMouseWheel"/>
-				</Scripts>
 			</ScrollFrame>
 		</Frames>
 		<Scripts>

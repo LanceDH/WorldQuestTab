@@ -133,34 +133,19 @@ for k, v in pairs(_V["WQT_FACTION_DATA"]) do
 end
 
 local function QuestCountsToCap(questLogIndex)
-	local _, _, _, isHeader, _, _, frequency, questID, _, _, _, _, isTask, isBounty, _, isHidden, _ = GetQuestLogTitle(questLogIndex);
-	local tagID = GetQuestTagInfo(questID)
-	local counts = false;
+	local title, _, _, isHeader, _, _, frequency, questID, _, _, _, _, isTask, isBounty, _, isHidden, _ = GetQuestLogTitle(questLogIndex);
 	
-	if (tagID == 256) then
-		-- Tags that always count
-		-- tagID = 256		: PvP Conquest
-		counts = true;
-	elseif (frequency == 2) then 
-		-- Daily quests
-		counts = true;
-	elseif (frequency == 3) then 
-		-- Weekly quests
-		-- Tags that don't count
-		-- tagID = 261		: Island Weekly Quest
-		if (tagID ~= 261) then
-			counts = true;
-		end
-	elseif (not (isHeader or isTask or isBounty)) then	
-		-- General quests
-		-- Tags that don't count
-		-- tagID = 102		: Account Wide
-		-- tagID = 270		: Threat Emissary
-		if (tagID ~= 102 and tagID ~= 270) then
-			counts = true;
-		end
+	if (isHeader or isTask or isBounty) then
+		return false, isHidden;
 	end
-
+	
+	local tagID = GetQuestTagInfo(questID)
+	local counts = true;
+	
+	if (tagID and _V["QUESTS_NOT_COUNTING"][tagID]) then
+		counts = false;
+	end
+	
 	return counts, isHidden;
 end
 
@@ -174,7 +159,7 @@ local function GetQuestLogInfo(hiddenList)
 		local counts, isHidden = QuestCountsToCap(questLogIndex);
 		if (counts) then
 			questCount = questCount + 1;
-
+			
 			-- hidden quest counting to the cap
 			if (isHidden) then
 				tinsert(hiddenList, questLogIndex);
@@ -183,10 +168,6 @@ local function GetQuestLogInfo(hiddenList)
 	end
 	
 	local color = questCount >= maxQuests and RED_FONT_COLOR or (questCount >= maxQuests-2 and _V["WQT_ORANGE_FONT_COLOR"] or _V["WQT_WHITE_FONT_COLOR"]);
-	
-	if (questCount > maxQuests) then
-		WQT:debugPrint("|cFFFF0000Questlog:", questCount, "/", maxQuests, "|r");
-	end
 	
 	return questCount, maxQuests, color;
 end
@@ -350,7 +331,7 @@ local function InitFilter(self, level)
 				info.notCheckable = false;
 				local options = WQT.settings.filters[ADD.MENU_VALUE].flags;
 				local order = WQT.filterOrders[ADD.MENU_VALUE] 
-				currExp = _V["CURRENT_EXPANSION"]
+				local currExp = _V["CURRENT_EXPANSION"]
 				for k, flagKey in pairs(order) do
 					local factionInfo = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
 					-- factions that aren't a faction (other and no faction), are of current expansion, and are neutral of player faction
@@ -1482,9 +1463,6 @@ end
 
 -- Entering the hidden quests indicator
 function WQT_QuestCounterMixin:InfoOnEnter(frame)
-	-- If it's hidden, don't show tooltip
-	if (frame.isHidden) then return end;
-	
 	GameTooltip:SetOwner(frame, "ANCHOR_RIGHT");
 	GameTooltip:SetText(_L["QUEST_COUNTER_TITLE"], nil, nil, nil, nil, true);
 	GameTooltip:AddLine(_L["QUEST_COUNTER_INFO"]:format(#self.hiddenList), 1, 1, 1, true);
@@ -1506,8 +1484,7 @@ function WQT_QuestCounterMixin:UpdateText()
 
 	-- Show or hide the icon
 	local showIcon = #self.hiddenList > 0;
-	self.HiddenInfo:SetAlpha(showIcon and 1 or 0);
-	self.HiddenInfo.isHidden = not showIcon;
+	self.HiddenInfo:SetShown(showIcon);
 end
 
 function WQT_QuestCounterMixin:UpdateVisibility()
@@ -2506,4 +2483,46 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	WQT_WorldQuestFrame:TriggerEvent("AnchorChanged", anchor);
 end
 
+--------------------------------
+-- WQT_ScrollFrameMixin
+--------------------------------
 
+WQT_ScrollFrameMixin = {};
+
+function WQT_ScrollFrameMixin:OnLoad()
+	self.offset = 0;
+	self.scrollStep = 30;
+	self.max = 0;
+	self.ScrollBar:SetMinMaxValues(0, 0);
+	self.ScrollBar:SetValue(0);
+	self.ScrollChild:SetPoint("RIGHT", self)
+end
+
+function WQT_ScrollFrameMixin:OnShow()
+	self:SetChildHeight(self.ScrollChild:GetHeight());
+end
+
+function WQT_ScrollFrameMixin:UpdateChildFramePosition()
+	if (self.ScrollChild) then
+		self.ScrollChild:SetPoint("TOPLEFT", self, 0, self.offset);
+	end
+end
+
+function WQT_ScrollFrameMixin:ScrollValueChanged(value)
+	self.offset = max(0, min(value, self.max));
+	self:UpdateChildFramePosition();
+end
+
+function WQT_ScrollFrameMixin:OnMouseWheel(delta)
+	self.offset = self.offset - delta * self.scrollStep;
+	self.offset = max(0, min(self.offset, self.max));
+	self:UpdateChildFramePosition();
+	self.ScrollBar:SetValue(self.offset);
+end
+
+function WQT_ScrollFrameMixin:SetChildHeight(height)
+	self.ScrollChild:SetHeight(height);
+	self.max = max(0, height - self:GetHeight());
+	self.offset = min(self.offset, self.max);
+	self.ScrollBar:SetMinMaxValues(0, self.max);
+end

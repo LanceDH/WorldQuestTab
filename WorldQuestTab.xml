@@ -977,7 +977,7 @@
 				<Scripts>
 					<OnLoad>
 						local text = _G[self:GetName() .. "Text"];
-						local a, b, c, x, y = text:GetPoint(1);
+						local a, b, c, x = text:GetPoint(1);
 						text:SetPoint(a, b, c, x, 0);
 					</OnLoad>
 					<OnClick> 
@@ -1332,6 +1332,53 @@
 
 		</Scripts>
 	</Button>
+	
+	<ScrollFrame name="WQT_OverlayScrollFrameTemplate" mixin="WQT_ScrollFrameMixin" virtual="true">
+		<Frames>
+			<Slider parentKey="ScrollBar">	
+				<Size x="4"/>
+				<HitRectInsets left="-5" right="-4" />
+				<Anchors>
+					<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="5" y="-27"/>
+					<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="5" y="0"/>
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture name="$parentTrack" parentKey="trackBG">
+							<Anchors>
+								<Anchor point="TOPLEFT" x="0" y="0"/>
+								<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
+							</Anchors>
+							<Color r="0" g="0" b="0" a="1"/>
+						</Texture>
+					</Layer>
+				</Layers>
+				<ThumbTexture name="$parentThumbTexture" inherits="HybridScrollBarButton" file="Interface\Buttons\UI-ScrollBar-Knob" parentKey="thumbTexture">
+					<Size x="18" y="24"/>
+					<TexCoords left="0.20" right="0.80" top="0.125" bottom="0.875"/>
+				</ThumbTexture>
+				<Scripts>
+					<OnValueChanged>
+						self:GetParent():ScrollValueChanged(value);
+					</OnValueChanged>
+				</Scripts>
+			</Slider>
+		</Frames>
+		
+		<ScrollChild>
+			<Frame parentKey="ScrollChild">
+				<Anchors>
+					<Anchor point="TOPLEFT" x="0" y="0"/>
+					<Anchor point="RIGHT"/>
+				</Anchors>
+			</Frame>
+		</ScrollChild>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+			<OnShow method="OnShow"/>
+			<OnMouseWheel method="OnMouseWheel"/>
+		</Scripts>
+	</ScrollFrame>
 	
 	<ScrollFrame name="WQT_VersionFrame" parent="WQT_OverlayFrame" parentKey="ScrollFrame" hidden="true" inherits="HybridScrollFrameTemplate">
 		<Anchors>

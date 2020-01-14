@@ -604,7 +604,7 @@ _V["SETTING_LIST"] = {
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
 	-- Pin icons
-	,{["type"] = _V["SETTING_TYPES"].subTitle, ["categoryID"] = "MAPPINS", ["label"] = _L["ICONS"]}
+	,{["type"] = _V["SETTING_TYPES"].subTitle, ["categoryID"] = "MAPPINS", ["label"] = _L["MINI_ICONS"]}
 	,{["type"] = _V["SETTING_TYPES"].checkBox, ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_TYPE"], ["tooltip"] = _L["PIN_TYPE_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.pin.typeIcon = value;
@@ -662,6 +662,13 @@ _V["TIME_REMAINING_CATEGORY"] = {
 	,["long"] = 5 -- 3d
 	,["veryLong"] = 6 -- >3d
 }
+
+_V["QUESTS_NOT_COUNTING"] = {
+		[261] = true -- Account Wide
+		,[256] = true -- PvP Conquest
+		,[102] = true -- Island Weekly Quest
+		--,[270] = true -- Threat Emissary <-- Actually does count
+	}
 
 _V["NUMBER_ABBREVIATIONS_ASIAN"] = {
 		{["value"] = 1000000000, ["format"] = _L["NUMBERS_THIRD"]}
@@ -976,7 +983,8 @@ _V["WQT_FACTION_DATA"] = {
 	,[2373] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Horde" ,["texture"] = 2909044 } -- Unshackled
 	,[2391] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 2909316 } -- Rustbolt
 	,[2400] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Alliance" ,["texture"] = 2909043 } -- Waveblade Ankoan
-	,[2417] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 3068678 } -- Uldum Accord
+	,[2417] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 3196264 } -- Uldum Accord
+	,[2415] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 3196265 } -- Rajani
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
@@ -986,6 +994,7 @@ end
 -- This is just easier to maintain than changing the entire string every time
 local _patchNotes = {
 		{["version"] = "8.3.01"
+			,["intro"] = {"Rejoice, for the long standing issue with PvP Conquest hidden quests counting to your max quests, was finally fixed by Blizzard! ... Alright enough rejoicing, 8.3 introduces the Threat Emissary Quest which has the exact same issue. gg no re"}
 			,["new"] = {
 				"Support for everything 8.3."
 				,"New type filter: Threat. Filters the new N'zoth world quests."
@@ -993,7 +1002,7 @@ local _patchNotes = {
 			,["changes"] = {
 				"Overhauled the settings menu. With this change, following settings have been reworked:"
 				,"'Bigger Pins' is now called 'Pin Scale' which instead uses a slider for more freedom."
-				,"'Reward Texture' is now called 'Center Content'."
+				,"'Reward Texture' is now called 'Main Icon Type'."
 			}
 			,["fixes"] = {
 				"Fixed some time display issues around the moment a timer should switch to a different color."
