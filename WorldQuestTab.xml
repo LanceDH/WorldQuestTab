@@ -784,7 +784,7 @@
 				<Size x="259" y="462"/>
 				<Anchors>
 					<Anchor point="TOP" relativeKey="$parent.FilterBar" relativePoint="BOTTOM" x="0" y="-2"/>
-					<Anchor point="BOTTOM" relativeTo="WQT_WorldQuestFrame" x="0" y="3"/>
+					<Anchor point="BOTTOM" relativeTo="WQT_WorldQuestFrame" x="0" y="0"/>
 				</Anchors>
 				<Frames>
 					<Slider name="$parentScrollBar" inherits="MinimalHybridScrollBarTemplate" parentKey="scrollBar">
@@ -827,7 +827,7 @@
 							<Layer level="ARTWORK" textureSubLevel="2">
 								<Texture parentKey="BottomDetail" atlas="QuestLog_BottomDetail" useAtlasSize="true">
 									<Anchors>
-										<Anchor point="BOTTOM" x="0" y="-4"/>
+										<Anchor point="BOTTOM" x="0" y="-2"/>
 									</Anchors>
 								</Texture>
 								<Texture parentKey="TopDetail" atlas="QuestLog_TopDetail" useAtlasSize="true">

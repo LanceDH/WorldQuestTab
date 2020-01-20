@@ -275,7 +275,7 @@ function WQT_Utils:GetFactionDataInternal(id)
 
 	if (not factionData[id]) then
 		-- Add new faction in case it's not in our data yet
-		factionData[id] = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = 134400 } -- Questionmark icon
+		factionData[id] = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = 134400, ["unknown"] = true } -- Questionmark icon
 		factionData[id].name = GetFactionInfoByID(id) or "Unknown Faction";
 		WQT:debugPrint("Added new faction", id,factionData[id].name);
 	end

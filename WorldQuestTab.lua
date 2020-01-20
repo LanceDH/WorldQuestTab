@@ -78,6 +78,7 @@ local WQT_DEFAULTS = {
 		["general"] = {
 			defaultTab = false;
 			saveFilters = true;
+			preciseFilters = false;
 			emissaryOnly = false;
 			useLFGButtons = false;
 			autoEmisarry = true;
@@ -116,11 +117,11 @@ local WQT_DEFAULTS = {
 		};
 
 		["filters"] = {
-				[1] = {["name"] = FACTION
-				, ["flags"] = {[OTHER] = true, [_L["NO_FACTION"]] = true}}
-				,[2] = {["name"] = TYPE
+				[_V["FILTER_TYPES"].faction] = {["name"] = FACTION
+						,["misc"] = {["none"] = true, ["other"] = true}, ["flags"] = {}}-- Faction filters are assigned later
+				,[_V["FILTER_TYPES"].type] = {["name"] = TYPE
 						, ["flags"] = {["Default"] = true, ["Elite"] = true, ["PvP"] = true, ["Petbattle"] = true, ["Dungeon"] = true, ["Raid"] = true, ["Profession"] = true, ["Invasion"] = true, ["Assault"] = true, ["Daily"] = true, ["Threat"] = true}}
-				,[3] = {["name"] = REWARD
+				,[_V["FILTER_TYPES"].reward] = {["name"] = REWARD
 						, ["flags"] = {["Item"] = true, ["Armor"] = true, ["Gold"] = true, ["Currency"] = true, ["Artifact"] = true, ["Relic"] = true, ["None"] = true, ["Experience"] = true, ["Honor"] = true, ["Reputation"] = true}}
 			}
 	}
@@ -211,7 +212,7 @@ end
 
 local function IsRelevantFilter(filterID, key)
 	-- Check any filter outside of factions if disabled by worldmap filter
-	if (filterID > 1) then return not WQT:FilterIsWorldMapDisabled(key) end
+	if (filterID > _V["FILTER_TYPES"].faction) then return not WQT:FilterIsWorldMapDisabled(key) end
 	-- Faction filters that are a string get a pass
 	if (not key or type(key) == "string") then return true; end
 	-- Factions with an ID of which the player faction is matching or neutral pass
@@ -308,13 +309,13 @@ local function InitFilter(self, level)
 		info.isNotRadio = true;
 		if ADD.MENU_VALUE then
 			-- Faction filters
-			if ADD.MENU_VALUE == 1 then
+			if ADD.MENU_VALUE == _V["FILTER_TYPES"].faction then
 			
 				info.notCheckable = true;
 					
 				info.text = CHECK_ALL
 				info.func = function()
-								WQT:SetAllFilterTo(1, true);
+								WQT:SetAllFilterTo(_V["FILTER_TYPES"].faction, true);
 								ADD:Refresh(self, 1, 2);
 								WQT_QuestScrollFrame:UpdateQuestList();
 							end
@@ -322,20 +323,21 @@ local function InitFilter(self, level)
 				
 				info.text = UNCHECK_ALL
 				info.func = function()
-								WQT:SetAllFilterTo(1, false);
+								WQT:SetAllFilterTo(_V["FILTER_TYPES"].faction, false);
 								ADD:Refresh(self, 1, 2);
 								WQT_QuestScrollFrame:UpdateQuestList();
 							end
 				ADD:AddButton(info, level)
 			
 				info.notCheckable = false;
-				local options = WQT.settings.filters[ADD.MENU_VALUE].flags;
-				local order = WQT.filterOrders[ADD.MENU_VALUE] 
+				local filter = WQT.settings.filters[_V["FILTER_TYPES"].faction];
+				local options = filter.flags;
+				local order = WQT.filterOrders[_V["FILTER_TYPES"].faction] 
 				local currExp = _V["CURRENT_EXPANSION"]
 				for k, flagKey in pairs(order) do
 					local factionInfo = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
-					-- factions that aren't a faction (other and no faction), are of current expansion, and are neutral of player faction
-					if (not factionInfo or (factionInfo.expansion == currExp and (not factionInfo.playerFaction or factionInfo.playerFaction == _playerFaction))) then
+					-- Only factions that are current expansion and match the player's faction
+					if (factionInfo and factionInfo.expansion == currExp and (not factionInfo.playerFaction or factionInfo.playerFaction == _playerFaction)) then
 						info.text = type(flagKey) == "number" and GetFactionInfoByID(flagKey) or flagKey;
 						info.func = function(_, _, _, value)
 											options[flagKey] = value;
@@ -346,6 +348,25 @@ local function InitFilter(self, level)
 					end
 				end
 				
+				-- Other
+				info.text = OTHER;
+				info.func = function(_, _, _, value)
+						filter.misc.other = value;
+						WQT_QuestScrollFrame:UpdateQuestList();
+					end
+				info.checked = function() return filter.misc.other end;
+				ADD:AddButton(info, level);			
+				
+				-- No faction
+				info.text = _L["NO_FACTION"];
+				info.func = function(_, _, _, value)
+						filter.misc.none = value;
+						WQT_QuestScrollFrame:UpdateQuestList();
+					end
+				info.checked = function() return filter.misc.none end;
+				ADD:AddButton(info, level);	
+				
+				-- Other expansions
 				info.hasArrow = true;
 				info.notCheckable = true;
 				info.text = EXPANSION_NAME6;
@@ -450,28 +471,24 @@ local function GetSortedFilterOrder(filterId)
 		table.insert(tbl, k);
 	end
 	table.sort(tbl, function(a, b) 
-				if(a == NONE or b == NONE)then
-					return a == NONE and b == NONE;
-				end
-				if(a == _L["NO_FACTION"] or b == _L["NO_FACTION"])then
-					return a ~= _L["NO_FACTION"] and b == _L["NO_FACTION"];
-				end
-				if(a == OTHER or b == OTHER)then
-					return a ~= OTHER and b == OTHER;
-				end
-				if(type(a) == "number" and type(b) == "number")then
-					local nameA = GetFactionInfoByID(tonumber(a));
-					local nameB = GetFactionInfoByID(tonumber(b));
-					if nameA and nameB then
-						return nameA < nameB;
+				if (filterId == _V["FILTER_TYPES"].faction) then
+					-- Compare 2 factions
+					if(type(a) == "number" and type(b) == "number")then
+						local nameA = GetFactionInfoByID(tonumber(a));
+						local nameB = GetFactionInfoByID(tonumber(b));
+						if nameA and nameB then
+							return nameA < nameB;
+						end
+						return a and not b;
 					end
-					return a and not b;
-				end
-				if (_V["WQT_TYPEFLAG_LABELS"][filterId]) then
-					return (_V["WQT_TYPEFLAG_LABELS"][filterId][a] or "") < (_V["WQT_TYPEFLAG_LABELS"][filterId][b] or "");
 				else
-					return a < b;
+					-- Compare localized labels for tpye and 
+					if (_V["WQT_TYPEFLAG_LABELS"][filterId]) then
+						return (_V["WQT_TYPEFLAG_LABELS"][filterId][a] or "") < (_V["WQT_TYPEFLAG_LABELS"][filterId][b] or "");
+					end
 				end
+				-- Failsafe
+				return tostring(a) < tostring(b);
 			end)
 	return tbl;
 end
@@ -526,7 +543,7 @@ local function ConvertOldSettings(version)
 		-- In 8.0.01 factions use ids rather than name
 		local repFlags = WQT.settings.filters[1].flags;
 		for name in pairs(repFlags) do
-			if (type(name) == "string" and name ~=OTHER and name ~= _L["NO_FACTION"]) then
+			if (type(name) == "string" and name ~= "Other" and name ~= _L["NO_FACTION"]) then
 				repFlags[name] = nil;
 			end
 		end
@@ -579,14 +596,24 @@ local function ConvertOldSettings(version)
 		WQT.settings.updateSeen = updateSeen;
 		
 		-- New filters
-		for flagId in pairs(WQT.settings.filters) do
-			WQT:SetAllFilterTo(flagId, true);
+		for filterID in pairs(WQT.settings.filters) do
+			WQT:SetAllFilterTo(filterID, true);
 		end
 	end
 	
 	if (version < "8.3.01")  then
-		WQT.settings.pin.scale =	 WQT.settings.pin.bigPoI and 1.15 or 1;
+		WQT.settings.pin.scale = WQT.settings.pin.bigPoI and 1.15 or 1;
 		WQT.settings.pin.centerType = WQT.settings.pin.reward and _V["PIN_CENTER_TYPES"].reward or _V["PIN_CENTER_TYPES"].blizzard;
+	end
+	
+	if (version < "8.3.02")  then
+		local factionFlags = WQT.settings.filters[_V["FILTER_TYPES"].faction].flags;
+		-- clear out string keys
+		for k in pairs(factionFlags) do
+			if (type(k) == "string") then
+				factionFlags[k] = nil;
+			end
+		end
 	end
 end
 
@@ -602,6 +629,14 @@ end
 function WQT:SetAllFilterTo(id, value)
 	local filter = WQT.settings.filters[id];
 	if (not filter) then return end;
+	
+	local misc = filter.misc;
+	if (misc) then
+		for k, v in pairs(misc) do
+			misc[k] = value;
+		end
+	end
+	
 	local flags = filter.flags;
 	for k, v in pairs(flags) do
 		flags[k] = value;
@@ -745,71 +780,133 @@ function WQT:IsWorldMapFiltering()
 	return false;
 end
 
-function WQT:IsFiltering()
-	if WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId then return true; end
-	for k, category in pairs(WQT.settings.filters)do
-		for k2, flag in pairs(category.flags) do
-			if not flag and IsRelevantFilter(k, k2) then 
+function WQT:IsUsingFilterNr(id)
+	if not WQT.settings.filters[id] then return false end
+	
+	local misSettings = WQT.settings.filters[id].misc;
+	if (misSettings) then
+		for k, flag in pairs(misSettings) do
+			if (WQT.settings.general.preciseFilters and flag) then
+				return true;
+			elseif (not WQT.settings.general.preciseFilters and not flag) then
 				return true;
 			end
+		end
+	end
+	
+	local flags = WQT.settings.filters[id].flags;
+	for k, flag in pairs(flags) do
+		if (WQT.settings.general.preciseFilters and flag) then
+			return true;
+		elseif (not WQT.settings.general.preciseFilters and not flag) then
+			return true;
 		end
 	end
 	return false;
 end
 
-function WQT:IsUsingFilterNr(id)
-	if not WQT.settings.filters[id] then return false end
-	local flags = WQT.settings.filters[id].flags;
-	for k, flag in pairs(flags) do
-		if (not flag) then return true; end
+function WQT:IsFiltering()
+	if WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId then return true; end
+	
+	for k, category in pairs(WQT.settings.filters)do
+		if (self:IsUsingFilterNr(k)) then return true; end
 	end
 	return false;
 end
 
 function WQT:PassesAllFilters(questInfo)
-	if WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId then 
+	if (WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId) then 
 		return WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
 	end
+	local filterTypes = _V["FILTER_TYPES"];
 	
-	if WQT:IsUsingFilterNr(1) and not WQT:PassesFactionFilter(questInfo) then return false; end
-	if WQT:IsUsingFilterNr(2) and not WQT:PassesFlagId(2, questInfo) then return false; end
-	if WQT:IsUsingFilterNr(3) and not WQT:PassesFlagId(3, questInfo) then return false; end
+	
+	-- For precise filters, all filters have to pass
+	if (WQT.settings.general.preciseFilters)  then
+		if (not  WQT:IsFiltering()) then
+			return true;
+		end
+		local passesAll = true;
+		
+		if WQT:IsUsingFilterNr(filterTypes.faction) then passesAll = passesAll and WQT:PassesFactionFilter(questInfo, true) end
+		if WQT:IsUsingFilterNr(filterTypes.type) then passesAll = passesAll and WQT:PassesFlagId(filterTypes.type, questInfo, true) end
+		if WQT:IsUsingFilterNr(filterTypes.reward) then passesAll = passesAll and WQT:PassesFlagId(filterTypes.reward, questInfo, true) end
+		
+		return passesAll;
+	end
+
+	if WQT:IsUsingFilterNr(filterTypes.faction) and not WQT:PassesFactionFilter(questInfo) then return false; end
+	if WQT:IsUsingFilterNr(filterTypes.type) and not WQT:PassesFlagId(filterTypes.type, questInfo) then return false; end
+	if WQT:IsUsingFilterNr(filterTypes.reward) and not WQT:PassesFlagId(filterTypes.reward, questInfo) then return false; end
 	
 	return  true;
 end
 
-function WQT:PassesFactionFilter(questInfo)
+function WQT:PassesFactionFilter(questInfo, checkPrecise)
 	-- Factions (1)
-	local flags = WQT.settings.filters[1].flags
-	-- no faction
+	local filter = WQT.settings.filters[_V["FILTER_TYPES"].faction];
+	local flags = filter.flags
+	local factionNone = filter.misc.none;
+	local factionOther = filter.misc.other;
 	local _, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
-	if not factionId then return flags[_L["NO_FACTION"]]; end
+	local factionInfo = WQT_Utils:GetFactionDataInternal(factionId);
+
+	-- Specific filters (matches all)
+	if (checkPrecise) then
+		if (factionNone and factionId) then
+			return false;
+		end
+		if (factionOther and (not factionId or not factionInfo.unknown)) then
+			return false;
+		end 
+		for flagKey, value in pairs(flags) do
+			if (value and type(flagKey) == "number" and flagKey ~= factionId) then
+				return false;
+			end
+		end
+		return true;
+	end
 	
-	if flags[factionId] ~= nil then 
+	-- General filters (matchs at least one)
+	if (not factionId) then return factionNone; end
+	
+	if (not factionInfo.unknown) then 
 		-- specific faction
 		return flags[factionId];
 	else
 		-- other faction
-		return flags[OTHER];
+		return factionOther;
 	end
 
 	return false;
 end
 
 -- Generic quest and reward type filters
-function WQT:PassesFlagId(flagId ,questInfo)
+function WQT:PassesFlagId(flagId ,questInfo, checkPrecise)
 	local flags = WQT.settings.filters[flagId].flags
 	if not flags then return false; end
 	local _, _, worldQuestType = GetQuestTagInfo(questInfo.questId);
 	
+	local passesPrecise = true;
+	
 	for flag, filterEnabled in pairs(flags) do
 		if (filterEnabled) then
 			local func = _V["FILTER_FUNCTIONS"][flagId] and _V["FILTER_FUNCTIONS"][flagId][flag] ;
-			if(func and func(questInfo, worldQuestType)) then 
-				return true;
+			if(func) then 
+				local passed = func(questInfo, worldQuestType)
+				-- If we are checking precise, combine all results. Otherwise exit out if we pass at least one
+				if (WQT.settings.general.preciseFilters) then
+					passesPrecise = passesPrecise and passed;
+				elseif (passed) then
+					return true;
+				end
 			end
 		end
 	end
+	if (checkPrecise) then
+		return passesPrecise;
+	end
+	
 	return false;
 end
 
@@ -1313,17 +1410,11 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 		
 		filterList = text;	
 	else
-		for kO, option in pairs(WQT.settings.filters) do
-			local active = 0;
-			local total = 0;
-			
-			for _, flag in pairs(option.flags) do
-				if (flag) then active = active + 1; end
-				total = total + 1;
-			end
-
-			if (active < total) then
+		for k, option in pairs(WQT.settings.filters) do
+			local counts = WQT:IsUsingFilterNr(k);
+			if (counts) then
 				filterList = filterList == "" and option.name or string.format("%s, %s", filterList, option.name);
+				break;
 			end
 		end
 	end
@@ -1647,14 +1738,16 @@ function WQT_CoreMixin:ShowWorldmapHighlight(questId)
 	local areaId = WorldMapFrame.mapID;
 	local coords = _V["WQT_ZONE_MAPCOORDS"][areaId] and _V["WQT_ZONE_MAPCOORDS"][areaId][zoneId];
 	local mapInfo = WQT_Utils:GetCachedMapInfo(zoneId);
+	-- We can't use parentMapID for cases like Cape of Stranglethorn
+	local continentID = WQT_Utils:GetContinentForMap(zoneId);
 	-- Highlihght continents on world view
 	-- 947 == Azeroth world map
-	if (not coords and areaId == 947 and mapInfo and mapInfo.parentMapID) then
-		coords = _V["WQT_ZONE_MAPCOORDS"][947][mapInfo.parentMapID];
-		mapInfo = WQT_Utils:GetCachedMapInfo(mapInfo.parentMapID);
+	if (not coords and areaId == 947 and continentID) then
+		coords = _V["WQT_ZONE_MAPCOORDS"][947][continentID];
+		mapInfo = WQT_Utils:GetCachedMapInfo(continentID);
 	end
 	
-	if not coords then return; end;
+	if (not coords or not mapInfo) then return; end;
 
 	WorldMapFrame.ScrollContainer:GetMap():TriggerEvent("SetAreaLabel", MAP_AREA_LABEL_TYPE.POI, mapInfo.name);
 
@@ -2123,7 +2216,8 @@ function WQT_CoreMixin:FilterClearButtonOnClick()
 		WQT.settings.general.emissaryOnly = false;
 	else
 		for k, v in pairs(WQT.settings.filters) do
-			WQT:SetAllFilterTo(k, true);
+			local default = not WQT.settings.general.preciseFilters;
+			WQT:SetAllFilterTo(k, default);
 		end
 	end
 	self.ScrollFrame:UpdateQuestList();

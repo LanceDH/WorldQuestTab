@@ -4,7 +4,7 @@
 addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 addon.externals = {};
 addon.variables = {};
-addon.debug = true;
+addon.debug = false;
 addon.WQT_Utils = {};
 local WQT_Utils = addon.WQT_Utils;
 local _L = addon.L;
@@ -374,6 +374,12 @@ _V["WQT_BOUNDYBOARD_OVERLAYID"] = 3;
 _V["WQT_TYPE_BONUSOBJECTIVE"] = 99;
 _V["WQT_LISTITTEM_HEIGHT"] = 32;
 
+_V["FILTER_TYPES"] = {
+	["faction"] = 1
+	,["type"] = 2
+	,["reward"] = 3
+}
+
 _V["PIN_CENTER_TYPES"] =	{
 	["blizzard"] = 1
 	,["reward"] = 2
@@ -459,6 +465,19 @@ _V["SETTING_LIST"] = {
 				WQT.settings.general.saveFilters = value;
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.saveFilters end
+			}	
+	,{["type"] = _V["SETTING_TYPES"].checkBox, ["categoryID"] = "GENERAL", ["label"] = _L["PRECISE_FILTER"], ["tooltip"] = _L["PRECISE_FILTER_TT"], ["isNew"] = true
+			, ["valueChangedFunc"] = function(value) 
+				for i=1, 3 do
+					if (not WQT:IsUsingFilterNr(i)) then
+						WQT:SetAllFilterTo(i, not value);
+					end
+				end
+			
+				WQT.settings.general.preciseFilters = value;
+				WQT_QuestScrollFrame:DisplayQuestList();
+			end
+			,["getValueFunc"] = function() return WQT.settings.general.preciseFilters end
 			}	
 	,{["type"] = _V["SETTING_TYPES"].checkBox, ["categoryID"] = "GENERAL", ["label"] = _L["LFG_BUTTONS"], ["tooltip"] = _L["LFG_BUTTONS_TT"]
 			, ["valueChangedFunc"] = function(value) 
@@ -667,7 +686,7 @@ _V["QUESTS_NOT_COUNTING"] = {
 		[261] = true -- Account Wide
 		,[256] = true -- PvP Conquest
 		,[102] = true -- Island Weekly Quest
-		--,[270] = true -- Threat Emissary <-- Actually does count
+		,[270] = true -- Threat Emissary
 	}
 
 _V["NUMBER_ABBREVIATIONS_ASIAN"] = {
@@ -839,7 +858,7 @@ _V["FILTER_FUNCTIONS"] = {
 			,["Elite"]		= function(questInfo, questType) return select(5, GetQuestTagInfo(questInfo.questId)) and questType ~= LE_QUEST_TAG_TYPE_DUNGEON; end
 			,["Default"]	= function(questInfo, questType) return questType == LE_QUEST_TAG_TYPE_NORMAL and not select(5, GetQuestTagInfo(questInfo.questId)); end 
 			,["Daily"]		= function(questInfo, questType) return questInfo.isDaily; end 
-			--,["Threat"]		= function(questInfo, questType) return  C_QuestLog.IsThreatQuest(questInfo.questId); end 
+			,["Threat"]		= function(questInfo, questType) return  C_QuestLog.IsThreatQuest(questInfo.questId); end 
 			}
 		,[3] = { -- Reward filters
 			["Armor"]		= function(questInfo, questType) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.equipment + WQT_REWARDTYPE.weapon) > 0; end
@@ -911,8 +930,6 @@ _V["ZONES_BY_EXPANSION"] = {
 	}
 }
 
-FUCK = _V["ZONES_BY_EXPANSION"];
-	
 _V["WQT_ZONE_EXPANSIONS"] = {}
 	
 for expansion, zones in pairs(_V["ZONES_BY_EXPANSION"]) do
@@ -993,7 +1010,21 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 local _patchNotes = {
-		{["version"] = "8.3.01"
+		{["version"] = "8.3.02"
+			,["intro"] = {"Rejoice again, for Blizzard fixed the new Threat Emissary issue right after 8.3 launch. Right now there are no known hidden quests preventing you from using all 25 quest slots!"}
+			,["new"] = {
+				"Returning setting: Precise Filters (default off). Founder under General settings. Enabling this will cause filters to only pass quests that match ALL filters. E.g.: If you have both the 'Gold' and 'Artifact' filters enabled, you will only see quests that give BOTH rewards."
+			}
+			,["changes"] = {
+				"Much like the official Blizzard settings, new WQT settings will be marked with an orange exclamation mark to make them easier to spot."
+			}
+			,["fixes"] = {
+				"Fixed an issue with filters for N'zoth world quests."
+				,"Fixed a rare case that could cause the filters and settings to break completely."
+				,"Fixed quests in Stranglethorn Vale not highlighting Eastern Kingdoms on the world map."
+			}
+		}
+		,{["version"] = "8.3.01"
 			,["intro"] = {"Rejoice, for the long standing issue with PvP Conquest hidden quests counting to your max quests, was finally fixed by Blizzard! ... Alright enough rejoicing, 8.3 introduces the Threat Emissary Quest which has the exact same issue. gg no re"}
 			,["new"] = {
 				"Support for everything 8.3."
