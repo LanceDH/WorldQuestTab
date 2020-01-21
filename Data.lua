@@ -1013,7 +1013,7 @@ local _patchNotes = {
 		{["version"] = "8.3.02"
 			,["intro"] = {"Rejoice again, for Blizzard fixed the new Threat Emissary issue right after 8.3 launch. Right now there are no known hidden quests preventing you from using all 25 quest slots!"}
 			,["new"] = {
-				"Returning setting: Precise Filters (default off). Founder under General settings. Enabling this will cause filters to only pass quests that match ALL filters. E.g.: If you have both the 'Gold' and 'Artifact' filters enabled, you will only see quests that give BOTH rewards."
+				"Returning setting: Precise Filters (default off). Found under General settings. Enabling this will cause filters to only pass quests that match ALL filters. E.g.: If you have both the 'Gold' and 'Artifact' filters enabled, you will only see quests that give BOTH rewards."
 			}
 			,["changes"] = {
 				"Much like the official Blizzard settings, new WQT settings will be marked with an orange exclamation mark to make them easier to spot."
