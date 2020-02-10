@@ -19,11 +19,15 @@ function WQT_SettingsBaseMixin:OnLoad()
 end
 
 function WQT_SettingsBaseMixin:OnEnter(anchorFrame, anchorType)
-	if (self.label and self.tooltip) then
+	local tooltipText = not self:IsDisabled() and self.tooltip or self.disabledTooltip;
+	if (tooltipText) then
 		GameTooltip:SetOwner(anchorFrame or self, anchorType or "ANCHOR_RIGHT");
-		GameTooltip:SetText(self.label, 1, 1, 1, true);
-		GameTooltip:AddLine(self.tooltip, nil, nil, nil, true);
+		if (self.label) then
+			GameTooltip:SetText(self.label, 1, 1, 1, true);
+		end
+		GameTooltip:AddLine(tooltipText, nil, nil, nil, true);
 		GameTooltip:Show();
+		
 	end
 end
 
@@ -34,6 +38,7 @@ end
 function WQT_SettingsBaseMixin:Init(data)
 	self.label = data.label;
 	self.tooltip = data.tooltip;
+	self.disabledTooltip = data.disabledTooltip;
 	self.valueChangedFunc = data.valueChangedFunc;
 	self.isDisabled = data.isDisabled;
 	if (self.Label) then
@@ -43,6 +48,12 @@ function WQT_SettingsBaseMixin:Init(data)
 		end
 		self.Label:SetText(labelText);
 	end
+	
+	if (self.DisabledOverlay) then
+		self.DisabledOverlay:SetFrameLevel(self:GetFrameLevel() + 2)
+	end
+	
+	self:UpdateState();
 end
 
 function WQT_SettingsBaseMixin:Reset()
@@ -75,6 +86,10 @@ end
 function WQT_SettingsBaseMixin:SetDisabled(value)
 	if (self.Label and not self.staticLabelFont) then
 		self.Label:SetFontObject(value and "GameFontDisable" or "GameFontNormal");
+	end
+	
+	if (self.DisabledOverlay) then
+		self.DisabledOverlay:SetShown(value);
 	end
 end
 

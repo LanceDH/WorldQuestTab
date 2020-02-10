@@ -374,6 +374,14 @@ _V["WQT_BOUNDYBOARD_OVERLAYID"] = 3;
 _V["WQT_TYPE_BONUSOBJECTIVE"] = 99;
 _V["WQT_LISTITTEM_HEIGHT"] = 32;
 
+_V["DEBUG_OUTPUT_TYPE"] = {
+	["invalid"] = 0
+	,["setting"] = 1
+	,["quest"] = 2
+	,["worldQuest"] = 3
+	,["addon"] = 4
+}
+
 _V["FILTER_TYPES"] = {
 	["faction"] = 1
 	,["type"] = 2
@@ -506,6 +514,17 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.bountyCounter end
 			}	
+	,{["type"] = _V["SETTING_TYPES"].checkBox, ["categoryID"] = "GENERAL", ["label"] = _L["INCLUDE_DAILIES"], ["tooltip"] = _L["INCLUDE_DAILIES_TT"], ["isNew"] = true
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.list.includeDaily = value;
+				local mapAreaID = WorldMapFrame.mapID;
+				WQT_WorldQuestFrame.dataProvider:LoadQuestsInZone(mapAreaID);
+				if (not value) then
+					WQT_Utils:RefreshOfficialDataProviders();
+				end
+			end
+			,["getValueFunc"] = function() return WQT.settings.list.includeDaily end
+			}
 
 	-- Quest List
 	,{["type"] = _V["SETTING_TYPES"].checkBox, ["categoryID"] = "QUESTLIST", ["label"] = _L["SHOW_TYPE"], ["tooltip"] = _L["SHOW_TYPE_TT"]
@@ -552,7 +571,6 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.alwaysAllQuests end
 			}	
-
 
 	-- Map Pin
 	,{["type"] = _V["SETTING_TYPES"].checkBox, ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_DISABLE"], ["tooltip"] = _L["PIN_DISABLE_TT"]
@@ -659,7 +677,7 @@ _V["SETTING_LIST"] = {
 }
 
 _V["SETTING_UTILITIES_LIST"] = {
-	{["type"] = _V["SETTING_TYPES"].checkBox, ["categoryID"] = "WQTU", ["label"] = _L["LOAD_UTILITIES"], ["tooltip"] = _L["LOAD_UTILITIES_TT"]
+	{["type"] = _V["SETTING_TYPES"].checkBox, ["categoryID"] = "WQTU", ["label"] = _L["LOAD_UTILITIES"], ["tooltip"] = _L["LOAD_UTILITIES_TT"], ["disabledTooltip"] = _L["LOAD_UTILITIES_TT_DISABLED"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.loadUtilities = value;
 				if (value and not IsAddOnLoaded("WorldQuestTabUtilities")) then
@@ -667,7 +685,8 @@ _V["SETTING_UTILITIES_LIST"] = {
 					WQT_QuestScrollFrame:UpdateQuestList();
 				end
 			end
-			,["getValueFunc"] = function() return WQT.settings.general.loadUtilities end;
+			,["getValueFunc"] = function() return WQT.settings.general.loadUtilities end
+			,["isDisabled"] = function() return GetAddOnEnableState(nil, "WorldQuestTabUtilities") == 0 end
 			}	
 }
 
@@ -1010,7 +1029,16 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 local _patchNotes = {
-		{["version"] = "8.3.02"
+		{["version"] = "8.3.03"
+			,["intro"] = {"This update is mainly to introduce an output dump to help report and debug problems."}
+			,["new"] = {
+				"New Setting: Include dailies (default on). Found under General settings. Treat certain dailies as world quests. Only affects dailies which Blizzard themselves treats as world quests."
+			}
+			,["fixes"] = {
+				"Fixed WQTU 'load' setting not disabling when it is not enabled in the add-on list."
+			}
+		}
+		,{["version"] = "8.3.02"
 			,["intro"] = {"Rejoice again, for Blizzard fixed the new Threat Emissary issue right after 8.3 launch. Right now there are no known hidden quests preventing you from using all 25 quest slots!"}
 			,["new"] = {
 				"Returning setting: Precise Filters (default off). Found under General settings. Enabling this will cause filters to only pass quests that match ALL filters. E.g.: If you have both the 'Gold' and 'Artifact' filters enabled, you will only see quests that give BOTH rewards."

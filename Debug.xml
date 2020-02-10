@@ -1,0 +1,190 @@
+ <Ui xmlns="http://www.blizzard.com/wow/ui/"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ../../FrameXML/UI.xsd">
+
+	<Script file="Debug.lua"/>
+	
+	<EditBox name="WQT_CopyBoxTemplate" inherits="InputBoxTemplate" autoFocus="false" virtual="true"> 
+		<Size y="20"/>
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture parentKey="Checkmark" file="Interface\Scenarios\ScenarioIcon-Check" alpha="0">
+					<Size x="16" y="16" />
+					<Anchors>
+						<Anchor point="LEFT" relativePoint="RIGHT" x="3"/>
+					</Anchors>
+				</Texture>
+				<FontString parentKey="Label" inherits="GameFontWhiteSmall" justifyH="LEFT" text="Unlabeled">
+					<Size y="15" />
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT"/>
+						<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Animations>
+			<AnimationGroup parentKey="CheckAnim" setToFinalAlpha="true" looping="NONE">
+				<Alpha parentKey="Checkmark" childKey="Checkmark" fromAlpha="1" toAlpha="0"  Duration="0.6" order="0" />
+				<Scale parentKey="Checkmark" childKey="Checkmark" fromScaleX="0.7" toScaleX="1.5" smoothing="NONE" fromScaleY="0.7" toScaleY="1.5" Duration="0.6" order="0"/>
+			</AnimationGroup>
+		</Animations>
+		
+		<Scripts>
+			<OnLoad inherit="prepend">
+				self.Label:SetText(self.label or "");
+				self:SetText(self.staticInput or "");
+			</OnLoad>
+			<OnEnterPressed function="EditBox_ClearFocus"/>
+			<OnKeyDown>
+				if (IsControlKeyDown() and (key == "C" or key == "X")) then
+					self.CheckAnim:Stop();
+					self.CheckAnim:Play();
+					PlaySound(SOUNDKIT.TUTORIAL_POPUP);
+					<!-- Delay until next frame or it will prevent the actual copy -->
+					C_Timer.After(0, function() self:ClearFocus(); end);
+				end
+			</OnKeyDown>
+			<OnTextChanged>
+				if (userInput) then
+					self:SetText(self.staticInput or "");
+					self:HighlightText();
+				else
+					self.staticInput = self:GetText();
+				end
+			</OnTextChanged>
+		</Scripts>
+	</EditBox>
+	
+	<Frame name="WQT_CopyBoxMultilineTemplate" autoFocus="false" virtual="true"> 
+		<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+			<EdgeSize>
+				<AbsValue val="8"/>
+			</EdgeSize>
+			<TileSize>
+				<AbsValue val="8"/>
+			</TileSize>
+			<BackgroundInsets>
+				<AbsInset left="1" right="1" top="1" bottom="1"/>
+			</BackgroundInsets>
+			<Color r="0" g="0" b="0" a="0.65"/>
+			<BorderColor r="0.6" g="0.6" b="0.6" a="1"/>
+		</Backdrop>
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture parentKey="Checkmark" file="Interface\Scenarios\ScenarioIcon-Check" alpha="0">
+					<Size x="16" y="16" />
+					<Anchors>
+						<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="3" y="-2"/>
+					</Anchors>
+				</Texture>
+				<FontString parentKey="Label" inherits="GameFontWhiteSmall" justifyH="LEFT" text="Unlabeled">
+					<Size y="15" />
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="5"/>
+						<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Animations>
+			<AnimationGroup parentKey="CheckAnim" setToFinalAlpha="true" looping="NONE">
+				<Alpha parentKey="Checkmark" childKey="Checkmark" fromAlpha="1" toAlpha="0"  Duration="0.6" order="0" />
+				<Scale parentKey="Checkmark" childKey="Checkmark" fromScaleX="0.7" toScaleX="1.5" smoothing="NONE" fromScaleY="0.7" toScaleY="1.5" Duration="0.6" order="0"/>
+			</AnimationGroup>
+		</Animations>
+		<Frames>
+			<EditBox parentKey="EditBox" multiLine="true" autoFocus="false" clipChildren="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" x="5" y="-5"/>
+					<Anchor point="BOTTOMRIGHT" x="-5" y="5"/>
+				</Anchors>
+				<Scripts>
+					<OnTextChanged>
+						local parent = self:GetParent();
+						if (userInput) then
+							self:SetText(parent.staticInput or "");
+							self:HighlightText();
+						else
+							parent.staticInput = self:GetText();
+						end
+					</OnTextChanged>
+					<OnKeyDown>
+						if (IsControlKeyDown() and (key == "C" or key == "X")) then
+							local parent = self:GetParent();
+							parent.CheckAnim:Stop();
+							parent.CheckAnim:Play();
+							PlaySound(SOUNDKIT.TUTORIAL_POPUP);
+							<!-- Delay until next frame or it will prevent the actual copy -->
+							C_Timer.After(0, function() self:ClearFocus(); end);
+						end
+					</OnKeyDown>
+					<OnEscapePressed function="EditBox_ClearFocus"/>
+					<OnEditFocusGained inherit="prepend">
+						self:HighlightText();
+					</OnEditFocusGained>
+					<OnEditFocusLost>
+						self:HighlightText(0, 0);
+					</OnEditFocusLost>
+				</Scripts>
+				<FontString inherits="ChatFontSmall"/>
+			</EditBox>
+		</Frames>
+		<Scripts>
+			<OnLoad inherit="prepend">
+				self.Label:SetText(self.label or "");
+				self.EditBox:SetText(self.staticInput or "");
+			</OnLoad>
+		</Scripts>
+	</Frame>
+	
+	<Frame name="WQT_DebugFrame" mixin="WQT_DebugFrameMixin" parent="UIParent" hidden="true">
+		<Size x="257" y="462"/>
+		<Anchors>
+			<Anchor point="CENTER" x="0" y="0"/>
+		</Anchors>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="BG" setAllPoints="true">
+					<Color r="0" g="0" b="0" a="0.5"/>
+				</Texture>
+			</Layer>
+		</Layers>
+		
+		<Frames>
+			<EditBox parentKey="CurseURL" inherits="WQT_CopyBoxTemplate">
+				<KeyValues>
+					<KeyValue key="label" value="Curseforge URL" type="string"/>
+				</KeyValues>
+				<Anchors>
+					<Anchor point="TOPLEFT" x="15" y="-30"/>
+					<Anchor point="RIGHT" x="-30"/>
+				</Anchors>
+			</EditBox>
+			<EditBox parentKey="WoWIURL" inherits="WQT_CopyBoxTemplate">
+				<KeyValues>
+					<KeyValue key="label" value="WowInterface URL" type="string"/>
+				</KeyValues>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.CurseURL" relativePoint="BOTTOMLEFT" y="-25"/>
+					<Anchor point="RIGHT" relativeKey="$parent.CurseURL"/>
+				</Anchors>
+			</EditBox>
+			
+			<Frame parentKey="DumpFrame" inherits="WQT_CopyBoxMultilineTemplate"> 
+				<KeyValues>
+					<KeyValue key="label" value="Copy paste this" type="string"/>
+				</KeyValues>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.WoWIURL" relativePoint="BOTTOMLEFT" x="-3" y="-25"/>
+					<Anchor point="RIGHT" relativeKey="$parent.WoWIURL"/>
+					<Anchor point="BOTTOM" y="20"/>
+				</Anchors>
+			</Frame>
+		</Frames>
+		
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+		</Scripts>
+	</Frame>
+ </Ui>

@@ -7,6 +7,8 @@ L["IS_AZIAN_CLIENT"]	= false
 
 L["ALWAYS_ALL"] = "Always All Quests"
 L["ALWAYS_ALL_TT"] = "Always show all quests for the expansion related to the current zone"
+L["INCLUDE_DAILIES"] = "Include Dailies"
+L["INCLUDE_DAILIES_TT"] = "Treat certain dailies as world quests. Only affects dailies which Blizzard themselves treats as world quests."
 L["AMOUNT_COLORS"] = "Amount Colors"
 L["AMOUNT_COLORS_TT"] = "Color reward amounts in the quest list based on reward type."
 L["AUTO_EMISARRY"] = "Auto Emissary Only"

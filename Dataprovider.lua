@@ -625,6 +625,48 @@ function WQT_Utils:RemoveTomTomArrowbyQuestId(questId)
 	end
 end
 
+function WQT_Utils:QuestCountsToCap(questLogIndex)
+	local title, _, _, isHeader, _, _, frequency, questID, _, _, _, _, isTask, isBounty, _, isHidden, _ = GetQuestLogTitle(questLogIndex);
+	
+	if (isHeader or isTask or isBounty) then
+		return false, isHidden;
+	end
+	
+	local tagID, tagName = GetQuestTagInfo(questID)
+	local counts = true;
+	
+	if (tagID and _V["QUESTS_NOT_COUNTING"][tagID]) then
+		counts = false;
+	end
+	
+	return counts, isHidden;
+end
+
+-- Count quests counting to the quest log cap and collect hidden ones that can't be abandoned
+function WQT_Utils:GetQuestLogInfo(hiddenList)
+	local numEntries = GetNumQuestLogEntries();
+	local maxQuests = C_QuestLog.GetMaxNumQuestsCanAccept();
+	local questCount = 0;
+	if (hiddenList) then
+		wipe(hiddenList);
+	end
+	for questLogIndex = 1, numEntries do
+		local counts, isHidden = WQT_Utils:QuestCountsToCap(questLogIndex);
+		if (counts) then
+			questCount = questCount + 1;
+			
+			-- hidden quest counting to the cap
+			if (isHidden and hiddenList) then
+				tinsert(hiddenList, questLogIndex);
+			end
+		end
+	end
+	
+	local color = questCount >= maxQuests and RED_FONT_COLOR or (questCount >= maxQuests-2 and _V["WQT_ORANGE_FONT_COLOR"] or _V["WQT_WHITE_FONT_COLOR"]);
+	
+	return questCount, maxQuests, color;
+end
+
 ----------------------------
 -- MIXIN
 ----------------------------
@@ -778,24 +820,29 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 end
 
 function WQT_DataProvider:AddQuestsInZone(zoneID, continentId)
-	local questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneID, continentId);
-	if not questsById then return false; end
 	local missingData = false;
-	local quest;
-	
-	for k, info in ipairs(questsById) do
-		if (info.mapID == zoneID) then
-			quest = self:AddQuest(info, info.mapID);
-			if (not quest) then 
-				missingData = true;
-			end;
+
+	local questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneID, continentId);
+	if (questsById) then
+		for k, info in ipairs(questsById) do
+			if (info.mapID == zoneID) then
+				local hasData = self:AddQuest(info);
+				if (not hasData) then 
+					missingData = true;
+				end;
+			end
 		end
 	end
-	
+
 	return missingData;
 end
 
-function WQT_DataProvider:AddQuest(qInfo, zoneId)
+function WQT_DataProvider:AddQuest(qInfo)
+	-- Setting to filter daily world quests
+	if (not WQT.settings.list.includeDaily and qInfo.isDaily) then
+		return true;
+	end
+
 	local duplicate = self:FindDuplicate(qInfo.questId);
 	-- If there is a duplicate, we don't want to go through all the info again
 	if (duplicate) then
@@ -824,10 +871,10 @@ function WQT_DataProvider:AddQuest(qInfo, zoneId)
 	if (not haveRewardData) then
 		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
 		tinsert(self.waitingRoomRewards, questInfo);
-		return nil;
+		return false;
 	end;
 
-	return questInfo;
+	return true;
 end
 
 function WQT_DataProvider:FindDuplicate(questId)

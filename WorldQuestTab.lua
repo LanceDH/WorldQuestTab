@@ -98,6 +98,7 @@ local WQT_DEFAULTS = {
 			showZone = true;
 			amountColors = true;
 			alwaysAllQuests = false;
+			includeDaily = true;
 			fullTime = false;
 		};
 
@@ -133,46 +134,6 @@ for k, v in pairs(_V["WQT_FACTION_DATA"]) do
 	end
 end
 
-local function QuestCountsToCap(questLogIndex)
-	local title, _, _, isHeader, _, _, frequency, questID, _, _, _, _, isTask, isBounty, _, isHidden, _ = GetQuestLogTitle(questLogIndex);
-	
-	if (isHeader or isTask or isBounty) then
-		return false, isHidden;
-	end
-	
-	local tagID = GetQuestTagInfo(questID)
-	local counts = true;
-	
-	if (tagID and _V["QUESTS_NOT_COUNTING"][tagID]) then
-		counts = false;
-	end
-	
-	return counts, isHidden;
-end
-
--- Count quests counting to the quest log cap and collect hidden ones that can't be abandoned
-local function GetQuestLogInfo(hiddenList)
-	local numEntries = GetNumQuestLogEntries();
-	local maxQuests = C_QuestLog.GetMaxNumQuestsCanAccept();
-	local questCount = 0;
-	wipe(hiddenList);
-	for questLogIndex = 1, numEntries do
-		local counts, isHidden = QuestCountsToCap(questLogIndex);
-		if (counts) then
-			questCount = questCount + 1;
-			
-			-- hidden quest counting to the cap
-			if (isHidden) then
-				tinsert(hiddenList, questLogIndex);
-			end
-		end
-	end
-	
-	local color = questCount >= maxQuests and RED_FONT_COLOR or (questCount >= maxQuests-2 and _V["WQT_ORANGE_FONT_COLOR"] or _V["WQT_WHITE_FONT_COLOR"]);
-	
-	return questCount, maxQuests, color;
-end
-
 -- Custom number abbreviation to fit inside reward icons in the list.
 local function GetLocalizedAbbreviatedNumber(number)
 	if type(number) ~= "number" then return "NaN" end;
@@ -204,6 +165,10 @@ local function slashcmd(msg)
 		addon.debug = not addon.debug;
 		WQT_QuestScrollFrame:UpdateQuestList();
 		print("WQT: debug", addon.debug and "enabled" or "disabled");
+		return;
+	elseif (msg:find("^dump")) then
+		local addition = msg:sub(6)
+		WQT_DebugFrame:DumpDebug(addition);
 		return;
 	end
 	
@@ -1569,7 +1534,7 @@ function WQT_QuestCounterMixin:InfoOnEnter(frame)
 end
 
 function WQT_QuestCounterMixin:UpdateText()
-	local numQuests, maxQuests, color = GetQuestLogInfo(self.hiddenList);
+	local numQuests, maxQuests, color = WQT_Utils:GetQuestLogInfo(self.hiddenList);
 	self.QuestCount:SetText(GENERIC_FRACTION_STRING_WITH_SPACING:format(numQuests, maxQuests));
 	self.QuestCount:SetTextColor(color.r, color.g, color.b);
 

@@ -13,6 +13,7 @@
 	<Script file="WorldQuestTab.lua"/>
 	<Include file="MapPinProvider.xml"/>
 	<Include file="External\External.xml"/>
+	<Include file="Debug.xml"/>
 	
 	<FontFamily name="WQT_NumberFontOutline" virtual="true">
 		<Member alphabet="roman">
@@ -1422,7 +1423,6 @@
 						parent.offset = min(parent.offset, parent.limit);
 						
 						parent.scrollBar:SetValue(parent.offset);
-						
 					</OnMouseWheel>
 				</Scripts>
 			</Slider>
@@ -1454,5 +1454,7 @@
 			</OnMouseWheel>
 		</Scripts>
 	</ScrollFrame>
+	
+	
  </Ui>
  

@@ -113,6 +113,21 @@
 					</OnClick>
 				</Scripts>
 			</CheckButton>
+			<Frame parentKey="DisabledOverlay">
+				<HitRectInsets right="-75"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.CheckBox"/>
+					<Anchor point="BOTTOMRIGHT" relativeKey="$parent.CheckBox"/>
+				</Anchors>
+				<Scripts>
+					<OnEnter>
+						self:GetParent():OnEnter(self);
+					</OnEnter>
+					<OnLeave>
+						self:GetParent():OnLeave();
+					</OnLeave>
+				</Scripts>
+			</Frame>
 		</Frames>
 		<Layers>
 			<Layer level="ARTWORK">
