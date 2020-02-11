@@ -77,6 +77,7 @@
 				<Anchors>
 					<Anchor point="LEFT" x="1"/>
 				</Anchors>
+				<!-- Disable all functionality. It's only a preview -->
 				<Scripts>
 					<OnClick />
 					<OnLoad />

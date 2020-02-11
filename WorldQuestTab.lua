@@ -976,7 +976,8 @@ function WQT:OnEnable()
 	end
 	
 	-- Load settings
-	WQT_SettingsFrame:LoadWQTSettings();
+	WQT_SettingsFrame:Init(_V["SETTING_CATEGORIES"], _V["SETTING_LIST"]);
+	WQT_SettingsFrame:SetCategoryExpanded("GENERAL", true);
 end
 
 ------------------------------------------
@@ -2540,48 +2541,4 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	WQT_WorldQuestFrame:SelectTab(tab);
 	
 	WQT_WorldQuestFrame:TriggerEvent("AnchorChanged", anchor);
-end
-
---------------------------------
--- WQT_ScrollFrameMixin
---------------------------------
-
-WQT_ScrollFrameMixin = {};
-
-function WQT_ScrollFrameMixin:OnLoad()
-	self.offset = 0;
-	self.scrollStep = 30;
-	self.max = 0;
-	self.ScrollBar:SetMinMaxValues(0, 0);
-	self.ScrollBar:SetValue(0);
-	self.ScrollChild:SetPoint("RIGHT", self)
-end
-
-function WQT_ScrollFrameMixin:OnShow()
-	self:SetChildHeight(self.ScrollChild:GetHeight());
-end
-
-function WQT_ScrollFrameMixin:UpdateChildFramePosition()
-	if (self.ScrollChild) then
-		self.ScrollChild:SetPoint("TOPLEFT", self, 0, self.offset);
-	end
-end
-
-function WQT_ScrollFrameMixin:ScrollValueChanged(value)
-	self.offset = max(0, min(value, self.max));
-	self:UpdateChildFramePosition();
-end
-
-function WQT_ScrollFrameMixin:OnMouseWheel(delta)
-	self.offset = self.offset - delta * self.scrollStep;
-	self.offset = max(0, min(self.offset, self.max));
-	self:UpdateChildFramePosition();
-	self.ScrollBar:SetValue(self.offset);
-end
-
-function WQT_ScrollFrameMixin:SetChildHeight(height)
-	self.ScrollChild:SetHeight(height);
-	self.max = max(0, height - self:GetHeight());
-	self.offset = min(self.offset, self.max);
-	self.ScrollBar:SetMinMaxValues(0, self.max);
 end
