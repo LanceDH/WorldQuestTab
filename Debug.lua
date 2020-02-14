@@ -25,7 +25,7 @@ local function bts(bool)
 end
 
 local function GetQuestDump()
-	local counted, limit = WQT_Utils:GetQuestLogInfo(hiddenList)
+	local counted, limit = WQT_Utils:GetQuestLogInfo()
 	local output = FORMAT_QUEST_HEADER:format(counted, limit);
 	
 	local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questID, startEvent, displayQuestID, isOnMap, hasLocalPOI, isTask, isBounty, isStory, isHidden, isScaling;

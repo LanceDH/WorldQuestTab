@@ -4,7 +4,7 @@
 addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 addon.externals = {};
 addon.variables = {};
-addon.debug = false;
+addon.debug = true;
 addon.WQT_Utils = {};
 local WQT_Utils = addon.WQT_Utils;
 local _L = addon.L;
@@ -439,12 +439,14 @@ _V["SETTING_TYPES"] = {
 -------------------------------
 -- This list gets turned into a settings menu based on the data provided.
 -- GENERAL
---   type (SETTING_TYPES): Defines the type of setting
+--   (either) template: A frame template which inherits the base mixin WQT_SettingsBaseMixin;
+--   (or) frameName: The name of a specific frame using the mixin WQT_SettingsBaseMixin;
 --   label (string): The text the label should have
 --   tooltip (string): Text displayed in the tooltip
 --   valueChangedFunc (function(value)): what actions should be taken when the value is changed. Value is nil for buttons
 --   isDisabled (boolean|function()): Boolean or function returning if the setting should be disabled
 --   getValueFunc (function()): Function returning the current value of the setting
+--   isNew (boolean): Mark the setting as new by adding an exclamantion mark to the label
 -- SLIDER SPECIFIC
 --   min (number): min value
 --   max (number): max value
@@ -453,7 +455,8 @@ _V["SETTING_TYPES"] = {
 --   options (table): a list for options in following format {[id] = {["label"] = "Displayed label", ["tooltip"] = "additional tooltip info (optional)"}, ...}
 
 _V["SETTING_CATEGORIES"] = {
-	{["id"]="GENERAL", ["label"] = GENERAL}
+	{["id"]="DEBUG", ["label"] = "Debug"}
+	,{["id"]="GENERAL", ["label"] = GENERAL}
 	,{["id"]="QUESTLIST", ["label"] = _L["QUEST_LIST"]}
 	,{["id"]="MAPPINS", ["label"] = _L["MAP_PINS"]}
 	,{["id"]="WQTU", ["label"] = "Utilities"}
@@ -674,7 +677,7 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.rewardTypeIcon; end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI; end
-			}		
+			}	
 }
 
 _V["SETTING_UTILITIES_LIST"] = {
@@ -690,7 +693,6 @@ _V["SETTING_UTILITIES_LIST"] = {
 			,["isDisabled"] = function() return GetAddOnEnableState(nil, "WorldQuestTabUtilities") == 0 end
 			}	
 }
-
 
 _V["TIME_REMAINING_CATEGORY"] = {
 	["none"] = 0
@@ -1034,6 +1036,9 @@ local _patchNotes = {
 			,["intro"] = {"This update is mainly to introduce an output dump to help report and debug problems."}
 			,["new"] = {
 				"New Setting: Include dailies (default on). Found under General settings. Treat certain dailies as world quests. Only affects dailies which Blizzard themselves treats as world quests."
+			}
+			,["changes"] = {
+				"Made some improvements to map pins to reduce the chance of one completely overlapping another."
 			}
 			,["fixes"] = {
 				"Fixed WQTU 'load' setting not disabling when it is not enabled in the add-on list."

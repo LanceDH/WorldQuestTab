@@ -275,6 +275,7 @@ function WQT_SettingsSliderMixin:OnValueChanged(value, userInput)
 		self:UpdateState();
 		return; 
 	end
+
 	value = Round(value*100)/100;
 	value = min(self.max, max(self.min, value));
 	if (userInput and value ~= self.current) then
