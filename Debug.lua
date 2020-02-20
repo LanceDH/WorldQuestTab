@@ -6,6 +6,113 @@ local ADD = LibStub("AddonDropDown-1.0");
 local WQT_Utils = addon.WQT_Utils;
 
 
+------------------------
+-- DEBUGGING
+------------------------
+
+local _debugTable;
+if (addon.debug and LDHDebug) then
+	LDHDebug:Monitor(addonName);
+end
+
+function WQT:debugPrint(...)
+	if (addon.debug and LDHDebug) then 
+		LDHDebug:Print(...);
+	end
+end
+
+local function AddIndentedDoubleLine(tooltip, a, b, level, color)
+	local indented = string.rep("    ", level) .. a;
+	if (type(b) == "table" and b.GetRGBA) then
+		b = b.r .. "/" .. b.g .. "/" .. b.b;
+	elseif (type(b) == "table" and b.GetXY) then
+		b = "{" ..floor(b.x*100)/100 .. " | " .. floor(b.y*100)/100 .. "}";
+	elseif (type(b) == "boolean") then
+		b = b and "true" or "false";
+	elseif  (type(a) == "string" and a:find("Bits") and type(b) == "number" and b > 0) then
+		local bits = b;
+		local o = "";
+		local index = 0;
+		while (bits > 0) do
+			local rest = bits% 2
+			if (rest > 0) then
+				o = o .. (o == "" and "" or ", ") .. index;
+			end
+			bits = (bits - rest) / 2
+			index = index + 1;
+		end
+		b = string.format("%s (%s)", b, o);
+	elseif (b == nil) then
+		b = "nil";
+	end
+	tooltip:AddDoubleLine(indented, b, color.r, color.g, color.b, color.r, color.g, color.b);
+end
+
+function WQT:AddDebugToTooltip(tooltip, questInfo, level)
+	if (not addon.debug) then return end;
+	level = level or 0;
+	local color = LIGHTBLUE_FONT_COLOR;
+	if(level == 0) then
+		AddIndentedDoubleLine(tooltip, "WQT debug info:", "", 0, color);
+	end
+	
+	-- First all non table values;
+	for key, value in pairs(questInfo) do
+		if ((type(value) ~= "table" or value.GetRGBA) and type(value) ~= "function") then
+			AddIndentedDoubleLine(tooltip, key, value, level+1, color);
+		end
+	end
+	-- Actual tables
+	for key, value in pairs(questInfo) do
+		if (type(value) == "table" and not value.GetRGBA and key ~= "debug") then
+			AddIndentedDoubleLine(tooltip, key, "", level+1, color);
+			self:AddDebugToTooltip(tooltip, value, level + 1)
+		end
+	end
+	
+	if(level == 0 and questInfo.questId) then
+		color = GRAY_FONT_COLOR;
+		
+		AddIndentedDoubleLine(tooltip, "Through functions:", "", 0, color);
+		local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
+		AddIndentedDoubleLine(tooltip, "title", title, 1, color);
+		local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questInfo.questId);
+		local tagDisplay = tagID and tagName.." ("..tagID..")" or tagName;
+		AddIndentedDoubleLine(tooltip, "tag", tagDisplay, 1, color);
+		AddIndentedDoubleLine(tooltip, "worldQuestType", worldQuestType, 1, color);
+		AddIndentedDoubleLine(tooltip, "rarity", rarity, 1, color);
+		AddIndentedDoubleLine(tooltip, "isElite", isElite, 1, color);
+		AddIndentedDoubleLine(tooltip, "tradeskillLineIndex", tradeskillLineIndex, 1, color);
+		-- Time
+		local seconds, timeString, timeColor, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo, true, true);
+		AddIndentedDoubleLine(tooltip, "time", "", 1, color);
+		AddIndentedDoubleLine(tooltip, "seconds", seconds, 2, color);
+		AddIndentedDoubleLine(tooltip, "timeString", timeString, 2, color);
+		AddIndentedDoubleLine(tooltip, "color", timeColor, 2, color);
+		AddIndentedDoubleLine(tooltip, "timeStringShort", timeStringShort, 2, color);
+		AddIndentedDoubleLine(tooltip, "isExpired", WQT_Utils:QuestIsExpired(questInfo), 2, color);
+		-- Faction
+		local factionInfo = WQT_Utils:GetFactionDataInternal(factionId);
+		AddIndentedDoubleLine(tooltip, "faction", "", 1, color);
+		AddIndentedDoubleLine(tooltip, "factionId", factionId, 2, color);
+		AddIndentedDoubleLine(tooltip, "name", factionInfo.name, 2, color);
+		AddIndentedDoubleLine(tooltip, "playerFaction", factionInfo.playerFaction, 2, color);
+		AddIndentedDoubleLine(tooltip, "texture", factionInfo.texture, 2, color);
+		AddIndentedDoubleLine(tooltip, "expansion", factionInfo.expansion, 2, color);
+		-- MapInfo
+		local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questId);
+		AddIndentedDoubleLine(tooltip, "mapInfo", "", 1, color);
+		AddIndentedDoubleLine(tooltip, "name", mapInfo.name, 2, color);
+		AddIndentedDoubleLine(tooltip, "mapID", mapInfo.mapID, 2, color);
+		AddIndentedDoubleLine(tooltip, "parentMapID", mapInfo.parentMapID, 2, color);
+		AddIndentedDoubleLine(tooltip, "mapType", mapInfo.mapType, 2, color);
+	end
+end
+
+------------------------
+-- OUTPUT DUMP
+------------------------
+
 local URL_CURSEFORGE = "https://www.curseforge.com/wow/addons/worldquesttab/issues"
 local URL_WOWI = "https://www.wowinterface.com/downloads/info25042-WorldQuestTab.html"
 
@@ -153,7 +260,24 @@ function WQT_DebugFrameMixin:DumpDebug(input)
 	end
 
 	self.DumpFrame.EditBox:SetText(text);
-	OpenWorldMap();
-	WQT_WorldQuestFrame:SelectTab(WQT_TabWorld); 
+	
+	-- Display WQT frame depending on current situation;
+	if (FlightMapFrame and FlightMapFrame:IsShown()) then
+		WQT_FlightMapContainerButton:SetSelected(true);
+	elseif (TaxiFrame:IsShown()) then
+		WQT_OldTaxiMapContainerButton:SetSelected(true);
+	else
+		if (WorldMapFrame:IsShown()) then
+			if (WorldMapFrame:IsMaximized()) then
+				WQT_WorldMapContainerButton:SetSelected(true);
+			elseif(not WorldMapFrame.QuestLog:IsShown()) then
+				WorldMapFrame.SidePanelToggle:OnClick();
+			end
+		else
+			OpenQuestLog();
+		end
+	end
+
+	WQT_WorldQuestFrame:SelectTab(WQT_TabWorld);
 	WQT_WorldQuestFrame:ShowOverlayFrame(self);
 end

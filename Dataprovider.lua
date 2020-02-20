@@ -28,12 +28,12 @@ local function UpdateWorldZones(newLevel)
 	-- world map continents depending on expansion level
 	worldTable[113] = {["x"] = 0.49, ["y"] = 0.13} -- Northrend
 	worldTable[424] = {["x"] = 0.46, ["y"] = 0.92} -- Pandaria
+	worldTable[12] = {["x"] = 0.19, ["y"] = 0.5} -- Kalimdor
+	worldTable[13] = {["x"] = 0.88, ["y"] = 0.56} -- Eastern Kingdom
 	
 	if (expLevel >= LE_EXPANSION_BATTLE_FOR_AZEROTH and newLevel >= 120) then
 		worldTable[875] = {["x"] = 0.54, ["y"] = 0.61} -- Zandalar
 		worldTable[876] = {["x"] = 0.72, ["y"] = 0.49} -- Kul Tiras
-		worldTable[12] = {["x"] = 0.19, ["y"] = 0.5} -- Kalimdor
-		worldTable[13] = {["x"] = 0.88, ["y"] = 0.56} -- Eastern Kingdom
 	elseif (expLevel >= LE_EXPANSION_LEGION and newLevel >= 110) then
 		worldTable[619] = {["x"] = 0.6, ["y"] = 0.41} -- Broken Isles
 	end
@@ -86,20 +86,20 @@ end
 local function ScanTooltipRewardForPattern(questID, pattern)
 	local result;
 	
-	GameTooltip_AddQuestRewardsToTooltip(WQT_Tooltip, questID);
+	QuestUtils_AddQuestRewardsToTooltip(WQT_Tooltip, questID, TOOLTIP_QUEST_REWARDS_STYLE_DEFAULT);
 	for i=2, 6 do
 		local line = _G["WQT_TooltipTooltipTextLeft"..i];
-		if not line then break; end
+		if (not line) then break; end
 		local lineText = line:GetText() or "";
 		result = lineText:match(pattern);
-		if result then break; end
+		if (result) then break; end
 	end
 	
 	-- Force hide compare tooltips as they'd show up for people with alwaysCompareItems set to 1
 	for _, tooltip in ipairs(WQT_Tooltip.shoppingTooltips) do
 		tooltip:Hide();
 	end
-	
+
 	return result;
 end
 
@@ -127,6 +127,7 @@ local function GetMostImpressiveCurrency(questInfo)
 end
 
 local function AddQuestReward(questInfo, rewardType, amount, texture, quality, color, id, canUpgrade)
+	--if true then return end
 	local reward = questInfo.reward;
 	-- First reward added will be our displayed reward
 	if (questInfo.reward.type == WQT_REWARDTYPE.none) then
@@ -150,7 +151,7 @@ local function SetQuestRewards(questInfo)
 		questInfo.reward.typeBits = 0;
 		questInfo.reward.type = WQT_REWARDTYPE.none;
 		questInfo.reward.amount = 0;
-		questInfo.reward.texture = "Interface/Garrison/GarrisonMissionUIInfoBoxBackgroundTile";
+		questInfo.reward.texture = 952659; --"Interface/Garrison/GarrisonMissionUIInfoBoxBackgroundTile";
 		questInfo.reward.quality = 1;
 		questInfo.reward.color = _V["WQT_COLOR_NONE"];
 
@@ -225,6 +226,15 @@ local function SetQuestRewards(questInfo)
 	return haveData;
 end
 
+local function ZonesByExpansionSort(a, b)
+	local expA = _V["WQT_ZONE_EXPANSIONS"][a];
+	local expB = _V["WQT_ZONE_EXPANSIONS"][b];
+	if (not expA or not expB or expA == expB) then
+		return b > a;
+	end
+	return expB > expA;
+end
+
 ----------------------------
 -- MIXIN
 ----------------------------
@@ -236,48 +246,69 @@ function WQT_DataProvider:OnLoad()
 	self.keyList = {};
 	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room
 	self.waitingRoomRewards = {};
-	self.lastUpdate = 0;
 	
-	self.callbacks = {
-		["waitingRoom"] = {}
-		,["questsLoaded"] = {}
-	}
+	self.bufferedZones = {};
+	self.bufferTimer = C_Timer.NewTicker(0, function() self:Tick() end);
 	
-	UpdateWorldZones(); 
+	self.callbacks = {};
 	
 	hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
-		local mapAreaID = WorldMapFrame.mapID;
-		if (self.currentMapId ~= mapAreaID) then
-			self.mapChanged = true;
-			self.currentMapId = mapAreaID;
-			self.currentMapInfo = WQT_Utils:GetCachedMapInfo(mapAreaID);
-			self:LoadQuestsInZone(self.currentMapId);
-		end
-	end)
+			self:LoadQuestsInZone(WorldMapFrame.mapID);
+		end);
+	
+	UpdateWorldZones(); 
 end
 
 function WQT_DataProvider:OnEvent(event, ...)
 	if (event == "QUEST_LOG_UPDATE") then
-		self:LoadQuestsInZone(self.currentMapId);
+		self:LoadQuestsInZone(WorldMapFrame.mapID);
 	elseif (event == "PLAYER_LEVEL_UP") then
 		local level = ...;
 		UpdateWorldZones(level); 
 	end
 end
 
-function WQT_DataProvider:HookWaitingRoomUpdate(func)
-	tinsert(self.callbacks.waitingRoom, func);
+function WQT_DataProvider:Tick()
+	if (#self.bufferedZones > 0) then
+		-- Figure out how many zoned to check each frame
+		local numQuests = #self.bufferedZones;
+		local num = 10;
+		num =  min (numQuests, num);
+		local questsAdded = false;
+		
+		-- Load quests
+		for i = numQuests, numQuests - num + 1, -1 do
+			local zoneId = self.bufferedZones[i];
+			local zoneInfo = WQT_Utils:GetCachedMapInfo(zoneId);
+			local hadQuests = self:AddQuestsInZone(zoneId, zoneInfo.parentMapID);
+			questsAdded = questsAdded or hadQuests;
+			tremove(self.bufferedZones, i);
+			self.numZonesProcessed = self.numZonesProcessed + 1;
+		end
+		
+		self:UpdateBufferProgress();
+		
+		if (#self.bufferedZones == 0) then
+			self:TriggerEvent("QuestsLoaded");
+		end
+	end
 end
 
-function WQT_DataProvider:HookQuestsLoaded(func)
-	tinsert(self.callbacks.questsLoaded, func);
+function WQT_DataProvider:RegisterEvent(event, func)
+	local callback = self.callbacks[event];
+	if (not callback) then 
+		callback = {};
+		self.callbacks[event] = callback;
+	end
+	
+	tinsert(callback, func);
 end
 
-function WQT_DataProvider:TriggerCallbacks(event, ...)
+function WQT_DataProvider:TriggerEvent(event, ...)
 	if (not self.callbacks[event]) then 
 		WQT:debugPrint("Tried to trigger invalid callback event:", event);
 		return
-	end;
+	end
 	for k, func in ipairs(self.callbacks[event]) do
 		func(event, ...);
 	end
@@ -288,6 +319,8 @@ function WQT_DataProvider:ClearData()
 	wipe(self.iterativeList);
 	wipe(self.keyList);
 	wipe(self.waitingRoomRewards);
+	wipe(self.bufferedZones);
+	self.numZonesProcessed = 0;
 end
 
 function WQT_DataProvider:SetQuestData(questInfo)
@@ -313,14 +346,14 @@ function WQT_DataProvider:UpdateWaitingRoom()
 	end
 	
 	if (updatedData) then
-		self:TriggerCallbacks("waitingRoom");
+		self:TriggerEvent("WaitingRoom");
 	end
 end
 
 function WQT_DataProvider:AddContinentMapQuests(continentZones, continentId)
 	if continentZones then
-		for zoneID  in pairs(continentZones) do
-			self:AddQuestsInZone(zoneID, continentId or zoneID);
+		for zoneId  in pairs(continentZones) do
+			tinsert(self.bufferedZones, zoneId);
 		end
 	end
 end
@@ -352,47 +385,49 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 	
 	local currentMapInfo = WQT_Utils:GetCachedMapInfo(zoneId);
 	if not currentMapInfo then return end;
-	if (WQT.settings.list.alwaysAllQuests and currentMapInfo.mapType ~= Enum.UIMapType.World) then
-		-- If we don't have an expansion linked to the zone, use the player's expansion level isntead
-		local zoneExpansion = _V["WQT_ZONE_EXPANSIONS"][zoneId] or GetAccountExpansionLevel();
-		local zones = _V["ZONES_BY_EXPANSION"][zoneExpansion];
-		if (zones) then
-			for key, zoneID in ipairs(zones) do	
-				local zoneInfo = WQT_Utils:GetCachedMapInfo(zoneId);
-				self:AddQuestsInZone(zoneID, zoneInfo.parentMapID);
+	if (WQT.settings.list.alwaysAllQuests ) then
+		local expLevel = _V["WQT_ZONE_EXPANSIONS"][zoneId];
+		if (not expLevel or expLevel == 0) then
+			expLevel = GetAccountExpansionLevel();
+		end
+		
+		-- Gather quests for all zones either matching current zone's expansion, or matching no expansion (i.e. Stranglethorn fishing quest)
+		local count = 0;
+		for zoneId, expId in pairs(_V["WQT_ZONE_EXPANSIONS"])do
+			if (expId == 0 or expId == expLevel) then
+				tinsert(self.bufferedZones, zoneId);
 			end
+			count = count + 1;
 		end
 	else
 		local continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneId];
-		if (currentMapInfo.mapType == Enum.UIMapType.Continent  and continentZones) then
-			self:AddContinentMapQuests(continentZones);
-		elseif (currentMapInfo.mapType == Enum.UIMapType.World) then
+		if (currentMapInfo.mapType == Enum.UIMapType.World) then
 			self:AddWorldMapQuests(continentZones);
+		elseif (continentZones) then -- Zone with multiple subzones
+			self:AddContinentMapQuests(continentZones);
 		else
-			-- Simple zone map
-			self:AddQuestsInZone(zoneId, currentMapInfo.parentMapID);
+			tinsert(self.bufferedZones, zoneId);
 		end
 	end
 	
-	self:TriggerCallbacks("questsLoaded");
+	-- Sort current expansion to front, they are more likely to have quests
+	table.sort(self.bufferedZones, ZonesByExpansionSort);
+	self:UpdateBufferProgress();
+	self:TriggerEvent("QuestsLoaded");
 end
 
 function WQT_DataProvider:AddQuestsInZone(zoneID, continentId)
-	local missingData = false;
-
 	local questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneID, continentId);
 	if (questsById) then
 		for k, info in ipairs(questsById) do
 			if (info.mapID == zoneID) then
-				local hasData = self:AddQuest(info);
-				if (not hasData) then 
-					missingData = true;
-				end;
+				self:AddQuest(info);
 			end
 		end
+		return #questsById > 0;
 	end
 
-	return missingData;
+	return false;
 end
 
 function WQT_DataProvider:AddQuest(qInfo)
@@ -414,6 +449,7 @@ function WQT_DataProvider:AddQuest(qInfo)
 	end
 	
 	local questInfo = self.pool:Acquire();
+	
 
 	questInfo.alwaysHide = not MapUtil.ShouldShowTask(qInfo.mapID, qInfo)
 	questInfo.isDaily = qInfo.isDaily;
@@ -424,7 +460,9 @@ function WQT_DataProvider:AddQuest(qInfo)
 
 	self:SetQuestData(questInfo);
 	
+	if (true) then
 	local haveRewardData = SetQuestRewards(questInfo);
+	end
 
 	if (not haveRewardData) then
 		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
@@ -480,3 +518,21 @@ function WQT_DataProvider:ListContainsEmissary()
 	end
 	return false
 end
+
+function WQT_DataProvider:HasNoQuests()
+	if (self:IsBuffereingQuests()) then return false; end
+	if (self.pool:GetNumActive() > 0) then return false; end
+	return true;
+end
+
+function WQT_DataProvider:IsBuffereingQuests()
+	return #self.bufferedZones > 0;
+end 
+
+function WQT_DataProvider:UpdateBufferProgress()
+	local total = #self.bufferedZones + self.numZonesProcessed;
+	local progress = 1-(#self.bufferedZones / total);
+	
+	self:TriggerEvent("BufferUpdated", progress);
+end	
+

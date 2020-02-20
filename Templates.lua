@@ -49,10 +49,64 @@ function WQT_ScrollFrameMixin:SetChildHeight(height)
 	self.ScrollBar:SetMinMaxValues(0, self.max);
 end
 
+----------------------------
+-- Containers
+----------------------------
+
+WQT_ContainerButtonMixin = {};
+
+function WQT_ContainerButtonMixin:OnClick()
+	self:SetSelected(not self.isSelected);
+end
+
+function WQT_ContainerButtonMixin:SetSelected(isSelected)
+	self.isSelected = isSelected;	
+	if (self.container) then
+		if (self.isSelected) then
+			self.container:Show();
+			self.Selected:SetAlpha(0.5);
+			WQT_WorldQuestFrame:SelectTab(WQT_TabWorld);
+		else
+			self.container:Hide();
+			self.Selected:SetAlpha(0);
+			WQT_WorldQuestFrame:SelectTab(WQT_TabNormal);
+		end
+	end
+end
+
+function WQT_ContainerButtonMixin:OnEnter()
+	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+	GameTooltip:SetText(TRACKER_HEADER_WORLD_QUESTS, 1, 1, 1, true);
+	GameTooltip:Show();
+end
+
+function WQT_ContainerButtonMixin:OnLeave()
+	GameTooltip:Hide();
+end
 
 ----------------------------
 -- Utilities
 ----------------------------
+
+local FORMAT_VERSION_MINOR = "%s|cFF888888.%s|r"
+local FORMAT_H1 = "%s<h1 align='center'>%s</h1>";
+local FORMAT_H2 = "%s<h2>%s:</h2>";
+local FORMAT_p = "%s<p>%s</p>";
+local FORMAT_WHITESPACE = "%s<h3>&#160;</h3>"
+
+local function AddNotes(updateMessage, title, notes)
+	if (not notes) then return updateMessage; end
+	if (title) then
+		updateMessage = FORMAT_H2:format(updateMessage, title);
+	end
+	for k, note in ipairs(notes) do
+		updateMessage = FORMAT_p:format(updateMessage, note);
+		updateMessage = FORMAT_WHITESPACE:format(updateMessage);
+	end
+	updateMessage = FORMAT_WHITESPACE:format(updateMessage);
+	return updateMessage;
+end
+
 
 local cachedTypeData = {};
 local cachedZoneInfo = {};
@@ -490,4 +544,30 @@ function WQT_Utils:GetQuestLogInfo(hiddenList)
 	local color = questCount >= maxQuests and RED_FONT_COLOR or (questCount >= maxQuests-2 and _V["WQT_ORANGE_FONT_COLOR"] or _V["WQT_WHITE_FONT_COLOR"]);
 	
 	return questCount, maxQuests, color;
+end
+
+function WQT_Utils:DeepWipeTable(t)
+	for k, v in pairs(t) do
+		if (type(v) == "table") then
+			self:DeepWipeTable(v)
+		end
+	end
+	wipe(t);
+	t = nil;
+end
+
+function WQT_Utils:FormatPatchNotes(notes, title)
+	local updateMessage = "<html><body><h3>&#160;</h3>";
+	updateMessage = FORMAT_H1:format(updateMessage, title);
+	updateMessage = FORMAT_WHITESPACE:format(updateMessage);
+	for i=1, #notes do
+		local patch = notes[i];
+		local version = patch.minor and FORMAT_VERSION_MINOR:format(patch.version, patch.minor) or patch.version;
+		updateMessage = FORMAT_H1:format(updateMessage, version);
+		updateMessage = AddNotes(updateMessage, nil, patch.intro);
+		updateMessage = AddNotes(updateMessage, "New", patch.new);
+		updateMessage = AddNotes(updateMessage, "Changes", patch.changes);
+		updateMessage = AddNotes(updateMessage, "Fixes", patch.fixes);
+	end
+	return updateMessage .. "</body></html>";
 end

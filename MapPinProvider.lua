@@ -125,7 +125,7 @@ function WQT_PinDataProvider:Init()
 		end);
 		
 	self.clusterDistance = 0.5;
-	self.clusterSpread = 0.20;
+	self.clusterSpread = 0.2;
 	self.enableNudging = true;
 	self.pinClusters = {};
 	self.pinClusterLookup = {};
@@ -133,6 +133,10 @@ end
 
 function WQT_PinDataProvider:RemoveAllData()
 	self.pinPool:ReleaseAll();
+	wipe(self.activePins);
+	wipe(self.pingedQuests);
+	wipe(self.pinClusters);
+	wipe(self.pinClusterLookup);
 end
 
 function WQT_PinDataProvider:RefreshAllData()
@@ -254,6 +258,7 @@ function WQT_PinDataProvider:FixOverlaps(canvas)
 	end
 	
 	-- Spread out the quests in each cluster in a circle around the center point
+	-- Puts all quests in a circle around the center of the cluster. Works with small clusters.
 	local mapID = canvas:GetParent().mapID;
 	for kC, pins in ipairs(clusters) do
 		local centerX, centerY = pins[1]:GetNudgedPosition();
@@ -276,12 +281,18 @@ function WQT_PinDataProvider:FixOverlaps(canvas)
 		-- Get the rotation of the first pin. This is where we start placing them on the circle
 		local firstX, firstY = pins[1]:GetPosition();
 		local startAngle = math.deg(math.atan2((centerY - firstY), (firstX-centerX)));
-
+		local spread = clusterSpread;
+		
+		-- Slightly increase spread distance based on number of pins in the cluster
+		if (#pins > 2) then
+			spread = spread + (#pins * 0.0005);
+		end
+		
 		-- Place every pin at aqual distance
 		for kP, pin in ipairs(pins) do
 			local angle = -startAngle - (kP-1) * (360 / #pins);
-			local offsetX = cos(angle) * clusterSpread;
-			local offsetY = sin(angle) * clusterSpread * canvasRatio;
+			local offsetX = cos(angle) * spread;
+			local offsetY = sin(angle) * spread * canvasRatio;
 			pin:SetNudge(centerX + offsetX, centerY + offsetY);
 		end
 	end

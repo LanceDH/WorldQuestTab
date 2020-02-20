@@ -99,6 +99,7 @@ local WQT_DEFAULTS = {
 			amountColors = true;
 			alwaysAllQuests = false;
 			includeDaily = true;
+			colorTime = true;
 			fullTime = false;
 		};
 
@@ -886,6 +887,8 @@ function WQT:OnInitialize()
 		WQT.settings.updateSeen = false;
 		WQT.settings.versionCheck  = currentVersion;
 	end
+	
+	_V:GeneratePatchNotes();
 end
 
 function WQT:OnEnable()
@@ -1067,8 +1070,10 @@ end
 
 function WQT_ListButtonMixin:OnUpdate()
 	if ( not self.questInfo or not self:IsShown() or self.questInfo.seconds == 0) then return; end
-	local _, timeString, color = WQT_Utils:GetQuestTimeString(self.questInfo, WQT.settings.list.fullTime);
-
+	local _, timeString, color, _, _, category = WQT_Utils:GetQuestTimeString(self.questInfo, WQT.settings.list.fullTime);
+	if (not WQT.settings.list.colorTime and category ~= _V["TIME_REMAINING_CATEGORY"].critical) then
+		color = _V["WQT_WHITE_FONT_COLOR"];
+	end
 	self.Time:SetTextColor(color.r, color.g, color.b, 1);
 	self.Time:SetText(timeString);
 end
@@ -1223,13 +1228,14 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	-- Display reward
 	self.Reward:Show();
 	self.Reward.Icon:Show();
-	
+	self.Reward:SetWidth(28);
 	if (questInfo.reward.typeBits == WQT_REWARDTYPE.missing) then
 		self.Reward.IconBorder:SetVertexColor(.75, 0, 0);
 		self.Reward.Icon:SetColorTexture(0, 0, 0, 0.5);
 		self.Reward.Amount:Hide();
 	elseif (questInfo.reward.typeBits == WQT_REWARDTYPE.none) then
 		self.Reward:Hide();
+		self.Reward:SetWidth(1);
 	else
 		local r, g, b = GetItemQualityColor(questInfo.reward.quality);
 		self.Reward.IconBorder:SetVertexColor(r, g, b);
@@ -1473,7 +1479,7 @@ function WQT_ScrollListMixin:DisplayQuestList()
 		end
 	end
 	HybridScrollFrame_Update(self, #list * _V["WQT_LISTITTEM_HEIGHT"], self:GetHeight());
-	
+
 	-- Update background
 	self:UpdateBackground();
 end
@@ -1483,7 +1489,7 @@ function WQT_ScrollListMixin:UpdateBackground()
 		WQT_WorldQuestFrame.Background:SetAlpha(0);
 	else
 		WQT_WorldQuestFrame.Background:SetAlpha(1);
-		if (self.numDisplayed == 0) then
+		if (self.numDisplayed == 0 and not WQT_WorldQuestFrame.dataProvider:IsBuffereingQuests()) then
 			WQT_WorldQuestFrame.Background:SetAtlas("NoQuestsBackground", true);
 		else
 			WQT_WorldQuestFrame.Background:SetAtlas("QuestLogBackground", true);
@@ -1818,7 +1824,7 @@ function WQT_CoreMixin:OnLoad()
 	frame:EnableMouse(true);
 	ADD:Initialize(frame, function(self, level) WQT:InitTrackDropDown(self, level) end, "MENU");
 
-	self.dataProvider:HookWaitingRoomUpdate(function() 
+	self.dataProvider:RegisterEvent("WaitingRoom", function() 
 			if (InCombatLockdown()) then return end;
 			WQT_QuestScrollFrame:ApplySort();
 			WQT_QuestScrollFrame:FilterQuestList();
@@ -1826,11 +1832,19 @@ function WQT_CoreMixin:OnLoad()
 			WQT_WorldQuestFrame:TriggerEvent("WaitingRoomUpdated")
 		end)
 		
-	self.dataProvider:HookQuestsLoaded(function() 
+	self.dataProvider:RegisterEvent("QuestsLoaded", function() 
 			self.ScrollFrame:UpdateQuestList(); 
 			-- Update the quest number counter
 			WQT_QuestLogFiller:UpdateText();
 			WQT_WorldQuestFrame:TriggerEvent("QuestsLoaded")
+		end)
+	
+	self.dataProvider:RegisterEvent("BufferUpdated", function(event, progress) 
+			if (progress == 0) then
+				self.ProgressBar:Hide();
+			end
+			CooldownFrame_SetDisplayAsPercentage(self.ProgressBar, progress);
+			self.ProgressBar.Pointer:SetRotation(-progress*6.2831);
 		end)
 
 	-- Events
@@ -2099,6 +2113,9 @@ function WQT_CoreMixin:OnLoad()
 	QuestScrollFrame.Background:SetPoint("BOTTOMRIGHT",QuestMapFrame, "BOTTOMRIGHT", 0, -2);
 	QuestMapFrame.DetailsFrame:SetPoint("TOPRIGHT", QuestMapFrame, "TOPRIGHT", -26, -2)
 	QuestMapFrame.VerticalSeparator:SetHeight(463);
+	
+
+	
 end
 
 function WQT_CoreMixin:UpdateBountyCounters()
@@ -2459,6 +2476,7 @@ function WQT_CoreMixin:SelectTab(tab)
 	-- Hide/show when quest details are shown
 	WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 	QuestMapFrame_UpdateQuestSessionState(QuestMapFrame);
+	self:HideOverlayFrame();
 
 	if (not QuestScrollFrame.Contents:IsShown() and not QuestMapFrame.DetailsFrame:IsShown()) or id == 1 then
 		-- Default questlog
@@ -2469,7 +2487,6 @@ function WQT_CoreMixin:SelectTab(tab)
 		WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
 		WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
 		QuestScrollFrame:Show();
-		self:HideOverlayFrame(true);
 	elseif id == 2 then
 		-- WQT
 		WQT_TabWorld:SetFrameLevel(10);
@@ -2488,7 +2505,6 @@ function WQT_CoreMixin:SelectTab(tab)
 		WQT_TabWorld:Hide()
 		QuestScrollFrame:Hide();
 		QuestMapFrame.DetailsFrame:Show();
-		self:HideOverlayFrame(true)
 	end
 	
 	WQT_QuestLogFiller:UpdateVisibility();

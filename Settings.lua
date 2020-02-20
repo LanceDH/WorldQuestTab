@@ -171,8 +171,8 @@ function WQT_SettingsQuestListMixin:UpdateState()
 		timeWidth = timeWidth + zoneWidth;
 		zoneWidth = 0.1;
 	end
-	questFrame.Time:SetWidth(timeWidth)
-	questFrame.Extra:SetWidth(zoneWidth)
+	questFrame.Time:SetWidth(timeWidth);
+	questFrame.Extra:SetWidth(zoneWidth);
 	
 	-- Time display
 	-- 74160s == 20h 36m
@@ -183,6 +183,11 @@ function WQT_SettingsQuestListMixin:UpdateState()
 		timeString = D_HOURS:format(74160 / SECONDS_PER_HOUR);
 	end
 	questFrame.Time:SetText(timeString);
+	if (WQT.settings.list.colorTime) then
+		questFrame.Time:SetVertexColor(0, 0.75, 0);
+	else
+		questFrame.Time:SetVertexColor(_V["WQT_WHITE_FONT_COLOR"]:GetRGB());
+	end
 	
 	-- Reward colors
 	if ( WQT.settings.list.amountColors) then
@@ -343,7 +348,8 @@ function WQT_SettingsDropDownMixin:Init(data)
 		end);
 		if (data.getValueFunc) then
 			local id = data.getValueFunc();
-			local label = data.options[id].label;
+			local option = data.options[id]
+			local label = option and option.label or "Invalid value";
 			ADD:SetText(self.DropDown, label);
 		end
 	end

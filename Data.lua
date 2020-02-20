@@ -1,140 +1,16 @@
 ﻿local addonName, addon = ...
 
-
 addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 addon.externals = {};
 addon.variables = {};
-addon.debug = true;
+addon.debug = false;
 addon.WQT_Utils = {};
 local WQT_Utils = addon.WQT_Utils;
 local _L = addon.L;
 local _V = addon.variables;
 local WQT = addon.WQT;
 local _emptyTable = {};
-
 local _playerFaction = UnitFactionGroup("Player");
-
-------------------------
--- DEBUG
-------------------------
-
-local _debugTable;
-if (addon.debug and LDHDebug) then
-	LDHDebug:Monitor(addonName);
-end
-
-function WQT:debugPrint(...)
-	if (addon.debug and LDHDebug) then 
-		LDHDebug:Print(...);
-	end
-end
-
-local function AddIndentedDoubleLine(tooltip, a, b, level, color)
-	local indented = string.rep("    ", level) .. a;
-	if (type(b) == "table" and b.GetRGBA) then
-		b = b.r .. "/" .. b.g .. "/" .. b.b;
-	elseif (type(b) == "table" and b.GetXY) then
-		b = "{" ..floor(b.x*100)/100 .. " | " .. floor(b.y*100)/100 .. "}";
-	elseif (type(b) == "boolean") then
-		b = b and "true" or "false";
-	elseif  (type(a) == "string" and a:find("Bits") and type(b) == "number" and b > 0) then
-		local bits = b;
-		local o = "";
-		local index = 0;
-		while (bits > 0) do
-			local rest = bits% 2
-			if (rest > 0) then
-				o = o .. (o == "" and "" or ", ") .. index;
-			end
-			bits = (bits - rest) / 2
-			index = index + 1;
-		end
-		b = string.format("%s (%s)", b, o);
-	elseif (b == nil) then
-		b = "nil";
-	end
-	tooltip:AddDoubleLine(indented, b, color.r, color.g, color.b, color.r, color.g, color.b);
-end
-
-function WQT:AddDebugToTooltip(tooltip, questInfo, level)
-	if (not addon.debug) then return end;
-	level = level or 0;
-	local color = LIGHTBLUE_FONT_COLOR;
-	if(level == 0) then
-		AddIndentedDoubleLine(tooltip, "WQT debug info:", "", 0, color);
-	end
-	
-	-- First all non table values;
-	for key, value in pairs(questInfo) do
-		if ((type(value) ~= "table" or value.GetRGBA) and type(value) ~= "function") then
-			AddIndentedDoubleLine(tooltip, key, value, level+1, color);
-		end
-	end
-	-- Actual tables
-	for key, value in pairs(questInfo) do
-		if (type(value) == "table" and not value.GetRGBA and key ~= "debug") then
-			AddIndentedDoubleLine(tooltip, key, "", level+1, color);
-			self:AddDebugToTooltip(tooltip, value, level + 1)
-		end
-	end
-	
-	if(level == 0 and questInfo.questId) then
-		color = GRAY_FONT_COLOR;
-		
-		AddIndentedDoubleLine(tooltip, "Through functions:", "", 0, color);
-		local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
-		AddIndentedDoubleLine(tooltip, "title", title, 1, color);
-		local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questInfo.questId);
-		local tagDisplay = tagID and tagName.." ("..tagID..")" or tagName;
-		AddIndentedDoubleLine(tooltip, "tag", tagDisplay, 1, color);
-		AddIndentedDoubleLine(tooltip, "worldQuestType", worldQuestType, 1, color);
-		AddIndentedDoubleLine(tooltip, "rarity", rarity, 1, color);
-		AddIndentedDoubleLine(tooltip, "isElite", isElite, 1, color);
-		AddIndentedDoubleLine(tooltip, "tradeskillLineIndex", tradeskillLineIndex, 1, color);
-		-- Time
-		local seconds, timeString, timeColor, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo, true, true);
-		AddIndentedDoubleLine(tooltip, "time", "", 1, color);
-		AddIndentedDoubleLine(tooltip, "seconds", seconds, 2, color);
-		AddIndentedDoubleLine(tooltip, "timeString", timeString, 2, color);
-		AddIndentedDoubleLine(tooltip, "color", timeColor, 2, color);
-		AddIndentedDoubleLine(tooltip, "timeStringShort", timeStringShort, 2, color);
-		AddIndentedDoubleLine(tooltip, "isExpired", WQT_Utils:QuestIsExpired(questInfo), 2, color);
-		-- Faction
-		local factionInfo = WQT_Utils:GetFactionDataInternal(factionId);
-		AddIndentedDoubleLine(tooltip, "faction", "", 1, color);
-		AddIndentedDoubleLine(tooltip, "factionId", factionId, 2, color);
-		AddIndentedDoubleLine(tooltip, "name", factionInfo.name, 2, color);
-		AddIndentedDoubleLine(tooltip, "playerFaction", factionInfo.playerFaction, 2, color);
-		AddIndentedDoubleLine(tooltip, "texture", factionInfo.texture, 2, color);
-		AddIndentedDoubleLine(tooltip, "expansion", factionInfo.expansion, 2, color);
-		-- MapInfo
-		local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questId);
-		AddIndentedDoubleLine(tooltip, "mapInfo", "", 1, color);
-		AddIndentedDoubleLine(tooltip, "name", mapInfo.name, 2, color);
-		AddIndentedDoubleLine(tooltip, "mapID", mapInfo.mapID, 2, color);
-		AddIndentedDoubleLine(tooltip, "parentMapID", mapInfo.parentMapID, 2, color);
-		AddIndentedDoubleLine(tooltip, "mapType", mapInfo.mapType, 2, color);
-	end
-end
-
-local FORMAT_VERSION_MINOR = "%s|cFF888888.%s|r"
-local FORMAT_H1 = "%s<h1 align='center'>%s</h1>";
-local FORMAT_H2 = "%s<h2>%s:</h2>";
-local FORMAT_p = "%s<p>%s</p>";
-local FORMAT_WHITESPACE = "%s<h3>&#160;</h3>"
-
-local function AddNotes(updateMessage, title, notes)
-	if (not notes) then return updateMessage; end
-	if (title) then
-		updateMessage = FORMAT_H2:format(updateMessage, title);
-	end
-	for k, note in ipairs(notes) do
-		updateMessage = FORMAT_p:format(updateMessage, note);
-		updateMessage = FORMAT_WHITESPACE:format(updateMessage);
-	end
-	updateMessage = FORMAT_WHITESPACE:format(updateMessage);
-	return updateMessage;
-end
 
 ------------------------
 -- PUBLIC
@@ -161,62 +37,19 @@ WQT_CONTAINER_DRAG = _L["CONTAINER_DRAG"];
 WQT_CONTAINER_DRAG_TT = _L["CONTAINER_DRAG_TT"];
 WQT_FULLSCREEN_BUTTON_TT = _L["WQT_FULLSCREEN_BUTTON_TT"];
 
-function WQT_Utils:DeepWipeTable(t)
+------------------------
+-- LOCAL
+------------------------
+
+local function _DeepWipeTable(t)
 	for k, v in pairs(t) do
 		if (type(v) == "table") then
-			self:DeepWipeTable(v)
+			_DeepWipeTable(v)
 		end
 	end
 	wipe(t);
 	t = nil;
 end
-
-function WQT_Utils:FormatPatchNotes(notes, title)
-	local updateMessage = "<html><body><h3>&#160;</h3>";
-	updateMessage = FORMAT_H1:format(updateMessage, title);
-	updateMessage = FORMAT_WHITESPACE:format(updateMessage);
-	for i=1, #notes do
-		local patch = notes[i];
-		local version = patch.minor and FORMAT_VERSION_MINOR:format(patch.version, patch.minor) or patch.version;
-		updateMessage = FORMAT_H1:format(updateMessage, version);
-		updateMessage = AddNotes(updateMessage, nil, patch.intro);
-		updateMessage = AddNotes(updateMessage, "New", patch.new);
-		updateMessage = AddNotes(updateMessage, "Changes", patch.changes);
-		updateMessage = AddNotes(updateMessage, "Fixes", patch.fixes);
-	end
-	return updateMessage .. "</body></html>";
-end
-
-WQT_ExternalMixin = {};
-
-function WQT_ExternalMixin:GetName()
-	-- Override me
-	return "";
-end
-
-function WQT_ExternalMixin:Init()
-	-- Override me
-end
-
-function WQT_ExternalMixin:IsLoaded()
-	local name = self:GetName();
-	if (name ~= "") then
-		return IsAddOnLoaded(name);
-	end
-	return false;
-end
-
-function WQT_ExternalMixin:IsLoadable()
-	local name = self:GetName();
-	if (name ~= "") then
-		return select(2, GetAddOnInfo(name));
-	end
-	return false;
-end
-
-------------------------
--- LOCAL
-------------------------
 
 local WQT_ZANDALAR = {
 	[864] =  {["x"] = 0.39, ["y"] = 0.32} -- Vol'dun
@@ -346,6 +179,82 @@ local WQT_DRAENOR = {
 	,[558]	= {["x"] = 0.73, ["y"] = 0.43} -- Ashran
 }
 
+local ZonesByExpansion = {
+	[LE_EXPANSION_BATTLE_FOR_AZEROTH] = {
+		875; -- Zandalar
+		864; -- Vol'dun
+		863; -- Nazmir
+		862; -- Zuldazar
+		1165; -- Dazar'alor
+		876; -- Kul Tiras
+		942; -- Stromsong Valley
+		896; -- Drustvar
+		895; -- Tiragarde Sound
+		1161; -- Boralus
+		1169; -- Tol Dagor
+		1355; -- Nazjatar
+		1462; -- Mechagon
+		--Classic zones with BfA WQ
+		14; -- Arathi Highlands
+		62; -- Darkshore
+		1527; -- Uldum
+		1530; -- Vale of Eternam Blossom
+	}
+	,[LE_EXPANSION_LEGION] = {
+		619; -- Broken Isles
+		630; -- Azsuna
+		680; -- Suramar
+		634; -- Stormheim
+		650; -- Highmountain
+		641; -- Val'sharah
+		790; -- Eye of Azshara
+		646; -- Broken Shore
+		627; -- Dalaran
+		830; -- Krokuun
+		885; -- Antoran Wastes
+		882; -- Mac'Aree
+		905; -- Argus
+	}
+	,[LE_EXPANSION_WARLORDS_OF_DRAENOR] = {
+		572; -- Draenor
+		525; -- Frostfire Ridge
+		543; -- Gorgrond
+		534; -- Tanaan Jungle
+		535; -- Talador
+		550; -- Nagrand
+		542; -- Spires of Arak
+		588; -- Ashran
+	}
+}
+
+-- A list of every zones linked to an expansion level
+_V["WQT_ZONE_EXPANSIONS"] = {}
+
+
+local function AddZonesToList(t)
+	for mapID, v in pairs(t) do
+		_V["WQT_ZONE_EXPANSIONS"][mapID] = 0;
+	end
+end
+
+AddZonesToList(WQT_ZANDALAR);
+AddZonesToList(WQT_KULTIRAS);
+AddZonesToList(WQT_LEGION);
+AddZonesToList(WQT_KALIMDOR);
+AddZonesToList(WQT_EASTERN_KINGDOMS);
+AddZonesToList(WQT_DRAENOR);
+AddZonesToList(WQT_PANDARIA);
+AddZonesToList(WQT_NORTHREND);
+AddZonesToList(WQT_OUTLAND);
+
+for expId, zones in pairs(ZonesByExpansion) do
+	for k, zoneId in ipairs(zones) do
+		_V["WQT_ZONE_EXPANSIONS"][zoneId] = expId;
+	end
+end
+
+_DeepWipeTable(ZonesByExpansion);
+
 ------------------------
 -- SHARED
 ------------------------
@@ -409,7 +318,7 @@ _V["RING_TYPES_LABELS"] ={
 	[_V["RING_TYPES"].default] = {["label"] = _L["PIN_RING_NONE"], ["tooltip"] = _L["PIN_RIMG_NONE_TT"]} 
 	,[_V["RING_TYPES"].reward] = {["label"] = _L["PIN_RING_COLOR"], ["tooltip"] = _L["PIN_RING_COLOR_TT"]}
 	,[_V["RING_TYPES"].time] = {["label"] = _L["PIN_RING_TIME"], ["tooltip"] = _L["PIN_RIMG_TIME_TT"]}
-	,[_V["RING_TYPES"].rarity] = {["label"] = RARITY, ["tooltip"] = _L["PIN_RING_QUALITY_TT"]} ;
+	,[_V["RING_TYPES"].rarity] = {["label"] = RARITY, ["tooltip"] = _L["PIN_RING_QUALITY_TT"]}
 }
 
 -- Setup date to display in the settings;
@@ -517,6 +426,15 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.bountyCounter end
 			}	
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["ALWAYS_ALL"], ["tooltip"] = _L["ALWAYS_ALL_TT"], ["isNew"] = true
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.list.alwaysAllQuests = value;
+				local mapAreaID = WorldMapFrame.mapID;
+				WQT_WorldQuestFrame.dataProvider:LoadQuestsInZone(mapAreaID);
+				WQT_QuestScrollFrame:UpdateQuestList();
+			end
+			,["getValueFunc"] = function() return WQT.settings.list.alwaysAllQuests end
+			}	
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["INCLUDE_DAILIES"], ["tooltip"] = _L["INCLUDE_DAILIES_TT"], ["isNew"] = true
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.list.includeDaily = value;
@@ -559,21 +477,19 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.amountColors end
 			}
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["LIST_COLOR_TIME"], ["tooltip"] = _L["LIST_COLOR_TIME_TT"], ["isNew"] = true
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.list.colorTime = value;
+				WQT_QuestScrollFrame:DisplayQuestList();
+			end
+			,["getValueFunc"] = function() return WQT.settings.list.colorTime end
+			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["LIST_FULL_TIME"], ["tooltip"] = _L["LIST_FULL_TIME_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.list.fullTime = value;
 				WQT_QuestScrollFrame:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.fullTime end
-			}	
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["ALWAYS_ALL"], ["tooltip"] = _L["ALWAYS_ALL_TT"]
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.list.alwaysAllQuests = value;
-				local mapAreaID = WorldMapFrame.mapID;
-				WQT_WorldQuestFrame.dataProvider:LoadQuestsInZone(mapAreaID);
-				WQT_QuestScrollFrame:UpdateQuestList();
-			end
-			,["getValueFunc"] = function() return WQT.settings.list.alwaysAllQuests end
 			}	
 
 	-- Map Pin
@@ -903,62 +819,6 @@ _V["WQT_CONTINENT_GROUPS"] = {
 		,[1014]	= {875} -- Kul Tiras flightmap
 		,[1504]	= {875, 876} -- Nazjatar flightmap
 	}
-	
-_V["ZONES_BY_EXPANSION"] = {
-	[LE_EXPANSION_BATTLE_FOR_AZEROTH] = {
-		875; -- Zandalar
-		864; -- Vol'dun
-		863; -- Nazmir
-		862; -- Zuldazar
-		1165; -- Dazar'alor
-		876; -- Kul Tiras
-		942; -- Stromsong Valley
-		896; -- Drustvar
-		895; -- Tiragarde Sound
-		1161; -- Boralus
-		1169; -- Tol Dagor
-		1355; -- Nazjatar
-		1462; -- Mechagon
-		--Classic zones with BfA WQ
-		14; -- Arathi Highlands
-		62; -- Darkshore
-		1527; -- Uldum
-		1530; -- Vale of Eternam Blossom
-	}
-	,[LE_EXPANSION_LEGION] = {
-		619; -- Broken Isles
-		630; -- Azsuna
-		680; -- Suramar
-		634; -- Stormheim
-		650; -- Highmountain
-		641; -- Val'sharah
-		790; -- Eye of Azshara
-		646; -- Broken Shore
-		627; -- Dalaran
-		830; -- Krokuun
-		885; -- Antoran Wastes
-		882; -- Mac'Aree
-		905; -- Argus
-	}
-	,[LE_EXPANSION_WARLORDS_OF_DRAENOR] = {
-		572; -- Draenor
-		525; -- Frostfire Ridge
-		543; -- Gorgrond
-		534; -- Tanaan Jungle
-		535; -- Talador
-		550; -- Nagrand
-		542; -- Spires of Arak
-		588; -- Ashran
-	}
-}
-
-_V["WQT_ZONE_EXPANSIONS"] = {}
-	
-for expansion, zones in pairs(_V["ZONES_BY_EXPANSION"]) do
-	for key, zoneID in ipairs(zones) do
-		_V["WQT_ZONE_EXPANSIONS"][zoneID] = expansion;
-	end
-end
 
 _V["WQT_ZONE_MAPCOORDS"] = {
 		[875]	= WQT_ZANDALAR -- Zandalar
@@ -983,7 +843,10 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 		,[989]	= WQT_PANDARIA -- Flightmap
 		,[572]	= WQT_DRAENOR
 		,[990]	= WQT_DRAENOR -- Flightmap
-		
+		,[224]	= { -- Stranglethorn Vale
+			[210] = {["x"] = 0.42, ["y"] = 0.62} -- Cape
+			,[50] = {["x"] = 0.67, ["y"] = 0.40} -- North
+		}
 		,[947]		= {	
 		} -- All of Azeroth
 	}
@@ -1031,17 +894,20 @@ for k, v in pairs(_V["WQT_FACTION_DATA"]) do
 end
 
 -- This is just easier to maintain than changing the entire string every time
-local _patchNotes = {
+_V["PATCH_NOTES"] = {
 		{["version"] = "8.3.03"
-			,["intro"] = {"This update is mainly to introduce an output dump to help report and debug problems."}
 			,["new"] = {
-				"New Setting: Include dailies (default on). Found under General settings. Treat certain dailies as world quests. Only affects dailies which Blizzard themselves treats as world quests."
+				"New General setting: Include dailies (default on). Treat certain dailies as world quests. Only affects dailies which Blizzard themselves treats as world quests."
+				,"New Pin Setting: Time Colors (default on). Add color coding to times based on the remaining duration."
 			}
 			,["changes"] = {
 				"Made some improvements to map pins to reduce the chance of one completely overlapping another."
+				,"Reduces framerate impact when changing zones on the map. Especially when using 'Always All Quests'."
+				,"Moved the 'Always All Quest' setting from the 'Quest List' category to 'General'."
 			}
 			,["fixes"] = {
-				"Fixed WQTU 'load' setting not disabling when it is not enabled in the add-on list."
+				"Fixed WQTU 'load' setting not disabling when it is disabled in the add-on list."
+				,"Fixed world quests not showing on the Stranglethorn Vale map."
 			}
 		}
 		,{["version"] = "8.3.02"
@@ -1243,6 +1109,9 @@ local _patchNotes = {
 		}
 	}
 
-_V["LATEST_UPDATE"] =  WQT_Utils:FormatPatchNotes(_patchNotes, "World Quest Tab");
-WQT_Utils:DeepWipeTable(_patchNotes);
-
+_V["LATEST_UPDATE"] = "";
+	
+function _V:GeneratePatchNotes()
+	_V["LATEST_UPDATE"] =  WQT_Utils:FormatPatchNotes(_V["PATCH_NOTES"], "World Quest Tab");
+	_DeepWipeTable(_V["PATCH_NOTES"]);
+end
