@@ -39,9 +39,9 @@
 					</Anchors>
 				</Texture>
 				<Texture parentKey="Icon">
+					<Size x="23" y="23" />
 					<Anchors>
-						<Anchor point="TOPLEFT" x="2" y="-2"/>
-						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
+						<Anchor point="CENTER"/>
 					</Anchors>
 				</Texture>
 				

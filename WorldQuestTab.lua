@@ -114,6 +114,7 @@ local WQT_DEFAULTS = {
 			timeLabel = false;
 			continentPins = false;
 			fadeOnPing = true;
+			eliteRing = false;
 			ringType = _V["RING_TYPES"].time;
 			centerType = _V["PIN_CENTER_TYPES"].reward;
 		};
@@ -1037,7 +1038,7 @@ function WQT_ListButtonMixin:OnClick(button)
 	-- 'Soft' tracking and jumping map to relevant zone
 	elseif (button == "LeftButton") then
 		-- Don't track bonus objectives. The object tracker doesn't like it;
-		if (isBonus) then
+		if (not isBonus) then
 			local hardWatched = IsWorldQuestHardWatched(self.questId);
 			AddWorldQuestWatch(self.questId);
 			-- if it was hard watched, keep it that way

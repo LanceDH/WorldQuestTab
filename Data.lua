@@ -535,6 +535,14 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.timeLabel  end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
+			}	
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_ELITE_RING"], ["tooltip"] = _L["PIN_ELITE_RING_TT"], ["isNew"] = true
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.pin.eliteRing  = value;
+				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
+			end
+			,["getValueFunc"] = function() return WQT.settings.pin.eliteRing  end
+			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}			
 	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_SCALE"], ["tooltip"] = _L["PIN_SCALE_TT"], ["min"] = 0.8, ["max"] = 1.5, ["valueStep"] = 0.01
 			, ["valueChangedFunc"] = function(value) 
@@ -898,7 +906,8 @@ _V["PATCH_NOTES"] = {
 		{["version"] = "8.3.03"
 			,["new"] = {
 				"New General setting: Include dailies (default on). Treat certain dailies as world quests. Only affects dailies which Blizzard themselves treats as world quests."
-				,"New Pin Setting: Time Colors (default on). Add color coding to times based on the remaining duration."
+				,"New Quest List setting: Time Colors (default on). Add color coding to times based on the remaining duration."
+				,"New Pin setting: Elite Ring (default off). Replace Blizzard's elite dragon with a spiked ring."
 			}
 			,["changes"] = {
 				"Made some improvements to map pins to reduce the chance of one completely overlapping another."

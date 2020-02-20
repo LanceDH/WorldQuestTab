@@ -438,7 +438,7 @@ function WQT_PinMixin:SetupCanvasType(pinType, parentMapFrame, isWatched)
 	end
 end
 
-function WQT_PinMixin:PlaceIcons()
+function WQT_PinMixin:PlaceMiniIcons()
 	local numIcons = #self.icons;
 	if (numIcons > 0) then
 		local angle = ICON_ANGLE_START - (ICON_ANGLE_DISTANCE*(numIcons-1))/2
@@ -482,7 +482,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self:SetScale(scale);
 	self:SetAlpha(self.startAlpha);
 
-	-- Ring stuff
+	-- Ring coloration
 	local ringType = WQT_Utils:GetSetting("pin", "ringType");
 	local now = time();
 	local r, g, b = _V["WQT_COLOR_CURRENCY"]:GetRGB();
@@ -499,6 +499,22 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	
 	self.RingBG:SetVertexColor(r*0.25, g*0.25, b*0.25);
 	self.Ring:SetSwipeColor(r*.8, g*.8, b*.8);
+	
+	-- Elite indicator
+	local settingEliteRing = WQT_Utils:GetSetting("pin", "eliteRing");
+	self.RingBG:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRing");
+	self.Ring:SetSwipeTexture("Interface/Addons/WorldQuestTab/Images/PoIRing");
+	if (settingEliteRing) then
+		self.CustomUnderlay:SetShown(false);
+		if(isElite) then
+			self.RingBG:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRingElite");
+			self.Ring:SetSwipeTexture("Interface/Addons/WorldQuestTab/Images/PoIRingElite");
+		else
+			
+		end
+	else
+		self.CustomUnderlay:SetShown(isElite);
+	end
 	
 	-- Setup mini icons
 	self.iconPool:ReleaseAll();
@@ -559,17 +575,17 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 		iconFrame.Icon:SetScale(1.1);
 	end
 	
-	self:PlaceIcons();
+	self:PlaceMiniIcons();
 	
 	-- Main Icon
 	self.CustomTypeIcon:SetShown(false);
-	self.CustomUnderlay:SetShown(isElite);
 	self.CustomSelectedGlow:Hide()
 	self.CustomBountyRing:Hide()
-	
+
 	self.Icon:SetTexture("Interface/PETBATTLES/BattleBar-AbilityBadge-Neutral");
 	self.Icon:SetTexCoord(0.06, 0.93, 0.05, 0.93);
 	self.Icon:SetDesaturated(false);
+	self.Icon:SetScale(1);
 	self.Icon:Show();
 
 	if(settingCenterType == _V["PIN_CENTER_TYPES"].reward) then
@@ -598,6 +614,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 				else
 					self.Icon:SetTexCoord(0.895, 0.98, 0.395, 0.48);
 				end
+				self.Icon:SetScale(1.1);
 			end
 		else
 			self.Icon:SetTexture("Interface/WorldMap/UI-QuestPoi-NumberIcons");
@@ -691,17 +708,17 @@ function WQT_PinMixin:UpdatePinTime()
 	return timeLeft;
 end
 
-function WQT_PinMixin:UpdatePlacement()
+function WQT_PinMixin:UpdatePlacement(alpha)
 	local canvas = self:GetParent();
 	local zoomPercent = self.parentMapFrame:GetCanvasZoomPercent();
 	local parentScaleFactor = self.scale / canvas:GetScale();
 	parentScaleFactor = parentScaleFactor * Lerp(self.startScale, self.endScale, Saturate(self.scaleFactor * zoomPercent));
 	self:SetScale(parentScaleFactor);
 	
-	local alpha = Lerp(self.startAlpha, self.endAlpha, Saturate(self.alphaFactor * zoomPercent));
-	self:SetAlpha(alpha);
-	self:SetShown(alpha > 0.05);
-	self.currentAlpha = alpha;
+	newAlpha = alpha or Lerp(self.startAlpha, self.endAlpha, Saturate(self.alphaFactor * zoomPercent));
+	self:SetAlpha(newAlpha);
+	self:SetShown(newAlpha > 0.05);
+	self.currentAlpha = newAlpha;
 	self.currentScale = parentScaleFactor; 
 	
 	self:ApplyScaledPosition(parentScaleFactor);
@@ -793,7 +810,7 @@ function WQT_PinMixin:Focus(playPing)
 	end
 
 	self.baseFrameLevel = PIN_FRAME_LEVEL_FOCUS;
-	self:UpdatePlacement();
+	self:UpdatePlacement(1);
 end
 
 function WQT_PinMixin:ClearFocus()
