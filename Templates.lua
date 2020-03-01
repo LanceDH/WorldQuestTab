@@ -31,7 +31,7 @@ function WQT_CallbackMixin:TriggerCallback(event, ...)
 	end
 	
 	for k, func in ipairs(self.callbacks[event]) do
-		func(event, ...);
+		func(...);
 	end
 end
 

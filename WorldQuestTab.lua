@@ -1701,7 +1701,7 @@ end
 -- ShowWorldmapHighlight(questId)
 -- HideWorldmapHighlight()
 -- TriggerEvent(event, ...)
--- RegisterCallback(event, func)
+-- RegisterCallback(func)
 -- OnLoad()
 -- UpdateBountyCounters()
 -- RepositionBountyTabs()
@@ -1860,7 +1860,7 @@ function WQT_CoreMixin:OnLoad()
 			WQT_WorldQuestFrame:TriggerCallback("QuestsLoaded")
 		end)
 	
-	self.dataProvider:RegisterCallback("BufferUpdated", function(event, progress) 
+	self.dataProvider:RegisterCallback("BufferUpdated", function(progress) 
 			if (progress == 0) then
 				self.ProgressBar:Hide();
 			end

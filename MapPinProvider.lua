@@ -721,7 +721,7 @@ function WQT_PinMixin:UpdatePlacement(alpha)
 	parentScaleFactor = parentScaleFactor * Lerp(self.startScale, self.endScale, Saturate(self.scaleFactor * zoomPercent));
 	self:SetScale(parentScaleFactor);
 	
-	newAlpha = alpha or Lerp(self.startAlpha, self.endAlpha, Saturate(self.alphaFactor * zoomPercent));
+	local newAlpha = alpha or Lerp(self.startAlpha, self.endAlpha, Saturate(self.alphaFactor * zoomPercent));
 	self:SetAlpha(newAlpha);
 	self:SetShown(newAlpha > 0.05);
 	self.currentAlpha = newAlpha;

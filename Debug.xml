@@ -56,7 +56,7 @@
 		</Scripts>
 	</EditBox>
 	
-	<Frame name="WQT_CopyBoxMultilineTemplate" autoFocus="false" virtual="true"> 
+	<Frame name="WQT_CopyBoxMultilineTemplate" virtual="true"> 
 		<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
 			<EdgeSize>
 				<AbsValue val="8"/>
