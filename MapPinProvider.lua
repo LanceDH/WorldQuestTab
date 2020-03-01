@@ -187,14 +187,14 @@ function WQT_PinDataProvider:RefreshAllData()
 	
 	-- Slightly spread out overlapping pins
 	self:FixOverlaps(canvas);
-	self:UpdateAllPlacements();
+	--self:UpdateAllPlacements();
 	
 	self:UpdateQuestPings();
 
 	if (not self.hookedCanvasChanges[parentMapFrame]) then
 		hooksecurefunc(parentMapFrame, "OnCanvasScaleChanged", function() 
 				self:FixOverlaps(canvas)
-				self:UpdateAllPlacements();
+				--self:UpdateAllPlacements();
 			end);
 		self.hookedCanvasChanges[parentMapFrame] = true;
 	end
@@ -489,12 +489,17 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.RingBG:SetShown(ringType == _V["RING_TYPES"].time and 1 or 0);
 	self.Ring:SetCooldownUNIX(now, now);
 	self.Pointer:Hide();
+	self.Ring:Show();
+	self.RingBG:Show();
 	if (ringType == _V["RING_TYPES"].reward) then
 		r, g, b = questInfo.reward.color:GetRGB();
 	elseif (rarity and ringType == _V["RING_TYPES"].rarity) then
 		if (rarity > 1 and WORLD_QUEST_QUALITY_COLORS[rarity]) then
 			r, g, b = WORLD_QUEST_QUALITY_COLORS[rarity].color:GetRGB();
 		end
+	elseif (ringType == _V["RING_TYPES"].hide) then
+		self.Ring:Hide();
+		self.RingBG:Hide();
 	end
 	
 	self.RingBG:SetVertexColor(r*0.25, g*0.25, b*0.25);
@@ -502,9 +507,10 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	
 	-- Elite indicator
 	local settingEliteRing = WQT_Utils:GetSetting("pin", "eliteRing");
+	local useEliteRing = settingEliteRing and ringType ~= _V["RING_TYPES"].hide;
 	self.RingBG:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRing");
 	self.Ring:SetSwipeTexture("Interface/Addons/WorldQuestTab/Images/PoIRing");
-	if (settingEliteRing) then
+	if (useEliteRing) then
 		self.CustomUnderlay:SetShown(false);
 		if(isElite) then
 			self.RingBG:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRingElite");
@@ -648,7 +654,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self:UpdatePinTime();
 	self:UpdatePlacement();
 	
-	WQT_WorldQuestFrame:TriggerEvent("MapPinInitialized", self);
+	WQT_WorldQuestFrame:TriggerCallback("MapPinInitialized", self);
 end
 
 function WQT_PinMixin:OnUpdate(elapsed)
@@ -723,6 +729,7 @@ function WQT_PinMixin:UpdatePlacement(alpha)
 	
 	self:ApplyScaledPosition(parentScaleFactor);
 	self:SetFrameLevel(self.baseFrameLevel + self.index);
+	WQT_WorldQuestFrame:TriggerCallback("MapPinPlaced", self);
 end
 
 function WQT_PinMixin:OnEnter()

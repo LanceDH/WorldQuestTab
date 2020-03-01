@@ -452,8 +452,8 @@
 		<Scripts>
 			<OnLoad>
 				self:SetParent(WorldMapFrame.ScrollContainer);
-				self:SetPoint("BOTTOMLEFT", WorldMapFrame.ScrollContainer, 0, 2000);
-				self:OnLoad("TOPLEFT");
+				self:SetPoint("BOTTOMLEFT", WorldMapFrame.ScrollContainer, 0, 0);
+				self:OnLoad();
 			</OnLoad>
 			<OnShow>
 				WQT_QuestScrollFrame:DisplayQuestList(UpdateBackground);
@@ -486,10 +486,10 @@
 				self:RegisterForDrag("RightButton")
 				self.container = WQT_WorldMapContainer;
 				self:SetParent(WorldMapFrame.ScrollContainer);
-				self:SetPoint("TOPRIGHT", WorldMapFrame.ScrollContainer, -40, -5);
+				self:SetPoint("BOTTOMLEFT", WorldMapFrame.ScrollContainer, 0, 0);
 				
 				self:SetFrameLevel(WorldMapFrame.ScrollContainer:GetFrameLevel()+10);
-				self:OnLoad("TOPRIGHT", -40, -5);
+				self:OnLoad();
 			</OnLoad>
 			<OnClick inherit="prepend">
 				if (InCombatLockdown()) then return end

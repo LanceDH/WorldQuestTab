@@ -73,7 +73,8 @@ local WQT_DEFAULTS = {
 		versionCheck = "";
 		sortBy = 1;
 		updateSeen = false;
-		fullScreenButtonPos = {["x"] = -1, ["y"] = -1};
+		fullScreenButtonPos = {["anchor"] = "TOPRIGHT", ["x"] = -35, ["y"] = -2};
+		fullScreenContainerPos = {["anchor"] = "TOPLEFT", ["x"] = 0, ["y"] = -25};
 
 		["general"] = {
 			defaultTab = false;
@@ -427,7 +428,7 @@ local function InitFilter(self, level)
 		end
 	end
 	
-	WQT_WorldQuestFrame:TriggerEvent("InitFilter", self, level);
+	WQT_WorldQuestFrame:TriggerCallback("InitFilter", self, level);
 end
 
 -- Sort filters alphabetically regardless of localization
@@ -504,6 +505,7 @@ local function ConvertOldSettings(version)
 	if (not version) then
 		WQT.settings.filters[3].flags.Resources = nil;
 		WQT.settings.versionCheck = "1";
+		return;
 	end
 	-- BfA
 	if (version < "8.0.1") then
@@ -582,6 +584,13 @@ local function ConvertOldSettings(version)
 			end
 		end
 	end
+	
+	if (version < "8.3.03")  then
+		-- Anchoring changed, reset to default position
+		WQT.settings.fullScreenButtonPos.anchor =  WQT_DEFAULTS.global.fullScreenButtonPos.anchor;
+		WQT.settings.fullScreenButtonPos.x = WQT_DEFAULTS.global.fullScreenButtonPos.x;
+		WQT.settings.fullScreenButtonPos.y = WQT_DEFAULTS.global.fullScreenButtonPos.y;
+	end
 end
 
 -- Display an indicator on the filter if some official map filters might hide quest
@@ -653,7 +662,7 @@ function WQT:Sort_OnClick(self, category)
 		ADD:SetText(dropdown, _V["WQT_SORT_OPTIONS"][category]);
 		WQT.settings.sortBy = category;
 		WQT_QuestScrollFrame:UpdateQuestList();
-		WQT_WorldQuestFrame:TriggerEvent("SortChanged", category);
+		WQT_WorldQuestFrame:TriggerCallback("SortChanged", category);
 	end
 end
 
@@ -903,9 +912,9 @@ function WQT:OnEnable()
 	end
 	
 	-- Place fullscreen button in saved location
-	if (WQT.settings.fullScreenButtonPos.x >= 0) then
-		WQT_WorldMapContainerButton:SetStartPosition("BOTTOMLEFT", WQT.settings.fullScreenButtonPos.x, WQT.settings.fullScreenButtonPos.y);
-	end
+	WQT_WorldMapContainerButton:LinkSettings(WQT.settings.fullScreenButtonPos);
+	WQT_WorldMapContainer:LinkSettings(WQT.settings.fullScreenContainerPos);
+	
 	
 	-- Apply saved filters
 	if (not self.settings.general.saveFilters) then
@@ -1294,7 +1303,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 		self.TrackedBorder:Hide();
 	end
 
-	WQT_WorldQuestFrame:TriggerEvent("ListButtonUpdate", self)
+	WQT_WorldQuestFrame:TriggerCallback("ListButtonUpdate", self)
 end
 
 function WQT_ListButtonMixin:FactionOnEnter(frame)
@@ -1430,7 +1439,7 @@ function WQT_ScrollListMixin:FilterQuestList()
 		end
 	end
 	
-	WQT_WorldQuestFrame:TriggerEvent("FilterQuestList");
+	WQT_WorldQuestFrame:TriggerCallback("FilterQuestList");
 end
 
 function WQT_ScrollListMixin:UpdateQuestList()
@@ -1443,7 +1452,7 @@ function WQT_ScrollListMixin:UpdateQuestList()
 	self:FilterQuestList();
 	self:ApplySort();
 	self:DisplayQuestList();
-	WQT_WorldQuestFrame:TriggerEvent("UpdateQuestList");
+	WQT_WorldQuestFrame:TriggerCallback("UpdateQuestList");
 end
 
 function WQT_ScrollListMixin:DisplayQuestList()
@@ -1497,7 +1506,7 @@ function WQT_ScrollListMixin:UpdateBackground()
 		end
 	end
 	
-	WQT_WorldQuestFrame:TriggerEvent("DisplayQuestList");
+	WQT_WorldQuestFrame:TriggerCallback("DisplayQuestList");
 end
 
 function WQT_ScrollListMixin:ScrollFrameSetEnabled(enabled)
@@ -1570,13 +1579,13 @@ end
 
 WQT_ConstrainedChildMixin = {}
 
-function WQT_ConstrainedChildMixin:OnLoad(anchor, x, y)
+function WQT_ConstrainedChildMixin:OnLoad(anchor)
 	self.margins = {["left"] = 0, ["right"] = 0, ["top"] = 0, ["bottom"] = 0};
-	self.FirstPlacement = true;
+	self.anchor = "BOTTOMLEFT";
 	self.left = 0;
 	self.bottom = 0;
-	self:SetStartPosition(anchor, x, y);
 	self.dragMouseOffset = {["x"] = 0, ["y"] = 0};
+	self.firstSetup = true;
 end
 
 function WQT_ConstrainedChildMixin:OnDragStart()		
@@ -1599,9 +1608,10 @@ function WQT_ConstrainedChildMixin:OnDragStop()
 		self:StopMovingOrSizing()
 		self:ConstrainPosition();
 		
-		if (self == WQT_WorldMapContainerButton) then
-			WQT.settings.fullScreenButtonPos.x = self.left;
-			WQT.settings.fullScreenButtonPos.y = self.bottom;
+		if (self.settings) then
+			self.settings.anchor = self.anchor;
+			self.settings.x = self.left;
+			self.settings.y = self.bottom;
 		end
 	end
 end
@@ -1612,25 +1622,18 @@ function WQT_ConstrainedChildMixin:OnUpdate()
 	end
 end
 
-function WQT_ConstrainedChildMixin:SetStartPosition(anchor, x, y)
-	self.anchor = anchor or "BOTTOMLEFT";
-	self.startX = x or 0;
-	self.startY = y or 0;
+function WQT_ConstrainedChildMixin:LinkSettings(settings)
+	self:ClearAllPoints();
+	self:SetPoint(settings.anchor, self:GetParent(), settings.anchor, settings.x, settings.y);
+	self.settings = settings;
 end
 
 -- Constrain the frame to stay inside the borders of the parent frame
 function WQT_ConstrainedChildMixin:ConstrainPosition()
-	local WorldMapButton = WorldMapFrame.ScrollContainer;
-	
-	if (self.FirstPlacement) then
-		self:ClearAllPoints();
-		self:SetPoint(self.anchor, WorldMapButton, self.startX, self.startY);
-		self.FirstPlacement = nil;
-	end
-
+	local parent = self:GetParent();
 	local l1, b1, w1, h1 = self:GetRect();
-	local l2, b2, w2, h2 = WorldMapFrame.ScrollContainer:GetRect();
-	
+	local l2, b2, w2, h2 = parent:GetRect();
+
 	-- If we're being dragged, we should make calculations based on the mouse position instead
 	-- Start dragging at middle of frame -> Mouse goes outside bounds -> Doesn't move until mouse is back at the middle
 	-- Oterwise the frame starts moving when the mouse is no longer near it.
@@ -1647,16 +1650,48 @@ function WQT_ConstrainedChildMixin:ConstrainPosition()
 	local bottom = (b1-b2);
 	local right = (l2+w2) - (l1+w1) - self.margins.right;
 	local top = (b2+h2) - (b1+h1) - self.margins.top;
-
-	left = max(self.margins.left, left);
-	bottom = max(self.margins.bottom, bottom);
-	left = right < 0 and (w2-w1 - self.margins.right) or left;
-	bottom = top < 0 and (h2-h1 - self.margins.top) or bottom;
-
-	self:ClearAllPoints();
-	self:SetPoint("BOTTOMLEFT", WorldMapButton, left, bottom);
+	-- Check if any side passes a edge (including margins)
+	local SetConstrainedPos = false;
+	if (left < self.margins.left) then 
+		left = self.margins.left;
+		SetConstrainedPos = true;
+	end
+	if (bottom < self.margins.bottom) then 
+		bottom = self.margins.bottom;
+		SetConstrainedPos = true;
+	end
+	if (right < 0) then 
+		left = (w2-w1 - self.margins.right);
+		SetConstrainedPos = true;
+	end
+	if (top < 0) then 
+		bottom = (h2-h1 - self.margins.top);
+		SetConstrainedPos = true;
+	end
+	
+	-- Find best fitting anchor
+	local anchorH = "LEFT";
+	local anchorV = "BOTTOM";
+	if (left + w1/2 >= w2/2) then
+		anchorH = "RIGHT";
+		left = left - w2 + w1;
+	end
+	if (bottom + h1/2 >= h2/2) then
+		anchorV = "TOP";
+		bottom = bottom - h2 + h1;
+	end
+	
+	local anchor = anchorV .. anchorH;
+	
+	self.anchor = anchor;
 	self.left = left;
 	self.bottom = bottom;
+
+	-- If the frame had to be constrained, force the constrained position
+	if (SetConstrainedPos) then
+		--self:ClearAllPoints();
+		--self:SetPoint(self.anchor, parent, self.anchor, left, bottom);
+	end
 end
 
 ------------------------------------------
@@ -1681,7 +1716,7 @@ end
 -- ChangeAnchorLocation(anchor)		Show list on a different container using _V["LIST_ANCHOR_TYPE"] variable
 -- :<event> -> ADDON_LOADED, PLAYER_REGEN_DISABLED, PLAYER_REGEN_ENABLED, QUEST_TURNED_IN, PVP_TIMER_UPDATE, WORLD_QUEST_COMPLETED_BY_SPELL, QUEST_LOG_UPDATE, QUEST_WATCH_LIST_CHANGED
 
-WQT_CoreMixin = {}
+WQT_CoreMixin = CreateFromMixins(WQT_CallbackMixin);
 
 function WQT_CoreMixin:TryHideOfficialMapPin(pin)
 	if (WQT.settings.pin.disablePoI) then return; end
@@ -1765,21 +1800,6 @@ function WQT_CoreMixin:HideWorldmapHighlight()
 	end
 end
 
-function WQT_CoreMixin:TriggerEvent(event, ...)
-	if (not self.callbacks[event]) then return end;
-	
-	for k, func in ipairs(self.callbacks[event]) do
-		func(...);
-	end
-end
-
-function WQT_CoreMixin:RegisterCallback(event, func)
-	if (not self.callbacks[event]) then
-		self.callbacks[event] = {};
-	end
-	tinsert(self.callbacks[event], func);
-end
-
 function WQT_CoreMixin:OnLoad()
 	self.callbacks = {};
 	self.WQT_Utils = WQT_Utils;
@@ -1825,22 +1845,22 @@ function WQT_CoreMixin:OnLoad()
 	frame:EnableMouse(true);
 	ADD:Initialize(frame, function(self, level) WQT:InitTrackDropDown(self, level) end, "MENU");
 
-	self.dataProvider:RegisterEvent("WaitingRoom", function() 
+	self.dataProvider:RegisterCallback("WaitingRoom", function() 
 			if (InCombatLockdown()) then return end;
 			WQT_QuestScrollFrame:ApplySort();
 			WQT_QuestScrollFrame:FilterQuestList();
 			WQT_QuestScrollFrame:UpdateQuestList();
-			WQT_WorldQuestFrame:TriggerEvent("WaitingRoomUpdated")
+			WQT_WorldQuestFrame:TriggerCallback("WaitingRoomUpdated")
 		end)
 		
-	self.dataProvider:RegisterEvent("QuestsLoaded", function() 
+	self.dataProvider:RegisterCallback("QuestsLoaded", function() 
 			self.ScrollFrame:UpdateQuestList(); 
 			-- Update the quest number counter
 			WQT_QuestLogFiller:UpdateText();
-			WQT_WorldQuestFrame:TriggerEvent("QuestsLoaded")
+			WQT_WorldQuestFrame:TriggerCallback("QuestsLoaded")
 		end)
 	
-	self.dataProvider:RegisterEvent("BufferUpdated", function(event, progress) 
+	self.dataProvider:RegisterCallback("BufferUpdated", function(event, progress) 
 			if (progress == 0) then
 				self.ProgressBar:Hide();
 			end
@@ -2557,5 +2577,5 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	WQT_WorldQuestFrame:SetParent(parent);
 	WQT_WorldQuestFrame:SelectTab(tab);
 	
-	WQT_WorldQuestFrame:TriggerEvent("AnchorChanged", anchor);
+	WQT_WorldQuestFrame:TriggerCallback("AnchorChanged", anchor);
 end

@@ -238,7 +238,12 @@ end
 ----------------------------
 -- MIXIN
 ----------------------------
-WQT_DataProvider = {}
+-- Callbacks:
+-- "BufferUpdated"	(progress): % of buffered quests has changed. progress = 0-1
+-- "QuestsLoaded"	(): Buffer emptied
+-- "WaitingRoom"	(): Quest in the waiting room had data updated
+
+WQT_DataProvider = CreateFromMixins(WQT_CallbackMixin);
 
 function WQT_DataProvider:OnLoad()
 	self.pool = CreateObjectPool(QuestCreationFunc, QuestResetFunc);
@@ -249,9 +254,6 @@ function WQT_DataProvider:OnLoad()
 	
 	self.bufferedZones = {};
 	self.bufferTimer = C_Timer.NewTicker(0, function() self:Tick() end);
-	
-	self.callbacks = {};
-	
 	hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
 			self:LoadQuestsInZone(WorldMapFrame.mapID);
 		end);
@@ -289,28 +291,8 @@ function WQT_DataProvider:Tick()
 		self:UpdateBufferProgress();
 		
 		if (#self.bufferedZones == 0) then
-			self:TriggerEvent("QuestsLoaded");
+			self:TriggerCallback("QuestsLoaded");
 		end
-	end
-end
-
-function WQT_DataProvider:RegisterEvent(event, func)
-	local callback = self.callbacks[event];
-	if (not callback) then 
-		callback = {};
-		self.callbacks[event] = callback;
-	end
-	
-	tinsert(callback, func);
-end
-
-function WQT_DataProvider:TriggerEvent(event, ...)
-	if (not self.callbacks[event]) then 
-		WQT:debugPrint("Tried to trigger invalid callback event:", event);
-		return
-	end
-	for k, func in ipairs(self.callbacks[event]) do
-		func(event, ...);
 	end
 end
 
@@ -346,7 +328,7 @@ function WQT_DataProvider:UpdateWaitingRoom()
 	end
 	
 	if (updatedData) then
-		self:TriggerEvent("WaitingRoom");
+		self:TriggerCallback("WaitingRoom");
 	end
 end
 
@@ -413,7 +395,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneId)
 	-- Sort current expansion to front, they are more likely to have quests
 	table.sort(self.bufferedZones, ZonesByExpansionSort);
 	self:UpdateBufferProgress();
-	self:TriggerEvent("QuestsLoaded");
+	self:TriggerCallback("QuestsLoaded");
 end
 
 function WQT_DataProvider:AddQuestsInZone(zoneID, continentId)
@@ -533,6 +515,6 @@ function WQT_DataProvider:UpdateBufferProgress()
 	local total = #self.bufferedZones + self.numZonesProcessed;
 	local progress = 1-(#self.bufferedZones / total);
 	
-	self:TriggerEvent("BufferUpdated", progress);
+	self:TriggerCallback("BufferUpdated", progress);
 end	
 

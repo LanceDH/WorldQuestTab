@@ -39,7 +39,7 @@
 					</Anchors>
 				</Texture>
 				<Texture parentKey="Icon">
-					<Size x="23" y="23" />
+					<Size x="21" y="21" />
 					<Anchors>
 						<Anchor point="CENTER"/>
 					</Anchors>

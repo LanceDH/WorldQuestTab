@@ -6,6 +6,37 @@ local ADD = LibStub("AddonDropDown-1.0");
 local WQT_Utils = addon.WQT_Utils;
 
 --------------------------------
+-- Custom Event mixin
+--------------------------------
+
+WQT_CallbackMixin = {};
+
+function WQT_CallbackMixin:RegisterCallback(event, func)
+	if (not self.callbacks) then
+		self.callbacks = {};
+	end
+
+	local callback = self.callbacks[event];
+	if (not callback) then 
+		callback = {};
+		self.callbacks[event] = callback;
+	end
+	
+	tinsert(callback, func);
+end
+
+function WQT_CallbackMixin:TriggerCallback(event, ...)
+	if (not self.callbacks or not self.callbacks[event]) then
+		return;
+	end
+	
+	for k, func in ipairs(self.callbacks[event]) do
+		func(event, ...);
+	end
+end
+
+
+--------------------------------
 -- WQT_ScrollFrameMixin
 --------------------------------
 

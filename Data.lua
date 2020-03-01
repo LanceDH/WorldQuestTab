@@ -315,7 +315,7 @@ _V["RING_TYPES"] = {
 }
 
 _V["RING_TYPES_LABELS"] ={
-	[_V["RING_TYPES"].default] = {["label"] = _L["PIN_RING_NONE"], ["tooltip"] = _L["PIN_RIMG_NONE_TT"]} 
+	[_V["RING_TYPES"].default] = {["label"] = _L["PIN_RING_DEFAULT"], ["tooltip"] = _L["PIN_RING_DEFAULT_TT"]} 
 	,[_V["RING_TYPES"].reward] = {["label"] = _L["PIN_RING_COLOR"], ["tooltip"] = _L["PIN_RING_COLOR_TT"]}
 	,[_V["RING_TYPES"].time] = {["label"] = _L["PIN_RING_TIME"], ["tooltip"] = _L["PIN_RIMG_TIME_TT"]}
 	,[_V["RING_TYPES"].rarity] = {["label"] = RARITY, ["tooltip"] = _L["PIN_RING_QUALITY_TT"]}
@@ -535,15 +535,7 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.timeLabel  end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
-			}	
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_ELITE_RING"], ["tooltip"] = _L["PIN_ELITE_RING_TT"], ["isNew"] = true
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.pin.eliteRing  = value;
-				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
-			end
-			,["getValueFunc"] = function() return WQT.settings.pin.eliteRing  end
-			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
-			}			
+			}		
 	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_SCALE"], ["tooltip"] = _L["PIN_SCALE_TT"], ["min"] = 0.8, ["max"] = 1.5, ["valueStep"] = 0.01
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.pin.scale = value;
@@ -568,6 +560,14 @@ _V["SETTING_LIST"] = {
 			,["getValueFunc"] = function() return WQT.settings.pin.ringType end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_ELITE_RING"], ["tooltip"] = _L["PIN_ELITE_RING_TT"], ["isNew"] = true
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.pin.eliteRing  = value;
+				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
+			end
+			,["getValueFunc"] = function() return WQT.settings.pin.eliteRing end
+			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
+			}	
 	-- Pin icons
 	,{["template"] = "WQT_SettingSubTitleTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["MINI_ICONS"]}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_TYPE"], ["tooltip"] = _L["PIN_TYPE_TT"]
@@ -906,11 +906,12 @@ _V["PATCH_NOTES"] = {
 		{["version"] = "8.3.03"
 			,["new"] = {
 				"New General setting: Include dailies (default on). Treat certain dailies as world quests. Only affects dailies which Blizzard themselves treats as world quests."
-				,"New Quest List setting: Time Colors (default on). Add color coding to times based on the remaining duration."
+				,"New Quest List setting: Time Colors (default on). Add color coding to times based on the remaining duration. Critital times (15 min) will be colored red regardless."
 				,"New Pin setting: Elite Ring (default off). Replace Blizzard's elite dragon with a spiked ring."
 			}
-			,["changes"] = {
-				"Made some improvements to map pins to reduce the chance of one completely overlapping another."
+			,["changes"] = {	
+				"Improved how frames anchor on the full screen world map. This fixes an issue for ElvUI users where the button wouldn't stay put. In addition, the location of the quest list frame will now also be saved between reloads. As a result of this change, their positions have been reset to their defaults."
+				,"Made some improvements to map pins to reduce the chance of one completely overlapping another."
 				,"Reduces framerate impact when changing zones on the map. Especially when using 'Always All Quests'."
 				,"Moved the 'Always All Quest' setting from the 'Quest List' category to 'General'."
 			}
