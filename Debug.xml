@@ -8,24 +8,24 @@
 		<Size y="20"/>
 		<Layers>
 			<Layer level="ARTWORK">
-				<Texture parentKey="Checkmark" file="Interface\Scenarios\ScenarioIcon-Check" alpha="0">
-					<Size x="16" y="16" />
-					<Anchors>
-						<Anchor point="LEFT" relativePoint="RIGHT" x="3"/>
-					</Anchors>
-				</Texture>
+				
 				<FontString parentKey="Label" inherits="GameFontWhiteSmall" justifyH="LEFT" text="Unlabeled">
 					<Size y="15" />
 					<Anchors>
 						<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT"/>
-						<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT"/>
 					</Anchors>
 				</FontString>
+				<Texture parentKey="Checkmark" file="Interface\Scenarios\ScenarioIcon-Check" alpha="0">
+					<Size x="16" y="16" />
+					<Anchors>
+						<Anchor point="LEFT" relativePoint="RIGHT" relativeKey="$parent.Label" x="3"/>
+					</Anchors>
+				</Texture>
 			</Layer>
 		</Layers>
 		<Animations>
 			<AnimationGroup parentKey="CheckAnim" setToFinalAlpha="true" looping="NONE">
-				<Alpha parentKey="Checkmark" childKey="Checkmark" fromAlpha="1" toAlpha="0"  Duration="0.6" order="0" />
+				<Alpha parentKey="Checkmark" childKey="Checkmark" fromAlpha="1" toAlpha="0"  Duration="0.6" order="0" smoothing="IN" />
 				<Scale parentKey="Checkmark" childKey="Checkmark" fromScaleX="0.7" toScaleX="1.5" smoothing="NONE" fromScaleY="0.7" toScaleY="1.5" Duration="0.6" order="0"/>
 			</AnimationGroup>
 		</Animations>
@@ -72,19 +72,19 @@
 		</Backdrop>
 		<Layers>
 			<Layer level="ARTWORK">
-				<Texture parentKey="Checkmark" file="Interface\Scenarios\ScenarioIcon-Check" alpha="0">
-					<Size x="16" y="16" />
-					<Anchors>
-						<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="3" y="-2"/>
-					</Anchors>
-				</Texture>
+				
 				<FontString parentKey="Label" inherits="GameFontWhiteSmall" justifyH="LEFT" text="Unlabeled">
 					<Size y="15" />
 					<Anchors>
 						<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="5"/>
-						<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT"/>
 					</Anchors>
 				</FontString>
+				<Texture parentKey="Checkmark" file="Interface\Scenarios\ScenarioIcon-Check" alpha="0">
+					<Size x="16" y="16" />
+					<Anchors>
+						<Anchor point="LEFT" relativePoint="RIGHT" relativeKey="$parent.Label" x="3"/>
+					</Anchors>
+				</Texture>
 			</Layer>
 		</Layers>
 		<Animations>
@@ -138,27 +138,71 @@
 		</Scripts>
 	</Frame>
 	
-	<Frame name="WQT_DebugFrame" mixin="WQT_DebugFrameMixin" parent="UIParent" hidden="true">
+	<Frame name="WQT_DebugFrame" mixin="WQT_DebugFrameMixin" parent="UIParent" frameStrata="high" enableMouse="true" hidden="true">
 		<Size x="257" y="462"/>
 		<Anchors>
 			<Anchor point="CENTER" x="0" y="0"/>
 		</Anchors>
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="BG" setAllPoints="true">
-					<Color r="0" g="0" b="0" a="0.5"/>
+				<Texture parentKey="UpdatesBG" file="Interface/Artifacts/ArtifactForge" setAllPoints="true" alpha="0.75">
+					<TexCoords left="0" right="0.8984375" top="0" bottom="0.5986328125"/>
 				</Texture>
+			</Layer>
+			
+			<Layer level="ARTWORK">
+				<FontString parentKey="Title" inherits="Fancy24Font" justifyH="LEFT" text="WQT Debug Dump">
+					<Anchors>
+						<Anchor point="TOP" y="-10"/>
+					</Anchors>
+					<Color r="1" g="0.82" b="0"/>
+				</FontString>
 			</Layer>
 		</Layers>
 		
 		<Frames>
+			<Button parentKey="CloseButton" hidden="false">
+				<Size x="20" y="20"/>
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativePoint="TOPRIGHT" x="-4" y="-4"/>
+				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture file="Interface\FriendsFrame\ClearBroadcastIcon" alpha="0.5" parentKey="texture">
+							<TexCoords right="0.9" bottom="0.9" />
+						</Texture>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnLoad>
+						self:SetFrameLevel(self:GetParent():GetFrameLevel() + 20);
+					</OnLoad>
+					<OnClick>
+						WQT_DebugFrame:Hide();
+					</OnClick>
+					<OnEnter>
+						self.texture:SetAlpha(1.0);
+					</OnEnter>
+					<OnLeave>
+						self.texture:SetAlpha(0.5);
+					</OnLeave>
+					<OnMouseDown>
+						if self:IsEnabled() then
+							self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 1, -1);
+						end
+					</OnMouseDown>
+					<OnMouseUp>
+						self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 0);
+					</OnMouseUp>
+				</Scripts>
+			</Button>
 			<EditBox parentKey="CurseURL" inherits="WQT_CopyBoxTemplate">
 				<KeyValues>
 					<KeyValue key="label" value="Curseforge URL" type="string"/>
 				</KeyValues>
 				<Anchors>
-					<Anchor point="TOPLEFT" x="15" y="-30"/>
-					<Anchor point="RIGHT" x="-30"/>
+					<Anchor point="TOPLEFT" x="15" y="-60"/>
+					<Anchor point="RIGHT" x="-15"/>
 				</Anchors>
 			</EditBox>
 			<EditBox parentKey="WoWIURL" inherits="WQT_CopyBoxTemplate">
@@ -185,6 +229,12 @@
 		
 		<Scripts>
 			<OnLoad method="OnLoad"/>
+			<OnShow>
+				PlaySound(SOUNDKIT.IG_QUEST_LOG_OPEN);
+			</OnShow>
+			<OnHide>
+				PlaySound(SOUNDKIT.IG_QUEST_LOG_CLOSE);
+			</OnHide>
 		</Scripts>
 	</Frame>
  </Ui>

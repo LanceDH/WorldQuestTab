@@ -904,6 +904,13 @@ end
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
 		{["version"] = "8.3.03"
+			,["minor"] = "2"
+			,["fixes"] = {
+				"Fixed an error that could occur when using the WorldFlightMap add-on."
+				,"Fixed pin positions for N'zoth quests that move around when the objectives are updated (i.e. Assault: The Black Empire)."
+			}
+		}
+		,{["version"] = "8.3.03"
 			,["new"] = {
 				"New General setting: Include dailies (default on). Treat certain dailies as world quests. Only affects dailies which Blizzard themselves treats as world quests."
 				,"New Quest List setting: Time Colors (default on). Add color coding to times based on the remaining duration. Critital times (15 min) will be colored red regardless."

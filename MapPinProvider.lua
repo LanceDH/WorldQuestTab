@@ -169,7 +169,7 @@ function WQT_PinDataProvider:RefreshAllData()
 		if (settingsFilterPoI and questInfo.passedFilter or (not settingsFilterPoI and questInfo.isValid)) then
 			local pinType = GetPinType(parentMapFrame, mapInfo.mapType, questInfo, settingsContinentPins);
 			if (pinType) then
-				local posX, posY = C_TaskQuest.GetQuestLocation(questInfo.questId, mapID);
+				local posX, posY = WQT_Utils:GetQuestMapLocation(questInfo.questId, mapID);
 				if (posX) then
 					local pin = self.pinPool:Acquire();
 					pin:SetParent(canvas);

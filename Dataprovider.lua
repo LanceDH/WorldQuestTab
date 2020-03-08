@@ -437,9 +437,10 @@ function WQT_DataProvider:AddQuest(qInfo)
 	questInfo.isDaily = qInfo.isDaily;
 	questInfo.isAllyQuest = qInfo.isCombatAllyQuest;
 	questInfo.questId = qInfo.questId;
-	questInfo.mapInfo.mapX = qInfo.x;
-	questInfo.mapInfo.mapY = qInfo.y;
-
+	local posX, posY = WQT_Utils:GetQuestMapLocation(qInfo.questId, qInfo.mapID);
+	questInfo.mapInfo.mapX = posX;
+	questInfo.mapInfo.mapY = posY;
+	
 	self:SetQuestData(questInfo);
 	
 	if (true) then

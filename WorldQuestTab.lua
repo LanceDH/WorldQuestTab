@@ -2277,8 +2277,9 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 		-- I'd rather not do it this way but the Flight map pins update so much I might as well
 		local flightWQProvider = WQT_Utils:GetFlightWQProvider();
 		hooksecurefunc(flightWQProvider, "AddWorldQuest", function(frame, info) 
-				--if true then return end
-				for pin in pairs(FlightMapFrame.pinPools["FlightMap_WorldQuestPinTemplate"].activeObjects) do
+				local pool = FlightMapFrame.pinPools[FlightMap_WorldQuestDataProviderMixin:GetPinTemplate()];
+				if (not pool) then return; end
+				for pin in pairs(pool.activeObjects) do
 					if (not pin.WQTHooked) then
 						pin.WQTHooked = true;
 						pin:HookScript("OnShow", function() 

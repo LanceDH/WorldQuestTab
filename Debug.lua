@@ -83,6 +83,7 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		AddIndentedDoubleLine(tooltip, "rarity", rarity, 1, color);
 		AddIndentedDoubleLine(tooltip, "isElite", isElite, 1, color);
 		AddIndentedDoubleLine(tooltip, "tradeskillLineIndex", tradeskillLineIndex, 1, color);
+		AddIndentedDoubleLine(tooltip, "isThreatQuest", C_QuestLog.IsThreatQuest(questInfo.questId), 1, color);
 		-- Time
 		local seconds, timeString, timeColor, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo, true, true);
 		AddIndentedDoubleLine(tooltip, "time", "", 1, color);
@@ -261,23 +262,5 @@ function WQT_DebugFrameMixin:DumpDebug(input)
 
 	self.DumpFrame.EditBox:SetText(text);
 	
-	-- Display WQT frame depending on current situation;
-	if (FlightMapFrame and FlightMapFrame:IsShown()) then
-		WQT_FlightMapContainerButton:SetSelected(true);
-	elseif (TaxiFrame:IsShown()) then
-		WQT_OldTaxiMapContainerButton:SetSelected(true);
-	else
-		if (WorldMapFrame:IsShown()) then
-			if (WorldMapFrame:IsMaximized()) then
-				WQT_WorldMapContainerButton:SetSelected(true);
-			elseif(not WorldMapFrame.QuestLog:IsShown()) then
-				WorldMapFrame.SidePanelToggle:OnClick();
-			end
-		else
-			OpenQuestLog();
-		end
-	end
-
-	WQT_WorldQuestFrame:SelectTab(WQT_TabWorld);
-	WQT_WorldQuestFrame:ShowOverlayFrame(self);
+	self:Show();
 end

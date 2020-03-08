@@ -494,10 +494,15 @@ end
 function WQT_Utils:RefreshOfficialDataProviders()
 	-- Have to force remove the WQ data from the map because RefreshAllData doesn't do it
 	local mapWQProvider = WQT_Utils:GetMapWQProvider();
-	mapWQProvider:RemoveAllData();
-
-	WorldMapFrame:RefreshAllDataProviders();
+	if (mapWQProvider) then
+		mapWQProvider:RemoveAllData();
+	end
 	
+	-- If there are no dataproviders, we haven't opened the map yet, so don't force a refresh on it
+	if (#WorldMapFrame.dataProviders > 0) then 
+		WorldMapFrame:RefreshAllDataProviders();
+	end
+
 	-- Flight map world quests
 	local flightWQProvider = WQT_Utils:GetFlightWQProvider();
 	if (flightWQProvider) then
@@ -575,6 +580,28 @@ function WQT_Utils:GetQuestLogInfo(hiddenList)
 	local color = questCount >= maxQuests and RED_FONT_COLOR or (questCount >= maxQuests-2 and _V["WQT_ORANGE_FONT_COLOR"] or _V["WQT_WHITE_FONT_COLOR"]);
 	
 	return questCount, maxQuests, color;
+end
+
+function WQT_Utils:GetQuestMapLocation(questId, mapId)
+	local isSameMap = true;
+	if (mapId) then
+		local mapInfo = WQT_Utils:GetMapInfoForQuest(questId);
+		isSameMap = mapInfo.mapID == mapId;
+	end
+	-- Threat quest specific
+	if (isSameMap and C_QuestLog.IsThreatQuest(questId)) then
+		local completed, x, y = QuestPOIGetIconInfo(questId);
+		if (x and y) then
+			return x, y;
+		end
+	end
+	-- General tasks
+	local x, y = C_TaskQuest.GetQuestLocation(questId, mapId);
+	if (x and y) then
+		return x, y;
+	end
+	-- Could not get a position
+	return 0, 0;
 end
 
 function WQT_Utils:DeepWipeTable(t)
