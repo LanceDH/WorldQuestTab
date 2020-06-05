@@ -72,9 +72,9 @@ function WQT_SettingsBaseMixin:IsDisabled()
 	return  self.isDisabled;
 end
 
-function WQT_SettingsBaseMixin:OnValueChanged(value, userInput)
+function WQT_SettingsBaseMixin:OnValueChanged(value, userInput, ...)
 	if (userInput and self.valueChangedFunc) then
-		self.valueChangedFunc(value);
+		self.valueChangedFunc(value, ...);
 		self:GetParent():GetParent():GetParent():UpdateList();
 	end
 end
@@ -316,25 +316,33 @@ end
 
 function WQT_SettingsDropDownMixin:Init(data)
 	WQT_SettingsBaseMixin.Init(self, data);
-	
+	self.options = data.options;
+	self.getValueFunc = data.getValueFunc;
 	if (data.options) then
+		self.options = data.options;
 		ADD:Initialize(self.DropDown, function(dropDown, level)
 			local info = ADD:CreateInfo();
-			info.func = function(option, value, label) 
-					self:OnValueChanged(value, true);
-					ADD:SetText(dropDown, label);
+			info.func = function(option, arg1, arg2) 
+					self:OnValueChanged(arg1, true);
+					ADD:SetText(dropDown, arg2);
 				end
 			local selected;
 			if (data.getValueFunc) then
 				selected = data.getValueFunc();
 			end
 			
-			for id, displayInfo in pairs(data.options) do
+			local options = data.options;
+			if (type(options) ==  "function") then
+				options = options();
+			end
+			
+			for id, displayInfo in pairs(options) do
+				local label = displayInfo.label or "Invalid label";
 				info.value = id;
-				info.arg1 = id;
-				info.text = displayInfo.label; 
-				info.arg2 = displayInfo.label;
-				info.tooltipTitle = displayInfo.label;
+				info.arg1 = displayInfo.arg1;
+				info.text = label; 
+				info.arg2 = label;
+				info.tooltipTitle = label;
 				info.tooltipText = displayInfo.tooltip;
 				info.tooltipOnButton = true;
 
@@ -346,15 +354,23 @@ function WQT_SettingsDropDownMixin:Init(data)
 				ADD:AddButton(info, level);
 			end
 		end);
-		if (data.getValueFunc) then
-			local id = data.getValueFunc();
-			local option = data.options[id]
-			local label = option and option.label or "Invalid value";
-			ADD:SetText(self.DropDown, label);
-		end
 	end
 	
 	self:UpdateState();
+end
+
+function WQT_SettingsDropDownMixin:UpdateState()
+	WQT_SettingsBaseMixin.UpdateState(self);
+	if (self.getValueFunc and self.options) then
+		local options = self.options;
+		if (type(options) ==  "function") then
+			options = options();
+		end
+		local index = self.getValueFunc();
+		local option = options[index]
+		local label = option and option.label or "Invalid label";
+		ADD:SetText(self.DropDown, label);
+	end
 end
 
 --------------------------------
@@ -378,6 +394,53 @@ end
 
 function WQT_SettingsButtonMixin:Init(data)
 	WQT_SettingsBaseMixin.Init(self, data);
+	self:UpdateState();
+end
+
+--------------------------------
+-- WQT_SettingsTextInputMixin
+--------------------------------
+
+WQT_SettingsTextInputMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+
+function WQT_SettingsTextInputMixin:Init(data)
+	WQT_SettingsBaseMixin.Init(self, data);
+	self.getValueFunc = data.getValueFunc;
+	self:UpdateState();
+end
+
+function WQT_SettingsTextInputMixin:Reset()
+	WQT_SettingsBaseMixin.Reset(self);
+end
+
+function WQT_SettingsTextInputMixin:UpdateState()
+	WQT_SettingsBaseMixin.UpdateState(self);
+	if (self.getValueFunc) then
+		local currentValue = self.getValueFunc() or "";
+		self.TextBox:SetText(currentValue);
+		self.current = currentValue;
+	end
+end
+
+function WQT_SettingsTextInputMixin:SetDisabled(value)
+	WQT_SettingsBaseMixin.SetDisabled(self, value);
+	if (value) then
+		self.TextBox:Disable();
+	else
+		self.TextBox:Enable();
+	end
+end
+
+function WQT_SettingsTextInputMixin:OnValueChanged(value, userInput)
+	if (not value or value == "") then 
+		-- Reset displayed values
+		self:UpdateState();
+		return; 
+	end
+
+	if (userInput and value ~= self.current) then
+		WQT_SettingsBaseMixin.OnValueChanged(self, value, userInput);
+	end
 	self:UpdateState();
 end
 
@@ -424,6 +487,13 @@ function WQT_SettingsFrameMixin:SetCategoryExpanded(id, value)
 		category.isExpanded = value;
 		if (category.isExpanded) then
 			category.ExpandIcon:SetAtlas("friendslist-categorybutton-arrow-down", true);
+			
+			-- Update states
+			for k2, setting in ipairs(category.settings) do
+				if (setting.UpdateState) then
+					setting:UpdateState();
+				end
+			end
 		else
 			category.ExpandIcon:SetAtlas("friendslist-categorybutton-arrow-right", true);
 		end
@@ -471,9 +541,11 @@ function WQT_SettingsFrameMixin:UpdateList()
 	end
 	
 	for k, category in ipairs(self.categories) do
-		for k2, setting in ipairs(category.settings) do
-			if (setting.UpdateState) then
-				setting:UpdateState();
+		if (category.isExpanded) then
+			for k2, setting in ipairs(category.settings) do
+				if (setting.UpdateState) then
+					setting:UpdateState();
+				end
 			end
 		end
 	end

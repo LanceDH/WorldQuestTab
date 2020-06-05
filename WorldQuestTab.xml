@@ -10,6 +10,7 @@
 	
 	<Script file="Locals.lua"/>
 	<Script file="Data.lua"/>
+	<Script file="Profiles.lua"/>
 	<Include file="Templates.xml"/>
 	<Script file="Dataprovider.lua"/>
 	<Script file="WorldQuestTab.lua"/>

@@ -118,6 +118,11 @@ L["USE_TOMTOM_TT"] = "Add TomTom functionality to the add-on."
 L["WHATS_NEW"] = "What's New"
 L["WHATS_NEW_TT"] = "View World Quest Tab patch notes."
 L["WQT_FULLSCREEN_BUTTON_TT"] = "Left click to toggle the world quest list. Right click and drag to change position."
+L["PROFILES"] = "Profiles"
+L["NEW_PROFILE"] = "New Profile"
+L["NEW_PROFILE_TT"] = "Create a new profile based on the current settings."
+L["REMOVE_PROFILE"] = "Remove Profile"
+L["REMOVE_PROFILE_TT"] = "Remove the currently active profile."
 
 if locale == "deDE" then
 L["COMBATLOCK"] = "Nicht verfügbar während eines Kampfes."

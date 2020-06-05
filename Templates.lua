@@ -238,7 +238,7 @@ end
 
 function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 	local timeLeftMinutes = 0
-        local timeLeftSeconds = 0
+	local timeLeftSeconds = 0
 	local timeString = "";
 	local timeStringShort = "";
 	local color = _V["WQT_COLOR_CURRENCY"];

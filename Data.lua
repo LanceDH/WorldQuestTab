@@ -5,7 +5,9 @@ addon.externals = {};
 addon.variables = {};
 addon.debug = false;
 addon.WQT_Utils = {};
+addon.WQT_Profiles = {};
 local WQT_Utils = addon.WQT_Utils;
+local WQT_Profiles = addon.WQT_Profiles;
 local _L = addon.L;
 local _V = addon.variables;
 local WQT = addon.WQT;
@@ -259,6 +261,7 @@ _DeepWipeTable(ZonesByExpansion);
 -- SHARED
 ------------------------
 
+
 _V["PATH_CUSTOM_ICONS"] = "Interface/Addons/WorldQuestTab/Images/CustomIcons";
 _V["LIST_ANCHOR_TYPE"] = {["flight"] = 1, ["world"] = 2, ["full"] = 3, ["taxi"] = 4};
 _V["CURRENT_EXPANSION"] = LE_EXPANSION_BATTLE_FOR_AZEROTH;
@@ -326,12 +329,14 @@ local _ringTypeDropDownInfo = {}
 
 for k, id in pairs(_V["RING_TYPES"]) do
 	_ringTypeDropDownInfo[id] = _V["RING_TYPES_LABELS"][id];
+	_ringTypeDropDownInfo[id].arg1 = id;
 end
 
 local _pinCenterDropDownInfo = {}
 
 for k, id in pairs(_V["PIN_CENTER_TYPES"]) do
 	_pinCenterDropDownInfo[id] = _V["PIN_CENTER_LABELS"][id];
+	_pinCenterDropDownInfo[id].arg1 = id;
 end
 
 _V["SETTING_TYPES"] = {
@@ -352,7 +357,7 @@ _V["SETTING_TYPES"] = {
 --   (or) frameName: The name of a specific frame using the mixin WQT_SettingsBaseMixin;
 --   label (string): The text the label should have
 --   tooltip (string): Text displayed in the tooltip
---   valueChangedFunc (function(value)): what actions should be taken when the value is changed. Value is nil for buttons
+--   valueChangedFunc (function(value, ...)): what actions should be taken when the value is changed. Value is nil for buttons
 --   isDisabled (boolean|function()): Boolean or function returning if the setting should be disabled
 --   getValueFunc (function()): Function returning the current value of the setting
 --   isNew (boolean): Mark the setting as new by adding an exclamantion mark to the label
@@ -361,10 +366,17 @@ _V["SETTING_TYPES"] = {
 --   max (number): max value
 --   valueStep (number): step the slider makes when moved
 -- DROPDOWN SPECIFIC
---   options (table): a list for options in following format {[id] = {["label"] = "Displayed label", ["tooltip"] = "additional tooltip info (optional)"}, ...}
+--   options (table): a list for options in following format 
+--			{[id1] = {["label"] = "Displayed label"
+--			 		,["tooltip"] = "additional tooltip info (optional)"
+--					,["arg1"] = return value 1
+--					,["arg2"] = return value 2
+--					}
+--			 ,[id2] = ...}
 
 _V["SETTING_CATEGORIES"] = {
 	{["id"]="DEBUG", ["label"] = "Debug"}
+	,{["id"]="PROFILES", ["label"] = _L["PROFILES"]}
 	,{["id"]="GENERAL", ["label"] = GENERAL}
 	,{["id"]="QUESTLIST", ["label"] = _L["QUEST_LIST"]}
 	,{["id"]="MAPPINS", ["label"] = _L["MAP_PINS"]}
@@ -373,8 +385,49 @@ _V["SETTING_CATEGORIES"] = {
 }
 
 _V["SETTING_LIST"] = {
+	{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "PROFILES", ["label"] = "Current Profile", ["tooltip"] = "Select your active profile", ["options"] = function() return WQT_Profiles:GetProfiles() end
+			, ["valueChangedFunc"] = function(arg1, arg2)
+				if (arg1 == WQT_Profiles:GetActiveProfileId()) then
+					-- Trying to load currently active profile
+					return;
+				end
+				WQT_Profiles:Load(arg1);
+				
+				WQT_WorldQuestFrame:UpdateBountyCounters();
+				WQT_WorldQuestFrame:RepositionBountyTabs();
+				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
+				if (value) then
+					WQT_Utils:RefreshOfficialDataProviders();
+				end
+				WQT_QuestScrollFrame:UpdateQuestList();
+				WQT:Sort_OnClick(nil, WQT.settings.general.sortBy);
+				WQT_WorldMapContainerButton:LinkSettings(WQT.settings.general.fullScreenButtonPos);
+				WQT_WorldMapContainer:LinkSettings(WQT.settings.general.fullScreenContainerPos);
+			end
+			,["getValueFunc"] = function() return WQT_Profiles:GetIndexById(WQT.db.char.activeProfile) end
+			}
+	,{["template"] = "WQT_SettingTextInputTemplate", ["categoryID"] = "PROFILES", ["label"] = "Profile Name", ["tooltip"] = "Change profile name"
+			, ["valueChangedFunc"] = function(value) 
+				WQT_Profiles:ChangeActiveProfileName(value);
+			end
+			,["getValueFunc"] = function() 
+				return WQT_Profiles:GetActiveProfileName(); 
+			end
+			,["isDisabled"] = function() return WQT_Profiles:DefaultIsActive() end
+			}
+	,{["template"] = "WQT_SettingButtonTemplate", ["categoryID"] = "PROFILES", ["label"] = _L["NEW_PROFILE"], ["tooltip"] = _L["NEW_PROFILE_TT"]
+			, ["valueChangedFunc"] = function(value) 
+				WQT_Profiles:CreateNew();
+			end
+			}
+	,{["template"] = "WQT_SettingButtonTemplate", ["categoryID"] = "PROFILES", ["label"] =_L["REMOVE_PROFILE"], ["tooltip"] = _L["REMOVE_PROFILE_TT"]
+			, ["valueChangedFunc"] = function(value) 
+				WQT_Profiles:Delete( WQT_Profiles:GetActiveProfileId());
+			end
+			,["isDisabled"] = function() return WQT_Profiles:DefaultIsActive() end
+			}
 	-- General settings
-	{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["DEFAULT_TAB"], ["tooltip"] = _L["DEFAULT_TAB_TT"]
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["DEFAULT_TAB"], ["tooltip"] = _L["DEFAULT_TAB_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.defaultTab = value;
 			end
@@ -901,9 +954,94 @@ for k, v in pairs(_V["WQT_FACTION_DATA"]) do
 	v.name = GetFactionInfoByID(k);
 end
 
+
+_V["WQT_DEFAULTS"] = {
+	global = {	
+		versionCheck = "";
+		updateSeen = false;
+		
+
+		["general"] = {
+			sortBy = 1;
+			fullScreenButtonPos = {["anchor"] = "TOPRIGHT", ["x"] = -35, ["y"] = -2};
+			fullScreenContainerPos = {["anchor"] = "TOPLEFT", ["x"] = 0, ["y"] = -25};
+		
+			defaultTab = false;
+			saveFilters = true;
+			preciseFilters = false;
+			emissaryOnly = false;
+			useLFGButtons = false;
+			autoEmisarry = true;
+			questCounter = true;
+			bountyCounter = true;
+			
+			loadUtilities = true;
+			
+			useTomTom = true;
+			TomTomAutoArrow = true;
+			TomTomArrowOnClick = false;
+		};
+		
+		["list"] = {
+			typeIcon = true;
+			factionIcon = true;
+			showZone = true;
+			amountColors = true;
+			alwaysAllQuests = false;
+			includeDaily = true;
+			colorTime = true;
+			fullTime = false;
+		};
+
+		["pin"] = {
+			-- Mini icons
+			typeIcon = true;
+			rewardTypeIcon = false;
+			rarityIcon = false;
+			timeIcon = false;
+			
+			filterPoI = true;
+			scale = 1;
+			disablePoI = false;
+			timeLabel = false;
+			continentPins = false;
+			fadeOnPing = true;
+			eliteRing = false;
+			ringType = _V["RING_TYPES"].time;
+			centerType = _V["PIN_CENTER_TYPES"].reward;
+		};
+
+		["filters"] = {
+				[_V["FILTER_TYPES"].faction] = {["name"] = FACTION
+						,["misc"] = {["none"] = true, ["other"] = true}, ["flags"] = {}}-- Faction filters are assigned later
+				,[_V["FILTER_TYPES"].type] = {["name"] = TYPE
+						, ["flags"] = {["Default"] = true, ["Elite"] = true, ["PvP"] = true, ["Petbattle"] = true, ["Dungeon"] = true, ["Raid"] = true, ["Profession"] = true, ["Invasion"] = true, ["Assault"] = true, ["Daily"] = true, ["Threat"] = true}}
+				,[_V["FILTER_TYPES"].reward] = {["name"] = REWARD
+						, ["flags"] = {["Item"] = true, ["Armor"] = true, ["Gold"] = true, ["Currency"] = true, ["Artifact"] = true, ["Relic"] = true, ["None"] = true, ["Experience"] = true, ["Honor"] = true, ["Reputation"] = true}}
+			};
+			
+		["profiles"] = {
+			
+		};
+	}
+}
+
+for k, v in pairs(_V["WQT_FACTION_DATA"]) do
+	if v.expansion >= LE_EXPANSION_LEGION then
+		_V["WQT_DEFAULTS"].global.filters[1].flags[k] = true;
+	end
+end
+
+
+
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
-		{["version"] = "8.3.03"
+		{["version"] = "8.3.04"
+			,["new"] = {
+				"Added support for setting profiles, allowing people to have different settings for different characters."
+			}
+		}
+		,{["version"] = "8.3.03"
 			,["minor"] = "2"
 			,["fixes"] = {
 				"Fixed an error that could occur when using the WorldFlightMap add-on."

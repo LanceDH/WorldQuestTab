@@ -56,6 +56,7 @@ local ADD = LibStub("AddonDropDown-1.0");
 local _L = addon.L
 local _V = addon.variables;
 local WQT_Utils = addon.WQT_Utils;
+local WQT_Profiles = addon.WQT_Profiles;
 
 local _; -- local trash 
 local _emptyTable = {};
@@ -68,74 +69,7 @@ local _utilitiesInstalled = not utilitiesStatus or utilitiesStatus ~= "MISSING";
 
 local _WFMLoaded = IsAddOnLoaded("WorldFlightMap");
 
-local WQT_DEFAULTS = {
-	global = {	
-		versionCheck = "";
-		sortBy = 1;
-		updateSeen = false;
-		fullScreenButtonPos = {["anchor"] = "TOPRIGHT", ["x"] = -35, ["y"] = -2};
-		fullScreenContainerPos = {["anchor"] = "TOPLEFT", ["x"] = 0, ["y"] = -25};
 
-		["general"] = {
-			defaultTab = false;
-			saveFilters = true;
-			preciseFilters = false;
-			emissaryOnly = false;
-			useLFGButtons = false;
-			autoEmisarry = true;
-			questCounter = true;
-			bountyCounter = true;
-			
-			loadUtilities = true;
-			
-			useTomTom = true;
-			TomTomAutoArrow = true;
-			TomTomArrowOnClick = false;
-		};
-		
-		["list"] = {
-			typeIcon = true;
-			factionIcon = true;
-			showZone = true;
-			amountColors = true;
-			alwaysAllQuests = false;
-			includeDaily = true;
-			colorTime = true;
-			fullTime = false;
-		};
-
-		["pin"] = {
-			typeIcon = true;
-			rewardTypeIcon = false;
-			rarityIcon = false;
-			timeIcon = false;
-			filterPoI = true;
-			scale = 1;
-			disablePoI = false;
-			timeLabel = false;
-			continentPins = false;
-			fadeOnPing = true;
-			eliteRing = false;
-			ringType = _V["RING_TYPES"].time;
-			centerType = _V["PIN_CENTER_TYPES"].reward;
-		};
-
-		["filters"] = {
-				[_V["FILTER_TYPES"].faction] = {["name"] = FACTION
-						,["misc"] = {["none"] = true, ["other"] = true}, ["flags"] = {}}-- Faction filters are assigned later
-				,[_V["FILTER_TYPES"].type] = {["name"] = TYPE
-						, ["flags"] = {["Default"] = true, ["Elite"] = true, ["PvP"] = true, ["Petbattle"] = true, ["Dungeon"] = true, ["Raid"] = true, ["Profession"] = true, ["Invasion"] = true, ["Assault"] = true, ["Daily"] = true, ["Threat"] = true}}
-				,[_V["FILTER_TYPES"].reward] = {["name"] = REWARD
-						, ["flags"] = {["Item"] = true, ["Armor"] = true, ["Gold"] = true, ["Currency"] = true, ["Artifact"] = true, ["Relic"] = true, ["None"] = true, ["Experience"] = true, ["Honor"] = true, ["Reputation"] = true}}
-			}
-	}
-}
-
-for k, v in pairs(_V["WQT_FACTION_DATA"]) do
-	if v.expansion >= LE_EXPANSION_LEGION then
-		WQT_DEFAULTS.global.filters[1].flags[k] = true;
-	end
-end
 
 -- Custom number abbreviation to fit inside reward icons in the list.
 local function GetLocalizedAbbreviatedNumber(number)
@@ -503,14 +437,14 @@ end
 
 local function ConvertOldSettings(version)
 	if (not version) then
-		WQT.settings.filters[3].flags.Resources = nil;
-		WQT.settings.versionCheck = "1";
+		WQT.db.global.filters[3].flags.Resources = nil;
+		WQT.db.global.versionCheck = "1";
 		return;
 	end
 	-- BfA
 	if (version < "8.0.1") then
 		-- In 8.0.01 factions use ids rather than name
-		local repFlags = WQT.settings.filters[1].flags;
+		local repFlags = WQT.db.global.filters[1].flags;
 		for name in pairs(repFlags) do
 			if (type(name) == "string" and name ~= "Other" and name ~= _L["NO_FACTION"]) then
 				repFlags[name] = nil;
@@ -519,40 +453,40 @@ local function ConvertOldSettings(version)
 	end
 	-- Pin rework, turn off pin time by default
 	if (version < "8.2.01")  then
-		WQT.settings.showPinTime = false;
+		WQT.db.global.showPinTime = false;
 	end
 	-- Reworked save structure
 	if (version < "8.2.02")  then
-		WQT.settings.general.defaultTab =		GetNewSettingData(WQT.settings.defaultTab, false);
-		WQT.settings.general.saveFilters = 		GetNewSettingData(WQT.settings.saveFilters, true);
-		WQT.settings.general.emissaryOnly = 		GetNewSettingData(WQT.settings.emissaryOnly, false);
-		WQT.settings.general.useLFGButtons = 	GetNewSettingData(WQT.settings.useLFGButtons, false);
-		WQT.settings.general.autoEmisarry = 		GetNewSettingData(WQT.settings.autoEmisarry, true);
-		WQT.settings.general.questCounter = 		GetNewSettingData(WQT.settings.questCounter, true);
-		WQT.settings.general.bountyCounter = 	GetNewSettingData(WQT.settings.bountyCounter, true);
-		WQT.settings.general.useTomTom = 		GetNewSettingData(WQT.settings.useTomTom, true);
-		WQT.settings.general.TomTomAutoArrow = 	GetNewSettingData(WQT.settings.TomTomAutoArrow, true);
+		WQT.db.global.general.defaultTab =		GetNewSettingData(WQT.db.global.defaultTab, false);
+		WQT.db.global.general.saveFilters = 		GetNewSettingData(WQT.db.global.saveFilters, true);
+		WQT.db.global.general.emissaryOnly = 	GetNewSettingData(WQT.db.global.emissaryOnly, false);
+		WQT.db.global.general.useLFGButtons = 	GetNewSettingData(WQT.db.global.useLFGButtons, false);
+		WQT.db.global.general.autoEmisarry = 	GetNewSettingData(WQT.db.global.autoEmisarry, true);
+		WQT.db.global.general.questCounter = 	GetNewSettingData(WQT.db.global.questCounter, true);
+		WQT.db.global.general.bountyCounter = 	GetNewSettingData(WQT.db.global.bountyCounter, true);
+		WQT.db.global.general.useTomTom = 		GetNewSettingData(WQT.db.global.useTomTom, true);
+		WQT.db.global.general.TomTomAutoArrow = 	GetNewSettingData(WQT.db.global.TomTomAutoArrow, true);
 		
-		WQT.settings.list.typeIcon = 			GetNewSettingData(WQT.settings.showTypeIcon, true);
-		WQT.settings.list.factionIcon = 			GetNewSettingData(WQT.settings.showFactionIcon, true);
-		WQT.settings.list.showZone = 			GetNewSettingData(WQT.settings.listShowZone, true);
-		WQT.settings.list.amountColors = 		GetNewSettingData(WQT.settings.rewardAmountColors, true);
-		WQT.settings.list.alwaysAllQuests =		GetNewSettingData(WQT.settings.alwaysAllQuests, false);
-		WQT.settings.list.fullTime = 			GetNewSettingData(WQT.settings.listFullTime, false);
+		WQT.db.global.list.typeIcon = 			GetNewSettingData(WQT.db.global.showTypeIcon, true);
+		WQT.db.global.list.factionIcon = 		GetNewSettingData(WQT.db.global.showFactionIcon, true);
+		WQT.db.global.list.showZone = 			GetNewSettingData(WQT.db.global.listShowZone, true);
+		WQT.db.global.list.amountColors = 		GetNewSettingData(WQT.db.global.rewardAmountColors, true);
+		WQT.db.global.list.alwaysAllQuests =		GetNewSettingData(WQT.db.global.alwaysAllQuests, false);
+		WQT.db.global.list.fullTime = 			GetNewSettingData(WQT.db.global.listFullTime, false);
 
-		WQT.settings.pin.typeIcon =				GetNewSettingData(WQT.settings.pinType, true);
-		WQT.settings.pin.rewardTypeIcon =		GetNewSettingData(WQT.settings.pinRewardType, false);
-		WQT.settings.pin.filterPoI =				GetNewSettingData(WQT.settings.filterPoI, true);
-		WQT.settings.pin.bigPoI =				GetNewSettingData(WQT.settings.bigPoI, false);
-		WQT.settings.pin.disablePoI =			GetNewSettingData(WQT.settings.disablePoI, false);
-		WQT.settings.pin.reward =				GetNewSettingData(WQT.settings.showPinReward, true);
-		WQT.settings.pin.timeLabel =				GetNewSettingData(WQT.settings.showPinTime, false);
-		WQT.settings.pin.ringType =				GetNewSettingData(WQT.settings.ringType, _V["RING_TYPES"].time);
+		WQT.db.global.pin.typeIcon =				GetNewSettingData(WQT.db.global.pinType, true);
+		WQT.db.global.pin.rewardTypeIcon =		GetNewSettingData(WQT.db.global.pinRewardType, false);
+		WQT.db.global.pin.filterPoI =			GetNewSettingData(WQT.db.global.filterPoI, true);
+		WQT.db.global.pin.bigPoI =				GetNewSettingData(WQT.db.global.bigPoI, false);
+		WQT.db.global.pin.disablePoI =			GetNewSettingData(WQT.db.global.disablePoI, false);
+		WQT.db.global.pin.reward =				GetNewSettingData(WQT.db.global.showPinReward, true);
+		WQT.db.global.pin.timeLabel =			GetNewSettingData(WQT.db.global.showPinTime, false);
+		WQT.db.global.pin.ringType =				GetNewSettingData(WQT.db.global.ringType, _V["RING_TYPES"].time);
 		
 		-- Clean up old data
-		local version = WQT.settings.versionCheck;
-		local sortBy = WQT.settings.sortBy;
-		local updateSeen = WQT.settings.updateSeen;
+		local version = WQT.db.global.versionCheck;
+		local sortBy = WQT.db.global.sortBy;
+		local updateSeen = WQT.db.global.updateSeen;
 		
 		for k, v in pairs(WQT.settings) do
 			if (type(v) ~= "table") then
@@ -560,23 +494,23 @@ local function ConvertOldSettings(version)
 			end
 		end
 		
-		WQT.settings.versionCheck = version;
-		WQT.settings.sortBy = sortBy;
-		WQT.settings.updateSeen = updateSeen;
+		WQT.db.global.versionCheck = version;
+		WQT.db.global.sortBy = sortBy;
+		WQT.db.global.updateSeen = updateSeen;
 		
 		-- New filters
-		for filterID in pairs(WQT.settings.filters) do
+		for filterID in pairs(WQT.db.global.filters) do
 			WQT:SetAllFilterTo(filterID, true);
 		end
 	end
 	
 	if (version < "8.3.01")  then
-		WQT.settings.pin.scale = WQT.settings.pin.bigPoI and 1.15 or 1;
-		WQT.settings.pin.centerType = WQT.settings.pin.reward and _V["PIN_CENTER_TYPES"].reward or _V["PIN_CENTER_TYPES"].blizzard;
+		WQT.db.global.pin.scale = WQT.db.global.pin.bigPoI and 1.15 or 1;
+		WQT.db.global.pin.centerType = WQT.db.global.pin.reward and _V["PIN_CENTER_TYPES"].reward or _V["PIN_CENTER_TYPES"].blizzard;
 	end
 	
 	if (version < "8.3.02")  then
-		local factionFlags = WQT.settings.filters[_V["FILTER_TYPES"].faction].flags;
+		local factionFlags = WQT.db.global.filters[_V["FILTER_TYPES"].faction].flags;
 		-- clear out string keys
 		for k in pairs(factionFlags) do
 			if (type(k) == "string") then
@@ -587,9 +521,25 @@ local function ConvertOldSettings(version)
 	
 	if (version < "8.3.03")  then
 		-- Anchoring changed, reset to default position
-		WQT.settings.fullScreenButtonPos.anchor =  WQT_DEFAULTS.global.fullScreenButtonPos.anchor;
-		WQT.settings.fullScreenButtonPos.x = WQT_DEFAULTS.global.fullScreenButtonPos.x;
-		WQT.settings.fullScreenButtonPos.y = WQT_DEFAULTS.global.fullScreenButtonPos.y;
+		WQT.db.global.fullScreenButtonPos.anchor =  _V["WQT_DEFAULTS"].global.fullScreenButtonPos.anchor;
+		WQT.db.global.fullScreenButtonPos.x = _V["WQT_DEFAULTS"].global.fullScreenButtonPos.x;
+		WQT.db.global.fullScreenButtonPos.y = _V["WQT_DEFAULTS"].global.fullScreenButtonPos.y;
+	end
+	
+	if (version < "8.3.04")  then
+		-- Changes for profiles
+		if (WQT.db.global.sortBy) then
+			WQT.db.global.general.sortBy = WQT.db.global.sortBy;
+			WQT.db.global.sortBy = nil;
+		end
+		if (WQT.db.global.fullScreenButtonPos) then
+			WQT.db.global.general.fullScreenButtonPos = WQT.db.global.fullScreenButtonPos;
+			WQT.db.global.fullScreenButtonPos = nil;
+		end
+		if (WQT.db.global.fullScreenContainerPos) then
+			WQT.db.global.general.fullScreenContainerPos = WQT.db.global.fullScreenContainerPos;
+			WQT.db.global.fullScreenContainerPos = nil;
+		end
 	end
 end
 
@@ -660,7 +610,7 @@ function WQT:Sort_OnClick(self, category)
 		dropdown.active = category
 		ADD:SetSelectedValue(dropdown, category);
 		ADD:SetText(dropdown, _V["WQT_SORT_OPTIONS"][category]);
-		WQT.settings.sortBy = category;
+		WQT.settings.general.sortBy = category;
 		WQT_QuestScrollFrame:UpdateQuestList();
 		WQT_WorldQuestFrame:TriggerCallback("SortChanged", category);
 	end
@@ -887,15 +837,17 @@ function WQT:PassesFlagId(flagId ,questInfo, checkPrecise)
 end
 
 function WQT:OnInitialize()
-	self.db = LibStub("AceDB-3.0"):New("BWQDB", WQT_DEFAULTS, true);
-	self.settings = self.db.global;
+	self.db = LibStub("AceDB-3.0"):New("BWQDB", _V["WQT_DEFAULTS"], true);
 	
-	ConvertOldSettings(WQT.settings.versionCheck)
+	ConvertOldSettings(WQT.db.global.versionCheck)
+	
+	WQT_Profiles:InitSettings();
+	
 	-- Hightlight 'what's new'
 	local currentVersion = GetAddOnMetadata(addonName, "version")
-	if (WQT.settings.versionCheck < currentVersion) then
-		WQT.settings.updateSeen = false;
-		WQT.settings.versionCheck  = currentVersion;
+	if (WQT.db.global.versionCheck < currentVersion) then
+		WQT.db.global.updateSeen = false;
+		WQT.db.global.versionCheck  = currentVersion;
 	end
 	
 	_V:GeneratePatchNotes();
@@ -912,8 +864,8 @@ function WQT:OnEnable()
 	end
 	
 	-- Place fullscreen button in saved location
-	WQT_WorldMapContainerButton:LinkSettings(WQT.settings.fullScreenButtonPos);
-	WQT_WorldMapContainer:LinkSettings(WQT.settings.fullScreenContainerPos);
+	WQT_WorldMapContainerButton:LinkSettings(WQT.settings.general.fullScreenButtonPos);
+	WQT_WorldMapContainer:LinkSettings(WQT.settings.general.fullScreenContainerPos);
 	
 	
 	-- Apply saved filters
@@ -924,9 +876,9 @@ function WQT:OnEnable()
 	end
 
 	-- Update sort text
-	if self.settings.general.saveFilters and _V["WQT_SORT_OPTIONS"][self.settings.sortBy] then
-		ADD:SetSelectedValue(WQT_WorldQuestFrameSortButton, self.settings.sortBy);
-		ADD:SetText(WQT_WorldQuestFrameSortButton, _V["WQT_SORT_OPTIONS"][self.settings.sortBy]);
+	if self.settings.general.saveFilters and _V["WQT_SORT_OPTIONS"][self.settings.general.sortBy] then
+		ADD:SetSelectedValue(WQT_WorldQuestFrameSortButton, self.settings.general.sortBy);
+		ADD:SetText(WQT_WorldQuestFrameSortButton, _V["WQT_SORT_OPTIONS"][self.settings.general.sortBy]);
 	else
 		ADD:SetSelectedValue(WQT_WorldQuestFrameSortButton, 1);
 		ADD:SetText(WQT_WorldQuestFrameSortButton, _V["WQT_SORT_OPTIONS"][1]);
@@ -1617,6 +1569,7 @@ function WQT_ConstrainedChildMixin:OnDragStop()
 end
 
 function WQT_ConstrainedChildMixin:OnUpdate()
+	--
 	if (self.isBeingDragged) then
 		self:ConstrainPosition();
 	end
@@ -1630,6 +1583,7 @@ end
 
 -- Constrain the frame to stay inside the borders of the parent frame
 function WQT_ConstrainedChildMixin:ConstrainPosition()
+	
 	local parent = self:GetParent();
 	local l1, b1, w1, h1 = self:GetRect();
 	local l2, b2, w2, h2 = parent:GetRect();
@@ -1689,8 +1643,8 @@ function WQT_ConstrainedChildMixin:ConstrainPosition()
 
 	-- If the frame had to be constrained, force the constrained position
 	if (SetConstrainedPos) then
-		--self:ClearAllPoints();
-		--self:SetPoint(self.anchor, parent, self.anchor, left, bottom);
+		self:ClearAllPoints();
+		self:SetPoint(self.anchor, parent, self.anchor, left, bottom);
 	end
 end
 
@@ -1878,6 +1832,7 @@ function WQT_CoreMixin:OnLoad()
 	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
 	self:RegisterEvent("TAXIMAP_OPENED");
 	self:RegisterEvent("QUEST_LOG_UPDATE"); -- Dataprovider only
+	self:RegisterEvent("PLAYER_LOGOUT");
 	
 	self:SetScript("OnEvent", function(self, event, ...) 
 			if	(self.dataProvider) then
@@ -2349,6 +2304,10 @@ end
 
 function WQT_CoreMixin:QUEST_LOG_UPDATE()
 	-- Dataprovider handles this one
+end
+
+function WQT_CoreMixin:PLAYER_LOGOUT()
+	WQT_Profiles:ClearDefaultsFromActive();
 end
 
 function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
