@@ -257,7 +257,7 @@
 						<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="CENTER">
 							<Size x="120" y="25"/>
 							<Anchors>
-								<Anchor point="CENTER" y="1"/>
+								<Anchor point="CENTER" y="0"/>
 							</Anchors>
 						</FontString>
 					</Layer>
@@ -276,7 +276,7 @@
 					</OnMouseDown>
 					<OnMouseUp inherit="prepend">
 						if (not self:GetParent():IsDisabled()) then
-							self.Label:SetPoint("CENTER", self, 0, 1);
+							self.Label:SetPoint("CENTER", self, 0, 0);
 						end
 					</OnMouseUp>
 					<OnClick> 

@@ -1040,6 +1040,9 @@ _V["PATCH_NOTES"] = {
 			,["new"] = {
 				"Added support for setting profiles, allowing people to have different settings for different characters."
 			}
+			,["fixes"] = {
+				"Fixed content on the full screen map not being constrained to the map area."
+			}
 		}
 		,{["version"] = "8.3.03"
 			,["minor"] = "2"

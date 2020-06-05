@@ -114,7 +114,6 @@ end
 
 function WQT_Profiles:InitSettings()
 	WQT.settings = {["general"] = {}, ["list"] = {}, ["pin"] = {}, ["filters"] = {}};
-	
 	if (not WQT.db.global.profiles[0]) then
 		ConvertDefaultProfile();
 	end

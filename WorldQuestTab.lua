@@ -436,8 +436,7 @@ local function GetNewSettingData(old, default)
 end
 
 local function ConvertOldSettings(version)
-	if (not version) then
-		WQT.db.global.filters[3].flags.Resources = nil;
+	if (not version or version == "") then
 		WQT.db.global.versionCheck = "1";
 		return;
 	end
@@ -488,20 +487,17 @@ local function ConvertOldSettings(version)
 		local sortBy = WQT.db.global.sortBy;
 		local updateSeen = WQT.db.global.updateSeen;
 		
-		for k, v in pairs(WQT.settings) do
-			if (type(v) ~= "table") then
-				WQT.settings[k] = nil;
+		if (WQT.settings) then
+			for k, v in pairs(WQT.settings) do
+				if (type(v) ~= "table") then
+					WQT.settings[k] = nil;
+				end
 			end
 		end
 		
 		WQT.db.global.versionCheck = version;
 		WQT.db.global.sortBy = sortBy;
 		WQT.db.global.updateSeen = updateSeen;
-		
-		-- New filters
-		for filterID in pairs(WQT.db.global.filters) do
-			WQT:SetAllFilterTo(filterID, true);
-		end
 	end
 	
 	if (version < "8.3.01")  then
@@ -838,9 +834,7 @@ end
 
 function WQT:OnInitialize()
 	self.db = LibStub("AceDB-3.0"):New("BWQDB", _V["WQT_DEFAULTS"], true);
-	
 	ConvertOldSettings(WQT.db.global.versionCheck)
-	
 	WQT_Profiles:InitSettings();
 	
 	-- Hightlight 'what's new'
