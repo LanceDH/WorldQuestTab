@@ -1,4 +1,4 @@
-local MAJOR, MINOR = "AddonDropDownTemplates-1.0", 8
+local MAJOR, MINOR = "AddonDropDownTemplates-1.0", 9
 local ADDT, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not ADDT then return end -- No Upgrade needed.
@@ -310,6 +310,7 @@ function ADDT:CreateMenuTemplate(lib, name, parent, id, frameType)
 	fontString:SetJustifyH("RIGHT");
 	fontString:SetSize(0, 10);
 	fontString:SetPoint("RIGHT", button.Right, "RIGHT", -43, 2);
+	fontString:SetPoint("LEFT", button.Left, "LEFT", 28, 2);
 	--parentIcon
 	tex = button:CreateTexture(nil, "OVERLAY");
 	button.Icon = tex;
@@ -376,6 +377,13 @@ function ADDT:CreateMenuTemplate(lib, name, parent, id, frameType)
 			button.Text:SetVertexColor(DISABLED_FONT_COLOR:GetRGB());
 			button.Button:Disable();
 		end);
+		
+	if (frameType == "BUTTON") then
+		button:SetScript("OnClick", function(self)
+				lib:ToggleDropDownMenu(nil, nil, button);
+				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+			end);
+	end
 	 
 	return button;
 end

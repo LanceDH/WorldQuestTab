@@ -393,16 +393,7 @@ _V["SETTING_LIST"] = {
 				end
 				WQT_Profiles:Load(arg1);
 				
-				WQT_WorldQuestFrame:UpdateBountyCounters();
-				WQT_WorldQuestFrame:RepositionBountyTabs();
-				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-				if (value) then
-					WQT_Utils:RefreshOfficialDataProviders();
-				end
-				WQT_QuestScrollFrame:UpdateQuestList();
-				WQT:Sort_OnClick(nil, WQT.settings.general.sortBy);
-				WQT_WorldMapContainerButton:LinkSettings(WQT.settings.general.fullScreenButtonPos);
-				WQT_WorldMapContainer:LinkSettings(WQT.settings.general.fullScreenContainerPos);
+				WQT_WorldQuestFrame:ApplyAllSettings();
 			end
 			,["getValueFunc"] = function() return WQT_Profiles:GetIndexById(WQT.db.char.activeProfile) end
 			}
@@ -420,11 +411,18 @@ _V["SETTING_LIST"] = {
 				WQT_Profiles:CreateNew();
 			end
 			}
-	,{["template"] = "WQT_SettingButtonTemplate", ["categoryID"] = "PROFILES", ["label"] =_L["REMOVE_PROFILE"], ["tooltip"] = _L["REMOVE_PROFILE_TT"]
+	,{["template"] = "WQT_SettingConfirmButtonTemplate", ["categoryID"] = "PROFILES", ["label"] =_L["RESET_PROFILE"], ["tooltip"] = _L["RESET_PROFILE_TT"]
 			, ["valueChangedFunc"] = function(value) 
-				WQT_Profiles:Delete( WQT_Profiles:GetActiveProfileId());
+				WQT_Profiles:ResetActive();
+				WQT_WorldQuestFrame:ApplyAllSettings();
 			end
-			,["isDisabled"] = function() return WQT_Profiles:DefaultIsActive() end
+			}
+	,{["template"] = "WQT_SettingConfirmButtonTemplate", ["categoryID"] = "PROFILES", ["label"] =_L["REMOVE_PROFILE"], ["tooltip"] = _L["REMOVE_PROFILE_TT"]
+			, ["valueChangedFunc"] = function(value) 
+				WQT_Profiles:Delete(WQT_Profiles:GetActiveProfileId());
+				WQT_WorldQuestFrame:ApplyAllSettings();
+			end
+			,["isDisabled"] = function() return WQT_Profiles:DefaultIsActive()  end
 			}
 	-- General settings
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["DEFAULT_TAB"], ["tooltip"] = _L["DEFAULT_TAB_TT"]
@@ -1039,6 +1037,9 @@ _V["PATCH_NOTES"] = {
 		{["version"] = "8.3.04"
 			,["new"] = {
 				"Added support for setting profiles, allowing people to have different settings for different characters."
+			}
+			,["changes"] = {
+				"Dropdown menus can now be opened by clicking anywhere on the dropdown button, rather than just the arrow on the right."
 			}
 			,["fixes"] = {
 				"Fixed content on the full screen map not being constrained to the map area."

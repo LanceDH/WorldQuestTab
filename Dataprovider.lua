@@ -145,6 +145,7 @@ end
 
 local function SetQuestRewards(questInfo)
 	local haveData = HaveQuestRewardData(questInfo.questId);
+	local hasAddedExperience = false;
 	
 	if haveData then
 		-- Setup default for no reward
@@ -159,7 +160,8 @@ local function SetQuestRewards(questInfo)
 		-- Items
 		if (GetNumQuestLogRewards(questInfo.questId) > 0) then
 			local _, texture, numItems, quality, _, rewardId, ilvl = GetQuestLogRewardInfo(1, questInfo.questId);
-			if rewardId then
+
+			if (rewardId) then
 				local price, typeID, subTypeID = select(11, GetItemInfo(rewardId));
 				if (typeID == 4 or typeID == 2) then -- Gear (4 = armor, 2 = weapon)
 					local canUpgrade = ScanTooltipRewardForPattern(questInfo.questId, "(%d+%+)$") and true or false;
@@ -172,10 +174,15 @@ local function SetQuestRewards(questInfo)
 					AddQuestReward(questInfo, WQT_REWARDTYPE.relic, numItems, texture, quality, _V["WQT_COLOR_RELIC"], rewardId);
 				else	
 					-- Normal items
-					if (typeID == 0 and subTypeID == 8 and price == 0 and ilvl > 100) then 
+					if (texture == 894556 and GetQuestLogRewardXP(questInfo.questId)) then
+						-- Player experience
+						local numItems = GetQuestLogRewardXP(questInfo.questId);
+						AddQuestReward(questInfo, WQT_REWARDTYPE.xp, numItems, texture, 1, _V["WQT_COLOR_ITEM"]);
+						hasAddedExperience = true;
+					elseif (typeID == 0 and subTypeID == 8 and price == 0 and ilvl > 100) then 
 						-- Item converting into equipment
 						AddQuestReward(questInfo, WQT_REWARDTYPE.equipment, ilvl, texture, quality, _V["WQT_COLOR_ARMOR"], rewardId);
-					else
+					else 
 						AddQuestReward(questInfo, WQT_REWARDTYPE.item, numItems, texture, quality, _V["WQT_COLOR_ITEM"], rewardId);
 					end
 				end
@@ -217,7 +224,7 @@ local function SetQuestRewards(questInfo)
 			end
 		end
 		-- Player experience 
-		if haveData and GetQuestLogRewardXP(questInfo.questId) > 0 then
+		if (not hasAddedExperience and GetQuestLogRewardXP(questInfo.questId) > 0) then
 			local numItems = GetQuestLogRewardXP(questInfo.questId);
 			AddQuestReward(questInfo, WQT_REWARDTYPE.xp, numItems, 894556, 1, _V["WQT_COLOR_ITEM"]);
 		end

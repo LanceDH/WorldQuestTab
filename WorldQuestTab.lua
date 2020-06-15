@@ -4,24 +4,24 @@
 -- questId					[number] questId
 -- isAllyQuest				[boolean] is a quest for combat allies (Nazjatar)
 -- isDaily					[boolean] is a daily type quest (Nazjatar & threat quests)
--- isCriteria				[boolean] is part of currently selected amissary
+-- isCriteria				[boolean] is part of currently selected emissary
 -- alwaysHide				[boolean] If the quest should be hidden no matter what
 -- passedFilter				[boolean] passed current filters
 -- isValid					[boolean] true if the quest is valid. Quest are invalid when they are missing quest data
 -- time						[table] time related values
 --		seconds					[number] seconds remaining when the data was gathered (To check the difference between no time and expired time)
--- mapInfo					[table] zone related values
+-- mapInfo					[table] zone related values, for more accurate position use WQT_Utils:GetQuestMapLocation
 --		mapX					[number] x pin position
 --		mapY					[number] y pin position
 -- reward					[table] reward related values
---		type					[number] type of the more valueable reward (and the one displayed). See WQT_REWARDTYPE in Data.lua
+--		type					[number] type of the most valueable reward (and the one displayed). See WQT_REWARDTYPE in Data.lua
 --		texture					[number/string] texture of the reward. can be string for things like gold or unknown reward
 --		amount					[amount] amount of items, gold, rep, or item level
 --		id						[number, nullable] itemId for reward. null if not an item
 --		quality					[number] item quality; common, rare, epic, etc
 --		canUpgrade				[boolean, nullable] true if item has a chance to upgrade (e.g. ilvl 285+)
 --		color					[Color] color based on the type of reward
---		typeBits				[bitfield] a combination of flags for all the types of rewards the quest provides. I.e. AP + gold + rep = 2^3 + 2^6 + 2^9 = 584 (10 0100 1000‬)
+--		typeBits				[bitfield] a combination of flags for all the types of rewards the quest provides. I.e. AP + gold + rep = 2^3 + 2^6 + 2^9 = 584 (1001001000‬)
 
 --
 -- For other data use following functions
@@ -33,6 +33,7 @@
 -- local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex, displayTimeLeft = GetQuestTagInfo(questId);
 -- local texture, sizeX, sizeY = WQT_Utils:GetCachedTypeIconData(worldQuestType, tradeskillLineIndex);
 -- local timeLeftSeconds, timeString, color, timeStringShort, category = WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated);
+-- local x, y = WQT_Utils:GetQuestMapLocation(questId, mapId); | More up to date position than mapInfo
 
 --
 -- Callbacks (WQT_WorldQuestFrame:RegisterCallback(event, func))
@@ -68,8 +69,6 @@ local utilitiesStatus = select(5, GetAddOnInfo("WorldQuestTabUtilities"));
 local _utilitiesInstalled = not utilitiesStatus or utilitiesStatus ~= "MISSING";
 
 local _WFMLoaded = IsAddOnLoaded("WorldFlightMap");
-
-
 
 -- Custom number abbreviation to fit inside reward icons in the list.
 local function GetLocalizedAbbreviatedNumber(number)
@@ -1783,8 +1782,6 @@ function WQT_CoreMixin:OnLoad()
 	self.sortButton = ADD:CreateMenuTemplate("WQT_WorldQuestFrameSortButton", self, nil, "BUTTON");
 	self.sortButton:SetSize(110, 22);
 	self.sortButton:SetPoint("RIGHT", "WQT_WorldQuestFrameFilterButton", "LEFT", -2, -1);
-	self.sortButton:EnableMouse(false);
-	self.sortButton:SetScript("OnClick", function() PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); end);
 
 	ADD:Initialize(self.sortButton, function(self, level) WQT:InitSort(self, level) end);
 
@@ -2086,6 +2083,19 @@ function WQT_CoreMixin:OnLoad()
 	
 
 	
+end
+
+function WQT_CoreMixin:ApplyAllSettings()
+	self:UpdateBountyCounters();
+	self:RepositionBountyTabs();
+	self.pinDataProvider:RefreshAllData()
+	if (value) then
+		WQT_Utils:RefreshOfficialDataProviders();
+	end
+	WQT_QuestScrollFrame:UpdateQuestList();
+	WQT:Sort_OnClick(nil, WQT.settings.general.sortBy);
+	WQT_WorldMapContainerButton:LinkSettings(WQT.settings.general.fullScreenButtonPos);
+	WQT_WorldMapContainer:LinkSettings(WQT.settings.general.fullScreenContainerPos);
 end
 
 function WQT_CoreMixin:UpdateBountyCounters()

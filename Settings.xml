@@ -247,9 +247,10 @@
 		<Size y="30"/>
 		<Frames>
 			<Button parentKey="Button" inherits="UIMenuButtonStretchTemplate">
-				<Size x="150" y="26"/>
+				<Size  y="26"/>
 				<Anchors>
 					<Anchor point="LEFT" x="27" y="0"/>
+					<Anchor point="RIGHT" x="-35" y="0"/>
 				</Anchors>
 				
 				<Layers>
@@ -288,6 +289,146 @@
 					<TexCoords left="0" right="1.0" top="0.03" bottom="0.7175"/>
 				</HighlightTexture>
 			</Button>
+		</Frames>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+		</Scripts>
+	</Frame>
+	
+	<Frame name="WQT_SettingConfirmButtonTemplate" mixin="WQT_SettingsConfirmButtonMixin" virtual="true">
+		<Size y="30"/>
+		<Frames>
+			<Button parentKey="Button" inherits="UIMenuButtonStretchTemplate">
+				<Size  y="26"/>
+				<Anchors>
+					<Anchor point="LEFT" x="27" y="0"/>
+					<Anchor point="RIGHT" x="-35" y="0"/>
+				</Anchors>
+				
+				<Layers>
+					<Layer level="ARTWORK">
+						<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="CENTER">
+							<Size x="120" y="25"/>
+							<Anchors>
+								<Anchor point="CENTER" y="0"/>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnEnter>
+						self:GetParent():OnEnter(self);
+					</OnEnter>
+					<OnLeave>
+						self:GetParent():OnLeave(self);
+					</OnLeave>
+					<OnMouseDown inherit="prepend">
+						if (not self:GetParent():IsDisabled()) then
+							self.Label:SetPoint("CENTER", self, 2, -1);
+						end
+					</OnMouseDown>
+					<OnMouseUp inherit="prepend">
+						if (not self:GetParent():IsDisabled()) then
+							self.Label:SetPoint("CENTER", self, 0, 0);
+						end
+					</OnMouseUp>
+					<OnClick> 
+						self:GetParent():SetPickingState(true);
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+					</OnClick>	
+				</Scripts>		
+				<HighlightTexture file="Interface\Buttons\UI-Silver-Button-Highlight" alphaMode="ADD" alpha="0.5">
+					<TexCoords left="0" right="1.0" top="0.03" bottom="0.7175"/>
+				</HighlightTexture>
+			</Button>
+			
+			<Button parentKey="ButtonConfirm" inherits="UIMenuButtonStretchTemplate" hidden="true">
+				<Size x="50" y="26"/>
+				<Anchors>
+					<Anchor point="LEFT" x="27" y="0"/>
+				</Anchors>
+				
+				<Layers>
+					<Layer level="ARTWORK">
+						<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="CENTER" text="YES">
+							<Size x="120" y="25"/>
+							<Anchors>
+								<Anchor point="CENTER" y="0"/>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnEnter>
+						self:GetParent():OnEnter(self);
+					</OnEnter>
+					<OnLeave>
+						self:GetParent():OnLeave(self);
+					</OnLeave>
+					<OnMouseDown inherit="prepend">
+						if (not self:GetParent():IsDisabled()) then
+							self.Label:SetPoint("CENTER", self, 2, -1);
+						end
+					</OnMouseDown>
+					<OnMouseUp inherit="prepend">
+						if (not self:GetParent():IsDisabled()) then
+							self.Label:SetPoint("CENTER", self, 0, 0);
+						end
+					</OnMouseUp>
+					<OnClick> 
+						self:GetParent():OnValueChanged(true, true);
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+					</OnClick>	
+				</Scripts>		
+				<HighlightTexture file="Interface\Buttons\UI-Silver-Button-Highlight" alphaMode="ADD" alpha="0.5">
+					<TexCoords left="0" right="1.0" top="0.03" bottom="0.7175"/>
+				</HighlightTexture>
+			</Button>
+			
+			<Button parentKey="ButtonDecline" inherits="UIMenuButtonStretchTemplate" hidden="true">
+				<Size x="50" y="26"/>
+				<Anchors>
+					<Anchor point="LEFT" relativeKey="$parent.ButtonConfirm" relativePoint="RIGHT" x="5" y="0"/>
+					<Anchor point="RIGHT" x="-35" y="0"/>
+				</Anchors>
+				
+				<Layers>
+					<Layer level="ARTWORK">
+						<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="CENTER" text="NO">
+							<Size x="120" y="25"/>
+							<Anchors>
+								<Anchor point="CENTER" y="0"/>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnEnter>
+						self:GetParent():OnEnter(self);
+					</OnEnter>
+					<OnLeave>
+						self:GetParent():OnLeave(self);
+					</OnLeave>
+					<OnMouseDown inherit="prepend">
+						if (not self:GetParent():IsDisabled()) then
+							self.Label:SetPoint("CENTER", self, 2, -1);
+						end
+					</OnMouseDown>
+					<OnMouseUp inherit="prepend">
+						if (not self:GetParent():IsDisabled()) then
+							self.Label:SetPoint("CENTER", self, 0, 0);
+						end
+					</OnMouseUp>
+					<OnClick> 
+						self:GetParent():SetPickingState(false);
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+					</OnClick>	
+				</Scripts>		
+				<HighlightTexture file="Interface\Buttons\UI-Silver-Button-Highlight" alphaMode="ADD" alpha="0.5">
+					<TexCoords left="0" right="1.0" top="0.03" bottom="0.7175"/>
+				</HighlightTexture>
+			</Button>
+			
 		</Frames>
 		<Scripts>
 			<OnLoad method="OnLoad"/>
@@ -348,6 +489,7 @@
 		</Frames>
 		<Scripts>
 			<OnLoad method="OnLoad"/>
+			<OnShow method="Refresh"/>
 		</Scripts>
 	</Frame>
  </Ui>

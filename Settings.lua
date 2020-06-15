@@ -53,7 +53,7 @@ function WQT_SettingsBaseMixin:Init(data)
 		self.DisabledOverlay:SetFrameLevel(self:GetFrameLevel() + 2)
 	end
 	
-	self:UpdateState();
+	--self:UpdateState();
 end
 
 function WQT_SettingsBaseMixin:Reset()
@@ -299,8 +299,9 @@ function WQT_SettingsDropDownMixin:OnLoad()
 	self.DropDown = ADD:CreateMenuTemplate(nil, self, nil, "BUTTON");
 	self.DropDown:SetSize(150, 22);
 	self.DropDown:SetPoint("BOTTOMLEFT", self, 27, 0);
+	self.DropDown:SetPoint("RIGHT", self, -35, 0);
+	self.DropDown.Text:SetJustifyH("LEFT");
 	self.DropDown:EnableMouse(true);
-	self.DropDown:SetScript("OnClick", function() PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON); end);
 	self.DropDown:SetScript("OnEnter", function() self:OnEnter(self.DropDown) end);
 	self.DropDown:SetScript("OnLeave", function() self:OnLeave() end);
 end
@@ -398,6 +399,61 @@ function WQT_SettingsButtonMixin:Init(data)
 end
 
 --------------------------------
+-- WQT_SettingsConfirmButtonMixin
+--------------------------------
+
+WQT_SettingsConfirmButtonMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+
+function WQT_SettingsConfirmButtonMixin:OnLoad()
+	self.Label = self.Button.Label;
+end
+
+function WQT_SettingsConfirmButtonMixin:SetDisabled(value)
+	WQT_SettingsBaseMixin.SetDisabled(self, value);
+	if (value) then
+		self.Button:Disable();
+	else
+		self.Button:Enable();
+	end
+end
+
+function WQT_SettingsConfirmButtonMixin:Init(data)
+	WQT_SettingsBaseMixin.Init(self, data);
+end
+
+function WQT_SettingsConfirmButtonMixin:UpdateState()
+	WQT_SettingsBaseMixin.UpdateState(self);
+	local width = (self:GetWidth() - 67) / 2;
+	self.ButtonConfirm:SetWidth(width);
+	
+	if (self.isPicking == true) then
+		self.Button:Show();
+		self.ButtonConfirm:Hide();
+		self.ButtonDecline:Hide();
+		self.isPicking = false;
+	end
+end
+
+function WQT_SettingsConfirmButtonMixin:OnValueChanged(value, userInput)
+	self:SetPickingState(false);
+	WQT_SettingsBaseMixin.OnValueChanged(self, value, userInput);
+end
+
+function WQT_SettingsConfirmButtonMixin:SetPickingState(isPicking)
+	self.isPicking = isPicking;
+	if (self.isPicking) then
+		self.Button:Hide();
+		self.ButtonConfirm:Show();
+		self.ButtonDecline:Show();
+		return;
+	end
+	
+	self.Button:Show();
+	self.ButtonConfirm:Hide();
+	self.ButtonDecline:Hide();
+end
+
+--------------------------------
 -- WQT_SettingsTextInputMixin
 --------------------------------
 
@@ -489,11 +545,11 @@ function WQT_SettingsFrameMixin:SetCategoryExpanded(id, value)
 			category.ExpandIcon:SetAtlas("friendslist-categorybutton-arrow-down", true);
 			
 			-- Update states
-			for k2, setting in ipairs(category.settings) do
-				if (setting.UpdateState) then
-					setting:UpdateState();
-				end
-			end
+			--for k2, setting in ipairs(category.settings) do
+			--	if (setting.UpdateState) then
+			--		setting:UpdateState();
+			--	end
+			--end
 		else
 			category.ExpandIcon:SetAtlas("friendslist-categorybutton-arrow-right", true);
 		end
@@ -634,6 +690,9 @@ function WQT_SettingsFrameMixin:PlaceSetting(setting)
 	end
 	setting:SetPoint("RIGHT", self.ScrollFrame.ScrollChild);
 	setting:Show();
+	if (setting.UpdateState) then
+		setting:UpdateState();
+	end
 	
 	self.previous = setting;
 	self.totalHeight = self.totalHeight + setting:GetHeight();

@@ -8,11 +8,6 @@ local WQT_Profiles = addon.WQT_Profiles;
 
 local _profileReferenceList = {};
 
-
--- TODO
-
--- Make active profile per character
-
 local function ReferenceListSort(a, b)
 	-- Default always on top, and in case of duplicate labels
 	if (a.arg1 == 0 or b.arg1 == 0) then
@@ -31,6 +26,19 @@ local function ReferenceListSort(a, b)
 	return a.label:lower() < b.label:lower();
 end
 
+local function ClearDefaults(a, b)
+	for k, v in pairs(b) do
+		if (type(a[k]) == "table" and type(v) == "table") then
+			ClearDefaults(a[k], v);
+			if (next(a[k]) == nil) then
+				a[k] = nil;
+			end
+		elseif (a[k] ~= nil and a[k] == v) then
+			a[k] = nil;
+		end
+	end
+end
+
 local function ProfileNameIsAvailable(name)
 	for k, v in pairs(WQT.db.global.profiles) do
 		if (v.name == name) then
@@ -38,6 +46,16 @@ local function ProfileNameIsAvailable(name)
 		end
 	end
 	return true;
+end
+
+local function ForceCopy(a, b)
+	for k, v in pairs(b) do
+		if (type(v) == "table") then
+			ForceCopy(a[k], v);
+		else
+			a[k] = v;
+		end
+	end
 end
 
 local function CopyIfNil(a, b)
@@ -286,28 +304,30 @@ function WQT_Profiles:GetActiveProfileName()
 	return profile and profile.name or "Invalid Profile";
 end
 
-local function test(a, b)
-	for k, v in pairs(b) do
-		if (type(a[k]) == "table" and type(v) == "table") then
-			test(a[k], v);
-			if (next(a[k]) == nil) then
-				a[k] = nil;
-			end
-		elseif (a[k] ~= nil and a[k] == v) then
-			a[k] = nil;
-		end
-	end
-end
+
 
 function WQT_Profiles:ClearDefaultsFromActive()
 	local category = "general";
 	
-	test(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
+	ClearDefaults(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
 	category = "list";
-	test(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
+	ClearDefaults(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
 	category = "pin";
-	test(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
+	ClearDefaults(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
 	category = "filters";
-	test(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
+	ClearDefaults(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
 end
+
+function WQT_Profiles:ResetActive()
+	local category = "general";
+	ForceCopy(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
+	category = "list";
+	ForceCopy(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
+	category = "pin";
+	ForceCopy(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
+	category = "filters";
+	ForceCopy(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
+end
+
+
 
