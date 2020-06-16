@@ -19,19 +19,19 @@ local _playerFaction = UnitFactionGroup("Player");
 ------------------------
 
 WQT_REWARDTYPE = {
-	["none"] = 			0
-	,["weapon"] = 		2^0
-	,["equipment"] =		2^1
-	,["relic"] = 		2^2
-	,["artifact"] = 		2^3
-	,["spell"] = 		2^4
-	,["item"] = 			2^5
-	,["gold"] = 			2^6
-	,["currency"] = 		2^7
-	,["honor"] = 		2^8
-	,["reputation"] =	2^9
-	,["xp"] = 			2^10
-	,["missing"] = 		2^11
+	["none"] = 			0		--0
+	,["weapon"] = 		2^0		--1
+	,["equipment"] =		2^1		--2
+	,["relic"] = 		2^2		--4
+	,["artifact"] = 		2^3		--8
+	,["spell"] = 		2^4		--16
+	,["item"] = 			2^5		--32
+	,["gold"] = 			2^6		--64
+	,["currency"] = 		2^7		--128
+	,["honor"] = 		2^8		--256
+	,["reputation"] =	2^9		--512
+	,["xp"] = 			2^10	--1024
+	,["missing"] = 		2^11	--2048
 };
 
 WQT_GROUP_INFO = _L["GROUP_SEARCH_INFO"];
@@ -542,7 +542,13 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.fullTime end
 			}	
-
+	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["REWARD_NUM_DISPLAY"], ["tooltip"] = _L["REWARD_NUM_DISPLAY_TT"], ["min"] = 0, ["max"] = 3, ["valueStep"] = 1, ["isNew"] = true
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.list.rewardNumDisplay = value;
+				WQT_QuestScrollFrame:DisplayQuestList();
+			end
+			,["getValueFunc"] = function() return WQT.settings.list.rewardNumDisplay end
+			}
 	-- Map Pin
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_DISABLE"], ["tooltip"] = _L["PIN_DISABLE_TT"]
 			, ["valueChangedFunc"] = function(value) 
@@ -719,7 +725,7 @@ _V["WQT_CVAR_LIST"] = {
 _V["WQT_TYPEFLAG_LABELS"] = {
 		[2] = {["Default"] = DEFAULT, ["Elite"] = ELITE, ["PvP"] = PVP, ["Petbattle"] = PET_BATTLE_PVP_QUEUE, ["Dungeon"] = TRACKER_HEADER_DUNGEON, ["Raid"] = RAID, ["Profession"] = BATTLE_PET_SOURCE_4, ["Invasion"] = _L["TYPE_INVASION"], ["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE
 			, ["Daily"] = DAILY, ["Threat"] = REPORT_THREAT}
-		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = WORLD_QUEST_REWARD_FILTERS_RESOURCES, ["Artifact"] = ITEM_QUALITY6_DESC
+		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = CURRENCY, ["Artifact"] = ITEM_QUALITY6_DESC
 			, ["Relic"] = RELICSLOT, ["None"] = NONE, ["Experience"] = POWER_TYPE_EXPERIENCE, ["Honor"] = HONOR, ["Reputation"] = REPUTATION}
 	};
 
@@ -989,6 +995,7 @@ _V["WQT_DEFAULTS"] = {
 			includeDaily = true;
 			colorTime = true;
 			fullTime = false;
+			rewardNumDisplay = 1;
 		};
 
 		["pin"] = {
@@ -1037,9 +1044,15 @@ _V["PATCH_NOTES"] = {
 		{["version"] = "8.3.04"
 			,["new"] = {
 				"Added support for setting profiles, allowing people to have different settings for different characters."
+				,"New Quest List setting: Number of Rewards (default 1). Choose how many rewards you want displayed per quest (between 0 and 3)."
 			}
 			,["changes"] = {
-				"Dropdown menus can now be opened by clicking anywhere on the dropdown button, rather than just the arrow on the right."
+				"Renamed 'Resources' filter to 'Currency'. All resources are currency, not all currency are resources."
+				,"Reward filters now affect shown rewards. A quest with gold and currency as a reward will prioritize the gold. If the gold filter is turned off, it will prioritize the currency instead."
+				,"Dropdown menus can now be opened by clicking anywhere on the dropdown button, rather than just the arrow on the right."
+				,"Characters with the BfA expansion will now see BfA world quests on the Azeroth world map starting at level 110 instead of 120."
+				,"Characters with the Legion expansion will now see Legion world quests on the Azeroth world map starting at level 98 instead of 110."
+				,"Holding Ctrl while clicking a quest, with no rewards that can be previewed in the dressing room, will no longer zoom to the related zone."
 			}
 			,["fixes"] = {
 				"Fixed content on the full screen map not being constrained to the map area."

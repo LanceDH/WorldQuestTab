@@ -4,6 +4,8 @@
 
 	<Script file="Debug.lua"/>
 	
+	<GameTooltip name="WQT_DebugTooltip" frameStrata="TOOLTIP" hidden="true" parent="UIParent" inherits="GameTooltipTemplate"/>
+	
 	<EditBox name="WQT_CopyBoxTemplate" inherits="InputBoxTemplate" autoFocus="false" virtual="true"> 
 		<Size y="20"/>
 		<Layers>

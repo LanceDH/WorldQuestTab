@@ -52,8 +52,6 @@ function WQT_SettingsBaseMixin:Init(data)
 	if (self.DisabledOverlay) then
 		self.DisabledOverlay:SetFrameLevel(self:GetFrameLevel() + 2)
 	end
-	
-	--self:UpdateState();
 end
 
 function WQT_SettingsBaseMixin:Reset()
@@ -119,20 +117,12 @@ function WQT_SettingsQuestListMixin:OnLoad()
 	local mapInfo = WQT_Utils:GetCachedMapInfo(942);
 	self.zoneName = mapInfo.name;
 	questFrame.Extra:SetText(self.zoneName);
-	
-	questFrame.Reward:Show();
-	questFrame.Reward.Icon:SetTexture(1733697);
-	questFrame.Reward.Icon:Show();
-	questFrame.Reward.Amount:SetText(410);
-	questFrame.Reward.Amount:Show();
-	questFrame.Reward.IconBorder:SetVertexColor(0, 0.44, 0.87);
-	questFrame.Reward.IconBorder:Show();
 end
 
 function WQT_SettingsQuestListMixin:UpdateState()
 	local questFrame = self.Preview;
 	questFrame.Title:ClearAllPoints()
-	questFrame.Title:SetPoint("RIGHT", questFrame.Reward, "LEFT", -5, 0);
+	questFrame.Title:SetPoint("RIGHT", questFrame.Rewards, "LEFT", -5, 0);
 	if (WQT.settings.list.factionIcon) then
 		questFrame.Title:SetPoint("BOTTOMLEFT", questFrame.Faction, "RIGHT", 5, 1);
 	elseif (WQT.settings.list.typeIcon) then
@@ -189,12 +179,11 @@ function WQT_SettingsQuestListMixin:UpdateState()
 		questFrame.Time:SetVertexColor(_V["WQT_WHITE_FONT_COLOR"]:GetRGB());
 	end
 	
-	-- Reward colors
-	if ( WQT.settings.list.amountColors) then
-		questFrame.Reward.Amount:SetVertexColor(0.85, 0.6, 1);
-	else
-		questFrame.Reward.Amount:SetVertexColor(1, 1, 1);
-	end
+	-- Fake rewards
+	questFrame.Rewards:Reset();
+	questFrame.Rewards:AddReward(WQT_REWARDTYPE.equipment, 1733697, 3, 410, _V["WQT_COLOR_ARMOR"], true);
+	questFrame.Rewards:AddReward(WQT_REWARDTYPE.gold, 133784, 1, 132, _V["WQT_COLOR_GOLD"], false);
+	questFrame.Rewards:AddReward(WQT_REWARDTYPE.xp, 894556, 1, 34000, _V["WQT_COLOR_ITEM"], false);
 end
 
 --------------------------------

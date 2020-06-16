@@ -304,8 +304,6 @@ function WQT_Profiles:GetActiveProfileName()
 	return profile and profile.name or "Invalid Profile";
 end
 
-
-
 function WQT_Profiles:ClearDefaultsFromActive()
 	local category = "general";
 	
@@ -328,6 +326,3 @@ function WQT_Profiles:ResetActive()
 	category = "filters";
 	ForceCopy(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
 end
-
-
-

@@ -125,6 +125,8 @@ L["REMOVE_PROFILE"] = "Remove Profile"
 L["REMOVE_PROFILE_TT"] = "Remove the currently active profile."
 L["RESET_PROFILE"] = "Reset Profile"
 L["RESET_PROFILE_TT"] = "Reset the currently active profile to standard settings."
+L["REWARD_NUM_DISPLAY"] = "Number Of Rewards"
+L["REWARD_NUM_DISPLAY_TT"] = "Up to how many of the quest's rewards should be shown."
 
 if locale == "deDE" then
 L["COMBATLOCK"] = "Nicht verfügbar während eines Kampfes."

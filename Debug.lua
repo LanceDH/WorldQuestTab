@@ -53,7 +53,7 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 	level = level or 0;
 	local color = LIGHTBLUE_FONT_COLOR;
 	if(level == 0) then
-		AddIndentedDoubleLine(tooltip, "WQT debug info:", "", 0, color);
+		AddIndentedDoubleLine(tooltip, "questInfo data:", "", 0, color);
 	end
 	
 	-- First all non table values;
@@ -91,7 +91,7 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		AddIndentedDoubleLine(tooltip, "timeString", timeString, 2, color);
 		AddIndentedDoubleLine(tooltip, "color", timeColor, 2, color);
 		AddIndentedDoubleLine(tooltip, "timeStringShort", timeStringShort, 2, color);
-		AddIndentedDoubleLine(tooltip, "isExpired", WQT_Utils:QuestIsExpired(questInfo), 2, color);
+		AddIndentedDoubleLine(tooltip, "isExpired", questInfo:IsExpired(), 2, color);
 		-- Faction
 		local factionInfo = WQT_Utils:GetFactionDataInternal(factionId);
 		AddIndentedDoubleLine(tooltip, "faction", "", 1, color);
@@ -108,6 +108,18 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		AddIndentedDoubleLine(tooltip, "parentMapID", mapInfo.parentMapID, 2, color);
 		AddIndentedDoubleLine(tooltip, "mapType", mapInfo.mapType, 2, color);
 	end
+end
+
+function WQT:ShowDebugTooltipForQuest(questInfo, anchor)
+	if (not addon.debug) then return end;
+	WQT_DebugTooltip:SetOwner(anchor, "ANCHOR_LEFT");
+	WQT_DebugTooltip:SetText("Debug Info");
+	self:AddDebugToTooltip(WQT_DebugTooltip, questInfo)
+	WQT_DebugTooltip:Show();
+end
+
+function WQT:HideDebugTooltip()
+	WQT_DebugTooltip:Hide();
 end
 
 ------------------------

@@ -82,6 +82,65 @@
 			</OnLoad>
 		</Scripts>
 	</Button>
+
+	<Frame name="WQT_RewardTemplate" parentArray="rewardFrames" virtual="true">
+		<Size x="28" y="29" />
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Icon" file="Interface\ICONS\INV_Misc_QuestionMark"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" x="1" y="-1"/>
+					<Anchor point="BOTTOMRIGHT" x="-1" y="1"/>
+				</Anchors>
+			</Layer>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Amount" inherits="WQT_NumberFontOutline" maxLines="1" justifyH="RIGHT">
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT" x="1" y="1"/>
+					</Anchors>
+					<Color r="1" g="1" b="1"/>
+				</FontString>
+			</Layer>
+			<Layer level="BORDER">
+				<Texture parentKey="IconBorder" file="Interface\Common\WhiteIconFrame" hidden="false">
+					<Size x="28" y="28"/>
+					
+				</Texture>
+			</Layer>
+		</Layers>
+	</Frame>
+	
+	<Frame name="WQT_RewardDisplayTemplate" mixin="WQT_RewardDisplayMixin" virtual="true">
+		<Size x="28" y="28" />
+		
+		<Frames>
+			<Frame parentKey="Reward1" inherits="WQT_RewardTemplate" >
+				<Anchors>
+					<Anchor point="TOPLEFT"/>
+				</Anchors>
+			</Frame>
+			<Frame parentKey="Reward2" inherits="WQT_RewardTemplate" >
+				<Anchors>
+					<Anchor point="TOPLEFT" x="29"/>
+				</Anchors>
+			</Frame>
+			<Frame parentKey="Reward3" inherits="WQT_RewardTemplate" >
+				<Anchors>
+					<Anchor point="TOPLEFT" x="58"/>
+				</Anchors>
+			</Frame>
+			<Frame parentKey="Reward4" inherits="WQT_RewardTemplate" >
+				<Anchors>
+					<Anchor point="TOPLEFT" x="87"/>
+				</Anchors>
+			</Frame>
+			
+		</Frames>
+		
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+		</Scripts>
+	</Frame>
 	 
 	<Button name="WQT_QuestTemplate" mixin="WQT_ListButtonMixin" hidden="true" virtual="true" registerForClicks="LeftButtonUp, RightButtonUp" >
 		<Size x="260" y="32"/>
@@ -166,33 +225,11 @@
 					</OnLeave>
 				</Scripts>
 			</Frame>
-		
-			<Frame parentKey="Reward" hidden="true">
-				<Size x="28" y="28" />
+
+			<Frame parentKey="Rewards" inherits="WQT_RewardDisplayTemplate">
 				<Anchors>
 					<Anchor point="RIGHT" x="-5" y="0"/>
 				</Anchors>
-				<Layers>
-					<Layer level="BACKGROUND">
-						<Texture parentKey="Icon" file="Interface\ICONS\INV_Misc_QuestionMark"/>
-					</Layer>
-					<Layer level="ARTWORK">
-						<FontString parentKey="Amount" inherits="WQT_NumberFontOutline" maxLines="1" justifyH="RIGHT">
-							<Anchors>
-								<Anchor point="BOTTOMRIGHT" x="1" y="1"/>
-							</Anchors>
-							<Color r="1" g="1" b="1"/>
-						</FontString>
-					</Layer>
-					<Layer level="BORDER">
-						<Texture parentKey="IconBorder" file="Interface\Common\WhiteIconFrame" hidden="false">
-							<Size x="29" y="29"/>
-							<Anchors>
-								<Anchor point="CENTER" relativeKey="$parent.Icon"/>
-							</Anchors>
-						</Texture>
-					</Layer>
-				</Layers>
 			</Frame>
 			
 			<Frame parentKey="TrackedBorder" hidden="true" alpha="0.75" >
@@ -274,7 +311,7 @@
 				<FontString parentKey="Title" inherits="GameFontNormalLeft" maxLines="1" justifyV="BOTTOM">
 					<Anchors>
 						<Anchor point="BOTTOMLEFT" relativeKey="$parent.Faction" relativePoint="RIGHT" x="5"/>
-						<Anchor point="RIGHT" relativeKey="$parent.Reward" relativePoint="LEFT" x="-5"/>
+						<Anchor point="RIGHT" relativeKey="$parent.Rewards" relativePoint="LEFT" x="-5"/>
 					</Anchors>
 					<Color r="1" g="0.82" b="0" a="1"/>
 				</FontString>
@@ -286,10 +323,9 @@
 					<Color r="0.75" g="0.61" b="0"/>
 				</FontString>
 				<FontString parentKey="Extra" inherits="GameFontNormalSmall" maxLines="1" justifyH="LEFT">
-					<!--<Size x="80" y="0"/>-->
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.Time" relativePoint="TOPRIGHT" x="6"/>
-						<Anchor point="RIGHT" relativeKey="$parent.Reward" relativePoint="LEFT" x="-5"/>
+						<Anchor point="RIGHT" relativeKey="$parent.Rewards" relativePoint="LEFT" x="-5"/>
 					</Anchors>
 					<Color r="0.7" g="0.7" b="0.7"/>
 				</FontString>
@@ -1005,7 +1041,6 @@
 			</OnLoad>
 		</Scripts>
 	</GameTooltip>
-	
 	<Frame name="WQT_MapZoneHightlight" hidden="true">
 		<Size x="128" y="128"/>
 		<Anchors>

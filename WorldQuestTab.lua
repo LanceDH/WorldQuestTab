@@ -938,6 +938,79 @@ function WQT:OnEnable()
 	WQT_SettingsFrame:SetCategoryExpanded("GENERAL", true);
 end
 
+
+
+WQT_RewardDisplayMixin = {};
+
+function WQT_RewardDisplayMixin:OnLoad()
+	self.numDisplayed = 0;
+end
+
+function WQT_RewardDisplayMixin:Reset()
+	for k, reward in ipairs(self.rewardFrames) do
+		reward:Hide();
+	end
+	
+	self.numDisplayed = 0;
+	self:SetWidth(0.1);
+end
+
+function WQT_RewardDisplayMixin:AddRewardByInfo(rewardInfo)
+	-- A bit easier when updating buttons
+	self:AddReward(rewardInfo.type, rewardInfo.texture, rewardInfo.quality, rewardInfo.amount, rewardInfo.color, rewardInfo.canUpgrade);
+end
+
+function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, typeColor, canUpgrade)
+	local displayTypeSetting = WQT.settings.list.rewardDisplay;
+
+	-- Limit the amount of rewards shown
+	if (self.numDisplayed >= WQT.settings.list.rewardNumDisplay) then return; end
+	
+	self.numDisplayed = self.numDisplayed + 1;
+	local num = self.numDisplayed;
+	
+	amount = amount or 1;
+	
+	self:SetWidth(num * 28 + (num-1));
+	local r, g, b = GetItemQualityColor(quality);
+	local rewardFrame = self.rewardFrames[num];
+	rewardFrame:Show();
+	rewardFrame.Icon:SetTexture(texture);
+	rewardFrame.IconBorder:SetVertexColor(r, g, b);
+	
+	rewardFrame.Amount:Hide();
+	if (amount > 1) then
+		rewardFrame.Amount:Show();
+		local amountDisplay = GetLocalizedAbbreviatedNumber(amount);
+		
+		if (rewardType == WQT_REWARDTYPE.relic) then
+			amountDisplay = "+"..amountDisplay;
+		elseif (canUpgrade) then
+			amountDisplay = amountDisplay.."+";
+		end
+		rewardFrame.Amount:SetText(amountDisplay);
+		
+		
+		-- Color reward amount for certain types
+		r, g, b = 1, 1, 1
+		if ( WQT.settings.list.amountColors) then
+			if (rewardType == WQT_REWARDTYPE.artifact) then
+				r, g, b = GetItemQualityColor(2);
+			elseif (rewardType == WQT_REWARDTYPE.equipment or rewardType == WQT_REWARDTYPE.weapon) then
+				
+				r, g, b = typeColor:GetRGB();
+			end
+		end
+		
+		rewardFrame.Amount:SetVertexColor(r, g, b);
+		
+	end
+	
+	--if (C_PvP.IsWarModeDesired() and _V["WARMODE_BONUS_REWARD_TYPES"][questInfo.reward.type] and C_QuestLog.QuestHasWarModeBonus(questInfo.questId) ) then
+	--	rewardAmount = rewardAmount + floor(rewardAmount * C_PvP.GetWarModeRewardBonus() / 100);
+	--end
+end
+
 ------------------------------------------
 -- 			LISTBUTTON MIXIN			--
 ------------------------------------------
@@ -964,6 +1037,7 @@ function WQT_ListButtonMixin:OnClick(button)
 	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	if (not self.questId or self.questId== -1) then return end
 	local isBonus = QuestUtils_IsQuestBonusObjective(self.questId);
+	local reward = self.questInfo:GetReward(1);
 	
 	-- 'Hard' tracking quests with shift
 	if (IsModifiedClick("QUESTWATCHTOGGLE")) then
@@ -985,9 +1059,11 @@ function WQT_ListButtonMixin:OnClick(button)
 		end
 		
 	-- Trying gear with Ctrl
-	elseif (IsModifiedClick("DRESSUP") and (self.questInfo.reward.type == WQT_REWARDTYPE.equipment or self.questInfo.reward.type == WQT_REWARDTYPE.weapon)) then
-		local _, link = GetItemInfo(self.questInfo.reward.id);
-		DressUpItemLink(link)
+	elseif (IsModifiedClick("DRESSUP")) then
+		if (reward  and (reward.type == WQT_REWARDTYPE.equipment or reward.type == WQT_REWARDTYPE.weapon)) then
+			local _, link = GetItemInfo(reward.id);
+			DressUpItemLink(link)
+		end
 	
 	-- 'Soft' tracking and jumping map to relevant zone
 	elseif (button == "LeftButton") then
@@ -1039,6 +1115,8 @@ function WQT_ListButtonMixin:OnLeave()
 	WQT_WorldQuestFrame:HideWorldmapHighlight();
 	GameTooltip:Hide();
 	GameTooltip.ItemTooltip:Hide();
+	
+	WQT:HideDebugTooltip()
 end
 
 function WQT_ListButtonMixin:OnEnter()
@@ -1101,7 +1179,6 @@ end
 
 function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	if (self.questInfo ~= questInfo) then
-		self.Reward.Amount:Hide();
 		self.TrackedBorder:Hide();
 		self.Highlight:Hide();
 		self:Hide();
@@ -1124,7 +1201,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	self.Title:SetText(title);
 	
 	self.Title:ClearAllPoints()
-	self.Title:SetPoint("RIGHT", self.Reward, "LEFT", -5, 0);
+	self.Title:SetPoint("RIGHT", self.Rewards, "LEFT", -5, 0);
 	
 	if (WQT.settings.list.factionIcon) then
 		self.Title:SetPoint("BOTTOMLEFT", self.Faction, "RIGHT", 5, 1);
@@ -1180,66 +1257,13 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 		self.Type:SetWidth(0.1);
 	end
 	
-	-- Display reward
-	self.Reward:Show();
-	self.Reward.Icon:Show();
-	self.Reward:SetWidth(28);
-	if (questInfo.reward.typeBits == WQT_REWARDTYPE.missing) then
-		self.Reward.IconBorder:SetVertexColor(.75, 0, 0);
-		self.Reward.Icon:SetColorTexture(0, 0, 0, 0.5);
-		self.Reward.Amount:Hide();
-	elseif (questInfo.reward.typeBits == WQT_REWARDTYPE.none) then
-		self.Reward:Hide();
-		self.Reward:SetWidth(1);
-	else
-		local r, g, b = GetItemQualityColor(questInfo.reward.quality);
-		self.Reward.IconBorder:SetVertexColor(r, g, b);
-		if (questInfo.reward.texture == "") then
-			self.Reward:Hide();
-		end
-		self.Reward.Icon:SetTexture(questInfo.reward.texture);
-		
-		-- Show reward amount if it's more than 1
-		if (questInfo.reward.amount and questInfo.reward.amount > 1)  then
-			if (questInfo.reward.type == WQT_REWARDTYPE.relic) then
-				-- Relics add ilvl so + in front
-				self.Reward.Amount:SetText("+" .. questInfo.reward.amount);
-			elseif (questInfo.reward.type == WQT_REWARDTYPE.equipment) then
-				-- If gear can upgrade, add + to the back
-				if (questInfo.reward.canUpgrade) then
-					self.Reward.Amount:SetText(questInfo.reward.amount.."+");
-				else 
-					self.Reward.Amount:SetText(questInfo.reward.amount);
-				end
-			else
-				-- Regular values. If warmode applies, include bonus value.
-				local rewardAmount = questInfo.reward.amount;
-				if (C_PvP.IsWarModeDesired() and _V["WARMODE_BONUS_REWARD_TYPES"][questInfo.reward.type] and C_QuestLog.QuestHasWarModeBonus(questInfo.questId) ) then
-					rewardAmount = rewardAmount + floor(rewardAmount * C_PvP.GetWarModeRewardBonus() / 100);
-				end
-				self.Reward.Amount:SetText(GetLocalizedAbbreviatedNumber(rewardAmount));
-			end
-			
-			-- color amount text based on reward type
-			r, g, b = 1, 1, 1;
-			if ( WQT.settings.list.amountColors) then
-				if (questInfo.reward.type == WQT_REWARDTYPE.artifact) then
-					r, g, b = GetItemQualityColor(2);
-				elseif (questInfo.reward.type == WQT_REWARDTYPE.equipment or questInfo.reward.type == WQT_REWARDTYPE.weapon) then
-					if (questInfo.reward.canUpgrade) then
-						self.Reward.Amount:SetText(questInfo.reward.amount.."+");
-					end
-					r, g, b = questInfo.reward.color:GetRGB();
-				end
-			end
-	
-			self.Reward.Amount:SetVertexColor(r, g, b);
-			self.Reward.Amount:Show();
-		else
-			self.Reward.Amount:Hide();
-		end
+	-- Rewards
+	self.Rewards:Reset();
+	for k, rewardInfo in ipairs(questInfo.rewardList) do
+		self.Rewards:AddRewardByInfo(rewardInfo);
 	end
 	
+
 	-- Show border if quest is tracked
 	if (GetSuperTrackedQuestID() == questInfo.questId or IsWorldQuestWatched(questInfo.questId)) then
 		self.TrackedBorder:Show();
@@ -1289,7 +1313,6 @@ function WQT_ScrollListMixin:ResetButtons()
 	if buttons == nil then return; end
 	for i=1, #buttons do
 		local button = buttons[i];
-		button.Reward.Amount:Hide();
 		button.TrackedBorder:Hide();
 		button.Highlight:Hide();
 		button:Hide();
@@ -1349,7 +1372,7 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 	local numHidden = 0;
 	local totalValid = 0;
 	for k, questInfo in ipairs(self.questList) do
-		if (questInfo.isValid and questInfo.reward.type ~= WQT_REWARDTYPE.missing) then
+		if (questInfo.isValid and reward.hasRewardData) then
 			if (questInfo.passedFilter) then
 				numHidden = numHidden + 1;
 			end	
@@ -1367,7 +1390,7 @@ function WQT_ScrollListMixin:FilterQuestList()
 	local BlizFiltering = WQT:IsWorldMapFiltering();
 	for k, questInfo in ipairs(self.questList) do
 		questInfo.passedFilter = false;
-		if (questInfo.isValid and not questInfo.alwaysHide and questInfo.reward.type ~= WQT_REWARDTYPE.missing and not WQT_Utils:QuestIsExpired(questInfo)) then
+		if (questInfo.isValid and not questInfo.alwaysHide and questInfo.reward.type ~= WQT_REWARDTYPE.missing and not questInfo:IsExpired()) then
 			local pass = BlizFiltering and WorldMap_DoesWorldQuestInfoPassFilters(questInfo) or not BlizFiltering;
 			if (pass and WQTFiltering) then
 				pass = WQT:PassesAllFilters(questInfo);
@@ -1394,6 +1417,11 @@ function WQT_ScrollListMixin:UpdateQuestList()
 	if (not (flightShown or worldShown)) then return end	
 	
 	self.questList = WQT_WorldQuestFrame.dataProvider:GetIterativeList();
+	-- Update reward priorities
+	for k, questInfo in ipairs(self.questList) do
+		questInfo:ParseRewards();
+	end
+	
 	self:FilterQuestList();
 	self:ApplySort();
 	self:DisplayQuestList();
@@ -1426,7 +1454,6 @@ function WQT_ScrollListMixin:DisplayQuestList()
 		if ( displayIndex <= #list) then
 			button:Update(list[displayIndex], shouldShowZone);
 		else
-			button.Reward.Amount:Hide();
 			button.TrackedBorder:Hide();
 			button.Highlight:Hide();
 			button:Hide();

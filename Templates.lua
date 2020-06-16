@@ -4,6 +4,7 @@ local _L = addon.L
 local _V = addon.variables;
 local ADD = LibStub("AddonDropDown-1.0");
 local WQT_Utils = addon.WQT_Utils;
+local WQT_Profiles = addon.WQT_Profiles;
 
 --------------------------------
 -- Custom Event mixin
@@ -34,7 +35,6 @@ function WQT_CallbackMixin:TriggerCallback(event, ...)
 		func(...);
 	end
 end
-
 
 --------------------------------
 -- WQT_ScrollFrameMixin
@@ -247,7 +247,7 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 	if (not questInfo or not questInfo.questId) then return timeLeftSeconds, timeString, color ,timeStringShort, timeLeftMinutes, category end
 	
 	-- Time ran out, waiting for an update
-	if (self:QuestIsExpired(questInfo)) then
+	if (questInfo:IsExpired()) then
 		timeString = RAID_INSTANCE_EXPIRES_EXPIRED;
 		timeStringShort = "Exp."
 		color = GRAY_FONT_COLOR;
@@ -333,11 +333,6 @@ function WQT_Utils:GetPinTime(questInfo)
 	return start, total, timeLeft, seconds, color, timeStringShort, category;
 end
 
-function WQT_Utils:QuestIsExpired(questInfo)
-	local timeLeftSeconds =  C_TaskQuest.GetQuestTimeLeftSeconds(questInfo.questId) or 0;
-	return questInfo.time.seconds and questInfo.time.seconds > 0 and timeLeftSeconds < 1;
-end
-
 function WQT_Utils:GetMapInfoForQuest(questId)
 	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
 	return WQT_Utils:GetCachedMapInfo(zoneId);
@@ -357,14 +352,14 @@ function WQT_Utils:ItterateAllBonusObjectivePins(func)
 end
 
 function WQT_Utils:ShowQuestTooltip(button, questInfo)
+	WQT:ShowDebugTooltipForQuest(questInfo, button);
+	
 	GameTooltip:SetOwner(button, "ANCHOR_RIGHT");
 
 	-- In case we somehow don't have data on this quest, even through that makes no sense at this point
 	if (not questInfo.questId or not HaveQuestData(questInfo.questId)) then
 		GameTooltip:SetText(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
 		GameTooltip.recalculatePadding = true;
-		-- Add debug lines
-		WQT:AddDebugToTooltip(GameTooltip, questInfo);
 		GameTooltip:Show();
 		return;
 	end
@@ -442,8 +437,6 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo)
 			end
 		end
 	end
-	
-	WQT:AddDebugToTooltip(GameTooltip, questInfo);
 
 	GameTooltip:Show();
 	GameTooltip.recalculatePadding = true;
@@ -602,6 +595,39 @@ function WQT_Utils:GetQuestMapLocation(questId, mapId)
 	end
 	-- Could not get a position
 	return 0, 0;
+end
+
+function WQT_Utils:RewardTypePassesFilter(rewardType) 
+	local rewardFilters = WQT.settings.filters[_V["FILTER_TYPES"].reward].flags;
+	if(rewardType == WQT_REWARDTYPE.equipment or rewardType == WQT_REWARDTYPE.weapon) then
+		return rewardFilters.armor;
+	end
+	if(rewardType == WQT_REWARDTYPE.spell or rewardType == WQT_REWARDTYPE.item) then
+		return rewardFilters.Item;
+	end
+	if(rewardType == WQT_REWARDTYPE.gold) then
+		return rewardFilters.Gold;
+	end
+	if(rewardType == WQT_REWARDTYPE.currency) then
+		return rewardFilters.Currency;
+	end
+	if(rewardType == WQT_REWARDTYPE.artifact) then
+		return rewardFilters.Artifact;
+	end
+	if(rewardType == WQT_REWARDTYPE.relic) then
+		return rewardFilters.Relic;
+	end
+	if(rewardType == WQT_REWARDTYPE.xp) then
+		return rewardFilters.Experience;
+	end
+	if(rewardType == WQT_REWARDTYPE.honor) then
+		return rewardFilters.Honor ;
+	end
+	if(rewardType == WQT_REWARDTYPE.reputation) then
+		return rewardFilters.Reputation;
+	end
+
+	return true;
 end
 
 function WQT_Utils:DeepWipeTable(t)

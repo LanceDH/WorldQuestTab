@@ -1,4 +1,5 @@
 ﻿local addonName, addon = ...
+local WQT = addon.WQT;
 local _L = addon.L
 local _V = addon.variables;
 local ADD = LibStub("AddonDropDown-1.0");
@@ -749,6 +750,7 @@ function WQT_PinMixin:OnLeave()
 	self:ClearFocus();
 
 	GameTooltip:Hide();
+	WQT:HideDebugTooltip()
 	-- Stop highlight quest in list
 	WQT_QuestScrollFrame.PoIHoverId = nil;
 	WQT_QuestScrollFrame:DisplayQuestList();
