@@ -33,6 +33,8 @@ WQT_REWARDTYPE = {
 	,["xp"] = 			2^10	--1024
 	,["missing"] = 		2^11	--2048
 };
+-- Combos
+WQT_REWARDTYPE.gear = bit.bor(WQT_REWARDTYPE.weapon, WQT_REWARDTYPE.equipment);
 
 WQT_GROUP_INFO = _L["GROUP_SEARCH_INFO"];
 WQT_CONTAINER_DRAG = _L["CONTAINER_DRAG"];
@@ -521,6 +523,13 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.showZone end
 			}
+	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["REWARD_NUM_DISPLAY"], ["tooltip"] = _L["REWARD_NUM_DISPLAY_TT"], ["min"] = 0, ["max"] = 3, ["valueStep"] = 1, ["isNew"] = true
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.list.rewardNumDisplay = value;
+				WQT_QuestScrollFrame:DisplayQuestList();
+			end
+			,["getValueFunc"] = function() return WQT.settings.list.rewardNumDisplay end
+			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["AMOUNT_COLORS"], ["tooltip"] = _L["AMOUNT_COLORS_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.list.amountColors = value;
@@ -542,13 +551,6 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.fullTime end
 			}	
-	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["REWARD_NUM_DISPLAY"], ["tooltip"] = _L["REWARD_NUM_DISPLAY_TT"], ["min"] = 0, ["max"] = 3, ["valueStep"] = 1, ["isNew"] = true
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.list.rewardNumDisplay = value;
-				WQT_QuestScrollFrame:DisplayQuestList();
-			end
-			,["getValueFunc"] = function() return WQT.settings.list.rewardNumDisplay end
-			}
 	-- Map Pin
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_DISABLE"], ["tooltip"] = _L["PIN_DISABLE_TT"]
 			, ["valueChangedFunc"] = function(value) 
@@ -650,15 +652,14 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.timeIcon; end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI;  end
-			}				
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_REWARD_TYPE"], ["tooltip"] = _L["PIN_REWARD_TYPE_TT"]
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.pin.rewardTypeIcon = value;
-				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-			end
-			,["getValueFunc"] = function() return WQT.settings.pin.rewardTypeIcon; end
-			,["isDisabled"] = function() return WQT.settings.pin.disablePoI; end
 			}	
+	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["REWARD_NUM_DISPLAY_PIN"], ["tooltip"] = _L["REWARD_NUM_DISPLAY_PIN_TT"], ["min"] = 0, ["max"] = 3, ["valueStep"] = 1, ["isNew"] = true
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.pin.numRewardIcons = value;
+				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
+			end
+			,["getValueFunc"] = function() return WQT.settings.pin.numRewardIcons end
+			}
 }
 
 _V["SETTING_UTILITIES_LIST"] = {
@@ -741,26 +742,42 @@ _V["SORT_OPTION_ORDER"] = {
 }
 _V["SORT_FUNCTIONS"] = {
 	["rewardType"] = function(a, b) 
-			if (a.reward.type and b.reward.type and a.reward.type ~= b.reward.type) then 
-				if (a.reward.type == WQT_REWARDTYPE.none or b.reward.type == WQT_REWARDTYPE.none) then
-					return a.reward.type > b.reward.type; 
+			local aType = a:GetRewardType();
+			local bType = b:GetRewardType();
+			if (aType and bType and aType ~= bType) then 
+				if (aType == WQT_REWARDTYPE.none or aType == WQT_REWARDTYPE.none) then
+					return aType > bType; 
 				end
 			
-				return a.reward.type < b.reward.type; 
+				return aType < bType; 
 			end 
 		end
-	,["rewardQuality"] = function(a, b) if (a.reward.quality and b.reward.quality and a.reward.quality ~= b.reward.quality) then return a.reward.quality > b.reward.quality; end end
-	,["canUpgrade"] = function(a, b) if (a.reward.canUpgrade and b.reward.canUpgrade and a.reward.canUpgrade ~= b.reward.canUpgrade) then return a.reward.canUpgrade and not b.reward.canUpgrade; end end
+	,["rewardQuality"] = function(a, b) 
+			local aQuality = a:GetRewardQuality();
+			local bQuality = b:GetRewardQuality();
+			if (aQuality and bQuality and aQuality ~= bQuality) then 
+				return aQuality > bQuality; 
+			end 
+		end
+	,["canUpgrade"] = function(a, b) 
+			local aCanUpgrade = a:GetRewardCanUpgrade();
+			local bCanUpgrade = b:GetRewardCanUpgrade();
+			if (aCanUpgrade and bCanUpgrade and aCanUpgrade ~= bCanUpgrade) then
+				return aCanUpgrade and not bCanUpgrade; 
+			end
+		end
 	,["seconds"] = function(a, b) if (a.time.seconds ~= b.time.seconds) then return a.time.seconds < b.time.seconds; end end
 	,["rewardAmount"] = function(a, b) 
-			local amountA = a.reward.amount;
-			local amountB = b.reward.amount;
+			local amountA = a:GetRewardAmount();
+			local amountB = b:GetRewardAmount();
 			if (C_PvP.IsWarModeDesired()) then
+				local aType = a:GetRewardType();
+				local bType = b:GetRewardType();
 				local bonus = C_PvP.GetWarModeRewardBonus() / 100;
-				if (_V["WARMODE_BONUS_REWARD_TYPES"][a.reward.type] and C_QuestLog.QuestHasWarModeBonus(a.questId)) then
+				if (_V["WARMODE_BONUS_REWARD_TYPES"][aType] and C_QuestLog.QuestHasWarModeBonus(a.questId)) then
 					amountA = amountA + floor(amountA * bonus);
 				end
-				if (_V["WARMODE_BONUS_REWARD_TYPES"][b.reward.type] and C_QuestLog.QuestHasWarModeBonus(b.questId)) then
+				if (_V["WARMODE_BONUS_REWARD_TYPES"][bType] and C_QuestLog.QuestHasWarModeBonus(b.questId)) then
 					amountB = amountB + floor(amountB * bonus);
 				end
 			end
@@ -770,8 +787,10 @@ _V["SORT_FUNCTIONS"] = {
 			end 
 		end
 	,["rewardId"] = function(a, b)
-			if (a.reward.id and b.reward.id and a.reward.id ~= b.reward.id) then 
-				return a.reward.id < b.reward.id; 
+			local aId = a:GetRewardId();
+			local bId = b:GetRewardId();
+			if (aId and bId and aId ~= bId) then 
+				return aId < bId; 
 			end 
 		end
 	,["faction"] = function(a, b) 
@@ -1001,7 +1020,7 @@ _V["WQT_DEFAULTS"] = {
 		["pin"] = {
 			-- Mini icons
 			typeIcon = true;
-			rewardTypeIcon = false;
+			numRewardIcons = 0;
 			rarityIcon = false;
 			timeIcon = false;
 			

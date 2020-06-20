@@ -13,15 +13,34 @@
 -- mapInfo					[table] zone related values, for more accurate position use WQT_Utils:GetQuestMapLocation
 --		mapX					[number] x pin position
 --		mapY					[number] y pin position
--- reward					[table] reward related values
---		type					[number] type of the most valueable reward (and the one displayed). See WQT_REWARDTYPE in Data.lua
---		texture					[number/string] texture of the reward. can be string for things like gold or unknown reward
---		amount					[amount] amount of items, gold, rep, or item level
---		id						[number, nullable] itemId for reward. null if not an item
---		quality					[number] item quality; common, rare, epic, etc
---		canUpgrade				[boolean, nullable] true if item has a chance to upgrade (e.g. ilvl 285+)
---		color					[Color] color based on the type of reward
+-- Reward					[table]
 --		typeBits				[bitfield] a combination of flags for all the types of rewards the quest provides. I.e. AP + gold + rep = 2^3 + 2^6 + 2^9 = 584 (1001001000‬)
+-- rewardList				[table] List of rewards sorted by priority and filter settings
+--		iterative list of rewardInfo tables
+--
+-- questInfo Functions
+-- 
+-- GetRewardType()			Type of the top reward
+-- GetRewardId()			Id of the top reward
+-- GetRewardAmount()		Amount of the top reward
+-- GetRewardTexture()		Texture of the top reward
+-- GetRewardQuality()		Quality of the top reward
+-- GetRewardColor()			Color of the top reward
+-- GetRewardCanUpgrade()	If the top reward has a chance of upgrading
+-- TryDressUpReward()		Try all of the rewards to be shown in the dressing room
+-- IsExpired()				Whether the quest time is expired or not
+-- GetReward(index)			Get a specific reward from the list. nil if index is not available
+-- IterateRewards()			Return ipairs of the rewards
+
+-- RewardInfo structure
+--
+--	type					[number] type of reward. See WQT_REWARDTYPE in Data.lua
+--	texture					[number/string] texture of the reward. can be string for things like gold or unknown reward
+--	amount					[amount] amount of items, gold, rep, or item level
+--	id						[number] itemId for reward. 0 if not applicable (i.e. gold)
+--	quality					[number] item quality; common, rare, epic, etc
+--	canUpgrade				[boolean, nullable] true if item has a chance to upgrade (e.g. ilvl 285+)
+--	color					[Color] color based on the type of reward
 
 --
 -- For other data use following functions
@@ -38,16 +57,17 @@
 --
 -- Callbacks (WQT_WorldQuestFrame:RegisterCallback(event, func))
 --
--- "InitFilter" 		(self, level) After InitFilter finishes
--- "DisplayQuestList" 	(skipPins) After all buttons in the list have been updated
--- "FilterQuestList"	() After the list has been filtered
--- "UpdateQuestList"	() After the list has been both filtered and updated
--- "QuestsLoaded"		() After the dataprovider updated its quest data
--- "WaitingRoomUpdated"	() After data in the dataprovider's waitingroom got updated
--- "SortChanged"		(category) After sort category was changed to a different one
--- "ListButtonUpdate"	(button) After a button was updated and shown
--- "AnchorChanged"		(anchor) After the anchor of the quest list has changed
--- "MapPinInitialized"	(pin) After a map pin has been fully setup to be shown
+-- "InitFilter" 			(self, level) After InitFilter finishes
+-- "DisplayQuestList" 		(skipPins) After all buttons in the list have been updated
+-- "FilterQuestList"		() After the list has been filtered
+-- "UpdateQuestList"		() After the list has been both filtered and updated
+-- "QuestsLoaded"			() After the dataprovider updated its quest data
+-- "WaitingRoomUpdated"		() After data in the dataprovider's waitingroom got updated
+-- "SortChanged"			(category) After sort category was changed to a different one
+-- "ListButtonUpdate"		(button) After a button was updated and shown
+-- "AnchorChanged"			(anchor) After the anchor of the quest list has changed
+-- "MapPinInitialized"		(pin) After a map pin has been fully setup to be shown
+-- "WorldQuestCompleted"	(questId, questInfo) When a world quest is completed. questInfo gets cleared shortly after this callback is triggered
 
 local addonName, addon = ...
 
@@ -535,6 +555,10 @@ local function ConvertOldSettings(version)
 			WQT.db.global.general.fullScreenContainerPos = WQT.db.global.fullScreenContainerPos;
 			WQT.db.global.fullScreenContainerPos = nil;
 		end
+		
+		-- Forgot to clear this in 8.3.01
+		WQT.db.global.pin.bigPoI = nil;
+		WQT.db.global.pin.reward = nil; 
 	end
 end
 
@@ -955,12 +979,12 @@ function WQT_RewardDisplayMixin:Reset()
 	self:SetWidth(0.1);
 end
 
-function WQT_RewardDisplayMixin:AddRewardByInfo(rewardInfo)
+function WQT_RewardDisplayMixin:AddRewardByInfo(rewardInfo, warmodeBonus)
 	-- A bit easier when updating buttons
-	self:AddReward(rewardInfo.type, rewardInfo.texture, rewardInfo.quality, rewardInfo.amount, rewardInfo.color, rewardInfo.canUpgrade);
+	self:AddReward(rewardInfo.type, rewardInfo.texture, rewardInfo.quality, rewardInfo.amount, rewardInfo.color, rewardInfo.canUpgrade, warmodeBonus);
 end
 
-function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, typeColor, canUpgrade)
+function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, typeColor, canUpgrade, warmodeBonus)
 	local displayTypeSetting = WQT.settings.list.rewardDisplay;
 
 	-- Limit the amount of rewards shown
@@ -970,8 +994,12 @@ function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, 
 	local num = self.numDisplayed;
 	
 	amount = amount or 1;
+	-- Calculate warmode bonus
+	if (warmodeBonus  and C_PvP.IsWarModeDesired() and _V["WARMODE_BONUS_REWARD_TYPES"][rewardType]) then
+		amount = amount + floor(amount * C_PvP.GetWarModeRewardBonus() / 100);
+	end
 	
-	self:SetWidth(num * 28 + (num-1));
+	self:SetWidth(num * 29 - 1);
 	local r, g, b = GetItemQualityColor(quality);
 	local rewardFrame = self.rewardFrames[num];
 	rewardFrame:Show();
@@ -981,6 +1009,7 @@ function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, 
 	rewardFrame.Amount:Hide();
 	if (amount > 1) then
 		rewardFrame.Amount:Show();
+		
 		local amountDisplay = GetLocalizedAbbreviatedNumber(amount);
 		
 		if (rewardType == WQT_REWARDTYPE.relic) then
@@ -1005,10 +1034,6 @@ function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, 
 		rewardFrame.Amount:SetVertexColor(r, g, b);
 		
 	end
-	
-	--if (C_PvP.IsWarModeDesired() and _V["WARMODE_BONUS_REWARD_TYPES"][questInfo.reward.type] and C_QuestLog.QuestHasWarModeBonus(questInfo.questId) ) then
-	--	rewardAmount = rewardAmount + floor(rewardAmount * C_PvP.GetWarModeRewardBonus() / 100);
-	--end
 end
 
 ------------------------------------------
@@ -1060,11 +1085,7 @@ function WQT_ListButtonMixin:OnClick(button)
 		
 	-- Trying gear with Ctrl
 	elseif (IsModifiedClick("DRESSUP")) then
-		if (reward  and (reward.type == WQT_REWARDTYPE.equipment or reward.type == WQT_REWARDTYPE.weapon)) then
-			local _, link = GetItemInfo(reward.id);
-			DressUpItemLink(link)
-		end
-	
+		self.questInfo:TryDressUpReward();
 	-- 'Soft' tracking and jumping map to relevant zone
 	elseif (button == "LeftButton") then
 		-- Don't track bonus objectives. The object tracker doesn't like it;
@@ -1259,8 +1280,8 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	
 	-- Rewards
 	self.Rewards:Reset();
-	for k, rewardInfo in ipairs(questInfo.rewardList) do
-		self.Rewards:AddRewardByInfo(rewardInfo);
+	for k, rewardInfo in questInfo:IterateRewards() do
+		self.Rewards:AddRewardByInfo(rewardInfo, C_QuestLog.QuestCanHaveWarModeBonus(self.questId));
 	end
 	
 
@@ -1372,7 +1393,7 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 	local numHidden = 0;
 	local totalValid = 0;
 	for k, questInfo in ipairs(self.questList) do
-		if (questInfo.isValid and reward.hasRewardData) then
+		if (questInfo.isValid and questInfo.hasRewardData) then
 			if (questInfo.passedFilter) then
 				numHidden = numHidden + 1;
 			end	
@@ -1390,7 +1411,7 @@ function WQT_ScrollListMixin:FilterQuestList()
 	local BlizFiltering = WQT:IsWorldMapFiltering();
 	for k, questInfo in ipairs(self.questList) do
 		questInfo.passedFilter = false;
-		if (questInfo.isValid and not questInfo.alwaysHide and questInfo.reward.type ~= WQT_REWARDTYPE.missing and not questInfo:IsExpired()) then
+		if (questInfo.isValid and not questInfo.alwaysHide and questInfo.hasRewardData and not questInfo:IsExpired()) then
 			local pass = BlizFiltering and WorldMap_DoesWorldQuestInfoPassFilters(questInfo) or not BlizFiltering;
 			if (pass and WQTFiltering) then
 				pass = WQT:PassesAllFilters(questInfo);
@@ -2318,6 +2339,11 @@ function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
 end
 
 function WQT_CoreMixin:QUEST_TURNED_IN(questId)
+	local questInfo = WQT_WorldQuestFrame.dataProvider:GetQuestById(questId);
+	if (questInfo) then
+		WQT_WorldQuestFrame:TriggerCallback("WorldQuestCompleted", questId, questInfo);
+	end
+
 	-- Remove TomTom arrow if tracked
 	if (TomTom and WQT.settings.general.useTomTom and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
 		WQT_Utils:RemoveTomTomArrowbyQuestId(questId);

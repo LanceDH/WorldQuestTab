@@ -600,7 +600,7 @@ end
 function WQT_Utils:RewardTypePassesFilter(rewardType) 
 	local rewardFilters = WQT.settings.filters[_V["FILTER_TYPES"].reward].flags;
 	if(rewardType == WQT_REWARDTYPE.equipment or rewardType == WQT_REWARDTYPE.weapon) then
-		return rewardFilters.armor;
+		return rewardFilters.Armor;
 	end
 	if(rewardType == WQT_REWARDTYPE.spell or rewardType == WQT_REWARDTYPE.item) then
 		return rewardFilters.Item;

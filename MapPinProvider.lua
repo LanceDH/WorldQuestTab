@@ -493,7 +493,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.Ring:Show();
 	self.RingBG:Show();
 	if (ringType == _V["RING_TYPES"].reward) then
-		r, g, b = questInfo.reward.color:GetRGB();
+		r, g, b = questInfo:GetRewardColor():GetRGB();
 	elseif (rarity and ringType == _V["RING_TYPES"].rarity) then
 		if (rarity > 1 and WORLD_QUEST_QUALITY_COLORS[rarity]) then
 			r, g, b = WORLD_QUEST_QUALITY_COLORS[rarity].color:GetRGB();
@@ -567,12 +567,17 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	end
 	
 	-- Reward Type Icon
-	local rewardTypeAtlas = WQT_Utils:GetSetting("pin", "rewardTypeIcon") and _V["REWARD_TYPE_ATLAS"][questInfo.reward.type];
-	if (rewardTypeAtlas) then
-		local iconFrame = self:AddIcon(rewardTypeAtlas.texture, rewardTypeAtlas.l, rewardTypeAtlas.r, rewardTypeAtlas.t, rewardTypeAtlas.b);
-		iconFrame.Icon:SetScale((rewardTypeAtlas.scale or 1))
-		if (rewardTypeAtlas.color) then
-			iconFrame.Icon:SetVertexColor(rewardTypeAtlas.color:GetRGB());
+	local numRewardIcons = WQT_Utils:GetSetting("pin", "numRewardIcons");
+	for k, rewardInfo in questInfo:IterateRewards() do
+		if (k <= numRewardIcons) then
+			local rewardTypeAtlas = _V["REWARD_TYPE_ATLAS"][rewardInfo.type];
+			if (rewardTypeAtlas) then
+				local iconFrame = self:AddIcon(rewardTypeAtlas.texture, rewardTypeAtlas.l, rewardTypeAtlas.r, rewardTypeAtlas.t, rewardTypeAtlas.b);
+				iconFrame.Icon:SetScale((rewardTypeAtlas.scale or 1))
+				if (rewardTypeAtlas.color) then
+					iconFrame.Icon:SetVertexColor(rewardTypeAtlas.color:GetRGB());
+				end
+			end
 		end
 	end
 	
@@ -596,10 +601,9 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.Icon:Show();
 
 	if(settingCenterType == _V["PIN_CENTER_TYPES"].reward) then
-		if (questInfo.reward.texture) then
-			self.Icon:SetTexture(questInfo.reward.texture);
-			self.Icon:SetTexCoord(0, 1, 0, 1);
-		end
+		local rewardTexture = questInfo:GetRewardTexture();
+		self.Icon:SetTexture(rewardTexture);
+		self.Icon:SetTexCoord(0, 1, 0, 1);
 	elseif(settingCenterType == _V["PIN_CENTER_TYPES"].blizzard) then
 		self.CustomTypeIcon:SetShown(true);
 		local selected = questInfo.questId == GetSuperTrackedQuestID()

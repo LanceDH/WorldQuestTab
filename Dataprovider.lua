@@ -58,7 +58,8 @@ end
 local function RewardSortFunc(a, b)
 	local aPassed = WQT_Utils:RewardTypePassesFilter(a.type);
 	local bPassed = WQT_Utils:RewardTypePassesFilter(b.type);
-
+	
+	-- Rewards that pass the filters get priority
 	if (aPassed ~= bPassed) then
 		return aPassed and not bPassed;
 	end
@@ -111,22 +112,18 @@ end
 -- QuestInfoMixin
 ----------------------------
 
-local QuestInfoMixin = {};
-
-function QuestInfoMixin:OnCreate()
-	self.time = {};
-	self.reward = { 
-			["type"] = WQT_REWARDTYPE.missing;
-			["typeBits"] = WQT_REWARDTYPE.missing;
-			["id"] = 0;
-			["amount"] = 0;
-			["texture"] = 134400;
-			["quality"] = 1;
-			["color"] = _V["WQT_COLOR_MISSING"];
-		};
-	self.rewardList = {};
-	self.mapInfo = {};
+local function QuestCreationFunc()
+	local questInfo = CreateFromMixins(QuestInfoMixin);
+	questInfo:OnCreate();
+	return questInfo;
 end
+
+local function QuestResetFunc(pool, questInfo)
+	questInfo:Reset();
+end
+
+
+local QuestInfoMixin = {};
 
 function QuestInfoMixin:Init(questId, isDaily, isCombatAllyQuest, alwaysHide, posX, posY)
 	self.questId = questId;
@@ -144,29 +141,34 @@ function QuestInfoMixin:Init(questId, isDaily, isCombatAllyQuest, alwaysHide, po
 	return self.hasRewardData;
 end
 
+function QuestInfoMixin:OnCreate()
+	self.time = {};
+	self.reward = { 
+			["typeBits"] = WQT_REWARDTYPE.missing;
+		};
+	self.rewardList = {};
+	self.mapInfo = {};
+end
+
 function QuestInfoMixin:SetMapPos(posX, posY)
 	self.mapInfo.mapX = posX;
 	self.mapInfo.mapY = posY;
 end
 
 function QuestInfoMixin:Reset()
+	wipe(self.rewardList);
+	
 	WipeQuestInfoRecursive(self);
 	-- Reset defaults
-	self.reward.type = WQT_REWARDTYPE.missing;
 	self.reward.typeBits = WQT_REWARDTYPE.missing;
-	self.reward.amount = 0;
-	self.reward.texture = 134400;
-	self.reward.quality = 1;
-	self.reward.color = _V["WQT_COLOR_MISSING"];
 	self.hasRewardData = false;
 	self.isValid = false;
-
-	wipe(self.rewardList);
 end
 
 function QuestInfoMixin:LoadRewards()
 	local haveData = HaveQuestRewardData(self.questId);
 	if (haveData) then
+		self.reward.typeBits = WQT_REWARDTYPE.none;
 		-- Items
 		if (GetNumQuestLogRewards(self.questId) > 0) then
 			local _, texture, numItems, quality, _, rewardId, ilvl = GetQuestLogRewardInfo(1, self.questId);
@@ -241,8 +243,7 @@ function QuestInfoMixin:AddReward(rewardType, amount, texture, quality, color, i
 
 	-- Create reward
 	local rewardInfo = self.rewardList[index] or {};
-	
-	rewardInfo.id = id;
+	rewardInfo.id = id or 0;
 	rewardInfo.type = rewardType
 	rewardInfo.amount = amount
 	rewardInfo.texture = texture
@@ -258,25 +259,26 @@ end
 
 function QuestInfoMixin:ParseRewards()
 	table.sort(self.rewardList, RewardSortFunc);
-	
-	local bestReward = self.rewardList[1];
-	
-	if (bestReward) then
-		self.reward.id = bestReward.id;
-		self.reward.type = bestReward.type
-		self.reward.amount = bestReward.amount
-		self.reward.texture = bestReward.texture
-		self.reward.quality = bestReward.quality
-		self.reward.color = bestReward.color
-		self.reward.canUpgrade = bestReward.canUpgrade;
-	else
-		self.reward.typeBits = 0;
-		self.reward.type = WQT_REWARDTYPE.none;
-		self.reward.amount = 0;
-		self.reward.texture = 952659;
-		self.reward.quality = 1;
-		self.reward.color = _V["WQT_COLOR_NONE"];
+end
+
+function QuestInfoMixin:TryDressUpReward()
+	for k, rewardInfo in questInfo:IterateRewards() do
+		if (bit.band(rewardInfo.type, WQT_REWARDTYPE.gear) > 0) then
+			local _, link = GetItemInfo(rewardInfo.id);
+			DressUpItemLink(link)
+		end
 	end
+end
+
+function QuestInfoMixin:IterateRewards()
+	return ipairs(self.rewardList);
+end
+
+function QuestInfoMixin:GetReward(index)
+	if (index < 1 or index > #self.rewardList) then
+		return nil;
+	end
+	return self.rewardList[index];
 end
 
 function QuestInfoMixin:IsExpired()
@@ -284,21 +286,40 @@ function QuestInfoMixin:IsExpired()
 	return self.time.seconds and self.time.seconds > 0 and timeLeftSeconds < 1;
 end
 
-function QuestInfoMixin:GetReward(index)
-	if (index < 1 or index > #self.rewardList) then
-		return
-	end
-	return self.rewardList[index];
+-- Getters for the most important reward
+function QuestInfoMixin:GetRewardType()
+	local reward = self.rewardList[1];
+	return reward and reward.type or WQT_REWARDTYPE.missing;
 end
 
-local function QuestCreationFunc()
-	local questInfo = CreateFromMixins(QuestInfoMixin);
-	questInfo:OnCreate();
-	return questInfo;
+function QuestInfoMixin:GetRewardId()
+	local reward = self.rewardList[1];
+	return reward and reward.id or 0;
 end
 
-local function QuestResetFunc(pool, questInfo)
-	questInfo:Reset();
+function QuestInfoMixin:GetRewardAmount()
+	local reward = self.rewardList[1];
+	return reward and reward.amount or 0;
+end
+
+function QuestInfoMixin:GetRewardTexture()
+	local reward = self.rewardList[1];
+	return reward and reward.texture or 134400;
+end
+
+function QuestInfoMixin:GetRewardQuality()
+	local reward = self.rewardList[1];
+	return reward and reward.quality or 1;
+end
+
+function QuestInfoMixin:GetRewardColor()
+	local reward = self.rewardList[1];
+	return reward and reward.color or _V["WQT_COLOR_MISSING"];
+end
+
+function QuestInfoMixin:GetRewardCanUpgrade()
+	local reward = self.rewardList[1];
+	return reward and reward.canUpgrade;
 end
 
 ----------------------------
@@ -313,7 +334,6 @@ WQT_DataProvider = CreateFromMixins(WQT_CallbackMixin);
 
 function WQT_DataProvider:OnLoad()
 	self.pool = CreateObjectPool(QuestCreationFunc, QuestResetFunc);
-	self.rewardPool = CreateObjectPool(RewardCreationFunc, RewardResetFunc);
 	self.iterativeList = {};
 	self.keyList = {};
 	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room

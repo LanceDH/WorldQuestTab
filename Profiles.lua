@@ -130,16 +130,34 @@ local function AddProfileToReferenceList(id, name)
 	end
 end
 
+local function ApplyVersionChanges(profile, version)
+	if (version < "8.3.04") then
+		profile.pin.numRewardIcons = profile.pin.rewardTypeIcon and 1 or 0;
+		profile.pin.rewardTypeIcon = nil;
+	end
+end
+
 function WQT_Profiles:InitSettings()
+	-- Version checking
+	local settingVersion = WQT.db.global.versionCheck or"0";
+	local currentVersion = GetAddOnMetadata(addonName, "version");
+	if (settingVersion < currentVersion) then
+		WQT.db.global.updateSeen = false;
+		WQT.db.global.versionCheck  = currentVersion;
+	end
+	
+	-- Setup profiles
 	WQT.settings = {["general"] = {}, ["list"] = {}, ["pin"] = {}, ["filters"] = {}};
 	if (not WQT.db.global.profiles[0]) then
 		ConvertDefaultProfile();
 	end
+
 	
 	for id, profile in pairs(WQT.db.global.profiles) do
+		ApplyVersionChanges(profile, settingVersion);
 		AddProfileToReferenceList(id, profile.name);
 	end
-	
+
 	self:Load(WQT.db.char.activeProfile);
 end
 
@@ -318,11 +336,15 @@ end
 
 function WQT_Profiles:ResetActive()
 	local category = "general";
-	ForceCopy(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
+	wipe(WQT.settings[category]);
+	WQT.settings[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
 	category = "list";
-	ForceCopy(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
+	wipe(WQT.settings[category]);
+	WQT.settings[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
 	category = "pin";
-	ForceCopy(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
+	wipe(WQT.settings[category]);
+	WQT.settings[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
 	category = "filters";
-	ForceCopy(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
+	wipe(WQT.settings[category]);
+	WQT.settings[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
 end
