@@ -171,7 +171,7 @@ function WQT_PinDataProvider:RefreshAllData()
 			local pinType = GetPinType(parentMapFrame, mapInfo.mapType, questInfo, settingsContinentPins);
 			if (pinType) then
 				local posX, posY = WQT_Utils:GetQuestMapLocation(questInfo.questId, mapID);
-				if (posX) then
+				if (posX and posX > 0 and posY > 0) then
 					local pin = self.pinPool:Acquire();
 					pin:SetParent(canvas);
 					tinsert(self.activePins, pin);
@@ -188,14 +188,12 @@ function WQT_PinDataProvider:RefreshAllData()
 	
 	-- Slightly spread out overlapping pins
 	self:FixOverlaps(canvas);
-	--self:UpdateAllPlacements();
 	
 	self:UpdateQuestPings();
 
 	if (not self.hookedCanvasChanges[parentMapFrame]) then
 		hooksecurefunc(parentMapFrame, "OnCanvasScaleChanged", function() 
 				self:FixOverlaps(canvas)
-				--self:UpdateAllPlacements();
 			end);
 		self.hookedCanvasChanges[parentMapFrame] = true;
 	end

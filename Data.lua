@@ -659,6 +659,7 @@ _V["SETTING_LIST"] = {
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.numRewardIcons end
+			,["isDisabled"] = function() return WQT.settings.pin.disablePoI; end
 			}
 }
 
@@ -1062,8 +1063,9 @@ end
 _V["PATCH_NOTES"] = {
 		{["version"] = "8.3.04"
 			,["new"] = {
-				"Added support for setting profiles, allowing people to have different settings for different characters."
+				"Added support for setting profiles, allowing different for different characters."
 				,"New Quest List setting: Number of Rewards (default 1). Choose how many rewards you want displayed per quest (between 0 and 3)."
+				,"New Map Pins setting: Reward Icons (default 0). Choose how many rewards you want displayed per quest asn mini icons (between 0 and 3). Replaces the Reward Icon option."
 			}
 			,["changes"] = {
 				"Renamed 'Resources' filter to 'Currency'. All resources are currency, not all currency are resources."
