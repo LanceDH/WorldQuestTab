@@ -765,7 +765,6 @@ function WQT:PassesAllFilters(questInfo)
 	end
 	local filterTypes = _V["FILTER_TYPES"];
 	
-	
 	-- For precise filters, all filters have to pass
 	if (WQT.settings.general.preciseFilters)  then
 		if (not  WQT:IsFiltering()) then
@@ -884,7 +883,6 @@ function WQT:OnEnable()
 	WQT_WorldMapContainerButton:LinkSettings(WQT.settings.general.fullScreenButtonPos);
 	WQT_WorldMapContainer:LinkSettings(WQT.settings.general.fullScreenContainerPos);
 	
-	
 	-- Apply saved filters
 	if (not self.settings.general.saveFilters) then
 		for k in pairs(self.settings.filters) do
@@ -962,7 +960,13 @@ function WQT:OnEnable()
 	WQT_SettingsFrame:SetCategoryExpanded("GENERAL", true);
 end
 
-
+------------------------------------------
+-- 			REWARDDISPLAY MIXIN			--
+------------------------------------------
+-- OnLoad()
+-- Reset()
+-- AddRewardByInfo(rewardInfo, warmodeBonus)
+-- AddReward(rewardType, texture, quality, amount, typeColor, canUpgrade, warmodeBonus)
 
 WQT_RewardDisplayMixin = {};
 
@@ -2128,18 +2132,13 @@ function WQT_CoreMixin:OnLoad()
 	QuestScrollFrame.Background:SetPoint("BOTTOMRIGHT",QuestMapFrame, "BOTTOMRIGHT", 0, -2);
 	QuestMapFrame.DetailsFrame:SetPoint("TOPRIGHT", QuestMapFrame, "TOPRIGHT", -26, -2)
 	QuestMapFrame.VerticalSeparator:SetHeight(463);
-	
-
-	
 end
 
 function WQT_CoreMixin:ApplyAllSettings()
 	self:UpdateBountyCounters();
 	self:RepositionBountyTabs();
 	self.pinDataProvider:RefreshAllData()
-	if (value) then
-		WQT_Utils:RefreshOfficialDataProviders();
-	end
+	WQT_Utils:RefreshOfficialDataProviders();
 	WQT_QuestScrollFrame:UpdateQuestList();
 	WQT:Sort_OnClick(nil, WQT.settings.general.sortBy);
 	WQT_WorldMapContainerButton:LinkSettings(WQT.settings.general.fullScreenButtonPos);

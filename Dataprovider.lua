@@ -111,6 +111,26 @@ end
 ----------------------------
 -- QuestInfoMixin
 ----------------------------
+-- Init(questId, isDaily, isCombatAllyQuest, alwaysHide, posX, posY)
+-- OnCreate() | Setup for QuestCreationFunc
+-- SetMapPos(posX, posY)
+-- Reset()
+-- LoadRewards() | Will add and parse rewards
+-- AddReward(rewardType, amount, texture, quality, color, id, canUpgrade)
+-- ParseRewards()
+-- TryDressUpReward()
+-- IterateRewards()
+-- GetReward(index)
+-- IsExpired()
+-- GetRewardType() | Top reward in the list
+-- GetRewardId() | Top reward in the list
+-- GetRewardAmount() | Top reward in the list
+-- GetRewardTexture() | Top reward in the list
+-- GetRewardQuality() | Top reward in the list
+-- GetRewardColor() | Top reward in the list
+-- GetRewardCanUpgrade() | Top reward in the list
+
+local QuestInfoMixin = {};
 
 local function QuestCreationFunc()
 	local questInfo = CreateFromMixins(QuestInfoMixin);
@@ -121,9 +141,6 @@ end
 local function QuestResetFunc(pool, questInfo)
 	questInfo:Reset();
 end
-
-
-local QuestInfoMixin = {};
 
 function QuestInfoMixin:Init(questId, isDaily, isCombatAllyQuest, alwaysHide, posX, posY)
 	self.questId = questId;
@@ -227,7 +244,7 @@ function QuestInfoMixin:LoadRewards()
 			end
 		end
 		-- Player experience 
-		if (not hasAddedExperience and GetQuestLogRewardXP(self.questId) > 0) then
+		if (GetQuestLogRewardXP(self.questId) > 0) then
 			local numItems = GetQuestLogRewardXP(self.questId);
 			self:AddReward(WQT_REWARDTYPE.xp, numItems, 894556, 1, _V["WQT_COLOR_ITEM"]);
 		end
@@ -262,7 +279,7 @@ function QuestInfoMixin:ParseRewards()
 end
 
 function QuestInfoMixin:TryDressUpReward()
-	for k, rewardInfo in questInfo:IterateRewards() do
+	for k, rewardInfo in self:IterateRewards() do
 		if (bit.band(rewardInfo.type, WQT_REWARDTYPE.gear) > 0) then
 			local _, link = GetItemInfo(rewardInfo.id);
 			DressUpItemLink(link)
