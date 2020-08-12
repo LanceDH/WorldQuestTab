@@ -2375,7 +2375,7 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 	-- Update TomTom arrows when quests change. Might be new that needs tracking or completed that needs removing
 	local autoArrow = WQT.settings.general.TomTomAutoArrow;
 	local clickArrow = WQT.settings.general.TomTomArrowOnClick;
-	if (questId and added and TomTom and WQT.settings.general.useTomTom and (clickArrow or autoArrow) and QuestUtils_IsQuestWorldQuest(questId)) then
+	if (questId and TomTom and WQT.settings.general.useTomTom and (clickArrow or autoArrow) and QuestUtils_IsQuestWorldQuest(questId)) then
 		
 		if (added) then
 			if (clickArrow or IsWorldQuestHardWatched(questId)) then

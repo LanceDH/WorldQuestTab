@@ -6,21 +6,21 @@ local _V = addon.variables;
 local WQT_Utils = addon.WQT_Utils;
 
 local _settings = {
-	{["type"] = _V["SETTING_TYPES"].checkBox, ["categoryID"] = "TOMTOM", ["label"] = _L["USE_TOMTOM"], ["tooltip"] = _L["USE_TOMTOM_TT"]
-			, ["func"] = function(value) 
+	{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "TOMTOM", ["label"] = _L["USE_TOMTOM"], ["tooltip"] = _L["USE_TOMTOM_TT"]
+			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.useTomTom = value;
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.useTomTom; end
 			}
-	,{["type"] = _V["SETTING_TYPES"].checkBox, ["categoryID"] = "TOMTOM", ["label"] = _L["TOMTOM_AUTO_ARROW"], ["tooltip"] = _L["TOMTOM_AUTO_ARROW_TT"]
-			, ["func"] = function(value) 
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "TOMTOM", ["label"] = _L["TOMTOM_AUTO_ARROW"], ["tooltip"] = _L["TOMTOM_AUTO_ARROW_TT"]
+			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.TomTomAutoArrow = value;
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.TomTomAutoArrow; end
 			,["isDisabled"] = function() return not WQT.settings.general.useTomTom; end
 			}	
-	,{["type"] = _V["SETTING_TYPES"].checkBox, ["categoryID"] = "TOMTOM", ["label"] = _L["TOMTOM_CLICK_ARROW"], ["tooltip"] = _L["TOMTOM_CLICK_ARROW_TT"]
-			, ["func"] = function(value) 
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "TOMTOM", ["label"] = _L["TOMTOM_CLICK_ARROW"], ["tooltip"] = _L["TOMTOM_CLICK_ARROW_TT"]
+			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.TomTomArrowOnClick = value;
 					
 				if (not value and WQT_WorldQuestFrame.softTomTomArrow and not IsWorldQuestHardWatched(WQT_WorldQuestFrame.softTomTomArrow)) then
