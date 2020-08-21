@@ -1062,6 +1062,12 @@ end
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
 		{{["version"] = "8.3.04"
+			,["minor"] = "3"
+			,["fixes"] = {
+				"Fixed an issue with the conversion of old settings."
+			}
+		}
+		,{["version"] = "8.3.04"
 			,["minor"] = "2"
 			,["fixes"] = {
 				"Fixed some issues with TomTom integration."

@@ -536,9 +536,12 @@ local function ConvertOldSettings(version)
 	
 	if (version < "8.3.03")  then
 		-- Anchoring changed, reset to default position
-		WQT.db.global.fullScreenButtonPos.anchor =  _V["WQT_DEFAULTS"].global.fullScreenButtonPos.anchor;
-		WQT.db.global.fullScreenButtonPos.x = _V["WQT_DEFAULTS"].global.fullScreenButtonPos.x;
-		WQT.db.global.fullScreenButtonPos.y = _V["WQT_DEFAULTS"].global.fullScreenButtonPos.y;
+		if (not WQT.db.global.fullScreenButtonPos) then
+			WQT.db.global.fullScreenButtonPos = {};
+		end
+		WQT.db.global.fullScreenButtonPos.anchor =  _V["WQT_DEFAULTS"].global.general.fullScreenButtonPos.anchor;
+		WQT.db.global.fullScreenButtonPos.x = _V["WQT_DEFAULTS"].global.general.fullScreenButtonPos.x;
+		WQT.db.global.fullScreenButtonPos.y = _V["WQT_DEFAULTS"].global.general.fullScreenButtonPos.y;
 	end
 	
 	if (version < "8.3.04")  then
