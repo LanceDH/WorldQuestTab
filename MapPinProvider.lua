@@ -44,21 +44,6 @@ local function SortPinsByMapPos(a, b)
 
 	return a.questId < b.questId;
 end
-
-local function OnPinIconRelease(pool, iconFrame)
-	iconFrame:Hide();
-	
-	iconFrame.BG:Show();
-	iconFrame.Icon:SetScale(1);
-	iconFrame.Icon:SetTexCoord(0, 1, 0, 1);
-	iconFrame.Icon:SetVertexColor(1, 1, 1);
-	
-	iconFrame.BG:Show();
-	iconFrame.BG:SetTexture("Interface/GLUES/Models/UI_MainMenu_Legion/UI_Legion_Shadow");
-	iconFrame.BG:SetScale(1);
-	iconFrame.BG:SetVertexColor(1, 1, 1);
-	iconFrame.BG:SetAlpha(0.75);
-end
 	
 local function OnPinRelease(pool, pin)
 	pin.questId = nil;
@@ -117,7 +102,7 @@ function WQT_PinDataProvider:Init()
 	
 	WQT_WorldQuestFrame:RegisterCallback("UpdateQuestList", function() 
 			self:RefreshAllData();
-		end);
+		end, addonName);
 		
 	-- Fix pings and fades when switching map
 	hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
@@ -203,8 +188,8 @@ end
 function WQT_PinDataProvider:FixOverlaps(canvas)
 	if (not self.enableNudging or not canvas) then return; end
 	
-	local canvasScale = 1/canvas:GetScale();
-	local scaling = 25/(canvas:GetWidth() * canvas:GetScale());
+	local canvasScale = 1/canvas:GetParent():GetCanvasScale();
+	local scaling = 25/(canvas:GetWidth() * canvas:GetParent():GetCanvasScale());
 	local canvasRatio = canvas:GetWidth() /canvas:GetHeight();
 	local clusterDistance = self.clusterDistance * scaling;
 	local clusterSpread = self.clusterSpread * scaling 
@@ -224,6 +209,7 @@ function WQT_PinDataProvider:FixOverlaps(canvas)
 					local aX, aY = pinA:GetNudgedPosition();
 					local bX, bY = pinB:GetNudgedPosition();
 					local distanceSquared = SquaredDistanceBetweenPoints(aX, aY, bX, bY);
+					
 					if (distanceSquared < clusterDistance * clusterDistance) then
 						if (not cluster) then 
 							cluster = {pinA, pinB}
@@ -418,7 +404,7 @@ function WQT_PinMixin:OnLoad()
 	self.UpdateTooltip = function() WQT_Utils:ShowQuestTooltip(self, self.questInfo) end;
 	self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 	self.updateTime = 0;
-	self.iconPool =  CreateFramePool("FRAME", self, "WQT_PinIconTemplate", OnPinIconRelease);
+	self.iconPool =  CreateFramePool("FRAME", self, "WQT_MiniIconTemplate", function(pool, iconFrame) iconFrame:Reset() end);
 	self.icons = {};
 end
 
@@ -451,36 +437,37 @@ function WQT_PinMixin:PlaceMiniIcons()
 	end
 end
 
-function WQT_PinMixin:AddIcon(texture, left, right, top, bottom)
+function WQT_PinMixin:AddIcon()
 	local iconFrame = self.iconPool:Acquire();
-	if (left) then
-		iconFrame.Icon:SetTexture(texture);
-		iconFrame.Icon:SetTexCoord(left, right, top, bottom);
-	else
-		iconFrame.Icon:SetAtlas(texture);
-	end
 	tinsert(self.icons, iconFrame);
 	return iconFrame;
 end
 
 function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
-	local isWatched = IsWorldQuestWatched(questInfo.questId);
+	local isWatched = QuestUtils_IsQuestWatched(questInfo.questId);
 	self:SetupCanvasType(pinType, parentMapFrame, isWatched);
 	
 	self.index = index;
 	self.questInfo = questInfo;
 	self.questId = questInfo.questId;
-
+	
 	local scale = WQT_Utils:GetSetting("pin", "scale")
-	local _, _, _, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
-	local _, _, worldQuestType, rarity, isElite = GetQuestTagInfo(questInfo.questId);
-	local isBonus = not worldQuestType;
 	local settingCenterType = WQT_Utils:GetSetting("pin", "centerType");
-
+	local _, _, _, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
+	local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questId);
+	local questQuality = tagInfo and tagInfo.quality;
+	local questType = tagInfo and tagInfo.worldQuestType;
+	
 	self.scale = scale
 	self:SetScale(scale);
+	self.currentScale = scale;
 	self:SetAlpha(self.startAlpha);
-
+	self.currentAlpha = self.startAlpha;
+	self:ResetNudge();
+	self.posX = x;
+	self.posY = y;
+	self.baseFrameLevel = PIN_FRAME_LEVEL_BASE;
+	
 	-- Ring coloration
 	local ringType = WQT_Utils:GetSetting("pin", "ringType");
 	local now = time();
@@ -492,9 +479,9 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.RingBG:Show();
 	if (ringType == _V["RING_TYPES"].reward) then
 		r, g, b = questInfo:GetRewardColor():GetRGB();
-	elseif (rarity and ringType == _V["RING_TYPES"].rarity) then
-		if (rarity > 1 and WORLD_QUEST_QUALITY_COLORS[rarity]) then
-			r, g, b = WORLD_QUEST_QUALITY_COLORS[rarity].color:GetRGB();
+	elseif (questQuality and ringType == _V["RING_TYPES"].rarity) then
+		if (questQuality > Enum.WorldQuestQuality.Common and WORLD_QUEST_QUALITY_COLORS[questQuality]) then
+			r, g, b = WORLD_QUEST_QUALITY_COLORS[questQuality].color:GetRGB();
 		end
 	elseif (ringType == _V["RING_TYPES"].hide) then
 		self.Ring:Hide();
@@ -505,6 +492,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.Ring:SetSwipeColor(r*.8, g*.8, b*.8);
 	
 	-- Elite indicator
+	local isElite = tagInfo and tagInfo.isElite;
 	local settingEliteRing = WQT_Utils:GetSetting("pin", "eliteRing");
 	local useEliteRing = settingEliteRing and ringType ~= _V["RING_TYPES"].hide;
 	self.RingBG:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRing");
@@ -527,20 +515,22 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	
 	-- Quest Type Icon
 	local typeAtlas, typeAtlasWidth, typeAtlasHeight =  WQT_Utils:GetCachedTypeIconData(questInfo);
-	local showTypeIcon = WQT_Utils:GetSetting("pin", "typeIcon") and (isBonus or (worldQuestType > 0 and worldQuestType ~= LE_QUEST_TAG_TYPE_NORMAL));
+	local showTypeIcon = WQT_Utils:GetSetting("pin", "typeIcon") and (not tagInfo or (questType and questType > 0 and questType ~= Enum.QuestTagType.Normal));
 	if (showTypeIcon and typeAtlas) then
-		local iconFrame = self:AddIcon(typeAtlas);
-		iconFrame.Icon:SetScale(worldQuestType == LE_QUEST_TAG_TYPE_PVP and 0.8 or 1);
+		local iconFrame = self:AddIcon();
+		iconFrame:SetupIcon(typeAtlas);
+		iconFrame:SetIconScale(questType == Enum.QuestTagType.PvP and 0.8 or 1);
 	end
 	
 	-- Quest rarity Icon
-	if (rarity and rarity > 1 and WQT_Utils:GetSetting("pin", "rarityIcon")) then
-		local color = WORLD_QUEST_QUALITY_COLORS[rarity];
+	if (questQuality and questQuality > Enum.WorldQuestQuality.Common and WQT_Utils:GetSetting("pin", "rarityIcon")) then
+		local color = WORLD_QUEST_QUALITY_COLORS[questQuality];
 		if (color) then
-			local iconFrame = self:AddIcon(_V["PATH_CUSTOM_ICONS"], 0, 0.25, 0, 0.5);
-			iconFrame.Icon:SetVertexColor(color.color:GetRGB());
-			iconFrame.Icon:SetScale(1.15);
-			iconFrame.BG:Hide();
+			local iconFrame = self:AddIcon();
+			iconFrame:SetupIcon(_V["PATH_CUSTOM_ICONS"], 0, 0.25, 0, 0.5);
+			iconFrame:SetIconColor(color.color);
+			iconFrame:SetIconScale(1.15);
+			iconFrame:SetBackgroundShown(false);
 		end
 	end
 
@@ -548,18 +538,19 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	if (WQT_Utils:GetSetting("pin", "timeIcon")) then
 		local start, total, timeLeft, seconds, color, timeStringShort, timeCategory = WQT_Utils:GetPinTime(self.questInfo);
 		if (timeCategory >= _V["TIME_REMAINING_CATEGORY"].critical) then
-			local iconFrame = self:AddIcon(_V["PATH_CUSTOM_ICONS"], 0, 0.25, 0.5, 1);
+			local iconFrame = self:AddIcon();
+			iconFrame:SetupIcon(_V["PATH_CUSTOM_ICONS"], 0, 0.25, 0.5, 1);
 			if (timeCategory == _V["TIME_REMAINING_CATEGORY"].medium) then
-				iconFrame.Icon:SetTexCoord(0.25, 0.5, 0.5, 1);
+				iconFrame:SetIconCoords(0.25, 0.5, 0.5, 1);
 			elseif (timeCategory == _V["TIME_REMAINING_CATEGORY"].short) then
-				iconFrame.Icon:SetTexCoord(0.5, 0.75, 0.5, 1);
+				iconFrame:SetIconCoords(0.5, 0.75, 0.5, 1);
 			elseif (timeCategory == _V["TIME_REMAINING_CATEGORY"].critical) then
-				iconFrame.Icon:SetTexCoord(0.75, 1, 0.5, 1);
+				iconFrame:SetIconCoords(0.75, 1, 0.5, 1);
 			end
 			
-			iconFrame.Icon:SetVertexColor(color:GetRGB());
-			iconFrame.Icon:SetScale(1);
-			iconFrame.BG:Hide();
+			iconFrame:SetIconColor(color);
+			iconFrame:SetIconScale(1);
+			iconFrame:SetBackgroundShown(false);
 			self.timeIcon = iconFrame;
 		end
 	end
@@ -568,21 +559,16 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	local numRewardIcons = WQT_Utils:GetSetting("pin", "numRewardIcons");
 	for k, rewardInfo in questInfo:IterateRewards() do
 		if (k <= numRewardIcons) then
-			local rewardTypeAtlas = _V["REWARD_TYPE_ATLAS"][rewardInfo.type];
-			if (rewardTypeAtlas) then
-				local iconFrame = self:AddIcon(rewardTypeAtlas.texture, rewardTypeAtlas.l, rewardTypeAtlas.r, rewardTypeAtlas.t, rewardTypeAtlas.b);
-				iconFrame.Icon:SetScale((rewardTypeAtlas.scale or 1))
-				if (rewardTypeAtlas.color) then
-					iconFrame.Icon:SetVertexColor(rewardTypeAtlas.color:GetRGB());
-				end
-			end
+			local iconFrame = self:AddIcon();
+			iconFrame:SetupRewardIcon(rewardInfo.type);
 		end
 	end
 	
 	-- Quest tracked icon
 	if (isWatched) then
-		local iconFrame = self:AddIcon("worldquest-emissary-tracker-checkmark");
-		iconFrame.Icon:SetScale(1.1);
+		local iconFrame = self:AddIcon();
+		iconFrame:SetupIcon("worldquest-emissary-tracker-checkmark");
+		iconFrame:SetIconScale(1.1);
 	end
 	
 	self:PlaceMiniIcons();
@@ -604,16 +590,17 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 		self.Icon:SetTexCoord(0, 1, 0, 1);
 	elseif(settingCenterType == _V["PIN_CENTER_TYPES"].blizzard) then
 		self.CustomTypeIcon:SetShown(true);
-		local selected = questInfo.questId == GetSuperTrackedQuestID()
-		local showSlectedGlow = not isBonus and rarity ~= LE_WORLD_QUEST_QUALITY_COMMON and selected;
-	
-		self.CustomBountyRing:SetShown(questInfo.isCriteria)
+		local selected = questInfo.questId == C_SuperTrack.GetSuperTrackedQuestID();
+		local showSlectedGlow = tagInfo and questQuality ~= Enum.WorldQuestQuality.Common and selected;
+		local selectedBountyOnly = WQT_Utils:GetSetting("general", "bountySelectedOnly");
+		
+		self.CustomBountyRing:SetShown(questInfo:IsCriteria(selectedBountyOnly));
 		self.CustomSelectedGlow:SetShown(showSlectedGlow);
-		if (not isBonus) then
-			if (rarity == LE_WORLD_QUEST_QUALITY_RARE) then
+		if (tagInfo) then
+			if (questQuality == Enum.WorldQuestQuality.Rare) then
 				self.Icon:SetAtlas("worldquest-questmarker-rare");
 				self.CustomSelectedGlow:SetAtlas("worldquest-questmarker-rare");
-			elseif (rarity == LE_WORLD_QUEST_QUALITY_EPIC) then
+			elseif (questQuality == Enum.WorldQuestQuality.Epic) then
 				self.Icon:SetAtlas("worldquest-questmarker-epic")
 				self.CustomSelectedGlow:SetAtlas("worldquest-questmarker-epic");
 			else
@@ -650,10 +637,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	end
 	self.Time:SetPoint("TOP", self, "BOTTOM", 1, timeOffset);
 
-	self:ResetNudge();
-	self.posX = x;
-	self.posY = y;
-	self.baseFrameLevel = PIN_FRAME_LEVEL_BASE;
+	
 	self:UpdatePinTime();
 	self:UpdatePlacement();
 	
@@ -668,6 +652,7 @@ function WQT_PinMixin:OnUpdate(elapsed)
 	local timeLeft = self:UpdatePinTime();
 	-- For the last minute we want to update every second for the time label
 	self.updateInterval = timeLeft > SECONDS_PER_MIN * 16 and 60 or 1;
+	
 end
 
 function WQT_PinMixin:UpdatePinTime()
@@ -693,7 +678,7 @@ function WQT_PinMixin:UpdatePinTime()
 		self.Time:SetText(timeStringShort);
 		self.Time:SetVertexColor(color.r, color.g, color.b);
 	end
-	
+
 	-- Small icon indicating time category
 	if (self.timeIcon) then
 		if (timeCategory == _V["TIME_REMAINING_CATEGORY"].medium) then
@@ -718,9 +703,9 @@ function WQT_PinMixin:UpdatePinTime()
 end
 
 function WQT_PinMixin:UpdatePlacement(alpha)
-	local canvas = self:GetParent();
+	--local canvas = self:GetParent();
 	local zoomPercent = self.parentMapFrame:GetCanvasZoomPercent();
-	local parentScaleFactor = self.scale / canvas:GetScale();
+	local parentScaleFactor = self.scale / self.parentMapFrame:GetCanvasScale();
 	parentScaleFactor = parentScaleFactor * Lerp(self.startScale, self.endScale, Saturate(self.scaleFactor * zoomPercent));
 	self:SetScale(parentScaleFactor);
 	
@@ -763,18 +748,17 @@ function WQT_PinMixin:OnClick(button)
 		if ( not ChatEdit_TryInsertQuestLinkForQuestID(self.questId) ) then
 			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 
+			local isWatchedManual = WQT_Utils:QuestIsWatchedManual(self.questId)
 			if (IsShiftKeyDown()) then
-				if (IsWorldQuestHardWatched(self.questId) or (IsWorldQuestWatched(self.questId) and GetSuperTrackedQuestID() == self.questId)) then
-					BonusObjectiveTracker_UntrackWorldQuest(self.questId);
+				if (isWatchedManual or (QuestUtils_IsQuestWatched(self.questId) and C_SuperTrack.GetSuperTrackedQuestID() == self.questId)) then
+					C_QuestLog.RemoveWorldQuestWatch(self.questId);
 				else
-					BonusObjectiveTracker_TrackWorldQuest(self.questId, true);
+					C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Manual);
 				end
 			else
-				if (IsWorldQuestHardWatched(self.questId)) then
-					SetSuperTrackedQuestID(self.questId);
-				else
-					BonusObjectiveTracker_TrackWorldQuest(self.questId);
-				end
+				C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Automatic);
+				C_SuperTrack.SetSuperTrackedQuestID(self.questId);
+				C_SuperTrack.SetSuperTrackedUserWaypoint(self.questId);
 			end
 		end
 	else
@@ -789,7 +773,7 @@ end
 
 function WQT_PinMixin:ApplyScaledPosition(manualScale)
 	local canvas = self:GetParent();
-	local scale = manualScale or self.scale / canvas:GetScale();
+	local scale = manualScale or self.scale / self.parentMapFrame:GetCanvasScale();
 	local posX, posY = self:GetNudgedPosition();
 	posX = (canvas:GetWidth() * posX)/scale;
 	posY = -(canvas:GetHeight() * posY)/scale;
@@ -800,7 +784,7 @@ end
 function WQT_PinMixin:Focus(playPing)
 	if (not self.questId) then return; end
 	local canvas = self:GetParent();
-	local parentScaleFactor = self.scale / canvas:GetScale();
+	local parentScaleFactor = self.scale / self.parentMapFrame:GetCanvasScale();
 	
 	self.fadeInAnim:Stop();
 	self.fadeOutAnim:Stop();

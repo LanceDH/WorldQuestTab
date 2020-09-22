@@ -861,7 +861,6 @@ function ADD:OnClick(self)
 		checked = checked(self);
 	end
 
-
 	if ( not self.keepShownOnClick ) then
 		self:GetParent():Hide();
 	end

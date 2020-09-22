@@ -27,7 +27,6 @@ function WQT_SettingsBaseMixin:OnEnter(anchorFrame, anchorType)
 		end
 		GameTooltip:AddLine(tooltipText, nil, nil, nil, true);
 		GameTooltip:Show();
-		
 	end
 end
 

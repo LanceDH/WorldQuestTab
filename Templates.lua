@@ -7,32 +7,74 @@ local WQT_Utils = addon.WQT_Utils;
 local WQT_Profiles = addon.WQT_Profiles;
 
 --------------------------------
--- Custom Event mixin
+-- WQT_MiniIconMixin
 --------------------------------
 
-WQT_CallbackMixin = {};
+WQT_MiniIconMixin = {};
 
-function WQT_CallbackMixin:RegisterCallback(event, func)
-	if (not self.callbacks) then
-		self.callbacks = {};
-	end
-
-	local callback = self.callbacks[event];
-	if (not callback) then 
-		callback = {};
-		self.callbacks[event] = callback;
-	end
+function WQT_MiniIconMixin:Reset()
+	self:Hide();
 	
-	tinsert(callback, func);
+	self.Icon:Show();
+	self.Icon:SetTexture(nil);
+	self.Icon:SetScale(1);
+	self.Icon:SetTexCoord(0, 1, 0, 1);
+	self.Icon:SetVertexColor(1, 1, 1);
+	
+	self.BG:Show();
+	self.BG:SetTexture("Interface/GLUES/Models/UI_MainMenu_Legion/UI_Legion_Shadow");
+	self.BG:SetScale(1);
+	self.BG:SetVertexColor(1, 1, 1);
+	self.BG:SetAlpha(0.75);
 end
 
-function WQT_CallbackMixin:TriggerCallback(event, ...)
-	if (not self.callbacks or not self.callbacks[event]) then
-		return;
-	end
+function WQT_MiniIconMixin:SetIconColor(color)
+	self.Icon:SetVertexColor(color:GetRGB());
+end
+
+function WQT_MiniIconMixin:SetIconCoords(left, right, top, bottom)
+	self.Icon:SetTexCoord(left, right, top, bottom);
+end
+
+function WQT_MiniIconMixin:SetIconScale(scale)
+	self.Icon:SetScale(scale);
+end
+
+function WQT_MiniIconMixin:SetBackgroundShown(value)
+	self.BG:SetShown(value);
+end
+
+function WQT_MiniIconMixin:SetupIcon(texture, left, right, top, bottom)
+	self:Reset();
 	
-	for k, func in ipairs(self.callbacks[event]) do
-		func(...);
+	if (not texture) then return; end
+	
+	if (left) then
+		self.Icon:SetTexture(texture);
+		self.Icon:SetTexCoord(left, right, top, bottom);
+	else
+		self.Icon:SetAtlas(texture);
+	end
+end
+
+function WQT_MiniIconMixin:SetupRewardIcon(rewardType)
+	self:Reset();
+	
+	if(not rewardType) then return; end
+	
+	local rewardTypeAtlas = _V["REWARD_TYPE_ATLAS"][rewardType];
+	if (rewardTypeAtlas) then
+		if (rewardTypeAtlas.l) then
+			self.Icon:SetTexture(rewardTypeAtlas.texture);
+			self.Icon:SetTexCoord(rewardTypeAtlas.l, rewardTypeAtlas.r, rewardTypeAtlas.t, rewardTypeAtlas.b);
+		else
+			self.Icon:SetAtlas(rewardTypeAtlas.texture);
+		end
+		self.Icon:SetScale(rewardTypeAtlas.scale);
+		if (rewardTypeAtlas.color) then
+			self.Icon:SetVertexColor(rewardTypeAtlas.color:GetRGB());
+		end
+		self:Show();
 	end
 end
 
@@ -163,6 +205,22 @@ function WQT_Utils:GetSetting(...)
 	return settings;
 end
 
+function WQT_Utils:GetLocal(key)
+	return _L[key or ""];
+end
+
+function WQT_Utils:GetVariable(key)
+	local val = _V[key or ""];
+	
+	if (not val) then return; end
+	
+	if (type(val) == "table") then
+		return CopyTable(val);
+	end
+	
+	return val;
+end
+
 function WQT_Utils:GetCachedMapInfo(zoneId)
 	zoneId = zoneId or 0;
 	local zoneInfo = cachedZoneInfo[zoneId];
@@ -194,45 +252,49 @@ function WQT_Utils:GetFactionDataInternal(id)
 end
 
 function WQT_Utils:GetCachedTypeIconData(questInfo)
-	local _, _, questType, _, _, tradeskillLineIndex = GetQuestTagInfo(questInfo.questId);
+	
 	if (questInfo.isDaily)	then
 		return "QuestDaily", 17, 17, true;
 	elseif (questInfo.isQuestStart) then
 		return "QuestNormal", 17, 17, true;
 	elseif (C_QuestLog.IsThreatQuest(questInfo.questId)) then
 		 return "worldquest-icon-nzoth", 14, 14, true;
-	elseif (not questType) then
+	end
+	
+	local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questId);
+	-- If there is no tag info, it's a bonus objective
+	if (not tagInfo) then
 		return "QuestBonusObjective", 21, 21, true;
 	end
 	
 	local isNew = false;
-	local originalType = questType;
-	questType = questType or _V["WQT_TYPE_BONUSOBJECTIVE"];
+	local originalType = tagInfo.worldQuestType;
+	tagInfo.worldQuestType = tagInfo.worldQuestType or _V["WQT_TYPE_BONUSOBJECTIVE"];
 
-	if (not cachedTypeData[questType]) then 
-		cachedTypeData[questType] = {};
+	if (not cachedTypeData[tagInfo.worldQuestType]) then 
+		cachedTypeData[tagInfo.worldQuestType] = {};
 		isNew = true;
 	end
-	if (tradeskillLineIndex and not cachedTypeData[questType][tradeskillLineIndex]) then 
-		cachedTypeData[questType][tradeskillLineIndex] = {};
+	if (tagInfo.tradeskillLineID and not cachedTypeData[tagInfo.worldQuestType][tagInfo.tradeskillLineID]) then 
+		cachedTypeData[tagInfo.worldQuestType][tagInfo.tradeskillLineID] = {};
 		isNew = true;
 	end
 	
 	if (isNew) then
-		local atlasTexture, sizeX, sizeY  = QuestUtil.GetWorldQuestAtlasInfo(originalType, false, tradeskillLineIndex);
-		if (tradeskillLineIndex) then
-			cachedTypeData[questType][tradeskillLineIndex] = {["texture"] = atlasTexture, ["x"] = sizeX, ["y"] = sizeY};
+		local atlasTexture, sizeX, sizeY  = QuestUtil.GetWorldQuestAtlasInfo(originalType, false, tagInfo.tradeskillLineID);
+		if (tagInfo.tradeskillLineID) then
+			cachedTypeData[tagInfo.worldQuestType][tagInfo.tradeskillLineID] = {["texture"] = atlasTexture, ["x"] = sizeX, ["y"] = sizeY};
 		else
-			cachedTypeData[questType] = {["texture"] = atlasTexture, ["x"] = sizeX, ["y"] = sizeY};
+			cachedTypeData[tagInfo.worldQuestType] = {["texture"] = atlasTexture, ["x"] = sizeX, ["y"] = sizeY};
 		end
 	end
 	
-	if (tradeskillLineIndex) then
-		local data = cachedTypeData[questType][tradeskillLineIndex];
+	if (tagInfo.tradeskillLineID) then
+		local data = cachedTypeData[tagInfo.worldQuestType][tagInfo.tradeskillLineID];
 		return data.texture, data.x, data.y;
 	end
 	
-	local data = cachedTypeData[questType];
+	local data = cachedTypeData[tagInfo.worldQuestType];
 	return data.texture, data.x, data.y;
 end
 
@@ -284,8 +346,8 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 			else
 				timeString = D_DAYS:format(displayTime / SECONDS_PER_DAY );
 			end
-			local _, _, _, rarity, isElite = GetQuestTagInfo(questInfo.questId);
-			local isWeek = isElite and rarity == LE_WORLD_QUEST_QUALITY_EPIC
+			local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questId);
+			local isWeek = tagInfo and tagInfo.isElite and tagInfo.quality == Enum.WorldQuestQuality.Epic
 			color = isWeek and _V["WQT_PURPLE_FONT_COLOR"] or _V["WQT_BLUE_FONT_COLOR"];
 			category = isWeek and _V["TIME_REMAINING_CATEGORY"].veryLong or _V["TIME_REMAINING_CATEGORY"].long;
 		end
@@ -310,8 +372,8 @@ function WQT_Utils:GetPinTime(questInfo)
 		if timeLeft >= 1440*60 then
 			maxTime = 5760*60;
 			offset = -720*60;
-			local _, _, _, rarity, isElite = GetQuestTagInfo(questInfo.questId);
-			if (timeLeft > maxTime or (isElite and rarity == LE_WORLD_QUEST_QUALITY_EPIC)) then
+			local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questId);
+			if (timeLeft > maxTime or (tagInfo.isElite and tagInfo.quality == Enum.WorldQuestQuality.Epic)) then
 				maxTime = 1440 * 7*60;
 				offset = 0;
 			end
@@ -365,8 +427,8 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo)
 	end
 	
 	local title, factionID, capped = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
-	local _, _, _, rarity = GetQuestTagInfo(questInfo.questId);
-	local qualityColor = WORLD_QUEST_QUALITY_COLORS[rarity or 1];
+	local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questId);
+	local qualityColor = WORLD_QUEST_QUALITY_COLORS[tagInfo and tagInfo.quality or Enum.WorldQuestQuality.Common];
 	
 	GameTooltip:SetText(title, qualityColor.r, qualityColor.g, qualityColor.b, 1, true);
 	
@@ -534,25 +596,25 @@ function WQT_Utils:RemoveTomTomArrowbyQuestId(questId)
 end
 
 function WQT_Utils:QuestCountsToCap(questLogIndex)
-	local title, _, _, isHeader, _, _, frequency, questID, _, _, _, _, isTask, isBounty, _, isHidden, _ = GetQuestLogTitle(questLogIndex);
+	local questInfo = C_QuestLog.GetInfo(questLogIndex);
 	
-	if (isHeader or isTask or isBounty) then
-		return false, isHidden;
+	if (questInfo.isHeader or questInfo.isTask or questInfo.isBounty) then
+		return false, questInfo.isHidden;
 	end
 	
-	local tagID, tagName = GetQuestTagInfo(questID)
+	local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questID);
 	local counts = true;
 	
-	if (tagID and _V["QUESTS_NOT_COUNTING"][tagID]) then
+	if (tagInfo and tagInfo.tagID and _V["QUESTS_NOT_COUNTING"][tagInfo.tagID]) then
 		counts = false;
 	end
 	
-	return counts, isHidden;
+	return counts, questInfo.isHidden;
 end
 
 -- Count quests counting to the quest log cap and collect hidden ones that can't be abandoned
 function WQT_Utils:GetQuestLogInfo(hiddenList)
-	local numEntries = GetNumQuestLogEntries();
+	local _, numEntries = C_QuestLog.GetNumQuestLogEntries();
 	local maxQuests = C_QuestLog.GetMaxNumQuestsCanAccept();
 	local questCount = 0;
 	if (hiddenList) then
@@ -573,6 +635,14 @@ function WQT_Utils:GetQuestLogInfo(hiddenList)
 	local color = questCount >= maxQuests and RED_FONT_COLOR or (questCount >= maxQuests-2 and _V["WQT_ORANGE_FONT_COLOR"] or _V["WQT_WHITE_FONT_COLOR"]);
 	
 	return questCount, maxQuests, color;
+end
+
+function WQT_Utils:QuestIsWatchedManual(questId)
+	return questId and C_QuestLog.GetQuestWatchType(questId) == Enum.QuestWatchType.Manual;
+end
+
+function WQT_Utils:QuestIsWatchedAutomatic(questId)
+	return questId and C_QuestLog.GetQuestWatchType(questId) == Enum.QuestWatchType.Automatic;
 end
 
 function WQT_Utils:GetQuestMapLocation(questId, mapId)
@@ -630,6 +700,27 @@ function WQT_Utils:RewardTypePassesFilter(rewardType)
 	return true;
 end
 
+function WQT_Utils:GetQuestRewardIcon(questID)
+	local texture;
+	-- Item
+	texture = select(2, GetQuestLogRewardInfo(1, questID));
+	if (texture) then return texture; end
+	-- Spell
+	texture = GetQuestLogRewardSpell(1, questID);
+	if (texture) then return texture; end
+	-- Honor
+	if (GetQuestLogRewardHonor(questID) > 0) then return 1455894 end;
+	-- Gold
+	if (GetQuestLogRewardMoney(questID) > 0) then return 133784 end;
+	-- Currency
+	local _, _, amount, currencyId = GetQuestLogRewardCurrencyInfo(1, questID);
+	if (currencyId) then
+		local currencyInfo = C_CurrencyInfo.GetCurrencyInfo(currencyId);
+		texture = select(2, CurrencyContainerUtil.GetCurrencyContainerInfo(currencyId, amount, currencyInfo.name, currencyInfo.iconFileID, currencyInfo.quality));
+		if (texture) then return texture; end
+	end
+end
+
 function WQT_Utils:DeepWipeTable(t)
 	for k, v in pairs(t) do
 		if (type(v) == "table") then
@@ -654,4 +745,21 @@ function WQT_Utils:FormatPatchNotes(notes, title)
 		updateMessage = AddNotes(updateMessage, "Fixes", patch.fixes);
 	end
 	return updateMessage .. "</body></html>";
+end
+
+function WQT_Utils:RegisterExternalSettings(key, defaults)
+	--print(key, "adding default settings");
+	return WQT_Profiles:RegisterExternalSettings(key, defaults);
+end
+
+function WQT_Utils:AddExternalSettingsOptions(settings)
+	for k, setting in ipairs(settings) do
+		tinsert(_V["SETTING_LIST"], setting);
+	end
+end
+
+function WQT_Utils:AddExternalSettingsOptions(settings)
+	for k, setting in ipairs(settings) do
+		tinsert(_V["SETTING_LIST"], setting);
+	end
 end

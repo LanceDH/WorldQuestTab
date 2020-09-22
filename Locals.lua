@@ -21,6 +21,10 @@ L["DEFAULT_TAB"] = "Default Tab"
 L["DEFAULT_TAB_TT"] = "Set WQT as the default tab when you log in. Only applies to characters level 110 and above."
 L["EMISSARY_COUNTER"] = "Emissary Counter"
 L["EMISSARY_COUNTER_TT"] = "Add counters to the emissary tabs which indicate your progress for each emissary."
+L["EMISSARY_REWARD"] = "Emissary Reward Icon"
+L["EMISSARY_REWARD_TT"] = "Adds an icon to the emissary tabs indicating the type of reward it offers."
+L["EMISSARY_SELECTED_ONLY"] = "Selected Emissary Only"
+L["EMISSARY_SELECTED_ONLY_TT"] = "Only mark quests for the currently selected emissary. Turning this off will instead mark quests for any of the active emissaries.\nClicking on emissary tabs will still only show quests related to that specific emissary." 
 L["FILTER_PINS"] = "Filter Map Pins"
 L["FILTER_PINS_TT"] = "Applies filters to pins on the map."
 L["FORMAT_GROUP_CREATE"] = "Type |cFFFFFFFF%d|r to create a group for this quest. Or type its name: |cFFFFFFFF%s|r. Consider using both so players without add-ons can also find your group."
@@ -465,7 +469,6 @@ L["USE_TOMTOM_TT"] = "在此插件添加TomTom功能。"
 L["WHATS_NEW"] = "最新消息"
 L["WHATS_NEW_TT"] = "查看World Quest Tab更新說明。"
 L["WQT_FULLSCREEN_BUTTON_TT"] = "左鍵點擊以切換世界任務列表。右鍵點擊並拖動以變更位置。"
-
 
 L["IS_AZIAN_CLIENT"]	= true
 end

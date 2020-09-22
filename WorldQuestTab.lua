@@ -55,7 +55,7 @@
 -- local x, y = WQT_Utils:GetQuestMapLocation(questId, mapId); | More up to date position than mapInfo
 
 --
--- Callbacks (WQT_WorldQuestFrame:RegisterCallback(event, func))
+-- Callbacks (WQT_WorldQuestFrame:RegisterCallback(event, func, addonName))
 --
 -- "InitFilter" 			(self, level) After InitFilter finishes
 -- "DisplayQuestList" 		(skipPins) After all buttons in the list have been updated
@@ -254,7 +254,7 @@ local function InitFilter(self, level)
 				local filter = WQT.settings.filters[_V["FILTER_TYPES"].faction];
 				local options = filter.flags;
 				local order = WQT.filterOrders[_V["FILTER_TYPES"].faction] 
-				local currExp = _V["CURRENT_EXPANSION"]
+				local currExp = _V["CURRENT_EXPANSION"];
 				for k, flagKey in pairs(order) do
 					local factionInfo = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
 					-- Only factions that are current expansion and match the player's faction
@@ -288,6 +288,15 @@ local function InitFilter(self, level)
 				ADD:AddButton(info, level);	
 				
 				-- Other expansions
+				-- BFA
+				info.hasArrow = true;
+				info.notCheckable = true;
+				info.text = EXPANSION_NAME7;
+				info.value = 302;
+				info.func = nil;
+				ADD:AddButton(info, level)
+
+				-- Legion
 				info.hasArrow = true;
 				info.notCheckable = true;
 				info.text = EXPANSION_NAME6;
@@ -364,9 +373,29 @@ local function InitFilter(self, level)
 			local order = WQT.filterOrders[1] 
 			local currExp = LE_EXPANSION_LEGION;
 			for k, flagKey in pairs(order) do
-				local data = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
-				if (data and data.expansion == currExp ) then
-					info.text = type(flagKey) == "number" and data.name or flagKey;
+				local factionInfo = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
+				if (factionInfo and factionInfo.expansion == currExp and (not factionInfo.playerFaction or factionInfo.playerFaction == _playerFaction)) then
+					info.text = type(flagKey) == "number" and factionInfo.name or flagKey;
+					info.func = function(_, _, _, value)
+										options[flagKey] = value;
+										if (value) then
+											WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
+										end
+										WQT_QuestScrollFrame:UpdateQuestList();
+									end
+					info.checked = function() return options[flagKey] end;
+					ADD:AddButton(info, level);			
+				end
+			end
+		elseif ADD.MENU_VALUE == 302 then -- BfA
+			local options = WQT.settings.filters[1].flags;
+			local order = WQT.filterOrders[1] 
+			local currExp = LE_EXPANSION_BATTLE_FOR_AZEROTH;
+			for k, flagKey in pairs(order) do
+				local factionInfo = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
+				
+				if (factionInfo and factionInfo.expansion == currExp and (not factionInfo.playerFaction or factionInfo.playerFaction == _playerFaction)) then
+					info.text = type(flagKey) == "number" and factionInfo.name or flagKey;
 					info.func = function(_, _, _, value)
 										options[flagKey] = value;
 										if (value) then
@@ -417,13 +446,18 @@ end
 local function SortQuestList(a, b, sortID)
 	-- Invalid goes to the bottom
 	if (not a.isValid or not b.isValid) then
-		if (a.isValid == b.isValid) then return a.questId < b.questId; end;
+		if (a.isValid == b.isValid) then 
+			return a.questId < b.questId;
+		end;
+		--print(a.questId, b.questId, a.isValid, b.isValid);
 		return a.isValid and not b.isValid;
 	end
 	
 	-- Filtered out quests go to the back (for debug view mainly)
 	if (not a.passedFilter or not b.passedFilter) then
-		if (a.passedFilter == b.passedFilter) then return a.questId < b.questId; end;
+		if (a.passedFilter == b.passedFilter) then 
+			return a.questId < b.questId; 
+		end;
 		return a.passedFilter and not b.passedFilter;
 	end
 
@@ -457,6 +491,8 @@ end
 local function ConvertOldSettings(version)
 	if (not version or version == "") then
 		WQT.db.global.versionCheck = "1";
+		-- It's a new user, their settings are perfect
+		-- Unless I change my mind again
 		return;
 	end
 	-- BfA
@@ -644,7 +680,7 @@ function WQT:InitTrackDropDown(self, level)
 	local questId = questInfo.questId;
 	local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questId);
 	local info = ADD:CreateInfo();
-	local _, _, worldQuestType = GetQuestTagInfo(questId);
+	local tagInfo = C_QuestLog.GetQuestTagInfo(questId);
 	info.notCheckable = true;	
 	
 	-- Title
@@ -654,41 +690,14 @@ function WQT:InitTrackDropDown(self, level)
 	ADD:AddButton(info, level);
 	
 	info.isTitle = false;
-	
-	-- TomTom functionality
-	if (TomTom and WQT.settings.general.useTomTom) then
-	
-		if (TomTom.WaypointExists and TomTom.AddWaypoint and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
-			-- All required functions are found
-			if ( not TomTom:WaypointExists(mapInfo.mapID, questInfo.mapInfo.mapX, questInfo.mapInfo.mapY, title)) then
-				info.text = _L["TRACKDD_TOMTOM"];
-				info.func = function()
-					WQT_Utils:AddTomTomArrowByQuestId(questId);
-				end
-			else
-				info.text = _L["TRACKDD_TOMTOM_REMOVE"];
-				info.func = function()
-					WQT_Utils:RemoveTomTomArrowbyQuestId(questId);
-				end
-			end
-		else
-			-- Something wrong with TomTom
-			info.text = "TomTom Unavailable";
-			info.func = function()
-				print("Something is wrong with TomTom. Either it failed to load correctly, or an update changed its functionality.");
-			end
-		end
-		
-		ADD:AddButton(info, level);
-	end
-	
+
 	-- Don't allow tracking for quests that don't support it in the ObjectiveTrackerFrame
-	if (worldQuestType) then
+	if (tagInfo.worldQuestType) then
 		-- Tracking
-		if (IsWorldQuestWatched(questId)) then
+		if (QuestUtils_IsQuestWatched(questId)) then
 			info.text = UNTRACK_QUEST;
 			info.func = function()
-						RemoveWorldQuestWatch(questId);
+						C_QuestLog.RemoveWorldQuestWatch(questId);
 						if WQT_WorldQuestFrame:GetAlpha() > 0 then 
 							WQT_QuestScrollFrame:DisplayQuestList();
 						end
@@ -696,7 +705,7 @@ function WQT:InitTrackDropDown(self, level)
 		else
 			info.text = TRACK_QUEST;
 			info.func = function()
-						AddWorldQuestWatch(questId, true);
+						C_QuestLog.AddWorldQuestWatch(questId, Enum.QuestWatchType.Manual);
 						if WQT_WorldQuestFrame:GetAlpha() > 0 then 
 							WQT_QuestScrollFrame:DisplayQuestList();
 						end
@@ -704,6 +713,15 @@ function WQT:InitTrackDropDown(self, level)
 		end	
 		ADD:AddButton(info, level)
 	end
+	
+	-- New 9.0 waypoint system
+	info.text = "Place Map Pin";
+	info.func = function()
+			questInfo:SetAsWaypoint();
+			C_SuperTrack.SetSuperTrackedUserWaypoint(true);
+		end
+	
+	ADD:AddButton(info, level)
 	
 	-- LFG if possible
 	if (WQT_WorldQuestFrame:ShouldAllowLFG(questInfo)) then
@@ -714,9 +732,13 @@ function WQT:InitTrackDropDown(self, level)
 		ADD:AddButton(info, level);
 	end
 	
+	WQT_WorldQuestFrame:TriggerCallback("InitTrackDropDown", self, level, info, ADD)
+	
 	info.text = CANCEL;
 	info.func = nil;
+	info.isTitle = false;
 	ADD:AddButton(info, level)
+
 end
 
 function WQT:IsWorldMapFiltering()
@@ -764,7 +786,7 @@ end
 
 function WQT:PassesAllFilters(questInfo)
 	if (WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId) then 
-		return WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
+		return questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly or WQT_WorldQuestFrame.autoEmisarryId); --WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
 	end
 	local filterTypes = _V["FILTER_TYPES"];
 	
@@ -832,7 +854,7 @@ end
 function WQT:PassesFlagId(flagId ,questInfo, checkPrecise)
 	local flags = WQT.settings.filters[flagId].flags
 	if not flags then return false; end
-	local _, _, worldQuestType = GetQuestTagInfo(questInfo.questId);
+	local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questId);
 	
 	local passesPrecise = true;
 	
@@ -840,7 +862,7 @@ function WQT:PassesFlagId(flagId ,questInfo, checkPrecise)
 		if (filterEnabled) then
 			local func = _V["FILTER_FUNCTIONS"][flagId] and _V["FILTER_FUNCTIONS"][flagId][flag] ;
 			if(func) then 
-				local passed = func(questInfo, worldQuestType)
+				local passed = func(questInfo, tagInfo)
 				-- If we are checking precise, combine all results. Otherwise exit out if we pass at least one
 				if (WQT.settings.general.preciseFilters) then
 					passesPrecise = passesPrecise and passed;
@@ -948,7 +970,7 @@ function WQT:OnEnable()
 	self.loadableExternals = {};
 	for k, external in ipairs(addon.externals) do
 		if (external:IsLoaded()) then
-			external:Init();
+			external:Init(WQT_Utils);
 			WQT:debugPrint("External", external:GetName(), "loaded on first try.");
 		elseif (external:IsLoadable()) then
 			self.loadableExternals[external:GetName()] = external;
@@ -957,7 +979,7 @@ function WQT:OnEnable()
 			WQT:debugPrint("External", external:GetName(), "not installed.");
 		end
 	end
-	
+
 	-- Load settings
 	WQT_SettingsFrame:Init(_V["SETTING_CATEGORIES"], _V["SETTING_LIST"]);
 	WQT_SettingsFrame:SetCategoryExpanded("GENERAL", true);
@@ -1077,15 +1099,15 @@ function WQT_ListButtonMixin:OnClick(button)
 		if (not isBonus) then
 			-- Only do tracking if we aren't adding the link tot he chat
 			if (not ChatEdit_TryInsertQuestLinkForQuestID(self.questId)) then 
-				if (IsWorldQuestWatched(self.questId)) then
-					local hardWatched = IsWorldQuestHardWatched(self.questId);
-					RemoveWorldQuestWatch(self.questId);
+				if (QuestUtils_IsQuestWatched(self.questId)) then
+					local hardWatched = WQT_Utils:QuestIsWatchedManual(self.questId);
+					C_QuestLog.RemoveWorldQuestWatch(self.questId);
 					-- If it wasn't actually hard watched, do so now
 					if not hardWatched then
-						AddWorldQuestWatch(self.questId, true);
+						C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Manual);
 					end
 				else
-					AddWorldQuestWatch(self.questId, true);
+					C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Manual);
 				end
 			end
 		end
@@ -1097,11 +1119,11 @@ function WQT_ListButtonMixin:OnClick(button)
 	elseif (button == "LeftButton") then
 		-- Don't track bonus objectives. The object tracker doesn't like it;
 		if (not isBonus) then
-			local hardWatched = IsWorldQuestHardWatched(self.questId);
-			AddWorldQuestWatch(self.questId);
+			local hardWatched = WQT_Utils:QuestIsWatchedManual(self.questId);
+			
 			-- if it was hard watched, keep it that way
-			if hardWatched then
-				AddWorldQuestWatch(self.questId, true);
+			if (not hardWatched) then
+				C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Automatic);
 			end
 		end
 		if (WorldMapFrame:IsShown()) then
@@ -1158,23 +1180,25 @@ end
 
 function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 	local typeFrame = self.Type;
-	local isCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
-	local _, _, questType, rarity, isElite = GetQuestTagInfo(questInfo.questId);
-
+	local isCriteria = questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly);--WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
+	local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questId);
+	--if (not tagInfo) then return; end
+	local isElite = tagInfo and tagInfo.isElite;
+	
 	typeFrame:Show();
 	typeFrame:SetWidth(typeFrame:GetHeight());
 	typeFrame.Texture:Show();
 	typeFrame.Elite:SetShown(isElite);
 	
-	if (not rarity or rarity == LE_WORLD_QUEST_QUALITY_COMMON) then
+	if (not tagInfo or not tagInfo.quality or tagInfo.quality == Enum.WorldQuestQuality.Common) then
 		typeFrame.Bg:SetTexture("Interface/WorldMap/UI-QuestPoi-NumberIcons");
 		typeFrame.Bg:SetTexCoord(0.875, 1, 0.375, 0.5);
 		typeFrame.Bg:SetSize(28, 28);
-	elseif (rarity == LE_WORLD_QUEST_QUALITY_RARE) then
+	elseif (tagInfo.quality == Enum.WorldQuestQuality.Rare) then
 		typeFrame.Bg:SetAtlas("worldquest-questmarker-rare");
 		typeFrame.Bg:SetTexCoord(0, 1, 0, 1);
 		typeFrame.Bg:SetSize(18, 18);
-	elseif (rarity == LE_WORLD_QUEST_QUALITY_EPIC) then
+	elseif (tagInfo.quality == Enum.WorldQuestQuality.Epic) then
 		typeFrame.Bg:SetAtlas("worldquest-questmarker-epic");
 		typeFrame.Bg:SetTexCoord(0, 1, 0, 1);
 		typeFrame.Bg:SetSize(18, 18);
@@ -1197,12 +1221,6 @@ function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 			typeFrame.CriteriaGlow:SetPoint("CENTER", 0, 0);
 		end
 	end
-	
-	-- Bonus objectives
-	if (questType == _V["WQT_TYPE_BONUSOBJECTIVE"]) then
-		typeFrame.Texture:SetAtlas("QuestBonusObjective", true);
-		typeFrame.Texture:SetSize(22, 22);
-	end
 end
 
 function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
@@ -1219,7 +1237,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 
 	-- Title
 	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
-	
+
 	if (not questInfo.isValid) then
 		title = "|cFFFF0000(Invalid) " .. title;
 	elseif (not questInfo.passedFilter) then
@@ -1293,9 +1311,10 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	
 
 	-- Show border if quest is tracked
-	if (GetSuperTrackedQuestID() == questInfo.questId or IsWorldQuestWatched(questInfo.questId)) then
+	local isHardWatched = WQT_Utils:QuestIsWatchedManual(questInfo.questId);
+	if (C_SuperTrack.GetSuperTrackedQuestID() == questInfo.questId or isHardWatched) then
 		self.TrackedBorder:Show();
-		self.TrackedBorder:SetAlpha(IsWorldQuestHardWatched(questInfo.questId) and 0.6 or 1);
+		self.TrackedBorder:SetAlpha(isHardWatched and 0.6 or 1);
 	else
 		self.TrackedBorder:Hide();
 	end
@@ -1542,9 +1561,9 @@ function WQT_QuestCounterMixin:InfoOnEnter(frame)
 	
 	-- Add culprits
 	for k, i in ipairs(self.hiddenList) do
-		local name, _, _, _, _, _, _, id = GetQuestLogTitle(i); 
-		local _, tagName = GetQuestTagInfo(id)
-		GameTooltip:AddDoubleLine(string.format("%s (%s)", name, id), tagName, 1, 1, 1, 1, 1, 1, true);
+		local info = C_QuestLog.GetInfo(i);
+		local tagInfo = C_QuestLog.GetQuestTagInfo(info.questID);
+		GameTooltip:AddDoubleLine(string.format("%s (%s)", info.title, info.questID), tagInfo and tagInfo.tagName or "No tag", 1, 1, 1, 1, 1, 1, true);
 	end
 	
 	GameTooltip:Show();
@@ -1718,7 +1737,7 @@ end
 -- ChangeAnchorLocation(anchor)		Show list on a different container using _V["LIST_ANCHOR_TYPE"] variable
 -- :<event> -> ADDON_LOADED, PLAYER_REGEN_DISABLED, PLAYER_REGEN_ENABLED, QUEST_TURNED_IN, PVP_TIMER_UPDATE, WORLD_QUEST_COMPLETED_BY_SPELL, QUEST_LOG_UPDATE, QUEST_WATCH_LIST_CHANGED
 
-WQT_CoreMixin = CreateFromMixins(WQT_CallbackMixin);
+WQT_CoreMixin = CreateFromMixins(WQT_CallbackMixin, WQT_EventHookMixin);
 
 function WQT_CoreMixin:TryHideOfficialMapPin(pin)
 	if (WQT.settings.pin.disablePoI) then return; end
@@ -1803,7 +1822,8 @@ function WQT_CoreMixin:HideWorldmapHighlight()
 end
 
 function WQT_CoreMixin:OnLoad()
-	self.callbacks = {};
+	--self.callbacks = {};
+	--self.eventHooks = {};
 	self.WQT_Utils = WQT_Utils;
 	self.variables = addon.variables;
 
@@ -1843,7 +1863,9 @@ function WQT_CoreMixin:OnLoad()
 	-- Context menu
 	local frame = ADD:CreateMenuTemplate("WQT_TrackDropDown", self);
 	frame:EnableMouse(true);
-	ADD:Initialize(frame, function(self, level) WQT:InitTrackDropDown(self, level) end, "MENU");
+	ADD:Initialize(frame, function(self, level) 
+			WQT:InitTrackDropDown(self, level) 
+		end, "MENU");
 
 	self.dataProvider:RegisterCallback("WaitingRoom", function() 
 			if (InCombatLockdown()) then return end;
@@ -1851,14 +1873,14 @@ function WQT_CoreMixin:OnLoad()
 			WQT_QuestScrollFrame:FilterQuestList();
 			WQT_QuestScrollFrame:UpdateQuestList();
 			WQT_WorldQuestFrame:TriggerCallback("WaitingRoomUpdated")
-		end)
+		end, addonName)
 		
 	self.dataProvider:RegisterCallback("QuestsLoaded", function() 
 			self.ScrollFrame:UpdateQuestList(); 
 			-- Update the quest number counter
 			WQT_QuestLogFiller:UpdateText();
 			WQT_WorldQuestFrame:TriggerCallback("QuestsLoaded")
-		end)
+		end, addonName)
 	
 	self.dataProvider:RegisterCallback("BufferUpdated", function(progress) 
 			if (progress == 0) then
@@ -1866,7 +1888,7 @@ function WQT_CoreMixin:OnLoad()
 			end
 			CooldownFrame_SetDisplayAsPercentage(self.ProgressBar, progress);
 			self.ProgressBar.Pointer:SetRotation(-progress*6.2831);
-		end)
+		end, addonName)
 
 	-- Events
 	self:RegisterEvent("PLAYER_REGEN_DISABLED");
@@ -1889,7 +1911,8 @@ function WQT_CoreMixin:OnLoad()
 			else 
 				WQT:debugPrint("WQT missing function for:",event); 
 			end 
-
+			
+			WQT_EventHookMixin.OnEvent(self, event, ...);
 		end)
 
 	-- Slashcommands
@@ -2024,7 +2047,7 @@ function WQT_CoreMixin:OnLoad()
 				WQT_QuestScrollFrame.PoIHoverId = self.questID;
 				WQT_QuestScrollFrame:UpdateQuestList(true);
 			end
-			self.notTracked = not IsWorldQuestWatched(self.questID);
+			self.notTracked = not QuestUtils_IsQuestWatched(self.questID);
 			
 			-- Improve official tooltips overlap
 			local level = GameTooltip:GetFrameLevel();
@@ -2132,7 +2155,7 @@ function WQT_CoreMixin:OnLoad()
 	local a,b,c,d =QuestMapFrame:GetPoint(1);
 	QuestMapFrame:SetPoint(a,b,c,d,-65);
 	QuestScrollFrame:SetPoint("BOTTOMRIGHT",QuestMapFrame, "BOTTOMRIGHT", 0, -2);
-	QuestScrollFrame.Background:SetPoint("BOTTOMRIGHT",QuestMapFrame, "BOTTOMRIGHT", 0, -2);
+	QuestMapFrame.Background:SetPoint("BOTTOMRIGHT",QuestMapFrame, "BOTTOMRIGHT", 0, -2);
 	QuestMapFrame.DetailsFrame:SetPoint("TOPRIGHT", QuestMapFrame, "TOPRIGHT", -26, -2)
 	QuestMapFrame.VerticalSeparator:SetHeight(463);
 end
@@ -2152,6 +2175,10 @@ function WQT_CoreMixin:UpdateBountyCounters()
 	self.bountyCounterPool:ReleaseAll();
 	if (not WQT.settings.general.bountyCounter) then return end
 	
+	if (not self.bountyInfo) then
+		self.bountyInfo = {};
+	end
+	
 	for tab, v in pairs(self.bountyBoard.bountyTabPool.activeObjects) do
 		self:AddBountyCountersToTab(tab);
 	end
@@ -2164,46 +2191,63 @@ function WQT_CoreMixin:RepositionBountyTabs()
 end
 
 function WQT_CoreMixin:AddBountyCountersToTab(tab)
+	local settingBountyReward = WQT_Utils:GetSetting("general", "bountyReward");
+
+	if (not tab.WQT_Reward) then
+		tab.WQT_Reward = CreateFrame("FRAME", nil, tab, "WQT_MiniIconTemplate");
+		tab.WQT_Reward:SetPoint("CENTER", tab, "TOPRIGHT", -8, -7);
+	end
+	tab.WQT_Reward:Reset();
+	
 	local bountyData = self.bountyBoard.bounties[tab.bountyIndex];
-	if bountyData then
-		local questIndex = GetQuestLogIndexByID(bountyData.questID);
-		if questIndex > 0 then
-			local desc = GetQuestLogLeaderBoard(1, questIndex);
-			
-			local progress, goal = desc:match("([%d]+)%s*/%s*([%d]+)");
-			progress = tonumber(progress);
-			goal = tonumber(goal);
-			
-			if (progress == goal) then return end;
-			
-			local offsetAngle, startAngle = 32, 270;
-			
-			-- position of first counter
-			startAngle = startAngle - offsetAngle * (goal -1) /2
-			
-			for i=1, goal do
-				local counter = self.bountyCounterPool:Acquire();
-
-				local x = cos(startAngle) * 16;
-				local y = sin(startAngle) * 16;
-				counter:SetPoint("CENTER", tab.Icon, "CENTER", x, y);
-				counter:SetParent(tab);
-				counter:Show();
-				
-				-- Light nr of completed
-				if i <= progress then
-					counter.icon:SetTexCoord(0, 0.5, 0, 0.5);
-					counter.icon:SetVertexColor(1, 1, 1, 1);
-					counter.icon:SetDesaturated(false);
-				else
-					counter.icon:SetTexCoord(0, 0.5, 0, 0.5);
-					counter.icon:SetVertexColor(0.65, 0.65, 0.65, 1);
-					counter.icon:SetDesaturated(true);
-				end
-
-				-- Offset next counter
-				startAngle = startAngle + offsetAngle;
+	
+	if (bountyData) then
+		local progress, goal = self.bountyBoard:CalculateBountySubObjectives(bountyData);
+		
+		if (progress == goal) then return end;
+		
+		-- RewardIcon
+		if (settingBountyReward) then
+			local bountyQuestInfo = self.bountyInfo[bountyData.questID];
+			if (not bountyQuestInfo) then
+				bountyQuestInfo = WQT_Utils:QuestCreationFunc();
+				self.bountyInfo[bountyData.questID] = bountyQuestInfo;
+				bountyQuestInfo:Init(bountyData.questID);
 			end
+			bountyQuestInfo:LoadRewards();
+			tab.WQT_Reward:SetupRewardIcon(bountyQuestInfo:GetFirstNoneAzeriteType());
+			tab.WQT_Reward:SetScale(1.38);
+		end
+		
+		-- Counters
+		local offsetAngle = 32;
+		local startAngle = 270;
+		
+		-- position of first counter
+		startAngle = startAngle - offsetAngle * (goal -1) /2
+		
+		for i=1, goal do
+			local counter = self.bountyCounterPool:Acquire();
+
+			local x = cos(startAngle) * 16;
+			local y = sin(startAngle) * 16;
+			counter:SetPoint("CENTER", tab.Icon, "CENTER", x, y);
+			counter:SetParent(tab);
+			counter:Show();
+			
+			-- Light nr of completed
+			if i <= progress then
+				counter.icon:SetTexCoord(0, 0.5, 0, 0.5);
+				counter.icon:SetVertexColor(1, 1, 1, 1);
+				counter.icon:SetDesaturated(false);
+			else
+				counter.icon:SetTexCoord(0, 0.5, 0, 0.5);
+				counter.icon:SetVertexColor(0.75, 0.75, 0.75, 1);
+				counter.icon:SetDesaturated(true);
+			end
+
+			-- Offset next counter
+			startAngle = startAngle + offsetAngle;
 		end
 	end
 	
@@ -2275,8 +2319,28 @@ function WQT_CoreMixin:ShouldAllowLFG(questInfo)
 		end
 		questId = questInfo.questId;
 	end
-	local questType = select(3, GetQuestTagInfo(questId));
-	return questType and not (questType == LE_QUEST_TAG_TYPE_PET_BATTLE or questType == LE_QUEST_TAG_TYPE_DUNGEON or questType == LE_QUEST_TAG_TYPE_PROFESSION or questType == LE_QUEST_TAG_TYPE_RAID);
+	
+	local tagInfo = C_QuestLog.GetQuestTagInfo(questId);
+	return tagInfo.worldQuestType and not (tagInfo.worldQuestType == Enum.QuestTagType.PetBattle or tagInfo.worldQuestType == Enum.QuestTagType.Dungeon or tagInfo.worldQuestType == Enum.QuestTagType.Progession or tagInfo.worldQuestType == Enum.QuestTagType.Raid);
+end
+
+--[[
+function WQT_CoreMixin:HookEvent(event, func)
+	local list = self.eventHooks[event];
+	if (not self.eventHooks[event]) then
+		list = {};
+		self.eventHooks[event] = list;
+	end
+	
+	list[func] = true;
+end
+]]
+
+function WQT_CoreMixin:UnhookEvent(event, func)
+	local list = self.eventHooks[event];
+	if (list) then
+		list[func] = nil;
+	end
 end
 
 function WQT_CoreMixin:ADDON_LOADED(loaded)
@@ -2314,7 +2378,7 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 	if (WQT.loadableExternals) then
 		local external = WQT.loadableExternals[loaded];
 		if (external) then
-			external:Init();
+			external:Init(WQT_Utils);
 			WQT:debugPrint("External", external:GetName(), "delayed load.");
 			WQT.loadableExternals[loaded] = nil;
 		end
@@ -2345,11 +2409,6 @@ function WQT_CoreMixin:QUEST_TURNED_IN(questId)
 	if (questInfo) then
 		WQT_WorldQuestFrame:TriggerCallback("WorldQuestCompleted", questId, questInfo);
 	end
-
-	-- Remove TomTom arrow if tracked
-	if (TomTom and WQT.settings.general.useTomTom and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
-		WQT_Utils:RemoveTomTomArrowbyQuestId(questId);
-	end
 end
 
  -- Warmode toggle because WAR_MODE_STATUS_UPDATE doesn't seems to fire when toggling warmode
@@ -2374,29 +2433,6 @@ function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
 
 	self.ScrollFrame:DisplayQuestList();
 	WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
-	
-	-- Update TomTom arrows when quests change. Might be new that needs tracking or completed that needs removing
-	local autoArrow = WQT.settings.general.TomTomAutoArrow;
-	local clickArrow = WQT.settings.general.TomTomArrowOnClick;
-	if (questId and TomTom and WQT.settings.general.useTomTom and (clickArrow or autoArrow) and QuestUtils_IsQuestWorldQuest(questId)) then
-		
-		if (added) then
-			if (clickArrow or IsWorldQuestHardWatched(questId)) then
-				WQT_Utils:AddTomTomArrowByQuestId(questId);
-				--If click arrow is active, we want to clear the previous click arrow
-				if (clickArrow and self.softTomTomArrow and not IsWorldQuestHardWatched(self.softTomTomArrow)) then
-					WQT_Utils:RemoveTomTomArrowbyQuestId(self.softTomTomArrow);
-				end
-				
-				if (clickArrow and not IsWorldQuestHardWatched(questId)) then
-					self.softTomTomArrow = questId;
-				end
-			end
-			
-		else
-			WQT_Utils:RemoveTomTomArrowbyQuestId(questId)
-		end
-	end
 end
 
 function WQT_CoreMixin:TAXIMAP_OPENED(system)
@@ -2597,4 +2633,9 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	WQT_WorldQuestFrame:SelectTab(tab);
 	
 	WQT_WorldQuestFrame:TriggerCallback("AnchorChanged", anchor);
+end
+
+function WQT_CoreMixin:LoadExternal(external)
+	external:Init(WQT_Utils);
+	WQT:debugPrint("External", external:GetName(), "loaded on first try.");
 end

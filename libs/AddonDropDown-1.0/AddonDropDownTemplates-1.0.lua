@@ -1,4 +1,4 @@
-local MAJOR, MINOR = "AddonDropDownTemplates-1.0", 9
+local MAJOR, MINOR = "AddonDropDownTemplates-1.0", 10
 local ADDT, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not ADDT then return end -- No Upgrade needed.
@@ -114,14 +114,12 @@ function ADDT:CreateButtonTemplate(lib, name, parent, id)
 			
 			local parent = self:GetParent();
 			if ( parent.tooltipTitle and parent.tooltipWhileDisabled) then
-				if ( parent.tooltipOnButton ) then
+				--if ( parent.tooltipOnButton ) then
 					GameTooltip:SetOwner(parent, "ANCHOR_RIGHT");
 					GameTooltip:AddLine(parent.tooltipTitle, 1.0, 1.0, 1.0);
 					GameTooltip:AddLine(parent.tooltipText, nil, nil, nil, true);
 					GameTooltip:Show();
-				else
-					GameTooltip_AddNewbieTip(parent, parent.tooltipTitle, 1.0, 1.0, 1.0, parent.tooltipText, 1);
-				end
+				--end
 			end
 		
 			if (parent.funcEnter) then
@@ -166,14 +164,14 @@ function ADDT:CreateButtonTemplate(lib, name, parent, id)
 			_G[self:GetName().."Highlight"]:Show();
 			lib:StopCounting(self:GetParent());
 			if ( self.tooltipTitle ) then
-				if ( self.tooltipOnButton ) then
+				--if ( self.tooltipOnButton ) then
 					GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 					GameTooltip:AddLine(self.tooltipTitle, 1.0, 1.0, 1.0);
 					GameTooltip:AddLine(self.tooltipText, nil, nil, nil, true);
 					GameTooltip:Show();
-				else
-					GameTooltip_AddNewbieTip(self, self.tooltipTitle, 1.0, 1.0, 1.0, self.tooltipText, 1);
-				end
+				--else
+				--	GameTooltip_AddNewbieTip(self, self.tooltipTitle, 1.0, 1.0, 1.0, self.tooltipText, 1);
+				--end
 			end
 			
 			if ( self.mouseOverIcon ~= nil ) then
@@ -225,7 +223,7 @@ function ADDT:CreateListTemplate(lib, name, id)
 	button:Hide();
 	
 	-- Backdrop
-	local temp = CreateFrame("Frame", name.."Backdrop", button);
+	local temp = CreateFrame("Frame", name.."Backdrop", button, "BackdropTemplate");
 	temp:SetAllPoints();
 	temp:SetBackdrop( {
 		["bgFile"] = "Interface/DialogFrame/UI-DialogBox-Background-Dark", 
@@ -233,7 +231,7 @@ function ADDT:CreateListTemplate(lib, name, id)
 		["insets"]  = { ["left"] = 11, ["right"] = 11, ["top"] = 11, ["bottom"] = 9 }
 	});
 	-- MenuBackdrop
-	temp = CreateFrame("Frame", name.."MenuBackdrop", button);
+	temp = CreateFrame("Frame", name.."MenuBackdrop", button, "BackdropTemplate");
 	temp:SetAllPoints();
 	temp:SetBackdrop( {
 		["bgFile"] = "Interface/Tooltips/UI-Tooltip-Background", 

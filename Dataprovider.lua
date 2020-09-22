@@ -16,9 +16,7 @@ local _azuriteID = C_CurrencyInfo.GetAzeriteCurrencyID();
 -- LOCAL FUNCTIONS
 ----------------------------
 
-local function UpdateWorldZones(newLevel)
-	if (newLevel and newLevel ~= 110 and newLevel ~=120) then return; end
-	 
+local function UpdateAzerothZones(newLevel)
 	newLevel = newLevel or UnitLevel("player");
 	
 	local expLevel = GetAccountExpansionLevel();
@@ -31,10 +29,11 @@ local function UpdateWorldZones(newLevel)
 	worldTable[12] = {["x"] = 0.19, ["y"] = 0.5} -- Kalimdor
 	worldTable[13] = {["x"] = 0.88, ["y"] = 0.56} -- Eastern Kingdom
 	
-	if (expLevel >= LE_EXPANSION_BATTLE_FOR_AZEROTH and newLevel >= 110) then
+	-- Always take the highest expansion
+	if (expLevel >= LE_EXPANSION_BATTLE_FOR_AZEROTH and newLevel >= 50) then
 		worldTable[875] = {["x"] = 0.54, ["y"] = 0.61} -- Zandalar
 		worldTable[876] = {["x"] = 0.72, ["y"] = 0.49} -- Kul Tiras
-	elseif (expLevel >= LE_EXPANSION_LEGION and newLevel >= 98) then
+	elseif (expLevel >= LE_EXPANSION_LEGION and newLevel >= 50) then
 		worldTable[619] = {["x"] = 0.6, ["y"] = 0.41} -- Broken Isles
 	end
 end
@@ -132,10 +131,10 @@ end
 
 local QuestInfoMixin = {};
 
-local function QuestCreationFunc()
+function WQT_Utils:QuestCreationFunc()
 	local questInfo = CreateFromMixins(QuestInfoMixin);
-	questInfo:OnCreate();
-	return questInfo;
+	local hasRewardData = questInfo:OnCreate();
+	return questInfo, hasRewardData;
 end
 
 local function QuestResetFunc(pool, questInfo)
@@ -152,8 +151,10 @@ function QuestInfoMixin:Init(questId, isDaily, isCombatAllyQuest, alwaysHide, po
 	self.isValid = HaveQuestData(self.questId);
 	self.time.seconds = WQT_Utils:GetQuestTimeString(self); -- To check if expired or never had a time limit
 	self.passedFilter = true;
-	self.isCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questId);
-	self.hasRewardData = self:LoadRewards();
+	--self.isCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questId);
+	--self.isCriteriaAny = 
+	
+	self:LoadRewards();
 	
 	return self.hasRewardData;
 end
@@ -165,6 +166,7 @@ function QuestInfoMixin:OnCreate()
 		};
 	self.rewardList = {};
 	self.mapInfo = {};
+	self.hasRewardData = false;
 end
 
 function QuestInfoMixin:SetMapPos(posX, posY)
@@ -183,6 +185,10 @@ function QuestInfoMixin:Reset()
 end
 
 function QuestInfoMixin:LoadRewards()
+	-- If we already have our data, don't try again;
+	if (self.hasRewardData) then return; end
+
+	wipe(self.rewardList);
 	local haveData = HaveQuestRewardData(self.questId);
 	if (haveData) then
 		self.reward.typeBits = WQT_REWARDTYPE.none;
@@ -221,12 +227,12 @@ function QuestInfoMixin:LoadRewards()
 			self:AddReward(WQT_REWARDTYPE.spell, 1, texture, 1, _V["WQT_COLOR_ITEM"], rewardId);
 		end
 		-- Honor
-		if GetQuestLogRewardHonor(self.questId) > 0 then
+		if (GetQuestLogRewardHonor(self.questId) > 0) then
 			local numItems = GetQuestLogRewardHonor(self.questId);
 			self:AddReward(WQT_REWARDTYPE.honor, numItems, 1455894, 1, _V["WQT_COLOR_HONOR"]);
 		end
 		-- Gold
-		if GetQuestLogRewardMoney(self.questId) > 0 then
+		if (GetQuestLogRewardMoney(self.questId) > 0) then
 			local numItems = floor(abs(GetQuestLogRewardMoney(self.questId) / 10000))
 			self:AddReward(WQT_REWARDTYPE.gold, numItems, 133784, 1, _V["WQT_COLOR_GOLD"]);
 		end
@@ -235,9 +241,9 @@ function QuestInfoMixin:LoadRewards()
 		for i=1, numCurrencies do
 			local _, _, amount, currencyId = GetQuestLogRewardCurrencyInfo(i, self.questId);
 			if (currencyId) then
-				local name, _, texture, _, _, _, _, quality = GetCurrencyInfo(currencyId);
+				local currencyInfo = C_CurrencyInfo.GetCurrencyInfo(currencyId);
 				local isRep = C_CurrencyInfo.GetFactionGrantedByCurrency(currencyId) ~= nil;
-				name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(currencyId, amount, name, texture, quality); 
+				local name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(currencyId, amount, currencyInfo.name, currencyInfo.iconFileID, currencyInfo.quality); 
 				local currType = currencyId == _azuriteID and WQT_REWARDTYPE.artifact or (isRep and WQT_REWARDTYPE.reputation or WQT_REWARDTYPE.currency);
 				local color = currType == WQT_REWARDTYPE.artifact and _V["WQT_COLOR_ARTIFACT"] or  _V["WQT_COLOR_CURRENCY"]
 				self:AddReward(currType, amount, texture, quality, color, currencyId);
@@ -252,7 +258,7 @@ function QuestInfoMixin:LoadRewards()
 		self:ParseRewards();
 	end
 
-	return haveData;
+	self.hasRewardData = haveData;
 end
 
 function QuestInfoMixin:AddReward(rewardType, amount, texture, quality, color, id, canUpgrade)
@@ -303,8 +309,35 @@ function QuestInfoMixin:IsExpired()
 	return self.time.seconds and self.time.seconds > 0 and timeLeftSeconds < 1;
 end
 
+function QuestInfoMixin:SetAsWaypoint()
+	local mapInfo = WQT_Utils:GetMapInfoForQuest(self.questId);
+	local x, y = WQT_Utils:GetQuestMapLocation(self.questId, mapInfo.mapID);
+	C_Map.SetUserWaypoint({["uiMapID"]= mapInfo.mapID, ["position"]={["x"] = x , ["y"] = y }});
+end
+
 -- Getters for the most important reward
+function QuestInfoMixin:GetFirstNoneAzeriteType()
+	if (self.reward.typeBits == WQT_REWARDTYPE.none) then
+		return WQT_REWARDTYPE.none;
+	end
+
+	local hasAzerite = false;
+	for i = 1, #self.rewardList do
+		local reward = self.rewardList[i];
+		if (reward.type ~= WQT_REWARDTYPE.artifact) then
+			return reward.type;
+		else
+			hasAzerite = true;
+		end
+	end
+
+	return hasAzerite and WQT_REWARDTYPE.artifact or WQT_REWARDTYPE.missing;
+end
+
 function QuestInfoMixin:GetRewardType()
+	if (self.reward.typeBits == WQT_REWARDTYPE.none) then
+		return WQT_REWARDTYPE.none;
+	end
 	local reward = self.rewardList[1];
 	return reward and reward.type or WQT_REWARDTYPE.missing;
 end
@@ -320,6 +353,11 @@ function QuestInfoMixin:GetRewardAmount()
 end
 
 function QuestInfoMixin:GetRewardTexture()
+	if (self.reward.typeBits == WQT_REWARDTYPE.none) then
+		-- Dark empty texture
+		return "Interface/Garrison/GarrisonMissionUIInfoBoxBackgroundTile";
+	end
+
 	local reward = self.rewardList[1];
 	return reward and reward.texture or 134400;
 end
@@ -330,6 +368,9 @@ function QuestInfoMixin:GetRewardQuality()
 end
 
 function QuestInfoMixin:GetRewardColor()
+	if (self.reward.typeBits == WQT_REWARDTYPE.none) then
+		return _V["WQT_COLOR_NONE"] ;
+	end
 	local reward = self.rewardList[1];
 	return reward and reward.color or _V["WQT_COLOR_MISSING"];
 end
@@ -337,6 +378,32 @@ end
 function QuestInfoMixin:GetRewardCanUpgrade()
 	local reward = self.rewardList[1];
 	return reward and reward.canUpgrade;
+end
+
+function QuestInfoMixin:IsCriteria(forceSingle)
+	local bountyBoard = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]];
+	if (not bountyBoard) then return false; end
+	
+	-- Try only selected
+	if (forceSingle) then
+		return bountyBoard:IsWorldQuestCriteriaForSelectedBounty(self.questId);
+	end
+	
+	-- Try any of them
+	if (bountyBoard.bounties) then
+		for k, bounty in ipairs(bountyBoard.bounties) do
+			if (C_QuestLog.IsQuestCriteriaForBounty(self.questId, bounty.questID)) then
+				return true;
+			end
+		end
+	end
+	
+	return false;
+end
+
+function QuestInfoMixin:GetTitle()
+	local title = C_TaskQuest.GetQuestInfoByQuestID(self.questId);
+	return title;
 end
 
 ----------------------------
@@ -350,7 +417,7 @@ end
 WQT_DataProvider = CreateFromMixins(WQT_CallbackMixin);
 
 function WQT_DataProvider:OnLoad()
-	self.pool = CreateObjectPool(QuestCreationFunc, QuestResetFunc);
+	self.pool = CreateObjectPool(WQT_Utils.QuestCreationFunc, QuestResetFunc);
 	self.iterativeList = {};
 	self.keyList = {};
 	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room
@@ -362,7 +429,7 @@ function WQT_DataProvider:OnLoad()
 			self:LoadQuestsInZone(WorldMapFrame.mapID);
 		end);
 	
-	UpdateWorldZones(); 
+	UpdateAzerothZones(); 
 end
 
 function WQT_DataProvider:OnEvent(event, ...)
@@ -370,7 +437,7 @@ function WQT_DataProvider:OnEvent(event, ...)
 		self:LoadQuestsInZone(WorldMapFrame.mapID);
 	elseif (event == "PLAYER_LEVEL_UP") then
 		local level = ...;
-		UpdateWorldZones(level); 
+		UpdateAzerothZones(level); 
 	end
 end
 
@@ -579,7 +646,7 @@ end
 
 function WQT_DataProvider:ListContainsEmissary()
 	for questInfo, v in self.pool:EnumerateActive() do
-		if questInfo.isCriteria then return true; end
+		if (questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly)) then return true; end
 	end
 	return false
 end

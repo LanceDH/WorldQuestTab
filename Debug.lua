@@ -76,14 +76,19 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		AddIndentedDoubleLine(tooltip, "Through functions:", "", 0, color);
 		local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
 		AddIndentedDoubleLine(tooltip, "title", title, 1, color);
-		local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questInfo.questId);
-		local tagDisplay = tagID and tagName.." ("..tagID..")" or tagName;
-		AddIndentedDoubleLine(tooltip, "tag", tagDisplay, 1, color);
-		AddIndentedDoubleLine(tooltip, "worldQuestType", worldQuestType, 1, color);
-		AddIndentedDoubleLine(tooltip, "rarity", rarity, 1, color);
-		AddIndentedDoubleLine(tooltip, "isElite", isElite, 1, color);
-		AddIndentedDoubleLine(tooltip, "tradeskillLineIndex", tradeskillLineIndex, 1, color);
-		AddIndentedDoubleLine(tooltip, "isThreatQuest", C_QuestLog.IsThreatQuest(questInfo.questId), 1, color);
+		AddIndentedDoubleLine(tooltip, "tag", "", 1, color);
+		local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questId);
+		if (tagInfo) then
+			local tagDisplay = tagInfo.tagID and tagInfo.tagName.." ("..tagInfo.tagID..")" or tagInfo.tagName;
+			AddIndentedDoubleLine(tooltip, "name", tagDisplay, 2, color);
+			AddIndentedDoubleLine(tooltip, "worldQuestType", tagInfo.worldQuestType, 2, color);
+			AddIndentedDoubleLine(tooltip, "quality", tagInfo.quality, 2, color);
+			AddIndentedDoubleLine(tooltip, "isElite", tagInfo.isElite, 2, color);
+			AddIndentedDoubleLine(tooltip, "tradeskillLineIndex", tagInfo.tradeskillLineID, 2, color);
+			AddIndentedDoubleLine(tooltip, "isThreatQuest", C_QuestLog.IsThreatQuest(questInfo.questId), 2, color);
+		else
+			AddIndentedDoubleLine(tooltip, "no tag info", "", 2, color);
+		end
 		-- Time
 		local seconds, timeString, timeColor, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo, true, true);
 		AddIndentedDoubleLine(tooltip, "time", "", 1, color);
@@ -148,13 +153,12 @@ local function GetQuestDump()
 	local counted, limit = WQT_Utils:GetQuestLogInfo()
 	local output = FORMAT_QUEST_HEADER:format(counted, limit);
 	
-	local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questID, startEvent, displayQuestID, isOnMap, hasLocalPOI, isTask, isBounty, isStory, isHidden, isScaling;
-	local numEntries = GetNumQuestLogEntries();
+	local numEntries = C_QuestLog.GetNumQuestLogEntries();
 	for index = 1, numEntries do
-		title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questID, startEvent, displayQuestID, isOnMap, hasLocalPOI, isTask, isBounty, isStory, isHidden, isScaling = GetQuestLogTitle(index);
+		local info = C_QuestLog.GetInfo(index);
 		local counted = WQT_Utils:QuestCountsToCap(index);
-		if (not isHeader) then
-			output = FORMAT_QUEST:format(output, questID, bts(counted), frequency, bts(isTask), bts(isBounty), bts(isHidden));
+		if (not info.isHeader) then
+			output = FORMAT_QUEST:format(output, info.questID, bts(counted), info.frequency, bts(info.isTask), bts(info.isBounty), bts(info.isHidden));
 		end
 	end
 	

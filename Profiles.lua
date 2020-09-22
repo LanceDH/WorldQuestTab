@@ -27,6 +27,7 @@ local function ReferenceListSort(a, b)
 end
 
 local function ClearDefaults(a, b)
+	if(not a or not b) then return; end
 	for k, v in pairs(b) do
 		if (type(a[k]) == "table" and type(v) == "table") then
 			ClearDefaults(a[k], v);
@@ -86,36 +87,6 @@ local function AddCategoryDefaults(category)
 	CopyIfNil(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
 end
 
-local function AddDefaultsToActive()
-	AddCategoryDefaults("general");
-	AddCategoryDefaults("list");
-	AddCategoryDefaults("pin");
-	AddCategoryDefaults("filters");
-end
-
-local function LoadProfileInternal(id, profile)
-	WQT.db.char.activeProfile = id;
-	WQT.settings = profile;
-	AddDefaultsToActive();
-end
-
-local function ConvertDefaultProfile()
-	local profile = {
-		["name"] = DEFAULT
-		,["general"] = CopyTable(WQT.db.global.general or {})
-		,["list"] = CopyTable(WQT.db.global.list or {})
-		,["pin"] = CopyTable(WQT.db.global.pin or {})
-		,["filters"] = CopyTable(WQT.db.global.filters or {})
-	}
-	WQT.db.global.general = nil;
-	WQT.db.global.list = nil;
-	WQT.db.global.pin = nil;
-	WQT.db.global.filters = nil;
-	
-	WQT.db.global.profiles[0] = profile;
-	LoadProfileInternal(0, profile);
-end
-
 local function GetProfileById(id)
 	for index, profile in ipairs(_profileReferenceList) do
 		if (profile.arg1 == id) then
@@ -138,6 +109,8 @@ local function ApplyVersionChanges(profile, version)
 end
 
 function WQT_Profiles:InitSettings()
+	self.externalDefaults = {};
+
 	-- Version checking
 	local settingVersion = WQT.db.global.versionCheck or"0";
 	local currentVersion = GetAddOnMetadata(addonName, "version");
@@ -149,7 +122,20 @@ function WQT_Profiles:InitSettings()
 	-- Setup profiles
 	WQT.settings = {["general"] = {}, ["list"] = {}, ["pin"] = {}, ["filters"] = {}};
 	if (not WQT.db.global.profiles[0]) then
-		ConvertDefaultProfile();
+		local profile = {
+			["name"] = DEFAULT
+			,["general"] = CopyTable(WQT.db.global.general or {})
+			,["list"] = CopyTable(WQT.db.global.list or {})
+			,["pin"] = CopyTable(WQT.db.global.pin or {})
+			,["filters"] = CopyTable(WQT.db.global.filters or {})
+		}
+		WQT.db.global.general = nil;
+		WQT.db.global.list = nil;
+		WQT.db.global.pin = nil;
+		WQT.db.global.filters = nil;
+		
+		WQT.db.global.profiles[0] = profile;
+		self:LoadProfileInternal(0, profile);
 	end
 
 	
@@ -215,6 +201,36 @@ function WQT_Profiles:LoadIndex(index)
 	self:Load(profile.id);
 end
 
+function WQT_Profiles:LoadProfileInternal(id, profile)
+
+	WQT.db.char.activeProfile = id;
+	WQT.settings = profile;
+	
+	-- Add defaults
+	AddCategoryDefaults("general");
+	AddCategoryDefaults("list");
+	AddCategoryDefaults("pin");
+	AddCategoryDefaults("filters");
+	
+	
+	local externals = WQT.settings.external;
+	if (not externals) then
+		WQT.settings.external = {};
+		externals = WQT.settings.external
+	end
+	
+	for external, settings in pairs(self.externalDefaults) do
+		local externalSettings = externals[external];
+		if (not externalSettings) then
+			externals[external] = {};
+			externalSettings = externals[external];
+		end
+		CopyIfNil(externalSettings, settings);
+	end
+	
+end
+
+
 function WQT_Profiles:Load(id)
 	WQT_Profiles:ClearDefaultsFromActive();
 
@@ -230,7 +246,8 @@ function WQT_Profiles:Load(id)
 		self:LoadDefault();
 		return;
 	end
-	LoadProfileInternal(id, profile);
+	self:LoadProfileInternal(id, profile);
+	WQT_WorldQuestFrame:TriggerCallback("LoadProfile");
 end
 
 function WQT_Profiles:Delete(id)
@@ -250,7 +267,7 @@ function WQT_Profiles:Delete(id)
 end
 
 function WQT_Profiles:LoadDefault()
-	LoadProfileInternal(0, WQT.db.global.profiles[0]);
+	self:LoadProfileInternal(0, WQT.db.global.profiles[0]);
 end
 
 function WQT_Profiles:DefaultIsActive()
@@ -332,6 +349,14 @@ function WQT_Profiles:ClearDefaultsFromActive()
 	ClearDefaults(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
 	category = "filters";
 	ClearDefaults(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
+	
+	--External
+	local externals = WQT.settings.external;
+	for external, settings in pairs(self.externalDefaults) do
+		ClearDefaults(externals[external], settings);
+	end
+	
+	WQT_WorldQuestFrame:TriggerCallback("ClearDefaults");
 end
 
 function WQT_Profiles:ResetActive()
@@ -347,4 +372,29 @@ function WQT_Profiles:ResetActive()
 	category = "filters";
 	wipe(WQT.settings[category]);
 	WQT.settings[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
+	
+	--External
+	local externals = WQT.settings.external;
+	for external, settings in pairs(self.externalDefaults) do
+		if (externals[external]) then
+			wipe(externals[external]);
+			-- The external has a direct reference to this table, so don't replace it
+			CopyIfNil(externals[external], settings);
+		end
+	end
+	
+	WQT_WorldQuestFrame:TriggerCallback("ResetActive");
+end
+
+function WQT_Profiles:RegisterExternalSettings(key, settings)
+	local list = self.externalDefaults[key];
+	if (not list) then
+		list = {};
+		self.externalDefaults[key] = list;
+	end
+	
+	CopyIfNil(list, settings);
+	self:Load(WQT.db.char.activeProfile);
+	
+	return WQT.settings.external[key];
 end

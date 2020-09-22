@@ -3,29 +3,7 @@
      xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ../../FrameXML/UI.xsd">
 
 	<Script file="MapPinProvider.lua"/>
-	
-	<Frame name="WQT_PinIconTemplate" flattenRenderLayers="true" virtual="true">
-		<Size x="16" y="16" />
-		<Layers>
-			<Layer level="ARTWORK" textureSubLevel="10">
-				<Texture parentKey="Icon" atlas="dungeon">
-					<Size x="10" y="10"/>
-					<Anchors>
-						<Anchor point="CENTER"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-			<Layer level="BACKGROUND" textureSubLevel="9">
-				<Texture parentKey="BG" alpha="0.75" file="Interface\GLUES\Models\UI_MainMenu_Legion\UI_Legion_Shadow" setAllPoints="true">
-					<Size x="16" y="16"/>
-					<Anchors>
-						<Anchor point="CENTER"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-		</Layers>
-	</Frame>
-	
+
 	<Button name="WQT_PinTemplate" mixin="WQT_PinMixin" flattenRenderLayers="true" virtual="true" frameStrata="MEDIUM">
 		<Size x="25" y="25" />
 		<HitRectInsets left="3" right="3" top="3" bottom="3"/>
@@ -90,7 +68,7 @@
 				<Texture parentKey="Pointer" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingPointer"/>
 			</Layer>
 			<Layer level="ARTWORK" textureSubLevel="5">
-				 <FontString parentKey="Time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE" text="Fuck">
+				 <FontString parentKey="Time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE" text="Uh oh">
 					<size y="18"/>
 					<Anchors>
 						<Anchor point="TOP" relativePoint="BOTTOM" x="2" y="2"/>

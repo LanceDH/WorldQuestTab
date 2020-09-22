@@ -238,4 +238,25 @@
 		</Frames>
 	</Frame>
 	
+	<Frame name="WQT_MiniIconTemplate" flattenRenderLayers="true" mixin="WQT_MiniIconMixin" virtual="true">
+		<Size x="16" y="16" />
+		<Layers>
+			<Layer level="ARTWORK" textureSubLevel="10">
+				<Texture parentKey="Icon" atlas="dungeon">
+					<Size x="10" y="10"/>
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="BACKGROUND" textureSubLevel="9">
+				<Texture parentKey="BG" alpha="0.75" file="Interface\GLUES\Models\UI_MainMenu_Legion\UI_Legion_Shadow" setAllPoints="true">
+					<Size x="16" y="16"/>
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+	</Frame>
 </Ui>
