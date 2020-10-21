@@ -161,26 +161,6 @@ end
 -- Utilities
 ----------------------------
 
-local FORMAT_VERSION_MINOR = "%s|cFF888888.%s|r"
-local FORMAT_H1 = "%s<h1 align='center'>%s</h1>";
-local FORMAT_H2 = "%s<h2>%s:</h2>";
-local FORMAT_p = "%s<p>%s</p>";
-local FORMAT_WHITESPACE = "%s<h3>&#160;</h3>"
-
-local function AddNotes(updateMessage, title, notes)
-	if (not notes) then return updateMessage; end
-	if (title) then
-		updateMessage = FORMAT_H2:format(updateMessage, title);
-	end
-	for k, note in ipairs(notes) do
-		updateMessage = FORMAT_p:format(updateMessage, note);
-		updateMessage = FORMAT_WHITESPACE:format(updateMessage);
-	end
-	updateMessage = FORMAT_WHITESPACE:format(updateMessage);
-	return updateMessage;
-end
-
-
 local cachedTypeData = {};
 local cachedZoneInfo = {};
 
@@ -253,7 +233,7 @@ end
 
 function WQT_Utils:GetCachedTypeIconData(questInfo)
 	
-	if (questInfo.isDaily)	then
+	if (questInfo.isDaily or questInfo.isAllyQuest) then
 		return "QuestDaily", 17, 17, true;
 	elseif (questInfo.isQuestStart) then
 		return "QuestNormal", 17, 17, true;
@@ -729,6 +709,25 @@ function WQT_Utils:DeepWipeTable(t)
 	end
 	wipe(t);
 	t = nil;
+end
+
+local FORMAT_VERSION_MINOR = "%s|cFF888888.%s|r"
+local FORMAT_H1 = "%s<h1 align='center'>%s</h1>";
+local FORMAT_H2 = "%s<h2>%s:</h2>";
+local FORMAT_p = "%s<p>%s</p>";
+local FORMAT_WHITESPACE = "%s<h3>&#160;</h3>"
+
+local function AddNotes(updateMessage, title, notes)
+	if (not notes) then return updateMessage; end
+	if (title) then
+		updateMessage = FORMAT_H2:format(updateMessage, title);
+	end
+	for k, note in ipairs(notes) do
+		updateMessage = FORMAT_p:format(updateMessage, note);
+		updateMessage = FORMAT_WHITESPACE:format(updateMessage);
+	end
+	updateMessage = FORMAT_WHITESPACE:format(updateMessage);
+	return updateMessage;
 end
 
 function WQT_Utils:FormatPatchNotes(notes, title)

@@ -599,6 +599,12 @@ local function ConvertOldSettings(version)
 		WQT.db.global.pin.bigPoI = nil;
 		WQT.db.global.pin.reward = nil; 
 	end
+	
+	if (version < "9.0.02") then
+		-- More specific options for map pins
+		WQT.db.global.pin.continentVisible = WQT.db.global.pin.continentPins and _V["ENUM_PIN_CONTINENT"].all or _V["ENUM_PIN_CONTINENT"].none;
+		WQT.db.global.pin.continentPins = nil
+	end
 end
 
 -- Display an indicator on the filter if some official map filters might hide quest
@@ -692,7 +698,7 @@ function WQT:InitTrackDropDown(self, level)
 	info.isTitle = false;
 
 	-- Don't allow tracking for quests that don't support it in the ObjectiveTrackerFrame
-	if (tagInfo.worldQuestType) then
+	if (tagInfo and tagInfo.worldQuestType) then
 		-- Tracking
 		if (QuestUtils_IsQuestWatched(questId)) then
 			info.text = UNTRACK_QUEST;
@@ -931,7 +937,7 @@ function WQT:OnEnable()
 	end
 	
 	-- Show default tab depending on setting
-	WQT_WorldQuestFrame:SelectTab((UnitLevel("player") >= 110 and self.settings.general.defaultTab) and WQT_TabWorld or WQT_TabNormal);
+	WQT_WorldQuestFrame:SelectTab(self.settings.general.defaultTab and WQT_TabWorld or WQT_TabNormal);
 	WQT_WorldQuestFrame.tabBeforeAnchor = WQT_WorldQuestFrame.selectedTab;
 	
 	-- Show quest log counter
@@ -1518,10 +1524,13 @@ function WQT_ScrollListMixin:UpdateBackground()
 		WQT_WorldQuestFrame.Background:SetAlpha(0);
 	else
 		WQT_WorldQuestFrame.Background:SetAlpha(1);
-		if (self.numDisplayed == 0 and not WQT_WorldQuestFrame.dataProvider:IsBuffereingQuests()) then
-			WQT_WorldQuestFrame.Background:SetAtlas("NoQuestsBackground", true);
-		else
-			WQT_WorldQuestFrame.Background:SetAtlas("QuestLogBackground", true);
+		-- Don't change the backgound if data is buffering to prevent the background flashing
+		if (not WQT_WorldQuestFrame.dataProvider:IsBuffereingQuests()) then
+			if (self.numDisplayed == 0) then
+				WQT_WorldQuestFrame.Background:SetAtlas("NoQuestsBackground", true);
+			else
+				WQT_WorldQuestFrame.Background:SetAtlas("QuestLogBackground", true);
+			end
 		end
 	end
 	

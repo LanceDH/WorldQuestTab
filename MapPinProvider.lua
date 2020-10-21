@@ -46,6 +46,7 @@ local function SortPinsByMapPos(a, b)
 end
 	
 local function OnPinRelease(pool, pin)
+	pin:ClearFocus();
 	pin.questId = nil;
 	pin.nudgeX = 0;
 	pin.nudgeY = 0;
@@ -58,27 +59,45 @@ local function OnPinRelease(pool, pin)
 	pin:ClearAllPoints();
 end
 
-local function GetPinType(parentMapFrame, mapType, questInfo, settingsContinentPins) 
-	-- No support for world pins right now
-	if (mapType <= Enum.UIMapType.World) then
-		return;
-	end
 
-	if (FlightMapFrame and parentMapFrame == FlightMapFrame) then
-		return _pinType.zone;
+local function ShouldShowPin(questInfo, mapType, settingsZoneVisible, settingsPinContinent, settingsFilterPins, isFlightMap)
+	-- Don't show if not valid
+	if (not questInfo.isValid) then return false; end
+	
+	-- Don't show if filtering and doesn't pass
+	if (settingsFilterPins and not questInfo.passedFilter) then return false; end
+	
+	if (isFlightMap) then return true; end
+
+	if (mapType == Enum.UIMapType.Continent) then
+		-- Never show on continent
+		if (settingsPinContinent == _V["ENUM_PIN_CONTINENT"].none) then
+			return false;
+		end
+		-- Show only if tracked
+		if (settingsPinContinent == _V["ENUM_PIN_CONTINENT"].tracked and not C_QuestLog.GetQuestWatchType(questInfo.questId)) then
+			return false;
+		end
+	elseif (mapType >= Enum.UIMapType.Zone) then
+		-- Never show on continent
+		if (settingsZoneVisible == _V["ENUM_PIN_ZONE"].none) then
+			return false;
+		end
+		-- Show only if tracked
+		if (settingsZoneVisible == _V["ENUM_PIN_ZONE"].tracked and not C_QuestLog.GetQuestWatchType(questInfo.questId)) then
+			return false;
+		end
 	end
 	
-	-- Anything deeper than a continent counts as a zone
-	if (mapType >= Enum.UIMapType.Zone) then
-		return _pinType.zone;
-	end
-	-- Maybe at some point
-	-- if (mapType == Enum.UIMapType.World) then
-		-- return _pinType.world;
-	-- end
-	if (mapType == Enum.UIMapType.Continent and settingsContinentPins) then
+	return true;
+end
+
+local function GetPinType(mapType) 
+	if (mapType == Enum.UIMapType.Continent) then
 		return _pinType.continent;
 	end
+	
+	return _pinType.zone;
 end
 
 ------------------------------------
@@ -131,9 +150,11 @@ function WQT_PinDataProvider:RefreshAllData()
 	WQT_WorldQuestFrame:HideOfficialMapPins();
 	
 	local parentMapFrame;
+	local isFlightMap = false;
 	if (WorldMapFrame:IsShown()) then
 		parentMapFrame = WorldMapFrame;
 	elseif (FlightMapFrame and FlightMapFrame:IsShown()) then
+		isFlightMap = true;
 		parentMapFrame = FlightMapFrame;
 	end
 	
@@ -146,26 +167,23 @@ function WQT_PinDataProvider:RefreshAllData()
 	
 	local mapID = parentMapFrame:GetMapID();
 	local settingsContinentPins = WQT_Utils:GetSetting("pin", "continentPins");
+	local settingsContinentVisible = WQT_Utils:GetSetting("pin", "continentVisible");
+	local settingsZoneVisible = WQT_Utils:GetSetting("pin", "zoneVisible");
 	local settingsFilterPoI  = WQT_Utils:GetSetting("pin", "filterPoI");
 	local mapInfo = WQT_Utils:GetCachedMapInfo(mapID);
 	local canvas = parentMapFrame:GetCanvas();
 	
 	wipe(self.activePins);
-	for k, questInfo in ipairs(WQT_WorldQuestFrame.dataProvider:GetIterativeList()) do
-		if (settingsFilterPoI and questInfo.passedFilter or (not settingsFilterPoI and questInfo.isValid)) then
-			local pinType = GetPinType(parentMapFrame, mapInfo.mapType, questInfo, settingsContinentPins);
-			if (pinType) then
+	if (mapInfo.mapType >= Enum.UIMapType.Continent) then
+		for k, questInfo in ipairs(WQT_WorldQuestFrame.dataProvider:GetIterativeList()) do
+			if (ShouldShowPin(questInfo, mapInfo.mapType, settingsZoneVisible, settingsContinentVisible, settingsFilterPoI, isFlightMap)) then
+				local pinType = GetPinType(mapInfo.mapType);
 				local posX, posY = WQT_Utils:GetQuestMapLocation(questInfo.questId, mapID);
 				if (posX and posX > 0 and posY > 0) then
 					local pin = self.pinPool:Acquire();
 					pin:SetParent(canvas);
 					tinsert(self.activePins, pin);
 					pin:Setup(questInfo, #self.activePins, posX, posY, pinType, parentMapFrame);
-					if (self.pingedQuests[pin.questId]) then
-						pin:Focus();
-					else
-						pin:ClearFocus();
-					end
 				end
 			end
 		end
@@ -515,7 +533,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	
 	-- Quest Type Icon
 	local typeAtlas, typeAtlasWidth, typeAtlasHeight =  WQT_Utils:GetCachedTypeIconData(questInfo);
-	local showTypeIcon = WQT_Utils:GetSetting("pin", "typeIcon") and (not tagInfo or (questType and questType > 0 and questType ~= Enum.QuestTagType.Normal));
+	local showTypeIcon = WQT_Utils:GetSetting("pin", "typeIcon") and (not tagInfo or (questType and questType > 0 and questType ~= Enum.QuestTagType.Normal) or questInfo.isAllyQuest);
 	if (showTypeIcon and typeAtlas) then
 		local iconFrame = self:AddIcon();
 		iconFrame:SetupIcon(typeAtlas);

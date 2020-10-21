@@ -305,7 +305,6 @@ end
 
 function WQT_SettingsDropDownMixin:Init(data)
 	WQT_SettingsBaseMixin.Init(self, data);
-	self.options = data.options;
 	self.getValueFunc = data.getValueFunc;
 	if (data.options) then
 		self.options = data.options;
@@ -320,7 +319,7 @@ function WQT_SettingsDropDownMixin:Init(data)
 				selected = data.getValueFunc();
 			end
 			
-			local options = data.options;
+			local options = self.options;
 			if (type(options) ==  "function") then
 				options = options();
 			end

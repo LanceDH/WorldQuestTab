@@ -416,20 +416,29 @@ _V["RING_TYPES_LABELS"] ={
 	,[_V["RING_TYPES"].rarity] = {["label"] = RARITY, ["tooltip"] = _L["PIN_RING_QUALITY_TT"]}
 }
 
--- Setup date to display in the settings;
-local _ringTypeDropDownInfo = {}
+_V["ENUM_PIN_CONTINENT"] = {
+	["none"] = 1
+	,["tracked"] = 2
+	,["all"] = 3
+}
 
-for k, id in pairs(_V["RING_TYPES"]) do
-	_ringTypeDropDownInfo[id] = _V["RING_TYPES_LABELS"][id];
-	_ringTypeDropDownInfo[id].arg1 = id;
-end
+_V["PIN_VISIBILITY_CONTINENT"] = {
+	[_V["ENUM_PIN_CONTINENT"].none] = {["label"] = NONE, ["tooltip"] = _L["PIN_VISIBILITY_NONE_TT"]} 
+	,[_V["ENUM_PIN_CONTINENT"].tracked] = {["label"] = _L["PIN_VISIBILITY_TRACKED"], ["tooltip"] = _L["PIN_VISIBILITY_TRACKED_TT"]} 
+	,[_V["ENUM_PIN_CONTINENT"].all] = {["label"] = ALL, ["tooltip"] = _L["PIN_VISIBILITY_ALL_TT"]} 
+}
 
-local _pinCenterDropDownInfo = {}
+_V["ENUM_PIN_ZONE"] = {
+	["none"] = 1
+	,["tracked"] = 2
+	,["all"] = 3
+}
 
-for k, id in pairs(_V["PIN_CENTER_TYPES"]) do
-	_pinCenterDropDownInfo[id] = _V["PIN_CENTER_LABELS"][id];
-	_pinCenterDropDownInfo[id].arg1 = id;
-end
+_V["PIN_VISIBILITY_ZONE"] = {
+	[_V["ENUM_PIN_ZONE"].none] = {["label"] = NONE, ["tooltip"] = _L["PIN_VISIBILITY_NONE_TT"]} 
+	,[_V["ENUM_PIN_ZONE"].tracked] = {["label"] = _L["PIN_VISIBILITY_TRACKED"], ["tooltip"] = _L["PIN_VISIBILITY_TRACKED_TT"]} 
+	,[_V["ENUM_PIN_ZONE"].all] = {["label"] = ALL, ["tooltip"] = _L["PIN_VISIBILITY_ALL_TT"]} 
+}
 
 _V["SETTING_TYPES"] = {
 	["category"] = 1
@@ -439,6 +448,17 @@ _V["SETTING_TYPES"] = {
 	,["dropDown"] = 5
 	,["button"] = 6
 }
+
+local function MakeIndexArg1(list)
+	for k, v in pairs(list) do
+		v.arg1 = k;
+	end
+end
+
+MakeIndexArg1(_V["PIN_CENTER_LABELS"]);
+MakeIndexArg1(_V["RING_TYPES_LABELS"]);
+MakeIndexArg1(_V["PIN_VISIBILITY_CONTINENT"]);
+MakeIndexArg1(_V["PIN_VISIBILITY_ZONE"]);
 
 -------------------------------
 -- Settings List
@@ -461,8 +481,8 @@ _V["SETTING_TYPES"] = {
 --   options (table): a list for options in following format 
 --			{[id1] = {["label"] = "Displayed label"
 --			 		,["tooltip"] = "additional tooltip info (optional)"
---					,["arg1"] = return value 1
---					,["arg2"] = return value 2
+--					,["arg1"] = required first return value
+--					,["arg2"] = optional second return value in valueChangedFunc
 --					}
 --			 ,[id2] = ...}
 
@@ -674,7 +694,7 @@ _V["SETTING_LIST"] = {
 			,["getValueFunc"] = function() return WQT.settings.pin.filterPoI end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}		
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_SHOW_CONTINENT"], ["tooltip"] = _L["PIN_SHOW_CONTINENT_TT"]
+	--[[,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_SHOW_CONTINENT"], ["tooltip"] = _L["PIN_SHOW_CONTINENT_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.pin.continentPins = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
@@ -682,6 +702,7 @@ _V["SETTING_LIST"] = {
 			,["getValueFunc"] = function() return WQT.settings.pin.continentPins end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
+			]]--
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_FADE_ON_PING"], ["tooltip"] = _L["PIN_FADE_ON_PING_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.pin.fadeOnPing = value;
@@ -699,6 +720,14 @@ _V["SETTING_LIST"] = {
 			,["getValueFunc"] = function() return WQT.settings.pin.timeLabel  end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}		
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_ELITE_RING"], ["tooltip"] = _L["PIN_ELITE_RING_TT"]
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.pin.eliteRing  = value;
+				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
+			end
+			,["getValueFunc"] = function() return WQT.settings.pin.eliteRing end
+			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
+			}
 	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_SCALE"], ["tooltip"] = _L["PIN_SCALE_TT"], ["min"] = 0.8, ["max"] = 1.5, ["valueStep"] = 0.01
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.pin.scale = value;
@@ -707,7 +736,7 @@ _V["SETTING_LIST"] = {
 			,["getValueFunc"] = function() return WQT.settings.pin.scale end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
-	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_CENTER"], ["tooltip"] = _L["PIN_CENTER_TT"], ["options"] = _pinCenterDropDownInfo
+	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_CENTER"], ["tooltip"] = _L["PIN_CENTER_TT"], ["options"] = _V["PIN_CENTER_LABELS"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.pin.centerType = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
@@ -715,22 +744,30 @@ _V["SETTING_LIST"] = {
 			,["getValueFunc"] = function() return WQT.settings.pin.centerType end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
-	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_RING_TITLE"], ["tooltip"] = _L["PIN_RING_TT"], ["options"] = _ringTypeDropDownInfo
+	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_RING_TITLE"], ["tooltip"] = _L["PIN_RING_TT"], ["options"] = _V["RING_TYPES_LABELS"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.pin.ringType = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.ringType end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
-			}
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_ELITE_RING"], ["tooltip"] = _L["PIN_ELITE_RING_TT"]
+			}	
+	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_VISIBILITY_ZONE"], ["tooltip"] = _L["PIN_VISIBILITY_ZONE_TT"], ["options"] = _V["PIN_VISIBILITY_ZONE"], ["isNew"] = true
 			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.pin.eliteRing  = value;
+				WQT.settings.pin.zoneVisible = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
-			,["getValueFunc"] = function() return WQT.settings.pin.eliteRing end
+			,["getValueFunc"] = function() return WQT.settings.pin.zoneVisible end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
-			}	
+			}
+	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_VISIBILITY_CONTINENT"], ["tooltip"] = _L["PIN_VISIBILITY_CONTINENT_TT"], ["options"] = _V["PIN_VISIBILITY_CONTINENT"], ["isNew"] = true
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.pin.continentVisible = value;
+				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
+			end
+			,["getValueFunc"] = function() return WQT.settings.pin.continentVisible end
+			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
+			}
 	-- Pin icons
 	,{["template"] = "WQT_SettingSubTitleTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["MINI_ICONS"]}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_TYPE"], ["tooltip"] = _L["PIN_TYPE_TT"]
@@ -1141,6 +1178,8 @@ _V["WQT_DEFAULTS"] = {
 			numRewardIcons = 0;
 			rarityIcon = false;
 			timeIcon = false;
+			continentVisible = _V["ENUM_PIN_CONTINENT"].none;
+			zoneVisible = _V["ENUM_PIN_ZONE"].all;
 			
 			filterPoI = true;
 			scale = 1;
@@ -1178,7 +1217,20 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
-		{["version"] = "9.0.01"
+		{["version"] = "9.0.02"
+			,["new"] = {
+				"New map pin option: Zone Map Pins (default All). Which quests should be allowed to show map pins on zone maps. (None, Tracked, or All)"
+				,"New map pin option: Continent Map Pins (default None). Which quests should be allowed to show map pins on continent maps. (None, Tracked, or All)"
+			}
+			,["changes"] = {
+				"The 'Pins On Continent' setting has been replaced by the new 'Continent Map Pins'. Its value has been transfered over."
+			}
+			,["fixes"] = {
+				"Fixed Ally Quests in Nazjatar not showing the daily quest icon on their map pins."
+				,"Fixed the missing backdrop in the debug dump window."
+			}
+		}
+		,{["version"] = "9.0.01"
 			,["intro"] = {"Update for the new 9.0 UI."}
 			,["new"] = {
 				"New type filter: Bonus. Filters out what the game considers bonus quests."

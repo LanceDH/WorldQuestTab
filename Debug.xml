@@ -58,20 +58,7 @@
 		</Scripts>
 	</EditBox>
 	
-	<Frame name="WQT_CopyBoxMultilineTemplate" virtual="true"> 
-		<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
-			<EdgeSize>
-				<AbsValue val="8"/>
-			</EdgeSize>
-			<TileSize>
-				<AbsValue val="8"/>
-			</TileSize>
-			<BackgroundInsets>
-				<AbsInset left="1" right="1" top="1" bottom="1"/>
-			</BackgroundInsets>
-			<Color r="0" g="0" b="0" a="0.65"/>
-			<BorderColor r="0.6" g="0.6" b="0.6" a="1"/>
-		</Backdrop>
+	<Frame name="WQT_CopyBoxMultilineTemplate" inherits="BackdropTemplate" virtual="true"> 
 		<Layers>
 			<Layer level="ARTWORK">
 				
@@ -136,6 +123,18 @@
 			<OnLoad inherit="prepend">
 				self.Label:SetText(self.label or "");
 				self.EditBox:SetText(self.staticInput or "");
+				
+				self:SetBackdrop({
+					bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+					edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+					tile = true,
+					tileEdge = true,
+					edgeSize = 8,
+					insets = { left = 1, right = 1, top = 1, bottom = 1 },
+				});
+				self:ApplyBackdrop();
+				self:SetBackdropBorderColor(.6, 0.6, 0.6);
+				self:SetBackdropColor(0, 0, 0, 0.65);
 			</OnLoad>
 		</Scripts>
 	</Frame>
@@ -224,7 +223,7 @@
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeKey="$parent.WoWIURL" relativePoint="BOTTOMLEFT" x="-3" y="-25"/>
 					<Anchor point="RIGHT" relativeKey="$parent.WoWIURL"/>
-					<Anchor point="BOTTOM" y="20"/>
+					<Anchor point="BOTTOM" y="15"/>
 				</Anchors>
 			</Frame>
 		</Frames>
