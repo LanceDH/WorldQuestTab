@@ -150,7 +150,8 @@ local function bts(bool)
 end
 
 local function GetQuestDump()
-	local counted, limit = WQT_Utils:GetQuestLogInfo()
+	local removedQuests = {};
+	local counted, limit = WQT_Utils:GetQuestLogInfo(removedQuests);
 	local output = FORMAT_QUEST_HEADER:format(counted, limit);
 	
 	local numEntries = C_QuestLog.GetNumQuestLogEntries();

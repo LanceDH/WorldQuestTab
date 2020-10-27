@@ -58,6 +58,7 @@
 -- Callbacks (WQT_WorldQuestFrame:RegisterCallback(event, func, addonName))
 --
 -- "InitFilter" 			(self, level) After InitFilter finishes
+-- "InitSettings"			(self, level) After InitSettings finishes
 -- "DisplayQuestList" 		(skipPins) After all buttons in the list have been updated
 -- "FilterQuestList"		() After the list has been filtered
 -- "UpdateQuestList"		() After the list has been both filtered and updated
@@ -188,41 +189,7 @@ local function InitFilter(self, level)
 			info.value = k;
 			ADD:AddButton(info, level)
 		end
-		
-		info.hasArrow = false;
-		
-		-- Settings button
-		info.text = SETTINGS;
-		info.func = function()
-				WQT_WorldQuestFrame:ShowOverlayFrame(WQT_SettingsFrame);
-			end
-		
-		ADD:AddButton(info, level)
-		
-		-- What's new
-		local newText = WQT.settings.updateSeen and "" or "|TInterface\\FriendsFrame\\InformationIcon:14|t ";
-		
-		info.text = newText .. _L["WHATS_NEW"];
-		info.tooltipTitle = _L["WHATS_NEW"];
-		info.tooltipText =  _L["WHATS_NEW_TT"];
-		
-		info.func = function()
-						local scrollFrame = WQT_VersionFrame;
-						local blockerText = scrollFrame.Text;
-						
-						blockerText:SetText(_V["LATEST_UPDATE"]);
-						blockerText:SetHeight(blockerText:GetContentHeight());
-						scrollFrame.limit = max(0, blockerText:GetHeight() - scrollFrame:GetHeight());
-						scrollFrame.scrollBar:SetMinMaxValues(0, scrollFrame.limit)
-						scrollFrame.scrollBar:SetValue(0);
-						
-						WQT.settings.updateSeen = true;
-						
-						WQT_WorldQuestFrame:ShowOverlayFrame(scrollFrame, 10, -18, -3, 3);
-						
-					end
-		ADD:AddButton(info, level)
-		
+
 	elseif level == 2 then
 		-- Filters
 		info.keepShownOnClick = true;
@@ -411,6 +378,58 @@ local function InitFilter(self, level)
 	end
 	
 	WQT_WorldQuestFrame:TriggerCallback("InitFilter", self, level);
+end
+
+local function InitSettings(self, level)
+	local info = ADD:CreateInfo();
+	info.keepShownOnClick = true;	
+	info.tooltipWhileDisabled = true;
+	info.tooltipOnButton = true;
+	info.motionScriptsWhileDisabled = true;
+	info.disabled = nil;
+	
+	if level == 1 then
+		info.checked = 	nil;
+		info.isNotRadio = true;
+		info.func =  nil;
+		info.hasArrow = false;
+		info.notCheckable = true;
+		
+		-- Settings button
+		info.text = SETTINGS;
+		info.func = function()
+				WQT_WorldQuestFrame:ShowOverlayFrame(WQT_SettingsFrame);
+			end
+		
+		ADD:AddButton(info, level)
+
+		-- What's new
+		local newText = WQT.db.global.updateSeen and "" or "|TInterface\\FriendsFrame\\InformationIcon:14|t ";
+		
+		info.text = newText .. _L["WHATS_NEW"];
+		info.tooltipTitle = _L["WHATS_NEW"];
+		info.tooltipText =  _L["WHATS_NEW_TT"];
+		
+		info.func = function()
+						local scrollFrame = WQT_VersionFrame;
+						local blockerText = scrollFrame.Text;
+						
+						blockerText:SetText(_V["LATEST_UPDATE"]);
+						blockerText:SetHeight(blockerText:GetContentHeight());
+						scrollFrame.limit = max(0, blockerText:GetHeight() - scrollFrame:GetHeight());
+						scrollFrame.scrollBar:SetMinMaxValues(0, scrollFrame.limit)
+						scrollFrame.scrollBar:SetValue(0);
+						
+						WQT.db.global.updateSeen = true;
+						
+						WQT_WorldQuestFrame:ShowOverlayFrame(scrollFrame, 10, -18, -3, 3);
+						
+					end
+		ADD:AddButton(info, level)
+		
+	end
+	
+	WQT_WorldQuestFrame:TriggerCallback("InitSettings", self, level);
 end
 
 -- Sort filters alphabetically regardless of localization
@@ -1030,8 +1049,8 @@ function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, 
 	
 	amount = amount or 1;
 	-- Calculate warmode bonus
-	if (warmodeBonus  and C_PvP.IsWarModeDesired() and _V["WARMODE_BONUS_REWARD_TYPES"][rewardType]) then
-		amount = amount + floor(amount * C_PvP.GetWarModeRewardBonus() / 100);
+	if (warmodeBonus) then
+		amount = WQT_Utils:CalculateWarmodeAmount(rewardType, amount);
 	end
 	
 	self:SetWidth(num * 29 - 1);
@@ -1044,6 +1063,10 @@ function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, 
 	rewardFrame.Amount:Hide();
 	if (amount > 1) then
 		rewardFrame.Amount:Show();
+		
+		if (rewardType == WQT_REWARDTYPE.gold) then
+			amount = floor(amount / 10000);
+		end
 		
 		local amountDisplay = GetLocalizedAbbreviatedNumber(amount);
 		
@@ -1098,11 +1121,12 @@ function WQT_ListButtonMixin:OnClick(button)
 	if (not self.questId or self.questId== -1) then return end
 	local isBonus = QuestUtils_IsQuestBonusObjective(self.questId);
 	local reward = self.questInfo:GetReward(1);
+	local tagInfo = C_QuestLog.GetQuestTagInfo(self.questId);
 	
 	-- 'Hard' tracking quests with shift
 	if (IsModifiedClick("QUESTWATCHTOGGLE")) then
 		-- Don't track bonus objectives. The object tracker doesn't like it;
-		if (not isBonus) then
+		if (not isBonus and tagInfo and tagInfo.worldQuestType) then
 			-- Only do tracking if we aren't adding the link tot he chat
 			if (not ChatEdit_TryInsertQuestLinkForQuestID(self.questId)) then 
 				if (QuestUtils_IsQuestWatched(self.questId)) then
@@ -1124,7 +1148,7 @@ function WQT_ListButtonMixin:OnClick(button)
 	-- 'Soft' tracking and jumping map to relevant zone
 	elseif (button == "LeftButton") then
 		-- Don't track bonus objectives. The object tracker doesn't like it;
-		if (not isBonus) then
+		if (not isBonus and tagInfo and tagInfo.worldQuestType) then
 			local hardWatched = WQT_Utils:QuestIsWatchedManual(self.questId);
 			
 			-- if it was hard watched, keep it that way
@@ -1318,9 +1342,8 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 
 	-- Show border if quest is tracked
 	local isHardWatched = WQT_Utils:QuestIsWatchedManual(questInfo.questId);
-	if (C_SuperTrack.GetSuperTrackedQuestID() == questInfo.questId or isHardWatched) then
+	if (isHardWatched) then
 		self.TrackedBorder:Show();
-		self.TrackedBorder:SetAlpha(isHardWatched and 0.6 or 1);
 	else
 		self.TrackedBorder:Hide();
 	end
@@ -1559,17 +1582,22 @@ WQT_QuestCounterMixin = {}
 
 function WQT_QuestCounterMixin:OnLoad()
 	self:SetFrameLevel(self:GetParent():GetFrameLevel() +5);
-	self.hiddenList = {};
+	self.falseCounted = {};
+	self.numQuests = 0
 end
 
 -- Entering the hidden quests indicator
 function WQT_QuestCounterMixin:InfoOnEnter(frame)
 	GameTooltip:SetOwner(frame, "ANCHOR_RIGHT");
-	GameTooltip:SetText(_L["QUEST_COUNTER_TITLE"], nil, nil, nil, nil, true);
-	GameTooltip:AddLine(_L["QUEST_COUNTER_INFO"]:format(#self.hiddenList), 1, 1, 1, true);
+	GameTooltip:SetText(_L["QUEST_COUNTER_TITLE"], 1, 1, 1, 1, true);
+	GameTooltip:AddLine(_L["QUEST_COUNTER_INFO"]:format(#self.falseCounted), nil, nil, nil, true);
+	
+	local _, questCount = C_QuestLog.GetNumQuestLogEntries();
+	GameTooltip:AddDoubleLine("API - Addon = Displayed", ("|cFFFFFFFF%d - %d = %d|r"):format(questCount , #self.falseCounted, self.numQuests), 1, 1, 1, 1, 1, 1, true);
+	--GameTooltip:AddLine(, nil, nil, nil, true);
 	
 	-- Add culprits
-	for k, i in ipairs(self.hiddenList) do
+	for k, i in ipairs(self.falseCounted) do
 		local info = C_QuestLog.GetInfo(i);
 		local tagInfo = C_QuestLog.GetQuestTagInfo(info.questID);
 		GameTooltip:AddDoubleLine(string.format("%s (%s)", info.title, info.questID), tagInfo and tagInfo.tagName or "No tag", 1, 1, 1, 1, 1, 1, true);
@@ -1579,13 +1607,11 @@ function WQT_QuestCounterMixin:InfoOnEnter(frame)
 end
 
 function WQT_QuestCounterMixin:UpdateText()
-	local numQuests, maxQuests, color = WQT_Utils:GetQuestLogInfo(self.hiddenList);
+	local numQuests, maxQuests, color = WQT_Utils:GetQuestLogInfo(self.falseCounted);
 	self.QuestCount:SetText(GENERIC_FRACTION_STRING_WITH_SPACING:format(numQuests, maxQuests));
 	self.QuestCount:SetTextColor(color.r, color.g, color.b);
-
-	-- Show or hide the icon
-	local showIcon = #self.hiddenList > 0;
-	self.HiddenInfo:SetShown(showIcon);
+	
+	self.numQuests = numQuests;
 end
 
 function WQT_QuestCounterMixin:UpdateVisibility()
@@ -1864,11 +1890,17 @@ function WQT_CoreMixin:OnLoad()
 	
 	-- Sort
 	self.sortButton = ADD:CreateMenuTemplate("WQT_WorldQuestFrameSortButton", self, nil, "BUTTON");
-	self.sortButton:SetSize(110, 22);
+	self.sortButton:SetSize(100, 22);
 	self.sortButton:SetPoint("RIGHT", "WQT_WorldQuestFrameFilterButton", "LEFT", -2, -1);
 
 	ADD:Initialize(self.sortButton, function(self, level) WQT:InitSort(self, level) end);
+	
+	-- Settings
+	self.settingsDropDown = ADD:CreateMenuTemplate("WQT_WorldQuestFrameSettingsDropDown", self);
+	self.settingsDropDown.noResize = true;
+	ADD:Initialize(self.settingsDropDown, function(dd, level) InitSettings(dd, level) end, "MENU");
 
+	
 	-- Context menu
 	local frame = ADD:CreateMenuTemplate("WQT_TrackDropDown", self);
 	frame:EnableMouse(true);
@@ -2333,18 +2365,6 @@ function WQT_CoreMixin:ShouldAllowLFG(questInfo)
 	return tagInfo.worldQuestType and not (tagInfo.worldQuestType == Enum.QuestTagType.PetBattle or tagInfo.worldQuestType == Enum.QuestTagType.Dungeon or tagInfo.worldQuestType == Enum.QuestTagType.Progession or tagInfo.worldQuestType == Enum.QuestTagType.Raid);
 end
 
---[[
-function WQT_CoreMixin:HookEvent(event, func)
-	local list = self.eventHooks[event];
-	if (not self.eventHooks[event]) then
-		list = {};
-		self.eventHooks[event] = list;
-	end
-	
-	list[func] = true;
-end
-]]
-
 function WQT_CoreMixin:UnhookEvent(event, func)
 	local list = self.eventHooks[event];
 	if (list) then
@@ -2534,9 +2554,13 @@ function WQT_CoreMixin:SetCustomEnabled(value)
 	if value then
 		self.FilterButton:Enable();
 		self.sortButton:Enable();
+		self.SettingsButton:Enable();
+		self.SettingsButton.darken:SetAlpha(0.15);
 	else
 		self.FilterButton:Disable();
 		self.sortButton:Disable();
+		self.SettingsButton:Disable();
+		self.SettingsButton.darken:SetAlpha(0.35);
 	end
 
 	self.ScrollFrame:SetButtonsEnabled(value);

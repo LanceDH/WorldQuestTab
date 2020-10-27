@@ -151,9 +151,7 @@ function QuestInfoMixin:Init(questId, isDaily, isCombatAllyQuest, alwaysHide, po
 	self.isValid = HaveQuestData(self.questId);
 	self.time.seconds = WQT_Utils:GetQuestTimeString(self); -- To check if expired or never had a time limit
 	self.passedFilter = true;
-	--self.isCriteria = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questId);
-	--self.isCriteriaAny = 
-	
+
 	self:LoadRewards();
 	
 	return self.hasRewardData;
@@ -233,7 +231,7 @@ function QuestInfoMixin:LoadRewards()
 		end
 		-- Gold
 		if (GetQuestLogRewardMoney(self.questId) > 0) then
-			local numItems = floor(abs(GetQuestLogRewardMoney(self.questId) / 10000))
+			local numItems = floor(abs(GetQuestLogRewardMoney(self.questId)))
 			self:AddReward(WQT_REWARDTYPE.gold, numItems, 133784, 1, _V["WQT_COLOR_GOLD"]);
 		end
 		-- Currency

@@ -575,6 +575,20 @@ function WQT_Utils:RemoveTomTomArrowbyQuestId(questId)
 	end
 end
 
+function WQT_Utils:QuestIncorrectlyCounts(questLogIndex)
+	local questInfo = C_QuestLog.GetInfo(questLogIndex);
+	if (questInfo.isHeader or questInfo.isTask or questInfo.isBounty) then
+		return false, questInfo.isHidden;
+	end
+	
+	local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questID);
+
+	if (tagInfo and tagInfo.tagID == 102) then
+		return true, questInfo.isHidden;
+	end
+	
+end
+
 function WQT_Utils:QuestCountsToCap(questLogIndex)
 	local questInfo = C_QuestLog.GetInfo(questLogIndex);
 	
@@ -592,22 +606,21 @@ function WQT_Utils:QuestCountsToCap(questLogIndex)
 	return counts, questInfo.isHidden;
 end
 
--- Count quests counting to the quest log cap and collect hidden ones that can't be abandoned
-function WQT_Utils:GetQuestLogInfo(hiddenList)
-	local _, numEntries = C_QuestLog.GetNumQuestLogEntries();
+-- Count quests counting to the quest log cap and collect the ones that shouldn't count
+function WQT_Utils:GetQuestLogInfo(list)
+	local numEntries, questCount = C_QuestLog.GetNumQuestLogEntries();
 	local maxQuests = C_QuestLog.GetMaxNumQuestsCanAccept();
-	local questCount = 0;
-	if (hiddenList) then
-		wipe(hiddenList);
+	
+	if (list) then
+		wipe(list);
 	end
+
 	for questLogIndex = 1, numEntries do
-		local counts, isHidden = WQT_Utils:QuestCountsToCap(questLogIndex);
-		if (counts) then
-			questCount = questCount + 1;
-			
-			-- hidden quest counting to the cap
-			if (isHidden and hiddenList) then
-				tinsert(hiddenList, questLogIndex);
+		-- Remove the ones that shouldn't be counted
+		if (WQT_Utils:QuestIncorrectlyCounts(questLogIndex)) then
+			questCount = questCount - 1;
+			if (list) then
+				tinsert(list, questLogIndex);
 			end
 		end
 	end
@@ -699,6 +712,13 @@ function WQT_Utils:GetQuestRewardIcon(questID)
 		texture = select(2, CurrencyContainerUtil.GetCurrencyContainerInfo(currencyId, amount, currencyInfo.name, currencyInfo.iconFileID, currencyInfo.quality));
 		if (texture) then return texture; end
 	end
+end
+
+function WQT_Utils:CalculateWarmodeAmount(rewardType, amount)
+	if (C_PvP.IsWarModeDesired() and _V["WARMODE_BONUS_REWARD_TYPES"][rewardType]) then
+		amount = amount + floor(amount * C_PvP.GetWarModeRewardBonus() / 100);
+	end
+	return amount;
 end
 
 function WQT_Utils:DeepWipeTable(t)

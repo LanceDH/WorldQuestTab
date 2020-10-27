@@ -1213,8 +1213,6 @@ for k, v in pairs(_V["WQT_FACTION_DATA"]) do
 	end
 end
 
-
-
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
 		{["version"] = "9.0.02"
@@ -1224,10 +1222,15 @@ _V["PATCH_NOTES"] = {
 			}
 			,["changes"] = {
 				"The 'Pins On Continent' setting has been replaced by the new 'Continent Map Pins'. Its value has been transfered over."
+				,"Moved the settings and 'What's new' options from the filters to a separate button."
 			}
 			,["fixes"] = {
 				"Fixed Ally Quests in Nazjatar not showing the daily quest icon on their map pins."
 				,"Fixed the missing backdrop in the debug dump window."
+				,"'Fixed' the quest log counter."
+				,"Fixed an error that could occur when trying to right-click certain quests."
+				,"Fixed flickering of the quest list background when it's being reloaded"
+				,"Fixed being able to add daily quests to the quest watch list, as the official API doesn't support them."
 			}
 		}
 		,{["version"] = "9.0.01"
