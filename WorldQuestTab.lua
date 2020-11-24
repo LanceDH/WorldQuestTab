@@ -73,7 +73,7 @@
 local addonName, addon = ...
 
 local WQT = addon.WQT;
-local ADD = LibStub("AddonDropDown-1.0");
+local ADD = LibStub("AddonDropDown-2.0");
 
 local _L = addon.L
 local _V = addon.variables;
@@ -144,9 +144,10 @@ local function IsRelevantFilter(filterID, key)
 	return false;
 end
 
-local function InitFilter(self, level)
-
-	local info = ADD:CreateInfo();
+local function FilterDDFunc(ddFrame)
+	local level = ddFrame.level;
+	local value = ddFrame.value;
+	local info = ddFrame:CreateButtonInfo();
 	info.keepShownOnClick = true;	
 	info.tooltipWhileDisabled = true;
 	info.tooltipOnButton = true;
@@ -154,11 +155,7 @@ local function InitFilter(self, level)
 	info.disabled = nil;
 	
 	if level == 1 then
-		info.checked = 	nil;
-		info.isNotRadio = true;
-		info.func =  nil;
-		info.hasArrow = false;
-		info.notCheckable = false;
+		info = ddFrame:CreateButtonInfo("checkbox");
 		
 		-- Emisarry only filter
 		info.text = _L["TYPE_EMISSARY"];
@@ -175,49 +172,46 @@ local function InitFilter(self, level)
 				end
 			end
 		info.checked = function() return WQT.settings.general.emissaryOnly end;
-		ADD:AddButton(info, level);		
+		ddFrame:AddButton(info);		
 		
-		info.hasArrow = true;
-		info.notCheckable = true;
-		info.isNotRadio = nil;
-		info.tooltipTitle = nil;
-		info.tooltipText = nil;
+		info = ddFrame:CreateButtonInfo("expand");
 		
 		-- Faction, reward, and type filters
 		for k, v in pairs(WQT.settings.filters) do
 			info.text = v.name;
 			info.value = k;
-			ADD:AddButton(info, level)
+			ddFrame:AddButton(info);		
 		end
 
 	elseif level == 2 then
 		-- Filters
-		info.keepShownOnClick = true;
-		info.hasArrow = false;
-		info.isNotRadio = true;
-		if ADD.MENU_VALUE then
+		if value then
 			-- Faction filters
-			if ADD.MENU_VALUE == _V["FILTER_TYPES"].faction then
+			if value == _V["FILTER_TYPES"].faction then
 			
-				info.notCheckable = true;
+				--info.notCheckable = true;
+				info = ddFrame:CreateButtonInfo("option");
+				info.keepShownOnClick = true;
 					
 				info.text = CHECK_ALL
 				info.func = function()
 								WQT:SetAllFilterTo(_V["FILTER_TYPES"].faction, true);
-								ADD:Refresh(self, 1, 2);
+								ddFrame:Refresh();
 								WQT_QuestScrollFrame:UpdateQuestList();
 							end
-				ADD:AddButton(info, level)
+				ddFrame:AddButton(info);
 				
 				info.text = UNCHECK_ALL
 				info.func = function()
 								WQT:SetAllFilterTo(_V["FILTER_TYPES"].faction, false);
-								ADD:Refresh(self, 1, 2);
+								ddFrame:Refresh();
 								WQT_QuestScrollFrame:UpdateQuestList();
 							end
-				ADD:AddButton(info, level)
+				ddFrame:AddButton(info);
 			
-				info.notCheckable = false;
+				info = ddFrame:CreateButtonInfo("checkbox");
+			
+				--info.notCheckable = false;
 				local filter = WQT.settings.filters[_V["FILTER_TYPES"].faction];
 				local options = filter.flags;
 				local order = WQT.filterOrders[_V["FILTER_TYPES"].faction] 
@@ -232,7 +226,7 @@ local function InitFilter(self, level)
 											WQT_QuestScrollFrame:UpdateQuestList();
 										end
 						info.checked = function() return options[flagKey] end;
-						ADD:AddButton(info, level);			
+						ddFrame:AddButton(info);			
 					end
 				end
 				
@@ -243,7 +237,7 @@ local function InitFilter(self, level)
 						WQT_QuestScrollFrame:UpdateQuestList();
 					end
 				info.checked = function() return filter.misc.other end;
-				ADD:AddButton(info, level);			
+				ddFrame:AddButton(info);			
 				
 				-- No faction
 				info.text = _L["NO_FACTION"];
@@ -252,54 +246,50 @@ local function InitFilter(self, level)
 						WQT_QuestScrollFrame:UpdateQuestList();
 					end
 				info.checked = function() return filter.misc.none end;
-				ADD:AddButton(info, level);	
+				ddFrame:AddButton(info);	
 				
 				-- Other expansions
+				info = ddFrame:CreateButtonInfo("expand");
 				-- BFA
-				info.hasArrow = true;
-				info.notCheckable = true;
 				info.text = EXPANSION_NAME7;
 				info.value = 302;
-				info.func = nil;
-				ADD:AddButton(info, level)
+				ddFrame:AddButton(info);
 
 				-- Legion
-				info.hasArrow = true;
-				info.notCheckable = true;
 				info.text = EXPANSION_NAME6;
 				info.value = 301;
-				info.func = nil;
-				ADD:AddButton(info, level)
+				ddFrame:AddButton(info);
 				
 			-- Type and reward filters
-			elseif WQT.settings.filters[ADD.MENU_VALUE] then
+			elseif WQT.settings.filters[value] then
 				
-				info.notCheckable = true;
-					
+				info = ddFrame:CreateButtonInfo("option");
+				info.keepShownOnClick = true;	
 				info.text = CHECK_ALL
 				info.func = function()
-								WQT:SetAllFilterTo(ADD.MENU_VALUE, true);
-								ADD:Refresh(self, 1, 2);
+								WQT:SetAllFilterTo(value, true);
+								ddFrame:Refresh();
 								WQT_QuestScrollFrame:UpdateQuestList();
 							end
-				ADD:AddButton(info, level)
+				ddFrame:AddButton(info);
 				
 				info.text = UNCHECK_ALL
 				info.func = function()
-								WQT:SetAllFilterTo(ADD.MENU_VALUE, false);
-								ADD:Refresh(self, 1, 2);
+								WQT:SetAllFilterTo(value, false);
+								ddFrame:Refresh();
 								WQT_QuestScrollFrame:UpdateQuestList();
 							end
-				ADD:AddButton(info, level)
+				ddFrame:AddButton(info);
 			
-				info.notCheckable = false;
-				local options = WQT.settings.filters[ADD.MENU_VALUE].flags;
-				local order = WQT.filterOrders[ADD.MENU_VALUE] 
-				local haveLabels = (_V["WQT_TYPEFLAG_LABELS"][ADD.MENU_VALUE] ~= nil);
+				info = ddFrame:CreateButtonInfo("checkbox");
+				
+				local options = WQT.settings.filters[value].flags;
+				local order = WQT.filterOrders[value] 
+				local haveLabels = (_V["WQT_TYPEFLAG_LABELS"][value] ~= nil);
 				for k, flagKey in pairs(order) do
 					info.disabled = false;
 					info.tooltipTitle = nil;
-					info.text = haveLabels and _V["WQT_TYPEFLAG_LABELS"][ADD.MENU_VALUE][flagKey] or flagKey;
+					info.text = haveLabels and _V["WQT_TYPEFLAG_LABELS"][value][flagKey] or flagKey;
 					info.func = function(_, _, _, value)
 										options[flagKey] = value;
 										WQT_QuestScrollFrame:UpdateQuestList();
@@ -318,7 +308,7 @@ local function InitFilter(self, level)
 						info.funcDisabled = function(listButton, button)  
 								if (button == "RightButton") then 
 									if (WQT_WorldQuestFrame:SetCvarValue(flagKey, true)) then
-										ADD:EnableButton(2, listButton:GetID());
+										ddFrame:Refresh(true);
 										listButton.tooltipTitle = nil;
 										listButton.tooltipText = nil;
 										listButton.funcEnter = nil;
@@ -328,14 +318,14 @@ local function InitFilter(self, level)
 							end;	
 					end
 					
-					ADD:AddButton(info, level);			
+					ddFrame:AddButton(info);		
 				end
 			end
 		end
 	elseif level == 3 then
-		info.isNotRadio = true;
-		info.notCheckable = false;
-		if ADD.MENU_VALUE == 301 then -- Legion factions
+		info = ddFrame:CreateButtonInfo("checkbox");
+		
+		if value == 301 then -- Legion factions
 			local options = WQT.settings.filters[1].flags;
 			local order = WQT.filterOrders[1] 
 			local currExp = LE_EXPANSION_LEGION;
@@ -351,10 +341,10 @@ local function InitFilter(self, level)
 										WQT_QuestScrollFrame:UpdateQuestList();
 									end
 					info.checked = function() return options[flagKey] end;
-					ADD:AddButton(info, level);			
+					ddFrame:AddButton(info);			
 				end
 			end
-		elseif ADD.MENU_VALUE == 302 then -- BfA
+		elseif value == 302 then -- BfA
 			local options = WQT.settings.filters[1].flags;
 			local order = WQT.filterOrders[1] 
 			local currExp = LE_EXPANSION_BATTLE_FOR_AZEROTH;
@@ -371,18 +361,19 @@ local function InitFilter(self, level)
 										WQT_QuestScrollFrame:UpdateQuestList();
 									end
 					info.checked = function() return options[flagKey] end;
-					ADD:AddButton(info, level);			
+					ddFrame:AddButton(info);	
 				end
 			end
 		end
 	end
 	
-	WQT_WorldQuestFrame:TriggerCallback("InitFilter", self, level);
+	WQT_WorldQuestFrame:TriggerCallback("InitFilter", ddFrame);
 end
 
-local function InitSettings(self, level)
-	local info = ADD:CreateInfo();
-	info.keepShownOnClick = true;	
+local function SettingsDDFunc(ddFrame)
+	local level = ddFrame.level;
+	local info = ddFrame:CreateButtonInfo();
+	info.keepShownOnClick = false;	
 	info.tooltipWhileDisabled = true;
 	info.tooltipOnButton = true;
 	info.motionScriptsWhileDisabled = true;
@@ -401,7 +392,7 @@ local function InitSettings(self, level)
 				WQT_WorldQuestFrame:ShowOverlayFrame(WQT_SettingsFrame);
 			end
 		
-		ADD:AddButton(info, level)
+		ddFrame:AddButton(info)
 
 		-- What's new
 		local newText = WQT.db.global.updateSeen and "" or "|TInterface\\FriendsFrame\\InformationIcon:14|t ";
@@ -425,11 +416,11 @@ local function InitSettings(self, level)
 						WQT_WorldQuestFrame:ShowOverlayFrame(scrollFrame, 10, -18, -3, 3);
 						
 					end
-		ADD:AddButton(info, level)
+		ddFrame:AddButton(info)
 		
 	end
 	
-	WQT_WorldQuestFrame:TriggerCallback("InitSettings", self, level);
+	WQT_WorldQuestFrame:TriggerCallback("InitSettings", ddFrame);
 end
 
 -- Sort filters alphabetically regardless of localization
@@ -663,13 +654,11 @@ function WQT:FilterIsWorldMapDisabled(filter)
 	return false;
 end
 
-function WQT:InitSort(self, level)
-
-	local selectedValue = ADD:GetSelectedValue(self);
-	local info = ADD:CreateInfo();
-	local buttonsAdded = 0;
+function WQT:SortDDFunc(ddFrame)
+	local selectedValue = WQT.settings.general.sortBy;
+	local info = ddFrame:CreateButtonInfo();
 	info.func = function(self, category) WQT:Sort_OnClick(self, category) end
-	
+
 	for k, option in pairs(_V["WQT_SORT_OPTIONS"]) do
 		info.text = option;
 		info.arg1 = k;
@@ -679,42 +668,42 @@ function WQT:InitSort(self, level)
 		else
 			info.checked = nil;
 		end
-		ADD:AddButton(info, level);
-		buttonsAdded = buttonsAdded + 1;
+		ddFrame:AddButton(info);
 	end
-	
-	return buttonsAdded;
 end
 
 function WQT:Sort_OnClick(self, category)
 	local dropdown = WQT_WorldQuestFrameSortButton;
 	if ( category and dropdown.active ~= category ) then
-		ADD:CloseDropDownMenus();
+		--ADD:CloseAll();
 		dropdown.active = category
-		ADD:SetSelectedValue(dropdown, category);
-		ADD:SetText(dropdown, _V["WQT_SORT_OPTIONS"][category]);
+		WQT_WorldQuestFrameSortButton:SetDisplayText(_V["WQT_SORT_OPTIONS"][category]);
+		
 		WQT.settings.general.sortBy = category;
 		WQT_QuestScrollFrame:UpdateQuestList();
 		WQT_WorldQuestFrame:TriggerCallback("SortChanged", category);
 	end
 end
 
-function WQT:InitTrackDropDown(self, level)
-	if not self:GetParent() or not self:GetParent().questInfo then return; end
-	local questInfo = self:GetParent().questInfo;
+function WQT:TrackDDFunc(ddFrame)
+	local sourceParent = ddFrame:GetSourceParent();
+
+	local questInfo = sourceParent.questInfo;
 	local questId = questInfo.questId;
 	local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questId);
-	local info = ADD:CreateInfo();
+	local info = ddFrame:CreateButtonInfo();
 	local tagInfo = C_QuestLog.GetQuestTagInfo(questId);
-	info.notCheckable = true;	
 	
 	-- Title
 	local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
-	info.text = title;
-	info.isTitle = true;
-	ADD:AddButton(info, level);
 	
-	info.isTitle = false;
+	info = ddFrame:CreateButtonInfo("title");
+	info.text = title;
+	info.overflow = true;
+	
+	ddFrame:AddButton(info);
+	
+	info = ddFrame:CreateButtonInfo("option");
 
 	-- Don't allow tracking for quests that don't support it in the ObjectiveTrackerFrame
 	if (tagInfo and tagInfo.worldQuestType) then
@@ -736,7 +725,7 @@ function WQT:InitTrackDropDown(self, level)
 						end
 					end
 		end	
-		ADD:AddButton(info, level)
+		ddFrame:AddButton(info);
 	end
 	
 	-- New 9.0 waypoint system
@@ -746,7 +735,7 @@ function WQT:InitTrackDropDown(self, level)
 			C_SuperTrack.SetSuperTrackedUserWaypoint(true);
 		end
 	
-	ADD:AddButton(info, level)
+	ddFrame:AddButton(info);
 	
 	-- LFG if possible
 	if (WQT_WorldQuestFrame:ShouldAllowLFG(questInfo)) then
@@ -754,16 +743,13 @@ function WQT:InitTrackDropDown(self, level)
 		info.func = function()
 			WQT_WorldQuestFrame:SearchGroup(questInfo);
 		end
-		ADD:AddButton(info, level);
+		ddFrame:AddButton(info);
 	end
 	
-	WQT_WorldQuestFrame:TriggerCallback("InitTrackDropDown", self, level, info, ADD)
+	WQT_WorldQuestFrame:TriggerCallback("InitTrackDropDown", ddFrame)
 	
-	info.text = CANCEL;
-	info.func = nil;
-	info.isTitle = false;
-	ADD:AddButton(info, level)
-
+	info = ddFrame:CreateButtonInfo("cancel");
+	ddFrame:AddButton(info);
 end
 
 function WQT:IsWorldMapFiltering()
@@ -942,11 +928,9 @@ function WQT:OnEnable()
 
 	-- Update sort text
 	if self.settings.general.saveFilters and _V["WQT_SORT_OPTIONS"][self.settings.general.sortBy] then
-		ADD:SetSelectedValue(WQT_WorldQuestFrameSortButton, self.settings.general.sortBy);
-		ADD:SetText(WQT_WorldQuestFrameSortButton, _V["WQT_SORT_OPTIONS"][self.settings.general.sortBy]);
+		WQT_WorldQuestFrameSortButton:SetDisplayText(_V["WQT_SORT_OPTIONS"][self.settings.general.sortBy]);
 	else
-		ADD:SetSelectedValue(WQT_WorldQuestFrameSortButton, 1);
-		ADD:SetText(WQT_WorldQuestFrameSortButton, _V["WQT_SORT_OPTIONS"][1]);
+		WQT_WorldQuestFrameSortButton:SetDisplayText(_V["WQT_SORT_OPTIONS"][1]);
 	end
 
 	-- Sort filters
@@ -1162,12 +1146,7 @@ function WQT_ListButtonMixin:OnClick(button)
 		
 	-- Context menu
 	elseif (button == "RightButton") then
-		if WQT_TrackDropDown:GetParent() ~= self then
-			-- If the dropdown is linked to another button, we must move and close it first
-			WQT_TrackDropDown:SetParent(self);
-			ADD:HideDropDownMenu(1);
-		end
-		ADD:ToggleDropDownMenu(1, nil, WQT_TrackDropDown, "cursor", -10, -10, nil, nil, 2);
+		ADD:CursorDropDown(self, function(...) WQT:TrackDDFunc(...) end);
 	end
 end
 
@@ -1410,7 +1389,7 @@ end
 
 function WQT_ScrollListMixin:ApplySort()
 	local list = self.questListDisplay;
-	local sortOption = ADD:GetSelectedValue(WQT_WorldQuestFrame.sortButton);
+	local sortOption =  WQT.settings.general.sortBy;
 	table.sort(list, function (a, b) return SortQuestList(a, b, sortOption); end);
 end
 
@@ -1536,8 +1515,9 @@ function WQT_ScrollListMixin:DisplayQuestList()
 			button.questInfo = nil;
 		end
 	end
+	
 	HybridScrollFrame_Update(self, #list * _V["WQT_LISTITTEM_HEIGHT"], self:GetHeight());
-
+	
 	-- Update background
 	self:UpdateBackground();
 end
@@ -1857,8 +1837,6 @@ function WQT_CoreMixin:HideWorldmapHighlight()
 end
 
 function WQT_CoreMixin:OnLoad()
-	--self.callbacks = {};
-	--self.eventHooks = {};
 	self.WQT_Utils = WQT_Utils;
 	self.variables = addon.variables;
 
@@ -1882,32 +1860,22 @@ function WQT_CoreMixin:OnLoad()
 	self.Blocker:SetFrameLevel(self:GetFrameLevel()+4);
 	
 	-- Fitler
-	self.filterDropDown = ADD:CreateMenuTemplate("WQT_WorldQuestFrameFilterDropDown", self);
-	self.filterDropDown.noResize = true;
-	ADD:Initialize(self.filterDropDown, function(dd, level) InitFilter(dd, level) end, "MENU");
 	self.FilterButton.Indicator.tooltipTitle = _L["MAP_FILTER_DISABLED_TITLE"];
 	self.FilterButton.Indicator.tooltipSub = _L["MAP_FILTER_DISABLED_INFO"];
+	ADD:LinkDropDown(self.FilterButton, FilterDDFunc, "TOPLEFT", "RIGHT", -15, 5);
+	
 	
 	-- Sort
-	self.sortButton = ADD:CreateMenuTemplate("WQT_WorldQuestFrameSortButton", self, nil, "BUTTON");
+	self.sortButton = ADD:CreateMenuTemplate("WQT_WorldQuestFrameSortButton", self);
 	self.sortButton:SetSize(100, 22);
-	self.sortButton:SetPoint("RIGHT", "WQT_WorldQuestFrameFilterButton", "LEFT", -2, -1);
+	self.sortButton:SetPoint("RIGHT", "WQT_WorldQuestFrameFilterButton", "LEFT", -2, 4);
+	ADD:LinkDropDown(self.sortButton, function(...) WQT:SortDDFunc(...) end, nil, nil, nil, nil, "LIST");
 
-	ADD:Initialize(self.sortButton, function(self, level) WQT:InitSort(self, level) end);
-	
 	-- Settings
-	self.settingsDropDown = ADD:CreateMenuTemplate("WQT_WorldQuestFrameSettingsDropDown", self);
-	self.settingsDropDown.noResize = true;
-	ADD:Initialize(self.settingsDropDown, function(dd, level) InitSettings(dd, level) end, "MENU");
+	ADD:LinkDropDown(self.SettingsButton, SettingsDDFunc, "TOPLEFT", "RIGHT", -10, 5);
+	
 
 	
-	-- Context menu
-	local frame = ADD:CreateMenuTemplate("WQT_TrackDropDown", self);
-	frame:EnableMouse(true);
-	ADD:Initialize(frame, function(self, level) 
-			WQT:InitTrackDropDown(self, level) 
-		end, "MENU");
-
 	self.dataProvider:RegisterCallback("WaitingRoom", function() 
 			if (InCombatLockdown()) then return end;
 			WQT_QuestScrollFrame:ApplySort();
@@ -1994,6 +1962,12 @@ function WQT_CoreMixin:OnLoad()
 
 	-- Fix tabs when official quests are shown
 	QuestScrollFrame:SetScript("OnShow", function() 
+			--ElvUI fix
+			if (QuestMapFrame.DetailsFrame:IsShown()) then
+				self:SelectTab(WQT_TabDetails); 
+				return;
+			end
+			
 			if(self.selectedTab and self.selectedTab:GetID() == 2) then
 				self:SelectTab(WQT_TabWorld); 
 			else
@@ -2053,7 +2027,7 @@ function WQT_CoreMixin:OnLoad()
 	
 	-- Close all our custom dropdowns when opening an Blizzard dropdown
 	hooksecurefunc("ToggleDropDownMenu", function()
-			ADD:CloseDropDownMenus();
+			ADD:CloseAll();
 		end);
 	
 	-- Auto emisarry when clicking on one of the buttons
@@ -2307,7 +2281,7 @@ function WQT_CoreMixin:ShowHighlightOnMapFilters()
 end
 
 function WQT_CoreMixin:FilterClearButtonOnClick()
-	ADD:CloseDropDownMenus();
+	ADD:CloseAll();
 	if WQT_WorldQuestFrame.autoEmisarryId then
 		WQT_WorldQuestFrame.autoEmisarryId = nil;
 	elseif WQT.settings.general.emissaryOnly then
@@ -2421,7 +2395,7 @@ function WQT_CoreMixin:PLAYER_REGEN_DISABLED()
 			block.WQTButton:SetEnabled(false);
 		end
 	end
-	ADD:HideDropDownMenu(1);
+	ADD:CloseAll();
 end
 
 function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
@@ -2517,7 +2491,7 @@ function WQT_CoreMixin:ShowOverlayFrame(frame, offsetLeft, offsetRight, offsetTo
 	WQT_QuestScrollFrame.DetailFrame:Hide();
 	
 	self.manualCloseOverlay = true;
-	ADD:HideDropDownMenu(1);
+	ADD:CloseAll();
 	
 	-- Hide quest and filter to prevent bleeding through when walking around
 	WQT_QuestScrollFrame:Hide();
@@ -2569,8 +2543,9 @@ end
 
 function WQT_CoreMixin:SelectTab(tab)
 	local id = tab and tab:GetID() or 0;
+	
 	if self.selectedTab ~= tab then
-		ADD:HideDropDownMenu(1);
+		ADD:CloseAll();
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	end
 	self.selectedTab = tab;

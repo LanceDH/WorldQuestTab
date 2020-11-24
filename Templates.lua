@@ -2,7 +2,6 @@
 local WQT = addon.WQT;
 local _L = addon.L
 local _V = addon.variables;
-local ADD = LibStub("AddonDropDown-1.0");
 local WQT_Utils = addon.WQT_Utils;
 local WQT_Profiles = addon.WQT_Profiles;
 
@@ -223,7 +222,7 @@ function WQT_Utils:GetFactionDataInternal(id)
 
 	if (not factionData[id]) then
 		-- Add new faction in case it's not in our data yet
-		factionData[id] = { ["expansion"] = 0 ,["faction"] = nil ,["icon"] = 134400, ["unknown"] = true } -- Questionmark icon
+		factionData[id] = { ["expansion"] = 0 ,["faction"] = nil ,["texture"] = 1103069, ["unknown"] = true } 
 		factionData[id].name = GetFactionInfoByID(id) or "Unknown Faction";
 		WQT:debugPrint("Added new faction", id,factionData[id].name);
 	end

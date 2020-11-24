@@ -69,12 +69,13 @@ local function QuestListChangedHook(event, ...)
 	end
 end
 
-local function TrackDropDownHook(self, level, info, ADD)
-	local questInfo = self:GetParent().questInfo;
+local function TrackDropDownHook(ddFrame)
+	local questInfo = ddFrame:GetSourceParent().questInfo;
 	local questId = questInfo.questId;
 	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
 	local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
 	local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+	local info = ddFrame:CreateButtonInfo("option");
 
 		-- TomTom functionality
 	if (TomTom and _activeSettings.useTomTom) then
@@ -100,9 +101,8 @@ local function TrackDropDownHook(self, level, info, ADD)
 			end
 		end
 		
-		ADD:AddButton(info, level);
+		ddFrame:AddButton(info);
 	end
-	
 end
 
 local TomTomExternal = CreateFromMixins(WQT_ExternalMixin);

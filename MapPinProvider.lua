@@ -2,7 +2,7 @@
 local WQT = addon.WQT;
 local _L = addon.L
 local _V = addon.variables;
-local ADD = LibStub("AddonDropDown-1.0");
+local ADD = LibStub("AddonDropDown-2.0");
 local WQT_Utils = addon.WQT_Utils;
 
 local _pinType = {
@@ -174,12 +174,15 @@ function WQT_PinDataProvider:RefreshAllData()
 	local canvas = parentMapFrame:GetCanvas();
 	
 	wipe(self.activePins);
+	
+	local count = 1;
 	if (mapInfo.mapType >= Enum.UIMapType.Continent) then
 		for k, questInfo in ipairs(WQT_WorldQuestFrame.dataProvider:GetIterativeList()) do
 			if (ShouldShowPin(questInfo, mapInfo.mapType, settingsZoneVisible, settingsContinentVisible, settingsFilterPoI, isFlightMap)) then
 				local pinType = GetPinType(mapInfo.mapType);
 				local posX, posY = WQT_Utils:GetQuestMapLocation(questInfo.questId, mapID);
 				if (posX and posX > 0 and posY > 0) then
+					count = count + 1;
 					local pin = self.pinPool:Acquire();
 					pin:SetParent(canvas);
 					tinsert(self.activePins, pin);
@@ -780,12 +783,7 @@ function WQT_PinMixin:OnClick(button)
 			end
 		end
 	else
-		if WQT_TrackDropDown:GetParent() ~= self then
-			-- If the dropdown is linked to another button, we must move and close it first
-			WQT_TrackDropDown:SetParent(self);
-			ADD:HideDropDownMenu(1);
-		end
-		ADD:ToggleDropDownMenu(1, nil, WQT_TrackDropDown, "cursor", -10, -10, nil, nil, 2);
+		ADD:CursorDropDown(self, function(...) WQT:TrackDDFunc(...) end);
 	end
 end
 

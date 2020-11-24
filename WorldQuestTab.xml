@@ -5,7 +5,7 @@
 	<Script file="Libs\LibStub\LibStub.lua"/>
 	<Include file="libs\AceAddon-3.0\AceAddon-3.0.xml"/>
 	<Include file="libs\AceDB-3.0\AceDB-3.0.xml"/>
-	<Include file="libs\AddonDropDown-1.0\AddonDropDown-1.0.xml"/>
+	<Include file="libs\AddonDropDown-2.0\AddonDropDown-2.0.xml"/>
 	
 	
 	<Script file="Locals.lua"/>
@@ -205,14 +205,24 @@
 						</MaskTexture>
 					</Layer>
 				</Layers>
+
 				<Layers>
-					<Layer level="OVERLAY">
-						<Texture parentKey="Ring" atlas="GarrMission_PartyBuffAbilityBorder" useAtlasSize="false">
+					<Layer level="OVERLAY" textureSubLevel="-1">
+						<Texture parentKey="RingShadow" atlas="azsharawards-fallingglow" useAtlasSize="false">
 							<Anchors>
-								<Anchor point="TOPLEFT" x="-1" y="1"/>
-								<Anchor point="BOTTOMRIGHT" x="1" y="-1"/>
+								<Anchor point="TOPLEFT" x="-0" y="0"/>
+								<Anchor point="BOTTOMRIGHT" x="0" y="-0"/>
 							</Anchors>
-							<Color r="0.75" g="0.75" b="0.75"/>
+							<Color r="0" g="0" b="0" a="0.5"/>
+						</Texture>
+					</Layer>
+					<Layer level="OVERLAY">
+						<Texture parentKey="Ring" atlas="jailerstower-wayfinder-rewardcircle" useAtlasSize="false" desaturated="true">
+							<Anchors>
+								<Anchor point="TOPLEFT" x="3" y="-3"/>
+								<Anchor point="BOTTOMRIGHT" x="-3" y="3"/>
+							</Anchors>
+							<Color r="0.55" g="0.45" b="0.45"/>
 						</Texture>
 					</Layer>
 				</Layers>
@@ -839,13 +849,7 @@
 						<Anchor point="BOTTOMRIGHT" x="-3" y="3"/>
 					</Anchors>
 				</HighlightTexture>
-				
-				<Scripts>
-					<OnClick> 
-						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-						ADDON_DROPDOWN:ToggleDropDownMenu(1, nil, WQT_WorldQuestFrameSettingsDropDown, "WQT_WorldQuestFrameSettingsButton", 10, 15);
-					</OnClick>	
-				</Scripts>			
+					
 			</Button>
 			
 			<Button name="$parentFilterButton" parentKey="FilterButton" inherits="UIMenuButtonStretchTemplate" text="FILTER">
@@ -905,10 +909,6 @@
 						local a, b, c, x = text:GetPoint(1);
 						text:SetPoint(a, b, c, x, 0);
 					</OnLoad>
-					<OnClick> 
-						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-						ADDON_DROPDOWN:ToggleDropDownMenu(1, nil, WQT_WorldQuestFrameFilterDropDown, "WQT_WorldQuestFrameFilterButton", 60, 15);
-					</OnClick>	
 				</Scripts>						
 			</Button>
 		</Frames>

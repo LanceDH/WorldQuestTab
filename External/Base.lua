@@ -1,4 +1,5 @@
-﻿-- Remember to add WorldQuestTab to your (optional) dependencies
+﻿--[[
+-- Remember to add WorldQuestTab to your (optional) dependencies
 if (not WQT_WorldQuestFrame) then
 	return;
 end
@@ -25,3 +26,6 @@ end
 
 -- Make the add-on load your stuff
 -- WQT_WorldQuestFrame:LoadExternal(ExampleExternal);
+]]--
+
+
