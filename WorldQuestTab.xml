@@ -1059,8 +1059,10 @@
 		</Frames>
 		<Scripts>
 			<OnLoad>
+				GameTooltip_OnLoad(self);
 				self.shoppingTooltips = { WQT_CompareTooltip1, WQT_CompareTooltip2 };
 			</OnLoad>
+			<OnUpdate function="GameTooltip_OnUpdate"/>
 		</Scripts>
 	</GameTooltip>
 	<Frame name="WQT_MapZoneHightlight" hidden="true">

@@ -95,15 +95,17 @@ WQT_REWARDTYPE = {
 	,["weapon"] = 		2^0		--1
 	,["equipment"] =		2^1		--2
 	,["relic"] = 		2^2		--4
-	,["artifact"] = 		2^3		--8
-	,["spell"] = 		2^4		--16
-	,["item"] = 			2^5		--32
-	,["gold"] = 			2^6		--64
-	,["currency"] = 		2^7		--128
-	,["honor"] = 		2^8		--256
-	,["reputation"] =	2^9		--512
-	,["xp"] = 			2^10	--1024
-	,["missing"] = 		2^11	--2048
+	,["anima"] = 		2^3		--8
+	,["artifact"] = 		2^4		--16
+	,["spell"] = 		2^5		--32
+	,["item"] = 			2^6		--64
+	,["gold"] = 			2^7		--128
+	,["currency"] = 		2^8		--256
+	,["honor"] = 		2^9		--512
+	,["reputation"] =	2^10	--1024
+	,["xp"] = 			2^11	--2048
+	,["missing"] = 		2^12	--4096
+	
 };
 -- Combos
 WQT_REWARDTYPE.gear = bit.bor(WQT_REWARDTYPE.weapon, WQT_REWARDTYPE.equipment);
@@ -868,7 +870,7 @@ _V["WQT_CVAR_LIST"] = {
 _V["WQT_TYPEFLAG_LABELS"] = {
 		[2] = {["Default"] = DEFAULT, ["Elite"] = ELITE, ["PvP"] = PVP, ["Petbattle"] = PET_BATTLE_PVP_QUEUE, ["Dungeon"] = TRACKER_HEADER_DUNGEON, ["Raid"] = RAID, ["Profession"] = BATTLE_PET_SOURCE_4, ["Invasion"] = _L["TYPE_INVASION"], ["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE
 			, ["Daily"] = DAILY, ["Threat"] = REPORT_THREAT, ["Bonus"] = SCENARIO_BONUS_LABEL}
-		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = CURRENCY, ["Artifact"] = ITEM_QUALITY6_DESC
+		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = CURRENCY, ["Artifact"] = ITEM_QUALITY6_DESC, ["Anima"] = ANIMA
 			, ["Relic"] = RELICSLOT, ["None"] = NONE, ["Experience"] = POWER_TYPE_EXPERIENCE, ["Honor"] = HONOR, ["Reputation"] = REPUTATION}
 	};
 
@@ -1010,6 +1012,7 @@ _V["REWARD_TYPE_ATLAS"] = {
 		,[WQT_REWARDTYPE.reputation] = {["texture"] = "QuestRepeatableTurnin", ["scale"] = 1.2} -- Rep
 		,[WQT_REWARDTYPE.xp] = {["texture"] = "poi-door-arrow-up", ["scale"] = .9} -- xp
 		,[WQT_REWARDTYPE.spell] = {["texture"] = "Banker", ["scale"] = 1.1}  -- spell acts like item
+		,[WQT_REWARDTYPE.anima] = {["texture"] =  "Interface/Addons/WorldQuestTab/Images/AnimaIcon", ["scale"] = 1.15, ["l"] = 0, ["r"] = 1, ["t"] = 0, ["b"] = 1, ["color"] = CreateColor(0.8, 0.8, 0.9)} -- Anima
 	}	
 
 _V["FILTER_FUNCTIONS"] = {
@@ -1031,6 +1034,7 @@ _V["FILTER_FUNCTIONS"] = {
 			["Armor"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.equipment + WQT_REWARDTYPE.weapon) > 0; end
 			,["Relic"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.relic) > 0; end
 			,["Item"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.spell + WQT_REWARDTYPE.item) > 0; end
+			,["Anima"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.anima) > 0; end
 			,["Artifact"]	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.artifact) > 0; end
 			,["Honor"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.honor) > 0; end
 			,["Gold"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.gold) > 0; end
@@ -1050,7 +1054,8 @@ _V["WQT_CONTINENT_GROUPS"] = {
 	}
 
 _V["WQT_ZONE_MAPCOORDS"] = {
-		[1550]		= WQT_SHADOWLANDS -- Shadowlands
+		[1647] 	= WQT_SHADOWLANDS -- Shadowlands flightmap
+		,[1550]	= WQT_SHADOWLANDS -- Shadowlands
 		,[875]	= WQT_ZANDALAR -- Zandalar
 		,[1011]	= WQT_ZANDALAR -- Zandalar flightmap
 		,[876]	= WQT_KULTIRAS -- Kul Tiras
@@ -1199,7 +1204,7 @@ _V["WQT_DEFAULTS"] = {
 				,[_V["FILTER_TYPES"].type] = {["name"] = TYPE
 						, ["flags"] = {["Default"] = true, ["Elite"] = true, ["PvP"] = true, ["Petbattle"] = true, ["Dungeon"] = true, ["Raid"] = true, ["Profession"] = true, ["Invasion"] = true, ["Assault"] = true, ["Daily"] = true, ["Threat"] = true, ["Bonus"] = true}}
 				,[_V["FILTER_TYPES"].reward] = {["name"] = REWARD
-						, ["flags"] = {["Item"] = true, ["Armor"] = true, ["Gold"] = true, ["Currency"] = true, ["Artifact"] = true, ["Relic"] = true, ["None"] = true, ["Experience"] = true, ["Honor"] = true, ["Reputation"] = true}}
+						, ["flags"] = {["Item"] = true, ["Armor"] = true, ["Gold"] = true, ["Currency"] = true, ["Anima"] = true, ["Artifact"] = true, ["Relic"] = true, ["None"] = true, ["Experience"] = true, ["Honor"] = true, ["Reputation"] = true}}
 			};
 			
 		["profiles"] = {
@@ -1216,7 +1221,17 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
-		{["version"] = "9.0.03"
+		{["version"] = "9.0.04"
+			,["new"] = {
+				"Anima is now it's own reward type and should show the total anima rather than number of tokens."
+			}
+			,["fixes"] = {
+				"Fixed Shadowlands world quests not showing up at flight masters."
+				,"Fixed an error related to covenant callings."
+				,"Fixed an issue where disabled filters wouldn't show tooltips."
+			}
+		}
+		,{["version"] = "9.0.03"
 			,["fixes"] = {
 				"Fixed default icon for factions which don't have a designated icon yet."
 				,"Fixed a quest detail issue with ElvUI."

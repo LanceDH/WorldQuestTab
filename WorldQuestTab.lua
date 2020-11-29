@@ -148,11 +148,6 @@ local function FilterDDFunc(ddFrame)
 	local level = ddFrame.level;
 	local value = ddFrame.value;
 	local info = ddFrame:CreateButtonInfo();
-	info.keepShownOnClick = true;	
-	info.tooltipWhileDisabled = true;
-	info.tooltipOnButton = true;
-	info.motionScriptsWhileDisabled = true;
-	info.disabled = nil;
 	
 	if level == 1 then
 		info = ddFrame:CreateButtonInfo("checkbox");
@@ -282,6 +277,7 @@ local function FilterDDFunc(ddFrame)
 				ddFrame:AddButton(info);
 			
 				info = ddFrame:CreateButtonInfo("checkbox");
+				info.tooltipWhileDisabled = true;
 				
 				local options = WQT.settings.filters[value].flags;
 				local order = WQT.filterOrders[value] 
@@ -1060,19 +1056,18 @@ function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, 
 			amountDisplay = amountDisplay.."+";
 		end
 		rewardFrame.Amount:SetText(amountDisplay);
-		
-		
+
 		-- Color reward amount for certain types
 		r, g, b = 1, 1, 1
 		if ( WQT.settings.list.amountColors) then
-			if (rewardType == WQT_REWARDTYPE.artifact) then
+			if (rewardType == WQT_REWARDTYPE.artifact or rewardType == WQT_REWARDTYPE.anima) then
 				r, g, b = GetItemQualityColor(2);
 			elseif (rewardType == WQT_REWARDTYPE.equipment or rewardType == WQT_REWARDTYPE.weapon) then
 				
 				r, g, b = typeColor:GetRGB();
 			end
 		end
-		
+
 		rewardFrame.Amount:SetVertexColor(r, g, b);
 		
 	end
@@ -1189,9 +1184,8 @@ end
 
 function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 	local typeFrame = self.Type;
-	local isCriteria = questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly);--WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
+	local isCriteria = questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly);
 	local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questId);
-	--if (not tagInfo) then return; end
 	local isElite = tagInfo and tagInfo.isElite;
 	
 	typeFrame:Show();
@@ -2138,14 +2132,16 @@ function WQT_CoreMixin:OnLoad()
 			local questInfo = self.dataProvider:GetQuestById(poi.questID);
 			if(questInfo and (questInfo.isDaily)) then
 				WorldMap_AddQuestTimeToTooltip(poi.questID);
-				for objectiveIndex = 1, poi.numObjectives do
-					local objectiveText, _, finished, numFulfilled, numRequired = GetQuestObjectiveInfo(poi.questID, objectiveIndex, false);
-					if(poi.shouldShowObjectivesAsStatusBar) then 
-						local percent = math.floor((numFulfilled/numRequired) * 100);
-						GameTooltip_ShowProgressBar(GameTooltip, 0, numRequired, numFulfilled, PERCENTAGE_STRING:format(percent));
-					elseif ( objectiveText and #objectiveText > 0 ) then
-						local color = finished and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
-						GameTooltip:AddLine(QUEST_DASH .. objectiveText, color.r, color.g, color.b, true);
+				if (poi.numObjectives and type(poi.numObjectives) == "number") then
+					for objectiveIndex = 1, poi.numObjectives do
+						local objectiveText, _, finished, numFulfilled, numRequired = GetQuestObjectiveInfo(poi.questID, objectiveIndex, false);
+						if(poi.shouldShowObjectivesAsStatusBar) then 
+							local percent = math.floor((numFulfilled/numRequired) * 100);
+							GameTooltip_ShowProgressBar(GameTooltip, 0, numRequired, numFulfilled, PERCENTAGE_STRING:format(percent));
+						elseif ( objectiveText and #objectiveText > 0 ) then
+							local color = finished and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
+							GameTooltip:AddLine(QUEST_DASH .. objectiveText, color.r, color.g, color.b, true);
+						end
 					end
 				end
 			

@@ -82,6 +82,7 @@ local function ScanTooltipRewardForPattern(questID, pattern)
 	local result;
 	
 	QuestUtils_AddQuestRewardsToTooltip(WQT_Tooltip, questID, TOOLTIP_QUEST_REWARDS_STYLE_DEFAULT);
+
 	for i=2, 6 do
 		local line = _G["WQT_TooltipTooltipTextLeft"..i];
 		if (not line) then break; end
@@ -196,15 +197,21 @@ function QuestInfoMixin:LoadRewards()
 
 			if (rewardId) then
 				local price, typeID, subTypeID = select(11, GetItemInfo(rewardId));
-				if (typeID == 4 or typeID == 2) then -- Gear (4 = armor, 2 = weapon)
+				if (typeID == 4 or typeID == 2) then 
+					-- Gear (4 = armor, 2 = weapon)
 					local canUpgrade = ScanTooltipRewardForPattern(self.questId, "(%d+%+)$") and true or false;
 					local rewardType = typeID == 4 and WQT_REWARDTYPE.equipment or WQT_REWARDTYPE.weapon;
 					local color = typeID == 4 and _V["WQT_COLOR_ARMOR"] or _V["WQT_COLOR_WEAPON"];
 					self:AddReward(rewardType, ilvl, texture, quality, color, rewardId, canUpgrade);
 				elseif (typeID == 3 and subTypeID == 11) then
+					-- Relics
 					-- Find upgrade amount as C_ArtifactUI.GetItemLevelIncreaseProvidedByRelic doesn't scale
 					local numItems = tonumber(ScanTooltipRewardForPattern(self.questId, "^%+(%d+)"));
 					self:AddReward(WQT_REWARDTYPE.relic, numItems, texture, quality, _V["WQT_COLOR_RELIC"], rewardId);
+				elseif(C_Item.IsAnimaItemByID(rewardId)) then
+					-- Anima
+					local value = ScanTooltipRewardForPattern(self.questId, " (%d+) ") or 1;
+					self:AddReward(WQT_REWARDTYPE.anima, numItems * value, texture, quality, _V["WQT_COLOR_ARTIFACT"], rewardId);
 				else	
 					-- Normal items
 					if (texture == 894556) then
