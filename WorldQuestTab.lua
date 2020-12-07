@@ -128,8 +128,6 @@ local function slashcmd(msg)
 		WQT_DebugFrame:DumpDebug(addition);
 		return;
 	end
-	
-	print(_L["OPTIONS_INFO"]);
 end
 
 local function IsRelevantFilter(filterID, key)
@@ -1040,6 +1038,15 @@ function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, 
 	rewardFrame.Icon:SetTexture(texture);
 	rewardFrame.IconBorder:SetVertexColor(r, g, b);
 	
+	-- Conduits have special borders
+	if (rewardType == WQT_REWARDTYPE.conduit) then
+		rewardFrame.IconBorder:SetAtlas("conduiticonframe");
+		rewardFrame.ConduitCorners:Show();
+	else
+		rewardFrame.IconBorder:SetTexture("Interface/Common/WhiteIconFrame");
+		rewardFrame.ConduitCorners:Hide();
+	end
+
 	rewardFrame.Amount:Hide();
 	if (amount > 1) then
 		rewardFrame.Amount:Show();
@@ -1063,7 +1070,6 @@ function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, 
 			if (rewardType == WQT_REWARDTYPE.artifact or rewardType == WQT_REWARDTYPE.anima) then
 				r, g, b = GetItemQualityColor(2);
 			elseif (rewardType == WQT_REWARDTYPE.equipment or rewardType == WQT_REWARDTYPE.weapon) then
-				
 				r, g, b = typeColor:GetRGB();
 			end
 		end
@@ -1933,6 +1939,13 @@ function WQT_CoreMixin:OnLoad()
 	-- 
 	
 	-- World map
+	-- If we were reading details when we switch maps, change back to normal quests
+	hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
+			if (self.selectedTab == WQT_TabDetails) then
+				self:SelectTab(WQT_TabNormal); 
+			end
+		end)
+	
 	-- Update when opening the map
 	WorldMapFrame:HookScript("OnShow", function() 
 			local mapAreaID = WorldMapFrame.mapID;
@@ -1941,7 +1954,7 @@ function WQT_CoreMixin:OnLoad()
 			self:SelectTab(self.selectedTab); 
 
 			-- If emissaryOnly was automaticaly set, and there's none in the current list, turn it off again.
-			if WQT_WorldQuestFrame.autoEmisarryId and not WQT_WorldQuestFrame.dataProvider:ListContainsEmissary() then
+			if (WQT_WorldQuestFrame.autoEmisarryId and not WQT_WorldQuestFrame.dataProvider:ListContainsEmissary()) then
 				WQT_WorldQuestFrame.autoEmisarryId = nil;
 				WQT_QuestScrollFrame:UpdateQuestList();
 			end
@@ -1962,7 +1975,7 @@ function WQT_CoreMixin:OnLoad()
 				return;
 			end
 			
-			if(self.selectedTab and self.selectedTab:GetID() == 2) then
+			if (self.selectedTab and self.selectedTab:GetID() == 2) then
 				self:SelectTab(WQT_TabWorld); 
 			else
 				self:SelectTab(WQT_TabNormal); 
@@ -2332,7 +2345,7 @@ function WQT_CoreMixin:ShouldAllowLFG(questInfo)
 	end
 	
 	local tagInfo = C_QuestLog.GetQuestTagInfo(questId);
-	return tagInfo.worldQuestType and not (tagInfo.worldQuestType == Enum.QuestTagType.PetBattle or tagInfo.worldQuestType == Enum.QuestTagType.Dungeon or tagInfo.worldQuestType == Enum.QuestTagType.Progession or tagInfo.worldQuestType == Enum.QuestTagType.Raid);
+	return tagInfo and tagInfo.worldQuestType and not (tagInfo.worldQuestType == Enum.QuestTagType.PetBattle or tagInfo.worldQuestType == Enum.QuestTagType.Dungeon or tagInfo.worldQuestType == Enum.QuestTagType.Progession or tagInfo.worldQuestType == Enum.QuestTagType.Raid);
 end
 
 function WQT_CoreMixin:UnhookEvent(event, func)
@@ -2538,8 +2551,8 @@ function WQT_CoreMixin:SetCustomEnabled(value)
 end
 
 function WQT_CoreMixin:SelectTab(tab)
-	local id = tab and tab:GetID() or 0;
 	
+	local id = tab and tab:GetID() or 0;
 	if self.selectedTab ~= tab then
 		ADD:CloseAll();
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);

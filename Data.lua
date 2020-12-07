@@ -94,17 +94,18 @@ WQT_REWARDTYPE = {
 	["none"] = 			0		--0
 	,["weapon"] = 		2^0		--1
 	,["equipment"] =		2^1		--2
-	,["relic"] = 		2^2		--4
-	,["anima"] = 		2^3		--8
-	,["artifact"] = 		2^4		--16
-	,["spell"] = 		2^5		--32
-	,["item"] = 			2^6		--64
-	,["gold"] = 			2^7		--128
-	,["currency"] = 		2^8		--256
-	,["honor"] = 		2^9		--512
-	,["reputation"] =	2^10	--1024
-	,["xp"] = 			2^11	--2048
-	,["missing"] = 		2^12	--4096
+	,["conduit"] = 		2^3		--4
+	,["relic"] = 		2^4		--4
+	,["anima"] = 		2^5		--8
+	,["artifact"] = 		2^6		--16
+	,["spell"] = 		2^7		--32
+	,["item"] = 			2^8		--64
+	,["gold"] = 			2^9		--128
+	,["currency"] = 		2^10		--256
+	,["honor"] = 		2^11		--512
+	,["reputation"] =	2^12	--1024
+	,["xp"] = 			2^13	--2048
+	,["missing"] = 		2^14	--4096
 	
 };
 -- Combos
@@ -570,40 +571,13 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.useLFGButtons end
 			}	
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["AUTO_EMISARRY"], ["tooltip"] = _L["AUTO_EMISARRY_TT"]
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.general.autoEmisarry = value;
-			end
-			,["getValueFunc"] = function() return WQT.settings.general.autoEmisarry end
-			}		
+		
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["QUEST_COUNTER"], ["tooltip"] = _L["QUEST_COUNTER_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.questCounter = value;
 				WQT_QuestLogFiller:UpdateVisibility();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.questCounter; end
-			}
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["EMISSARY_COUNTER"], ["tooltip"] = _L["EMISSARY_COUNTER_TT"]
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.general.bountyCounter = value;
-				WQT_WorldQuestFrame:UpdateBountyCounters();
-				WQT_WorldQuestFrame:RepositionBountyTabs();
-			end
-			,["getValueFunc"] = function() return WQT.settings.general.bountyCounter end
-			}	
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["EMISSARY_REWARD"], ["tooltip"] = _L["EMISSARY_REWARD_TT"], ["isNew"] = true
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.general.bountyReward = value;
-				WQT_WorldQuestFrame:UpdateBountyCounters();
-			end
-			,["getValueFunc"] = function() return WQT.settings.general.bountyReward end
-			}
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["EMISSARY_SELECTED_ONLY"], ["tooltip"] = _L["EMISSARY_SELECTED_ONLY_TT"], ["isNew"] = true
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.general.bountySelectedOnly = value;
-				WQT_QuestScrollFrame:UpdateQuestList();
-			end
-			,["getValueFunc"] = function() return WQT.settings.general.bountySelectedOnly end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["ALWAYS_ALL"], ["tooltip"] = _L["ALWAYS_ALL_TT"]
 			, ["valueChangedFunc"] = function(value) 
@@ -625,7 +599,53 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.includeDaily end
 			}
-
+			
+	,{["template"] ="WQT_SettingSubTitleTemplate", ["categoryID"] = "GENERAL", ["label"] = EXPANSION_NAME8}
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["CALLINGS_BOARD"], ["tooltip"] = _L["CALLINGS_BOARD_TT"], ["isNew"] = true
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.general.sl_callingsBoard = value;
+				WQT_CallingsBoard:UpdateVisibility();
+			end
+			,["getValueFunc"] = function() return WQT.settings.general.sl_callingsBoard end
+			}
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["GENERIC_ANIMA"], ["tooltip"] = _L["GENERIC_ANIMA_TT"], ["isNew"] = true
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.general.sl_genericAnimaIcons = value;
+				WQT_WorldQuestFrame.dataProvider:ReloadQuestRewards();
+			end
+			,["getValueFunc"] = function() return WQT.settings.general.sl_genericAnimaIcons end
+			}
+			
+			
+	,{["template"] ="WQT_SettingSubTitleTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["PREVIOUS_EXPANSIONS"]}
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["AUTO_EMISARRY"], ["tooltip"] = _L["AUTO_EMISARRY_TT"]
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.general.autoEmisarry = value;
+			end
+			,["getValueFunc"] = function() return WQT.settings.general.autoEmisarry end
+			}	
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["EMISSARY_COUNTER"], ["tooltip"] = _L["EMISSARY_COUNTER_TT"]
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.general.bountyCounter = value;
+				WQT_WorldQuestFrame:UpdateBountyCounters();
+				WQT_WorldQuestFrame:RepositionBountyTabs();
+			end
+			,["getValueFunc"] = function() return WQT.settings.general.bountyCounter end
+			}	
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["EMISSARY_REWARD"], ["tooltip"] = _L["EMISSARY_REWARD_TT"]
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.general.bountyReward = value;
+				WQT_WorldQuestFrame:UpdateBountyCounters();
+			end
+			,["getValueFunc"] = function() return WQT.settings.general.bountyReward end
+			}
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["EMISSARY_SELECTED_ONLY"], ["tooltip"] = _L["EMISSARY_SELECTED_ONLY_TT"]
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.general.bountySelectedOnly = value;
+				WQT_QuestScrollFrame:UpdateQuestList();
+			end
+			,["getValueFunc"] = function() return WQT.settings.general.bountySelectedOnly end
+			}
 	-- Quest List
 	,{["frameName"] = "WQT_SettingsQuestListPreview", ["categoryID"] = "QUESTLIST"}	
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["SHOW_TYPE"], ["tooltip"] = _L["SHOW_TYPE_TT"]
@@ -870,7 +890,7 @@ _V["WQT_CVAR_LIST"] = {
 _V["WQT_TYPEFLAG_LABELS"] = {
 		[2] = {["Default"] = DEFAULT, ["Elite"] = ELITE, ["PvP"] = PVP, ["Petbattle"] = PET_BATTLE_PVP_QUEUE, ["Dungeon"] = TRACKER_HEADER_DUNGEON, ["Raid"] = RAID, ["Profession"] = BATTLE_PET_SOURCE_4, ["Invasion"] = _L["TYPE_INVASION"], ["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE
 			, ["Daily"] = DAILY, ["Threat"] = REPORT_THREAT, ["Bonus"] = SCENARIO_BONUS_LABEL}
-		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = CURRENCY, ["Artifact"] = ITEM_QUALITY6_DESC, ["Anima"] = ANIMA
+		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = CURRENCY, ["Artifact"] = ITEM_QUALITY6_DESC, ["Anima"] = ANIMA, ["Conduits"] = _L["REWARD_CONDUITS"]
 			, ["Relic"] = RELICSLOT, ["None"] = NONE, ["Experience"] = POWER_TYPE_EXPERIENCE, ["Honor"] = HONOR, ["Reputation"] = REPUTATION}
 	};
 
@@ -1013,6 +1033,7 @@ _V["REWARD_TYPE_ATLAS"] = {
 		,[WQT_REWARDTYPE.xp] = {["texture"] = "poi-door-arrow-up", ["scale"] = .9} -- xp
 		,[WQT_REWARDTYPE.spell] = {["texture"] = "Banker", ["scale"] = 1.1}  -- spell acts like item
 		,[WQT_REWARDTYPE.anima] = {["texture"] =  "Interface/Addons/WorldQuestTab/Images/AnimaIcon", ["scale"] = 1.15, ["l"] = 0, ["r"] = 1, ["t"] = 0, ["b"] = 1, ["color"] = CreateColor(0.8, 0.8, 0.9)} -- Anima
+		,[WQT_REWARDTYPE.conduit] = {["texture"] =  "soulbinds_tree_conduit_icon_utility", ["scale"] = 1.15} -- Anima
 	}	
 
 _V["FILTER_FUNCTIONS"] = {
@@ -1035,6 +1056,7 @@ _V["FILTER_FUNCTIONS"] = {
 			,["Relic"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.relic) > 0; end
 			,["Item"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.spell + WQT_REWARDTYPE.item) > 0; end
 			,["Anima"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.anima) > 0; end
+			,["Conduits"]	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.conduit) > 0; end
 			,["Artifact"]	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.artifact) > 0; end
 			,["Honor"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.honor) > 0; end
 			,["Gold"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.gold) > 0; end
@@ -1124,12 +1146,11 @@ _V["WQT_FACTION_DATA"] = {
 	,[2417] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 3196264 } -- Uldum Accord
 	,[2415] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 3196265 } -- Rajani
 	-- Shadowlands - Speculation at this point, I can't test
-	,[2407] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3555147 } -- The Ascended
+	,[2407] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3257748 } -- The Ascended
 	,[2410] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3641396 } -- The Undying Army
-	,[2413] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3540525 } -- Court of Harvesters
+	,[2413] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3257751 } -- Court of Harvesters
 	,[2465] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3641394 } -- The Wild Hunt
-	,[2439] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3063266 } -- The Avowed
-	
+	,[2432] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3729461 } -- Ve'nari
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
@@ -1158,6 +1179,9 @@ _V["WQT_DEFAULTS"] = {
 			bountyCounter = true;
 			bountyReward = false;
 			bountySelectedOnly = true;
+			
+			sl_callingsBoard = true;
+			sl_genericAnimaIcons = false;
 			
 			loadUtilities = true;
 			
@@ -1204,7 +1228,7 @@ _V["WQT_DEFAULTS"] = {
 				,[_V["FILTER_TYPES"].type] = {["name"] = TYPE
 						, ["flags"] = {["Default"] = true, ["Elite"] = true, ["PvP"] = true, ["Petbattle"] = true, ["Dungeon"] = true, ["Raid"] = true, ["Profession"] = true, ["Invasion"] = true, ["Assault"] = true, ["Daily"] = true, ["Threat"] = true, ["Bonus"] = true}}
 				,[_V["FILTER_TYPES"].reward] = {["name"] = REWARD
-						, ["flags"] = {["Item"] = true, ["Armor"] = true, ["Gold"] = true, ["Currency"] = true, ["Anima"] = true, ["Artifact"] = true, ["Relic"] = true, ["None"] = true, ["Experience"] = true, ["Honor"] = true, ["Reputation"] = true}}
+						, ["flags"] = {["Item"] = true, ["Armor"] = true, ["Gold"] = true, ["Currency"] = true, ["Anima"] = true, ["Conduits"] = true, ["Artifact"] = true, ["Relic"] = true, ["None"] = true, ["Experience"] = true, ["Honor"] = true, ["Reputation"] = true}}
 			};
 			
 		["profiles"] = {
@@ -1221,7 +1245,21 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
-		{["version"] = "9.0.04"
+		{["version"] = "9.0.05"
+			,["new"] = {
+				"Added a callings board to the world map similar to the ones in Legion and BfA. This is enabled by default but can be turned off in the settings."
+				,"Conduits are now their own reward type which includes filtering and reward displays in the quest list."
+			}
+			,["changes"] = {
+				"Moved some of the settings around so the ones relevant to older contet are out of the way."
+				,"Replaced all covenant factions icons to their covenant sigil and added an icon for Ve'nari."
+			}
+			,["fixes"] = {
+				"Fixed the quest log disapearing when changing maps while quest details are open."
+				,"Fixed a potential error when right clicking a world quest."
+			}
+		}
+		,{["version"] = "9.0.04"
 			,["new"] = {
 				"Anima is now it's own reward type and should show the total anima rather than number of tokens."
 			}

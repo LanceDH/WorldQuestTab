@@ -17,8 +17,10 @@ function WQT_MiniIconMixin:Reset()
 	self.Icon:Show();
 	self.Icon:SetTexture(nil);
 	self.Icon:SetScale(1);
+	self.Icon:SetSize(10, 10);
 	self.Icon:SetTexCoord(0, 1, 0, 1);
 	self.Icon:SetVertexColor(1, 1, 1);
+	self.Icon:SetDesaturated(false);
 	
 	self.BG:Show();
 	self.BG:SetTexture("Interface/GLUES/Models/UI_MainMenu_Legion/UI_Legion_Shadow");
@@ -31,12 +33,28 @@ function WQT_MiniIconMixin:SetIconColor(color)
 	self.Icon:SetVertexColor(color:GetRGB());
 end
 
+function WQT_MiniIconMixin:SetIconColorRGBA(r, g, b, a)
+	self.Icon:SetVertexColor(r or 1, g or 1, b or 1, a or 1);
+end
+
+function WQT_MiniIconMixin:SetDesaturated(value)
+	self.Icon:SetDesaturated(value);
+end
+
 function WQT_MiniIconMixin:SetIconCoords(left, right, top, bottom)
 	self.Icon:SetTexCoord(left, right, top, bottom);
 end
 
 function WQT_MiniIconMixin:SetIconScale(scale)
 	self.Icon:SetScale(scale);
+end
+
+function WQT_MiniIconMixin:SetIconSize(width, height)
+	self.Icon:SetSize(width, height);
+end
+
+function WQT_MiniIconMixin:SetBackgroundScale(scale)
+	self.BG:SetScale(scale);
 end
 
 function WQT_MiniIconMixin:SetBackgroundShown(value)
@@ -54,6 +72,8 @@ function WQT_MiniIconMixin:SetupIcon(texture, left, right, top, bottom)
 	else
 		self.Icon:SetAtlas(texture);
 	end
+	
+	self:Show();
 end
 
 function WQT_MiniIconMixin:SetupRewardIcon(rewardType)
@@ -155,6 +175,55 @@ end
 function WQT_ContainerButtonMixin:OnLeave()
 	GameTooltip:Hide();
 end
+
+----------------------------
+-- WQT_MiniIconOverlayMixin
+----------------------------
+
+WQT_MiniIconOverlayMixin = {};
+
+function WQT_MiniIconOverlayMixin:Init(anchor, startAngle, distance, spacingAngle)
+	self.miniIconPool = CreateFramePool("FRAME", anchor, "WQT_MiniIconTemplate");
+	self.anchor = anchor;
+	self.startAngle = startAngle or 270;
+	self.distance = distance or 20;
+	self.spacingAngle = spacingAngle or 32;
+	self.activeIcons = {};
+end
+
+function WQT_MiniIconOverlayMixin:Reset()
+	self.miniIconPool:ReleaseAll();
+	wipe(self.activeIcons);
+end
+
+function WQT_MiniIconOverlayMixin:Create()
+	local icon = self.miniIconPool:Acquire();
+	tinsert(self.activeIcons, icon);
+	icon:Show();
+	self:UpdatePlacement();
+	return icon;
+end
+
+function WQT_MiniIconOverlayMixin:UpdatePlacement()
+	local numIcons = self.miniIconPool:GetNumActive();
+	-- Counters
+	local offsetAngle = self.spacingAngle;
+	local startAngle = self.startAngle;
+	
+	-- position of first counter
+	startAngle = startAngle - offsetAngle * (numIcons -1) /2
+	
+	for k, icon in ipairs(self.activeIcons) do
+		local x = cos(startAngle) * self.distance;
+		local y = sin(startAngle) * self.distance;
+		icon:SetPoint("CENTER", self.anchor, "CENTER", x, y);
+		icon:SetParent(self.anchor);
+		icon:Show();
+		-- Offset next counter
+		startAngle = startAngle + offsetAngle;
+	end
+end
+
 
 ----------------------------
 -- Utilities

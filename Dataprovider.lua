@@ -183,9 +183,9 @@ function QuestInfoMixin:Reset()
 	self.isValid = false;
 end
 
-function QuestInfoMixin:LoadRewards()
+function QuestInfoMixin:LoadRewards(force)
 	-- If we already have our data, don't try again;
-	if (self.hasRewardData) then return; end
+	if (not force and self.hasRewardData) then return; end
 
 	wipe(self.rewardList);
 	local haveData = HaveQuestRewardData(self.questId);
@@ -197,7 +197,10 @@ function QuestInfoMixin:LoadRewards()
 
 			if (rewardId) then
 				local price, typeID, subTypeID = select(11, GetItemInfo(rewardId));
-				if (typeID == 4 or typeID == 2) then 
+				if (C_Soulbinds.IsItemConduitByItemInfo(rewardId)) then
+					-- Soulbinds
+					self:AddReward(WQT_REWARDTYPE.conduit, ilvl, texture, quality, _V["WQT_COLOR_RELIC"], rewardId);
+				elseif (typeID == 4 or typeID == 2) then 
 					-- Gear (4 = armor, 2 = weapon)
 					local canUpgrade = ScanTooltipRewardForPattern(self.questId, "(%d+%+)$") and true or false;
 					local rewardType = typeID == 4 and WQT_REWARDTYPE.equipment or WQT_REWARDTYPE.weapon;
@@ -211,6 +214,14 @@ function QuestInfoMixin:LoadRewards()
 				elseif(C_Item.IsAnimaItemByID(rewardId)) then
 					-- Anima
 					local value = ScanTooltipRewardForPattern(self.questId, " (%d+) ") or 1;
+					value = tonumber(value);
+
+					if (WQT.settings.general.sl_genericAnimaIcons) then
+						texture = 3528288;
+						if (value >= 250) then
+							texture = 3528287;
+						end
+					end
 					self:AddReward(WQT_REWARDTYPE.anima, numItems * value, texture, quality, _V["WQT_COLOR_ARTIFACT"], rewardId);
 				else	
 					-- Normal items
@@ -672,4 +683,11 @@ function WQT_DataProvider:UpdateBufferProgress()
 	
 	self:TriggerCallback("BufferUpdated", progress);
 end	
+
+function WQT_DataProvider:ReloadQuestRewards()
+	for questInfo, v in self.pool:EnumerateActive() do
+		questInfo:LoadRewards(true);
+	end
+	self:TriggerCallback("QuestsLoaded");
+end
 

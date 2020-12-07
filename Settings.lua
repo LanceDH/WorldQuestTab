@@ -181,7 +181,7 @@ function WQT_SettingsQuestListMixin:UpdateState()
 	-- Fake rewards
 	questFrame.Rewards:Reset();
 	questFrame.Rewards:AddReward(WQT_REWARDTYPE.equipment, 1733697, 3, 410, _V["WQT_COLOR_ARMOR"], true);
-	questFrame.Rewards:AddReward(WQT_REWARDTYPE.gold, 133784, 1, 132, _V["WQT_COLOR_GOLD"], false);
+	questFrame.Rewards:AddReward(WQT_REWARDTYPE.gold, 133784, 1, 1320000, _V["WQT_COLOR_GOLD"], false);
 	questFrame.Rewards:AddReward(WQT_REWARDTYPE.xp, 894556, 1, 34000, _V["WQT_COLOR_ITEM"], false);
 end
 

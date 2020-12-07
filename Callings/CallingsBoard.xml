@@ -1,0 +1,88 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ../../FrameXML/UI.xsd">
+
+	<Script file="CallingsBoard.lua"/>
+	
+	<Button name="WQT_CallingBoardDisplay" mixin="WQT_CallingsBoardDisplayMixin" virtual="true" parentArray="Displays">
+		<Size x="50" y="50"/>
+		<Layers>
+		
+			<Layer level="ARTWORK">
+				<Texture parentKey="Icon">
+					<Size x="90" y="90"/>
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="Highlight" alphaMode="ADD" alpha="0.5" hidden="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.Icon"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Icon"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Shadow" atlas="covenantsanctum-reservoir-shadow" alpha="0.5">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.Icon" x="15" y="-13"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Icon" x="-15" y="20"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="BACKGROUND" textureSubLevel="2">
+				<Texture parentKey="Glow" atlas="Callings-Glow">
+					<Size x="44" y="43"/>
+					<Anchors>
+						<Anchor point="CENTER" y="2"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY">
+				<Texture parentKey="Bang" atlas="Callings-Available">
+					<Size x="18" y="20"/>
+					<Anchors>
+						<Anchor point="CENTER" y="-17"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="BangHighlight" atlas="Callings-Available" alphaMode="ADD" alpha="0.75" hidden="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.Bang"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Bang"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		
+		<Scripts>
+			<OnEnter method="OnEnter"/>
+			<OnLeave method="OnLeave"/>
+			<OnClick method="OnClick"/>
+		</Scripts>
+	</Button>
+
+	<Frame name="WQT_CallingsBoard" mixin="WQT_CallingsBoardMixin" frameStrata="HIGH" hidden="true">
+		<Size x="180" y="65"/>
+		<HitRectInsets top="-5" right="-5" bottom="5" left="5"/>
+	
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="BG">
+					<color r="0" g="0" b="0" a="0.5"/>
+				</Texture>
+			</Layer>
+		</Layers>
+		
+		<Frames>
+			<Button inherits="WQT_CallingBoardDisplay" id="1"/>
+			<Button inherits="WQT_CallingBoardDisplay" id="2"/>
+			<Button inherits="WQT_CallingBoardDisplay" id="3"/>
+		</Frames>
+	
+		<Scripts>
+			<Onload method="OnLoad"/>
+			<OnEvent method="OnEvent"/>
+		</Scripts>
+	</Frame>
+	
+</Ui>

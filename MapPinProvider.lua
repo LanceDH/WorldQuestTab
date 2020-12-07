@@ -145,8 +145,18 @@ function WQT_PinDataProvider:RemoveAllData()
 end
 
 function WQT_PinDataProvider:RefreshAllData()
+	-- Protection against coroutines I guess. 
+	-- TaskPOI_OnEnter can trigger this function a second time when the first one isn't done yet
+	if (self.isUpdating) then
+		return;
+	end
+
+	self.isUpdating = true;
 	self:RemoveAllData();
-	if (WQT_Utils:GetSetting("pin", "disablePoI")) then return; end
+	if (WQT_Utils:GetSetting("pin", "disablePoI")) then 
+		self.isUpdating = false;
+		return; 
+	end
 	WQT_WorldQuestFrame:HideOfficialMapPins();
 	
 	local parentMapFrame;
@@ -160,10 +170,14 @@ function WQT_PinDataProvider:RefreshAllData()
 	
 	-- If the Quest details are shown, keep all pins hidden.
 	if (QuestMapFrame.DetailsFrame:IsShown()) then
+		self.isUpdating = false;
 		return;
 	end
 
-	if (not parentMapFrame) then return; end
+	if (not parentMapFrame) then 
+		self.isUpdating = false;
+		return; 
+	end
 	
 	local mapID = parentMapFrame:GetMapID();
 	local settingsContinentPins = WQT_Utils:GetSetting("pin", "continentPins");
@@ -176,6 +190,11 @@ function WQT_PinDataProvider:RefreshAllData()
 	wipe(self.activePins);
 	
 	local count = 1;
+	
+	local dbg = debugstack(2, 3, 2);
+	if (dbg:find("TaskPOI_OnEnter")) then
+		--print(dbg);
+	end
 	if (mapInfo.mapType >= Enum.UIMapType.Continent) then
 		for k, questInfo in ipairs(WQT_WorldQuestFrame.dataProvider:GetIterativeList()) do
 			if (ShouldShowPin(questInfo, mapInfo.mapType, settingsZoneVisible, settingsContinentVisible, settingsFilterPoI, isFlightMap)) then
@@ -191,6 +210,7 @@ function WQT_PinDataProvider:RefreshAllData()
 			end
 		end
 	end
+	--print("- - - - - - - - - - -", #self.activePins, self)
 	
 	-- Slightly spread out overlapping pins
 	self:FixOverlaps(canvas);
@@ -203,7 +223,8 @@ function WQT_PinDataProvider:RefreshAllData()
 			end);
 		self.hookedCanvasChanges[parentMapFrame] = true;
 	end
-	
+
+	self.isUpdating = false;
 end
 
 function WQT_PinDataProvider:FixOverlaps(canvas)
@@ -765,26 +786,26 @@ function WQT_PinMixin:OnLeave()
 end
 
 function WQT_PinMixin:OnClick(button)
-	if (button == "LeftButton") then
-		if ( not ChatEdit_TryInsertQuestLinkForQuestID(self.questId) ) then
-			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-
-			local isWatchedManual = WQT_Utils:QuestIsWatchedManual(self.questId)
-			if (IsShiftKeyDown()) then
-				if (isWatchedManual or (QuestUtils_IsQuestWatched(self.questId) and C_SuperTrack.GetSuperTrackedQuestID() == self.questId)) then
-					C_QuestLog.RemoveWorldQuestWatch(self.questId);
-				else
-					C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Manual);
-				end
-			else
-				C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Automatic);
-				C_SuperTrack.SetSuperTrackedQuestID(self.questId);
-				C_SuperTrack.SetSuperTrackedUserWaypoint(self.questId);
-			end
-		end
-	else
-		ADD:CursorDropDown(self, function(...) WQT:TrackDDFunc(...) end);
-	end
+	-- if (button == "LeftButton") then
+		-- if ( not ChatEdit_TryInsertQuestLinkForQuestID(self.questId) ) then
+			-- PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+                
+			-- local isWatchedManual = WQT_Utils:QuestIsWatchedManual(self.questId)
+			-- if (IsShiftKeyDown()) then
+				-- if (isWatchedManual or (QuestUtils_IsQuestWatched(self.questId) and C_SuperTrack.GetSuperTrackedQuestID() == self.questId)) then
+					-- C_QuestLog.RemoveWorldQuestWatch(self.questId);
+				-- else
+					-- C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Manual);
+				-- end
+			-- else
+				-- C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Automatic);
+				-- C_SuperTrack.SetSuperTrackedQuestID(self.questId);
+				-- C_SuperTrack.SetSuperTrackedUserWaypoint(self.questId);
+			-- end
+		-- end
+	-- else
+		-- ADD:CursorDropDown(self, function(...) WQT:TrackDDFunc(...) end);
+	-- end
 end
 
 function WQT_PinMixin:ApplyScaledPosition(manualScale)
