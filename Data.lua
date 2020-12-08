@@ -1257,6 +1257,7 @@ _V["PATCH_NOTES"] = {
 			,["fixes"] = {
 				"Fixed the quest log disapearing when changing maps while quest details are open."
 				,"Fixed a potential error when right clicking a world quest."
+				,"Fixed some tainting issues should prevent combat errors."
 			}
 		}
 		,{["version"] = "9.0.04"

@@ -1039,12 +1039,14 @@ function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, 
 	rewardFrame.IconBorder:SetVertexColor(r, g, b);
 	
 	-- Conduits have special borders
+	rewardFrame.ConduitCorners:Hide();
 	if (rewardType == WQT_REWARDTYPE.conduit) then
 		rewardFrame.IconBorder:SetAtlas("conduiticonframe");
 		rewardFrame.ConduitCorners:Show();
+	elseif (rewardType == WQT_REWARDTYPE.relic) then
+		rewardFrame.IconBorder:SetTexture("Interface/Artifacts/RelicIconFrame");
 	else
 		rewardFrame.IconBorder:SetTexture("Interface/Common/WhiteIconFrame");
-		rewardFrame.ConduitCorners:Hide();
 	end
 
 	rewardFrame.Amount:Hide();
@@ -1929,14 +1931,16 @@ function WQT_CoreMixin:OnLoad()
 	SLASH_WQTSLASH2 = '/worldquesttab';
 	SlashCmdList["WQTSLASH"] = slashcmd
 	
-	-- Show quest tab when leaving quest details
-	hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
-			self:SelectTab(WQT_TabNormal);
-		end)
+	
 
 	--
 	-- Function hooks
 	-- 
+	
+	-- Show quest tab when leaving quest details
+	hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
+			self:SelectTab(WQT_TabNormal);
+		end)
 	
 	-- World map
 	-- If we were reading details when we switch maps, change back to normal quests
@@ -1951,7 +1955,13 @@ function WQT_CoreMixin:OnLoad()
 			local mapAreaID = WorldMapFrame.mapID;
 			self.dataProvider:LoadQuestsInZone(mapAreaID);
 			self.ScrollFrame:UpdateQuestList();
-			self:SelectTab(self.selectedTab); 
+			
+			-- Prevent opening empty quest details
+			local currentTab = self.selectedTab;
+			if (currentTab == WQT_TabDetails and not QuestMapFrame.DetailsFrame.questID) then
+				currentTab = WQT_TabNormal;
+			end
+			self:SelectTab(currentTab); 
 
 			-- If emissaryOnly was automaticaly set, and there's none in the current list, turn it off again.
 			if (WQT_WorldQuestFrame.autoEmisarryId and not WQT_WorldQuestFrame.dataProvider:ListContainsEmissary()) then
@@ -2062,20 +2072,9 @@ function WQT_CoreMixin:OnLoad()
 	
 	
 	-- Show hightlight in list when hovering over official map pinDataProvider
-	hooksecurefunc("TaskPOI_OnEnter", function(self)
-			if (WQT.settings.pin.disablePoI) then return; end
-			
-			if (self.questID ~= WQT_QuestScrollFrame.PoIHoverId) then
-				WQT_QuestScrollFrame.PoIHoverId = self.questID;
-				WQT_QuestScrollFrame:UpdateQuestList(true);
-			end
-			self.notTracked = not QuestUtils_IsQuestWatched(self.questID);
-			
-			-- Improve official tooltips overlap
-			local level = GameTooltip:GetFrameLevel();
-			ShoppingTooltip1:SetFrameLevel(level + 1);
-			ShoppingTooltip2:SetFrameLevel(level + 1);
-		end)
+	--hooksecurefunc("TaskPOI_OnEnter", function(self)
+	--		
+	--	end)
 
 	hooksecurefunc("TaskPOI_OnLeave", function(self)
 			if (WQT.settings.pin.disablePoI) then return; end
@@ -2140,8 +2139,22 @@ function WQT_CoreMixin:OnLoad()
 			end
 		end)
 		
-	-- Add quest info to daily quests
+	
 	hooksecurefunc("TaskPOI_OnEnter", function(poi) 
+			if (WQT.settings.pin.disablePoI) then return; end
+			
+			if (poi.questID ~= WQT_QuestScrollFrame.PoIHoverId) then
+				WQT_QuestScrollFrame.PoIHoverId = poi.questID;
+				WQT_QuestScrollFrame:UpdateQuestList(true);
+			end
+			poi.notTracked = not QuestUtils_IsQuestWatched(poi.questID);
+			
+			-- Improve official tooltips overlap
+			local level = GameTooltip:GetFrameLevel();
+			ShoppingTooltip1:SetFrameLevel(level + 1);
+			ShoppingTooltip2:SetFrameLevel(level + 1);
+
+			-- Add quest info to daily quests
 			local questInfo = self.dataProvider:GetQuestById(poi.questID);
 			if(questInfo and (questInfo.isDaily)) then
 				WorldMap_AddQuestTimeToTooltip(poi.questID);
@@ -2158,7 +2171,7 @@ function WQT_CoreMixin:OnLoad()
 					end
 				end
 			
-				GameTooltip_AddQuestRewardsToTooltip(GameTooltip, poi.questID);
+				WQT_Utils:AddQuestRewardsToTooltip(GameTooltip, poi.questID);
 				GameTooltip:Show();
 			end
 		end);

@@ -83,6 +83,12 @@ function WQT_CallingsBoardMixin:OnEvent(event, ...)
 	end
 end
 
+function WQT_CallingsBoardMixin:OnShow()
+	-- Guarantee this thing gets updated whenever it's presented
+	self:Update();
+	C_CovenantCallings.RequestCallings();
+end
+
 function WQT_CallingsBoardMixin:Update()
 	self:UpdateCovenant();
 	for k, display in ipairs(self.Displays) do
@@ -91,6 +97,7 @@ function WQT_CallingsBoardMixin:Update()
 end
 
 function WQT_CallingsBoardMixin:OnMapChanged(mapID)
+	self:UpdateCovenant();
 	local anchorPoint = MAP_ANCHORS[mapID];
 
 	if (not anchorPoint or self.covenantID == 0) then
@@ -120,6 +127,9 @@ function WQT_CallingsBoardMixin:UpdateCovenant()
 	local data = C_Covenants.GetCovenantData(covenantID);
 	self.covenantData = data;
 	if (data) then
+		for k, display in ipairs(self.Displays) do
+			display:SetCovenant(data);
+		end
 		local bgAtlas = string.format("covenantsanctum-level-border-%s", data.textureKit:lower());
 		self.BG:SetAtlas(bgAtlas);
 	end
@@ -139,14 +149,18 @@ function WQT_CallingsBoardMixin:ProcessCallings(callings)
 		display:Setup(calling, self.covenantData);
 	end
 	
-	table.sort(self.Displays, CompareCallings);
-	
+	local numInactive = 0
 	for i=1, numDisplays do
 		local display = self.Displays[i];
 		local width = display:GetWidth();
 		local x = -((numDisplays-1) * width)/2;
 		x = x + width * (i-1);
-		display.calling.index = Constants.Callings.MaxCallings + 1 - i;
+		
+		if (not display.calling.questID) then
+			
+			display.calling.index = Constants.Callings.MaxCallings - numInactive;
+			numInactive = numInactive + 1;
+		end
 		
 		display:SetPoint("CENTER", self, x, 0);
 	end
@@ -167,7 +181,12 @@ end
 WQT_CallingsBoardDisplayMixin = {};
 
 function WQT_CallingsBoardDisplayMixin:OnLoad()
-	
+	self.calling = CovenantCalling_Create();
+	self.timeRemaining = 0;
+end
+
+function WQT_CallingsBoardDisplayMixin:SetCovenant(covenantData)
+	self.covenantData = covenantData;
 end
 
 function WQT_CallingsBoardDisplayMixin:Setup(calling, covenantData)
@@ -189,6 +208,15 @@ function WQT_CallingsBoardDisplayMixin:Setup(calling, covenantData)
 end
 
 function WQT_CallingsBoardDisplayMixin:Update()
+	if (not self.covenantData) then return; end
+	
+	-- If we have no calling data yet, just make it look like an empty one for now
+	if (not self.calling) then
+		local tempIcon = ("Interface/Pictures/Callings-%s-Head-Disable"):format(self.covenantData.textureKit);
+		self.Icon:SetTexture(tempIcon);
+		return;
+	end
+
 	local icon;
 	if (self.calling.isLockedToday) then 
 		icon = ("Interface/Pictures/Callings-%s-Head-Disable"):format(self.covenantData.textureKit);

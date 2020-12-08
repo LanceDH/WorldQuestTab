@@ -1043,9 +1043,9 @@
 	<Frame name="WQT_PoISelectIndicator" inherits="WQT_PoISelectTemplate" />
 	
 	<!-- This exists for tooltip scanning -->
-	<GameTooltip name="WQT_CompareTooltip1" clampedToScreen="true"  frameStrata="TOOLTIP" hidden="true" parent="UIParent" inherits="ShoppingTooltipTemplate"/>
-	<GameTooltip name="WQT_CompareTooltip2" clampedToScreen="true" frameStrata="TOOLTIP" hidden="true" parent="UIParent" inherits="ShoppingTooltipTemplate"/>
-	<GameTooltip name="WQT_Tooltip" frameStrata="TOOLTIP" hidden="true" parent="UIParent" inherits="GameTooltipTemplate">
+	<GameTooltip name="WQT_CompareScrapeTooltip1" clampedToScreen="true"  frameStrata="TOOLTIP" hidden="true" parent="UIParent" inherits="ShoppingTooltipTemplate"/>
+	<GameTooltip name="WQT_CompareScrapeTooltip2" clampedToScreen="true" frameStrata="TOOLTIP" hidden="true" parent="UIParent" inherits="ShoppingTooltipTemplate"/>
+	<GameTooltip name="WQT_ScrapeTooltip" frameStrata="TOOLTIP" hidden="true" parent="UIParent" inherits="GameTooltipTemplate">
 		<Frames>
 			<Frame parentKey="ItemTooltip" inherits="InternalEmbeddedItemTooltipTemplate" hidden="true">
 				<Size x="100" y="100"/>
@@ -1061,6 +1061,7 @@
 					</OnLoad>
 				</Scripts>
 			</Frame>
+			<Frame name="WQT_TooltipMoneyFrame1" inherits="TooltipMoneyFrameTemplate"/>
 		</Frames>
 		<Scripts>
 			<OnLoad>
@@ -1070,6 +1071,7 @@
 			<OnUpdate function="GameTooltip_OnUpdate"/>
 		</Scripts>
 	</GameTooltip>
+	
 	<Frame name="WQT_MapZoneHightlight" hidden="true">
 		<Size x="128" y="128"/>
 		<Anchors>
@@ -1089,9 +1091,6 @@
  
 	<Frame name="WQT_GroupSearch" hidden="true" inherits="BackdropTemplate" enableMouse="true">
 		<Size y="28" />
-		
-		
-		
 		<Frames>
 			<Button name="$parentCloseButton" parentKey="CloseButton">
 				<Size x="12" y="12" />

@@ -81,10 +81,10 @@ end
 local function ScanTooltipRewardForPattern(questID, pattern)
 	local result;
 	
-	QuestUtils_AddQuestRewardsToTooltip(WQT_Tooltip, questID, TOOLTIP_QUEST_REWARDS_STYLE_DEFAULT);
+	WQT_Utils:AddQuestRewardsToTooltip(WQT_ScrapeTooltip, questID, TOOLTIP_QUEST_REWARDS_STYLE_DEFAULT);
 
 	for i=2, 6 do
-		local line = _G["WQT_TooltipTooltipTextLeft"..i];
+		local line = _G["WQT_ScrapeTooltipTooltipTextLeft"..i];
 		if (not line) then break; end
 		local lineText = line:GetText() or "";
 		result = lineText:match(pattern);
@@ -92,7 +92,7 @@ local function ScanTooltipRewardForPattern(questID, pattern)
 	end
 	
 	-- Force hide compare tooltips as they'd show up for people with alwaysCompareItems set to 1
-	for _, tooltip in ipairs(WQT_Tooltip.shoppingTooltips) do
+	for _, tooltip in ipairs(WQT_ScrapeTooltip.shoppingTooltips) do
 		tooltip:Hide();
 	end
 

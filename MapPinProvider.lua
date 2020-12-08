@@ -786,26 +786,26 @@ function WQT_PinMixin:OnLeave()
 end
 
 function WQT_PinMixin:OnClick(button)
-	-- if (button == "LeftButton") then
-		-- if ( not ChatEdit_TryInsertQuestLinkForQuestID(self.questId) ) then
-			-- PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+	if (button == "LeftButton") then
+		if ( not ChatEdit_TryInsertQuestLinkForQuestID(self.questId) ) then
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
                 
-			-- local isWatchedManual = WQT_Utils:QuestIsWatchedManual(self.questId)
-			-- if (IsShiftKeyDown()) then
-				-- if (isWatchedManual or (QuestUtils_IsQuestWatched(self.questId) and C_SuperTrack.GetSuperTrackedQuestID() == self.questId)) then
-					-- C_QuestLog.RemoveWorldQuestWatch(self.questId);
-				-- else
-					-- C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Manual);
-				-- end
-			-- else
-				-- C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Automatic);
-				-- C_SuperTrack.SetSuperTrackedQuestID(self.questId);
-				-- C_SuperTrack.SetSuperTrackedUserWaypoint(self.questId);
-			-- end
-		-- end
-	-- else
-		-- ADD:CursorDropDown(self, function(...) WQT:TrackDDFunc(...) end);
-	-- end
+			local isWatchedManual = WQT_Utils:QuestIsWatchedManual(self.questId)
+			if (IsShiftKeyDown()) then
+				if (isWatchedManual or (QuestUtils_IsQuestWatched(self.questId) and C_SuperTrack.GetSuperTrackedQuestID() == self.questId)) then
+					C_QuestLog.RemoveWorldQuestWatch(self.questId);
+				else
+					C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Manual);
+				end
+			else
+				C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Automatic);
+				C_SuperTrack.SetSuperTrackedQuestID(self.questId);
+				C_SuperTrack.SetSuperTrackedUserWaypoint(self.questId);
+			end
+		end
+	else
+		ADD:CursorDropDown(self, function(...) WQT:TrackDDFunc(...) end);
+	end
 end
 
 function WQT_PinMixin:ApplyScaledPosition(manualScale)

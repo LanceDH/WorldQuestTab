@@ -461,6 +461,140 @@ function WQT_Utils:ItterateAllBonusObjectivePins(func)
 	end
 end
 
+-- Copy of QuestUtils_AddQuestRewardsToTooltip to prevent SetTooltipMoney from causing taint 
+local function AddQuestRewardsToTooltip(tooltip, questID, style)
+	local hasAnySingleLineRewards = false;
+	local isWarModeDesired = C_PvP.IsWarModeDesired();
+	local questHasWarModeBonus = C_QuestLog.QuestCanHaveWarModeBonus(questID);
+
+	-- xp
+	local totalXp, baseXp = GetQuestLogRewardXP(questID);
+	if ( baseXp > 0 ) then
+		GameTooltip_AddColoredLine(tooltip, BONUS_OBJECTIVE_EXPERIENCE_FORMAT:format(baseXp), HIGHLIGHT_FONT_COLOR);
+		if (isWarModeDesired and questHasWarModeBonus) then
+			tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_XP_FORMAT:format(C_PvP.GetWarModeRewardBonus()));
+		end
+		hasAnySingleLineRewards = true;
+	end
+	local artifactXP = GetQuestLogRewardArtifactXP(questID);
+	if ( artifactXP > 0 ) then
+		GameTooltip_AddColoredLine(tooltip, BONUS_OBJECTIVE_ARTIFACT_XP_FORMAT:format(artifactXP), HIGHLIGHT_FONT_COLOR);
+		hasAnySingleLineRewards = true;
+	end
+
+	-- currency
+	if not style.atLeastShowAzerite then
+		local numAddedQuestCurrencies, usingCurrencyContainer = QuestUtils_AddQuestCurrencyRewardsToTooltip(questID, tooltip, tooltip.ItemTooltip);
+		if ( numAddedQuestCurrencies > 0 ) then
+			hasAnySingleLineRewards = not usingCurrencyContainer or numAddedQuestCurrencies > 1;
+		end
+	end
+
+	-- honor
+	local honorAmount = GetQuestLogRewardHonor(questID);
+	if ( honorAmount > 0 ) then
+		GameTooltip_AddColoredLine(tooltip, BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT:format("Interface\\ICONS\\Achievement_LegionPVPTier4", honorAmount, HONOR), HIGHLIGHT_FONT_COLOR);
+		hasAnySingleLineRewards = true;
+	end
+
+	-- money
+	local money = GetQuestLogRewardMoney(questID);
+	if ( money > 0 ) then
+		GameTooltip_AddColoredLine(tooltip, GetMoneyString(money), HIGHLIGHT_FONT_COLOR);
+		if (isWarModeDesired and QuestUtils_IsQuestWorldQuest(questID) and questHasWarModeBonus) then
+			tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_FORMAT:format(C_PvP.GetWarModeRewardBonus()));
+		end
+		hasAnySingleLineRewards = true;
+	end
+
+	-- items
+	local showRetrievingData = false;
+	local numQuestRewards = GetNumQuestLogRewards(questID);
+	local numCurrencyRewards = GetNumQuestLogRewardCurrencies(questID);
+	if numQuestRewards > 0 and (not style.prioritizeCurrencyOverItem or numCurrencyRewards == 0) then
+		if style.fullItemDescription then
+			-- we want to do a full item description
+			local itemIndex, rewardType = QuestUtils_GetBestQualityItemRewardIndex(questID);  -- Only support one item reward currently
+			if not EmbeddedItemTooltip_SetItemByQuestReward(tooltip.ItemTooltip, itemIndex, questID, rewardType) then
+				showRetrievingData = true;
+			end
+			-- check for item compare input of flag
+			if not showRetrievingData then
+				if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
+					GameTooltip_ShowCompareItem(tooltip.ItemTooltip.Tooltip, tooltip.BackdropFrame);
+				else
+					for i, tooltip in ipairs(tooltip.ItemTooltip.Tooltip.shoppingTooltips) do
+						tooltip:Hide();
+					end
+				end
+			end
+		else
+			-- we want to do an abbreviated item description
+			local name, texture, numItems, quality, isUsable = GetQuestLogRewardInfo(1, questID);
+			if numItems > 1 then
+				text = string.format(BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT, texture, HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(numItems), name);
+			elseif texture and name then
+				text = string.format(BONUS_OBJECTIVE_REWARD_FORMAT, texture, name);
+			end
+			if text then
+				local color = ITEM_QUALITY_COLORS[quality];
+				tooltip:AddLine(text, color.r, color.g, color.b);
+			end
+		end
+	end
+
+	-- spells
+	local numQuestSpellRewards = GetNumQuestLogRewardSpells(questID);
+	if numQuestSpellRewards > 0 and not tooltip.ItemTooltip:IsShown() then
+		if not EmbeddedItemTooltip_SetSpellByQuestReward(tooltip.ItemTooltip, 1, questID) then
+			showRetrievingData = true;
+		end
+	end
+
+	-- atLeastShowAzerite: show azerite if nothing else is awarded
+	-- and in the case of double azerite, only show the currency container one
+	if style.atLeastShowAzerite and not hasAnySingleLineRewards and not tooltip.ItemTooltip:IsShown() then
+		local numAddedQuestCurrencies, usingCurrencyContainer = QuestUtils_AddQuestCurrencyRewardsToTooltip(questID, tooltip, tooltip.ItemTooltip);
+		if ( numAddedQuestCurrencies > 0 ) then
+			hasAnySingleLineRewards = not usingCurrencyContainer or numAddedQuestCurrencies > 1;
+			if usingCurrencyContainer and numAddedQuestCurrencies > 1 then
+				EmbeddedItemTooltip_Clear(tooltip.ItemTooltip);
+				tooltip.ItemTooltip:Hide();
+				tooltip:Show();
+			end
+		end
+	end
+	return hasAnySingleLineRewards, showRetrievingData;
+end
+
+-- Copy of GameTooltip_AddQuestRewardsToTooltip to prevent SetTooltipMoney from causing taint 
+function WQT_Utils:AddQuestRewardsToTooltip(tooltip, questID, style)
+	style = style or TOOLTIP_QUEST_REWARDS_STYLE_DEFAULT;
+
+	if ( GetQuestLogRewardXP(questID) > 0 or GetNumQuestLogRewardCurrencies(questID) > 0 or GetNumQuestLogRewards(questID) > 0 or
+		GetQuestLogRewardMoney(questID) > 0 or GetQuestLogRewardArtifactXP(questID) > 0 or GetQuestLogRewardHonor(questID) > 0 or
+		GetNumQuestLogRewardSpells(questID) > 0) then
+		if tooltip.ItemTooltip then
+			tooltip.ItemTooltip:Hide();
+		end
+
+		GameTooltip_AddBlankLinesToTooltip(tooltip, style.prefixBlankLineCount);
+		if style.headerText and style.headerColor then
+			GameTooltip_AddColoredLine(tooltip, style.headerText, style.headerColor, style.wrapHeaderText);
+		end
+		GameTooltip_AddBlankLinesToTooltip(tooltip, style.postHeaderBlankLineCount);
+
+		local hasAnySingleLineRewards, showRetrievingData = AddQuestRewardsToTooltip(tooltip, questID, style);
+
+		if hasAnySingleLineRewards and tooltip.ItemTooltip and tooltip.ItemTooltip:IsShown() then
+			GameTooltip_AddBlankLinesToTooltip(tooltip, 1);
+			if showRetrievingData then
+				GameTooltip_AddColoredLine(tooltip, RETRIEVING_DATA, RED_FONT_COLOR);
+			end
+		end
+	end
+end
+
 function WQT_Utils:ShowQuestTooltip(button, questInfo)
 	WQT:ShowDebugTooltipForQuest(questInfo, button);
 	
@@ -515,7 +649,7 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo)
 	if (questInfo.reward.type == WQT_REWARDTYPE.missing) then
 		GameTooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
 	else
-		GameTooltip_AddQuestRewardsToTooltip(GameTooltip, questInfo.questId);
+		self:AddQuestRewardsToTooltip(GameTooltip, questInfo.questId);
 		
 		-- reposition compare frame
 		if((questInfo.reward.type == WQT_REWARDTYPE.equipment or questInfo.reward.type == WQT_REWARDTYPE.weapon) and GameTooltip.ItemTooltip:IsShown()) then
@@ -699,7 +833,7 @@ function WQT_Utils:GetQuestLogInfo(list)
 end
 
 function WQT_Utils:QuestIsWatchedManual(questId)
-	return questId and C_QuestLog.GetQuestWatchType(questId) == Enum.QuestWatchType.Manual;
+	return false;-- questId and C_QuestLog.GetQuestWatchType(questId) == Enum.QuestWatchType.Manual;
 end
 
 function WQT_Utils:QuestIsWatchedAutomatic(questId)
