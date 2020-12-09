@@ -159,8 +159,8 @@ function WQT_CallingsBoardMixin:ProcessCallings(callings)
 		x = x + width * (i-1);
 		
 		if (not display.calling.questID) then
-			
-			display.calling.index = Constants.Callings.MaxCallings - numInactive;
+			-- Not risking Constants.Callings.MaxCallings 
+			display.calling.index = 3 - numInactive;
 			numInactive = numInactive + 1;
 		end
 		
