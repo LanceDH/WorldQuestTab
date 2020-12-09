@@ -969,6 +969,9 @@ function WQT:OnEnable()
 			end);
 	end
 	
+	-- Load settings
+	WQT_SettingsFrame:Init(_V["SETTING_CATEGORIES"], _V["SETTING_LIST"]);
+	
 	-- Load externals
 	self.loadableExternals = {};
 	for k, external in ipairs(addon.externals) do
@@ -983,9 +986,7 @@ function WQT:OnEnable()
 		end
 	end
 
-	-- Load settings
-	WQT_SettingsFrame:Init(_V["SETTING_CATEGORIES"], _V["SETTING_LIST"]);
-	WQT_SettingsFrame:SetCategoryExpanded("GENERAL", true);
+	
 end
 
 ------------------------------------------

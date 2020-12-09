@@ -65,7 +65,7 @@ function WQT_CallingsBoardMixin:OnLoad()
 			self:OnMapChanged(WorldMapFrame:GetMapID());
 		end)
 		
-	C_CovenantCallings.RequestCallings();
+	CovenantCalling_CheckCallings();
 end
 
 function WQT_CallingsBoardMixin:OnEvent(event, ...)
@@ -76,7 +76,7 @@ function WQT_CallingsBoardMixin:OnEvent(event, ...)
 		local questID = ...;
 		if (C_QuestLog.IsQuestCalling(questID)) then
 			self:Update();
-			C_CovenantCallings.RequestCallings();
+			CovenantCalling_CheckCallings();
 		end
 	elseif (event == "TASK_PROGRESS_UPDATE") then
 		self:Update();
@@ -86,7 +86,7 @@ end
 function WQT_CallingsBoardMixin:OnShow()
 	-- Guarantee this thing gets updated whenever it's presented
 	self:Update();
-	C_CovenantCallings.RequestCallings();
+	CovenantCalling_CheckCallings();
 end
 
 function WQT_CallingsBoardMixin:Update()
@@ -149,6 +149,8 @@ function WQT_CallingsBoardMixin:ProcessCallings(callings)
 		display:Setup(calling, self.covenantData);
 	end
 	
+	table.sort(self.Displays, CompareCallings);
+	
 	local numInactive = 0
 	for i=1, numDisplays do
 		local display = self.Displays[i];
@@ -204,7 +206,6 @@ function WQT_CallingsBoardDisplayMixin:Setup(calling, covenantData)
 	end
 	
 	self:Update();
-	self:Show();
 end
 
 function WQT_CallingsBoardDisplayMixin:Update()

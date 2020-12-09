@@ -4,7 +4,7 @@
 
 	<Script file="Settings.lua"/>
 
-	<Button name="WQT_SettingCategoryTemplate" virtual="true">
+	<Button name="WQT_SettingCategoryTemplate" mixin="WQT_SettingsCategoryMixin" virtual="true">
 		<Size y="40"/>	
 		<Layers>
 			<Layer level="BORDER">
@@ -64,7 +64,52 @@
 		</Layers>
 		<Scripts>
 			<OnClick>
-				WQT_SettingsFrame:SetCategoryExpanded(self.id, not self.isExpanded);
+				self:SetExpanded(not self.isExpanded);
+				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+			</OnClick>
+		</Scripts>
+	</Button>
+	
+	<Button name="WQT_SettingSubCategoryTemplate" mixin="WQT_SettingsCategoryMixin" virtual="true">
+		<Size y="30"/>	
+		<KeyValues>
+			<KeyValue key="staticLabelFont" value="true" type="boolean"/>
+		</KeyValues>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Background" file="Interface\ACHIEVEMENTFRAME\UI-Achievement-RecentHeader" desaturated="true" alpha="0.75">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="15" y="-5"/>
+						<Anchor point="BOTTOMRIGHT" x="-20" y="5"/>
+					</Anchors>
+					<TexCoords bottom="0.75"/>
+				</Texture>
+			</Layer>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Title" inherits="GameFontHighlight" maxLines="1" justifyH="CENTER">
+					<Anchors>
+						<Anchor point="LEFT" x="15" y="2"/>
+						<Anchor point="RIGHT" x="-15" y="2"/>
+					</Anchors>
+				</FontString>
+				<Texture parentKey="ExpandIcon" atlas="friendslist-categorybutton-arrow-right" useAtlasSize="true" desaturated="true">
+					<Anchors>
+						<Anchor point="CENTER" relativePoint="LEFT" x="40" y="-1"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="HIGHLIGHT">
+				<Texture parentKey="Highlight" atlas="groupfinder-highlightbar-blue" alphaMode="ADD" alpha="0.5"> <!--  -->
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.BGLeft" x="30" y="-7"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BGRight" x="-30" y="8"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnClick>
+				self:SetExpanded(not self.isExpanded);
 				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 			</OnClick>
 		</Scripts>

@@ -70,8 +70,10 @@ function WQT_SettingsBaseMixin:IsDisabled()
 end
 
 function WQT_SettingsBaseMixin:OnValueChanged(value, userInput, ...)
-	if (userInput and self.valueChangedFunc) then
-		self.valueChangedFunc(value, ...);
+	if (userInput) then
+		if (self.valueChangedFunc) then
+			self.valueChangedFunc(value, ...);
+		end
 		self:GetParent():GetParent():GetParent():UpdateList();
 	end
 end
@@ -491,6 +493,34 @@ function WQT_SettingsTextInputMixin:OnValueChanged(value, userInput)
 end
 
 --------------------------------
+-- WQT_SettingsCategoryMixin
+--------------------------------
+
+WQT_SettingsCategoryMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+
+function WQT_SettingsCategoryMixin:Init(data)
+	WQT_SettingsBaseMixin.Init(self, data);
+	self.id = data.id;
+	self.isExpanded = data.expanded;
+	self.settings = {};
+	self.subCategories = {};
+end
+
+function WQT_SettingsCategoryMixin:UpdateState()
+	WQT_SettingsBaseMixin.UpdateState(self);
+	if (self.isExpanded) then
+		self.ExpandIcon:SetAtlas("friendslist-categorybutton-arrow-down", true);
+	else
+		self.ExpandIcon:SetAtlas("friendslist-categorybutton-arrow-right", true);
+	end
+end
+
+function WQT_SettingsCategoryMixin:SetExpanded(value)
+	self.isExpanded = value;
+	self:GetParent():GetParent():GetParent():Refresh();
+end
+
+--------------------------------
 -- WQT_SettingsFrameMixin
 --------------------------------
 
@@ -499,6 +529,7 @@ WQT_SettingsFrameMixin = {};
 function WQT_SettingsFrameMixin:OnLoad()
 	-- Because we can't destroy frames, keep a pool of each type to re-use
 	self.categoryPool = CreateFramePool("BUTTON", self.ScrollFrame.ScrollChild, "WQT_SettingCategoryTemplate");
+	self.subCategoryPool = CreateFramePool("BUTTON", self.ScrollFrame.ScrollChild, "WQT_SettingSubCategoryTemplate");
 	
 	self.templatePools = {};
 	
@@ -507,22 +538,20 @@ function WQT_SettingsFrameMixin:OnLoad()
 	self.categoriesLookup = {};
 	
 	self.bufferedSettings = {};
+	self.bufferedCategories = {};
 end
 
 function WQT_SettingsFrameMixin:Init(categories, settings)
 	-- Initialize 'official' settings
 	self.isInitialized = true;
-	if (categories) then
-		for k, data in ipairs(categories) do
-			self:RegisterCategory(data);
-		end
-	end
+	self:RegisterCategories(categories);
 
 	if (settings) then
 		self:AddSettingList(settings);
 	end
 
 	-- Add buffered settings from other add-ons
+	self:RegisterCategories(self.bufferedCategories);
 	self:AddSettingList(self.bufferedSettings);
 end
 
@@ -530,20 +559,15 @@ function WQT_SettingsFrameMixin:SetCategoryExpanded(id, value)
 	local category = self.categoriesLookup[id];
 	
 	if (category) then
-		category.isExpanded = value;
-		if (category.isExpanded) then
-			category.ExpandIcon:SetAtlas("friendslist-categorybutton-arrow-down", true);
-			
-			-- Update states
-			--for k2, setting in ipairs(category.settings) do
-			--	if (setting.UpdateState) then
-			--		setting:UpdateState();
-			--	end
-			--end
-		else
-			category.ExpandIcon:SetAtlas("friendslist-categorybutton-arrow-right", true);
+		category:SetExpanded(value);
+	end
+end
+
+function WQT_SettingsFrameMixin:RegisterCategories(categories)
+	if (categories) then
+		for k, data in ipairs(categories) do
+			self:RegisterCategory(data);
 		end
-		self:Refresh();
 	end
 end
 
@@ -563,18 +587,34 @@ function WQT_SettingsFrameMixin:RegisterCategory(data)
 end
 
 function WQT_SettingsFrameMixin:CreateCategory(data)
+	if (not self.isInitialized) then
+		tinsert(self.bufferedCategories, data);
+		return;
+	end
+
 	if (type(data) ~= "table") then
 		local temp = {["id"] = data};
 		data = temp;
 	end
-
-	local category = self.categoryPool:Acquire();
-	category.Title:SetText(data.label or data.id)
-	category.id = data.id;
-	category.isExpanded = false;
-	category.settings = {};
 	
-	tinsert(self.categories, category);
+	local isSubCategory = data.parentCategory ~= nil;
+	
+	local category;
+	if (isSubCategory) then
+		local parent = self.categoriesLookup[data.parentCategory];
+		if (not parent) then return; end
+		category = self.subCategoryPool:Acquire();
+		tinsert(parent.subCategories, category);
+	else
+		category = self.categoryPool:Acquire();
+	end
+	
+	category:Init(data);
+	category.Title:SetText(data.label or data.id)
+	
+	if (not isSubCategory) then
+		tinsert(self.categories, category);
+	end
 	self.categoriesLookup[data.id] = category;
 	return category;
 end
@@ -697,8 +737,15 @@ function WQT_SettingsFrameMixin:Refresh()
 		self:PlaceSetting(current);
 	end
 	
-	for i = 1, #self.categories do
-		local category = self.categories[i];
+	self:PlaceCategories(self.categories);
+	
+	self.ScrollFrame:SetChildHeight(self.totalHeight);
+end
+
+function WQT_SettingsFrameMixin:PlaceCategories(categories)
+	
+	for i = 1, #categories do
+		local category = categories[i];
 		if (#category.settings > 0) then
 			self:PlaceSetting(category);
 			
@@ -711,7 +758,25 @@ function WQT_SettingsFrameMixin:Refresh()
 				end
 			end
 		end
+		
+		if (category.isExpanded) then
+			self:PlaceCategories(category.subCategories);
+		else
+			for k, subCategory in ipairs(category.subCategories) do
+				self:HideCategory(subCategory);
+			end
+		end
 	end
-	
-	self.ScrollFrame:SetChildHeight(self.totalHeight);
+end
+
+function WQT_SettingsFrameMixin:HideCategory(category)
+	for k, setting in ipairs(category.settings) do
+		setting:ClearAllPoints();
+		setting:Hide();
+	end
+	for k, subCategory in ipairs(category.subCategories) do
+		self:HideCategory(subCategory);
+	end
+	category:ClearAllPoints();
+	category:Hide();
 end
