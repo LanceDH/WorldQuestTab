@@ -1252,11 +1252,11 @@ _V["PATCH_NOTES"] = {
 			}
 			,["changes"] = {
 				"Replaced all covenant factions icons to their covenant sigil and added an icon for Ve'nari."
-				,"Moved some of the settings around so the ones relevant to older contet are out of the way."
+				,"Moved some of the settings around so the ones relevant to older content are out of the way."
 				,"Subcategories in settings can now also be expanded and collapsed."
 			}
 			,["fixes"] = {
-				"Fixed the quest log disapearing when changing maps while quest details are open."
+				"Fixed the quest log disappearing when changing maps while quest details are open."
 				,"Fixed a potential error when right clicking a world quest."
 				,"Fixed some tainting issues should prevent combat errors."
 			}
