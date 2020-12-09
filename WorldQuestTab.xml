@@ -1057,7 +1057,7 @@
 				</KeyValues>
 				<Scripts>
 					<OnLoad inherit="prepend">
-						self.Tooltip.shoppingTooltips = { WQT_CompareTooltip1, WQT_CompareTooltip2 };
+						self.Tooltip.shoppingTooltips = { WQT_CompareScrapeTooltip1, WQT_CompareScrapeTooltip2 };
 					</OnLoad>
 				</Scripts>
 			</Frame>
@@ -1066,7 +1066,7 @@
 		<Scripts>
 			<OnLoad>
 				GameTooltip_OnLoad(self);
-				self.shoppingTooltips = { WQT_CompareTooltip1, WQT_CompareTooltip2 };
+				self.shoppingTooltips = { WQT_CompareScrapeTooltip1, WQT_CompareScrapeTooltip2 };
 			</OnLoad>
 			<OnUpdate function="GameTooltip_OnUpdate"/>
 		</Scripts>

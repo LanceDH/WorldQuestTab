@@ -1246,6 +1246,12 @@ end
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
 		{["version"] = "9.0.05"
+			,["minor"] = 2
+			,["fixes"] = {
+				"Fixed an error that would happen for those that have the 'alwaysCompareItems' cvar set to 1."
+			}
+		}
+		,{["version"] = "9.0.05"
 			,["new"] = {
 				"Added a callings board to the world map similar to the ones in Legion and BfA. This is enabled by default but can be turned off in the settings."
 				,"Conduits are now their own reward type which includes filtering and reward displays in the quest list."
