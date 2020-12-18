@@ -23,7 +23,7 @@ end
 local function AddIndentedDoubleLine(tooltip, a, b, level, color)
 	local indented = string.rep("    ", level) .. a;
 	if (type(b) == "table" and b.GetRGBA) then
-		b = b.r .. "/" .. b.g .. "/" .. b.b;
+		b = floor(b.r*100)/100 .. "/" ..  floor(b.g*100)/100 .. "/" ..  floor(b.b*100)/100;
 	elseif (type(b) == "table" and b.GetXY) then
 		b = "{" ..floor(b.x*100)/100 .. " | " .. floor(b.y*100)/100 .. "}";
 	elseif (type(b) == "boolean") then
@@ -75,19 +75,6 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		AddIndentedDoubleLine(tooltip, "Through functions:", "", 0, color);
 		local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
 		AddIndentedDoubleLine(tooltip, "title", title, 1, color);
-		AddIndentedDoubleLine(tooltip, "tag", "", 1, color);
-		local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questId);
-		if (tagInfo) then
-			local tagDisplay = tagInfo.tagID and tagInfo.tagName.." ("..tagInfo.tagID..")" or tagInfo.tagName;
-			AddIndentedDoubleLine(tooltip, "name", tagDisplay, 2, color);
-			AddIndentedDoubleLine(tooltip, "worldQuestType", tagInfo.worldQuestType, 2, color);
-			AddIndentedDoubleLine(tooltip, "quality", tagInfo.quality, 2, color);
-			AddIndentedDoubleLine(tooltip, "isElite", tagInfo.isElite, 2, color);
-			AddIndentedDoubleLine(tooltip, "tradeskillLineIndex", tagInfo.tradeskillLineID, 2, color);
-			AddIndentedDoubleLine(tooltip, "isThreatQuest", C_QuestLog.IsThreatQuest(questInfo.questId), 2, color);
-		else
-			AddIndentedDoubleLine(tooltip, "no tag info", "", 2, color);
-		end
 		-- Time
 		local seconds, timeString, timeColor, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo, true, true);
 		AddIndentedDoubleLine(tooltip, "time", "", 1, color);

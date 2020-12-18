@@ -120,15 +120,17 @@ function WQT_Profiles:InitSettings()
 	end
 	
 	-- Setup profiles
-	WQT.settings = {["general"] = {}, ["list"] = {}, ["pin"] = {}, ["filters"] = {}};
+	WQT.settings = {["colors"] = {}, ["general"] = {}, ["list"] = {}, ["pin"] = {}, ["filters"] = {}};
 	if (not WQT.db.global.profiles[0]) then
 		local profile = {
 			["name"] = DEFAULT
+			,["colors"] = CopyTable(WQT.db.global.colors or {})
 			,["general"] = CopyTable(WQT.db.global.general or {})
 			,["list"] = CopyTable(WQT.db.global.list or {})
 			,["pin"] = CopyTable(WQT.db.global.pin or {})
 			,["filters"] = CopyTable(WQT.db.global.filters or {})
 		}
+		WQT.db.global.colors = nil;
 		WQT.db.global.general = nil;
 		WQT.db.global.list = nil;
 		WQT.db.global.pin = nil;
@@ -179,6 +181,7 @@ function WQT_Profiles:CreateNew()
 	-- Create new profile
 	local profile = {
 		["name"] = self:GetFirstValidProfileName()
+		,["colors"] = CopyTable(currentSettings.colors or {})
 		,["general"] = CopyTable(currentSettings.general or {})
 		,["list"] = CopyTable(currentSettings.list or {})
 		,["pin"] = CopyTable(currentSettings.pin or {})
@@ -207,6 +210,7 @@ function WQT_Profiles:LoadProfileInternal(id, profile)
 	WQT.settings = profile;
 	
 	-- Add defaults
+	AddCategoryDefaults("colors");
 	AddCategoryDefaults("general");
 	AddCategoryDefaults("list");
 	AddCategoryDefaults("pin");
@@ -228,6 +232,8 @@ function WQT_Profiles:LoadProfileInternal(id, profile)
 		CopyIfNil(externalSettings, settings);
 	end
 	
+	-- Make sure our colors are up to date
+	WQT_Utils:LoadColors();
 end
 
 
@@ -349,6 +355,8 @@ function WQT_Profiles:ClearDefaultsFromActive()
 	ClearDefaults(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
 	category = "filters";
 	ClearDefaults(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
+	category = "colors";
+	ClearDefaults(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
 	
 	--External
 	local externals = WQT.settings.external;
@@ -372,6 +380,12 @@ function WQT_Profiles:ResetActive()
 	category = "filters";
 	wipe(WQT.settings[category]);
 	WQT.settings[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
+	category = "colors";
+	wipe(WQT.settings[category]);
+	WQT.settings[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
+	
+	-- Make sure our colors are up to date
+	WQT_Utils:LoadColors();
 	
 	--External
 	local externals = WQT.settings.external;

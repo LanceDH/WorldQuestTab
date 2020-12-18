@@ -6,31 +6,31 @@ local WQT_Utils = addon.WQT_Utils;
 local WQT_Profiles = addon.WQT_Profiles;
 
 local MAP_ANCHORS = {
-	[1543] = "BOTTOMLEFT" -- The Maw
-	,[1536] = "BOTTOMLEFT" -- Maldraxxus
-	,[1698] = "BOTTOMLEFT" -- Maldraxxus
-	,[1525] = "BOTTOMLEFT" -- Revendreth
-	,[1699] = "BOTTOMLEFT" -- Revendreth Covenant
-	,[1700] = "BOTTOMLEFT" -- Revendreth Covenant
-	,[1670] = "BOTTOMRIGHT" -- Oribos
-	,[1671] = "BOTTOMRIGHT" -- Oribos
-	,[1672] = "BOTTOMRIGHT" -- Oribos
-	,[1673] = "BOTTOMRIGHT" -- Oribos
-	,[1533] = "BOTTOMLEFT" -- Bastion
-	,[1707] = "BOTTOMLEFT" -- Bastion Covenant
-	,[1708] = "BOTTOMLEFT" -- Bastion Covenant
-	,[1565] = "BOTTOMLEFT" -- Ardenweald
-	,[1701] = "BOTTOMLEFT" -- Ardenweald Covenant
-	,[1702] = "BOTTOMLEFT" -- Ardenweald Covenant
-	,[1703] = "BOTTOMLEFT" -- Ardenweald Covenant
-	,[1550] = "BOTTOMRIGHT" -- Shadowlands
+	[1543] = "BOTTOMLEFT", -- The Maw
+	[1536] = "BOTTOMLEFT", -- Maldraxxus
+	[1698] = "BOTTOMLEFT", -- Maldraxxus
+	[1525] = "BOTTOMLEFT", -- Revendreth
+	[1699] = "BOTTOMLEFT", -- Revendreth Covenant
+	[1700] = "BOTTOMLEFT", -- Revendreth Covenant
+	[1670] = "BOTTOMRIGHT", -- Oribos
+	[1671] = "BOTTOMRIGHT", -- Oribos
+	[1672] = "BOTTOMRIGHT", -- Oribos
+	[1673] = "BOTTOMRIGHT", -- Oribos
+	[1533] = "BOTTOMLEFT", -- Bastion
+	[1707] = "BOTTOMLEFT", -- Bastion Covenant
+	[1708] = "BOTTOMLEFT", -- Bastion Covenant
+	[1565] = "BOTTOMLEFT", -- Ardenweald
+	[1701] = "BOTTOMLEFT", -- Ardenweald Covenant
+	[1702] = "BOTTOMLEFT", -- Ardenweald Covenant
+	[1703] = "BOTTOMLEFT", -- Ardenweald Covenant
+	[1550] = "BOTTOMRIGHT", -- Shadowlands
 }
 
 local CovenantCallingsEvents = {
-	"COVENANT_CALLINGS_UPDATED"
-	,"QUEST_TURNED_IN"
-	,"QUEST_ACCEPTED"
-	,"TASK_PROGRESS_UPDATE"
+	"COVENANT_CALLINGS_UPDATED",
+	"QUEST_TURNED_IN",
+	"QUEST_ACCEPTED",
+	"TASK_PROGRESS_UPDATE",
 }
 
 local function CompareCallings(a, b)
@@ -58,25 +58,35 @@ function WQT_CallingsBoardMixin:OnLoad()
 	end
 
 	FrameUtil.RegisterFrameForEvents(self, CovenantCallingsEvents);
-
+	
+	self.lastUpdate = 0;
 	self:UpdateCovenant();
 	
 	hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
 			self:OnMapChanged(WorldMapFrame:GetMapID());
 		end)
 		
-	CovenantCalling_CheckCallings();
+	self:RequestUpdate();
+end
+
+function WQT_CallingsBoardMixin:RequestUpdate()
+	C_CovenantCallings.RequestCallings();
 end
 
 function WQT_CallingsBoardMixin:OnEvent(event, ...)
 	if (event == "COVENANT_CALLINGS_UPDATED") then
-		local callings = ...;
-		self:ProcessCallings(callings);
+		local now = GetTime();
+		if (now - self.lastUpdate > 0.5) then
+			local callings = ...;
+			self:ProcessCallings(callings);
+			
+			self.lastUpdate = now;
+		end
 	elseif (event == "QUEST_TURNED_IN" or event == "QUEST_ACCEPTED") then
 		local questID = ...;
 		if (C_QuestLog.IsQuestCalling(questID)) then
 			self:Update();
-			CovenantCalling_CheckCallings();
+			self:RequestUpdate();
 		end
 	elseif (event == "TASK_PROGRESS_UPDATE") then
 		self:Update();
@@ -86,7 +96,7 @@ end
 function WQT_CallingsBoardMixin:OnShow()
 	-- Guarantee this thing gets updated whenever it's presented
 	self:Update();
-	CovenantCalling_CheckCallings();
+	self:RequestUpdate();
 end
 
 function WQT_CallingsBoardMixin:Update()
@@ -94,6 +104,7 @@ function WQT_CallingsBoardMixin:Update()
 	for k, display in ipairs(self.Displays) do
 		display:Update();
 	end
+	self:PlaceDisplays();
 end
 
 function WQT_CallingsBoardMixin:OnMapChanged(mapID)
@@ -136,9 +147,19 @@ function WQT_CallingsBoardMixin:UpdateCovenant()
 end
 
 function WQT_CallingsBoardMixin:ProcessCallings(callings)
+	
+	if (self.isUpdating) then
+		-- 1 Update at a time, ty
+		return;
+	end
+	self.isUpdating = true;
+
 	self.callings = callings;
 	-- Better safe than error
-	if (not callings or not self.covenantData) then return; end
+	if (not callings or not self.covenantData) then 
+		self.isUpdating = false;
+		return; 
+	end
 	
 	local numDisplays = #self.Displays;
 	
@@ -151,14 +172,21 @@ function WQT_CallingsBoardMixin:ProcessCallings(callings)
 	
 	table.sort(self.Displays, CompareCallings);
 	
-	local numInactive = 0
+	self:PlaceDisplays();
+	
+	self.isUpdating = false;
+end
+
+function WQT_CallingsBoardMixin:PlaceDisplays()
+	local numDisplays = #self.Displays;
+	local numInactive = 0;
 	for i=1, numDisplays do
 		local display = self.Displays[i];
 		local width = display:GetWidth();
 		local x = -((numDisplays-1) * width)/2;
 		x = x + width * (i-1);
 		
-		if (not display.calling.questID) then
+		if (display.calling and not display.calling.questID) then
 			-- Not risking Constants.Callings.MaxCallings 
 			display.calling.index = 3 - numInactive;
 			numInactive = numInactive + 1;
@@ -211,6 +239,9 @@ end
 function WQT_CallingsBoardDisplayMixin:Update()
 	if (not self.covenantData) then return; end
 	
+	self.Bang:Hide();
+	self.Glow:Hide();
+	
 	-- If we have no calling data yet, just make it look like an empty one for now
 	if (not self.calling) then
 		local tempIcon = ("Interface/Pictures/Callings-%s-Head-Disable"):format(self.covenantData.textureKit);
@@ -227,10 +258,7 @@ function WQT_CallingsBoardDisplayMixin:Update()
 	
 	self.Icon:SetTexture(icon);
 	self.Highlight:SetTexture(icon);
-	
-	self.Bang:Hide();
-	self.Glow:Hide();
-	
+
 	if (self.calling.questID) then
 		local questID = self.calling.questID;
 		local onQuest = C_QuestLog.IsOnQuest(questID);
@@ -282,7 +310,10 @@ end
 
 
 function WQT_CallingsBoardDisplayMixin:OnEnter()
+	if (not self.calling) then return; end
+
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+	
 	if (self.calling.isLockedToday) then 
 		GameTooltip:SetText(self.calling:GetDaysUntilNextString(), HIGHLIGHT_FONT_COLOR:GetRGB());
 	else
@@ -335,11 +366,25 @@ end
 function WQT_CallingsBoardDisplayMixin:OnClick()
 	if (self.calling.isLockedToday) then return; end
 
-	local mapID = GetQuestUiMapID(self.calling.questID, true);
-	if ( mapID ~= 0 ) then
-		WorldMapFrame:SetMapID(mapID);
+	if (IsModifiedClick("QUESTWATCHTOGGLE")) then
+		WQT_Utils:ShiftClickQuest(self.questInfo);
 	else
-		OpenWorldMap(C_TaskQuest.GetQuestZoneID(self.calling.questID));
+		local openDetails = false;
+		
+		if (self.calling:GetState() == Enum.CallingStates.QuestActive and not WorldMapFrame:IsMaximized()) then
+			openDetails = true;
+		end
+		
+		if (openDetails) then
+			QuestMapFrame_OpenToQuestDetails(self.calling.questID);
+		else
+			local mapID = GetQuestUiMapID(self.calling.questID, true);
+			if ( mapID ~= 0 ) then
+				WorldMapFrame:SetMapID(mapID);
+			else
+				OpenWorldMap(C_TaskQuest.GetQuestZoneID(self.calling.questID));
+			end
+		end
 	end
 end
 

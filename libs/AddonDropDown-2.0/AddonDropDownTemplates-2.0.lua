@@ -1,4 +1,4 @@
-local MAJOR, MINOR = "AddonDropDownTemplates-2.0", 1
+local MAJOR, MINOR = "AddonDropDownTemplates-2.0", 2
 local ADDT, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not ADDT then return end -- No Upgrade needed.
@@ -56,7 +56,6 @@ marked with x is supported
 [x] info.funcDisabled = [function()]  --  The function that is called when you click the button
 
 ]]
-
 
 ---------------------------------
 --
@@ -177,9 +176,13 @@ function ListButtonMixin:OnEnter()
 	parent:StopAutoCloseCount();
 
 	parent:CloseChildren();
-	
+
 	if (self.info.isTitle) then
 		return;
+	elseif (self.info.tooltipFunc) then
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+		self.info.tooltipFunc(GameTooltip);
+		GameTooltip:Show();
 	elseif ( self.info.tooltipTitle ) then
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 		GameTooltip:AddLine(self.info.tooltipTitle, 1.0, 1.0, 1.0);
@@ -298,7 +301,11 @@ local function buttonCreateFunc(pool, button)
 		
 			parentdd:CloseChildren();
 			
-			if ( parentButton.info.tooltipTitle and parentButton.info.tooltipWhileDisabled) then
+			if (parentButton.info.tooltipFunc) then
+				GameTooltip:SetOwner(parentButton, "ANCHOR_RIGHT");
+				parentButton.info.tooltipFunc(GameTooltip);
+				GameTooltip:Show();
+			elseif ( parentButton.info.tooltipTitle and parentButton.info.tooltipWhileDisabled) then
 					GameTooltip:SetOwner(parentButton, "ANCHOR_RIGHT");
 					GameTooltip:AddLine(parentButton.info.tooltipTitle, 1.0, 1.0, 1.0);
 					GameTooltip:AddLine(parentButton.info.tooltipText, nil, nil, nil, true);

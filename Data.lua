@@ -91,23 +91,30 @@ local WQT_Profiles = addon.WQT_Profiles;
 ------------------------
 
 WQT_REWARDTYPE = {
-	["none"] = 			0		--0
-	,["weapon"] = 		2^0		--1
-	,["equipment"] =		2^1		--2
-	,["conduit"] = 		2^3		--4
-	,["relic"] = 		2^4		--4
-	,["anima"] = 		2^5		--8
-	,["artifact"] = 		2^6		--16
-	,["spell"] = 		2^7		--32
-	,["item"] = 			2^8		--64
-	,["gold"] = 			2^9		--128
-	,["currency"] = 		2^10		--256
-	,["honor"] = 		2^11		--512
-	,["reputation"] =	2^12	--1024
-	,["xp"] = 			2^13	--2048
-	,["missing"] = 		2^14	--4096
+	["none"] = 			0,		--0
+	["weapon"] = 		2^0,	--1
+	["equipment"] =		2^1,	--2
+	["conduit"] = 		2^3,	--4
+	["relic"] = 			2^4,	--4
+	["anima"] = 			2^5,	--8
+	["artifact"] = 		2^6,	--16
+	["spell"] = 			2^7,	--32
+	["item"] = 			2^8,	--64
+	["gold"] = 			2^9,	--128
+	["currency"] = 		2^10,	--256
+	["honor"] = 			2^11,	--512
+	["reputation"] =		2^12,	--1024
+	["xp"] = 			2^13,	--2048
+	["missing"] = 		2^14,	--4096
 	
 };
+
+_V["CONDUIT_SUBTYPE"] = {
+	["endurance"] = 1,
+	["finesse"] = 2,
+	["potency"] = 3,
+}
+
 -- Combos
 WQT_REWARDTYPE.gear = bit.bor(WQT_REWARDTYPE.weapon, WQT_REWARDTYPE.equipment);
 
@@ -131,196 +138,194 @@ local function _DeepWipeTable(t)
 end
 
 local WQT_SHADOWLANDS = {
-	[1543] =  {["x"] = 0.23, ["y"] = 0.13} -- The Maw
-	,[1536] = {["x"] = 0.62, ["y"] = 0.21} -- Maldraxxus
-	,[1525] = {["x"] = 0.24, ["y"] = 0.54} -- Revendreth
-	,[1670] = {["x"] = 0.47, ["y"] = 0.51} -- Oribos
-	,[1533] = {["x"] = 0.71, ["y"] = 0.57} -- Bastion
-	,[1565] = {["x"] = 0.48, ["y"] = 0.80} -- Ardenweald
-	,[1701] = {["x"] = 0.48, ["y"] = 0.80}
+	[1543] =  {["x"] = 0.23, ["y"] = 0.13}, -- The Maw
+	[1536] = {["x"] = 0.62, ["y"] = 0.21}, -- Maldraxxus
+	[1525] = {["x"] = 0.24, ["y"] = 0.54}, -- Revendreth
+	[1670] = {["x"] = 0.47, ["y"] = 0.51}, -- Oribos
+	[1533] = {["x"] = 0.71, ["y"] = 0.57}, -- Bastion
+	[1565] = {["x"] = 0.48, ["y"] = 0.80}, -- Ardenweald
 }
 local WQT_ZANDALAR = {
-	[864] =  {["x"] = 0.39, ["y"] = 0.32} -- Vol'dun
-	,[863] = {["x"] = 0.57, ["y"] = 0.28} -- Nazmir
-	,[862] = {["x"] = 0.55, ["y"] = 0.61} -- Zuldazar
-	,[1165] = {["x"] = 0.55, ["y"] = 0.61} -- Dazar'alor
-	,[1355] = {["x"] = 0.86, ["y"] = 0.14} -- Nazjatar
+	[864] =  {["x"] = 0.39, ["y"] = 0.32}, -- Vol'dun
+	[863] = {["x"] = 0.57, ["y"] = 0.28}, -- Nazmir
+	[862] = {["x"] = 0.55, ["y"] = 0.61}, -- Zuldazar
+	[1165] = {["x"] = 0.55, ["y"] = 0.61}, -- Dazar'alor
+	[1355] = {["x"] = 0.86, ["y"] = 0.14}, -- Nazjatar
 }
 local WQT_KULTIRAS = {
-	[942] =  {["x"] = 0.55, ["y"] = 0.25} -- Stromsong Valley
-	,[896] = {["x"] = 0.36, ["y"] = 0.67} -- Drustvar
-	,[895] = {["x"] = 0.56, ["y"] = 0.54} -- Tiragarde Sound
-	,[1161] = {["x"] = 0.56, ["y"] = 0.54} -- Boralus
-	,[1169] = {["x"] = 0.78, ["y"] = 0.61} -- Tol Dagor
-	,[1355] = {["x"] = 0.86, ["y"] = 0.14} -- Nazjatar
-	,[1462] = {["x"] = 0.17, ["y"] = 0.28} -- Mechagon
+	[942] =  {["x"] = 0.55, ["y"] = 0.25}, -- Stromsong Valley
+	[896] = {["x"] = 0.36, ["y"] = 0.67}, -- Drustvar
+	[895] = {["x"] = 0.56, ["y"] = 0.54}, -- Tiragarde Sound
+	[1161] = {["x"] = 0.56, ["y"] = 0.54}, -- Boralus
+	[1169] = {["x"] = 0.78, ["y"] = 0.61}, -- Tol Dagor
+	[1355] = {["x"] = 0.86, ["y"] = 0.14}, -- Nazjatar
+	[1462] = {["x"] = 0.17, ["y"] = 0.28}, -- Mechagon
 }
 local WQT_LEGION = {
-	[630] =  {["x"] = 0.33, ["y"] = 0.58} -- Azsuna
-	,[680] = {["x"] = 0.46, ["y"] = 0.45} -- Suramar
-	,[634] = {["x"] = 0.60, ["y"] = 0.33} -- Stormheim
-	,[650] = {["x"] = 0.46, ["y"] = 0.23} -- Highmountain
-	,[641] = {["x"] = 0.34, ["y"] = 0.33} -- Val'sharah
-	,[790] = {["x"] = 0.46, ["y"] = 0.84} -- Eye of Azshara
-	,[646] = {["x"] = 0.54, ["y"] = 0.68} -- Broken Shore
-	,[627] = {["x"] = 0.45, ["y"] = 0.64} -- Dalaran
-	
-	,[830]	= {["x"] = 0.86, ["y"] = 0.15} -- Krokuun
-	,[885]	= {["x"] = 0.86, ["y"] = 0.15} -- Antoran Wastes
-	,[882]	= {["x"] = 0.86, ["y"] = 0.15} -- Mac'Aree
+	[630]	= {["x"] = 0.33, ["y"] = 0.58}, -- Azsuna
+	[680]	= {["x"] = 0.46, ["y"] = 0.45}, -- Suramar
+	[634]	= {["x"] = 0.60, ["y"] = 0.33}, -- Stormheim
+	[650]	= {["x"] = 0.46, ["y"] = 0.23}, -- Highmountain
+	[641]	= {["x"] = 0.34, ["y"] = 0.33}, -- Val'sharah
+	[790]	= {["x"] = 0.46, ["y"] = 0.84}, -- Eye of Azshara
+	[646]	= {["x"] = 0.54, ["y"] = 0.68}, -- Broken Shore
+	[627]	= {["x"] = 0.45, ["y"] = 0.64}, -- Dalaran
+	[830]	= {["x"] = 0.86, ["y"] = 0.15}, -- Krokuun
+	[885]	= {["x"] = 0.86, ["y"] = 0.15}, -- Antoran Wastes
+	[882]	= {["x"] = 0.86, ["y"] = 0.15}, -- Mac'Aree
 }
 local WQT_KALIMDOR = { 
-	[81] 	= {["x"] = 0.42, ["y"] = 0.82} -- Silithus
-	,[64]	= {["x"] = 0.5, ["y"] = 0.72} -- Thousand Needles
-	,[249]	= {["x"] = 0.47, ["y"] = 0.91} -- Uldum
-	,[1527]	= {["x"] = 0.47, ["y"] = 0.91} -- Uldum BfA
-	,[71]	= {["x"] = 0.55, ["y"] = 0.84} -- Tanaris
-	,[78]	= {["x"] = 0.5, ["y"] = 0.81} -- Ungoro
-	,[69]	= {["x"] = 0.43, ["y"] = 0.7} -- Feralas
-	,[70]	= {["x"] = 0.55, ["y"] = 0.67} -- Dustwallow
-	,[199]	= {["x"] = 0.51, ["y"] = 0.67} -- S Barrens
-	,[7]	= {["x"] = 0.47, ["y"] = 0.6} -- Mulgore
-	,[66]	= {["x"] = 0.41, ["y"] = 0.57} -- Desolace
-	,[65]	= {["x"] = 0.43, ["y"] = 0.46} -- Stonetalon
-	,[10]	= {["x"] = 0.52, ["y"] = 0.5} -- N Barrens
-	,[1]	= {["x"] = 0.58, ["y"] = 0.5} -- Durotar
-	,[63]	= {["x"] = 0.49, ["y"] = 0.41} -- Ashenvale
-	,[62]	= {["x"] = 0.46, ["y"] = 0.23} -- Dakshore
-	,[76]	= {["x"] = 0.59, ["y"] = 0.37} -- Azshara
-	,[198]	= {["x"] = 0.54, ["y"] = 0.32} -- Hyjal
-	,[77]	= {["x"] = 0.49, ["y"] = 0.25} -- Felwood
-	,[80]	= {["x"] = 0.53, ["y"] = 0.19} -- Moonglade
-	,[83]	= {["x"] = 0.58, ["y"] = 0.23} -- Winterspring
-	,[57]	= {["x"] = 0.42, ["y"] = 0.1} -- Teldrassil
-	,[97]	= {["x"] = 0.33, ["y"] = 0.27} -- Azuremyst
-	,[106]	= {["x"] = 0.3, ["y"] = 0.18} -- Bloodmyst
+	[81] 	= {["x"] = 0.42, ["y"] = 0.82}, -- Silithus
+	[64]	= {["x"] = 0.5, ["y"] = 0.72}, -- Thousand Needles
+	[249]	= {["x"] = 0.47, ["y"] = 0.91}, -- Uldum
+	[1527]	= {["x"] = 0.47, ["y"] = 0.91}, -- Uldum BfA
+	[71]	= {["x"] = 0.55, ["y"] = 0.84}, -- Tanaris
+	[78]	= {["x"] = 0.5, ["y"] = 0.81}, -- Ungoro
+	[69]	= {["x"] = 0.43, ["y"] = 0.7}, -- Feralas
+	[70]	= {["x"] = 0.55, ["y"] = 0.67}, -- Dustwallow
+	[199]	= {["x"] = 0.51, ["y"] = 0.67}, -- S Barrens
+	[7]		= {["x"] = 0.47, ["y"] = 0.6}, -- Mulgore
+	[66]	= {["x"] = 0.41, ["y"] = 0.57}, -- Desolace
+	[65]	= {["x"] = 0.43, ["y"] = 0.46}, -- Stonetalon
+	[10]	= {["x"] = 0.52, ["y"] = 0.5}, -- N Barrens
+	[1]		= {["x"] = 0.58, ["y"] = 0.5}, -- Durotar
+	[63]	= {["x"] = 0.49, ["y"] = 0.41}, -- Ashenvale
+	[62]	= {["x"] = 0.46, ["y"] = 0.23}, -- Dakshore
+	[76]	= {["x"] = 0.59, ["y"] = 0.37}, -- Azshara
+	[198]	= {["x"] = 0.54, ["y"] = 0.32}, -- Hyjal
+	[77]	= {["x"] = 0.49, ["y"] = 0.25}, -- Felwood
+	[80]	= {["x"] = 0.53, ["y"] = 0.19}, -- Moonglade
+	[83]	= {["x"] = 0.58, ["y"] = 0.23}, -- Winterspring
+	[57]	= {["x"] = 0.42, ["y"] = 0.1}, -- Teldrassil
+	[97]	= {["x"] = 0.33, ["y"] = 0.27}, -- Azuremyst
+	[106]	= {["x"] = 0.3, ["y"] = 0.18}, -- Bloodmyst
 }
 local WQT_EASTERN_KINGDOMS = {
-	[210]	= {["x"] = 0.47, ["y"] = 0.87} -- Cape of STV
-	,[50]	= {["x"] = 0.47, ["y"] = 0.87} -- N STV
-	,[17]	= {["x"] = 0.54, ["y"] = 0.89} -- Blasted Lands
-	,[51]	= {["x"] = 0.54, ["y"] = 0.78} -- Swamp of Sorrow
-	,[42]	= {["x"] = 0.49, ["y"] = 0.79} -- Deadwind
-	,[47]	= {["x"] = 0.45, ["y"] = 0.8} -- Duskwood
-	,[52]	= {["x"] = 0.4, ["y"] = 0.79} -- Westfall
-	,[37]	= {["x"] = 0.47, ["y"] = 0.75} -- Elwynn
-	,[49]	= {["x"] = 0.51, ["y"] = 0.75} -- Redridge
-	,[36]	= {["x"] = 0.49, ["y"] = 0.7} -- Burning Steppes
-	,[32]	= {["x"] = 0.47, ["y"] = 0.65} -- Searing Gorge
-	,[15]	= {["x"] = 0.52, ["y"] = 0.65} -- Badlands
-	,[27]	= {["x"] = 0.44, ["y"] = 0.61} -- Dun Morogh
-	,[48]	= {["x"] = 0.52, ["y"] = 0.6} -- Loch Modan
-	,[241]	= {["x"] = 0.56, ["y"] = 0.55} -- Twilight Highlands
-	,[56]	= {["x"] = 0.5, ["y"] = 0.53} -- Wetlands
-	,[14]	= {["x"] = 0.51, ["y"] = 0.46} -- Arathi Highlands
-	,[26]	= {["x"] = 0.57, ["y"] = 0.4} -- Hinterlands
-	,[25]	= {["x"] = 0.46, ["y"] = 0.4} -- Hillsbrad
-	,[217]	= {["x"] = 0.4, ["y"] = 0.48} -- Ruins of Gilneas
-	,[21]	= {["x"] = 0.41, ["y"] = 0.39} -- Silverpine
-	,[18]	= {["x"] = 0.39, ["y"] = 0.32} -- Tirisfall
-	,[22]	= {["x"] = 0.49, ["y"] = 0.31} -- W Plaugelands
-	,[23]	= {["x"] = 0.54, ["y"] = 0.32} -- E Plaguelands
-	,[95]	= {["x"] = 0.56, ["y"] = 0.23} -- Ghostlands
-	,[94]	= {["x"] = 0.54, ["y"] = 0.18} -- Eversong
-	,[122]	= {["x"] = 0.55, ["y"] = 0.05} -- Quel'Danas
+	[210]	= {["x"] = 0.47, ["y"] = 0.87}, -- Cape of STV
+	[50]	= {["x"] = 0.47, ["y"] = 0.87}, -- N STV
+	[17]	= {["x"] = 0.54, ["y"] = 0.89}, -- Blasted Lands
+	[51]	= {["x"] = 0.54, ["y"] = 0.78}, -- Swamp of Sorrow
+	[42]	= {["x"] = 0.49, ["y"] = 0.79}, -- Deadwind
+	[47]	= {["x"] = 0.45, ["y"] = 0.8}, -- Duskwood
+	[52]	= {["x"] = 0.4, ["y"] = 0.79}, -- Westfall
+	[37]	= {["x"] = 0.47, ["y"] = 0.75}, -- Elwynn
+	[49]	= {["x"] = 0.51, ["y"] = 0.75}, -- Redridge
+	[36]	= {["x"] = 0.49, ["y"] = 0.7}, -- Burning Steppes
+	[32]	= {["x"] = 0.47, ["y"] = 0.65}, -- Searing Gorge
+	[15]	= {["x"] = 0.52, ["y"] = 0.65}, -- Badlands
+	[27]	= {["x"] = 0.44, ["y"] = 0.61}, -- Dun Morogh
+	[48]	= {["x"] = 0.52, ["y"] = 0.6}, -- Loch Modan
+	[241]	= {["x"] = 0.56, ["y"] = 0.55}, -- Twilight Highlands
+	[56]	= {["x"] = 0.5, ["y"] = 0.53}, -- Wetlands
+	[14]	= {["x"] = 0.51, ["y"] = 0.46}, -- Arathi Highlands
+	[26]	= {["x"] = 0.57, ["y"] = 0.4}, -- Hinterlands
+	[25]	= {["x"] = 0.46, ["y"] = 0.4}, -- Hillsbrad
+	[217]	= {["x"] = 0.4, ["y"] = 0.48}, -- Ruins of Gilneas
+	[21]	= {["x"] = 0.41, ["y"] = 0.39}, -- Silverpine
+	[18]	= {["x"] = 0.39, ["y"] = 0.32}, -- Tirisfall
+	[22]	= {["x"] = 0.49, ["y"] = 0.31}, -- W Plaugelands
+	[23]	= {["x"] = 0.54, ["y"] = 0.32}, -- E Plaguelands
+	[95]	= {["x"] = 0.56, ["y"] = 0.23}, -- Ghostlands
+	[94]	= {["x"] = 0.54, ["y"] = 0.18}, -- Eversong
+	[122]	= {["x"] = 0.55, ["y"] = 0.05}, -- Quel'Danas
 }
 local WQT_OUTLAND = {
-	[104]	= {["x"] = 0.74, ["y"] = 0.8} -- Shadowmoon Valley
-	,[108]	= {["x"] = 0.45, ["y"] = 0.77} -- Terrokar
-	,[107]	= {["x"] = 0.3, ["y"] = 0.65} -- Nagrand
-	,[100]	= {["x"] = 0.52, ["y"] = 0.51} -- Hellfire
-	,[102]	= {["x"] = 0.33, ["y"] = 0.47} -- Zangarmarsh
-	,[105]	= {["x"] = 0.36, ["y"] = 0.23} -- Blade's Edge
-	,[109]	= {["x"] = 0.57, ["y"] = 0.2} -- Netherstorm
+	[104]	= {["x"] = 0.74, ["y"] = 0.8}, -- Shadowmoon Valley
+	[108]	= {["x"] = 0.45, ["y"] = 0.77}, -- Terrokar
+	[107]	= {["x"] = 0.3, ["y"] = 0.65}, -- Nagrand
+	[100]	= {["x"] = 0.52, ["y"] = 0.51}, -- Hellfire
+	[102]	= {["x"] = 0.33, ["y"] = 0.47}, -- Zangarmarsh
+	[105]	= {["x"] = 0.36, ["y"] = 0.23}, -- Blade's Edge
+	[109]	= {["x"] = 0.57, ["y"] = 0.2}, -- Netherstorm
 }
 local WQT_NORTHREND = {
-	[114]	= {["x"] = 0.22, ["y"] = 0.59} -- Borean Tundra
-	,[119]	= {["x"] = 0.25, ["y"] = 0.41} -- Sholazar Basin
-	,[118]	= {["x"] = 0.41, ["y"] = 0.26} -- Icecrown
-	,[127]	= {["x"] = 0.47, ["y"] = 0.55} -- Crystalsong
-	,[120]	= {["x"] = 0.61, ["y"] = 0.21} -- Stormpeaks
-	,[121]	= {["x"] = 0.77, ["y"] = 0.32} -- Zul'Drak
-	,[116]	= {["x"] = 0.71, ["y"] = 0.53} -- Grizzly Hillsbrad
-	,[113]	= {["x"] = 0.78, ["y"] = 0.74} -- Howling Fjord
+	[114]	= {["x"] = 0.22, ["y"] = 0.59}, -- Borean Tundra
+	[119]	= {["x"] = 0.25, ["y"] = 0.41}, -- Sholazar Basin
+	[118]	= {["x"] = 0.41, ["y"] = 0.26}, -- Icecrown
+	[127]	= {["x"] = 0.47, ["y"] = 0.55}, -- Crystalsong
+	[120]	= {["x"] = 0.61, ["y"] = 0.21}, -- Stormpeaks
+	[121]	= {["x"] = 0.77, ["y"] = 0.32}, -- Zul'Drak
+	[116]	= {["x"] = 0.71, ["y"] = 0.53}, -- Grizzly Hillsbrad
+	[113]	= {["x"] = 0.78, ["y"] = 0.74}, -- Howling Fjord
 }
 local WQT_PANDARIA = {
-	[554]	= {["x"] = 0.9, ["y"] = 0.68} -- Timeless Isles
-	,[371]	= {["x"] = 0.67, ["y"] = 0.52} -- Jade Forest
-	,[418]	= {["x"] = 0.53, ["y"] = 0.75} -- Karasang
-	,[376]	= {["x"] = 0.51, ["y"] = 0.65} -- Four Winds
-	,[422]	= {["x"] = 0.35, ["y"] = 0.62} -- Dread Waste
-	,[390]	= {["x"] = 0.5, ["y"] = 0.52} -- Eternal Blossom
-	,[379]	= {["x"] = 0.45, ["y"] = 0.35} -- Kun-lai Summit
-	,[507]	= {["x"] = 0.48, ["y"] = 0.05} -- Isle of Giants
-	,[388]	= {["x"] = 0.32, ["y"] = 0.45} -- Townlong Steppes
-	,[504]	= {["x"] = 0.2, ["y"] = 0.11} -- Isle of Thunder
-	,[1530]	= {["x"] = 0.51, ["y"] = 0.53} -- Vale Of Eternal Blossom BfA
+	[554]	= {["x"] = 0.9, ["y"] = 0.68}, -- Timeless Isles
+	[371]	= {["x"] = 0.67, ["y"] = 0.52}, -- Jade Forest
+	[418]	= {["x"] = 0.53, ["y"] = 0.75}, -- Karasang
+	[376]	= {["x"] = 0.51, ["y"] = 0.65}, -- Four Winds
+	[422]	= {["x"] = 0.35, ["y"] = 0.62}, -- Dread Waste
+	[390]	= {["x"] = 0.5, ["y"] = 0.52}, -- Eternal Blossom
+	[379]	= {["x"] = 0.45, ["y"] = 0.35}, -- Kun-lai Summit
+	[507]	= {["x"] = 0.48, ["y"] = 0.05}, -- Isle of Giants
+	[388]	= {["x"] = 0.32, ["y"] = 0.45}, -- Townlong Steppes
+	[504]	= {["x"] = 0.2, ["y"] = 0.11}, -- Isle of Thunder
+	[1530]	= {["x"] = 0.51, ["y"] = 0.53}, -- Vale Of Eternal Blossom BfA
 }
 local WQT_DRAENOR = {
-	[550]	= {["x"] = 0.24, ["y"] = 0.49} -- Nagrand
-	,[525]	= {["x"] = 0.34, ["y"] = 0.29} -- Frostridge
-	,[543]	= {["x"] = 0.49, ["y"] = 0.21} -- Gorgrond
-	,[535]	= {["x"] = 0.43, ["y"] = 0.56} -- Talador
-	,[542]	= {["x"] = 0.46, ["y"] = 0.73} -- Spired of Arak
-	,[539]	= {["x"] = 0.58, ["y"] = 0.67} -- Shadowmoon
-	,[534]	= {["x"] = 0.58, ["y"] = 0.47} -- Tanaan Jungle
-	,[558]	= {["x"] = 0.73, ["y"] = 0.43} -- Ashran
+	[550]	= {["x"] = 0.24, ["y"] = 0.49}, -- Nagrand
+	[525]	= {["x"] = 0.34, ["y"] = 0.29}, -- Frostridge
+	[543]	= {["x"] = 0.49, ["y"] = 0.21}, -- Gorgrond
+	[535]	= {["x"] = 0.43, ["y"] = 0.56}, -- Talador
+	[542]	= {["x"] = 0.46, ["y"] = 0.73}, -- Spired of Arak
+	[539]	= {["x"] = 0.58, ["y"] = 0.67}, -- Shadowmoon
+	[534]	= {["x"] = 0.58, ["y"] = 0.47}, -- Tanaan Jungle
+	[558]	= {["x"] = 0.73, ["y"] = 0.43}, -- Ashran
 }
 
 local ZonesByExpansion = {
 	[LE_EXPANSION_SHADOWLANDS] = {
-		1543; -- The Maw
-		1536; -- Maldraxxus
-		1525; -- Revendreth
-		1670; -- Oribos
-		1533; -- Bastion
-		1565; -- Ardenweald
+		1543, -- The Maw
+		1536, -- Maldraxxus
+		1525, -- Revendreth
+		1670, -- Oribos
+		1533, -- Bastion
+		1565, -- Ardenweald
 	}
 	,[LE_EXPANSION_BATTLE_FOR_AZEROTH] = {
-		875; -- Zandalar
-		864; -- Vol'dun
-		863; -- Nazmir
-		862; -- Zuldazar
-		1165; -- Dazar'alor
-		876; -- Kul Tiras
-		942; -- Stromsong Valley
-		896; -- Drustvar
-		895; -- Tiragarde Sound
-		1161; -- Boralus
-		1169; -- Tol Dagor
-		1355; -- Nazjatar
-		1462; -- Mechagon
+		875, -- Zandalar
+		864, -- Vol'dun
+		863, -- Nazmir
+		862, -- Zuldazar
+		1165, -- Dazar'alor
+		876, -- Kul Tiras
+		942, -- Stromsong Valley
+		896, -- Drustvar
+		895, -- Tiragarde Sound
+		1161, -- Boralus
+		1169, -- Tol Dagor
+		1355, -- Nazjatar
+		1462, -- Mechagon
 		--Classic zones with BfA WQ
-		14; -- Arathi Highlands
-		62; -- Darkshore
-		1527; -- Uldum
-		1530; -- Vale of Eternam Blossom
+		14, -- Arathi Highlands
+		62, -- Darkshore
+		1527, -- Uldum
+		1530, -- Vale of Eternam Blossom
 		
 	}
 	,[LE_EXPANSION_LEGION] = {
-		619; -- Broken Isles
-		630; -- Azsuna
-		680; -- Suramar
-		634; -- Stormheim
-		650; -- Highmountain
-		641; -- Val'sharah
-		790; -- Eye of Azshara
-		646; -- Broken Shore
-		627; -- Dalaran
-		830; -- Krokuun
-		885; -- Antoran Wastes
-		882; -- Mac'Aree
-		905; -- Argus
+		619, -- Broken Isles
+		630, -- Azsuna
+		680, -- Suramar
+		634, -- Stormheim
+		650, -- Highmountain
+		641, -- Val'sharah
+		790, -- Eye of Azshara
+		646, -- Broken Shore
+		627, -- Dalaran
+		830, -- Krokuun
+		885, -- Antoran Wastes
+		882, -- Mac'Aree
+		905, -- Argus
 	}
 	,[LE_EXPANSION_WARLORDS_OF_DRAENOR] = {
-		572; -- Draenor
-		525; -- Frostfire Ridge
-		543; -- Gorgrond
-		534; -- Tanaan Jungle
-		535; -- Talador
-		550; -- Nagrand
-		542; -- Spires of Arak
-		588; -- Ashran
+		572, -- Draenor
+		525, -- Frostfire Ridge
+		543, -- Gorgrond
+		534, -- Tanaan Jungle
+		535, -- Talador
+		550, -- Nagrand
+		542, -- Spires of Arak
+		588, -- Ashran
 	}
 }
 
@@ -362,6 +367,9 @@ _V["PATH_CUSTOM_ICONS"] = "Interface/Addons/WorldQuestTab/Images/CustomIcons";
 _V["LIST_ANCHOR_TYPE"] = {["flight"] = 1, ["world"] = 2, ["full"] = 3, ["taxi"] = 4};
 _V["CURRENT_EXPANSION"] = LE_EXPANSION_SHADOWLANDS;
 
+_V["COLOR_IDS"] = {
+}
+
 _V["WQT_COLOR_NONE"] =  CreateColor(0.45, 0.45, .45) ;
 _V["WQT_COLOR_ARMOR"] =  CreateColor(0.85, 0.6, 1) ;
 _V["WQT_COLOR_WEAPON"] =  CreateColor(1, 0.40, 1) ;
@@ -377,6 +385,7 @@ _V["WQT_ORANGE_FONT_COLOR"] = CreateColor(1, 0.5, 0);
 _V["WQT_GREEN_FONT_COLOR"] = CreateColor(0, 0.75, 0);
 _V["WQT_BLUE_FONT_COLOR"] = CreateColor(0.2, 0.60, 1);
 _V["WQT_PURPLE_FONT_COLOR"] = CreateColor(0.73, 0.33, 0.82);
+
 
 _V["WQT_BOUNDYBOARD_OVERLAYID"] = 4;
 _V["WQT_TYPE_BONUSOBJECTIVE"] = 99;
@@ -481,6 +490,8 @@ MakeIndexArg1(_V["PIN_VISIBILITY_ZONE"]);
 --   min (number): min value
 --   max (number): max value
 --   valueStep (number): step the slider makes when moved
+-- COLOR SPECIFIC
+--   defaultColor (Color): the default color for this setting
 -- DROPDOWN SPECIFIC
 --   options (table): a list for options in following format 
 --			{[id1] = {["label"] = "Displayed label"
@@ -499,12 +510,126 @@ _V["SETTING_CATEGORIES"] = {
 	,{["id"]="QUESTLIST", ["label"] = _L["QUEST_LIST"]}
 	,{["id"]="MAPPINS", ["label"] = _L["MAP_PINS"]}
 	,{["id"]="MAPPINS_MINIICONS", ["parentCategory"] = "MAPPINS", ["label"] = _L["MINI_ICONS"], ["expanded"] = true}
+	,{["id"]="COLORS", ["label"] = _L["CUSTOM_COLORS"]}
+	,{["id"]="COLORS_TIME", ["parentCategory"] = "COLORS", ["label"] = _L["TIME_COLORS"], ["expanded"] = true}
+	,{["id"]="COLORS_REWARD_RING", ["parentCategory"] = "COLORS", ["label"] = _L["REWARD_COLORS_RING"]}
+	,{["id"]="COLORS_REWARD_AMOUNT", ["parentCategory"] = "COLORS", ["label"] = _L["REWARD_COLORS_AMOUNT"]}
 	,{["id"]="WQTU", ["label"] = "Utilities"}
 	,{["id"]="TOMTOM", ["label"] = "TomTom"}
 }
 
+local function UpdateColorID(id, r, g, b) 
+	local color = WQT_Utils:UpdateColor(_V["COLOR_IDS"][id], r, g, b);
+	if (color) then
+		WQT.settings.colors[id] = color:GenerateHexColor();
+		WQT_QuestScrollFrame:DisplayQuestList();
+		WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
+	end
+end
+
+local function GetColorByID(id)
+	return WQT_Utils:GetColor(_V["COLOR_IDS"][id]);
+end
+
 _V["SETTING_LIST"] = {
-	{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "PROFILES", ["label"] = "Current Profile", ["tooltip"] = "Select your active profile", ["options"] = function() return WQT_Profiles:GetProfiles() end
+	-- Time
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_TIME", ["label"] = _L["TIME_CRITICAL"], ["tooltip"] = _L["TIME_CRITICAL_TT"], ["defaultColor"] = RED_FONT_COLOR
+			, ["valueChangedFunc"] = UpdateColorID, ["colorID"] = "timeCritical" ,["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_TIME", ["label"] = _L["TIME_SHORT"], ["tooltip"] = _L["TIME_SHORT_TT"], ["defaultColor"] = _V["WQT_ORANGE_FONT_COLOR"]
+			, ["valueChangedFunc"] = UpdateColorID, ["colorID"] = "timeShort",["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_TIME", ["label"] = _L["TIME_MEDIUM"], ["tooltip"] = _L["TIME_MEDIUM_TT"], ["defaultColor"] = _V["WQT_GREEN_FONT_COLOR"]
+			, ["valueChangedFunc"] = UpdateColorID, ["colorID"] = "timeMedium",["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_TIME", ["label"] = _L["TIME_LONG"], ["tooltip"] = _L["TIME_LONG_TT"], ["defaultColor"] = _V["WQT_BLUE_FONT_COLOR"]
+			, ["valueChangedFunc"] = UpdateColorID, ["colorID"] = "timeLong",["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_TIME", ["label"] = _L["TIME_VERYLONG"], ["tooltip"] = _L["TIME_VERYLONG_TT"], ["defaultColor"] = _V["WQT_PURPLE_FONT_COLOR"]
+			, ["valueChangedFunc"] = UpdateColorID, ["colorID"] = "timeVeryLong",["getValueFunc"] = GetColorByID
+		},
+	-- Rewards
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = NONE, ["defaultColor"] = _V["WQT_COLOR_NONE"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardNone", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = WEAPON, ["defaultColor"] = _V["WQT_COLOR_WEAPON"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardWeapon", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ARMOR, ["defaultColor"] = _V["WQT_COLOR_ARMOR"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardArmor", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = _L["REWARD_CONDUITS"], ["defaultColor"] = _V["WQT_COLOR_RELIC"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardConduit", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = RELICSLOT, ["defaultColor"] = _V["WQT_COLOR_RELIC"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardRelic", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ANIMA, ["defaultColor"] = _V["WQT_COLOR_ARTIFACT"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardAnima", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ITEM_QUALITY6_DESC, ["defaultColor"] = _V["WQT_COLOR_ARTIFACT"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardArtifact", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ITEMS, ["defaultColor"] = _V["WQT_COLOR_ITEM"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardItem", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = POWER_TYPE_EXPERIENCE, ["defaultColor"] = _V["WQT_COLOR_ITEM"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardXp", ["getValueFunc"] = GetColorByID
+		},	
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["defaultColor"] = _V["WQT_COLOR_GOLD"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardGold", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = CURRENCY, ["defaultColor"] = _V["WQT_COLOR_CURRENCY"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardCurrency", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = REPUTATION, ["defaultColor"] = _V["WQT_COLOR_CURRENCY"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardReputation", ["getValueFunc"] = GetColorByID
+		},	
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = HONOR, ["defaultColor"] = _V["WQT_COLOR_HONOR"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardHonor", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ADDON_MISSING, ["defaultColor"] = _V["WQT_COLOR_MISSING"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardMissing", ["getValueFunc"] = GetColorByID
+		},	
+	-- Rewards
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = WEAPON, ["defaultColor"] = _V["WQT_COLOR_WEAPON"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextWeapon", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ARMOR, ["defaultColor"] = _V["WQT_COLOR_ARMOR"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextArmor", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = _L["REWARD_CONDUITS"], ["defaultColor"] = WHITE_FONT_COLOR, 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextConduit", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = RELICSLOT, ["defaultColor"] = WHITE_FONT_COLOR, 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextRelic", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ANIMA, ["defaultColor"] = GREEN_FONT_COLOR, 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextAnima", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ITEM_QUALITY6_DESC, ["defaultColor"] = GREEN_FONT_COLOR, 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextArtifact", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ITEMS, ["defaultColor"] = WHITE_FONT_COLOR, 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextItem", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = POWER_TYPE_EXPERIENCE, ["defaultColor"] = WHITE_FONT_COLOR, 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextXp", ["getValueFunc"] = GetColorByID
+		},	
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["defaultColor"] = WHITE_FONT_COLOR, 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextGold", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = CURRENCY, ["defaultColor"] = WHITE_FONT_COLOR, 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextCurrency", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = REPUTATION, ["defaultColor"] = WHITE_FONT_COLOR, 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextReputation", ["getValueFunc"] = GetColorByID
+		},	
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = HONOR, ["defaultColor"] = WHITE_FONT_COLOR, 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextHonor", ["getValueFunc"] = GetColorByID
+		},
+		
+	{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "PROFILES", ["label"] = _L["CURRENT_PROFILE"], ["tooltip"] = _L["CURRENT_PROFILE_TT"], ["options"] = function() return WQT_Profiles:GetProfiles() end
 			, ["valueChangedFunc"] = function(arg1, arg2)
 				if (arg1 == WQT_Profiles:GetActiveProfileId()) then
 					-- Trying to load currently active profile
@@ -516,7 +641,7 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT_Profiles:GetIndexById(WQT.db.char.activeProfile) end
 			}
-	,{["template"] = "WQT_SettingTextInputTemplate", ["categoryID"] = "PROFILES", ["label"] = "Profile Name", ["tooltip"] = "Change profile name"
+	,{["template"] = "WQT_SettingTextInputTemplate", ["categoryID"] = "PROFILES", ["label"] = _L["PROFILE_NAME"] , ["tooltip"] = _L["PROFILE_NAME_TT"] 
 			, ["valueChangedFunc"] = function(value) 
 				WQT_Profiles:ChangeActiveProfileName(value);
 			end
@@ -893,27 +1018,33 @@ _V["WQT_TYPEFLAG_LABELS"] = {
 		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = CURRENCY, ["Artifact"] = ITEM_QUALITY6_DESC, ["Anima"] = ANIMA, ["Conduits"] = _L["REWARD_CONDUITS"]
 			, ["Relic"] = RELICSLOT, ["None"] = NONE, ["Experience"] = POWER_TYPE_EXPERIENCE, ["Honor"] = HONOR, ["Reputation"] = REPUTATION}
 	};
+	
+_V["FILTER_TYPE_OLD_CONTENT"] = {
+	[2] = {["Invasion"] = true, ["Assault"] = true, ["Threat"] = true}
+	,[3] = {["Artifact"] = true, ["Relic"] = true}
+}
 
 _V["WQT_SORT_OPTIONS"] = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD, [7] = QUALITY}
 _V["SORT_OPTION_ORDER"] = {
-	[1] = {"seconds", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "title"}
-	,[2] = {"faction", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"}
-	,[3] = {"criteria", "questType", "questRarity", "elite", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"}
-	,[4] = {"zone", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"}
-	,[5] = {"title", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds"}
-	,[6] = {"rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"}
-	,[7] = {"rewardQuality", "rewardType", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"}
+	[1] = {"seconds", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "title"},
+	[2] = {"faction", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"},
+	[3] = {"criteria", "questType", "questRarity", "elite", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"},
+	[4] = {"zone", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"},
+	[5] = {"title", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds"},
+	[6] = {"rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"},
+	[7] = {"rewardQuality", "rewardType", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"},
 }
 _V["SORT_FUNCTIONS"] = {
 	["rewardType"] = function(a, b) 
-			local aType = a:GetRewardType();
-			local bType = b:GetRewardType();
+			local aType, aSubType = a:GetRewardType();
+			local bType, bSubType = b:GetRewardType();
 			if (aType and bType and aType ~= bType) then 
 				if (aType == WQT_REWARDTYPE.none or bType == WQT_REWARDTYPE.none) then
 					return aType > bType; 
 				end
-			
-				return aType < bType; 
+				return aType < bType;
+			elseif (aType == bType and aSubType and bSubType) then
+				return aSubType < bSubType;
 			end 
 		end
 	,["rewardQuality"] = function(a, b) 
@@ -974,15 +1105,15 @@ _V["SORT_FUNCTIONS"] = {
 				return a.isDaily and not b.isDaily;
 			end			
 			
-			local tagInfoA = C_QuestLog.GetQuestTagInfo(a.questId)
-			local tagInfoB = C_QuestLog.GetQuestTagInfo(b.questId)
+			local tagInfoA = a:GetTagInfo();
+			local tagInfoB = b:GetTagInfo();
 			if (tagInfoA and tagInfoB and tagInfoA.worldQuestType and tagInfoB.worldQuestType and tagInfoA.worldQuestType ~= tagInfoB.worldQuestType) then 
 				return tagInfoA.worldQuestType > tagInfoB.worldQuestType; 
 			end 
 		end
 	,["questRarity"] = function(a, b)
-			local tagInfoA = C_QuestLog.GetQuestTagInfo(a.questId)
-			local tagInfoB = C_QuestLog.GetQuestTagInfo(b.questId)
+			local tagInfoA = a:GetTagInfo();
+			local tagInfoB = b:GetTagInfo();
 			if (tagInfoA and tagInfoB and tagInfoA.quality and tagInfoB.quality and tagInfoA.quality ~= tagInfoB.quality) then 
 				return tagInfoA.quality > tagInfoB.quality; 
 			end 
@@ -995,8 +1126,8 @@ _V["SORT_FUNCTIONS"] = {
 			end 
 		end
 	,["elite"] = function(a, b) 
-			local tagInfoA = C_QuestLog.GetQuestTagInfo(a.questId)
-			local tagInfoB = C_QuestLog.GetQuestTagInfo(b.questId)
+			local tagInfoA = a:GetTagInfo();
+			local tagInfoB = b:GetTagInfo();
 			local aIsElite = tagInfoA and tagInfoA.isElite;
 			local bIsElite = tagInfoB and tagInfoB.isElite;
 			if (aIsElite ~= bIsElite) then 
@@ -1033,7 +1164,11 @@ _V["REWARD_TYPE_ATLAS"] = {
 		,[WQT_REWARDTYPE.xp] = {["texture"] = "poi-door-arrow-up", ["scale"] = .9} -- xp
 		,[WQT_REWARDTYPE.spell] = {["texture"] = "Banker", ["scale"] = 1.1}  -- spell acts like item
 		,[WQT_REWARDTYPE.anima] = {["texture"] =  "Interface/Addons/WorldQuestTab/Images/AnimaIcon", ["scale"] = 1.15, ["l"] = 0, ["r"] = 1, ["t"] = 0, ["b"] = 1, ["color"] = CreateColor(0.8, 0.8, 0.9)} -- Anima
-		,[WQT_REWARDTYPE.conduit] = {["texture"] =  "soulbinds_tree_conduit_icon_utility", ["scale"] = 1.15} -- Anima
+		,[WQT_REWARDTYPE.conduit] = {
+			[_V["CONDUIT_SUBTYPE"].potency] = {["texture"] =  "soulbinds_tree_conduit_icon_attack", ["scale"] = 1.15};
+			[_V["CONDUIT_SUBTYPE"].endurance] = {["texture"] =  "soulbinds_tree_conduit_icon_protect", ["scale"] = 1.15};
+			[_V["CONDUIT_SUBTYPE"].finesse] = {["texture"] =  "soulbinds_tree_conduit_icon_utility", ["scale"] = 1.15};
+		}-- Anima
 	}	
 
 _V["FILTER_FUNCTIONS"] = {
@@ -1048,8 +1183,8 @@ _V["FILTER_FUNCTIONS"] = {
 			,["Elite"]		= function(questInfo, tagInfo) return tagInfo and tagInfo.isElite and tagInfo.worldQuestType ~= Enum.QuestTagType.Dungeon; end
 			,["Default"]	= function(questInfo, tagInfo) return tagInfo and not tagInfo.isElite and tagInfo.worldQuestType == Enum.QuestTagType.Normal; end 
 			,["Daily"]		= function(questInfo, tagInfo) return questInfo.isDaily; end 
-			,["Threat"]		= function(questInfo, tagInfo) return  C_QuestLog.IsThreatQuest(questInfo.questId); end 
-			,["Bonus"]		= function(questInfo, tagInfo) return  not tagInfo; end 
+			,["Threat"]		= function(questInfo, tagInfo) return C_QuestLog.IsThreatQuest(questInfo.questId); end 
+			,["Bonus"]		= function(questInfo, tagInfo) return not tagInfo; end 
 			}
 		,[3] = { -- Reward filters
 			["Armor"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.equipment + WQT_REWARDTYPE.weapon) > 0; end
@@ -1074,6 +1209,13 @@ _V["WQT_CONTINENT_GROUPS"] = {
 		,[1014]	= {875} -- Kul Tiras flightmap
 		,[1504]	= {875, 876} -- Nazjatar flightmap
 	}
+
+_V["ZONE_SUBZONES"] = {
+	[1565] = {1701, 1702, 1703}; -- Ardenweald covenant
+	[1533] = {1707, 1708}; -- Bastion Covenant
+	[1525] = {1699, 1700}; -- Revendreth Covenant
+	[1536] = {1698}; -- Maldraxxus Covenant
+}
 
 _V["WQT_ZONE_MAPCOORDS"] = {
 		[1647] 	= WQT_SHADOWLANDS -- Shadowlands flightmap
@@ -1163,7 +1305,42 @@ _V["WQT_DEFAULTS"] = {
 		versionCheck = "";
 		updateSeen = false;
 		
-
+		["colors"] = {
+			["timeCritical"] = RED_FONT_COLOR:GenerateHexColor();
+			["timeShort"] = _V["WQT_ORANGE_FONT_COLOR"]:GenerateHexColor();
+			["timeMedium"] = _V["WQT_GREEN_FONT_COLOR"]:GenerateHexColor();
+			["timeLong"] = _V["WQT_BLUE_FONT_COLOR"]:GenerateHexColor();
+			["timeVeryLong"] = _V["WQT_PURPLE_FONT_COLOR"]:GenerateHexColor();
+			
+			["rewardNone"] = _V["WQT_COLOR_NONE"]:GenerateHexColor();
+			["rewardWeapon"] = _V["WQT_COLOR_WEAPON"]:GenerateHexColor();
+			["rewardArmor"] = _V["WQT_COLOR_ARMOR"]:GenerateHexColor();
+			["rewardConduit"] = _V["WQT_COLOR_RELIC"]:GenerateHexColor();
+			["rewardRelic"] = _V["WQT_COLOR_RELIC"]:GenerateHexColor();
+			["rewardAnima"] = _V["WQT_COLOR_ARTIFACT"]:GenerateHexColor();
+			["rewardArtifact"] = _V["WQT_COLOR_ARTIFACT"]:GenerateHexColor();
+			["rewardItem"] = _V["WQT_COLOR_ITEM"]:GenerateHexColor();
+			["rewardXp"] = _V["WQT_COLOR_ITEM"]:GenerateHexColor();
+			["rewardGold"] = _V["WQT_COLOR_GOLD"]:GenerateHexColor();
+			["rewardCurrency"] = _V["WQT_COLOR_CURRENCY"]:GenerateHexColor();
+			["rewardHonor"] = _V["WQT_COLOR_HONOR"]:GenerateHexColor();
+			["rewardReputation"] = _V["WQT_COLOR_CURRENCY"]:GenerateHexColor();
+			["rewardMissing"] = _V["WQT_COLOR_MISSING"]:GenerateHexColor();
+			
+			["rewardTextWeapon"] = _V["WQT_COLOR_WEAPON"]:GenerateHexColor();
+			["rewardTextArmor"] = _V["WQT_COLOR_ARMOR"]:GenerateHexColor();
+			["rewardTextConduit"] = WHITE_FONT_COLOR:GenerateHexColor();
+			["rewardTextRelic"] = WHITE_FONT_COLOR:GenerateHexColor();
+			["rewardTextAnima"] = GREEN_FONT_COLOR:GenerateHexColor();
+			["rewardTextArtifact"] = GREEN_FONT_COLOR:GenerateHexColor();
+			["rewardTextItem"] = WHITE_FONT_COLOR:GenerateHexColor();
+			["rewardTextXp"] = WHITE_FONT_COLOR:GenerateHexColor();
+			["rewardTextGold"] = WHITE_FONT_COLOR:GenerateHexColor();
+			["rewardTextCurrency"] = WHITE_FONT_COLOR:GenerateHexColor();
+			["rewardTextHonor"] = WHITE_FONT_COLOR:GenerateHexColor();
+			["rewardTextReputation"] = WHITE_FONT_COLOR:GenerateHexColor();
+		};
+		
 		["general"] = {
 			sortBy = 1;
 			fullScreenButtonPos = {["anchor"] = "TOPRIGHT", ["x"] = -74, ["y"] = -2};
@@ -1179,9 +1356,12 @@ _V["WQT_DEFAULTS"] = {
 			bountyCounter = true;
 			bountyReward = false;
 			bountySelectedOnly = true;
+			showDisliked = true;
 			
 			sl_callingsBoard = true;
 			sl_genericAnimaIcons = false;
+			
+			dislikedQuests = {};
 			
 			loadUtilities = true;
 			
@@ -1245,79 +1425,101 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
-		{["version"] = "9.0.05"
-			,["minor"] = 2
-			,["fixes"] = {
-				"Fixed an error that would happen for those that have the 'alwaysCompareItems' cvar set to 1."
-			}
-		}
-		,{["version"] = "9.0.05"
-			,["new"] = {
-				"Added a callings board to the world map similar to the ones in Legion and BfA. This is enabled by default but can be turned off in the settings."
-				,"Conduits are now their own reward type which includes filtering and reward displays in the quest list."
-			}
-			,["changes"] = {
-				"Replaced all covenant factions icons to their covenant sigil and added an icon for Ve'nari."
-				,"Moved some of the settings around so the ones relevant to older content are out of the way."
-				,"Subcategories in settings can now also be expanded and collapsed."
-			}
-			,["fixes"] = {
-				"Fixed the quest log disappearing when changing maps while quest details are open."
-				,"Fixed a potential error when right clicking a world quest."
-				,"Fixed some tainting issues should prevent combat errors."
-			}
-		}
-		,{["version"] = "9.0.04"
-			,["minor"] = "(beta)"
-			,["new"] = {
-				"Anima is now it's own reward type and should show the total anima rather than number of tokens."
-			}
-			,["fixes"] = {
-				"Fixed Shadowlands world quests not showing up at flight masters."
-				,"Fixed an error related to covenant callings."
-				,"Fixed an issue where disabled filters wouldn't show tooltips."
-			}
-		}
-		,{["version"] = "9.0.03"
-			,["fixes"] = {
-				"Fixed default icon for factions which don't have a designated icon yet."
-				,"Fixed a quest detail issue with ElvUI."
-				,"Fixed one of the Shadowlands factions having switched IDs."
-			}
-		}
-		,{["version"] = "9.0.02"
-			,["new"] = {
-				"New map pin option: Zone Map Pins (default All). Which quests should be allowed to show map pins on zone maps. (None, Tracked, or All)"
-				,"New map pin option: Continent Map Pins (default None). Which quests should be allowed to show map pins on continent maps. (None, Tracked, or All)"
-			}
-			,["changes"] = {
-				"The 'Pins On Continent' setting has been replaced by the new 'Continent Map Pins'. Its value has been transfered over."
-				,"Moved the settings and 'What's new' options from the filters to a separate button."
-			}
-			,["fixes"] = {
-				"Fixed Ally Quests in Nazjatar not showing the daily quest icon on their map pins."
-				,"Fixed the missing backdrop in the debug dump window."
-				,"'Fixed' the quest log counter."
-				,"Fixed an error that could occur when trying to right-click certain quests."
-				,"Fixed flickering of the quest list background when it's being reloaded"
-				,"Fixed being able to add daily quests to the quest watch list, as the official API doesn't support them."
-			}
-		}
-		,{["version"] = "9.0.01"
-			,["intro"] = {"Update for the new 9.0 UI."}
-			,["new"] = {
-				"New type filter: Bonus. Filters out what the game considers bonus quests."
-				,"New general option: Emissary Reward Icon (default off). Adds an icon to the emissary tabs indicating the type of reward it offers."
-				,"New general option: Selected Emissary Only (default on). Only mark quests for the currently selected emissary. Turning this off will instead mark quests for any of the active emissaries."
-				,"Right clicking a quest now includes an option to place the new official map pin at the quest's location."
-			}
-			,["changes"] = {
-				"Moved the TomTom waypoint option to the bottom of the right click menu."
-			}
-			,["fixes"] = {
-				"Fixed map pin visuals for quests with no rewards."
-			}
-		}
+		{["version"] = "9.0.06",
+			["new"] ={
+				"Added the option to mark quests as 'uninterested'. You (un)mark a quest as uninterested either by shift-right clicking or through the right click menu. Uninterested quests will be placed at the bottom of the list and become less visible.",
+				"Added a 'Uninterested' filter. Take a guess what it does.",
+				"Added custom color settings allowing you to change most of the add-on specific colors to your liking.",
+			},
+			["changes"] = {
+				"Mini icons for conduits will now match their type (Finesse, Potency, or Endurance).",
+				"The quest list should no longer jump back to the top when it gets updated. Finally... that's been bugging me for ages.",
+				"Moved filters related to older content to their own sub menus.",
+				"You can now control right click a quest to place the waypoint at its location.",
+				"Added tooltips to the right-click menu to inform about shortcuts.",
+			},
+			["fixes"] = {
+				"Improved memory usage in different parts of the add-on.",
+				"Fixed an issue that could cause duplicate callings to show up on the calling board or not callings to show up at all.",
+				"Fixed an issue with shift-clicking to track quests.",
+				"Fixed quests in covenant areas not being included on some maps.",
+				"Fixed the entire quest frame disappearing when untracking a quest while quest details are shown.",
+				"Focusing on a calling will no longer hide relevant world quests. (Doesn't apply when the map is in full screen mode)",
+			},
+		},
+		{["version"] = "9.0.05",
+			["minor"] = 2,
+			["fixes"] = {
+				"Fixed an error that would happen for those that have the 'alwaysCompareItems' cvar set to 1.",
+			},
+		},
+		{["version"] = "9.0.05",
+			["new"] = {
+				"Added a callings board to the world map similar to the ones in Legion and BfA. This is enabled by default but can be turned off in the settings.",
+				"Conduits are now their own reward type which includes filtering and reward displays in the quest list.",
+			},
+			["changes"] = {
+				"Replaced all covenant factions icons to their covenant sigil and added an icon for Ve'nari.",
+				"Moved some of the settings around so the ones relevant to older content are out of the way.",
+				"Subcategories in settings can now also be expanded and collapsed.",
+			},
+			["fixes"] = {
+				"Fixed the quest log disappearing when changing maps while quest details are open.",
+				"Fixed a potential error when right clicking a world quest.",
+				"Fixed some tainting issues should prevent combat errors.",
+			},
+		},
+		{["version"] = "9.0.04",
+			["minor"] = "(beta)",
+			["new"] = {
+				"Anima is now it's own reward type and should show the total anima rather than number of tokens.",
+			},
+			["fixes"] = {
+				"Fixed Shadowlands world quests not showing up at flight masters.",
+				"Fixed an error related to covenant callings.",
+				"Fixed an issue where disabled filters wouldn't show tooltips.",
+			},
+		},
+		{["version"] = "9.0.03",
+			["fixes"] = {
+				"Fixed default icon for factions which don't have a designated icon yet.",
+				"Fixed a quest detail issue with ElvUI.",
+				"Fixed one of the Shadowlands factions having switched IDs.",
+			},
+		},
+		{["version"] = "9.0.02",
+			["new"] = {
+				"New map pin option: Zone Map Pins (default All). Which quests should be allowed to show map pins on zone maps. (None, Tracked, or All)",
+				"New map pin option: Continent Map Pins (default None). Which quests should be allowed to show map pins on continent maps. (None, Tracked, or All)",
+			},
+			["changes"] = {
+				"The 'Pins On Continent' setting has been replaced by the new 'Continent Map Pins'. Its value has been transfered over.",
+				"Moved the settings and 'What's new' options from the filters to a separate button.",
+			},
+			["fixes"] = {
+				"Fixed Ally Quests in Nazjatar not showing the daily quest icon on their map pins.",
+				"Fixed the missing backdrop in the debug dump window.",
+				"'Fixed' the quest log counter.",
+				"Fixed an error that could occur when trying to right-click certain quests.",
+				"Fixed flickering of the quest list background when it's being reloaded",
+				"Fixed being able to add daily quests to the quest watch list, as the official API doesn't support them.",
+			},
+		},
+		{["version"] = "9.0.01",
+			["intro"] = {"Update for the new 9.0 UI."},
+			["new"] = {
+				"New type filter: Bonus. Filters out what the game considers bonus quests.",
+				"New general option: Emissary Reward Icon (default off). Adds an icon to the emissary tabs indicating the type of reward it offers.",
+				"New general option: Selected Emissary Only (default on). Only mark quests for the currently selected emissary. Turning this off will instead mark quests for any of the active emissaries.",
+				"Right clicking a quest now includes an option to place the new official map pin at the quest's location.",
+			},
+			["changes"] = {
+				"Moved the TomTom waypoint option to the bottom of the right click menu.",
+			},
+			["fixes"] = {
+				"Fixed map pin visuals for quests with no rewards.",
+			},
+		},
 	}
 	
 _V["LATEST_UPDATE"] = "";

@@ -271,6 +271,161 @@
 		</Layers>
 	</Frame>
 	
+	<Frame name="WQT_SettingColorTemplate" mixin="WQT_SettingsColorMixin" virtual="true">
+		<Size y="30"/>
+		<HitRectInsets top="3" right="75" bottom="3" left="75"/>
+	
+		<Frames>
+			<Button parentKey="Picker" inherits="UIMenuButtonStretchTemplate">
+				<Size x="26" y="26"/>
+				<Anchors>
+					<Anchor point="LEFT" x="27" y="0"/>
+				</Anchors>
+				
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture parentKey="Color" atlas="LootBanner-IconGlow">
+							<Size x="14" y="14"/>
+							<Anchors>
+								<Anchor point="CENTER"/>
+							<!--
+								<Anchor point="TOPLEFT" x="6" y="-6"/>
+								<Anchor point="BOTTOMRIGHT" x="-6" y="6"/>
+								-->
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnEnter>
+						self:GetParent():OnEnter(self);
+					</OnEnter>
+					<OnLeave>
+						self:GetParent():OnLeave(self);
+					</OnLeave>
+					<OnClick> 
+						self:GetParent():StartPicking();
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+					</OnClick>	
+					<OnMouseDown inherit="prepend">
+						if (self:IsEnabled()) then
+							self.Color:SetPoint("CENTER", self, 1, -1);
+						end
+					</OnMouseDown>
+					<OnMouseUp inherit="prepend">
+						if (self:IsEnabled()) then
+							self.Color:SetPoint("CENTER", self, 0, 0);
+						end
+					</OnMouseUp>
+				</Scripts>		
+				<HighlightTexture atlas="bags-glow-white" alphaMode="ADD" alpha="0.5">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="3" y="-3"/>
+						<Anchor point="BOTTOMRIGHT" x="-3" y="3"/>
+					</Anchors>
+				</HighlightTexture>
+			</Button>
+			
+			<Button parentKey="ResetButton" inherits="UIMenuButtonStretchTemplate">
+				<Size x="26" y="26"/>
+				
+				<Anchors>
+					<Anchor point="LEFT" relativeKey="$parent.Picker" relativePoint="RIGHT" x="5" y="0"/>
+				</Anchors>
+				
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture parentKey="Icon" atlas="soulbinds_tree_undo" alpha="0.75">
+							<Size x="14" y="14"/>
+							<Anchors>
+								<Anchor point="CENTER"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnEnter>
+						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+						GameTooltip_SetTitle(GameTooltip, RESET_TO_DEFAULT);
+						GameTooltip:Show();
+					</OnEnter>
+					<OnLeave>
+						GameTooltip:Hide();
+					</OnLeave>
+					<OnClick> 
+						self:GetParent():ResetColor(true);
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+					</OnClick>	
+					<OnMouseDown inherit="prepend">
+						if (self:IsEnabled()) then
+							self.Icon:SetPoint("CENTER", self, 1, -1);
+						end
+					</OnMouseDown>
+					<OnMouseUp inherit="prepend">
+						if (self:IsEnabled()) then
+							self.Icon:SetPoint("CENTER", self, 0, 0);
+						end
+					</OnMouseUp>
+				</Scripts>		
+				<HighlightTexture atlas="bags-glow-white" alphaMode="ADD" alpha="0.5">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="3" y="-3"/>
+						<Anchor point="BOTTOMRIGHT" x="-3" y="3"/>
+					</Anchors>
+				</HighlightTexture>
+			</Button>
+		</Frames>
+		
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="LEFT">
+					<Anchors>
+						<Anchor point="LEFT" relativeKey="$parent.ResetButton" relativePoint="RIGHT" x="10" y="0"/>
+					</Anchors>
+				</FontString>
+				<FontString parentKey="ExampleText" inherits="GameFontWhite" maxLines="1" justifyH="LEFT" text="PREVIEW" hidden="true">
+					<Anchors>
+						<Anchor point="LEFT" relativeKey="$parent.ResetButton" relativePoint="RIGHT" x="10" y="0"/>
+					</Anchors>
+				</FontString>	
+			</Layer>
+		</Layers>
+		
+		<Frames>
+			<Button parentKey="ExampleRing" hidden="true">
+				<Size x="25" y="25" />
+				<Anchors>
+					<Anchor point="LEFT" relativeKey="$parent.ExampleText" relativePoint="RIGHT" x="10" y="0"/>
+				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK" textureSubLevel="-1">
+						<!-- This serves as a background for the timer -->
+						<Texture parentKey="RingBG" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRing" />
+					</Layer>
+					<Layer level="ARTWORK" textureSubLevel="2" >
+						<!-- Edge highlight of the timer. Custom so it can be colored -->
+						<Texture parentKey="Pointer" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingPointer"/>
+					</Layer>
+				</Layers>
+				<Frames>
+					<Cooldown parentKey="Ring" useParentLevel="true" setAllPoints="true" hideCountdownNumbers="true">
+						<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing"/>
+					</Cooldown>
+				</Frames>
+			</Button>
+		</Frames>
+		
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+			<OnEnter>
+				self:OnEnter(self.Label);
+			</OnEnter>
+			<OnLeave>
+				self:OnLeave(self.Label);
+			</OnLeave>
+		</Scripts>
+	</Frame>
+	
 	<Frame name="WQT_SettingDropDownTemplate" mixin="WQT_SettingsDropDownMixin" virtual="true">
 		<Size y="55"/>	
 		<Layers>

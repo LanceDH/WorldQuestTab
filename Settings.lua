@@ -175,7 +175,8 @@ function WQT_SettingsQuestListMixin:UpdateState()
 	end
 	questFrame.Time:SetText(timeString);
 	if (WQT.settings.list.colorTime) then
-		questFrame.Time:SetVertexColor(0, 0.75, 0);
+		local color = WQT_Utils:GetColor(_V["COLOR_IDS"].timeMedium)
+		questFrame.Time:SetVertexColor(color:GetRGB());
 	else
 		questFrame.Time:SetVertexColor(_V["WQT_WHITE_FONT_COLOR"]:GetRGB());
 	end
@@ -276,6 +277,109 @@ function WQT_SettingsSliderMixin:OnValueChanged(value, userInput)
 	if (userInput and value ~= self.current) then
 		WQT_SettingsBaseMixin.OnValueChanged(self, value, userInput);
 	end
+	self:UpdateState();
+end
+
+--------------------------------
+-- WQT_SettingsColorMixin
+--------------------------------
+
+WQT_SettingsColorMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+
+function WQT_SettingsColorMixin:OnLoad()
+	
+end
+
+function WQT_SettingsColorMixin:Init(data)
+	WQT_SettingsBaseMixin.Init(self, data);
+	self.getValueFunc = data.getValueFunc;
+	self.defaultColor = data.defaultColor;
+	self.colorID = data.colorID;
+
+	CooldownFrame_SetDisplayAsPercentage(self.ExampleRing.Ring, 0.35);
+	self.ExampleRing.Pointer:SetRotation(0.65*6.2831);
+	self.ExampleRing.Ring:Show();
+end
+
+function WQT_SettingsColorMixin:UpdateState()
+	if (self.getValueFunc) then
+		local color = self.getValueFunc(self.colorID);
+		self:SetWidgetRGB(color:GetRGB());
+
+		-- Hex is more costly but doesn't have as meany issues 0.001 differences
+		local canReset = color:GenerateHexColor() ~= self.defaultColor:GenerateHexColor();
+		self:SetResetEnabled(canReset);
+	end
+	
+	self.Label:Show();
+	self.ExampleText:Hide();
+	self.ExampleRing:Hide();
+end
+
+function WQT_SettingsColorMixin:SetResetEnabled(enable)
+	self.ResetButton:SetEnabled(enable);
+	self.ResetButton.Icon:SetDesaturated(not enable);
+	if (enable) then
+		self.ResetButton.Icon:SetVertexColor(1, 1, 1);
+	else
+		self.ResetButton.Icon:SetVertexColor(.7, .7, .7);
+	end
+end
+
+function WQT_SettingsColorMixin:ResetColor(userInput)
+	local r, g, b = self.defaultColor:GetRGB();
+	self:SetWidgetRGB(r, g, b);
+	self:OnValueChanged(self.colorID, userInput, r, g, b);
+end
+
+function WQT_SettingsColorMixin:SetWidgetRGB(r, g, b)
+	self.ExampleText:SetVertexColor(r, g, b);
+	self.ExampleRing.Ring:SetSwipeColor(r*0.8, g*0.8, b*0.8);
+	self.ExampleRing.RingBG:SetVertexColor(r*0.25, g*0.25, b*0.25);
+	self.ExampleRing.Pointer:SetVertexColor(r*1.1, g*1.1, b*1.1);
+	self.Picker.Color:SetVertexColor(r, g, b);
+end
+
+function WQT_SettingsColorMixin:UpdateFromPicker(isConfirmed)
+	local r, g, b = ColorPickerFrame:GetColorRGB();
+	self:SetWidgetRGB(r, g, b);
+	
+	if (isConfirmed) then
+		self:OnValueChanged(self.colorID, true, r, g, b);
+		self:StopPicking();
+	end
+end
+
+function WQT_SettingsColorMixin:StartPicking()
+	if (not self.getValueFunc) then return; end
+	
+	self:GetParent():GetParent():GetParent():UpdateList();
+	
+	local color = self.getValueFunc(self.colorID);
+	local r, g, b = color:GetRGB();
+	
+	local info = {
+		["swatchFunc"] = function () self:UpdateFromPicker() end,
+		["opacityFunc"] = function () self:UpdateFromPicker(true) end,
+		["cancelFunc"] = function () self:ResetColor(); self:StopPicking(); end,
+		["r"] = r,
+		["g"] = g,
+		["b"] = b,
+		["extraInfo"] = "test"
+	}
+	
+	self.Label:Hide();
+	self.ExampleText:Show();
+	self.ExampleRing:Show();
+	
+	OpenColorPicker(info);
+end
+
+function WQT_SettingsColorMixin:StopPicking()
+	self.Label:Show();
+	self.ExampleText:Hide();
+	self.ExampleRing:Hide();
+	
 	self:UpdateState();
 end
 
@@ -619,6 +723,20 @@ function WQT_SettingsFrameMixin:CreateCategory(data)
 	return category;
 end
 
+function WQT_SettingsFrameMixin:UpdateCategory(category)
+	if (category.isExpanded) then
+		for k2, setting in ipairs(category.settings) do
+			if (setting.UpdateState) then
+				setting:UpdateState();
+			end
+		end
+		
+		for k2, subCategory in ipairs(category.subCategories) do
+			self:UpdateCategory(subCategory);
+		end
+	end
+end
+
 function WQT_SettingsFrameMixin:UpdateList()
 	for k, setting in ipairs(self.categoryless) do
 		if (setting.UpdateState) then
@@ -627,13 +745,7 @@ function WQT_SettingsFrameMixin:UpdateList()
 	end
 	
 	for k, category in ipairs(self.categories) do
-		if (category.isExpanded) then
-			for k2, setting in ipairs(category.settings) do
-				if (setting.UpdateState) then
-					setting:UpdateState();
-				end
-			end
-		end
+		self:UpdateCategory(category);
 	end
 end
 
@@ -742,11 +854,25 @@ function WQT_SettingsFrameMixin:Refresh()
 	self.ScrollFrame:SetChildHeight(self.totalHeight);
 end
 
+function WQT_SettingsFrameMixin:CategoryTreeHasSettings(category)
+	if (#category.settings > 0) then
+		return true;
+	end
+	
+	for k, subCategory in ipairs(category.subCategories) do
+		if (self:CategoryTreeHasSettings(subCategory)) then
+			return true;
+		end
+	end
+	
+	return false;
+end
+
 function WQT_SettingsFrameMixin:PlaceCategories(categories)
 	
 	for i = 1, #categories do
 		local category = categories[i];
-		if (#category.settings > 0) then
+		if (self:CategoryTreeHasSettings(category)) then
 			self:PlaceSetting(category);
 			
 			for k, setting in ipairs(category.settings) do

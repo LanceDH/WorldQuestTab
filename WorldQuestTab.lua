@@ -146,11 +146,30 @@ local function FilterDDFunc(ddFrame)
 	local level = ddFrame.level;
 	local value = ddFrame.value;
 	local info = ddFrame:CreateButtonInfo();
-	
+
 	if level == 1 then
-		info = ddFrame:CreateButtonInfo("checkbox");
+		-- Faction, reward, and type filters
+		info = ddFrame:CreateButtonInfo("expand");
+		for k, v in pairs(WQT.settings.filters) do
+			info.text = v.name;
+			info.value = k;
+			ddFrame:AddButton(info);		
+		end
 		
+		-- Uninterested
+		info = ddFrame:CreateButtonInfo("checkbox");
+		info.text = _L["UNINTERESTED"];
+		info.tooltipTitle = _L["UNINTERESTED"];
+		info.tooltipText =  _L["UNINTERESTED_TT"];
+		info.func = function(_, _, _, value)
+				WQT.settings.general.showDisliked = value;
+				WQT_QuestScrollFrame:UpdateQuestList();
+			end
+		info.checked = function() return WQT.settings.general.showDisliked end;
+		ddFrame:AddButton(info);
+
 		-- Emisarry only filter
+		info = ddFrame:CreateButtonInfo("checkbox");
 		info.text = _L["TYPE_EMISSARY"];
 		info.tooltipTitle = _L["TYPE_EMISSARY"];
 		info.tooltipText =  _L["TYPE_EMISSARY_TT"];
@@ -165,16 +184,7 @@ local function FilterDDFunc(ddFrame)
 				end
 			end
 		info.checked = function() return WQT.settings.general.emissaryOnly end;
-		ddFrame:AddButton(info);		
-		
-		info = ddFrame:CreateButtonInfo("expand");
-		
-		-- Faction, reward, and type filters
-		for k, v in pairs(WQT.settings.filters) do
-			info.text = v.name;
-			info.value = k;
-			ddFrame:AddButton(info);		
-		end
+		ddFrame:AddButton(info);			
 
 	elseif level == 2 then
 		-- Filters
@@ -280,39 +290,52 @@ local function FilterDDFunc(ddFrame)
 				local options = WQT.settings.filters[value].flags;
 				local order = WQT.filterOrders[value] 
 				local haveLabels = (_V["WQT_TYPEFLAG_LABELS"][value] ~= nil);
+				local hasOldContent = false;
 				for k, flagKey in pairs(order) do
-					info.disabled = false;
-					info.tooltipTitle = nil;
-					info.text = haveLabels and _V["WQT_TYPEFLAG_LABELS"][value][flagKey] or flagKey;
-					info.func = function(_, _, _, value)
-										options[flagKey] = value;
-										WQT_QuestScrollFrame:UpdateQuestList();
+					if (not WQT_Utils:FilterIsOldContent(value, flagKey)) then
+						info.disabled = false;
+						info.tooltipTitle = nil;
+						info.text = haveLabels and _V["WQT_TYPEFLAG_LABELS"][value][flagKey] or flagKey;
+						info.func = function(_, _, _, value)
+											options[flagKey] = value;
+											WQT_QuestScrollFrame:UpdateQuestList();
+										end
+						info.checked = function() return options[flagKey] end;
+						info.funcEnter = nil;
+						info.funcLeave = nil;
+						info.funcDisabled = nil
+						
+						if WQT:FilterIsWorldMapDisabled(flagKey) then
+							info.disabled = true;
+							info.tooltipTitle = _L["MAP_FILTER_DISABLED"];
+							info.tooltipText = _L["MAP_FILTER_DISABLED_BUTTON_INFO"];
+							info.funcEnter = function() WQT_WorldQuestFrame:ShowHighlightOnMapFilters(); end;
+							info.funcLeave = function() WQT_PoISelectIndicator:Hide(); end;	
+							info.funcDisabled = function(listButton, button)  
+									if (button == "RightButton") then 
+										if (WQT_WorldQuestFrame:SetCvarValue(flagKey, true)) then
+											ddFrame:Refresh(true);
+											listButton.tooltipTitle = nil;
+											listButton.tooltipText = nil;
+											listButton.funcEnter = nil;
+											listButton.funcLeave = nil;	
+										end
 									end
-					info.checked = function() return options[flagKey] end;
-					info.funcEnter = nil;
-					info.funcLeave = nil;
-					info.funcDisabled = nil
-					
-					if WQT:FilterIsWorldMapDisabled(flagKey) then
-						info.disabled = true;
-						info.tooltipTitle = _L["MAP_FILTER_DISABLED"];
-						info.tooltipText = _L["MAP_FILTER_DISABLED_BUTTON_INFO"];
-						info.funcEnter = function() WQT_WorldQuestFrame:ShowHighlightOnMapFilters(); end;
-						info.funcLeave = function() WQT_PoISelectIndicator:Hide(); end;	
-						info.funcDisabled = function(listButton, button)  
-								if (button == "RightButton") then 
-									if (WQT_WorldQuestFrame:SetCvarValue(flagKey, true)) then
-										ddFrame:Refresh(true);
-										listButton.tooltipTitle = nil;
-										listButton.tooltipText = nil;
-										listButton.funcEnter = nil;
-										listButton.funcLeave = nil;	
-									end
-								end
-							end;	
+								end;	
+						end
+						
+						ddFrame:AddButton(info);		
+					else
+						hasOldContent = true;
 					end
-					
-					ddFrame:AddButton(info);		
+				end
+				
+				if (hasOldContent) then
+					info = ddFrame:CreateButtonInfo("expand");
+					-- BFA
+					info.text = OTHER;
+					info.value = "OldFilters" .. value;
+					ddFrame:AddButton(info);
 				end
 			end
 		end
@@ -356,6 +379,53 @@ local function FilterDDFunc(ddFrame)
 									end
 					info.checked = function() return options[flagKey] end;
 					ddFrame:AddButton(info);	
+				end
+			end
+		elseif value:find("OldFilters") then
+			local filterID = tonumber(value:match("(%d+)"));
+			info = ddFrame:CreateButtonInfo("checkbox");
+			info.tooltipWhileDisabled = true;
+			
+			local options = WQT.settings.filters[filterID].flags;
+			local order = WQT.filterOrders[filterID] 
+			local haveLabels = (_V["WQT_TYPEFLAG_LABELS"][filterID] ~= nil);
+			local hasOldContent = false;
+			for k, flagKey in pairs(order) do
+				if (WQT_Utils:FilterIsOldContent(filterID, flagKey)) then
+					info.disabled = false;
+					info.tooltipTitle = nil;
+					info.text = haveLabels and _V["WQT_TYPEFLAG_LABELS"][filterID][flagKey] or flagKey;
+					info.func = function(_, _, _, filterID)
+										options[flagKey] = filterID;
+										WQT_QuestScrollFrame:UpdateQuestList();
+									end
+					info.checked = function() return options[flagKey] end;
+					info.funcEnter = nil;
+					info.funcLeave = nil;
+					info.funcDisabled = nil
+					
+					if WQT:FilterIsWorldMapDisabled(flagKey) then
+						info.disabled = true;
+						info.tooltipTitle = _L["MAP_FILTER_DISABLED"];
+						info.tooltipText = _L["MAP_FILTER_DISABLED_BUTTON_INFO"];
+						info.funcEnter = function() WQT_WorldQuestFrame:ShowHighlightOnMapFilters(); end;
+						info.funcLeave = function() WQT_PoISelectIndicator:Hide(); end;	
+						info.funcDisabled = function(listButton, button)  
+								if (button == "RightButton") then 
+									if (WQT_WorldQuestFrame:SetCvarValue(flagKey, true)) then
+										ddFrame:Refresh(true);
+										listButton.tooltipTitle = nil;
+										listButton.tooltipText = nil;
+										listButton.funcEnter = nil;
+										listButton.funcLeave = nil;	
+									end
+								end
+							end;	
+					end
+					
+					ddFrame:AddButton(info);		
+				else
+					hasOldContent = true;
 				end
 			end
 		end
@@ -453,7 +523,6 @@ local function SortQuestList(a, b, sortID)
 		if (a.isValid == b.isValid) then 
 			return a.questId < b.questId;
 		end;
-		--print(a.questId, b.questId, a.isValid, b.isValid);
 		return a.isValid and not b.isValid;
 	end
 	
@@ -464,6 +533,13 @@ local function SortQuestList(a, b, sortID)
 		end;
 		return a.passedFilter and not b.passedFilter;
 	end
+	
+	-- Disliked quests go to the back of the list
+	local aDisliked = a:IsDisliked();
+	local bDisliked = b:IsDisliked();
+	if (aDisliked ~= bDisliked) then 
+		return not aDisliked;
+	end 
 
 	-- Sort by a list of filters depending on the current filter choice
 	local order = _V["SORT_OPTION_ORDER"][sortID];
@@ -683,29 +759,34 @@ function WQT:TrackDDFunc(ddFrame)
 	local sourceParent = ddFrame:GetSourceParent();
 
 	local questInfo = sourceParent.questInfo;
-	local questId = questInfo.questId;
-	local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questId);
+	if (not questInfo) then return; end
+	
+	local questID = questInfo.questId;
+	local mapInfo = WQT_Utils:GetMapInfoForQuest(questID);
 	local info = ddFrame:CreateButtonInfo();
-	local tagInfo = C_QuestLog.GetQuestTagInfo(questId);
+	local tagInfo = questInfo:GetTagInfo();
 	
 	-- Title
-	local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+	local title = C_TaskQuest.GetQuestInfoByQuestID(questID);
 	
 	info = ddFrame:CreateButtonInfo("title");
 	info.text = title;
 	info.overflow = true;
 	
 	ddFrame:AddButton(info);
-	
-	info = ddFrame:CreateButtonInfo("option");
 
 	-- Don't allow tracking for quests that don't support it in the ObjectiveTrackerFrame
+	
 	if (tagInfo and tagInfo.worldQuestType) then
+		info = ddFrame:CreateButtonInfo("option");
+		info.tooltipFunc = function(tooltip)
+				GameTooltip_AddInstructionLine(tooltip, _L["SHORTCUT_TRACK"]);
+			end
 		-- Tracking
-		if (QuestUtils_IsQuestWatched(questId)) then
+		if (QuestUtils_IsQuestWatched(questID)) then
 			info.text = UNTRACK_QUEST;
 			info.func = function()
-						C_QuestLog.RemoveWorldQuestWatch(questId);
+						C_QuestLog.RemoveWorldQuestWatch(questID);
 						if WQT_WorldQuestFrame:GetAlpha() > 0 then 
 							WQT_QuestScrollFrame:DisplayQuestList();
 						end
@@ -713,7 +794,7 @@ function WQT:TrackDDFunc(ddFrame)
 		else
 			info.text = TRACK_QUEST;
 			info.func = function()
-						C_QuestLog.AddWorldQuestWatch(questId, Enum.QuestWatchType.Manual);
+						C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual);
 						if WQT_WorldQuestFrame:GetAlpha() > 0 then 
 							WQT_QuestScrollFrame:DisplayQuestList();
 						end
@@ -723,15 +804,36 @@ function WQT:TrackDDFunc(ddFrame)
 	end
 	
 	-- New 9.0 waypoint system
-	info.text = "Place Map Pin";
+	info = ddFrame:CreateButtonInfo("option");
+	info.text = _L["PLACE_MAP_PIN"];
 	info.func = function()
 			questInfo:SetAsWaypoint();
 			C_SuperTrack.SetSuperTrackedUserWaypoint(true);
 		end
+	info.tooltipFunc = function(tooltip)
+				GameTooltip_AddInstructionLine(tooltip, _L["SHORTCUT_WAYPOINT"]);
+			end
+	
+	ddFrame:AddButton(info);
+	
+	-- Dislike toggle
+	info = ddFrame:CreateButtonInfo("checkbox");
+	
+	info.text = _L["UNINTERESTED"];
+	info.func = function()
+			local dislike = not WQT_Utils:QuestIsDisliked(questID);
+			WQT_Utils:SetQuestDisliked(questID, dislike);
+			ddFrame:Refresh();
+		end
+	info.checked = function() return WQT_Utils:QuestIsDisliked(questID) end;
+	info.tooltipFunc = function(tooltip)
+				GameTooltip_AddInstructionLine(tooltip, _L["SHORTCUT_DISLIKE"]);
+			end
 	
 	ddFrame:AddButton(info);
 	
 	-- LFG if possible
+	info = ddFrame:CreateButtonInfo("option");
 	if (WQT_WorldQuestFrame:ShouldAllowLFG(questInfo)) then
 		info.text = OBJECTIVES_FIND_GROUP;
 		info.func = function()
@@ -741,6 +843,7 @@ function WQT:TrackDDFunc(ddFrame)
 	end
 	
 	WQT_WorldQuestFrame:TriggerCallback("InitTrackDropDown", ddFrame)
+	
 	
 	info = ddFrame:CreateButtonInfo("cancel");
 	ddFrame:AddButton(info);
@@ -781,7 +884,8 @@ function WQT:IsUsingFilterNr(id)
 end
 
 function WQT:IsFiltering()
-	if WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId then return true; end
+	if (WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId) then return true; end
+	if (not WQT.settings.general.showDisliked) then return true; end
 	
 	for k, category in pairs(WQT.settings.filters)do
 		if (self:IsUsingFilterNr(k)) then return true; end
@@ -791,9 +895,13 @@ end
 
 function WQT:PassesAllFilters(questInfo)
 	if (WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId) then 
-		return questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly or WQT_WorldQuestFrame.autoEmisarryId); --WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]]:IsWorldQuestCriteriaForSelectedBounty(questInfo.questId);
+		return questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly or WQT_WorldQuestFrame.autoEmisarryId);
 	end
 	local filterTypes = _V["FILTER_TYPES"];
+
+	if (not WQT.settings.general.showDisliked and questInfo:IsDisliked()) then
+		return false;
+	end
 	
 	-- For precise filters, all filters have to pass
 	if (WQT.settings.general.preciseFilters)  then
@@ -859,7 +967,7 @@ end
 function WQT:PassesFlagId(flagId ,questInfo, checkPrecise)
 	local flags = WQT.settings.filters[flagId].flags
 	if not flags then return false; end
-	local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questId);
+	local tagInfo = questInfo:GetTagInfo();
 	
 	local passesPrecise = true;
 	
@@ -877,6 +985,7 @@ function WQT:PassesFlagId(flagId ,questInfo, checkPrecise)
 			end
 		end
 	end
+
 	if (checkPrecise) then
 		return passesPrecise;
 	end
@@ -972,6 +1081,8 @@ function WQT:OnEnable()
 	-- Load settings
 	WQT_SettingsFrame:Init(_V["SETTING_CATEGORIES"], _V["SETTING_LIST"]);
 	
+	WQT_Utils:LoadColors();
+	
 	-- Load externals
 	self.loadableExternals = {};
 	for k, external in ipairs(addon.externals) do
@@ -986,7 +1097,7 @@ function WQT:OnEnable()
 		end
 	end
 
-	
+	wipe(_V["SETTING_LIST"]);
 end
 
 ------------------------------------------
@@ -1004,6 +1115,7 @@ function WQT_RewardDisplayMixin:OnLoad()
 end
 
 function WQT_RewardDisplayMixin:Reset()
+	self:SetDesaturated(false);
 	for k, reward in ipairs(self.rewardFrames) do
 		reward:Hide();
 	end
@@ -1012,9 +1124,73 @@ function WQT_RewardDisplayMixin:Reset()
 	self:SetWidth(0.1);
 end
 
+function WQT_RewardDisplayMixin:SetDesaturated(desaturate)
+	self.desaturate = desaturate;
+	
+	self:UpdateVisuals();
+end
+
 function WQT_RewardDisplayMixin:AddRewardByInfo(rewardInfo, warmodeBonus)
 	-- A bit easier when updating buttons
-	self:AddReward(rewardInfo.type, rewardInfo.texture, rewardInfo.quality, rewardInfo.amount, rewardInfo.color, rewardInfo.canUpgrade, warmodeBonus);
+	self:AddReward(rewardInfo.type, rewardInfo.texture, rewardInfo.quality, rewardInfo.amount, rewardInfo.textColor, rewardInfo.canUpgrade, warmodeBonus);
+end
+
+function WQT_RewardDisplayMixin:UpdateVisuals()
+	for i= 1, self.numDisplayed do
+		local rewardFrame = self.rewardFrames[i];
+		local r, g, b = GetItemQualityColor(rewardFrame.quality);
+	
+		rewardFrame:Show();
+		rewardFrame.Icon:SetTexture(rewardFrame.texture);
+		rewardFrame.Icon:SetDesaturated(self.desaturate);
+		rewardFrame.IconBorder:SetDesaturated(self.desaturate);
+		if (self.desaturate) then
+			rewardFrame.IconBorder:SetVertexColor(1, 1, 1);
+		else
+			rewardFrame.IconBorder:SetVertexColor(r, g, b);
+		end
+
+		-- Conduits have special borders
+		rewardFrame.ConduitCorners:Hide();
+		if (rewardFrame.rewardType == WQT_REWARDTYPE.conduit) then
+			rewardFrame.IconBorder:SetAtlas("conduiticonframe");
+			rewardFrame.ConduitCorners:Show();
+		elseif (rewardFrame.rewardType == WQT_REWARDTYPE.relic) then
+			rewardFrame.IconBorder:SetTexture("Interface/Artifacts/RelicIconFrame");
+		else
+			rewardFrame.IconBorder:SetTexture("Interface/Common/WhiteIconFrame");
+		end
+		if (self.desaturate) then
+			rewardFrame.ConduitCorners:SetDesaturated(self.desaturate);
+		end
+	
+		local amount = rewardFrame.amount;
+		rewardFrame.Amount:Hide();
+		if (amount > 1) then
+			rewardFrame.Amount:Show();
+			
+			if (rewardFrame.rewardType == WQT_REWARDTYPE.gold) then
+				amount = floor(amount / 10000);
+			end
+			
+			local amountDisplay = GetLocalizedAbbreviatedNumber(amount);
+			
+			if (rewardFrame.rewardType == WQT_REWARDTYPE.relic) then
+				amountDisplay = "+"..amountDisplay;
+			elseif (rewardFrame.canUpgrade) then
+				amountDisplay = amountDisplay.."+";
+			end
+			rewardFrame.Amount:SetText(amountDisplay);
+	
+			-- Color reward amount for certain types
+			r, g, b = 1, 1, 1
+			if (not self.desaturate and WQT.settings.list.amountColors) then
+				r, g, b = rewardFrame.typeColor:GetRGB();
+			end
+	
+			rewardFrame.Amount:SetVertexColor(r, g, b);
+		end
+	end
 end
 
 function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, typeColor, canUpgrade, warmodeBonus)
@@ -1033,53 +1209,18 @@ function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, 
 	end
 	
 	self:SetWidth(num * 29 - 1);
-	local r, g, b = GetItemQualityColor(quality);
 	local rewardFrame = self.rewardFrames[num];
-	rewardFrame:Show();
-	rewardFrame.Icon:SetTexture(texture);
-	rewardFrame.IconBorder:SetVertexColor(r, g, b);
+	rewardFrame.rewardType = rewardType;
+	rewardFrame.texture = texture;
+	rewardFrame.quality = quality;
+	rewardFrame.amount = amount;
+	rewardFrame.typeColor = typeColor;
+	rewardFrame.canUpgrade = canUpgrade;
 	
-	-- Conduits have special borders
-	rewardFrame.ConduitCorners:Hide();
-	if (rewardType == WQT_REWARDTYPE.conduit) then
-		rewardFrame.IconBorder:SetAtlas("conduiticonframe");
-		rewardFrame.ConduitCorners:Show();
-	elseif (rewardType == WQT_REWARDTYPE.relic) then
-		rewardFrame.IconBorder:SetTexture("Interface/Artifacts/RelicIconFrame");
-	else
-		rewardFrame.IconBorder:SetTexture("Interface/Common/WhiteIconFrame");
-	end
-
-	rewardFrame.Amount:Hide();
-	if (amount > 1) then
-		rewardFrame.Amount:Show();
-		
-		if (rewardType == WQT_REWARDTYPE.gold) then
-			amount = floor(amount / 10000);
-		end
-		
-		local amountDisplay = GetLocalizedAbbreviatedNumber(amount);
-		
-		if (rewardType == WQT_REWARDTYPE.relic) then
-			amountDisplay = "+"..amountDisplay;
-		elseif (canUpgrade) then
-			amountDisplay = amountDisplay.."+";
-		end
-		rewardFrame.Amount:SetText(amountDisplay);
-
-		-- Color reward amount for certain types
-		r, g, b = 1, 1, 1
-		if ( WQT.settings.list.amountColors) then
-			if (rewardType == WQT_REWARDTYPE.artifact or rewardType == WQT_REWARDTYPE.anima) then
-				r, g, b = GetItemQualityColor(2);
-			elseif (rewardType == WQT_REWARDTYPE.equipment or rewardType == WQT_REWARDTYPE.weapon) then
-				r, g, b = typeColor:GetRGB();
-			end
-		end
-
-		rewardFrame.Amount:SetVertexColor(r, g, b);
-		
-	end
+	self:UpdateVisuals();
+	
+	
+	
 end
 
 ------------------------------------------
@@ -1102,56 +1243,11 @@ function WQT_ListButtonMixin:OnLoad()
 	self.Highlight:SetFrameLevel(self:GetFrameLevel() + 2);
 	self:EnableKeyboard(false);
 	self.UpdateTooltip = function() WQT_Utils:ShowQuestTooltip(self, self.questInfo) end;
+	self.timer = 0;
 end
 
 function WQT_ListButtonMixin:OnClick(button)
-	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-	if (not self.questId or self.questId== -1) then return end
-	local isBonus = QuestUtils_IsQuestBonusObjective(self.questId);
-	local reward = self.questInfo:GetReward(1);
-	local tagInfo = C_QuestLog.GetQuestTagInfo(self.questId);
-	
-	-- 'Hard' tracking quests with shift
-	if (IsModifiedClick("QUESTWATCHTOGGLE")) then
-		-- Don't track bonus objectives. The object tracker doesn't like it;
-		if (not isBonus and tagInfo and tagInfo.worldQuestType) then
-			-- Only do tracking if we aren't adding the link tot he chat
-			if (not ChatEdit_TryInsertQuestLinkForQuestID(self.questId)) then 
-				if (QuestUtils_IsQuestWatched(self.questId)) then
-					local hardWatched = WQT_Utils:QuestIsWatchedManual(self.questId);
-					C_QuestLog.RemoveWorldQuestWatch(self.questId);
-					-- If it wasn't actually hard watched, do so now
-					if not hardWatched then
-						C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Manual);
-					end
-				else
-					C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Manual);
-				end
-			end
-		end
-		
-	-- Trying gear with Ctrl
-	elseif (IsModifiedClick("DRESSUP")) then
-		self.questInfo:TryDressUpReward();
-	-- 'Soft' tracking and jumping map to relevant zone
-	elseif (button == "LeftButton") then
-		-- Don't track bonus objectives. The object tracker doesn't like it;
-		if (not isBonus and tagInfo and tagInfo.worldQuestType) then
-			local hardWatched = WQT_Utils:QuestIsWatchedManual(self.questId);
-			
-			-- if it was hard watched, keep it that way
-			if (not hardWatched) then
-				C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Automatic);
-			end
-		end
-		if (WorldMapFrame:IsShown()) then
-			WorldMapFrame:SetMapID(self.zoneId);
-		end
-		
-	-- Context menu
-	elseif (button == "RightButton") then
-		ADD:CursorDropDown(self, function(...) WQT:TrackDDFunc(...) end);
-	end
+	WQT_Utils:HandleQuestClick(self, self.questInfo, button);
 end
 
 -- Custom enable/disable
@@ -1162,10 +1258,20 @@ function WQT_ListButtonMixin:SetEnabledMixin(value)
 	self.Faction:EnableMouse(value);
 end
 
-function WQT_ListButtonMixin:OnUpdate()
+function WQT_ListButtonMixin:OnUpdate(elapsed)
+	self.timer = self.timer + elapsed;
+	
+	if (self.timer >= 1) then 
+		self:UpdateTime();
+		self.timer = 0;
+	end;
+end
+
+function WQT_ListButtonMixin:UpdateTime()
 	if ( not self.questInfo or not self:IsShown() or self.questInfo.seconds == 0) then return; end
 	local _, timeString, color, _, _, category = WQT_Utils:GetQuestTimeString(self.questInfo, WQT.settings.list.fullTime);
-	if (not WQT.settings.list.colorTime and category ~= _V["TIME_REMAINING_CATEGORY"].critical) then
+
+	if (self.questInfo:IsDisliked() or (not WQT.settings.list.colorTime and category ~= _V["TIME_REMAINING_CATEGORY"].critical)) then
 		color = _V["WQT_WHITE_FONT_COLOR"];
 	end
 	self.Time:SetTextColor(color.r, color.g, color.b, 1);
@@ -1179,6 +1285,9 @@ function WQT_ListButtonMixin:OnLeave()
 	GameTooltip:Hide();
 	GameTooltip.ItemTooltip:Hide();
 	
+	local isDisliked = self.questInfo:IsDisliked();
+	self:SetAlpha(isDisliked and 0.75 or 1);
+	
 	WQT:HideDebugTooltip()
 end
 
@@ -1189,19 +1298,22 @@ function WQT_ListButtonMixin:OnEnter()
 	WQT_WorldQuestFrame.pinDataProvider:SetQuestIDPinged(self.questInfo.questId, true);
 	WQT_WorldQuestFrame:ShowWorldmapHighlight(questInfo.questId);
 	WQT_Utils:ShowQuestTooltip(self, questInfo);
+	
+	self:SetAlpha(1);
 end
 
 function WQT_ListButtonMixin:UpdateQuestType(questInfo)
+
 	local typeFrame = self.Type;
 	local isCriteria = questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly);
-	local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questId);
+	local tagInfo = questInfo:GetTagInfo();
 	local isElite = tagInfo and tagInfo.isElite;
 	
 	typeFrame:Show();
 	typeFrame:SetWidth(typeFrame:GetHeight());
 	typeFrame.Texture:Show();
 	typeFrame.Elite:SetShown(isElite);
-	
+
 	if (not tagInfo or not tagInfo.quality or tagInfo.quality == Enum.WorldQuestQuality.Common) then
 		typeFrame.Bg:SetTexture("Interface/WorldMap/UI-QuestPoi-NumberIcons");
 		typeFrame.Bg:SetTexCoord(0.875, 1, 0.375, 0.5);
@@ -1215,7 +1327,7 @@ function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 		typeFrame.Bg:SetTexCoord(0, 1, 0, 1);
 		typeFrame.Bg:SetSize(18, 18);
 	end
-
+	
 	-- Update Icon
 	local atlasTexture, sizeX, sizeY, hideBG = WQT_Utils:GetCachedTypeIconData(questInfo);
 
@@ -1241,12 +1353,14 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 		self.Highlight:Hide();
 		self:Hide();
 	end
-
+	
 	self:Show();
 	self.questInfo = questInfo;
 	self.zoneId = C_TaskQuest.GetQuestZoneID(questInfo.questId);
 	self.questId = questInfo.questId;
-
+	local isDisliked = questInfo:IsDisliked();
+	self:SetAlpha(isDisliked and 0.75 or 1);
+	
 	-- Title
 	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
 
@@ -1254,6 +1368,8 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 		title = "|cFFFF0000(Invalid) " .. title;
 	elseif (not questInfo.passedFilter) then
 		title = "|cFF999999(Filtered) " .. title;
+	elseif (isDisliked) then
+		title = "|cFF999999" .. title;
 	end
 	
 	self.Title:SetText(title);
@@ -1281,6 +1397,8 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	self.Time:SetWidth(timeWidth)
 	self.Extra:SetWidth(zoneWidth)
 	
+	self:UpdateTime();
+	
 	local zoneName = "";
 	if (shouldShowZone) then
 		local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questId);
@@ -1306,21 +1424,26 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 		self.Faction:Hide();
 		self.Faction:SetWidth(0.1);
 	end
+	self.Faction.Icon:SetDesaturated(isDisliked);
 	
 	-- Type icon
+	
 	if (WQT.settings.list.typeIcon) then
 		self:UpdateQuestType(questInfo)
 	else
 		self.Type:Hide()
 		self.Type:SetWidth(0.1);
 	end
-	
+	self.Type.Bg:SetDesaturated(isDisliked);
+	self.Type.Texture:SetDesaturated(isDisliked);
+	self.Type.Elite:SetDesaturated(isDisliked);
+
 	-- Rewards
 	self.Rewards:Reset();
+	self.Rewards:SetDesaturated(isDisliked);
 	for k, rewardInfo in questInfo:IterateRewards() do
 		self.Rewards:AddRewardByInfo(rewardInfo, C_QuestLog.QuestCanHaveWarModeBonus(self.questId));
 	end
-	
 
 	-- Show border if quest is tracked
 	local isHardWatched = WQT_Utils:QuestIsWatchedManual(questInfo.questId);
@@ -1329,7 +1452,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	else
 		self.TrackedBorder:Hide();
 	end
-
+	
 	WQT_WorldQuestFrame:TriggerCallback("ListButtonUpdate", self)
 end
 
@@ -1362,7 +1485,7 @@ function WQT_ScrollListMixin:OnLoad()
 	self.questListDisplay = {};
 	self.scrollBar.trackBG:Hide();
 	self.scrollBar.doNotHide = true;
-	self.update = function() self:DisplayQuestList(true) end;
+	self.update = function() self:DisplayQuestList() end;
 	HybridScrollFrame_CreateButtons(self, "WQT_QuestTemplate", 1, 0);
 end
 
@@ -1418,6 +1541,10 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 		
 		filterList = text;	
 	else
+		if (not WQT.settings.general.showDisliked) then
+			filterList = _L["UNINTERESTED"];
+		end
+	
 		for k, option in pairs(WQT.settings.filters) do
 			local counts = WQT:IsUsingFilterNr(k);
 			if (counts) then
@@ -1502,14 +1629,15 @@ function WQT_ScrollListMixin:DisplayQuestList()
 	self:UpdateFilterDisplay();
 	
 	-- Update list buttons
+	self.scrollLocked = WQT_WorldQuestFrame.dataProvider:IsUpdating();
 	local list = self.questListDisplay;
 	self.numDisplayed = #list;
-
+	
 	for i=1, #buttons do
 		local button = buttons[i];
 		local displayIndex = i + offset;
 
-		if ( displayIndex <= #list) then
+		if ( displayIndex <= #list and not self.scrollLocked) then
 			button:Update(list[displayIndex], shouldShowZone);
 		else
 			button.TrackedBorder:Hide();
@@ -1518,11 +1646,15 @@ function WQT_ScrollListMixin:DisplayQuestList()
 			button.questInfo = nil;
 		end
 	end
-	
-	HybridScrollFrame_Update(self, #list * _V["WQT_LISTITTEM_HEIGHT"], self:GetHeight());
+
+	if (not self.scrollLocked) then
+		HybridScrollFrame_Update(self, #list * _V["WQT_LISTITTEM_HEIGHT"], self:GetHeight());
+	end
 	
 	-- Update background
 	self:UpdateBackground();
+	
+	WQT_WorldQuestFrame:TriggerCallback("DisplayQuestList");
 end
 
 function WQT_ScrollListMixin:UpdateBackground()
@@ -1539,8 +1671,6 @@ function WQT_ScrollListMixin:UpdateBackground()
 			end
 		end
 	end
-	
-	WQT_WorldQuestFrame:TriggerCallback("DisplayQuestList");
 end
 
 function WQT_ScrollListMixin:ScrollFrameSetEnabled(enabled)
@@ -1851,12 +1981,10 @@ function WQT_CoreMixin:OnLoad()
 	end
 
 	-- Quest Dataprovider
-	self.dataProvider = CreateFromMixins(WQT_DataProvider);
-	self.dataProvider:OnLoad();
-	
+	self.dataProvider = CreateAndInitFromMixin(WQT_DataProvider);
+
 	-- Pin Dataprovider
-	self.pinDataProvider = CreateFromMixins(WQT_PinDataProvider);
-	self.pinDataProvider:Init();
+	self.pinDataProvider = CreateAndInitFromMixin(WQT_PinDataProvider);
 	self.bountyCounterPool = CreateFramePool("FRAME", self, "WQT_BountyCounterTemplate");
 	
 	self:SetFrameLevel(self:GetParent():GetFrameLevel()+4);
@@ -1880,7 +2008,7 @@ function WQT_CoreMixin:OnLoad()
 
 	
 	self.dataProvider:RegisterCallback("WaitingRoom", function() 
-			if (InCombatLockdown()) then return end;
+			--if (InCombatLockdown()) then return end;
 			WQT_QuestScrollFrame:ApplySort();
 			WQT_QuestScrollFrame:FilterQuestList();
 			WQT_QuestScrollFrame:UpdateQuestList();
@@ -1911,13 +2039,12 @@ function WQT_CoreMixin:OnLoad()
 	self:RegisterEvent("ADDON_LOADED");
 	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
 	self:RegisterEvent("TAXIMAP_OPENED");
-	self:RegisterEvent("QUEST_LOG_UPDATE"); -- Dataprovider only
 	self:RegisterEvent("PLAYER_LOGOUT");
 	
 	self:SetScript("OnEvent", function(self, event, ...) 
-			if	(self.dataProvider) then
-				self.dataProvider:OnEvent(event, ...);
-			end
+			--if	(self.dataProvider) then
+			--	self.dataProvider:OnEvent(event, ...);
+			--end
 			if (self[event]) then 
 				self[event](self, ...) 
 			else 
@@ -1942,6 +2069,13 @@ function WQT_CoreMixin:OnLoad()
 	hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
 			self:SelectTab(WQT_TabNormal);
 		end)
+	-- When untracking a quest with details open
+	hooksecurefunc("QuestMapFrame_CloseQuestDetails", function()
+			if (self.selectedTab == WQT_TabDetails) then
+				self:SelectTab(WQT_TabNormal);
+			end
+		end)
+		
 	
 	-- World map
 	-- If we were reading details when we switch maps, change back to normal quests
@@ -2315,6 +2449,9 @@ function WQT_CoreMixin:FilterClearButtonOnClick()
 			WQT:SetAllFilterTo(k, default);
 		end
 	end
+	
+	WQT.settings.general.showDisliked = true;
+	
 	self.ScrollFrame:UpdateQuestList();
 end
 
@@ -2358,7 +2495,7 @@ function WQT_CoreMixin:ShouldAllowLFG(questInfo)
 		questId = questInfo.questId;
 	end
 	
-	local tagInfo = C_QuestLog.GetQuestTagInfo(questId);
+	local tagInfo = questInfo:GetTagInfo();
 	return tagInfo and tagInfo.worldQuestType and not (tagInfo.worldQuestType == Enum.QuestTagType.PetBattle or tagInfo.worldQuestType == Enum.QuestTagType.Dungeon or tagInfo.worldQuestType == Enum.QuestTagType.Progession or tagInfo.worldQuestType == Enum.QuestTagType.Raid);
 end
 
@@ -2444,10 +2581,6 @@ end
 
 function WQT_CoreMixin:WORLD_QUEST_COMPLETED_BY_SPELL()
 	self.ScrollFrame:UpdateQuestList();
-end
-
-function WQT_CoreMixin:QUEST_LOG_UPDATE()
-	-- Dataprovider handles this one
 end
 
 function WQT_CoreMixin:PLAYER_LOGOUT()
@@ -2670,3 +2803,5 @@ function WQT_CoreMixin:LoadExternal(external)
 	external:Init(WQT_Utils);
 	WQT:debugPrint("External", external:GetName(), "loaded on first try.");
 end
+
+

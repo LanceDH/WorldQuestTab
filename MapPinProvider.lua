@@ -150,6 +150,8 @@ function WQT_PinDataProvider:RefreshAllData()
 	if (self.isUpdating) then
 		return;
 	end
+	
+	local wqp = WQT_Utils:GetMapWQProvider();
 
 	self.isUpdating = true;
 	self:RemoveAllData();
@@ -167,12 +169,6 @@ function WQT_PinDataProvider:RefreshAllData()
 		isFlightMap = true;
 		parentMapFrame = FlightMapFrame;
 	end
-	
-	-- If the Quest details are shown, keep all pins hidden.
-	if (QuestMapFrame.DetailsFrame:IsShown()) then
-		self.isUpdating = false;
-		return;
-	end
 
 	if (not parentMapFrame) then 
 		self.isUpdating = false;
@@ -189,19 +185,17 @@ function WQT_PinDataProvider:RefreshAllData()
 	
 	wipe(self.activePins);
 	
-	local count = 1;
-	
-	local dbg = debugstack(2, 3, 2);
-	if (dbg:find("TaskPOI_OnEnter")) then
-		--print(dbg);
-	end
 	if (mapInfo.mapType >= Enum.UIMapType.Continent) then
 		for k, questInfo in ipairs(WQT_WorldQuestFrame.dataProvider:GetIterativeList()) do
-			if (ShouldShowPin(questInfo, mapInfo.mapType, settingsZoneVisible, settingsContinentVisible, settingsFilterPoI, isFlightMap)) then
+			local officialShow = true;
+			if (wqp.focusedQuestID) then
+				officialShow = C_QuestLog.IsQuestCalling(wqp.focusedQuestID) and wqp:ShouldHighlightInfo(questInfo.questId);
+			end
+
+			if (officialShow and ShouldShowPin(questInfo, mapInfo.mapType, settingsZoneVisible, settingsContinentVisible, settingsFilterPoI, isFlightMap)) then
 				local pinType = GetPinType(mapInfo.mapType);
 				local posX, posY = WQT_Utils:GetQuestMapLocation(questInfo.questId, mapID);
 				if (posX and posX > 0 and posY > 0) then
-					count = count + 1;
 					local pin = self.pinPool:Acquire();
 					pin:SetParent(canvas);
 					tinsert(self.activePins, pin);
@@ -210,7 +204,6 @@ function WQT_PinDataProvider:RefreshAllData()
 			end
 		end
 	end
-	--print("- - - - - - - - - - -", #self.activePins, self)
 	
 	-- Slightly spread out overlapping pins
 	self:FixOverlaps(canvas);
@@ -485,6 +478,12 @@ function WQT_PinMixin:AddIcon()
 	return iconFrame;
 end
 
+function WQT_PinMixin:SetIconsDesaturated(desaturate)
+	for k, icon in ipairs(self.icons) do
+		icon:SetDesaturated(desaturate);
+	end
+end
+
 function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	local isWatched = QuestUtils_IsQuestWatched(questInfo.questId);
 	self:SetupCanvasType(pinType, parentMapFrame, isWatched);
@@ -496,9 +495,10 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	local scale = WQT_Utils:GetSetting("pin", "scale")
 	local settingCenterType = WQT_Utils:GetSetting("pin", "centerType");
 	local _, _, _, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
-	local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questId);
+	local tagInfo = questInfo:GetTagInfo();
 	local questQuality = tagInfo and tagInfo.quality;
 	local questType = tagInfo and tagInfo.worldQuestType;
+	local isDisliked = questInfo:IsDisliked();
 	
 	self.scale = scale
 	self:SetScale(scale);
@@ -530,6 +530,10 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 		self.RingBG:Hide();
 	end
 	
+	if (isDisliked) then
+		r, g, b = 1, 1, 1;
+	end
+	
 	self.RingBG:SetVertexColor(r*0.25, g*0.25, b*0.25);
 	self.Ring:SetSwipeColor(r*.8, g*.8, b*.8);
 	
@@ -550,6 +554,8 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	else
 		self.CustomUnderlay:SetShown(isElite);
 	end
+	
+	self.CustomUnderlay:SetDesaturated(isDisliked);
 	
 	-- Setup mini icons
 	self.iconPool:ReleaseAll();
@@ -602,7 +608,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	for k, rewardInfo in questInfo:IterateRewards() do
 		if (k <= numRewardIcons) then
 			local iconFrame = self:AddIcon();
-			iconFrame:SetupRewardIcon(rewardInfo.type);
+			iconFrame:SetupRewardIcon(rewardInfo.type, rewardInfo.subType);
 		end
 	end
 	
@@ -668,6 +674,12 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 		self.Icon:Hide();
 	end
 	
+	if (isDisliked) then
+		self.Icon:SetDesaturated(true);
+	end
+	self.CustomTypeIcon:SetDesaturated(isDisliked);
+	self.CustomTypeIcon:SetDesaturated(isDisliked);
+	
 	-- Time
 	local settingPinTimeLabel =  WQT_Utils:GetSetting("pin", "timeLabel");
 	local showTimeString = settingPinTimeLabel and timeStringShort ~= "";
@@ -679,7 +691,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	end
 	self.Time:SetPoint("TOP", self, "BOTTOM", 1, timeOffset);
 
-	
+	self:SetIconsDesaturated(isDisliked);
 	self:UpdatePinTime();
 	self:UpdatePlacement();
 	
@@ -699,11 +711,16 @@ end
 
 function WQT_PinMixin:UpdatePinTime()
 	local start, total, timeLeft, seconds, color, timeStringShort, timeCategory = WQT_Utils:GetPinTime(self.questInfo);
-
+	local isDisliked = self.questInfo:IsDisliked();
+	
 	if (WQT_Utils:GetSetting("pin", "ringType") == _V["RING_TYPES"].time) then
 		local r, g, b = color:GetRGB();
 		local now = time();
 		self.Pointer:SetShown(total > 0);
+		if (isDisliked) then
+			r, g, b = .8, .8, .8;
+		end
+		
 		if (total > 0) then
 			self.Pointer:SetRotation((timeLeft)/(total)*6.2831);
 			self.Pointer:SetVertexColor(r*1.1, g*1.1, b*1.1);
@@ -718,7 +735,11 @@ function WQT_PinMixin:UpdatePinTime()
 	-- Time text under pin
 	if(WQT_Utils:GetSetting("pin", "timeLabel")) then
 		self.Time:SetText(timeStringShort);
-		self.Time:SetVertexColor(color.r, color.g, color.b);
+		if (isDisliked) then
+			self.Time:SetVertexColor(1, 1, 1);
+		else
+			self.Time:SetVertexColor(color.r, color.g, color.b);
+		end
 	end
 
 	-- Small icon indicating time category
@@ -736,6 +757,8 @@ function WQT_PinMixin:UpdatePinTime()
 		self.timeIcon.Icon:SetVertexColor(color:GetRGB());
 	end
 	
+	self:SetIconsDesaturated(isDisliked);
+	
 	if (timeCategory == _V["TIME_REMAINING_CATEGORY"].expired) then
 		self.isExpired = true;
 		return SECONDS_PER_HOUR;
@@ -745,13 +768,13 @@ function WQT_PinMixin:UpdatePinTime()
 end
 
 function WQT_PinMixin:UpdatePlacement(alpha)
-	--local canvas = self:GetParent();
 	local zoomPercent = self.parentMapFrame:GetCanvasZoomPercent();
 	local parentScaleFactor = self.scale / self.parentMapFrame:GetCanvasScale();
 	parentScaleFactor = parentScaleFactor * Lerp(self.startScale, self.endScale, Saturate(self.scaleFactor * zoomPercent));
 	self:SetScale(parentScaleFactor);
 	
-	local newAlpha = alpha or Lerp(self.startAlpha, self.endAlpha, Saturate(self.alphaFactor * zoomPercent));
+	local startAlpha, targetAlpha = self:GetAlphas();
+	local newAlpha = alpha or Lerp(startAlpha, targetAlpha, Saturate(self.alphaFactor * zoomPercent));
 	self:SetAlpha(newAlpha);
 	self:SetShown(newAlpha > 0.05);
 	self.currentAlpha = newAlpha;
@@ -760,6 +783,14 @@ function WQT_PinMixin:UpdatePlacement(alpha)
 	self:ApplyScaledPosition(parentScaleFactor);
 	self:SetFrameLevel(self.baseFrameLevel + self.index);
 	WQT_WorldQuestFrame:TriggerCallback("MapPinPlaced", self);
+end
+
+function WQT_PinMixin:GetAlphas()
+	if (self.questInfo:IsDisliked()) then
+		return min(self.startAlpha,0.5), 0.5;
+	end
+	
+	return self.startAlpha, self.endAlpha;
 end
 
 function WQT_PinMixin:OnEnter()
@@ -786,26 +817,7 @@ function WQT_PinMixin:OnLeave()
 end
 
 function WQT_PinMixin:OnClick(button)
-	if (button == "LeftButton") then
-		if ( not ChatEdit_TryInsertQuestLinkForQuestID(self.questId) ) then
-			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-                
-			local isWatchedManual = WQT_Utils:QuestIsWatchedManual(self.questId)
-			if (IsShiftKeyDown()) then
-				if (isWatchedManual or (QuestUtils_IsQuestWatched(self.questId) and C_SuperTrack.GetSuperTrackedQuestID() == self.questId)) then
-					C_QuestLog.RemoveWorldQuestWatch(self.questId);
-				else
-					C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Manual);
-				end
-			else
-				C_QuestLog.AddWorldQuestWatch(self.questId, Enum.QuestWatchType.Automatic);
-				C_SuperTrack.SetSuperTrackedQuestID(self.questId);
-				C_SuperTrack.SetSuperTrackedUserWaypoint(self.questId);
-			end
-		end
-	else
-		ADD:CursorDropDown(self, function(...) WQT:TrackDDFunc(...) end);
-	end
+	WQT_Utils:HandleQuestClick(self, self.questInfo, button);
 end
 
 function WQT_PinMixin:ApplyScaledPosition(manualScale)

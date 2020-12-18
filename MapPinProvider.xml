@@ -10,7 +10,7 @@
 
 		<Layers>
 			<Layer level="BACKGROUND" textureSubLevel="3">
-				<Texture parentKey="CustomUnderlay" atlas="worldquest-questmarker-dragon">
+				<Texture parentKey="CustomUnderlay" atlas="worldquest-questmarker-dragon" hidden="true">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="-5" y="4"/>
 						<Anchor point="BOTTOMRIGHT" x="5" y="-5"/>
@@ -40,7 +40,7 @@
 						<Anchor point="CENTER"/>
 					</Anchors>
 				</Texture>
-				<Texture parentKey="CustomBountyRing" atlas="worldquest-emissary-ring">
+				<Texture parentKey="CustomBountyRing" atlas="worldquest-emissary-ring" hidden="true">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="1" y="-2"/>
 						<Anchor point="BOTTOMRIGHT" x="-1" y="0"/>
@@ -50,7 +50,7 @@
 			</Layer>
 			
 			<Layer level="BACKGROUND" textureSubLevel="6">
-				<Texture parentKey="CustomSelectedGlow" alphaMode="ADD">
+				<Texture parentKey="CustomSelectedGlow" alphaMode="ADD" hidden="true">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="2" y="-2"/>
 						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
@@ -68,7 +68,7 @@
 				<Texture parentKey="Pointer" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingPointer"/>
 			</Layer>
 			<Layer level="ARTWORK" textureSubLevel="5">
-				 <FontString parentKey="Time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE" text="Uh oh">
+				 <FontString parentKey="Time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE" text="Uh oh" hidden="true">
 					<size y="18"/>
 					<Anchors>
 						<Anchor point="TOP" relativePoint="BOTTOM" x="2" y="2"/>
@@ -76,7 +76,7 @@
 				</FontString>
 			</Layer>
 			<Layer level="ARTWORK" textureSubLevel="4">
-				<Texture parentKey="TimeBG" file="Interface/COMMON/NameShadow">
+				<Texture parentKey="TimeBG" file="Interface/COMMON/NameShadow" hidden="true">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.Time" y="0"/>
 						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Time" x="-2" y="4" />

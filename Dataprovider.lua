@@ -111,24 +111,6 @@ end
 ----------------------------
 -- QuestInfoMixin
 ----------------------------
--- Init(questId, isDaily, isCombatAllyQuest, alwaysHide, posX, posY)
--- OnCreate() | Setup for QuestCreationFunc
--- SetMapPos(posX, posY)
--- Reset()
--- LoadRewards() | Will add and parse rewards
--- AddReward(rewardType, amount, texture, quality, color, id, canUpgrade)
--- ParseRewards()
--- TryDressUpReward()
--- IterateRewards()
--- GetReward(index)
--- IsExpired()
--- GetRewardType() | Top reward in the list
--- GetRewardId() | Top reward in the list
--- GetRewardAmount() | Top reward in the list
--- GetRewardTexture() | Top reward in the list
--- GetRewardQuality() | Top reward in the list
--- GetRewardColor() | Top reward in the list
--- GetRewardCanUpgrade() | Top reward in the list
 
 local QuestInfoMixin = {};
 
@@ -148,6 +130,7 @@ function QuestInfoMixin:Init(questId, isDaily, isCombatAllyQuest, alwaysHide, po
 	self.isAllyQuest = isCombatAllyQuest;
 	self.alwaysHide = alwaysHide;
 	self:SetMapPos(posX, posY);
+	self.tagInfo = C_QuestLog.GetQuestTagInfo(questId);
 	
 	self.isValid = HaveQuestData(self.questId);
 	self.time.seconds = WQT_Utils:GetQuestTimeString(self); -- To check if expired or never had a time limit
@@ -181,6 +164,7 @@ function QuestInfoMixin:Reset()
 	self.reward.typeBits = WQT_REWARDTYPE.missing;
 	self.hasRewardData = false;
 	self.isValid = false;
+	self.tagInfo = nil;
 end
 
 function QuestInfoMixin:LoadRewards(force)
@@ -198,19 +182,27 @@ function QuestInfoMixin:LoadRewards(force)
 			if (rewardId) then
 				local price, typeID, subTypeID = select(11, GetItemInfo(rewardId));
 				if (C_Soulbinds.IsItemConduitByItemInfo(rewardId)) then
-					-- Soulbinds
-					self:AddReward(WQT_REWARDTYPE.conduit, ilvl, texture, quality, _V["WQT_COLOR_RELIC"], rewardId);
+					-- Conduits
+					-- Lovely yikes on getting the type
+					local conduitType = ScanTooltipRewardForPattern(self.questId, "(.+)") or "";
+					local subType = _V["CONDUIT_SUBTYPE"].endurance;
+					if(conduitType == CONDUIT_TYPE_FINESSE) then
+						subType = _V["CONDUIT_SUBTYPE"].finesse;
+					elseif(conduitType == CONDUIT_TYPE_POTENCY) then
+						subType = _V["CONDUIT_SUBTYPE"].potency;
+					end
+					self:AddReward(WQT_REWARDTYPE.conduit, ilvl, texture, quality, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardRelic), rewardId, false, subType);
 				elseif (typeID == 4 or typeID == 2) then 
 					-- Gear (4 = armor, 2 = weapon)
 					local canUpgrade = ScanTooltipRewardForPattern(self.questId, "(%d+%+)$") and true or false;
 					local rewardType = typeID == 4 and WQT_REWARDTYPE.equipment or WQT_REWARDTYPE.weapon;
-					local color = typeID == 4 and _V["WQT_COLOR_ARMOR"] or _V["WQT_COLOR_WEAPON"];
+					local color = typeID == 4 and WQT_Utils:GetColor(_V["COLOR_IDS"].rewardArmor) or WQT_Utils:GetColor(_V["COLOR_IDS"].rewardWeapon);
 					self:AddReward(rewardType, ilvl, texture, quality, color, rewardId, canUpgrade);
 				elseif (typeID == 3 and subTypeID == 11) then
 					-- Relics
 					-- Find upgrade amount as C_ArtifactUI.GetItemLevelIncreaseProvidedByRelic doesn't scale
 					local numItems = tonumber(ScanTooltipRewardForPattern(self.questId, "^%+(%d+)"));
-					self:AddReward(WQT_REWARDTYPE.relic, numItems, texture, quality, _V["WQT_COLOR_RELIC"], rewardId);
+					self:AddReward(WQT_REWARDTYPE.relic, numItems, texture, quality,WQT_Utils:GetColor(_V["COLOR_IDS"].rewardRelic), rewardId);
 				elseif(C_Item.IsAnimaItemByID(rewardId)) then
 					-- Anima
 					local value = ScanTooltipRewardForPattern(self.questId, " (%d+) ") or 1;
@@ -222,17 +214,17 @@ function QuestInfoMixin:LoadRewards(force)
 							texture = 3528287;
 						end
 					end
-					self:AddReward(WQT_REWARDTYPE.anima, numItems * value, texture, quality, _V["WQT_COLOR_ARTIFACT"], rewardId);
+					self:AddReward(WQT_REWARDTYPE.anima, numItems * value, texture, quality, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardAnima), rewardId);
 				else	
 					-- Normal items
 					if (texture == 894556) then
 						-- Bonus player xp item is counted as actual xp
-						self:AddReward(WQT_REWARDTYPE.xp, ilvl, texture, quality, _V["WQT_COLOR_ARMOR"], rewardId);
+						self:AddReward(WQT_REWARDTYPE.xp, ilvl, texture, quality, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardItem), rewardId);
 					elseif (typeID == 0 and subTypeID == 8 and price == 0 and ilvl > 100) then 
 						-- Item converting into equipment
-						self:AddReward(WQT_REWARDTYPE.equipment, ilvl, texture, quality, _V["WQT_COLOR_ARMOR"], rewardId);
+						self:AddReward(WQT_REWARDTYPE.equipment, ilvl, texture, quality, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardArmor), rewardId);
 					else 
-						self:AddReward(WQT_REWARDTYPE.item, numItems, texture, quality, _V["WQT_COLOR_ITEM"], rewardId);
+						self:AddReward(WQT_REWARDTYPE.item, numItems, texture, quality, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardItem), rewardId);
 					end
 				end
 			end
@@ -240,17 +232,17 @@ function QuestInfoMixin:LoadRewards(force)
 		-- Spells
 		if (GetQuestLogRewardSpell(1, self.questId)) then
 			local texture, _, _, _, _, _, _, _, rewardId = GetQuestLogRewardSpell(1, self.questId);
-			self:AddReward(WQT_REWARDTYPE.spell, 1, texture, 1, _V["WQT_COLOR_ITEM"], rewardId);
+			self:AddReward(WQT_REWARDTYPE.spell, 1, texture, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardItem), rewardId);
 		end
 		-- Honor
 		if (GetQuestLogRewardHonor(self.questId) > 0) then
 			local numItems = GetQuestLogRewardHonor(self.questId);
-			self:AddReward(WQT_REWARDTYPE.honor, numItems, 1455894, 1, _V["WQT_COLOR_HONOR"]);
+			self:AddReward(WQT_REWARDTYPE.honor, numItems, 1455894, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardHonor));
 		end
 		-- Gold
 		if (GetQuestLogRewardMoney(self.questId) > 0) then
 			local numItems = floor(abs(GetQuestLogRewardMoney(self.questId)))
-			self:AddReward(WQT_REWARDTYPE.gold, numItems, 133784, 1, _V["WQT_COLOR_GOLD"]);
+			self:AddReward(WQT_REWARDTYPE.gold, numItems, 133784, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardGold));
 		end
 		-- Currency
 		local numCurrencies = GetNumQuestLogRewardCurrencies(self.questId);
@@ -261,14 +253,14 @@ function QuestInfoMixin:LoadRewards(force)
 				local isRep = C_CurrencyInfo.GetFactionGrantedByCurrency(currencyId) ~= nil;
 				local name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(currencyId, amount, currencyInfo.name, currencyInfo.iconFileID, currencyInfo.quality); 
 				local currType = currencyId == _azuriteID and WQT_REWARDTYPE.artifact or (isRep and WQT_REWARDTYPE.reputation or WQT_REWARDTYPE.currency);
-				local color = currType == WQT_REWARDTYPE.artifact and _V["WQT_COLOR_ARTIFACT"] or  _V["WQT_COLOR_CURRENCY"]
+				local color = currType == WQT_REWARDTYPE.artifact and WQT_Utils:GetColor(_V["COLOR_IDS"].rewardArtiface) or  WQT_Utils:GetColor(_V["COLOR_IDS"].rewardCurrency);
 				self:AddReward(currType, amount, texture, quality, color, currencyId);
 			end
 		end
 		-- Player experience 
 		if (GetQuestLogRewardXP(self.questId) > 0) then
 			local numItems = GetQuestLogRewardXP(self.questId);
-			self:AddReward(WQT_REWARDTYPE.xp, numItems, 894556, 1, _V["WQT_COLOR_ITEM"]);
+			self:AddReward(WQT_REWARDTYPE.xp, numItems, 894556, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardXp));
 		end
 		
 		self:ParseRewards();
@@ -277,18 +269,19 @@ function QuestInfoMixin:LoadRewards(force)
 	self.hasRewardData = haveData;
 end
 
-function QuestInfoMixin:AddReward(rewardType, amount, texture, quality, color, id, canUpgrade)
+function QuestInfoMixin:AddReward(rewardType, amount, texture, quality, color, id, canUpgrade, subType)
 	local index = #self.rewardList + 1;
 
 	-- Create reward
 	local rewardInfo = self.rewardList[index] or {};
 	rewardInfo.id = id or 0;
-	rewardInfo.type = rewardType
-	rewardInfo.amount = amount
-	rewardInfo.texture = texture
-	rewardInfo.quality = quality
-	rewardInfo.color = color
+	rewardInfo.type = rewardType;
+	rewardInfo.amount = amount;
+	rewardInfo.texture = texture;
+	rewardInfo.quality = quality;
+	rewardInfo.color, rewardInfo.textColor = WQT_Utils:GetRewardTypeColorIDs(rewardType);
 	rewardInfo.canUpgrade = canUpgrade;
+	rewardInfo.subType = subType;
 	
 	self.rewardList[index] = rewardInfo;
 	
@@ -328,7 +321,8 @@ end
 function QuestInfoMixin:SetAsWaypoint()
 	local mapInfo = WQT_Utils:GetMapInfoForQuest(self.questId);
 	local x, y = WQT_Utils:GetQuestMapLocation(self.questId, mapInfo.mapID);
-	C_Map.SetUserWaypoint({["uiMapID"]= mapInfo.mapID, ["position"]={["x"] = x , ["y"] = y }});
+	local wayPoint = UiMapPoint.CreateFromCoordinates(mapInfo.mapID, x, y);
+	C_Map.SetUserWaypoint(wayPoint);
 end
 
 -- Getters for the most important reward
@@ -341,7 +335,7 @@ function QuestInfoMixin:GetFirstNoneAzeriteType()
 	for i = 1, #self.rewardList do
 		local reward = self.rewardList[i];
 		if (reward.type ~= WQT_REWARDTYPE.artifact) then
-			return reward.type;
+			return reward.type, reward.subType;
 		else
 			hasAzerite = true;
 		end
@@ -355,7 +349,10 @@ function QuestInfoMixin:GetRewardType()
 		return WQT_REWARDTYPE.none;
 	end
 	local reward = self.rewardList[1];
-	return reward and reward.type or WQT_REWARDTYPE.missing;
+	
+	local rewardType = reward and reward.type or WQT_REWARDTYPE.missing;
+	local rewardSubType = reward and reward.subType;
+	return rewardType, rewardSubType;
 end
 
 function QuestInfoMixin:GetRewardId()
@@ -385,10 +382,10 @@ end
 
 function QuestInfoMixin:GetRewardColor()
 	if (self.reward.typeBits == WQT_REWARDTYPE.none) then
-		return _V["WQT_COLOR_NONE"] ;
+		return WQT_Utils:GetColor(_V["COLOR_IDS"].rewardNone);
 	end
 	local reward = self.rewardList[1];
-	return reward and reward.color or _V["WQT_COLOR_MISSING"];
+	return reward and reward.color or WQT_Utils:GetColor(_V["COLOR_IDS"].rewardMissing);
 end
 
 function QuestInfoMixin:GetRewardCanUpgrade()
@@ -422,6 +419,14 @@ function QuestInfoMixin:GetTitle()
 	return title;
 end
 
+function QuestInfoMixin:GetTagInfo()
+	return self.tagInfo;
+end
+
+function QuestInfoMixin:IsDisliked()
+	return WQT_Utils:QuestIsDisliked(self.questId);
+end
+
 ----------------------------
 -- MIXIN
 ----------------------------
@@ -432,7 +437,13 @@ end
 
 WQT_DataProvider = CreateFromMixins(WQT_CallbackMixin);
 
-function WQT_DataProvider:OnLoad()
+function WQT_DataProvider:Init()
+	self.frame = CreateFrame("FRAME");
+	self.frame:SetScript("OnUpdate", function(frame, ...) self:OnUpdate(...); end);
+	self.frame:SetScript("OnEvent", function(frame, ...) self:OnEvent(...); end);
+	self.frame:RegisterEvent("QUEST_LOG_UPDATE");
+	self.frame:RegisterEvent("PLAYER_LEVEL_UP");
+
 	self.pool = CreateObjectPool(WQT_Utils.QuestCreationFunc, QuestResetFunc);
 	self.iterativeList = {};
 	self.keyList = {};
@@ -440,24 +451,36 @@ function WQT_DataProvider:OnLoad()
 	self.waitingRoomRewards = {};
 	
 	self.bufferedZones = {};
-	self.bufferTimer = C_Timer.NewTicker(0, function() self:Tick() end);
 	hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
+			-- If we change map, reset the CD, we want new quest info
 			self:LoadQuestsInZone(WorldMapFrame.mapID);
 		end);
-	
+
 	UpdateAzerothZones(); 
+	
+	self.updateCD = 0;
 end
 
 function WQT_DataProvider:OnEvent(event, ...)
 	if (event == "QUEST_LOG_UPDATE") then
-		self:LoadQuestsInZone(WorldMapFrame.mapID);
+		-- If the last update was too recent, it's probably just quest data becoming available
+		if (self.updateCD > 0) then
+			self:UpdateWaitingRoom();
+		else
+			self:LoadQuestsInZone(WorldMapFrame.mapID);
+		end
+			
 	elseif (event == "PLAYER_LEVEL_UP") then
 		local level = ...;
 		UpdateAzerothZones(level); 
 	end
 end
 
-function WQT_DataProvider:Tick()
+function WQT_DataProvider:OnUpdate(elapsed)
+	if (self.updateCD > 0) then
+		self.updateCD = max(0, self.updateCD - elapsed);
+	end
+
 	if (#self.bufferedZones > 0) then
 		-- Figure out how many zoned to check each frame
 		local numQuests = #self.bufferedZones;
@@ -478,6 +501,7 @@ function WQT_DataProvider:Tick()
 		self:UpdateBufferProgress();
 		
 		if (#self.bufferedZones == 0) then
+			self.isUpdating = false;
 			self:TriggerCallback("QuestsLoaded");
 		end
 	end
@@ -499,7 +523,7 @@ function WQT_DataProvider:UpdateWaitingRoom()
 	for i = #self.waitingRoomRewards, 1, -1 do
 		questInfo = self.waitingRoomRewards[i];
 		if ( questInfo.questId and HaveQuestRewardData(questInfo.questId)) then
-			questInfo:LoadRewards();
+			questInfo:LoadRewards(true);
 			table.remove(self.waitingRoomRewards, i);
 			updatedData = true;
 		end
@@ -512,8 +536,8 @@ end
 
 function WQT_DataProvider:AddContinentMapQuests(continentZones, continentId)
 	if continentZones then
-		for zoneId  in pairs(continentZones) do
-			tinsert(self.bufferedZones, zoneId);
+		for zoneID  in pairs(continentZones) do
+			self:AddZoneToBuffer(zoneID);
 		end
 	end
 end
@@ -528,66 +552,87 @@ function WQT_DataProvider:AddWorldMapQuests(worldContinents)
 	end
 end
 
-function WQT_DataProvider:LoadQuestsInZone(zoneId)
+function WQT_DataProvider:AddZoneToBuffer(zoneID)
+	tinsert(self.bufferedZones, zoneID);
+	
+	-- Check for subzones and add those as well
+	local subZones = _V["ZONE_SUBZONES"][zoneID];
+	if (subZones) then
+		for k, subID in ipairs(subZones) do
+			tinsert(self.bufferedZones, subID);
+		end
+	end
+end
+
+function WQT_DataProvider:LoadQuestsInZone(zoneID)
+	self.isUpdating = true;
 	self:ClearData();
-	zoneId = zoneId or self.latestZoneId or C_Map.GetBestMapForUnit("player");
-	if (not zoneId) then return end;
-	self.latestZoneId = zoneId
+	zoneID = zoneID or self.latestZoneId or C_Map.GetBestMapForUnit("player");
+	
+	if (not zoneID) then return end;
+	
+	self.updateCD = 0.5;
+	self.latestZoneId = zoneID
 	-- If the flight map is open, we want all quests no matter what
 	if ((FlightMapFrame and FlightMapFrame:IsShown()) ) then 
 		local taxiId = GetTaxiMapID()
-		zoneId = (taxiId and taxiId > 0) and taxiId or zoneId;
+		zoneID = (taxiId and taxiId > 0) and taxiId or zoneID;
 		-- World Flight Map add-on overwrite
 		if (_WFMLoaded) then
-			zoneId = WorldMapFrame.mapID;
+			zoneID = WorldMapFrame.mapID;
 		end
 	end
 	
-	local currentMapInfo = WQT_Utils:GetCachedMapInfo(zoneId);
+	local currentMapInfo = WQT_Utils:GetCachedMapInfo(zoneID);
 	if not currentMapInfo then return end;
 	if (WQT.settings.list.alwaysAllQuests ) then
-		local expLevel = _V["WQT_ZONE_EXPANSIONS"][zoneId];
+		local expLevel = _V["WQT_ZONE_EXPANSIONS"][zoneID];
 		if (not expLevel or expLevel == 0) then
 			expLevel = GetAccountExpansionLevel();
 		end
 		
 		-- Gather quests for all zones either matching current zone's expansion, or matching no expansion (i.e. Stranglethorn fishing quest)
 		local count = 0;
-		for zoneId, expId in pairs(_V["WQT_ZONE_EXPANSIONS"])do
+		for zoneID, expId in pairs(_V["WQT_ZONE_EXPANSIONS"])do
 			if (expId == 0 or expId == expLevel) then
-				tinsert(self.bufferedZones, zoneId);
+				self:AddZoneToBuffer(zoneID);
 			end
 			count = count + 1;
 		end
 	else
-		local continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneId];
+		local continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneID];
 		if (currentMapInfo.mapType == Enum.UIMapType.World) then
 			self:AddWorldMapQuests(continentZones);
 		elseif (continentZones) then -- Zone with multiple subzones
 			self:AddContinentMapQuests(continentZones);
 		else
-			tinsert(self.bufferedZones, zoneId);
+			self:AddZoneToBuffer(zoneID);
 		end
 	end
-	
 	-- Sort current expansion to front, they are more likely to have quests
 	table.sort(self.bufferedZones, ZonesByExpansionSort);
 	self:UpdateBufferProgress();
+
+	if (self.bufferedZones == 0) then
+		self.isUpdating = false;
+		
+	end
 	self:TriggerCallback("QuestsLoaded");
 end
 
 function WQT_DataProvider:AddQuestsInZone(zoneID, continentId)
 	local questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneID, continentId);
+	local hadQuests;
 	if (questsById) then
 		for k, info in ipairs(questsById) do
 			if (info.mapID == zoneID) then
 				self:AddQuest(info);
 			end
 		end
-		return #questsById > 0;
+		hadQuests = #questsById > 0;
 	end
-
-	return false;
+	
+	return hadQuests;
 end
 
 function WQT_DataProvider:AddQuest(qInfo)
@@ -612,7 +657,9 @@ function WQT_DataProvider:AddQuest(qInfo)
 	local posX, posY = WQT_Utils:GetQuestMapLocation(qInfo.questId, qInfo.mapID);
 	local haveRewardData = questInfo:Init(qInfo.questId, qInfo.isDaily, qInfo.isCombatAllyQuest, alwaysHide, posX, posY);
 
-	if (not haveRewardData) then
+	-- If we have no data for the quest, don't include them in the waiting room, they are probably messed up
+	-- Worst case we do get their data at a later point, it will cause everything to refresh anyway
+	if (not haveRewardData and HaveQuestData(qInfo.questId)) then
 		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
 		tinsert(self.waitingRoomRewards, questInfo);
 		return false;
@@ -689,5 +736,9 @@ function WQT_DataProvider:ReloadQuestRewards()
 		questInfo:LoadRewards(true);
 	end
 	self:TriggerCallback("QuestsLoaded");
+end
+
+function WQT_DataProvider:IsUpdating()
+	return self.isUpdating or #self.bufferedZones > 0 or #self.waitingRoomRewards > 0;
 end
 

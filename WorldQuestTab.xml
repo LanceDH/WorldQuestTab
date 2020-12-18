@@ -16,7 +16,9 @@
 	<Script file="Dataprovider.lua"/>
 	<Script file="WorldQuestTab.lua"/>
 	<Include file="MapPinProvider.xml"/>
+	
 	<include file="Callings\CallingsBoard.xml"/>
+	
 	<Include file="External\External.xml"/>
 	<Include file="Debug.xml"/>
 	
@@ -724,6 +726,13 @@
 								</Texture>
 							</Layer>
 						</Layers>
+						<Scripts>
+							<OnValueChanged>
+								if (not self:GetParent().scrollLocked) then
+									HybridScrollFrame_OnValueChanged(self, value);
+								end
+							</OnValueChanged>
+						</Scripts>
 					</Slider>
 					<Frame parentKey="DetailFrame" setAllPoints="true">
 						<Layers>
@@ -745,6 +754,11 @@
 				
 				<Scripts>
 					<OnLoad method="OnLoad" />
+					<OnMouseWheel>
+						if (not self.scrollLocked) then
+							HybridScrollFrame_OnMouseWheel(self, delta);
+						end
+					</OnMouseWheel>
 				</Scripts>
 			</ScrollFrame>
 			<Frame name="WQT_OverlayFrame" parentKey="Blocker" enableMouse="true" hidden="true">
