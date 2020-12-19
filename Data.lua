@@ -1426,6 +1426,12 @@ end
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
 		{["version"] = "9.0.06",
+			["minor"] = 2,
+			["fixes"] = {
+				"Fixed an error related to the LFG buttons setting.",
+			},
+		},
+		{["version"] = "9.0.06",
 			["new"] ={
 				"Added the option to mark quests as 'uninterested'. You (un)mark a quest as uninterested either by shift-right clicking or through the right click menu. Uninterested quests will be placed at the bottom of the list and become less visible.",
 				"Added a 'Uninterested' filter. Take a guess what it does.",

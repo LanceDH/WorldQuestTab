@@ -2487,15 +2487,16 @@ end
 
 -- Only allow LFG for quests that would actually allow it
 function WQT_CoreMixin:ShouldAllowLFG(questInfo)
-	local questId = questInfo;
-	if (type(questInfo) == "table") then
+	local tagInfo;
+	if (type(questInfo) == "number") then
+		tagInfo = C_QuestLog.GetQuestTagInfo(questInfo);
+	else
 		if (questInfo.isDaily) then 
 			return false; 
 		end
-		questId = questInfo.questId;
+		tagInfo = questInfo:GetTagInfo();
 	end
 	
-	local tagInfo = questInfo:GetTagInfo();
 	return tagInfo and tagInfo.worldQuestType and not (tagInfo.worldQuestType == Enum.QuestTagType.PetBattle or tagInfo.worldQuestType == Enum.QuestTagType.Dungeon or tagInfo.worldQuestType == Enum.QuestTagType.Progession or tagInfo.worldQuestType == Enum.QuestTagType.Raid);
 end
 
