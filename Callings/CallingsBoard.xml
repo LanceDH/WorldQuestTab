@@ -54,6 +54,37 @@
 			</Layer>
 		</Layers>
 		
+		<Frames>
+			<Frame parentKey="ProgressBar">
+				<Size x="35" y="5"/>
+				<Anchors>
+					<Anchor point="TOP" relativePoint="BOTTOM" y="10"/>
+				</Anchors>
+				
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture parentKey="BG" atlas="MainPet-HealthBarFrame" hidden="false">
+							<Anchors>
+								<Anchor point="TOPLEFT" x="-7" y="9"/>
+								<Anchor point="BOTTOMRIGHT" x="7" y="-8"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+					
+					<Layer level="ARTWORK">
+						<Texture parentKey="Glow" atlas="ui-frame-bar-fill-white" hidden="false" horizTile="true">
+							<Anchors>
+								<Anchor point="TOPLEFT"/>
+								<Anchor point="BOTTOMLEFT"/>
+								<Anchor point="RIGHT" relativePoint="LEFT"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+			</Frame>
+		</Frames>
+		
+		
 		<Scripts>
 			<OnEnter method="OnEnter"/>
 			<OnLeave method="OnLeave"/>

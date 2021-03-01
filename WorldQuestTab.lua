@@ -2254,7 +2254,8 @@ function WQT_CoreMixin:OnLoad()
 			end
 		end);
 
-	LFGListSearchPanelScrollFrame.StartGroupButton:HookScript("OnClick", function() 
+	local LFGParent =  GetBuildInfo() < "9.0.5" and LFGListSearchPanelScrollFrame or LFGListSearchPanelScrollFrameScrollChild;
+	LFGParent.StartGroupButton:HookScript("OnClick", function() 
 			-- If we are creating a group because we couldn't find one, show the info on the create frame
 			if InCombatLockdown() then return; end
 			local searchString = LFGListFrame.SearchPanel.SearchBox:GetText();
@@ -2487,6 +2488,8 @@ end
 
 -- Only allow LFG for quests that would actually allow it
 function WQT_CoreMixin:ShouldAllowLFG(questInfo)
+	if (not questInfo) then return false; end
+
 	local tagInfo;
 	if (type(questInfo) == "number") then
 		tagInfo = C_QuestLog.GetQuestTagInfo(questInfo);

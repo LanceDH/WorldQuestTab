@@ -443,7 +443,7 @@ function WQT_DataProvider:Init()
 	self.frame:SetScript("OnEvent", function(frame, ...) self:OnEvent(...); end);
 	self.frame:RegisterEvent("QUEST_LOG_UPDATE");
 	self.frame:RegisterEvent("PLAYER_LEVEL_UP");
-
+	
 	self.pool = CreateObjectPool(WQT_Utils.QuestCreationFunc, QuestResetFunc);
 	self.iterativeList = {};
 	self.keyList = {};

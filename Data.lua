@@ -1426,6 +1426,18 @@ end
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
 		{["version"] = "9.0.06",
+			["minor"] = 3,
+			["changes"] = {
+				"Callings on the callings board with either a progress bar or a high number objective will now be displayed as a progress bar instead.",
+			},
+			["fixes"] = {
+				"Clicking a world quest will now correctly set it as the currently tracked quest.",
+				"Fixed TomTom settings not showing up for those using the add-on.",
+				"Fixed an error that could happen using a wormhole generation. (Maybe?)",
+				"Potentially fixed a couple of other errors."
+			},
+		},
+		{["version"] = "9.0.06",
 			["minor"] = 2,
 			["fixes"] = {
 				"Fixed an error related to the LFG buttons setting.",

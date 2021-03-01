@@ -836,7 +836,7 @@ end
 
 function WQT_Utils:QuestIncorrectlyCounts(questLogIndex)
 	local questInfo = C_QuestLog.GetInfo(questLogIndex);
-	if (questInfo.isHeader or questInfo.isTask or questInfo.isBounty) then
+	if (not questInfo or questInfo.isHeader or questInfo.isTask or questInfo.isBounty) then
 		return false, questInfo.isHidden;
 	end
 	
@@ -851,7 +851,7 @@ end
 function WQT_Utils:QuestCountsToCap(questLogIndex)
 	local questInfo = C_QuestLog.GetInfo(questLogIndex);
 	
-	if (questInfo.isHeader or questInfo.isTask or questInfo.isBounty) then
+	if (not questInfo or questInfo.isHeader or questInfo.isTask or questInfo.isBounty) then
 		return false, questInfo.isHidden;
 	end
 	
@@ -901,6 +901,9 @@ function WQT_Utils:GetQuestMapLocation(questId, mapId)
 	local isSameMap = true;
 	if (mapId) then
 		local mapInfo = WQT_Utils:GetMapInfoForQuest(questId);
+		if (not mapInfo) then
+			return 0, 0;
+		end
 		isSameMap = mapInfo.mapID == mapId;
 	end
 	-- Threat quest specific
@@ -1030,15 +1033,7 @@ function WQT_Utils:RegisterExternalSettings(key, defaults)
 end
 
 function WQT_Utils:AddExternalSettingsOptions(settings)
-	for k, setting in ipairs(settings) do
-		tinsert(_V["SETTING_LIST"], setting);
-	end
-end
-
-function WQT_Utils:AddExternalSettingsOptions(settings)
-	for k, setting in ipairs(settings) do
-		tinsert(_V["SETTING_LIST"], setting);
-	end
+	WQT_SettingsFrame:AddSettingList(settings);
 end
 
 function WQT_Utils:FilterIsOldContent(typeID, flagID)
@@ -1082,9 +1077,11 @@ function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 						-- If it wasn't actually hard watched, do so now
 						if (not hardWatched) then
 							C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual);
+							C_SuperTrack.SetSuperTrackedQuestID(questID);
 						end
 					else
 						C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual);
+						C_SuperTrack.SetSuperTrackedQuestID(questID);
 					end
 				end
 			else
@@ -1099,10 +1096,10 @@ function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 			-- Don't track bonus objectives. The object tracker doesn't like it;
 			if (isWorldQuest) then
 				local hardWatched = WQT_Utils:QuestIsWatchedManual(questID);
-				
 				-- if it was hard watched, keep it that way
 				if (not hardWatched) then
 					C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic);
+					C_SuperTrack.SetSuperTrackedQuestID(questID);
 				end
 			end
 			if (WorldMapFrame:IsShown()) then

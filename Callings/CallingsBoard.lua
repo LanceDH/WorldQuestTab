@@ -5,6 +5,8 @@ local _V = addon.variables;
 local WQT_Utils = addon.WQT_Utils;
 local WQT_Profiles = addon.WQT_Profiles;
 
+local MAX_CALLINGS = 3;
+
 local MAP_ANCHORS = {
 	[1543] = "BOTTOMLEFT", -- The Maw
 	[1536] = "BOTTOMLEFT", -- Maldraxxus
@@ -135,7 +137,7 @@ function WQT_CallingsBoardMixin:UpdateCovenant()
 	end
 
 	self.covenantID = covenantID;
-	local data = C_Covenants.GetCovenantData(covenantID);
+	local data = C_Covenants.GetCovenantData(4);
 	self.covenantData = data;
 	if (data) then
 		for k, display in ipairs(self.Displays) do
@@ -188,7 +190,7 @@ function WQT_CallingsBoardMixin:PlaceDisplays()
 		
 		if (display.calling and not display.calling.questID) then
 			-- Not risking Constants.Callings.MaxCallings 
-			display.calling.index = 3 - numInactive;
+			display.calling.index = MAX_CALLINGS - numInactive;
 			numInactive = numInactive + 1;
 		end
 		
@@ -206,6 +208,29 @@ function WQT_CallingsBoardMixin:UpdateVisibility()
 	self:SetShown(self.showOnCurrentMap);
 end
 
+function WQT_CallingsBoardMixin:CalculateUncappedObjectives(calling)
+	local numCompleted = 0;
+	local numTotal = 0;
+
+	for objectiveIndex = 1, calling.numObjectives do
+		local objectiveText, objectiveType, finished, numFulfilled, numRequired = GetQuestObjectiveInfo(calling.questID, objectiveIndex, false);
+		
+		if(objectiveType == "progressbar") then
+			return GetQuestProgressBarPercent(calling.questID), 100;
+		end
+		
+		if objectiveText and #objectiveText > 0 and numRequired > 0 then
+			for objectiveSubIndex = 1, numRequired do
+				if objectiveSubIndex <= numFulfilled then
+					numCompleted = numCompleted + 1;
+				end
+				numTotal = numTotal + 1;
+			end
+		end
+	end
+	
+	return numCompleted, numTotal;
+end
 
 
 WQT_CallingsBoardDisplayMixin = {};
@@ -217,11 +242,41 @@ end
 
 function WQT_CallingsBoardDisplayMixin:SetCovenant(covenantData)
 	self.covenantData = covenantData;
+	
+	if(covenantData) then
+		local bgAtlas = string.format("covenantsanctum-level-border-%s", covenantData.textureKit:lower());
+		self.ProgressBar.BG:SetAtlas(bgAtlas);
+		
+		local r, g, b = 1, 1, 1;
+		if(covenantData.ID == Enum.CovenantType.Kyrian) then
+			r = 0.6;
+			g = 0.74;
+			b = 0.85;
+		elseif(covenantData.ID == Enum.CovenantType.Venthyr) then
+			r = 0.86;
+			g = 0.11;
+			b = 0.11;
+		elseif(covenantData.ID == Enum.CovenantType.NightFae) then
+			r = 0.31;
+			g = 0.55;
+			b = 1;
+		elseif(covenantData.ID == Enum.CovenantType.Necrolord) then
+			r = 0.05;
+			g = 0.74;
+			b = 0.42;
+		end
+		
+		self.ProgressBar.Glow:SetVertexColor(r, g, b);
+		
+		--self.ProgressBar.BG:SetVertexColor(0.4, 0.4, 0.4);
+		--bgAtlas = string.format("covenantchoice-celebration-%sglowline", covenantData.textureKit:lower());
+		--self.ProgressBar.Glow:SetAtlas(bgAtlas);
+	end
 end
 
 function WQT_CallingsBoardDisplayMixin:Setup(calling, covenantData)
 	self.calling = calling;
-	self.covenantData = covenantData;
+	self:SetCovenant(covenantData);
 	
 	self.timeRemaining = 0;
 	self.questInfo = nil;
@@ -264,8 +319,7 @@ function WQT_CallingsBoardDisplayMixin:Update()
 		local onQuest = C_QuestLog.IsOnQuest(questID);
 		local questComplete =  C_QuestLog.IsComplete(questID);
 		self.Glow:SetShown(not onQuest);
-		
-		
+
 		local bangAtlas = self.calling:GetBang();
 		self.Bang:SetAtlas(bangAtlas);
 		self.BangHighlight:SetAtlas(bangAtlas);
@@ -278,17 +332,29 @@ end
 function WQT_CallingsBoardDisplayMixin:UpdateProgress()
 	self.miniIcons:Reset();
 	self.BangHighlight:Hide();
+	self.ProgressBar:Hide();
 	
 	if (not self.calling:IsActive()) then
 		return;
 	end
 	
-	local progress, goal = WorldMapBountyBoardMixin:CalculateBountySubObjectives(self.calling);
-	
-	if (progress == goal) then 
+	local progress, goal = WQT_CallingsBoardMixin:CalculateUncappedObjectives(self.calling);
+
+	if (progress >= goal) then 
 		self.BangHighlight:Show();
 		return;
 	end
+	
+	if (goal > MAX_BOUNTY_OBJECTIVES) then 
+		self.ProgressBar:Show();
+		local perc = progress / goal;
+		local width = self.ProgressBar:GetWidth();
+		
+		self.ProgressBar.Glow:SetPoint("RIGHT", self.ProgressBar, "LEFT", perc * width, 0);
+	
+		return
+	end
+	
 	
 	for i=1, goal do
 		local icon = self.miniIcons:Create();
@@ -315,7 +381,15 @@ function WQT_CallingsBoardDisplayMixin:OnEnter()
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 	
 	if (self.calling.isLockedToday) then 
-		GameTooltip:SetText(self.calling:GetDaysUntilNextString(), HIGHLIGHT_FONT_COLOR:GetRGB());
+	
+		local daysUntilString = "";
+		if (GetBuildInfo() < "9.0.5") then
+			daysUntilString = self.calling:GetDaysUntilNextString();
+		else
+			local days = MAX_CALLINGS - self.calling.index + 1;
+			daysUntilString = _G["BOUNTY_BOARD_NO_CALLINGS_DAYS_" .. days] or BOUNTY_BOARD_NO_CALLINGS_DAYS_1;
+		end
+		GameTooltip:SetText(daysUntilString, HIGHLIGHT_FONT_COLOR:GetRGB());
 	else
 		self.Highlight:Show();
 
