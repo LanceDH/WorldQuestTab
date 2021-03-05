@@ -414,10 +414,15 @@ function WQT_CallingsBoardDisplayMixin:OnEnter()
 		
 		local numObjectives = C_QuestLog.GetNumQuestObjectives(questInfo.questId);
 		for objectiveIndex = 1, numObjectives do
-			local objectiveText, _, finished = GetQuestObjectiveInfo(questInfo.questId, objectiveIndex, false);
+			local objectiveText, objectiveType, finished, numFulfilled, numRequired = GetQuestObjectiveInfo(questInfo.questId, objectiveIndex, false);
 			if ( objectiveText and #objectiveText > 0 ) then
 				local objectiveColor = finished and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
 				GameTooltip:AddLine(QUEST_DASH .. objectiveText, objectiveColor.r, objectiveColor.g, objectiveColor.b, true);
+				-- Add a progress bar if that's the type
+				if(objectiveType == "progressbar") then
+					local percent = math.floor((numFulfilled/numRequired) * 100);
+					GameTooltip_ShowProgressBar(GameTooltip, 0, numRequired, numFulfilled, PERCENTAGE_STRING:format(percent));
+				end
 			end
 		end
 		
@@ -440,24 +445,20 @@ end
 function WQT_CallingsBoardDisplayMixin:OnClick()
 	if (self.calling.isLockedToday) then return; end
 
-	if (IsModifiedClick("QUESTWATCHTOGGLE")) then
-		WQT_Utils:ShiftClickQuest(self.questInfo);
+	local openDetails = false;
+	
+	if (self.calling:GetState() == Enum.CallingStates.QuestActive and not WorldMapFrame:IsMaximized()) then
+		openDetails = true;
+	end
+	
+	if (openDetails) then
+		QuestMapFrame_OpenToQuestDetails(self.calling.questID);
 	else
-		local openDetails = false;
-		
-		if (self.calling:GetState() == Enum.CallingStates.QuestActive and not WorldMapFrame:IsMaximized()) then
-			openDetails = true;
-		end
-		
-		if (openDetails) then
-			QuestMapFrame_OpenToQuestDetails(self.calling.questID);
+		local mapID = GetQuestUiMapID(self.calling.questID, true);
+		if ( mapID ~= 0 ) then
+			WorldMapFrame:SetMapID(mapID);
 		else
-			local mapID = GetQuestUiMapID(self.calling.questID, true);
-			if ( mapID ~= 0 ) then
-				WorldMapFrame:SetMapID(mapID);
-			else
-				OpenWorldMap(C_TaskQuest.GetQuestZoneID(self.calling.questID));
-			end
+			OpenWorldMap(C_TaskQuest.GetQuestZoneID(self.calling.questID));
 		end
 	end
 end

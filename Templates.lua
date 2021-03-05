@@ -1094,13 +1094,13 @@ function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 		else
 			-- 'Soft' tracking and jumping map to relevant zone
 			-- Don't track bonus objectives. The object tracker doesn't like it;
-			if (isWorldQuest) then
+			if (isWorldQuest) then	
 				local hardWatched = WQT_Utils:QuestIsWatchedManual(questID);
 				-- if it was hard watched, keep it that way
 				if (not hardWatched) then
 					C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic);
-					C_SuperTrack.SetSuperTrackedQuestID(questID);
 				end
+				C_SuperTrack.SetSuperTrackedQuestID(questID);
 			end
 			if (WorldMapFrame:IsShown()) then
 				local zoneID =  C_TaskQuest.GetQuestZoneID(questID);

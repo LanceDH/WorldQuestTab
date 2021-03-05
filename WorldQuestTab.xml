@@ -214,15 +214,17 @@
 				</Layers>
 
 				<Layers>
+				
 					<Layer level="OVERLAY" textureSubLevel="-1">
 						<Texture parentKey="RingShadow" atlas="azsharawards-fallingglow" useAtlasSize="false">
 							<Anchors>
-								<Anchor point="TOPLEFT" x="-0" y="0"/>
-								<Anchor point="BOTTOMRIGHT" x="0" y="-0"/>
+								<Anchor point="TOPLEFT" x="0" y="-0"/>
+								<Anchor point="BOTTOMRIGHT" x="-0" y="0"/>
 							</Anchors>
 							<Color r="0" g="0" b="0" a="0.5"/>
 						</Texture>
 					</Layer>
+					
 					<Layer level="OVERLAY">
 						<Texture parentKey="Ring" atlas="jailerstower-wayfinder-rewardcircle" useAtlasSize="false" desaturated="true">
 							<Anchors>
@@ -232,6 +234,18 @@
 							<Color r="0.55" g="0.45" b="0.45"/>
 						</Texture>
 					</Layer>
+					
+					<!-- 9.0.05
+						<Layer level="OVERLAY">
+							<Texture parentKey="Ring" atlas="jailerstower-wayfinder-rewardcircle" useAtlasSize="false" desaturated="true">
+								<Anchors>
+									<Anchor point="TOPLEFT" x="2" y="-2"/>
+									<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
+								</Anchors>
+								<Color r="0.55" g="0.45" b="0.45"/>
+							</Texture>
+						</Layer>
+					-->
 				</Layers>
 				<Scripts>
 					<OnEnter>

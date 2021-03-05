@@ -822,6 +822,13 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.fullTime end
 			}	
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["PIN_FADE_ON_PING"], ["tooltip"] = _L["PIN_FADE_ON_PING_TT"]
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.pin.fadeOnPing = value;
+			end
+			,["getValueFunc"] = function() return WQT.settings.pin.fadeOnPing end
+			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
+			}
 	-- Map Pin
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_DISABLE"], ["tooltip"] = _L["PIN_DISABLE_TT"]
 			, ["valueChangedFunc"] = function(value) 
@@ -850,13 +857,6 @@ _V["SETTING_LIST"] = {
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
 			]]--
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_FADE_ON_PING"], ["tooltip"] = _L["PIN_FADE_ON_PING_TT"]
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.pin.fadeOnPing = value;
-			end
-			,["getValueFunc"] = function() return WQT.settings.pin.fadeOnPing end
-			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
-			}
 	-- Pin appearance
 	,{["template"] =" WQT_SettingSubTitleTemplate", ["categoryID"] = "MAPPINS", ["label"] = APPEARANCE_LABEL}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_TIME"], ["tooltip"] = _L["PIN_TIME_TT"]
@@ -1426,7 +1426,19 @@ end
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
 		{["version"] = "9.0.06",
-			["minor"] = 3,
+			["minor"] = 4,
+			["changes"] = {
+				"Moved the pin fade setting to the Quest List category and renamed it to Fade Irrelevant Pins to better reflect its functionality.",
+				"Calling board tooltips will now include a progress bar if it's that type of an objective (\"X Defended\")."
+			},
+			["fixes"] = {
+				"Fixed an error when shift-clicking the callings board.",
+				"Fixed an issue preventing tracked quests to be set as your current objective (yellow minimap arrow).",
+				"Fixed right-click tracking not always setting the quest as the current objective"
+			},
+		},
+		{["version"] = "9.0.06",
+			["minor"] = "3 (beta)",
 			["changes"] = {
 				"Callings on the callings board with either a progress bar or a high number objective will now be displayed as a progress bar instead.",
 			},
@@ -1488,7 +1500,7 @@ _V["PATCH_NOTES"] = {
 			},
 		},
 		{["version"] = "9.0.04",
-			["minor"] = "(beta)",
+			["minor"] = "0 (beta)",
 			["new"] = {
 				"Anima is now it's own reward type and should show the total anima rather than number of tokens.",
 			},

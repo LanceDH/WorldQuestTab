@@ -795,6 +795,7 @@ function WQT:TrackDDFunc(ddFrame)
 			info.text = TRACK_QUEST;
 			info.func = function()
 						C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual);
+						C_SuperTrack.SetSuperTrackedQuestID(questID);
 						if WQT_WorldQuestFrame:GetAlpha() > 0 then 
 							WQT_QuestScrollFrame:DisplayQuestList();
 						end
@@ -816,9 +817,20 @@ function WQT:TrackDDFunc(ddFrame)
 	
 	ddFrame:AddButton(info);
 	
+	-- LFG if possible
+	info = ddFrame:CreateButtonInfo("option");
+	if (WQT_WorldQuestFrame:ShouldAllowLFG(questInfo)) then
+		info.text = OBJECTIVES_FIND_GROUP;
+		info.func = function()
+			WQT_WorldQuestFrame:SearchGroup(questInfo);
+		end
+		ddFrame:AddButton(info);
+	end
+	
 	-- Dislike toggle
 	info = ddFrame:CreateButtonInfo("checkbox");
 	
+	info.keepShownOnClick = false;
 	info.text = _L["UNINTERESTED"];
 	info.func = function()
 			local dislike = not WQT_Utils:QuestIsDisliked(questID);
@@ -831,16 +843,6 @@ function WQT:TrackDDFunc(ddFrame)
 			end
 	
 	ddFrame:AddButton(info);
-	
-	-- LFG if possible
-	info = ddFrame:CreateButtonInfo("option");
-	if (WQT_WorldQuestFrame:ShouldAllowLFG(questInfo)) then
-		info.text = OBJECTIVES_FIND_GROUP;
-		info.func = function()
-			WQT_WorldQuestFrame:SearchGroup(questInfo);
-		end
-		ddFrame:AddButton(info);
-	end
 	
 	WQT_WorldQuestFrame:TriggerCallback("InitTrackDropDown", ddFrame)
 	
