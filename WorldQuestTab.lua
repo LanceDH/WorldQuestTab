@@ -2044,9 +2044,6 @@ function WQT_CoreMixin:OnLoad()
 	self:RegisterEvent("PLAYER_LOGOUT");
 	
 	self:SetScript("OnEvent", function(self, event, ...) 
-			--if	(self.dataProvider) then
-			--	self.dataProvider:OnEvent(event, ...);
-			--end
 			if (self[event]) then 
 				self[event](self, ...) 
 			else 
@@ -2207,12 +2204,6 @@ function WQT_CoreMixin:OnLoad()
 		tab:SetPoint(point, relativeTo, relativePoint, x, y + 2);
 	end)
 	
-	
-	-- Show hightlight in list when hovering over official map pinDataProvider
-	--hooksecurefunc("TaskPOI_OnEnter", function(self)
-	--		
-	--	end)
-
 	hooksecurefunc("TaskPOI_OnLeave", function(self)
 			if (WQT.settings.pin.disablePoI) then return; end
 			
@@ -2256,7 +2247,7 @@ function WQT_CoreMixin:OnLoad()
 			end
 		end);
 
-	local LFGParent =  GetBuildInfo() < "9.0.5" and LFGListSearchPanelScrollFrame or LFGListSearchPanelScrollFrameScrollChild;
+	local LFGParent = LFGListSearchPanelScrollFrameScrollChild;
 	LFGParent.StartGroupButton:HookScript("OnClick", function() 
 			-- If we are creating a group because we couldn't find one, show the info on the create frame
 			if InCombatLockdown() then return; end
@@ -2276,7 +2267,6 @@ function WQT_CoreMixin:OnLoad()
 				WQT_GroupSearch:Show();
 			end
 		end)
-		
 	
 	hooksecurefunc("TaskPOI_OnEnter", function(poi) 
 			if (WQT.settings.pin.disablePoI) then return; end
@@ -2594,10 +2584,7 @@ function WQT_CoreMixin:PLAYER_LOGOUT()
 end
 
 function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
-	local questId, added = ...;
-
 	self.ScrollFrame:DisplayQuestList();
-	WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 end
 
 function WQT_CoreMixin:TAXIMAP_OPENED(system)
@@ -2709,6 +2696,7 @@ function WQT_CoreMixin:SelectTab(tab)
 	if self.selectedTab ~= tab then
 		ADD:CloseAll();
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+		WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 	end
 	self.selectedTab = tab;
 	
@@ -2720,7 +2708,6 @@ function WQT_CoreMixin:SelectTab(tab)
 	WQT_TabWorld.Hider:Show();
 
 	-- Hide/show when quest details are shown
-	WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 	QuestMapFrame_UpdateQuestSessionState(QuestMapFrame);
 	self:HideOverlayFrame();
 

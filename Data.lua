@@ -1425,16 +1425,11 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
-		{["version"] = "9.0.06",
-			["minor"] = 4,
-			["changes"] = {
-				"Moved the pin fade setting to the Quest List category and renamed it to Fade Irrelevant Pins to better reflect its functionality.",
-				"Calling board tooltips will now include a progress bar if it's that type of an objective (\"X Defended\")."
-			},
+		{["version"] = "9.0.07",
+			["intro"] = { "9.0.5 compatibility and fixes." },
 			["fixes"] = {
-				"Fixed an error when shift-clicking the callings board.",
-				"Fixed an issue preventing tracked quests to be set as your current objective (yellow minimap arrow).",
-				"Fixed right-click tracking not always setting the quest as the current objective"
+				"Fixed the calling board always showing as Necrolord rather than the player's covenant.",
+				"Fixed pin highlights lagging behind when the world quest tab isn't visible.",
 			},
 		},
 		{["version"] = "9.0.06",

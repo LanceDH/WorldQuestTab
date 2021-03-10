@@ -103,17 +103,15 @@ end
 ------------------------------------
 -- DataProvider
 ------------------------------------
--- Init()
--- RemoveAllData()
--- RefreshAllData()
--- FixOverlaps(canvasRatio, isFlightMap)
--- UpdateAllPlacements()
--- UpdateQuestPings()
--- SetQuestIDPinged(questId, shouldPing)
 
 WQT_PinDataProvider = {};
 
 function WQT_PinDataProvider:Init()
+	self.frame = CreateFrame("FRAME");
+	self.frame:SetScript("OnEvent", function(frame, ...) self:OnEvent(...); end);
+	self.frame:RegisterEvent("SUPER_TRACKING_CHANGED");
+	self.frame:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
+
 	self.pinPool = CreateFramePool("BUTTON", nil, "WQT_PinTemplate", OnPinRelease);
 	self.activePins = {};
 	self.pingedQuests = {};
@@ -134,6 +132,14 @@ function WQT_PinDataProvider:Init()
 	self.enableNudging = true;
 	self.pinClusters = {};
 	self.pinClusterLookup = {};
+end
+
+function WQT_PinDataProvider:OnEvent(event, ...)
+	if (event == "SUPER_TRACKING_CHANGED") then
+		self:UpdateAllVisuals();
+	elseif (event == "QUEST_WATCH_LIST_CHANGED") then
+		self:UpdateAllVisuals();
+	end
 end
 
 function WQT_PinDataProvider:RemoveAllData()
@@ -334,6 +340,12 @@ function WQT_PinDataProvider:UpdateAllPlacements()
 	end
 end
 
+function WQT_PinDataProvider:UpdateAllVisuals()
+	for pin in self.pinPool:EnumerateActive() do
+		pin:UpdateVisuals();
+	end
+end
+
 function WQT_PinDataProvider:UpdateQuestPings()
 	local settingPinFadeOnPing = WQT_Utils:GetSetting("pin", "fadeOnPing");
 	local fadeOthers = false;
@@ -416,22 +428,6 @@ end
 ------------------------------------
 -- Pin
 ------------------------------------
--- OnLoad()
--- SetupCanvasType(pinType, parentMapFrame, isWatched)
--- Setup(questInfo, index, x, y, pinType, parentMapFrame)
--- OnUpdate(elapsed)
--- UpdatePinTime()
--- UpdatePlacement()
--- OnEnter()
--- OnLeave()
--- OnClick(button)
--- ApplyScaledPosition(manualScale)
--- Focus(playPing)
--- ClearFocus()
--- FadeIn()
--- FadeOut()
--- GetNudgedPosition()
--- SetNudge(x, y)
 
 WQT_PinMixin = {};
 
@@ -493,13 +489,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.questId = questInfo.questId;
 	
 	local scale = WQT_Utils:GetSetting("pin", "scale")
-	local settingCenterType = WQT_Utils:GetSetting("pin", "centerType");
-	local _, _, _, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
-	local tagInfo = questInfo:GetTagInfo();
-	local questQuality = tagInfo and tagInfo.quality;
-	local questType = tagInfo and tagInfo.worldQuestType;
-	local isDisliked = questInfo:IsDisliked();
-	
+
 	self.scale = scale
 	self:SetScale(scale);
 	self.currentScale = scale;
@@ -509,7 +499,22 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.posX = x;
 	self.posY = y;
 	self.baseFrameLevel = PIN_FRAME_LEVEL_BASE;
-	
+
+	self:UpdateVisuals();
+	WQT_WorldQuestFrame:TriggerCallback("MapPinInitialized", self);
+end
+
+function WQT_PinMixin:UpdateVisuals()
+	local questInfo = self.questInfo;
+	local settingCenterType = WQT_Utils:GetSetting("pin", "centerType");
+	local _, _, _, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
+	local tagInfo = questInfo:GetTagInfo();
+	local questQuality = tagInfo and tagInfo.quality;
+	local questType = tagInfo and tagInfo.worldQuestType;
+	local isDisliked = questInfo:IsDisliked();
+	local typeAtlas, typeAtlasWidth, typeAtlasHeight =  WQT_Utils:GetCachedTypeIconData(questInfo);
+	local isWatched = QuestUtils_IsQuestWatched(questInfo.questId);
+
 	-- Ring coloration
 	local ringType = WQT_Utils:GetSetting("pin", "ringType");
 	local now = time();
@@ -678,8 +683,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 		self.Icon:SetDesaturated(true);
 	end
 	self.CustomTypeIcon:SetDesaturated(isDisliked);
-	self.CustomTypeIcon:SetDesaturated(isDisliked);
-	
+
 	-- Time
 	local settingPinTimeLabel =  WQT_Utils:GetSetting("pin", "timeLabel");
 	local showTimeString = settingPinTimeLabel and timeStringShort ~= "";
@@ -694,8 +698,6 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self:SetIconsDesaturated(isDisliked);
 	self:UpdatePinTime();
 	self:UpdatePlacement();
-	
-	WQT_WorldQuestFrame:TriggerCallback("MapPinInitialized", self);
 end
 
 function WQT_PinMixin:OnUpdate(elapsed)

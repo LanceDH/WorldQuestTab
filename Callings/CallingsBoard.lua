@@ -137,7 +137,7 @@ function WQT_CallingsBoardMixin:UpdateCovenant()
 	end
 
 	self.covenantID = covenantID;
-	local data = C_Covenants.GetCovenantData(4);
+	local data = C_Covenants.GetCovenantData(covenantID);
 	self.covenantData = data;
 	if (data) then
 		for k, display in ipairs(self.Displays) do

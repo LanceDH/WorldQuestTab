@@ -197,8 +197,8 @@
 					<Layer level="ARTWORK">
 						<Texture parentKey="Icon">
 							<Anchors>
-								<Anchor point="TOPLEFT" x="4" y="-4"/>
-								<Anchor point="BOTTOMRIGHT" x="-4" y="4"/>
+								<Anchor point="TOPLEFT" x="5" y="-5"/>
+								<Anchor point="BOTTOMRIGHT" x="-5" y="5"/>
 							</Anchors>
 						</Texture>
 						<MaskTexture parentKey="CircleMask" file="Interface\CharacterFrame\TempPortraitAlphaMask" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE">
@@ -224,28 +224,15 @@
 							<Color r="0" g="0" b="0" a="0.5"/>
 						</Texture>
 					</Layer>
-					
 					<Layer level="OVERLAY">
 						<Texture parentKey="Ring" atlas="jailerstower-wayfinder-rewardcircle" useAtlasSize="false" desaturated="true">
 							<Anchors>
-								<Anchor point="TOPLEFT" x="3" y="-3"/>
-								<Anchor point="BOTTOMRIGHT" x="-3" y="3"/>
+								<Anchor point="TOPLEFT" x="2" y="-2"/>
+								<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
 							</Anchors>
 							<Color r="0.55" g="0.45" b="0.45"/>
 						</Texture>
 					</Layer>
-					
-					<!-- 9.0.05
-						<Layer level="OVERLAY">
-							<Texture parentKey="Ring" atlas="jailerstower-wayfinder-rewardcircle" useAtlasSize="false" desaturated="true">
-								<Anchors>
-									<Anchor point="TOPLEFT" x="2" y="-2"/>
-									<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
-								</Anchors>
-								<Color r="0.55" g="0.45" b="0.45"/>
-							</Texture>
-						</Layer>
-					-->
 				</Layers>
 				<Scripts>
 					<OnEnter>
