@@ -506,6 +506,8 @@ end
 
 function WQT_PinMixin:UpdateVisuals()
 	local questInfo = self.questInfo;
+	if (not questInfo:DataIsValid()) then return end;
+	
 	local settingCenterType = WQT_Utils:GetSetting("pin", "centerType");
 	local _, _, _, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
 	local tagInfo = questInfo:GetTagInfo();

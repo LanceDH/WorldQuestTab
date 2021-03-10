@@ -429,10 +429,8 @@ function WQT_CallingsBoardDisplayMixin:OnEnter()
 		GameTooltip_AddBlankLineToTooltip(GameTooltip);
 		GameTooltip_AddNormalLine(GameTooltip, CALLING_QUEST_TOOLTIP_DESCRIPTION, true);
 		GameTooltip_AddQuestRewardsToTooltip(GameTooltip, questID, TOOLTIP_QUEST_REWARDS_STYLE_CALLING_REWARD);
-	
 	end
-	
-	
+
 	GameTooltip:Show();
 	GameTooltip.recalculatePadding = true;
 end

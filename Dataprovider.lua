@@ -427,6 +427,10 @@ function QuestInfoMixin:IsDisliked()
 	return WQT_Utils:QuestIsDisliked(self.questId);
 end
 
+function QuestInfoMixin:DataIsValid()
+	return self.questId ~= nil;
+end
+
 ----------------------------
 -- MIXIN
 ----------------------------

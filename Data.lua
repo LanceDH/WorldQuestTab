@@ -1426,6 +1426,12 @@ end
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
 		{["version"] = "9.0.07",
+			["minor"] = 2,
+			["fixes"] = {
+				"Fixed the 'C_QuestLog.IsThreatQuest' error.",
+			},
+		},
+		{["version"] = "9.0.07",
 			["intro"] = { "9.0.5 compatibility and fixes." },
 			["fixes"] = {
 				"Fixed the calling board always showing as Necrolord rather than the player's covenant.",
