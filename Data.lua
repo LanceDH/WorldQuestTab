@@ -1446,8 +1446,14 @@ end
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
 		{["version"] = "9.0.08",
+			["minor"] = "2",
+			["fixes"] = {
+				"Fixed an error for those also running TomTom.",
+			},
+		},
+		{["version"] = "9.0.08",
 			["new"] ={
-				"New filter option 'Ignores Filters': Allows special quest types such as Callings and Threat quests to ignore filters settings and always show (if they would show in the list otherwise)"
+				"New filter 'Ignores Filters': Allows special quest types such as Callings and Threat quests to ignore filters settings and always show (if they would show in the list otherwise)"
 			},
 			["changes"] = {
 				"Calling quests now have their own icon in the quest list and mini icons for pins. When using Blizzard pin icons, pins for callings will now also have a blue inner circle.",

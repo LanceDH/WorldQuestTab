@@ -1128,6 +1128,8 @@ function WQT:OnEnable()
 	end
 
 	wipe(_V["SETTING_LIST"]);
+	
+	self.isEnabled = true;
 end
 
 ------------------------------------------
@@ -2805,7 +2807,7 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 end
 
 function WQT_CoreMixin:LoadExternal(external)
-	if (external:IsLoaded()) then
+	if (self.isEnabled and external:IsLoaded()) then
 		external:Init(WQT_Utils);
 	else
 		tinsert(addon.externals, external);
