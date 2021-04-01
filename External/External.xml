@@ -5,5 +5,6 @@
 	<Script file="External.lua"/>
 	<Script file="WorldFlightMap.lua"/>
 	<Script file="TomTom.lua"/>
+	<Script file="Blizzard_GarrisonUI.lua"/>
  </Ui>
  

@@ -350,9 +350,16 @@ function WQT_Utils:GetFactionDataInternal(id)
 	return factionData[id];
 end
 
-function WQT_Utils:GetCachedTypeIconData(questInfo)
+function WQT_Utils:GetCachedTypeIconData(questInfo, pinVersion)
 	
-	if (questInfo.isDaily or questInfo.isAllyQuest) then
+	if (C_QuestLog.IsQuestCalling(questInfo.questId)) then
+		if (pinVersion) then
+			return "QuestDaily", 17, 17, true;
+		else
+			return "Callings-Available", 16, 21, true;
+			--return "quest-dailycampaign-available", 17, 17, true;
+		end
+	elseif (questInfo.isDaily or questInfo.isAllyQuest) then
 		return "QuestDaily", 17, 17, true;
 	elseif (questInfo.isQuestStart) then
 		return "QuestNormal", 17, 17, true;
@@ -519,7 +526,8 @@ function WQT_Utils:ItterateAllBonusObjectivePins(func)
 end
 
 -- Copy of QuestUtils_AddQuestRewardsToTooltip to prevent SetTooltipMoney from causing taint 
-local function AddQuestRewardsToTooltip(tooltip, questID, style)
+-- Edited to prevent items from overwriting currencies
+local function _AddQuestRewardsToTooltip(tooltip, questID, style)
 	local hasAnySingleLineRewards = false;
 	local isWarModeDesired = C_PvP.IsWarModeDesired();
 	local questHasWarModeBonus = C_QuestLog.QuestCanHaveWarModeBonus(questID);
@@ -541,12 +549,20 @@ local function AddQuestRewardsToTooltip(tooltip, questID, style)
 
 	-- currency
 	if not style.atLeastShowAzerite then
-		local numAddedQuestCurrencies, usingCurrencyContainer = QuestUtils_AddQuestCurrencyRewardsToTooltip(questID, tooltip, tooltip.ItemTooltip);
+		local numQuestRewards = GetNumQuestLogRewards(questID);
+		local itemToolTip = tooltip.ItemTooltip
+		-- If one of the rewards is an item, don't allow currencies to use the use the item tooltip
+		-- In official code this causes the item to overwrite the currency
+		if (GetNumQuestLogRewards(questID) > 0) then
+			itemToolTip = nil;
+		end
+		
+		local numAddedQuestCurrencies, usingCurrencyContainer = QuestUtils_AddQuestCurrencyRewardsToTooltip(questID, tooltip, itemToolTip);
 		if ( numAddedQuestCurrencies > 0 ) then
 			hasAnySingleLineRewards = not usingCurrencyContainer or numAddedQuestCurrencies > 1;
 		end
 	end
-
+	
 	-- honor
 	local honorAmount = GetQuestLogRewardHonor(questID);
 	if ( honorAmount > 0 ) then
@@ -568,6 +584,7 @@ local function AddQuestRewardsToTooltip(tooltip, questID, style)
 	local showRetrievingData = false;
 	local numQuestRewards = GetNumQuestLogRewards(questID);
 	local numCurrencyRewards = GetNumQuestLogRewardCurrencies(questID);
+	local showingItem = false;
 	if numQuestRewards > 0 and (not style.prioritizeCurrencyOverItem or numCurrencyRewards == 0) then
 		if style.fullItemDescription then
 			-- we want to do a full item description
@@ -642,7 +659,7 @@ function WQT_Utils:AddQuestRewardsToTooltip(tooltip, questID, style)
 		end
 		GameTooltip_AddBlankLinesToTooltip(tooltip, style.postHeaderBlankLineCount);
 
-		local hasAnySingleLineRewards, showRetrievingData = AddQuestRewardsToTooltip(tooltip, questID, style);
+		local hasAnySingleLineRewards, showRetrievingData = _AddQuestRewardsToTooltip(tooltip, questID, style);
 
 		if hasAnySingleLineRewards and tooltip.ItemTooltip and tooltip.ItemTooltip:IsShown() then
 			GameTooltip_AddBlankLinesToTooltip(tooltip, 1);
@@ -653,15 +670,15 @@ function WQT_Utils:AddQuestRewardsToTooltip(tooltip, questID, style)
 	end
 end
 
-function WQT_Utils:ShowQuestTooltip(button, questInfo)
+function WQT_Utils:ShowQuestTooltip(button, questInfo, style)
+	style = style or _V["TOOLTIP_STYLES"].default;
 	WQT:ShowDebugTooltipForQuest(questInfo, button);
 	
 	GameTooltip:SetOwner(button, "ANCHOR_RIGHT");
-
 	-- In case we somehow don't have data on this quest, even through that makes no sense at this point
 	if (not questInfo.questId or not HaveQuestData(questInfo.questId)) then
-		GameTooltip:SetText(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
-		GameTooltip.recalculatePadding = true;
+		GameTooltip_SetTitle(GameTooltip, RETRIEVING_DATA, RED_FONT_COLOR);
+		GameTooltip_SetTooltipWaitingForData(GameTooltip, true);
 		GameTooltip:Show();
 		return;
 	end
@@ -669,9 +686,22 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo)
 	local title, factionID, capped = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
 	local tagInfo = questInfo:GetTagInfo();
 	local qualityColor = WORLD_QUEST_QUALITY_COLORS[tagInfo and tagInfo.quality or Enum.WorldQuestQuality.Common];
+
+	-- title
+	GameTooltip_SetTitle(GameTooltip, title, qualityColor.color, true);
 	
-	GameTooltip:SetText(title, qualityColor.r, qualityColor.g, qualityColor.b, 1, true);
+	-- type
+	if (not style.hideType) then
+		if (questInfo:IsQuestOfType(WQT_QUESTTYPE.calling)) then
+			GameTooltip_AddNormalLine(GameTooltip, COVENANT_CALLINGS_AVAILABLE);
+		elseif (questInfo.isAllyQuest) then
+			GameTooltip_AddColoredLine(GameTooltip, AVAILABLE_FOLLOWER_QUEST, HIGHLIGHT_FONT_COLOR, true);
+		elseif (tagInfo and tagInfo.worldQuestType) then
+			QuestUtils_AddQuestTypeToTooltip(GameTooltip, questInfo.questId, NORMAL_FONT_COLOR);
+		end
+	end
 	
+	-- faction
 	if ( factionID ) then
 		local factionName = GetFactionInfoByID(factionID);
 		if ( factionName ) then
@@ -682,33 +712,36 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo)
 			end
 		end
 	end
-
+	
 	-- Add time
 	local seconds, timeString, timeColor, _, _, category = WQT_Utils:GetQuestTimeString(questInfo, true, true)
 	if (seconds > 0 or category == _V["TIME_REMAINING_CATEGORY"].expired) then
 		timeColor = seconds <= SECONDS_PER_HOUR  and timeColor or NORMAL_FONT_COLOR;
-		GameTooltip:AddLine(BONUS_OBJECTIVE_TIME_LEFT:format(timeString), timeColor.r, timeColor.g, timeColor.b);
+		GameTooltip_AddColoredLine(GameTooltip, BONUS_OBJECTIVE_TIME_LEFT:format(timeString), timeColor);
 	end
 
-	local numObjectives = C_QuestLog.GetNumQuestObjectives(questInfo.questId);
-	for objectiveIndex = 1, numObjectives do
-		local objectiveText, _, finished = GetQuestObjectiveInfo(questInfo.questId, objectiveIndex, false);
-		if ( objectiveText and #objectiveText > 0 ) then
-			local objectiveColor = finished and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
-			GameTooltip:AddLine(QUEST_DASH .. objectiveText, objectiveColor.r, objectiveColor.g, objectiveColor.b, true);
+	if (not style.hideObjectives) then
+		local numObjectives = C_QuestLog.GetNumQuestObjectives(questInfo.questId);
+		for objectiveIndex = 1, numObjectives do
+			local objectiveText, objectiveType, finished = GetQuestObjectiveInfo(questInfo.questId, objectiveIndex, false);
+	
+			if ( objectiveText and #objectiveText > 0 ) then
+				local objectiveColor = finished and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
+				GameTooltip:AddLine(QUEST_DASH .. objectiveText, objectiveColor.r, objectiveColor.g, objectiveColor.b, true);
+			end
+			-- Add a progress bar if that's the type
+			if(objectiveType == "progressbar") then
+				local percent = GetQuestProgressBarPercent(questInfo.questId);
+				GameTooltip_ShowProgressBar(GameTooltip, 0, 100, percent, PERCENTAGE_STRING:format(percent));
+			end
 		end
 	end
-
-	local percent = C_TaskQuest.GetQuestProgressBarInfo(questInfo.questId);
-	if ( percent ) then
-		GameTooltip_ShowProgressBar(GameTooltip, 0, 100, percent, PERCENTAGE_STRING:format(percent));
-	end
-
+	
 	if (questInfo.reward.type == WQT_REWARDTYPE.missing) then
 		GameTooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
 	else
 		self:AddQuestRewardsToTooltip(GameTooltip, questInfo.questId);
-		
+
 		-- reposition compare frame
 		if((questInfo.reward.type == WQT_REWARDTYPE.equipment or questInfo.reward.type == WQT_REWARDTYPE.weapon) and GameTooltip.ItemTooltip:IsShown()) then
 			if IsModifiedClick("COMPAREITEMS") or C_CVar.GetCVarBool("alwaysCompareItems") then
@@ -741,7 +774,6 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo)
 	end
 
 	GameTooltip:Show();
-	GameTooltip.recalculatePadding = true;
 end
 
 -- Climb map parents until the first continent type map it can find.
@@ -1155,6 +1187,13 @@ function WQT_Utils:SetQuestDisliked(questID, isDisliked)
 	end
 	PlaySound(soundID, nil, false);
 end 
+
+function WQT_Utils:QuestIsVIQ(questInfo)
+	if (questInfo:IsQuestOfType(WQT_QUESTTYPE.calling)) then return WQT.settings.general.filterPasses.calling; end
+	if (questInfo:IsQuestOfType(WQT_QUESTTYPE.threat)) then return WQT.settings.general.filterPasses.threat; end
+	if (questInfo:IsQuestOfType(WQT_QUESTTYPE.combatAlly)) then return WQT.settings.general.filterPasses.combatAlly; end
+	return false;
+end
 
 --------------------------
 -- Colors

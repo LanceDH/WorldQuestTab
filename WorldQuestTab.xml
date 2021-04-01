@@ -19,7 +19,7 @@
 	
 	<include file="Callings\CallingsBoard.xml"/>
 	
-	<Include file="External\External.xml"/>
+	<!--<Include file="External\External.xml"/>-->
 	<Include file="Debug.xml"/>
 	
 	<Button name="WQT_TabTemplate" virtual="true">

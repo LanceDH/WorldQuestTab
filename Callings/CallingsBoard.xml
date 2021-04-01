@@ -32,7 +32,7 @@
 			</Layer>
 			<Layer level="BACKGROUND" textureSubLevel="2">
 				<Texture parentKey="Glow" atlas="Callings-Glow">
-					<Size x="44" y="43"/>
+					<Size x="46" y="46"/>
 					<Anchors>
 						<Anchor point="CENTER" y="2"/>
 					</Anchors>

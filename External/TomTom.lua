@@ -123,4 +123,4 @@ function TomTomExternal:Init(utils)
 	WQT_WorldQuestFrame:HookEvent("QUEST_WATCH_LIST_CHANGED", QuestListChangedHook);
 end
 
-tinsert(addon.externals, TomTomExternal);
+WQT_WorldQuestFrame:LoadExternal(TomTomExternal);

@@ -63,7 +63,7 @@ local function RewardSortFunc(a, b)
 		return aPassed and not bPassed;
 	end
 	
-	if (a.type == b.type) then
+	if (a.quality == b.quality) then
 		if (a.quality == b.quality) then
 			if (a.id and b.id and a.id ~= b.id) then
 				return a.id > b.id;
@@ -73,9 +73,9 @@ local function RewardSortFunc(a, b)
 			end
 			return a.amount > b.amount;
 		end
-		return a.quality  > b.quality;
+		return a.type  < b.type;
 	end
-	return a.type < b.type;
+	return a.quality > b.quality;
 end
 
 local function ScanTooltipRewardForPattern(questID, pattern)
@@ -114,9 +114,15 @@ end
 
 local QuestInfoMixin = {};
 
-function WQT_Utils:QuestCreationFunc()
+function WQT_Utils:QuestCreationFunc(questId)
 	local questInfo = CreateFromMixins(QuestInfoMixin);
-	local hasRewardData = questInfo:OnCreate();
+	questInfo:OnCreate();
+	
+	local hasRewardData = false;
+	if (questId) then
+		hasRewardData = questInfo:Init(questId);
+	end
+	
 	return questInfo, hasRewardData;
 end
 
@@ -135,7 +141,15 @@ function QuestInfoMixin:Init(questId, isDaily, isCombatAllyQuest, alwaysHide, po
 	self.isValid = HaveQuestData(self.questId);
 	self.time.seconds = WQT_Utils:GetQuestTimeString(self); -- To check if expired or never had a time limit
 	self.passedFilter = true;
+	
+	-- quest type
+	self.typeBits = WQT_QUESTTYPE.normal;
+	if (isDaily) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.daily); end
+	if (C_QuestLog.IsThreatQuest(self.questId)) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.threat); end
+	if (C_QuestLog.IsQuestCalling(self.questId)) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.calling); end
+	if (isCombatAllyQuest) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.combatAlly); end
 
+	-- rewards
 	self:LoadRewards();
 	
 	return self.hasRewardData;
@@ -162,6 +176,7 @@ function QuestInfoMixin:Reset()
 	WipeQuestInfoRecursive(self);
 	-- Reset defaults
 	self.reward.typeBits = WQT_REWARDTYPE.missing;
+	self.typeBits = WQT_QUESTTYPE.normal;
 	self.hasRewardData = false;
 	self.isValid = false;
 	self.tagInfo = nil;
@@ -429,6 +444,14 @@ end
 
 function QuestInfoMixin:DataIsValid()
 	return self.questId ~= nil;
+end
+
+function QuestInfoMixin:IsSpecialType()
+	return self.typeBits ~= WQT_QUESTTYPE.normal;
+end
+
+function QuestInfoMixin:IsQuestOfType(questType)
+	return bit.band(self.typeBits, questType) > 0;
 end
 
 ----------------------------

@@ -7,15 +7,15 @@ end
 local WQT_Utils;
 
 
-local ExampleExternal = CreateFromMixins(WQT_ExternalMixin);
+local external = CreateFromMixins(WQT_ExternalMixin);
 
-function ExampleExternal:GetName()
+function external:GetName()
 	-- Return Add-on name
 	return "Base";
 end
 
 -- This function will run the moment the external load
-function ExampleExternal:Init(utils)
+function external:Init(utils)
 	WQT_Utils = utils;
 	print("Base");
 	-- Callbacks for actions the add-on does
@@ -25,7 +25,7 @@ function ExampleExternal:Init(utils)
 end
 
 -- Make the add-on load your stuff
--- WQT_WorldQuestFrame:LoadExternal(ExampleExternal);
+WQT_WorldQuestFrame:LoadExternal(external);
 ]]--
 
 

@@ -26,4 +26,4 @@ function WorldFlightMapExternal:Init()
 	WQT_WorldQuestFrame:RegisterCallback("MapPinInitialized", ReApplyPinAlphas);
 end
 
-tinsert(addon.externals, WorldFlightMapExternal);
+WQT_WorldQuestFrame:LoadExternal(WorldFlightMapExternal);

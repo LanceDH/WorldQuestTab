@@ -80,6 +80,7 @@ function WQT_CallingsBoardMixin:OnEvent(event, ...)
 		local now = GetTime();
 		if (now - self.lastUpdate > 0.5) then
 			local callings = ...;
+			self:UpdateCovenant();
 			self:ProcessCallings(callings);
 			
 			self.lastUpdate = now;
@@ -149,7 +150,6 @@ function WQT_CallingsBoardMixin:UpdateCovenant()
 end
 
 function WQT_CallingsBoardMixin:ProcessCallings(callings)
-	
 	if (self.isUpdating) then
 		-- 1 Update at a time, ty
 		return;
@@ -232,6 +232,13 @@ function WQT_CallingsBoardMixin:CalculateUncappedObjectives(calling)
 	return numCompleted, numTotal;
 end
 
+function WQT_CallingsBoardMixin:GetQuestData(questID) 
+	for k, display in ipairs(self.Displays) do
+		if (display.calling and display.calling.questID == questID) then
+			return display.questInfo, display.calling;
+		end
+	end
+end
 
 WQT_CallingsBoardDisplayMixin = {};
 
@@ -267,10 +274,6 @@ function WQT_CallingsBoardDisplayMixin:SetCovenant(covenantData)
 		end
 		
 		self.ProgressBar.Glow:SetVertexColor(r, g, b);
-		
-		--self.ProgressBar.BG:SetVertexColor(0.4, 0.4, 0.4);
-		--bgAtlas = string.format("covenantchoice-celebration-%sglowline", covenantData.textureKit:lower());
-		--self.ProgressBar.Glow:SetAtlas(bgAtlas);
 	end
 end
 
@@ -377,11 +380,8 @@ end
 
 function WQT_CallingsBoardDisplayMixin:OnEnter()
 	if (not self.calling) then return; end
-
-	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 	
 	if (self.calling.isLockedToday) then 
-	
 		local daysUntilString = "";
 		if (GetBuildInfo() < "9.0.5") then
 			daysUntilString = self.calling:GetDaysUntilNextString();
@@ -389,50 +389,23 @@ function WQT_CallingsBoardDisplayMixin:OnEnter()
 			local days = MAX_CALLINGS - self.calling.index + 1;
 			daysUntilString = _G["BOUNTY_BOARD_NO_CALLINGS_DAYS_" .. days] or BOUNTY_BOARD_NO_CALLINGS_DAYS_1;
 		end
+		
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 		GameTooltip:SetText(daysUntilString, HIGHLIGHT_FONT_COLOR:GetRGB());
+		GameTooltip:Show();
 	else
 		self.Highlight:Show();
+		if (self.calling:IsActive()) then
+			WQT_Utils:ShowQuestTooltip(self, self.questInfo, _V["TOOLTIP_STYLES"].callingActive);
+		else
+			WQT_Utils:ShowQuestTooltip(self, self.questInfo, _V["TOOLTIP_STYLES"].callingAvailable);
+		end
+		
 
 		local questInfo = self.questInfo;
 		local questID = self.calling.questID;
 		local title = QuestUtils_GetQuestName(questID);
-		GameTooltip_SetTitle(GameTooltip, title);
-		
-		local activeCovenantID = C_Covenants.GetActiveCovenantID();
-		if activeCovenantID and activeCovenantID > 0 then
-			local covenantData = C_Covenants.GetCovenantData(activeCovenantID);
-			if covenantData then
-				GameTooltip_AddNormalLine(GameTooltip, covenantData.name);
-			end
-		end
-		
-		local seconds, timeString, timeColor, _, _, category = WQT_Utils:GetQuestTimeString(questInfo, true, true)
-		if (seconds > 0 or category == _V["TIME_REMAINING_CATEGORY"].expired) then
-			timeColor = seconds <= SECONDS_PER_HOUR  and timeColor or NORMAL_FONT_COLOR;
-			GameTooltip:AddLine(BONUS_OBJECTIVE_TIME_LEFT:format(timeString), timeColor.r, timeColor.g, timeColor.b);
-		end
-		
-		local numObjectives = C_QuestLog.GetNumQuestObjectives(questInfo.questId);
-		for objectiveIndex = 1, numObjectives do
-			local objectiveText, objectiveType, finished, numFulfilled, numRequired = GetQuestObjectiveInfo(questInfo.questId, objectiveIndex, false);
-			if ( objectiveText and #objectiveText > 0 ) then
-				local objectiveColor = finished and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
-				GameTooltip:AddLine(QUEST_DASH .. objectiveText, objectiveColor.r, objectiveColor.g, objectiveColor.b, true);
-				-- Add a progress bar if that's the type
-				if(objectiveType == "progressbar") then
-					local percent = math.floor((numFulfilled/numRequired) * 100);
-					GameTooltip_ShowProgressBar(GameTooltip, 0, numRequired, numFulfilled, PERCENTAGE_STRING:format(percent));
-				end
-			end
-		end
-		
-		GameTooltip_AddBlankLineToTooltip(GameTooltip);
-		GameTooltip_AddNormalLine(GameTooltip, CALLING_QUEST_TOOLTIP_DESCRIPTION, true);
-		GameTooltip_AddQuestRewardsToTooltip(GameTooltip, questID, TOOLTIP_QUEST_REWARDS_STYLE_CALLING_REWARD);
 	end
-
-	GameTooltip:Show();
-	GameTooltip.recalculatePadding = true;
 end
 
 function WQT_CallingsBoardDisplayMixin:OnLeave()

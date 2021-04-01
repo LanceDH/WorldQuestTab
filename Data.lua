@@ -94,20 +94,29 @@ WQT_REWARDTYPE = {
 	["none"] = 			0,		--0
 	["weapon"] = 		2^0,	--1
 	["equipment"] =		2^1,	--2
-	["conduit"] = 		2^3,	--4
-	["relic"] = 			2^4,	--4
-	["anima"] = 			2^5,	--8
-	["artifact"] = 		2^6,	--16
-	["spell"] = 			2^7,	--32
-	["item"] = 			2^8,	--64
-	["gold"] = 			2^9,	--128
-	["currency"] = 		2^10,	--256
-	["honor"] = 			2^11,	--512
-	["reputation"] =		2^12,	--1024
-	["xp"] = 			2^13,	--2048
-	["missing"] = 		2^14,	--4096
+	["conduit"] = 		2^2,	--4
+	["relic"] = 			2^3,	--8
+	["anima"] = 			2^4,	--16
+	["artifact"] = 		2^5,	--32
+	["spell"] = 			2^6,	--64
+	["item"] = 			2^7,	--128
+	["gold"] = 			2^8,	--256
+	["currency"] = 		2^9,	--512
+	["honor"] = 			2^10,	--1024
+	["reputation"] =		2^11,	--2048
+	["xp"] = 			2^12,	--4096
+	["missing"] = 		2^13,	--8192
 	
 };
+
+WQT_QUESTTYPE = {
+	["normal"] = 	0,
+	["daily"] = 		2^0,	--1
+	["threat"] =		2^1,	--2
+	["calling"] = 	2^2,	--4
+	["bonus"] = 		2^3,	--8
+	["combatAlly"] =	2^4,	--16
+}
 
 _V["CONDUIT_SUBTYPE"] = {
 	["endurance"] = 1,
@@ -366,6 +375,12 @@ _DeepWipeTable(ZonesByExpansion);
 _V["PATH_CUSTOM_ICONS"] = "Interface/Addons/WorldQuestTab/Images/CustomIcons";
 _V["LIST_ANCHOR_TYPE"] = {["flight"] = 1, ["world"] = 2, ["full"] = 3, ["taxi"] = 4};
 _V["CURRENT_EXPANSION"] = LE_EXPANSION_SHADOWLANDS;
+
+_V["TOOLTIP_STYLES"] = { 
+	["default"] = {},
+	["callingAvailable"] = { ["hideObjectives"] = true; },
+	["callingActive"] = { ["hideType"] = true; },
+}
 
 _V["COLOR_IDS"] = {
 }
@@ -1361,6 +1376,11 @@ _V["WQT_DEFAULTS"] = {
 			sl_callingsBoard = true;
 			sl_genericAnimaIcons = false;
 			
+			filterPasses = {
+				["calling"] = true;
+				["threat"] = true,
+				["combatAlly"] = true,
+			};
 			dislikedQuests = {};
 			
 			loadUtilities = true;
@@ -1425,10 +1445,18 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
-		{["version"] = "9.0.07",
-			["minor"] = 2,
+		{["version"] = "9.0.08",
+			["new"] ={
+				"New filter option 'Ignores Filters': Allows special quest types such as Callings and Threat quests to ignore filters settings and always show (if they would show in the list otherwise)"
+			},
+			["changes"] = {
+				"Calling quests now have their own icon in the quest list and mini icons for pins. When using Blizzard pin icons, pins for callings will now also have a blue inner circle.",
+				"Tooltips rewarding currency and an item will now show everything. In other words, callings will now show if they'll reward an Emblem of Renown.",
+				"Quests will now sort their rewards by quality over type. As an example, callings will prioritize showing the Emblem of Renown over the loot container.",
+				"Some minor tooltip tweaks both in terms of functionality and information.",
+			},
 			["fixes"] = {
-				"Fixed the 'C_QuestLog.IsThreatQuest' error.",
+				"Fixed some missing info in tooltips on the callings board.",
 			},
 		},
 		{["version"] = "9.0.07",
