@@ -348,7 +348,7 @@ function WQT_CallingsBoardDisplayMixin:UpdateProgress()
 		return;
 	end
 	
-	if (goal > MAX_BOUNTY_OBJECTIVES) then 
+	if (goal > 4) then 
 		self.ProgressBar:Show();
 		local perc = progress / goal;
 		local width = self.ProgressBar:GetWidth();
@@ -358,21 +358,20 @@ function WQT_CallingsBoardDisplayMixin:UpdateProgress()
 		return
 	end
 	
-	
 	for i=1, goal do
 		local icon = self.miniIcons:Create();
-		local atlas, desaturate;
-		if (i <= progress) then
-			atlas = ("shadowlands-landingbutton-%s-up"):format(self.covenantData.textureKit);
-			desaturate = false;
-		else
-			atlas = ("shadowlands-landingbutton-%s-down"):format(self.covenantData.textureKit);
+		local atlas = ("%sassaultsquest-32x32"):format(self.covenantData.textureKit);
+		local vertCol = 1; 
+		local desaturate;
+		
+		if (i > progress) then
+			vertCol = 0.65;
 			desaturate = true;
 		end
 		icon:SetupIcon(atlas);
+		icon:SetIconSize(12, 12);
 		icon:SetDesaturated(desaturate);
-		icon:SetIconSize(20, 20);
-		icon:SetBackgroundScale(1.35)
+		icon:SetIconColorRGBA(vertCol, vertCol, vertCol);
 	end
 end
 

@@ -43,14 +43,14 @@ function WQT_MiniIconMixin:Reset()
 end
 
 function WQT_MiniIconMixin:SetIconColor(color)
-	self.r, self.g, self.b = color:GetRGB();
-	self:Update();
+	self:SetIconColorRGBA(color:GetRGB());
 end
 
 function WQT_MiniIconMixin:SetIconColorRGBA(r, g, b, a)
 	self.r = r;
 	self.g = g;
 	self.b = b;
+	self.hasCustomColor = true;
 	self:Update();
 end
 
@@ -135,7 +135,9 @@ function WQT_MiniIconMixin:Update()
 	local r, g, b = 1, 1, 1;
 	self.Icon:SetDesaturated(false);
 	if (self.isDesaturated) then
-		if (self.left) then
+		if(self.hasCustomColor) then
+			r, g, b = self.r, self.g, self.b;
+		elseif (self.left) then
 			r, g, b = 0.8, 0.8, 0.8;
 		else
 			self.Icon:SetDesaturated(true);
@@ -364,7 +366,9 @@ function WQT_Utils:GetCachedTypeIconData(questInfo, pinVersion)
 	elseif (questInfo.isQuestStart) then
 		return "QuestNormal", 17, 17, true;
 	elseif (C_QuestLog.IsThreatQuest(questInfo.questId)) then
-		 return "worldquest-icon-nzoth", 14, 14, true;
+		local themeInfo = C_QuestLog.GetQuestDetailsTheme(questInfo.questId);
+		local atlas = themeInfo and themeInfo.poiIcon or "worldquest-icon-nzoth";
+		return atlas, 16, 16, true;
 	end
 	
 	local tagInfo = questInfo:GetTagInfo();
