@@ -1,8 +1,8 @@
-﻿## Interface: 90200
+﻿## Interface: 90205
 ## Title: World Quest Tab
 ## Notes: Creates a new quest tab to keep track of world quests.
 ## Author: LanceDH. Maintenance by Anarior-Aman'thul.
-## Version: 9.2.01
+## Version: 9.2.1
 ## SavedVariables: BWQDB
 
 WorldQuestTab.xml
