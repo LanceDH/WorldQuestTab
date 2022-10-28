@@ -91,11 +91,12 @@
 		<Size x="28" y="29" />
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="Icon" file="Interface\ICONS\INV_Misc_QuestionMark"/>
-				<Anchors>
-					<Anchor point="TOPLEFT" x="1" y="-1"/>
-					<Anchor point="BOTTOMRIGHT" x="-1" y="1"/>
-				</Anchors>
+				<Texture parentKey="Icon" file="Interface\ICONS\INV_Misc_QuestionMark">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="1" y="-1"/>
+						<Anchor point="BOTTOMRIGHT" x="-1" y="1"/>
+					</Anchors>
+				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
 				<FontString parentKey="Amount" inherits="WQT_NumberFontOutline" maxLines="1" justifyH="RIGHT">

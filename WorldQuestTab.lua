@@ -2074,12 +2074,13 @@ function WQT_CoreMixin:OnLoad()
 			WQT_WorldQuestFrame:TriggerCallback("QuestsLoaded")
 		end, addonName)
 	
-	self.dataProvider:RegisterCallback("BufferUpdated", function(progress) 
-			if (progress == 0) then
+	self.dataProvider:RegisterCallback("BufferUpdated", function(progress)
+			if (progress == 0 or progress == 1) then
 				self.ProgressBar:Hide();
+			else
+				CooldownFrame_SetDisplayAsPercentage(self.ProgressBar, progress);
+				self.ProgressBar.Pointer:SetRotation(-progress*6.2831);
 			end
-			CooldownFrame_SetDisplayAsPercentage(self.ProgressBar, progress);
-			self.ProgressBar.Pointer:SetRotation(-progress*6.2831);
 		end, addonName)
 
 	-- Events
@@ -2298,7 +2299,8 @@ function WQT_CoreMixin:OnLoad()
 		end);
 
 	local LFGParent = LFGListSearchPanelScrollFrameScrollChild;
-	LFGParent.StartGroupButton:HookScript("OnClick", function() 
+	if LFGParent ~= nil then
+		LFGParent.StartGroupButton:HookScript("OnClick", function() 
 			-- If we are creating a group because we couldn't find one, show the info on the create frame
 			if InCombatLockdown() then return; end
 			local searchString = LFGListFrame.SearchPanel.SearchBox:GetText();
@@ -2317,6 +2319,7 @@ function WQT_CoreMixin:OnLoad()
 				WQT_GroupSearch:Show();
 			end
 		end)
+	end
 
 	-- Hook hiding of official pins if we replace them with our own
 	local mapWQProvider = WQT_Utils:GetMapWQProvider();
