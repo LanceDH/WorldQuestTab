@@ -2298,8 +2298,8 @@ function WQT_CoreMixin:OnLoad()
 			end
 		end);
 
-	local LFGParent = LFGListSearchPanelScrollFrameScrollChild;
-	if LFGParent ~= nil then
+	local LFGParent = LFGListFrame.SearchPanel.ScrollBox;
+	if LFGParent and LFGParent.StartGroupButton then
 		LFGParent.StartGroupButton:HookScript("OnClick", function() 
 			-- If we are creating a group because we couldn't find one, show the info on the create frame
 			if InCombatLockdown() then return; end
