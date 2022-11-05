@@ -382,13 +382,9 @@ function WQT_CallingsBoardDisplayMixin:OnEnter()
 	
 	if (self.calling.isLockedToday) then 
 		local daysUntilString = "";
-		if (GetBuildInfo() < "9.0.5") then
-			daysUntilString = self.calling:GetDaysUntilNextString();
-		else
-			local days = MAX_CALLINGS - self.calling.index + 1;
-			daysUntilString = _G["BOUNTY_BOARD_NO_CALLINGS_DAYS_" .. days] or BOUNTY_BOARD_NO_CALLINGS_DAYS_1;
-		end
-		
+		local days = MAX_CALLINGS - self.calling.index + 1;
+		daysUntilString = _G["BOUNTY_BOARD_NO_CALLINGS_DAYS_" .. days] or BOUNTY_BOARD_NO_CALLINGS_DAYS_1;
+
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 		GameTooltip:SetText(daysUntilString, HIGHLIGHT_FONT_COLOR:GetRGB());
 		GameTooltip:Show();
