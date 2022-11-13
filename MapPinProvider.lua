@@ -79,7 +79,7 @@ local function ShouldShowPin(questInfo, mapType, settingsZoneVisible, settingsPi
 			return false;
 		end
 	elseif (mapType >= Enum.UIMapType.Zone) then
-		-- Never show on continent
+		-- Never show on zone
 		if (settingsZoneVisible == _V["ENUM_PIN_ZONE"].none) then
 			return false;
 		end

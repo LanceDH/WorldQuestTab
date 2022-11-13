@@ -1291,5 +1291,3 @@ function WQT_Utils:GetRewardTypeColorIDs(rewardType)
 	
 	return self:GetColor(ring), self:GetColor(text);
 end
-
-

@@ -2074,7 +2074,7 @@ function WQT_CoreMixin:OnLoad()
 			WQT_WorldQuestFrame:TriggerCallback("QuestsLoaded")
 		end, addonName)
 	
-	self.dataProvider:RegisterCallback("BufferUpdated", function(progress)
+	self.dataProvider:RegisterCallback("BufferUpdated", function(progress) 
 			if (progress == 0 or progress == 1) then
 				self.ProgressBar:Hide();
 			else
@@ -2285,13 +2285,13 @@ function WQT_CoreMixin:OnLoad()
 		end);
 		
 	LFGListFrame.EntryCreation:HookScript("OnHide", function() 
-			if (not InCombatLockdown()) then
+		if (not InCombatLockdown()) then
 				WQT_GroupSearch:Hide();
 			end
 		end);
 		
 	hooksecurefunc("LFGListUtil_FindQuestGroup", function(questID, isFromGreenEyeButton)
-			if (isFromGreenEyeButton) then
+		if (isFromGreenEyeButton) then
 				WQT_GroupSearch:Hide();
 				WQT_GroupSearch.questId = nil;
 				WQT_GroupSearch.title = nil;
@@ -2320,7 +2320,6 @@ function WQT_CoreMixin:OnLoad()
 			end
 		end)
 	end
-
 	-- Hook hiding of official pins if we replace them with our own
 	local mapWQProvider = WQT_Utils:GetMapWQProvider();
 	hooksecurefunc(mapWQProvider, "RefreshAllData", function() 

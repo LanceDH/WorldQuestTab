@@ -1,4 +1,4 @@
-local MAJOR, MINOR = "AddonDropDownTemplates-2.0", 2
+﻿local MAJOR, MINOR = "AddonDropDownTemplates-2.0", 2
 local ADDT, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not ADDT then return end -- No Upgrade needed.

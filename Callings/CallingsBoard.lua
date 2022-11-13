@@ -428,11 +428,3 @@ function WQT_CallingsBoardDisplayMixin:OnClick()
 		end
 	end
 end
-
-
-
-
-
-
-
-

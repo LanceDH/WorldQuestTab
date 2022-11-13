@@ -145,7 +145,16 @@ local function _DeepWipeTable(t)
 	wipe(t);
 	t = nil;
 end
-
+-- /dump WorldMapFrame:GetMapID()
+local WQT_DRAGONFLIGHT = {
+	[2026] =  {["x"] = 0.66, ["y"] = 0.09}, -- Forbidden Reach
+	[2112] =  {["x"] = 0.55, ["y"] = 0.48}, -- Valdrakken
+	[2022] =  {["x"] = 0.49, ["y"] = 0.35}, -- Waking Shores
+	[2023] =  {["x"] = 0.42, ["y"] = 0.56}, -- Ohn'ahran Plains
+	[2024] =  {["x"] = 0.53, ["y"] = 0.74}, -- Azure Span
+	[2025] =  {["x"] = 0.63, ["y"] = 0.50}, -- Thaldraszus
+	[2085] =  {["x"] = 0.66, ["y"] = 0.57}, -- Primalist Future
+}
 local WQT_SHADOWLANDS = {
 	[1543] =  {["x"] = 0.23, ["y"] = 0.13}, -- The Maw
 	[1536] = {["x"] = 0.62, ["y"] = 0.21}, -- Maldraxxus
@@ -153,6 +162,8 @@ local WQT_SHADOWLANDS = {
 	[1670] = {["x"] = 0.47, ["y"] = 0.51}, -- Oribos
 	[1533] = {["x"] = 0.71, ["y"] = 0.57}, -- Bastion
 	[1565] = {["x"] = 0.48, ["y"] = 0.80}, -- Ardenweald
+	[1961] = {["x"] = 0.30, ["y"] = 0.25}, -- Korthia
+	[1970] = {["x"] = 0.85, ["y"] = 0.80}, -- Zereth Mortis
 }
 local WQT_ZANDALAR = {
 	[864] =  {["x"] = 0.39, ["y"] = 0.32}, -- Vol'dun
@@ -170,6 +181,11 @@ local WQT_KULTIRAS = {
 	[1355] = {["x"] = 0.86, ["y"] = 0.14}, -- Nazjatar
 	[1462] = {["x"] = 0.17, ["y"] = 0.28}, -- Mechagon
 }
+local WQT_LEGION_ARGUS = {
+	[830]	= {["x"] = 0.49, ["y"] = 0.29}, -- Krokuun
+	[885]	= {["x"] = 0.29, ["y"] = 0.71}, -- Antoran Wastes
+	[882]	= {["x"] = 0.80, ["y"] = 0.71}, -- Mac'Aree
+}
 local WQT_LEGION = {
 	[630]	= {["x"] = 0.33, ["y"] = 0.58}, -- Azsuna
 	[680]	= {["x"] = 0.46, ["y"] = 0.45}, -- Suramar
@@ -179,9 +195,7 @@ local WQT_LEGION = {
 	[790]	= {["x"] = 0.46, ["y"] = 0.84}, -- Eye of Azshara
 	[646]	= {["x"] = 0.54, ["y"] = 0.68}, -- Broken Shore
 	[627]	= {["x"] = 0.45, ["y"] = 0.64}, -- Dalaran
-	[830]	= {["x"] = 0.86, ["y"] = 0.15}, -- Krokuun
-	[885]	= {["x"] = 0.86, ["y"] = 0.15}, -- Antoran Wastes
-	[882]	= {["x"] = 0.86, ["y"] = 0.15}, -- Mac'Aree
+	[905] 	= {["x"] = 0.86, ["y"] = 0.17}, -- Argus
 }
 local WQT_KALIMDOR = { 
 	[81] 	= {["x"] = 0.42, ["y"] = 0.82}, -- Silithus
@@ -282,13 +296,34 @@ local WQT_DRAENOR = {
 }
 
 local ZonesByExpansion = {
-	[LE_EXPANSION_SHADOWLANDS] = {
+	[LE_EXPANSION_DRAGONFLIGHT] = {
+		1978, -- Dragon Isles
+		2026, -- Forbidden Reach
+		2112, -- Valdrakken
+		2022, -- Waking Shores
+		2023, -- Ohn'ahran Plains
+		2024, -- Azure Span
+		2025, -- Thaldraszus
+		2085, -- Primalist Future
+	}
+	,[LE_EXPANSION_SHADOWLANDS] = {
+		1550, -- The Shadowlands
 		1543, -- The Maw
 		1536, -- Maldraxxus
 		1525, -- Revendreth
 		1670, -- Oribos
 		1533, -- Bastion
 		1565, -- Ardenweald
+		1701, -- Ardenweald covenant
+		1702, -- Ardenweald covenant
+		1703, -- Ardenweald covenant
+		1707, -- Bastion Covenant
+		1708, -- Bastion Covenant
+		1699, -- Revendreth Covenant
+		1700, -- Revendreth Covenant
+		1698, -- Maldraxxus Covenant
+		1961, -- Korthia
+		1970, -- Zereth Mortis
 	}
 	,[LE_EXPANSION_BATTLE_FOR_AZEROTH] = {
 		875, -- Zandalar
@@ -348,9 +383,11 @@ local function AddZonesToList(t)
 	end
 end
 
+AddZonesToList(WQT_DRAGONFLIGHT);
 AddZonesToList(WQT_SHADOWLANDS);
 AddZonesToList(WQT_ZANDALAR);
 AddZonesToList(WQT_KULTIRAS);
+AddZonesToList(WQT_LEGION_ARGUS);
 AddZonesToList(WQT_LEGION);
 AddZonesToList(WQT_KALIMDOR);
 AddZonesToList(WQT_EASTERN_KINGDOMS);
@@ -374,7 +411,7 @@ _DeepWipeTable(ZonesByExpansion);
 
 _V["PATH_CUSTOM_ICONS"] = "Interface/Addons/WorldQuestTab/Images/CustomIcons";
 _V["LIST_ANCHOR_TYPE"] = {["flight"] = 1, ["world"] = 2, ["full"] = 3, ["taxi"] = 4};
-_V["CURRENT_EXPANSION"] = LE_EXPANSION_SHADOWLANDS;
+_V["CURRENT_EXPANSION"] = LE_EXPANSION_DRAGONFLIGHT;
 
 _V["TOOLTIP_STYLES"] = { 
 	["default"] = {},
@@ -1183,7 +1220,7 @@ _V["REWARD_TYPE_ATLAS"] = {
 			[_V["CONDUIT_SUBTYPE"].potency] = {["texture"] =  "soulbinds_tree_conduit_icon_attack", ["scale"] = 1.15};
 			[_V["CONDUIT_SUBTYPE"].endurance] = {["texture"] =  "soulbinds_tree_conduit_icon_protect", ["scale"] = 1.15};
 			[_V["CONDUIT_SUBTYPE"].finesse] = {["texture"] =  "soulbinds_tree_conduit_icon_utility", ["scale"] = 1.15};
-		}-- Anima
+		}-- Conduits
 	}	
 
 _V["FILTER_FUNCTIONS"] = {
@@ -1216,16 +1253,21 @@ _V["FILTER_FUNCTIONS"] = {
 			,["None"]		= function(questInfo, tagInfo) return questInfo.reward.typeBits == WQT_REWARDTYPE.none; end
 			}
 	};
-
+-- /dump WorldMapFrame:GetMapID()
+-- /dump FlightMapFrame:GetMapID()
 _V["WQT_CONTINENT_GROUPS"] = {
 		[875]	= {876} 
 		,[1011]	= {876}  -- Zandalar flightmap
 		,[876]	= {875}
 		,[1014]	= {875} -- Kul Tiras flightmap
 		,[1504]	= {875, 876} -- Nazjatar flightmap
+		,[619]	= {905} -- Legion
+		,[905]	= {619} -- Argus
+		
 	}
 
 _V["ZONE_SUBZONES"] = {
+	[2025] = {2112, 2085}; -- Thaldraszus, Valdrakken, Primalist Future
 	[1565] = {1701, 1702, 1703}; -- Ardenweald covenant
 	[1533] = {1707, 1708}; -- Bastion Covenant
 	[1525] = {1699, 1700}; -- Revendreth Covenant
@@ -1233,7 +1275,9 @@ _V["ZONE_SUBZONES"] = {
 }
 
 _V["WQT_ZONE_MAPCOORDS"] = {
-		[1647] 	= WQT_SHADOWLANDS -- Shadowlands flightmap
+		[2057] = WQT_DRAGONFLIGHT -- Dragonflight flightmap
+		,[1978] = WQT_DRAGONFLIGHT -- Dragonflight
+		,[1647] = WQT_SHADOWLANDS -- Shadowlands flightmap
 		,[1550]	= WQT_SHADOWLANDS -- Shadowlands
 		,[875]	= WQT_ZANDALAR -- Zandalar
 		,[1011]	= WQT_ZANDALAR -- Zandalar flightmap
@@ -1242,11 +1286,11 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 		,[1504]	= { -- Nazjatar flightmap
 			[1355] = {["x"] = 0, ["y"] = 0} -- Nazjatar
 		}
+		,[905] 	= WQT_LEGION_ARGUS -- Argus
 		,[619] 	= WQT_LEGION 
 		,[993] 	= WQT_LEGION -- Flightmap	
-		,[905] 	= WQT_LEGION -- Argus
 		,[12] 	= WQT_KALIMDOR 
-		,[1209] 	= WQT_KALIMDOR -- Flightmap
+		,[1209] = WQT_KALIMDOR -- Flightmap
 		,[13]	= WQT_EASTERN_KINGDOMS
 		,[1208]	= WQT_EASTERN_KINGDOMS -- Flightmap
 		,[101]	= WQT_OUTLAND
@@ -1261,11 +1305,19 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 			[210] = {["x"] = 0.42, ["y"] = 0.62} -- Cape
 			,[50] = {["x"] = 0.67, ["y"] = 0.40} -- North
 		}
-		,[947]		= {	
-		} -- All of Azeroth
+		,[947]	= { -- All of Azeroth
+			[12] = {["x"] = 0.24, ["y"] = 0.55}
+			,[13] = {["x"] = 0.89, ["y"] = 0.52}
+			,[113] = {["x"] = 0.49, ["y"] = 0.12}
+			,[424] = {["x"] = 0.48, ["y"] = 0.82}
+			,[619] = {["x"] = 0.58, ["y"] = 0.39}
+			,[875] = {["x"] = 0.54, ["y"] = 0.63}
+			,[876] = {["x"] = 0.71, ["y"] = 0.50}
+			,[1978] = {["x"] = 0.77, ["y"] = 0.22}
+		}
 	}
 
-_V["WQT_NO_FACTION_DATA"] = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L["NO_FACTION"] } -- No faction
+_V["WQT_NO_FACTION_DATA"] = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 134400, ["name"]=_L["NO_FACTION"] } -- No faction
 _V["WQT_FACTION_DATA"] = {
 	[67] = 		{ ["expansion"] = LE_EXPANSION_CLASSIC ,["playerFaction"] = nil ,["texture"] = 2203914 } -- Horde
 	,[469] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC ,["playerFaction"] = nil ,["texture"] = 2203912 } -- Alliance
@@ -1308,7 +1360,19 @@ _V["WQT_FACTION_DATA"] = {
 	,[2413] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3257751 } -- Court of Harvesters
 	,[2465] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3641394 } -- The Wild Hunt
 	,[2432] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3729461 } -- Ve'nari
-	,[2470] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 4083292 } -- Death's Advance
+	,[2470] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 4083292 } -- Korthia
+	,[2472] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 4067928 } -- Korthia Codex
+	,[2478] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 4226232 } -- Zereth Mortis
+	-- LE_EXPANSION_DRAGONFLIGHT
+	,[2507] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687628 } -- Dragonscale Expedition
+	,[2511] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687629 } -- Iskaara Tuskarr
+	,[2503] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687627 } -- Maruuk Centaur
+	,[2510] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687630 } -- Valdrakken Accord
+	,[2544] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4548878 } -- Artisan's Consortium
+	,[2517] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4640487 } -- Wrathion
+	,[2518] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4640488 } -- Sabellian
+	,[2550] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 134565 } -- Cobalt Assembly
+	
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
@@ -1446,12 +1510,6 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
-		{["version"] = "9.1.01",
-			["intro"] = { "Update for 9.1 content" },
-			["changes"] = {
-				"Changed the calling board progress icons to a texture that looks better at their small scale.",
-			},
-		},
 		{["version"] = "9.0.08",
 			["minor"] = "2",
 			["fixes"] = {

@@ -382,8 +382,9 @@ end
 
 function QuestInfoMixin:GetRewardTexture()
 	if (self.reward.typeBits == WQT_REWARDTYPE.none) then
-		-- Dark empty texture
-		return "Interface/Garrison/GarrisonMissionUIInfoBoxBackgroundTile";
+		-- Dark empty texture	
+		--return "Interface/Garrison/GarrisonMissionUIInfoBoxBackgroundTile";
+		return 134400;
 	end
 
 	local reward = self.rewardList[1];
