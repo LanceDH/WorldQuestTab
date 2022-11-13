@@ -1510,6 +1510,18 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
+		{["version"] = "10.0.2.0",
+			["intro"] = { "Update for 10.0.2 content" },
+			["changes"] = {
+				"Added DF zones and factions. Fix missing zones and factions. Fix missing icons.",
+			},
+		},
+		{["version"] = "9.1.01",
+			["intro"] = { "Update for 9.1 content" },
+			["changes"] = {
+				"Changed the calling board progress icons to a texture that looks better at their small scale.",
+			},
+		},
 		{["version"] = "9.0.08",
 			["minor"] = "2",
 			["fixes"] = {
