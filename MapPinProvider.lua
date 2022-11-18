@@ -206,7 +206,7 @@ function WQT_PinDataProvider:PlacePins()
 		for k, questInfo in ipairs(WQT_WorldQuestFrame.dataProvider:GetIterativeList()) do
 			local officialShow = true;
 			if (wqp.focusedQuestID) then
-				officialShow = C_QuestLog.IsQuestCalling(wqp.focusedQuestID) and wqp:ShouldHighlightInfo(questInfo.questId);
+				officialShow = C_QuestLog.IsQuestCalling(wqp.focusedQuestID) and wqp:ShouldSupertrackHighlightInfo(questInfo.questId);
 			end
 
 			if (officialShow and ShouldShowPin(questInfo, mapInfo.mapType, settingsZoneVisible, settingsContinentVisible, settingsFilterPoI, isFlightMap)) then
