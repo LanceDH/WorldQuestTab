@@ -1510,6 +1510,11 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
+		{["version"] = "10.0.2.2",
+			["fixes"] = {
+				'Fixed "Sparks of Life" bug.',
+			},
+		},
 		{["version"] = "10.0.2.1",
 			["fixes"] = {
 				'Fixed "ShouldHighlightInfo" bug.',
