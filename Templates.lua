@@ -489,7 +489,7 @@ function WQT_Utils:GetPinTime(questInfo)
 			maxTime = 5760*60;
 			offset = -720*60;
 			local tagInfo = questInfo:GetTagInfo();
-			if tagInfo and (timeLeft > maxTime or (tagInfo.isElite and tagInfo.quality == Enum.WorldQuestQuality.Epic)) then
+			if (timeLeft > maxTime or tagInfo and (tagInfo.isElite and tagInfo.quality == Enum.WorldQuestQuality.Epic)) then
 				maxTime = 1440 * 7*60;
 				offset = 0;
 			end
