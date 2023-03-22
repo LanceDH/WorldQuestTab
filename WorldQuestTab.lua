@@ -258,6 +258,12 @@ local function FilterDDFunc(ddFrame)
 				
 				-- Other expansions
 				info = ddFrame:CreateButtonInfo("expand");
+				
+				-- Shadowlands
+				info.text = EXPANSION_NAME8;
+				info.value = 303;
+				ddFrame:AddButton(info);
+				
 				-- BFA
 				info.text = EXPANSION_NAME7;
 				info.value = 302;
@@ -390,6 +396,26 @@ local function FilterDDFunc(ddFrame)
 			local options = WQT.settings.filters[1].flags;
 			local order = WQT.filterOrders[1] 
 			local currExp = LE_EXPANSION_BATTLE_FOR_AZEROTH;
+			for k, flagKey in pairs(order) do
+				local factionInfo = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
+				
+				if (factionInfo and factionInfo.expansion == currExp and (not factionInfo.playerFaction or factionInfo.playerFaction == _playerFaction)) then
+					info.text = type(flagKey) == "number" and factionInfo.name or flagKey;
+					info.func = function(_, _, _, value)
+										options[flagKey] = value;
+										if (value) then
+											WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
+										end
+										WQT_QuestScrollFrame:UpdateQuestList();
+									end
+					info.checked = function() return options[flagKey] end;
+					ddFrame:AddButton(info);	
+				end
+			end
+		elseif value == 303 then -- Shadowlands
+			local options = WQT.settings.filters[1].flags;
+			local order = WQT.filterOrders[1] 
+			local currExp = LE_EXPANSION_SHADOWLANDS;
 			for k, flagKey in pairs(order) do
 				local factionInfo = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
 				

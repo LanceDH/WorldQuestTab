@@ -520,6 +520,7 @@ L["WHATS_NEW_TT"] = "查看 World Quest Tab 的更新日志。"
 L["WQT_FULLSCREEN_BUTTON_TT"] = "左键点击来切换世界任务列表，右键按住拖拽来改变位置。"
 L["PRECISE_FILTER"] = "精确过滤"
 L["PRECISE_FILTER_TT"] = "过滤器只显示与所有过滤匹配的任务，\\n而不仅仅是单一过滤匹配的任务。"
+L["IGNORES_FILTERS"] = "始终显示"
 
 L["IS_AZIAN_CLIENT"]	= true
 end
@@ -688,6 +689,7 @@ L["USE_TOMTOM_TT"] = "在此插件添加TomTom功能。"
 L["WHATS_NEW"] = "最新消息"
 L["WHATS_NEW_TT"] = "查看World Quest Tab更新說明。"
 L["WQT_FULLSCREEN_BUTTON_TT"] = "左鍵點擊以切換世界任務列表。右鍵點擊並拖動以變更位置。"
+L["IGNORES_FILTERS"] = "始終顯示類型"
 
 L["IS_AZIAN_CLIENT"]	= true
 end
