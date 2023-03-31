@@ -1307,7 +1307,7 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 			[210] = {["x"] = 0.42, ["y"] = 0.62} -- Cape
 			,[50] = {["x"] = 0.67, ["y"] = 0.40} -- North
 		}
-		,[947]	= { -- All of Azeroth
+		,[947]	= { -- All of Azeroth (Also look at UpdateAzerothZones() in Dataprovider.lua)
 			[12] = {["x"] = 0.24, ["y"] = 0.55}
 			,[13] = {["x"] = 0.89, ["y"] = 0.52}
 			,[113] = {["x"] = 0.49, ["y"] = 0.12}
@@ -1514,6 +1514,12 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
+		{["version"] = "10.0.7.1",
+			["fixes"] = {
+				[[Fixed "Vol'dun" bug.]],
+				'Fixed "Elite Ring" size.',
+			},
+		},
 		{["version"] = "10.0.7.0",
 			["new"] ={
 				"Added new Dragonflight zones and factions.",

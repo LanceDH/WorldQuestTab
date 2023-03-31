@@ -2,10 +2,11 @@
 ## Title: World Quest Tab
 ## Notes: Creates a new quest tab to keep track of world quests.
 ## Author: LanceDH
-## Version: 10.0.7.0
+## Version: 10.0.7.1
 ## SavedVariables: BWQDB
 ## X-Website: https://www.curseforge.com/wow/addons/worldquesttab
 ## X-Curse-Project-ID: 102243
+## IconTexture: Interface\Worldmap\UI-World-Icon
 
 WorldQuestTab.xml
 External\External.xml

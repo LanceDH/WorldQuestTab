@@ -12,8 +12,8 @@
 			<Layer level="BACKGROUND" textureSubLevel="3">
 				<Texture parentKey="CustomUnderlay" atlas="worldquest-questmarker-dragon" hidden="true">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="-5" y="4"/>
-						<Anchor point="BOTTOMRIGHT" x="5" y="-5"/>
+						<Anchor point="TOPLEFT" x="-12" y="11"/>
+						<Anchor point="BOTTOMRIGHT" x="10" y="-10"/>
 					</Anchors>
 				</Texture>
 				<Texture parentKey="Icon">
