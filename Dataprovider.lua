@@ -247,9 +247,16 @@ function QuestInfoMixin:LoadRewards(force)
 			end
 		end
 		-- Spells
-		if (GetQuestLogRewardSpell(1, self.questId)) then
-			local texture, _, _, _, _, _, _, _, rewardId = GetQuestLogRewardSpell(1, self.questId);
-			self:AddReward(WQT_REWARDTYPE.spell, 1, texture, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardItem), rewardId);
+		if (C_QuestInfoSystem.HasQuestRewardSpells(self.questId)) then	
+			local spellRewards = C_QuestInfoSystem.GetQuestRewardSpells(self.questId);
+			for _, spellID in ipairs(spellRewards) do
+				local spellInfo = C_QuestInfoSystem.GetQuestRewardSpellInfo(self.questId, spellID);
+				local knownSpell = IsSpellKnownOrOverridesKnown(spellID);
+				-- only allow the spell reward if user can learn it
+				if spellInfo and spellInfo.texture and not knownSpell and (not spellInfo.isBoostSpell or IsCharacterNewlyBoosted()) and (not spellInfo.garrFollowerID or not C_Garrison.IsFollowerCollected(spellInfo.garrFollowerID)) then
+					self:AddReward(WQT_REWARDTYPE.spell, 1, spellInfo.texture, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardItem), spellInfo.spellID);
+				end
+			end
 		end
 		-- Honor
 		if (GetQuestLogRewardHonor(self.questId) > 0) then

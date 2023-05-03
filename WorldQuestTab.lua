@@ -1055,7 +1055,7 @@ function WQT:OnInitialize()
 	WQT_Profiles:InitSettings();
 	
 	-- Hightlight 'what's new'
-	local currentVersion = GetAddOnMetadata(addonName, "version")
+	local currentVersion = C_AddOns.GetAddOnMetadata(addonName, "version")
 	if (WQT.db.global.versionCheck < currentVersion) then
 		WQT.db.global.updateSeen = false;
 		WQT.db.global.versionCheck  = currentVersion;

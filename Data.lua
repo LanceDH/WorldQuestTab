@@ -155,6 +155,7 @@ local WQT_DRAGONFLIGHT = {
 	[2024] =  {["x"] = 0.53, ["y"] = 0.74}, -- Azure Span
 	[2025] =  {["x"] = 0.63, ["y"] = 0.50}, -- Thaldraszus
 	[2085] =  {["x"] = 0.66, ["y"] = 0.57}, -- Primalist Future
+	[2133] =  {["x"] = 0.86, ["y"] = 0.83}, -- Zaralek Cavern
 }
 local WQT_SHADOWLANDS = {
 	[1543] =  {["x"] = 0.23, ["y"] = 0.13}, -- The Maw
@@ -307,6 +308,7 @@ local ZonesByExpansion = {
 		2024, -- Azure Span
 		2025, -- Thaldraszus
 		2085, -- Primalist Future
+		2133, -- Zaralek Cavern
 	}
 	,[LE_EXPANSION_SHADOWLANDS] = {
 		1550, -- The Shadowlands
@@ -1075,7 +1077,7 @@ _V["WQT_TYPEFLAG_LABELS"] = {
 	
 _V["FILTER_TYPE_OLD_CONTENT"] = {
 	[2] = {["Invasion"] = true, ["Assault"] = true, ["Threat"] = true}
-	,[3] = {["Artifact"] = true, ["Relic"] = true}
+	,[3] = {["Anima"] = true, ["Conduits"] = true, ["Artifact"] = true, ["Relic"] = true}
 }
 
 _V["WQT_SORT_OPTIONS"] = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD, [7] = QUALITY}
@@ -1227,18 +1229,18 @@ _V["REWARD_TYPE_ATLAS"] = {
 
 _V["FILTER_FUNCTIONS"] = {
 		[2] = { -- Types
-			["PvP"] 			= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PvP; end 
+			["PvP"] 			= function(questInfo, tagInfo) return tagInfo and (tagInfo.worldQuestType == Enum.QuestTagType.PvP or tagInfo.worldQuestType == Enum.QuestTagType.Bounty); end 
 			,["Petbattle"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PetBattle; end 
 			,["Dungeon"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Dungeon; end 
 			,["Raid"] 		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Raid; end 
 			,["Profession"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Profession; end 
-			,["Invasion"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Invasion; end 
+			,["Invasion"] 	= function(questInfo, tagInfo) return tagInfo and (tagInfo.worldQuestType == Enum.QuestTagType.Invasion or tagInfo.worldQuestType == Enum.QuestTagType.InvasionWrapper); end 
 			,["Assault"]	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.FactionAssault; end 
 			,["Elite"]		= function(questInfo, tagInfo) return tagInfo and tagInfo.isElite and tagInfo.worldQuestType ~= Enum.QuestTagType.Dungeon; end
-			,["Default"]	= function(questInfo, tagInfo) return tagInfo and not tagInfo.isElite and tagInfo.worldQuestType == Enum.QuestTagType.Normal; end 
+			,["Default"]	= function(questInfo, tagInfo) return tagInfo and ((not tagInfo.isElite and tagInfo.worldQuestType == Enum.QuestTagType.Normal) or tagInfo.worldQuestType == Enum.QuestTagType.DragonRiderRacing or tagInfo.worldQuestType == Enum.QuestTagType.CovenantCalling); end 
 			,["Daily"]		= function(questInfo, tagInfo) return questInfo.isDaily; end 
 			,["Threat"]		= function(questInfo, tagInfo) return C_QuestLog.IsThreatQuest(questInfo.questId); end 
-			,["Bonus"]		= function(questInfo, tagInfo) return not tagInfo; end 
+			,["Bonus"]		= function(questInfo, tagInfo) return not tagInfo; end
 			}
 		,[3] = { -- Reward filters
 			["Armor"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.equipment + WQT_REWARDTYPE.weapon) > 0; end
@@ -1269,7 +1271,7 @@ _V["WQT_CONTINENT_GROUPS"] = {
 	}
 
 _V["ZONE_SUBZONES"] = {
-	[2025] = {2112, 2085}; -- Thaldraszus, Valdrakken, Primalist Future
+	[2025] = {2112, 2085, 2133}; -- Thaldraszus, Valdrakken, Primalist Future, Zaralek Cavern
 	[1565] = {1701, 1702, 1703}; -- Ardenweald covenant
 	[1533] = {1707, 1708}; -- Bastion Covenant
 	[1525] = {1699, 1700}; -- Revendreth Covenant
@@ -1377,6 +1379,7 @@ _V["WQT_FACTION_DATA"] = {
 	,[2523] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4528811 } -- Dark Talons
 	,[2524] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4528812 } -- Obsidian Warders
 	,[2526] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4901295 } -- Winterpelt Furbolg
+	,[2564] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5140835 } -- Loamm Niffen
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
@@ -1427,7 +1430,7 @@ _V["WQT_DEFAULTS"] = {
 		
 		["general"] = {
 			sortBy = 1;
-			fullScreenButtonPos = {["anchor"] = "TOPRIGHT", ["x"] = -74, ["y"] = -2};
+			fullScreenButtonPos = {["anchor"] = "TOPRIGHT", ["x"] = -2, ["y"] = -35};
 			fullScreenContainerPos = {["anchor"] = "TOPLEFT", ["x"] = 0, ["y"] = -25};
 		
 			defaultTab = false;
@@ -1514,6 +1517,19 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
+		{["version"] = "10.1.0.0",
+			["new"] ={
+				"Added new Dragonflight zones and factions.",
+			},
+			["fixes"] = {
+				'Fixed WQs filtering.',
+			},
+			["changes"] = {
+				"Moved full screen button default position.",
+			},
+		},
+		
+		
 		{["version"] = "10.0.7.1",
 			["fixes"] = {
 				[[Fixed "Vol'dun" bug.]],
