@@ -1039,10 +1039,12 @@ _V["QUESTS_NOT_COUNTING"] = {
 	}
 
 _V["NUMBER_ABBREVIATIONS_ASIAN"] = {
-		{["value"] = 1000000000, ["format"] = _L["NUMBERS_THIRD"]}
+		{["value"] = 10000000000000, ["format"] = _L["NUMBERS_THIRD"]}
+		,{["value"] = 1000000000000, ["format"] = _L["NUMBERS_THIRD"], ["decimal"] = true}
+		,{["value"] = 1000000000, ["format"] = _L["NUMBERS_SECOND"]}
 		,{["value"] = 100000000, ["format"] = _L["NUMBERS_SECOND"], ["decimal"] = true}
 		,{["value"] = 100000, ["format"] = _L["NUMBERS_FIRST"]}
-		,{["value"] = 1000, ["format"] = _L["NUMBERS_FIRST"], ["decimal"] = true}
+		,{["value"] = 10000, ["format"] = _L["NUMBERS_FIRST"], ["decimal"] = true}
 	}
 
 _V["NUMBER_ABBREVIATIONS"] = {
@@ -1380,6 +1382,7 @@ _V["WQT_FACTION_DATA"] = {
 	,[2524] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4528812 } -- Obsidian Warders
 	,[2526] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4901295 } -- Winterpelt Furbolg
 	,[2564] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5140835 } -- Loamm Niffen
+	,[2553] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 609811 } -- Soridormi
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
@@ -1517,7 +1520,17 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
+		{["version"] = "10.1.5.0",
+			["intro"] = { "Update for 10.1.5." },
+			["changes"] = {
+				"Added experimental zhCN translation.",
+			},
+			["fixes"] = {
+				"Updated embedded libraries.",
+			},
+		},
 		{["version"] = "10.1.0.0",
+			["intro"] = { "Update for 10.1.0 content." },
 			["new"] ={
 				"Added new Dragonflight zones and factions.",
 			},
@@ -1528,8 +1541,6 @@ _V["PATCH_NOTES"] = {
 				"Moved full screen button default position.",
 			},
 		},
-		
-		
 		{["version"] = "10.0.7.1",
 			["fixes"] = {
 				[[Fixed "Vol'dun" bug.]],
