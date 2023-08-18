@@ -241,7 +241,7 @@ function QuestInfoMixin:LoadRewards(force)
 						-- Item converting into equipment
 						self:AddReward(WQT_REWARDTYPE.equipment, ilvl, texture, quality, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardArmor), rewardId);
 					else
-						if (rewardId == 199192 or rewardId == 204359 or rewardId == 205226) then
+						if (WQT.settings.general.df_goldPurses and (rewardId == 199192 or rewardId == 204359 or rewardId == 205226)) then
 							self:AddReward(WQT_REWARDTYPE.gold, 525*100*100, 133784, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardGold));
 						else
 							self:AddReward(WQT_REWARDTYPE.item, numItems, texture, quality, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardItem), rewardId);
