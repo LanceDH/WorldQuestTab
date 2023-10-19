@@ -794,14 +794,14 @@ _V["SETTING_LIST"] = {
 			,["getValueFunc"] = function() return WQT.settings.general.df_goldPurses end
 			}
 
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["CALLINGS_BOARD"], ["tooltip"] = _L["CALLINGS_BOARD_TT"], ["isNew"] = true
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["CALLINGS_BOARD"], ["tooltip"] = _L["CALLINGS_BOARD_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.sl_callingsBoard = value;
 				WQT_CallingsBoard:UpdateVisibility();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.sl_callingsBoard end
 			}
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["GENERIC_ANIMA"], ["tooltip"] = _L["GENERIC_ANIMA_TT"], ["isNew"] = true
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["GENERIC_ANIMA"], ["tooltip"] = _L["GENERIC_ANIMA_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.sl_genericAnimaIcons = value;
 				WQT_WorldQuestFrame.dataProvider:ReloadQuestRewards();
@@ -1530,6 +1530,12 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
+		{["version"] = "10.1.7.0",
+			["intro"] = { "Update for 10.1.7." },
+			["new"] ={
+				"Added option to treat Dragonflight dragon racer's purse rewards as gold.",
+			},
+		},
 		{["version"] = "10.1.5.0",
 			["intro"] = { "Update for 10.1.5." },
 			["changes"] = {
