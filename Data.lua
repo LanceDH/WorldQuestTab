@@ -561,6 +561,7 @@ _V["SETTING_CATEGORIES"] = {
 	{["id"]="DEBUG", ["label"] = "Debug"}
 	,{["id"]="PROFILES", ["label"] = _L["PROFILES"]}
 	,{["id"]="GENERAL", ["label"] = GENERAL, ["expanded"] = true}
+	,{["id"]="GENERAL_DRAGONFLIGHT", ["parentCategory"] = "GENERAL", ["label"] = EXPANSION_NAME9, ["expanded"] = true}
 	,{["id"]="GENERAL_SHADOWLANDS", ["parentCategory"] = "GENERAL", ["label"] = EXPANSION_NAME8, ["expanded"] = true}
 	,{["id"]="GENERAL_OLDCONTENT", ["parentCategory"] = "GENERAL", ["label"] = _L["PREVIOUS_EXPANSIONS"]}
 	,{["id"]="QUESTLIST", ["label"] = _L["QUEST_LIST"]}
@@ -785,6 +786,14 @@ _V["SETTING_LIST"] = {
 			,["getValueFunc"] = function() return WQT.settings.list.includeDaily end
 			}
 	
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_DRAGONFLIGHT", ["label"] = _L["GOLD_PURSES"], ["tooltip"] = _L["GOLD_PURSES_TT"], ["isNew"] = true
+			, ["valueChangedFunc"] = function(value)
+				WQT.settings.general.df_goldPurses = value;
+				WQT_WorldQuestFrame.dataProvider:ReloadQuestRewards();
+			end
+			,["getValueFunc"] = function() return WQT.settings.general.df_goldPurses end
+			}
+
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["CALLINGS_BOARD"], ["tooltip"] = _L["CALLINGS_BOARD_TT"], ["isNew"] = true
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.sl_callingsBoard = value;
@@ -1448,6 +1457,7 @@ _V["WQT_DEFAULTS"] = {
 			bountySelectedOnly = true;
 			showDisliked = true;
 			
+			df_goldPurses = false;
 			sl_callingsBoard = true;
 			sl_genericAnimaIcons = false;
 			
