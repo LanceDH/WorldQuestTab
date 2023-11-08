@@ -64,9 +64,13 @@ function WQT_CallingsBoardMixin:OnLoad()
 	self.lastUpdate = 0;
 	self:UpdateCovenant();
 	
-	hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
-			self:OnMapChanged(WorldMapFrame:GetMapID());
-		end)
+	-- hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
+			-- self:OnMapChanged(WorldMapFrame:GetMapID());
+		-- end)
+	EventRegistry:RegisterCallback("MapCanvas.MapSet", function(_,mapID) 
+			-- Now we do it modern way.
+			self:OnMapChanged(mapID);
+		end);
 		
 	self:RequestUpdate();
 end

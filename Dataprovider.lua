@@ -240,7 +240,7 @@ function QuestInfoMixin:LoadRewards(force)
 					elseif (typeID == 0 and subTypeID == 8 and price == 0 and ilvl > 100) then 
 						-- Item converting into equipment
 						self:AddReward(WQT_REWARDTYPE.equipment, ilvl, texture, quality, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardArmor), rewardId);
-					elseif (rewardId == 199192 or rewardId == 204359 or rewardId == 205226) and WQT.settings.general.df_goldPurses then
+					elseif (rewardId == 199192 or rewardId == 204359 or rewardId == 205226 or rewardId == 210549) and WQT.settings.general.df_goldPurses then
 						--Treat dragon racer's purse rewards as gold.
 						self:AddReward(WQT_REWARDTYPE.gold, 525*100*100, 133784, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardGold));
 					else
@@ -491,12 +491,15 @@ function WQT_DataProvider:Init()
 	self.waitingRoomRewards = {};
 	
 	self.bufferedZones = {};
-	hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
-			-- If we change map, reset the CD, we want new quest info
-			self:LoadQuestsInZone(WorldMapFrame.mapID);
+	-- hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
+			-- -- If we change map, reset the CD, we want new quest info
+			-- self:LoadQuestsInZone(WorldMapFrame.mapID);
+		-- end);
+	EventRegistry:RegisterCallback("MapCanvas.MapSet", function(_,mapID) 
+			-- Now we do it modern way.
+			self:LoadQuestsInZone(mapID);
 		end);
-
-	UpdateAzerothZones(); 
+	UpdateAzerothZones();
 	
 	self.updateCD = 0;
 end
@@ -512,7 +515,7 @@ function WQT_DataProvider:OnEvent(event, ...)
 			
 	elseif (event == "PLAYER_LEVEL_UP") then
 		local level = ...;
-		UpdateAzerothZones(level); 
+		UpdateAzerothZones(level);
 	end
 end
 
@@ -615,7 +618,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 	self.latestZoneId = zoneID
 	-- If the flight map is open, we want all quests no matter what
 	if ((FlightMapFrame and FlightMapFrame:IsShown()) ) then 
-		local taxiId = GetTaxiMapID()
+		local taxiId = FlightMapFrame and FlightMapFrame:GetMapID() or GetTaxiMapID()
 		zoneID = (taxiId and taxiId > 0) and taxiId or zoneID;
 		-- World Flight Map add-on overwrite
 		if (_WFMLoaded) then
@@ -698,7 +701,7 @@ function WQT_DataProvider:AddQuest(qInfo)
 	-- Dragonflight devs forgot to flagged some tech quests with "MapUtil.ShouldShowTask", and past it in Vol'dun location.
 	-- It make Vol'dun's map messy. This should fix it.
 	if (qInfo.questId > 60000) and (qInfo.mapID == 864) then alwaysHide = true; end
-	
+
 	local posX, posY = WQT_Utils:GetQuestMapLocation(qInfo.questId, qInfo.mapID);
 	local haveRewardData = questInfo:Init(qInfo.questId, qInfo.isDaily, qInfo.isCombatAllyQuest, alwaysHide, posX, posY);
 

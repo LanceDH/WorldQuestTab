@@ -122,7 +122,12 @@ function WQT_PinDataProvider:Init()
 		end, addonName);
 		
 	-- Fix pings and fades when switching map
-	hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
+	-- hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
+			-- wipe(self.pingedQuests);
+			-- self:UpdateQuestPings();
+		-- end);
+	EventRegistry:RegisterCallback("MapCanvas.MapSet", function() 
+			-- Now we do it modern way.
 			wipe(self.pingedQuests);
 			self:UpdateQuestPings();
 		end);
