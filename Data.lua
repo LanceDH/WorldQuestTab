@@ -1406,6 +1406,7 @@ _V["WQT_FACTION_DATA"] = {
 	,[2564] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5140835 } -- Loamm Niffen
 	,[2553] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 609811 } -- Soridormi
 	,[2574] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5244643 } -- Dream Wardens
+	,[2615] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5315246 } -- Azerothian Archives	
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
@@ -1543,6 +1544,12 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
+		{["version"] = "10.2.5.0",
+			["intro"] = { "Update for 10.2.5." },
+			["new"] ={
+				"Added new Dragonflight factions.",
+			},
+		},
 		{["version"] = "10.2.0.0",
 			["intro"] = { "Update for 10.2.0." },
 			["new"] ={
