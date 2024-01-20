@@ -258,6 +258,12 @@ local function FilterDDFunc(ddFrame)
 				
 				-- Other expansions
 				info = ddFrame:CreateButtonInfo("expand");
+				
+				-- Shadowlands
+				info.text = EXPANSION_NAME8;
+				info.value = 303;
+				ddFrame:AddButton(info);
+				
 				-- BFA
 				info.text = EXPANSION_NAME7;
 				info.value = 302;
@@ -390,6 +396,26 @@ local function FilterDDFunc(ddFrame)
 			local options = WQT.settings.filters[1].flags;
 			local order = WQT.filterOrders[1] 
 			local currExp = LE_EXPANSION_BATTLE_FOR_AZEROTH;
+			for k, flagKey in pairs(order) do
+				local factionInfo = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
+				
+				if (factionInfo and factionInfo.expansion == currExp and (not factionInfo.playerFaction or factionInfo.playerFaction == _playerFaction)) then
+					info.text = type(flagKey) == "number" and factionInfo.name or flagKey;
+					info.func = function(_, _, _, value)
+										options[flagKey] = value;
+										if (value) then
+											WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
+										end
+										WQT_QuestScrollFrame:UpdateQuestList();
+									end
+					info.checked = function() return options[flagKey] end;
+					ddFrame:AddButton(info);	
+				end
+			end
+		elseif value == 303 then -- Shadowlands
+			local options = WQT.settings.filters[1].flags;
+			local order = WQT.filterOrders[1] 
+			local currExp = LE_EXPANSION_SHADOWLANDS;
 			for k, flagKey in pairs(order) do
 				local factionInfo = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
 				
@@ -1029,7 +1055,7 @@ function WQT:OnInitialize()
 	WQT_Profiles:InitSettings();
 	
 	-- Hightlight 'what's new'
-	local currentVersion = GetAddOnMetadata(addonName, "version")
+	local currentVersion = C_AddOns.GetAddOnMetadata(addonName, "version")
 	if (WQT.db.global.versionCheck < currentVersion) then
 		WQT.db.global.updateSeen = false;
 		WQT.db.global.versionCheck  = currentVersion;
@@ -1668,7 +1694,7 @@ end
 function WQT_ScrollListMixin:DisplayQuestList()
 	local mapId = WorldMapFrame.mapID;
 	if (((FlightMapFrame and FlightMapFrame:IsShown()) or TaxiRouteMap:IsShown()) and not _WFMLoaded) then 
-		local taxiId = GetTaxiMapID()
+		local taxiId = FlightMapFrame and FlightMapFrame:GetMapID() or GetTaxiMapID()
 		mapId = (taxiId and taxiId > 0) and taxiId or mapId;
 	end
 	local mapInfo = WQT_Utils:GetCachedMapInfo(mapId or 0);	
@@ -2075,11 +2101,12 @@ function WQT_CoreMixin:OnLoad()
 		end, addonName)
 	
 	self.dataProvider:RegisterCallback("BufferUpdated", function(progress) 
-			if (progress == 0) then
+			if (progress == 0 or progress == 1) then
 				self.ProgressBar:Hide();
+			else
+				CooldownFrame_SetDisplayAsPercentage(self.ProgressBar, progress);
+				self.ProgressBar.Pointer:SetRotation(-progress*6.2831);
 			end
-			CooldownFrame_SetDisplayAsPercentage(self.ProgressBar, progress);
-			self.ProgressBar.Pointer:SetRotation(-progress*6.2831);
 		end, addonName)
 
 	-- Events
@@ -2128,11 +2155,17 @@ function WQT_CoreMixin:OnLoad()
 	
 	-- World map
 	-- If we were reading details when we switch maps, change back to normal quests
-	hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
+	-- hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
+			-- if (self.selectedTab == WQT_TabDetails) then
+				-- self:SelectTab(WQT_TabNormal); 
+			-- end
+		-- end)
+	EventRegistry:RegisterCallback("MapCanvas.MapSet", function() 
+			-- Now we do it modern way.
 			if (self.selectedTab == WQT_TabDetails) then
 				self:SelectTab(WQT_TabNormal); 
 			end
-		end)
+		end);
 	
 	-- Update when opening the map
 	WorldMapFrame:HookScript("OnShow", function() 
@@ -2284,21 +2317,22 @@ function WQT_CoreMixin:OnLoad()
 		end);
 		
 	LFGListFrame.EntryCreation:HookScript("OnHide", function() 
-			if (not InCombatLockdown()) then
+		if (not InCombatLockdown()) then
 				WQT_GroupSearch:Hide();
 			end
 		end);
 		
 	hooksecurefunc("LFGListUtil_FindQuestGroup", function(questID, isFromGreenEyeButton)
-			if (isFromGreenEyeButton) then
+		if (isFromGreenEyeButton) then
 				WQT_GroupSearch:Hide();
 				WQT_GroupSearch.questId = nil;
 				WQT_GroupSearch.title = nil;
 			end
 		end);
 
-	local LFGParent = LFGListSearchPanelScrollFrameScrollChild;
-	LFGParent.StartGroupButton:HookScript("OnClick", function() 
+	local LFGParent = LFGListFrame.SearchPanel.ScrollBox;
+	if LFGParent and LFGParent.StartGroupButton then
+		LFGParent.StartGroupButton:HookScript("OnClick", function() 
 			-- If we are creating a group because we couldn't find one, show the info on the create frame
 			if InCombatLockdown() then return; end
 			local searchString = LFGListFrame.SearchPanel.SearchBox:GetText();
@@ -2317,7 +2351,7 @@ function WQT_CoreMixin:OnLoad()
 				WQT_GroupSearch:Show();
 			end
 		end)
-
+	end
 	-- Hook hiding of official pins if we replace them with our own
 	local mapWQProvider = WQT_Utils:GetMapWQProvider();
 	hooksecurefunc(mapWQProvider, "RefreshAllData", function() 
@@ -2480,7 +2514,7 @@ function WQT_CoreMixin:SearchGroup(questInfo)
 		WQT_GroupSearch:SetFrameLevel(LFGListFrame.SearchPanel.SearchBox:GetFrameLevel()+5);
 		WQT_GroupSearch:ClearAllPoints();
 		WQT_GroupSearch:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "BOTTOMLEFT", -2, -3);
-		WQT_GroupSearch:SetPoint("RIGHT", LFGListFrame.SearchPanel, "RIGHT", -30, 0);
+		WQT_GroupSearch:SetPoint("RIGHT", LFGListFrame.SearchPanel.SearchBox, "RIGHT", -30, 0);
 	
 		WQT_GroupSearch.Text:SetText(_L["FORMAT_GROUP_SEARCH"]:format(id, title));
 		WQT_GroupSearch.downArrow = false;
@@ -2609,7 +2643,7 @@ function WQT_CoreMixin:TAXIMAP_OPENED(system)
 	end
 	
 	WQT_WorldQuestFrame:ChangeAnchorLocation(anchor);
-	self.dataProvider:LoadQuestsInZone(GetTaxiMapID());
+	self.dataProvider:LoadQuestsInZone(FlightMapFrame and FlightMapFrame:GetMapID() or GetTaxiMapID());
 end
 
 -- Reset official map filters

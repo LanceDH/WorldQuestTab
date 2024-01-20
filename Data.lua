@@ -145,7 +145,19 @@ local function _DeepWipeTable(t)
 	wipe(t);
 	t = nil;
 end
-
+-- /dump WorldMapFrame:GetMapID()
+local WQT_DRAGONFLIGHT = {
+	[2026] =  {["x"] = 0.66, ["y"] = 0.09}, -- Forbidden Reach (dracthyr start)
+	[2151] =  {["x"] = 0.66, ["y"] = 0.09}, -- Forbidden Reach
+	[2112] =  {["x"] = 0.55, ["y"] = 0.48}, -- Valdrakken
+	[2022] =  {["x"] = 0.49, ["y"] = 0.35}, -- Waking Shores
+	[2023] =  {["x"] = 0.42, ["y"] = 0.56}, -- Ohn'ahran Plains
+	[2024] =  {["x"] = 0.53, ["y"] = 0.74}, -- Azure Span
+	[2025] =  {["x"] = 0.63, ["y"] = 0.50}, -- Thaldraszus
+	[2085] =  {["x"] = 0.66, ["y"] = 0.57}, -- Primalist Future
+	[2133] =  {["x"] = 0.86, ["y"] = 0.83}, -- Zaralek Cavern
+	[2200] =  {["x"] = 0.31, ["y"] = 0.55}, -- Emerald Dream
+}
 local WQT_SHADOWLANDS = {
 	[1543] =  {["x"] = 0.23, ["y"] = 0.13}, -- The Maw
 	[1536] = {["x"] = 0.62, ["y"] = 0.21}, -- Maldraxxus
@@ -153,6 +165,8 @@ local WQT_SHADOWLANDS = {
 	[1670] = {["x"] = 0.47, ["y"] = 0.51}, -- Oribos
 	[1533] = {["x"] = 0.71, ["y"] = 0.57}, -- Bastion
 	[1565] = {["x"] = 0.48, ["y"] = 0.80}, -- Ardenweald
+	[1961] = {["x"] = 0.30, ["y"] = 0.25}, -- Korthia
+	[1970] = {["x"] = 0.85, ["y"] = 0.80}, -- Zereth Mortis
 }
 local WQT_ZANDALAR = {
 	[864] =  {["x"] = 0.39, ["y"] = 0.32}, -- Vol'dun
@@ -170,6 +184,11 @@ local WQT_KULTIRAS = {
 	[1355] = {["x"] = 0.86, ["y"] = 0.14}, -- Nazjatar
 	[1462] = {["x"] = 0.17, ["y"] = 0.28}, -- Mechagon
 }
+local WQT_LEGION_ARGUS = {
+	[830]	= {["x"] = 0.49, ["y"] = 0.29}, -- Krokuun
+	[885]	= {["x"] = 0.29, ["y"] = 0.71}, -- Antoran Wastes
+	[882]	= {["x"] = 0.80, ["y"] = 0.71}, -- Mac'Aree
+}
 local WQT_LEGION = {
 	[630]	= {["x"] = 0.33, ["y"] = 0.58}, -- Azsuna
 	[680]	= {["x"] = 0.46, ["y"] = 0.45}, -- Suramar
@@ -179,9 +198,7 @@ local WQT_LEGION = {
 	[790]	= {["x"] = 0.46, ["y"] = 0.84}, -- Eye of Azshara
 	[646]	= {["x"] = 0.54, ["y"] = 0.68}, -- Broken Shore
 	[627]	= {["x"] = 0.45, ["y"] = 0.64}, -- Dalaran
-	[830]	= {["x"] = 0.86, ["y"] = 0.15}, -- Krokuun
-	[885]	= {["x"] = 0.86, ["y"] = 0.15}, -- Antoran Wastes
-	[882]	= {["x"] = 0.86, ["y"] = 0.15}, -- Mac'Aree
+	[905] 	= {["x"] = 0.86, ["y"] = 0.17}, -- Argus
 }
 local WQT_KALIMDOR = { 
 	[81] 	= {["x"] = 0.42, ["y"] = 0.82}, -- Silithus
@@ -282,13 +299,37 @@ local WQT_DRAENOR = {
 }
 
 local ZonesByExpansion = {
-	[LE_EXPANSION_SHADOWLANDS] = {
+	[LE_EXPANSION_DRAGONFLIGHT] = {
+		1978, -- Dragon Isles
+		2026, -- Forbidden Reach (dracthyr start)
+		2151, -- Forbidden Reach
+		2112, -- Valdrakken
+		2022, -- Waking Shores
+		2023, -- Ohn'ahran Plains
+		2024, -- Azure Span
+		2025, -- Thaldraszus
+		2085, -- Primalist Future
+		2133, -- Zaralek Cavern
+		2200, -- Emerald Dream
+	}
+	,[LE_EXPANSION_SHADOWLANDS] = {
+		1550, -- The Shadowlands
 		1543, -- The Maw
 		1536, -- Maldraxxus
 		1525, -- Revendreth
 		1670, -- Oribos
 		1533, -- Bastion
 		1565, -- Ardenweald
+		1701, -- Ardenweald covenant
+		1702, -- Ardenweald covenant
+		1703, -- Ardenweald covenant
+		1707, -- Bastion Covenant
+		1708, -- Bastion Covenant
+		1699, -- Revendreth Covenant
+		1700, -- Revendreth Covenant
+		1698, -- Maldraxxus Covenant
+		1961, -- Korthia
+		1970, -- Zereth Mortis
 	}
 	,[LE_EXPANSION_BATTLE_FOR_AZEROTH] = {
 		875, -- Zandalar
@@ -348,9 +389,11 @@ local function AddZonesToList(t)
 	end
 end
 
+AddZonesToList(WQT_DRAGONFLIGHT);
 AddZonesToList(WQT_SHADOWLANDS);
 AddZonesToList(WQT_ZANDALAR);
 AddZonesToList(WQT_KULTIRAS);
+AddZonesToList(WQT_LEGION_ARGUS);
 AddZonesToList(WQT_LEGION);
 AddZonesToList(WQT_KALIMDOR);
 AddZonesToList(WQT_EASTERN_KINGDOMS);
@@ -374,7 +417,7 @@ _DeepWipeTable(ZonesByExpansion);
 
 _V["PATH_CUSTOM_ICONS"] = "Interface/Addons/WorldQuestTab/Images/CustomIcons";
 _V["LIST_ANCHOR_TYPE"] = {["flight"] = 1, ["world"] = 2, ["full"] = 3, ["taxi"] = 4};
-_V["CURRENT_EXPANSION"] = LE_EXPANSION_SHADOWLANDS;
+_V["CURRENT_EXPANSION"] = LE_EXPANSION_DRAGONFLIGHT;
 
 _V["TOOLTIP_STYLES"] = { 
 	["default"] = {},
@@ -520,6 +563,7 @@ _V["SETTING_CATEGORIES"] = {
 	{["id"]="DEBUG", ["label"] = "Debug"}
 	,{["id"]="PROFILES", ["label"] = _L["PROFILES"]}
 	,{["id"]="GENERAL", ["label"] = GENERAL, ["expanded"] = true}
+	,{["id"]="GENERAL_DRAGONFLIGHT", ["parentCategory"] = "GENERAL", ["label"] = EXPANSION_NAME9, ["expanded"] = true}
 	,{["id"]="GENERAL_SHADOWLANDS", ["parentCategory"] = "GENERAL", ["label"] = EXPANSION_NAME8, ["expanded"] = true}
 	,{["id"]="GENERAL_OLDCONTENT", ["parentCategory"] = "GENERAL", ["label"] = _L["PREVIOUS_EXPANSIONS"]}
 	,{["id"]="QUESTLIST", ["label"] = _L["QUEST_LIST"]}
@@ -579,7 +623,7 @@ _V["SETTING_LIST"] = {
 	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = RELICSLOT, ["defaultColor"] = _V["WQT_COLOR_RELIC"], 
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardRelic", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ANIMA, ["defaultColor"] = _V["WQT_COLOR_ARTIFACT"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = WORLD_QUEST_REWARD_FILTERS_ANIMA, ["defaultColor"] = _V["WQT_COLOR_ARTIFACT"], 
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardAnima", ["getValueFunc"] = GetColorByID
 		},
 	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ITEM_QUALITY6_DESC, ["defaultColor"] = _V["WQT_COLOR_ARTIFACT"], 
@@ -619,7 +663,7 @@ _V["SETTING_LIST"] = {
 	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = RELICSLOT, ["defaultColor"] = WHITE_FONT_COLOR, 
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextRelic", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ANIMA, ["defaultColor"] = GREEN_FONT_COLOR, 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = WORLD_QUEST_REWARD_FILTERS_ANIMA, ["defaultColor"] = GREEN_FONT_COLOR, 
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextAnima", ["getValueFunc"] = GetColorByID
 		},
 	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ITEM_QUALITY6_DESC, ["defaultColor"] = GREEN_FONT_COLOR, 
@@ -743,15 +787,21 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.includeDaily end
 			}
-	
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["CALLINGS_BOARD"], ["tooltip"] = _L["CALLINGS_BOARD_TT"], ["isNew"] = true
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_DRAGONFLIGHT", ["label"] = _L["GOLD_PURSES"], ["tooltip"] = _L["GOLD_PURSES_TT"], ["isNew"] = true
+			, ["valueChangedFunc"] = function(value)
+				WQT.settings.general.df_goldPurses = value;
+				WQT_WorldQuestFrame.dataProvider:ReloadQuestRewards();
+			end
+			,["getValueFunc"] = function() return WQT.settings.general.df_goldPurses end
+			}
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["CALLINGS_BOARD"], ["tooltip"] = _L["CALLINGS_BOARD_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.sl_callingsBoard = value;
 				WQT_CallingsBoard:UpdateVisibility();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.sl_callingsBoard end
 			}
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["GENERIC_ANIMA"], ["tooltip"] = _L["GENERIC_ANIMA_TT"], ["isNew"] = true
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["GENERIC_ANIMA"], ["tooltip"] = _L["GENERIC_ANIMA_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.sl_genericAnimaIcons = value;
 				WQT_WorldQuestFrame.dataProvider:ReloadQuestRewards();
@@ -998,10 +1048,12 @@ _V["QUESTS_NOT_COUNTING"] = {
 	}
 
 _V["NUMBER_ABBREVIATIONS_ASIAN"] = {
-		{["value"] = 1000000000, ["format"] = _L["NUMBERS_THIRD"]}
+		{["value"] = 10000000000000, ["format"] = _L["NUMBERS_THIRD"]}
+		,{["value"] = 1000000000000, ["format"] = _L["NUMBERS_THIRD"], ["decimal"] = true}
+		,{["value"] = 1000000000, ["format"] = _L["NUMBERS_SECOND"]}
 		,{["value"] = 100000000, ["format"] = _L["NUMBERS_SECOND"], ["decimal"] = true}
 		,{["value"] = 100000, ["format"] = _L["NUMBERS_FIRST"]}
-		,{["value"] = 1000, ["format"] = _L["NUMBERS_FIRST"], ["decimal"] = true}
+		,{["value"] = 10000, ["format"] = _L["NUMBERS_FIRST"], ["decimal"] = true}
 	}
 
 _V["NUMBER_ABBREVIATIONS"] = {
@@ -1030,13 +1082,13 @@ _V["WQT_CVAR_LIST"] = {
 _V["WQT_TYPEFLAG_LABELS"] = {
 		[2] = {["Default"] = DEFAULT, ["Elite"] = ELITE, ["PvP"] = PVP, ["Petbattle"] = PET_BATTLE_PVP_QUEUE, ["Dungeon"] = TRACKER_HEADER_DUNGEON, ["Raid"] = RAID, ["Profession"] = BATTLE_PET_SOURCE_4, ["Invasion"] = _L["TYPE_INVASION"], ["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE
 			, ["Daily"] = DAILY, ["Threat"] = REPORT_THREAT, ["Bonus"] = SCENARIO_BONUS_LABEL}
-		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = CURRENCY, ["Artifact"] = ITEM_QUALITY6_DESC, ["Anima"] = ANIMA, ["Conduits"] = _L["REWARD_CONDUITS"]
+		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = CURRENCY, ["Artifact"] = ITEM_QUALITY6_DESC, ["Anima"] = WORLD_QUEST_REWARD_FILTERS_ANIMA, ["Conduits"] = _L["REWARD_CONDUITS"]
 			, ["Relic"] = RELICSLOT, ["None"] = NONE, ["Experience"] = POWER_TYPE_EXPERIENCE, ["Honor"] = HONOR, ["Reputation"] = REPUTATION}
 	};
 	
 _V["FILTER_TYPE_OLD_CONTENT"] = {
 	[2] = {["Invasion"] = true, ["Assault"] = true, ["Threat"] = true}
-	,[3] = {["Artifact"] = true, ["Relic"] = true}
+	,[3] = {["Anima"] = true, ["Conduits"] = true, ["Artifact"] = true, ["Relic"] = true}
 }
 
 _V["WQT_SORT_OPTIONS"] = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD, [7] = QUALITY}
@@ -1183,23 +1235,23 @@ _V["REWARD_TYPE_ATLAS"] = {
 			[_V["CONDUIT_SUBTYPE"].potency] = {["texture"] =  "soulbinds_tree_conduit_icon_attack", ["scale"] = 1.15};
 			[_V["CONDUIT_SUBTYPE"].endurance] = {["texture"] =  "soulbinds_tree_conduit_icon_protect", ["scale"] = 1.15};
 			[_V["CONDUIT_SUBTYPE"].finesse] = {["texture"] =  "soulbinds_tree_conduit_icon_utility", ["scale"] = 1.15};
-		}-- Anima
+		}-- Conduits
 	}	
 
 _V["FILTER_FUNCTIONS"] = {
 		[2] = { -- Types
-			["PvP"] 			= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PvP; end 
+			["PvP"] 			= function(questInfo, tagInfo) return tagInfo and (tagInfo.worldQuestType == Enum.QuestTagType.PvP or tagInfo.worldQuestType == Enum.QuestTagType.Bounty); end 
 			,["Petbattle"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PetBattle; end 
 			,["Dungeon"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Dungeon; end 
 			,["Raid"] 		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Raid; end 
 			,["Profession"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Profession; end 
-			,["Invasion"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Invasion; end 
+			,["Invasion"] 	= function(questInfo, tagInfo) return tagInfo and (tagInfo.worldQuestType == Enum.QuestTagType.Invasion or tagInfo.worldQuestType == Enum.QuestTagType.InvasionWrapper); end 
 			,["Assault"]	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.FactionAssault; end 
 			,["Elite"]		= function(questInfo, tagInfo) return tagInfo and tagInfo.isElite and tagInfo.worldQuestType ~= Enum.QuestTagType.Dungeon; end
-			,["Default"]	= function(questInfo, tagInfo) return tagInfo and not tagInfo.isElite and tagInfo.worldQuestType == Enum.QuestTagType.Normal; end 
+			,["Default"]	= function(questInfo, tagInfo) return tagInfo and ((not tagInfo.isElite and tagInfo.worldQuestType == Enum.QuestTagType.Normal) or tagInfo.worldQuestType == Enum.QuestTagType.DragonRiderRacing or tagInfo.worldQuestType == Enum.QuestTagType.CovenantCalling); end 
 			,["Daily"]		= function(questInfo, tagInfo) return questInfo.isDaily; end 
 			,["Threat"]		= function(questInfo, tagInfo) return C_QuestLog.IsThreatQuest(questInfo.questId); end 
-			,["Bonus"]		= function(questInfo, tagInfo) return not tagInfo; end 
+			,["Bonus"]		= function(questInfo, tagInfo) return not tagInfo; end
 			}
 		,[3] = { -- Reward filters
 			["Armor"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.equipment + WQT_REWARDTYPE.weapon) > 0; end
@@ -1216,16 +1268,28 @@ _V["FILTER_FUNCTIONS"] = {
 			,["None"]		= function(questInfo, tagInfo) return questInfo.reward.typeBits == WQT_REWARDTYPE.none; end
 			}
 	};
-
+-- /dump WorldMapFrame:GetMapID()
+-- /dump FlightMapFrame:GetMapID()
 _V["WQT_CONTINENT_GROUPS"] = {
-		[875]	= {876} 
-		,[1011]	= {876}  -- Zandalar flightmap
-		,[876]	= {875}
-		,[1014]	= {875} -- Kul Tiras flightmap
+		[2200] = {1978,2133} -- Emerald Dream 
+		,[2241] = {1978,2133} -- Emerald Dream flightmap
+		,[2133] = {1978,2200} -- Zaralek Cavern 
+		,[2175] = {1978,2200} -- Zaralek Cavern flightmap
+		,[1978] = {2133,2200} -- Dragonflight
+		,[2057] = {2133,2200} -- Dragonflight flightmap
+		,[875]	= {876, 1355} -- Zandalar
+		,[1011]	= {876, 1355} -- Zandalar flightmap
+		,[876]	= {875, 1355} -- Kul Tiras
+		,[1014]	= {875, 1355} -- Kul Tiras flightmap
+		,[1355]	= {875, 876} -- Nazjatar
 		,[1504]	= {875, 876} -- Nazjatar flightmap
+		,[619]	= {905} -- Legion
+		,[905]	= {619} -- Argus
+		
 	}
 
 _V["ZONE_SUBZONES"] = {
+	[2025] = {2112, 2085}; -- Thaldraszus, Valdrakken, Primalist Future
 	[1565] = {1701, 1702, 1703}; -- Ardenweald covenant
 	[1533] = {1707, 1708}; -- Bastion Covenant
 	[1525] = {1699, 1700}; -- Revendreth Covenant
@@ -1233,7 +1297,15 @@ _V["ZONE_SUBZONES"] = {
 }
 
 _V["WQT_ZONE_MAPCOORDS"] = {
-		[1647] 	= WQT_SHADOWLANDS -- Shadowlands flightmap
+		[2241]	= { -- Emerald Dream flightmap
+			[2200] = {["x"] = 0, ["y"] = 0} -- Emerald Dream
+		}
+		,[2175]	= { -- Zaralek Cavern flightmap
+			[2133] = {["x"] = 0, ["y"] = 0} -- Zaralek Cavern
+		}
+		,[2057] = WQT_DRAGONFLIGHT -- Dragonflight flightmap
+		,[1978] = WQT_DRAGONFLIGHT -- Dragonflight
+		,[1647] = WQT_SHADOWLANDS -- Shadowlands flightmap
 		,[1550]	= WQT_SHADOWLANDS -- Shadowlands
 		,[875]	= WQT_ZANDALAR -- Zandalar
 		,[1011]	= WQT_ZANDALAR -- Zandalar flightmap
@@ -1242,11 +1314,11 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 		,[1504]	= { -- Nazjatar flightmap
 			[1355] = {["x"] = 0, ["y"] = 0} -- Nazjatar
 		}
+		,[905] 	= WQT_LEGION_ARGUS -- Argus
 		,[619] 	= WQT_LEGION 
 		,[993] 	= WQT_LEGION -- Flightmap	
-		,[905] 	= WQT_LEGION -- Argus
 		,[12] 	= WQT_KALIMDOR 
-		,[1209] 	= WQT_KALIMDOR -- Flightmap
+		,[1209] = WQT_KALIMDOR -- Flightmap
 		,[13]	= WQT_EASTERN_KINGDOMS
 		,[1208]	= WQT_EASTERN_KINGDOMS -- Flightmap
 		,[101]	= WQT_OUTLAND
@@ -1261,11 +1333,19 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 			[210] = {["x"] = 0.42, ["y"] = 0.62} -- Cape
 			,[50] = {["x"] = 0.67, ["y"] = 0.40} -- North
 		}
-		,[947]		= {	
-		} -- All of Azeroth
+		,[947]	= { -- All of Azeroth (Also look at UpdateAzerothZones() in Dataprovider.lua)
+			[12] = {["x"] = 0.24, ["y"] = 0.55}
+			,[13] = {["x"] = 0.89, ["y"] = 0.52}
+			,[113] = {["x"] = 0.49, ["y"] = 0.12}
+			,[424] = {["x"] = 0.48, ["y"] = 0.82}
+			,[619] = {["x"] = 0.58, ["y"] = 0.39}
+			,[875] = {["x"] = 0.54, ["y"] = 0.63}
+			,[876] = {["x"] = 0.71, ["y"] = 0.50}
+			,[1978] = {["x"] = 0.77, ["y"] = 0.22}
+		}
 	}
 
-_V["WQT_NO_FACTION_DATA"] = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L["NO_FACTION"] } -- No faction
+_V["WQT_NO_FACTION_DATA"] = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 1103069, ["name"]=_L["NO_FACTION"] } -- No faction
 _V["WQT_FACTION_DATA"] = {
 	[67] = 		{ ["expansion"] = LE_EXPANSION_CLASSIC ,["playerFaction"] = nil ,["texture"] = 2203914 } -- Horde
 	,[469] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC ,["playerFaction"] = nil ,["texture"] = 2203912 } -- Alliance
@@ -1302,13 +1382,31 @@ _V["WQT_FACTION_DATA"] = {
 	,[2400] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Alliance" ,["texture"] = 2909043 } -- Waveblade Ankoan
 	,[2417] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 3196264 } -- Uldum Accord
 	,[2415] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 3196265 } -- Rajani
-	-- Shadowlands - Speculation at this point, I can't test
+	-- Shadowlands
 	,[2407] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3257748 } -- The Ascended
 	,[2410] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3641396 } -- The Undying Army
 	,[2413] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3257751 } -- Court of Harvesters
 	,[2465] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3641394 } -- The Wild Hunt
 	,[2432] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3729461 } -- Ve'nari
-	,[2470] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 4083292 } -- Death's Advance
+	,[2470] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 4083292 } -- Korthia
+	,[2472] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 4067928 } -- Korthia Codex
+	,[2478] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 4226232 } -- Zereth Mortis
+	-- LE_EXPANSION_DRAGONFLIGHT
+	,[2507] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687628 } -- Dragonscale Expedition
+	,[2511] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687629 } -- Iskaara Tuskarr
+	,[2503] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687627 } -- Maruuk Centaur
+	,[2510] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687630 } -- Valdrakken Accord
+	,[2544] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4548878 } -- Artisan's Consortium
+	,[2517] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4640487 } -- Wrathion
+	,[2518] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4640488 } -- Sabellian
+	,[2550] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 134565 } -- Cobalt Assembly
+	,[2523] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4528811 } -- Dark Talons
+	,[2524] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4528812 } -- Obsidian Warders
+	,[2526] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4901295 } -- Winterpelt Furbolg
+	,[2564] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5140835 } -- Loamm Niffen
+	,[2553] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 609811 } -- Soridormi
+	,[2574] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5244643 } -- Dream Wardens
+	,[2615] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5315246 } -- Azerothian Archives	
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
@@ -1359,7 +1457,7 @@ _V["WQT_DEFAULTS"] = {
 		
 		["general"] = {
 			sortBy = 1;
-			fullScreenButtonPos = {["anchor"] = "TOPRIGHT", ["x"] = -74, ["y"] = -2};
+			fullScreenButtonPos = {["anchor"] = "TOPRIGHT", ["x"] = -2, ["y"] = -35};
 			fullScreenContainerPos = {["anchor"] = "TOPLEFT", ["x"] = 0, ["y"] = -25};
 		
 			defaultTab = false;
@@ -1373,7 +1471,7 @@ _V["WQT_DEFAULTS"] = {
 			bountyReward = false;
 			bountySelectedOnly = true;
 			showDisliked = true;
-			
+			df_goldPurses = false;
 			sl_callingsBoard = true;
 			sl_genericAnimaIcons = false;
 			
@@ -1446,8 +1544,88 @@ end
 
 -- This is just easier to maintain than changing the entire string every time
 _V["PATCH_NOTES"] = {
+		{["version"] = "10.2.5.0",
+			["intro"] = { "Update for 10.2.5." },
+			["new"] ={
+				"Added new Dragonflight factions.",
+			},
+		},
+		{["version"] = "10.2.0.0",
+			["intro"] = { "Update for 10.2.0." },
+			["new"] ={
+				"Added new Dragonflight zones and factions.",
+			},
+			["fixes"] = {
+				"Updated embedded libraries.",
+				"Minor fixes.",
+			},
+		},
+		{["version"] = "10.1.7.0",
+			["intro"] = { "Update for 10.1.7." },
+			["new"] ={
+				"Added option to treat Dragonflight dragon racer's purse rewards as gold.",
+			},
+		},
+		{["version"] = "10.1.5.0",
+			["intro"] = { "Update for 10.1.5." },
+			["changes"] = {
+				"Added experimental zhCN translation.",
+			},
+			["fixes"] = {
+				"Updated embedded libraries.",
+			},
+		},
+		{["version"] = "10.1.0.0",
+			["intro"] = { "Update for 10.1.0 content." },
+			["new"] ={
+				"Added new Dragonflight zones and factions.",
+			},
+			["fixes"] = {
+				'Fixed WQs filtering.',
+			},
+			["changes"] = {
+				"Moved full screen button default position.",
+			},
+		},
+		{["version"] = "10.0.7.1",
+			["fixes"] = {
+				[[Fixed "Vol'dun" bug.]],
+				'Fixed "Elite Ring" size.',
+			},
+		},
+		{["version"] = "10.0.7.0",
+			["new"] ={
+				"Added new Dragonflight zones and factions.",
+			},
+			["fixes"] = {
+				'Fixed "Anima" translation.',
+				'Fixed "Shadowlands" submenu in filters dropdown.',
+			},
+		},
+		{["version"] = "10.0.2.2",
+			["fixes"] = {
+				'Fixed "Sparks of Life" bug.',
+			},
+		},
+		{["version"] = "10.0.2.1",
+			["fixes"] = {
+				'Fixed "ShouldHighlightInfo" bug.',
+				'Fixed LFG List anchoring to improve compatibility.',
+			},
+		},
+		{["version"] = "10.0.2.0",
+			["intro"] = { "Update for 10.0.2 content." },
+			["new"] ={
+				"Added Dragonflight zones and factions.",
+			},
+			["fixes"] = {
+				"Updated embedded libraries.",
+				"Fixed missing zones and factions.",
+				"Fixed missing icons.",
+			},
+		},
 		{["version"] = "9.1.01",
-			["intro"] = { "Update for 9.1 content" },
+			["intro"] = { "Update for 9.1 content." },
 			["changes"] = {
 				"Changed the calling board progress icons to a texture that looks better at their small scale.",
 			},

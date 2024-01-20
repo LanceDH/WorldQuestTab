@@ -64,9 +64,13 @@ function WQT_CallingsBoardMixin:OnLoad()
 	self.lastUpdate = 0;
 	self:UpdateCovenant();
 	
-	hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
-			self:OnMapChanged(WorldMapFrame:GetMapID());
-		end)
+	-- hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
+			-- self:OnMapChanged(WorldMapFrame:GetMapID());
+		-- end)
+	EventRegistry:RegisterCallback("MapCanvas.MapSet", function(_,mapID) 
+			-- Now we do it modern way.
+			self:OnMapChanged(mapID);
+		end);
 		
 	self:RequestUpdate();
 end
@@ -382,13 +386,9 @@ function WQT_CallingsBoardDisplayMixin:OnEnter()
 	
 	if (self.calling.isLockedToday) then 
 		local daysUntilString = "";
-		if (GetBuildInfo() < "9.0.5") then
-			daysUntilString = self.calling:GetDaysUntilNextString();
-		else
-			local days = MAX_CALLINGS - self.calling.index + 1;
-			daysUntilString = _G["BOUNTY_BOARD_NO_CALLINGS_DAYS_" .. days] or BOUNTY_BOARD_NO_CALLINGS_DAYS_1;
-		end
-		
+		local days = MAX_CALLINGS - self.calling.index + 1;
+		daysUntilString = _G["BOUNTY_BOARD_NO_CALLINGS_DAYS_" .. days] or BOUNTY_BOARD_NO_CALLINGS_DAYS_1;
+
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 		GameTooltip:SetText(daysUntilString, HIGHLIGHT_FONT_COLOR:GetRGB());
 		GameTooltip:Show();
@@ -432,11 +432,3 @@ function WQT_CallingsBoardDisplayMixin:OnClick()
 		end
 	end
 end
-
-
-
-
-
-
-
-

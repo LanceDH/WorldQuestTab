@@ -167,7 +167,7 @@ local function GetWorldQuestDump()
 end
 
 local function GetPlayerDump()
-	local version = GetAddOnMetadata(addonName, "version");
+	local version = C_AddOns.GetAddOnMetadata(addonName, "version");
 	local map = C_Map.GetBestMapForUnit("player");
 	local coords = nil;
 	if (map) then

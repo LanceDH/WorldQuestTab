@@ -344,8 +344,8 @@ function WQT_Utils:GetFactionDataInternal(id)
 
 	if (not factionData[id]) then
 		-- Add new faction in case it's not in our data yet
-		factionData[id] = { ["expansion"] = 0 ,["faction"] = nil ,["texture"] = 1103069, ["unknown"] = true } 
-		factionData[id].name = GetFactionInfoByID(id) or "Unknown Faction";
+		factionData[id] = { ["expansion"] = 0 ,["faction"] = nil ,["texture"] = 134400, ["unknown"] = true } 
+		factionData[id].name = GetFactionInfoByID(id) or UNKNOWN;
 		WQT:debugPrint("Added new faction", id,factionData[id].name);
 	end
 	
@@ -489,7 +489,7 @@ function WQT_Utils:GetPinTime(questInfo)
 			maxTime = 5760*60;
 			offset = -720*60;
 			local tagInfo = questInfo:GetTagInfo();
-			if (timeLeft > maxTime or (tagInfo.isElite and tagInfo.quality == Enum.WorldQuestQuality.Epic)) then
+			if (timeLeft > maxTime or tagInfo and (tagInfo.isElite and tagInfo.quality == Enum.WorldQuestQuality.Epic)) then
 				maxTime = 1440 * 7*60;
 				offset = 0;
 			end
@@ -623,8 +623,7 @@ local function _AddQuestRewardsToTooltip(tooltip, questID, style)
 	end
 
 	-- spells
-	local numQuestSpellRewards = GetNumQuestLogRewardSpells(questID);
-	if numQuestSpellRewards > 0 and not tooltip.ItemTooltip:IsShown() then
+	if C_QuestInfoSystem.HasQuestRewardSpells(questID) and not tooltip.ItemTooltip:IsShown() then
 		if not EmbeddedItemTooltip_SetSpellByQuestReward(tooltip.ItemTooltip, 1, questID) then
 			showRetrievingData = true;
 		end
@@ -652,7 +651,7 @@ function WQT_Utils:AddQuestRewardsToTooltip(tooltip, questID, style)
 
 	if ( GetQuestLogRewardXP(questID) > 0 or GetNumQuestLogRewardCurrencies(questID) > 0 or GetNumQuestLogRewards(questID) > 0 or
 		GetQuestLogRewardMoney(questID) > 0 or GetQuestLogRewardArtifactXP(questID) > 0 or GetQuestLogRewardHonor(questID) > 0 or
-		GetNumQuestLogRewardSpells(questID) > 0) then
+		C_QuestInfoSystem.HasQuestRewardSpells(questID)) then
 		if tooltip.ItemTooltip then
 			tooltip.ItemTooltip:Hide();
 		end
@@ -1291,5 +1290,3 @@ function WQT_Utils:GetRewardTypeColorIDs(rewardType)
 	
 	return self:GetColor(ring), self:GetColor(text);
 end
-
-

@@ -1,4 +1,4 @@
-local MAJOR, MINOR = "AddonDropDown-2.0", 1
+﻿local MAJOR, MINOR = "AddonDropDown-2.0", 1
 local ADD, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not ADD then return end -- No Upgrade needed.
