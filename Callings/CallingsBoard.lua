@@ -51,27 +51,27 @@ function WQT_CallingsBoardMixin:OnLoad()
 	self:SetParent(WorldMapFrame.ScrollContainer);
 	self:SetPoint("BOTTOMLEFT", 15, 15);
 	self:SetFrameStrata("HIGH")
-	
+
 	local numDisplays = #self.Displays;
-	
+
 	for i=1, numDisplays do
 		local display = self.Displays[i];
 		display.miniIcons = CreateAndInitFromMixin(WQT_MiniIconOverlayMixin, display, 270, 20, 40)
 	end
 
 	FrameUtil.RegisterFrameForEvents(self, CovenantCallingsEvents);
-	
+
 	self.lastUpdate = 0;
 	self:UpdateCovenant();
-	
+
 	-- hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
 			-- self:OnMapChanged(WorldMapFrame:GetMapID());
 		-- end)
-	EventRegistry:RegisterCallback("MapCanvas.MapSet", function(_,mapID) 
+	EventRegistry:RegisterCallback("MapCanvas.MapSet", function(_,mapID)
 			-- Now we do it modern way.
 			self:OnMapChanged(mapID);
 		end);
-		
+
 	self:RequestUpdate();
 end
 
@@ -86,7 +86,7 @@ function WQT_CallingsBoardMixin:OnEvent(event, ...)
 			local callings = ...;
 			self:UpdateCovenant();
 			self:ProcessCallings(callings);
-			
+
 			self.lastUpdate = now;
 		end
 	elseif (event == "QUEST_TURNED_IN" or event == "QUEST_ACCEPTED") then
@@ -123,15 +123,15 @@ function WQT_CallingsBoardMixin:OnMapChanged(mapID)
 		self:UpdateVisibility();
 		return;
 	end
-	
+
 	self:ClearAllPoints();
 	if(anchorPoint == "BOTTOMLEFT") then
 		self:SetPoint("BOTTOMLEFT", 15, 15);
-	else	
+	else
 		self:SetPoint("BOTTOMRIGHT", -30, 15);
 	end
 	self.showOnCurrentMap = true;
-	
+
 	self:UpdateVisibility();
 end
 
@@ -162,24 +162,24 @@ function WQT_CallingsBoardMixin:ProcessCallings(callings)
 
 	self.callings = callings;
 	-- Better safe than error
-	if (not callings or not self.covenantData) then 
+	if (not callings or not self.covenantData) then
 		self.isUpdating = false;
-		return; 
+		return;
 	end
-	
+
 	local numDisplays = #self.Displays;
-	
+
 	for i=1, numDisplays do
 		local display = self.Displays[i];
 		local calling = callings[i];
 		calling = CovenantCalling_Create(calling);
 		display:Setup(calling, self.covenantData);
 	end
-	
+
 	table.sort(self.Displays, CompareCallings);
-	
+
 	self:PlaceDisplays();
-	
+
 	self.isUpdating = false;
 end
 
@@ -191,13 +191,13 @@ function WQT_CallingsBoardMixin:PlaceDisplays()
 		local width = display:GetWidth();
 		local x = -((numDisplays-1) * width)/2;
 		x = x + width * (i-1);
-		
+
 		if (display.calling and not display.calling.questID) then
 			-- Not risking Constants.Callings.MaxCallings 
 			display.calling.index = MAX_CALLINGS - numInactive;
 			numInactive = numInactive + 1;
 		end
-		
+
 		display:SetPoint("CENTER", self, x, 0);
 	end
 end
@@ -208,7 +208,7 @@ function WQT_CallingsBoardMixin:UpdateVisibility()
 		self:Hide();
 		return;
 	end
-	
+
 	self:SetShown(self.showOnCurrentMap);
 end
 
@@ -218,11 +218,11 @@ function WQT_CallingsBoardMixin:CalculateUncappedObjectives(calling)
 
 	for objectiveIndex = 1, calling.numObjectives do
 		local objectiveText, objectiveType, finished, numFulfilled, numRequired = GetQuestObjectiveInfo(calling.questID, objectiveIndex, false);
-		
+
 		if(objectiveType == "progressbar") then
 			return GetQuestProgressBarPercent(calling.questID), 100;
 		end
-		
+
 		if objectiveText and #objectiveText > 0 and numRequired > 0 then
 			for objectiveSubIndex = 1, numRequired do
 				if objectiveSubIndex <= numFulfilled then
@@ -232,11 +232,11 @@ function WQT_CallingsBoardMixin:CalculateUncappedObjectives(calling)
 			end
 		end
 	end
-	
+
 	return numCompleted, numTotal;
 end
 
-function WQT_CallingsBoardMixin:GetQuestData(questID) 
+function WQT_CallingsBoardMixin:GetQuestData(questID)
 	for k, display in ipairs(self.Displays) do
 		if (display.calling and display.calling.questID == questID) then
 			return display.questInfo, display.calling;
@@ -253,11 +253,11 @@ end
 
 function WQT_CallingsBoardDisplayMixin:SetCovenant(covenantData)
 	self.covenantData = covenantData;
-	
+
 	if(covenantData) then
 		local bgAtlas = string.format("covenantsanctum-level-border-%s", covenantData.textureKit:lower());
 		self.ProgressBar.BG:SetAtlas(bgAtlas);
-		
+
 		local r, g, b = 1, 1, 1;
 		if(covenantData.ID == Enum.CovenantType.Kyrian) then
 			r = 0.6;
@@ -276,7 +276,7 @@ function WQT_CallingsBoardDisplayMixin:SetCovenant(covenantData)
 			g = 0.74;
 			b = 0.42;
 		end
-		
+
 		self.ProgressBar.Glow:SetVertexColor(r, g, b);
 	end
 end
@@ -284,26 +284,26 @@ end
 function WQT_CallingsBoardDisplayMixin:Setup(calling, covenantData)
 	self.calling = calling;
 	self:SetCovenant(covenantData);
-	
+
 	self.timeRemaining = 0;
 	self.questInfo = nil;
-	
+
 	if (self.calling.questID) then
 		local questInfo = WQT_Utils:QuestCreationFunc();
 		questInfo:Init(self.calling.questID);
 		self.questInfo = questInfo;
 		self.timeRemaining = C_TaskQuest.GetQuestTimeLeftSeconds(calling.questID) or 0;
 	end
-	
+
 	self:Update();
 end
 
 function WQT_CallingsBoardDisplayMixin:Update()
 	if (not self.covenantData) then return; end
-	
+
 	self.Bang:Hide();
 	self.Glow:Hide();
-	
+
 	-- If we have no calling data yet, just make it look like an empty one for now
 	if (not self.calling) then
 		local tempIcon = ("Interface/Pictures/Callings-%s-Head-Disable"):format(self.covenantData.textureKit);
@@ -312,12 +312,12 @@ function WQT_CallingsBoardDisplayMixin:Update()
 	end
 
 	local icon;
-	if (self.calling.isLockedToday) then 
+	if (self.calling.isLockedToday) then
 		icon = ("Interface/Pictures/Callings-%s-Head-Disable"):format(self.covenantData.textureKit);
 	else
 		icon = self.calling.icon;
 	end
-	
+
 	self.Icon:SetTexture(icon);
 	self.Highlight:SetTexture(icon);
 
@@ -332,7 +332,7 @@ function WQT_CallingsBoardDisplayMixin:Update()
 		self.BangHighlight:SetAtlas(bangAtlas);
 		self.Bang:SetShown(bangAtlas);
 	end
-	
+
 	self:UpdateProgress();
 end
 
@@ -340,34 +340,34 @@ function WQT_CallingsBoardDisplayMixin:UpdateProgress()
 	self.miniIcons:Reset();
 	self.BangHighlight:Hide();
 	self.ProgressBar:Hide();
-	
+
 	if (not self.calling:IsActive()) then
 		return;
 	end
-	
+
 	local progress, goal = WQT_CallingsBoardMixin:CalculateUncappedObjectives(self.calling);
 
-	if (progress >= goal) then 
+	if (progress >= goal) then
 		self.BangHighlight:Show();
 		return;
 	end
-	
-	if (goal > 4) then 
+
+	if (goal > 4) then
 		self.ProgressBar:Show();
 		local perc = progress / goal;
 		local width = self.ProgressBar:GetWidth();
-		
+
 		self.ProgressBar.Glow:SetPoint("RIGHT", self.ProgressBar, "LEFT", perc * width, 0);
-	
+
 		return
 	end
-	
+
 	for i=1, goal do
 		local icon = self.miniIcons:Create();
 		local atlas = ("%sassaultsquest-32x32"):format(self.covenantData.textureKit);
-		local vertCol = 1; 
+		local vertCol = 1;
 		local desaturate;
-		
+
 		if (i > progress) then
 			vertCol = 0.65;
 			desaturate = true;
@@ -383,8 +383,8 @@ end
 
 function WQT_CallingsBoardDisplayMixin:OnEnter()
 	if (not self.calling) then return; end
-	
-	if (self.calling.isLockedToday) then 
+
+	if (self.calling.isLockedToday) then
 		local daysUntilString = "";
 		local days = MAX_CALLINGS - self.calling.index + 1;
 		daysUntilString = _G["BOUNTY_BOARD_NO_CALLINGS_DAYS_" .. days] or BOUNTY_BOARD_NO_CALLINGS_DAYS_1;
@@ -399,7 +399,7 @@ function WQT_CallingsBoardDisplayMixin:OnEnter()
 		else
 			WQT_Utils:ShowQuestTooltip(self, self.questInfo, _V["TOOLTIP_STYLES"].callingAvailable);
 		end
-		
+
 
 		local questInfo = self.questInfo;
 		local questID = self.calling.questID;
@@ -416,11 +416,11 @@ function WQT_CallingsBoardDisplayMixin:OnClick()
 	if (self.calling.isLockedToday) then return; end
 
 	local openDetails = false;
-	
+
 	if (self.calling:GetState() == Enum.CallingStates.QuestActive and not WorldMapFrame:IsMaximized()) then
 		openDetails = true;
 	end
-	
+
 	if (openDetails) then
 		QuestMapFrame_OpenToQuestDetails(self.calling.questID);
 	else
