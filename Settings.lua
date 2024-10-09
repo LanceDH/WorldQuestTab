@@ -47,7 +47,7 @@ function WQT_SettingsBaseMixin:Init(data)
 		end
 		self.Label:SetText(labelText);
 	end
-	
+
 	if (self.DisabledOverlay) then
 		self.DisabledOverlay:SetFrameLevel(self:GetFrameLevel() + 2)
 	end
@@ -86,7 +86,7 @@ function WQT_SettingsBaseMixin:SetDisabled(value)
 	if (self.Label and not self.staticLabelFont) then
 		self.Label:SetFontObject(value and "GameFontDisable" or "GameFontNormal");
 	end
-	
+
 	if (self.DisabledOverlay) then
 		self.DisabledOverlay:SetShown(value);
 	end
@@ -109,11 +109,11 @@ function WQT_SettingsQuestListMixin:OnLoad()
 	typeFrame.Bg:SetAtlas("worldquest-questmarker-rare");
 	typeFrame.Bg:SetTexCoord(0, 1, 0, 1);
 	typeFrame.Bg:SetSize(18, 18);
-	
+
 	typeFrame.Texture:SetAtlas("worldquest-icon-dungeon");
 	typeFrame.Texture:SetSize(16, 17);
 	typeFrame:Show();
-	
+
 	questFrame.Time:SetVertexColor(0, 0.75, 0);
 	local mapInfo = WQT_Utils:GetCachedMapInfo(942);
 	self.zoneName = mapInfo.name;
@@ -140,7 +140,7 @@ function WQT_SettingsQuestListMixin:UpdateState()
 		questFrame.Faction:Hide();
 		questFrame.Faction:SetWidth(0.1);
 	end
-	
+
 	-- Type icon
 	if (WQT.settings.list.typeIcon) then
 		questFrame.Type:Show();
@@ -149,7 +149,7 @@ function WQT_SettingsQuestListMixin:UpdateState()
 		questFrame.Type:Hide();
 		questFrame.Type:SetWidth(0.1);
 	end
-	
+
 	-- Zone name
 	questFrame.Extra:SetText(WQT.settings.list.showZone and self.zoneName or "");
 
@@ -164,7 +164,7 @@ function WQT_SettingsQuestListMixin:UpdateState()
 	end
 	questFrame.Time:SetWidth(timeWidth);
 	questFrame.Extra:SetWidth(zoneWidth);
-	
+
 	-- Time display
 	-- 74160s == 20h 36m
 	local timeString;
@@ -180,7 +180,7 @@ function WQT_SettingsQuestListMixin:UpdateState()
 	else
 		questFrame.Time:SetVertexColor(_V["WQT_WHITE_FONT_COLOR"]:GetRGB());
 	end
-	
+
 	-- Fake rewards
 	questFrame.Rewards:Reset();
 	questFrame.Rewards:AddReward(WQT_REWARDTYPE.equipment, 1733697, 3, 410, _V["WQT_COLOR_ARMOR"], true);
@@ -246,9 +246,11 @@ function WQT_SettingsSliderMixin:UpdateState()
 	WQT_SettingsBaseMixin.UpdateState(self);
 	if (self.getValueFunc) then
 		local currentValue = self.getValueFunc();
-		self.Slider:SetValue(currentValue);
-		self.TextBox:SetText(Round(currentValue*100)/100);
-		self.current = currentValue;
+		if currentValue and type(currentValue) == "number" then
+			self.Slider:SetValue(currentValue);
+			self.TextBox:SetText(Round(currentValue*100)/100);
+			self.current = currentValue;
+		end
 	end
 end
 
@@ -266,10 +268,10 @@ end
 function WQT_SettingsSliderMixin:OnValueChanged(value, userInput)
 	-- Prevent non-number input
 	value = tonumber(value);
-	if (not value) then 
+	if (not value) then
 		-- Reset displayed values
 		self:UpdateState();
-		return; 
+		return;
 	end
 
 	value = Round(value*100)/100;
@@ -287,7 +289,7 @@ end
 WQT_SettingsColorMixin = CreateFromMixins(WQT_SettingsBaseMixin);
 
 function WQT_SettingsColorMixin:OnLoad()
-	
+
 end
 
 function WQT_SettingsColorMixin:Init(data)
@@ -310,7 +312,7 @@ function WQT_SettingsColorMixin:UpdateState()
 		local canReset = color:GenerateHexColor() ~= self.defaultColor:GenerateHexColor();
 		self:SetResetEnabled(canReset);
 	end
-	
+
 	self.Label:Show();
 	self.ExampleText:Hide();
 	self.ExampleRing:Hide();
@@ -343,7 +345,7 @@ end
 function WQT_SettingsColorMixin:UpdateFromPicker(isConfirmed)
 	local r, g, b = ColorPickerFrame:GetColorRGB();
 	self:SetWidgetRGB(r, g, b);
-	
+
 	if (isConfirmed) then
 		self:OnValueChanged(self.colorID, true, r, g, b);
 		self:StopPicking();
@@ -352,12 +354,12 @@ end
 
 function WQT_SettingsColorMixin:StartPicking()
 	if (not self.getValueFunc) then return; end
-	
+
 	self:GetParent():GetParent():GetParent():UpdateList();
-	
+
 	local color = self.getValueFunc(self.colorID);
 	local r, g, b = color:GetRGB();
-	
+
 	local info = {
 		["swatchFunc"] = function () self:UpdateFromPicker() end,
 		["opacityFunc"] = function () self:UpdateFromPicker(true) end,
@@ -367,11 +369,11 @@ function WQT_SettingsColorMixin:StartPicking()
 		["b"] = b,
 		["extraInfo"] = "test"
 	}
-	
+
 	self.Label:Hide();
 	self.ExampleText:Show();
 	self.ExampleRing:Show();
-	
+
 	OpenColorPicker(info);
 end
 
@@ -379,7 +381,7 @@ function WQT_SettingsColorMixin:StopPicking()
 	self.Label:Show();
 	self.ExampleText:Hide();
 	self.ExampleRing:Hide();
-	
+
 	self:UpdateState();
 end
 
@@ -414,10 +416,10 @@ function WQT_SettingsDropDownMixin:Init(data)
 	self.getValueFunc = data.getValueFunc;
 	if (data.options) then
 		self.options = data.options;
-		
+
 		local function temp (frame, level, value)
 			local info = frame:CreateButtonInfo();
-			info.func = function(option, arg1, arg2) 
+			info.func = function(option, arg1, arg2)
 					self:OnValueChanged(arg1, true);
 					self.DropDown:SetDisplayText(arg2);
 				end
@@ -425,17 +427,17 @@ function WQT_SettingsDropDownMixin:Init(data)
 			if (data.getValueFunc) then
 				selected = data.getValueFunc();
 			end
-			
+
 			local options = self.options;
 			if (type(options) ==  "function") then
 				options = options();
 			end
-			
+
 			for id, displayInfo in pairs(options) do
 				local label = displayInfo.label or "Invalid label";
 				info.value = id;
 				info.arg1 = displayInfo.arg1;
-				info.text = label; 
+				info.text = label;
 				info.arg2 = label;
 				info.tooltipTitle = label;
 				info.tooltipText = displayInfo.tooltip;
@@ -450,9 +452,9 @@ function WQT_SettingsDropDownMixin:Init(data)
 			end
 		end
 		ADD:LinkDropDown(self.DropDown, temp, nil, nil, nil, nil, "LIST");
-		
+
 	end
-	
+
 	self:UpdateState();
 end
 
@@ -521,7 +523,7 @@ function WQT_SettingsConfirmButtonMixin:UpdateState()
 	WQT_SettingsBaseMixin.UpdateState(self);
 	local width = (self:GetWidth() - 67) / 2;
 	self.ButtonConfirm:SetWidth(width);
-	
+
 	if (self.isPicking == true) then
 		self.Button:Show();
 		self.ButtonConfirm:Hide();
@@ -543,7 +545,7 @@ function WQT_SettingsConfirmButtonMixin:SetPickingState(isPicking)
 		self.ButtonDecline:Show();
 		return;
 	end
-	
+
 	self.Button:Show();
 	self.ButtonConfirm:Hide();
 	self.ButtonDecline:Hide();
@@ -584,10 +586,10 @@ function WQT_SettingsTextInputMixin:SetDisabled(value)
 end
 
 function WQT_SettingsTextInputMixin:OnValueChanged(value, userInput)
-	if (not value or value == "") then 
+	if (not value or value == "") then
 		-- Reset displayed values
 		self:UpdateState();
-		return; 
+		return;
 	end
 
 	if (userInput and value ~= self.current) then
@@ -634,13 +636,13 @@ function WQT_SettingsFrameMixin:OnLoad()
 	-- Because we can't destroy frames, keep a pool of each type to re-use
 	self.categoryPool = CreateFramePool("BUTTON", self.ScrollFrame.ScrollChild, "WQT_SettingCategoryTemplate");
 	self.subCategoryPool = CreateFramePool("BUTTON", self.ScrollFrame.ScrollChild, "WQT_SettingSubCategoryTemplate");
-	
+
 	self.templatePools = {};
-	
+
 	self.categoryless = {};
 	self.categories = {};
 	self.categoriesLookup = {};
-	
+
 	self.bufferedSettings = {};
 	self.bufferedCategories = {};
 end
@@ -661,7 +663,7 @@ end
 
 function WQT_SettingsFrameMixin:SetCategoryExpanded(id, value)
 	local category = self.categoriesLookup[id];
-	
+
 	if (category) then
 		category:SetExpanded(value);
 	end
@@ -685,9 +687,9 @@ function WQT_SettingsFrameMixin:RegisterCategory(data)
 		end
 		return;
 	end
-	
+
 	category =  self:CreateCategory(data)
-	
+
 end
 
 function WQT_SettingsFrameMixin:CreateCategory(data)
@@ -700,9 +702,9 @@ function WQT_SettingsFrameMixin:CreateCategory(data)
 		local temp = {["id"] = data};
 		data = temp;
 	end
-	
+
 	local isSubCategory = data.parentCategory ~= nil;
-	
+
 	local category;
 	if (isSubCategory) then
 		local parent = self.categoriesLookup[data.parentCategory];
@@ -712,10 +714,10 @@ function WQT_SettingsFrameMixin:CreateCategory(data)
 	else
 		category = self.categoryPool:Acquire();
 	end
-	
+
 	category:Init(data);
 	category.Title:SetText(data.label or data.id)
-	
+
 	if (not isSubCategory) then
 		tinsert(self.categories, category);
 	end
@@ -730,7 +732,7 @@ function WQT_SettingsFrameMixin:UpdateCategory(category)
 				setting:UpdateState();
 			end
 		end
-		
+
 		for k2, subCategory in ipairs(category.subCategories) do
 			self:UpdateCategory(subCategory);
 		end
@@ -743,7 +745,7 @@ function WQT_SettingsFrameMixin:UpdateList()
 			setting:UpdateState();
 		end
 	end
-	
+
 	for k, category in ipairs(self.categories) do
 		self:UpdateCategory(category);
 	end
@@ -756,7 +758,7 @@ function WQT_SettingsFrameMixin:AcquireFrameOfTemplate(template)
 		pool = CreateFramePool("FRAME", self.ScrollFrame.ScrollChild, template, function(pool, frame) frame:Reset(); end);
 		self.templatePools[template] = pool;
 	end
-	
+
 	if (pool) then
 		return pool:Acquire();
 	end
@@ -835,7 +837,7 @@ function WQT_SettingsFrameMixin:PlaceSetting(setting)
 	if (setting.UpdateState) then
 		setting:UpdateState();
 	end
-	
+
 	self.previous = setting;
 	self.totalHeight = self.totalHeight + setting:GetHeight();
 end
@@ -848,9 +850,9 @@ function WQT_SettingsFrameMixin:Refresh()
 		local current = self.categoryless[i];
 		self:PlaceSetting(current);
 	end
-	
+
 	self:PlaceCategories(self.categories);
-	
+
 	self.ScrollFrame:SetChildHeight(self.totalHeight);
 end
 
@@ -858,23 +860,23 @@ function WQT_SettingsFrameMixin:CategoryTreeHasSettings(category)
 	if (#category.settings > 0) then
 		return true;
 	end
-	
+
 	for k, subCategory in ipairs(category.subCategories) do
 		if (self:CategoryTreeHasSettings(subCategory)) then
 			return true;
 		end
 	end
-	
+
 	return false;
 end
 
 function WQT_SettingsFrameMixin:PlaceCategories(categories)
-	
+
 	for i = 1, #categories do
 		local category = categories[i];
 		if (self:CategoryTreeHasSettings(category)) then
 			self:PlaceSetting(category);
-			
+
 			for k, setting in ipairs(category.settings) do
 				if (category.isExpanded) then
 					self:PlaceSetting(setting);
@@ -884,7 +886,7 @@ function WQT_SettingsFrameMixin:PlaceCategories(categories)
 				end
 			end
 		end
-		
+
 		if (category.isExpanded) then
 			self:PlaceCategories(category.subCategories);
 		else

@@ -13,7 +13,7 @@ end
 function WQT_ExternalMixin:IsLoaded()
 	local name = self:GetName();
 	if (name ~= "") then
-		return IsAddOnLoaded(name);
+		return C_AddOns.IsAddOnLoaded(name);
 	end
 	return false;
 end
@@ -21,7 +21,7 @@ end
 function WQT_ExternalMixin:IsLoadable()
 	local name = self:GetName();
 	if (name ~= "") then
-		return select(2, GetAddOnInfo(name));
+		return select(2, C_AddOns.GetAddOnInfo(name));
 	end
 	return false;
 end

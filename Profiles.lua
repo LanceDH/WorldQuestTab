@@ -113,7 +113,7 @@ function WQT_Profiles:InitSettings()
 
 	-- Version checking
 	local settingVersion = WQT.db.global.versionCheck or"0";
-	local currentVersion = GetAddOnMetadata(addonName, "version");
+	local currentVersion = C_AddOns.GetAddOnMetadata(addonName, "version");
 	if (settingVersion < currentVersion) then
 		WQT.db.global.updateSeen = false;
 		WQT.db.global.versionCheck  = currentVersion;
