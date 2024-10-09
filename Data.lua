@@ -14,6 +14,14 @@ local WQT = addon.WQT;
 local _emptyTable = {};
 local _playerFaction = UnitFactionGroup("Player");
 
+WQT = WQT or {}
+WQT.settings = WQT.settings or {
+    general = {},
+    list = {},
+    filters = {},
+    pin = {}
+}
+
 --------------------------------
 -- Custom Event mixin
 --------------------------------
@@ -30,11 +38,11 @@ function WQT_CallbackMixin:RegisterCallback(event, func)
 	end
 
 	local callback = self.callbacks[event];
-	if (not callback) then 
+	if (not callback) then
 		callback = {};
 		self.callbacks[event] = callback;
 	end
-	
+
 	tinsert(callback, {["func"] = func, ["source"] = source});
 end
 
@@ -42,7 +50,7 @@ function WQT_CallbackMixin:TriggerCallback(event, ...)
 	if (not self.callbacks or not self.callbacks[event]) then
 		return;
 	end
-	
+
 	for k, callback in ipairs(self.callbacks[event]) do
 		callback.func(...);
 	end
@@ -61,7 +69,7 @@ function WQT_EventHookMixin:HookEvent(event, func)
 	end
 
 	local callback = self.eventHooks[event];
-	if (not callback) then 
+	if (not callback) then
 		callback = {};
 		self.eventHooks[event] = callback;
 	end
@@ -73,7 +81,7 @@ function WQT_EventHookMixin:OnEvent(event, ...)
 	if (not self.eventHooks or not self.eventHooks[event]) then
 		return;
 	end
-	
+
 	for k, callback in ipairs(self.eventHooks[event]) do
 		callback.func(event, ...);
 	end
@@ -106,7 +114,7 @@ WQT_REWARDTYPE = {
 	["reputation"] =		2^11,	--2048
 	["xp"] = 			2^12,	--4096
 	["missing"] = 		2^13,	--8192
-	
+
 };
 
 WQT_QUESTTYPE = {
@@ -200,7 +208,7 @@ local WQT_LEGION = {
 	[627]	= {["x"] = 0.45, ["y"] = 0.64}, -- Dalaran
 	[905] 	= {["x"] = 0.86, ["y"] = 0.17}, -- Argus
 }
-local WQT_KALIMDOR = { 
+local WQT_KALIMDOR = {
 	[81] 	= {["x"] = 0.42, ["y"] = 0.82}, -- Silithus
 	[64]	= {["x"] = 0.5, ["y"] = 0.72}, -- Thousand Needles
 	[249]	= {["x"] = 0.47, ["y"] = 0.91}, -- Uldum
@@ -350,7 +358,7 @@ local ZonesByExpansion = {
 		62, -- Darkshore
 		1527, -- Uldum
 		1530, -- Vale of Eternam Blossom
-		
+
 	}
 	,[LE_EXPANSION_LEGION] = {
 		619, -- Broken Isles
@@ -419,7 +427,7 @@ _V["PATH_CUSTOM_ICONS"] = "Interface/Addons/WorldQuestTab/Images/CustomIcons";
 _V["LIST_ANCHOR_TYPE"] = {["flight"] = 1, ["world"] = 2, ["full"] = 3, ["taxi"] = 4};
 _V["CURRENT_EXPANSION"] = LE_EXPANSION_DRAGONFLIGHT;
 
-_V["TOOLTIP_STYLES"] = { 
+_V["TOOLTIP_STYLES"] = {
 	["default"] = {},
 	["callingAvailable"] = { ["hideObjectives"] = true; },
 	["callingActive"] = { ["hideType"] = true; },
@@ -469,7 +477,7 @@ _V["PIN_CENTER_TYPES"] =	{
 }
 
 _V["PIN_CENTER_LABELS"] ={
-	[_V["PIN_CENTER_TYPES"].blizzard] = {["label"] = _L["BLIZZARD"], ["tooltip"] = _L["PIN_BLIZZARD_TT"]} 
+	[_V["PIN_CENTER_TYPES"].blizzard] = {["label"] = _L["BLIZZARD"], ["tooltip"] = _L["PIN_BLIZZARD_TT"]}
 	,[_V["PIN_CENTER_TYPES"].reward] = {["label"] = REWARD, ["tooltip"] = _L["PIN_REWARD_TT"]}
 }
 
@@ -481,7 +489,7 @@ _V["RING_TYPES"] = {
 }
 
 _V["RING_TYPES_LABELS"] ={
-	[_V["RING_TYPES"].default] = {["label"] = _L["PIN_RING_DEFAULT"], ["tooltip"] = _L["PIN_RING_DEFAULT_TT"]} 
+	[_V["RING_TYPES"].default] = {["label"] = _L["PIN_RING_DEFAULT"], ["tooltip"] = _L["PIN_RING_DEFAULT_TT"]}
 	,[_V["RING_TYPES"].reward] = {["label"] = _L["PIN_RING_COLOR"], ["tooltip"] = _L["PIN_RING_COLOR_TT"]}
 	,[_V["RING_TYPES"].time] = {["label"] = _L["PIN_RING_TIME"], ["tooltip"] = _L["PIN_RIMG_TIME_TT"]}
 	,[_V["RING_TYPES"].rarity] = {["label"] = RARITY, ["tooltip"] = _L["PIN_RING_QUALITY_TT"]}
@@ -494,9 +502,9 @@ _V["ENUM_PIN_CONTINENT"] = {
 }
 
 _V["PIN_VISIBILITY_CONTINENT"] = {
-	[_V["ENUM_PIN_CONTINENT"].none] = {["label"] = NONE, ["tooltip"] = _L["PIN_VISIBILITY_NONE_TT"]} 
-	,[_V["ENUM_PIN_CONTINENT"].tracked] = {["label"] = _L["PIN_VISIBILITY_TRACKED"], ["tooltip"] = _L["PIN_VISIBILITY_TRACKED_TT"]} 
-	,[_V["ENUM_PIN_CONTINENT"].all] = {["label"] = ALL, ["tooltip"] = _L["PIN_VISIBILITY_ALL_TT"]} 
+	[_V["ENUM_PIN_CONTINENT"].none] = {["label"] = NONE, ["tooltip"] = _L["PIN_VISIBILITY_NONE_TT"]}
+	,[_V["ENUM_PIN_CONTINENT"].tracked] = {["label"] = _L["PIN_VISIBILITY_TRACKED"], ["tooltip"] = _L["PIN_VISIBILITY_TRACKED_TT"]}
+	,[_V["ENUM_PIN_CONTINENT"].all] = {["label"] = ALL, ["tooltip"] = _L["PIN_VISIBILITY_ALL_TT"]}
 }
 
 _V["ENUM_PIN_ZONE"] = {
@@ -506,9 +514,9 @@ _V["ENUM_PIN_ZONE"] = {
 }
 
 _V["PIN_VISIBILITY_ZONE"] = {
-	[_V["ENUM_PIN_ZONE"].none] = {["label"] = NONE, ["tooltip"] = _L["PIN_VISIBILITY_NONE_TT"]} 
-	,[_V["ENUM_PIN_ZONE"].tracked] = {["label"] = _L["PIN_VISIBILITY_TRACKED"], ["tooltip"] = _L["PIN_VISIBILITY_TRACKED_TT"]} 
-	,[_V["ENUM_PIN_ZONE"].all] = {["label"] = ALL, ["tooltip"] = _L["PIN_VISIBILITY_ALL_TT"]} 
+	[_V["ENUM_PIN_ZONE"].none] = {["label"] = NONE, ["tooltip"] = _L["PIN_VISIBILITY_NONE_TT"]}
+	,[_V["ENUM_PIN_ZONE"].tracked] = {["label"] = _L["PIN_VISIBILITY_TRACKED"], ["tooltip"] = _L["PIN_VISIBILITY_TRACKED_TT"]}
+	,[_V["ENUM_PIN_ZONE"].all] = {["label"] = ALL, ["tooltip"] = _L["PIN_VISIBILITY_ALL_TT"]}
 }
 
 _V["SETTING_TYPES"] = {
@@ -577,7 +585,7 @@ _V["SETTING_CATEGORIES"] = {
 	,{["id"]="TOMTOM", ["label"] = "TomTom"}
 }
 
-local function UpdateColorID(id, r, g, b) 
+local function UpdateColorID(id, r, g, b)
 	local color = WQT_Utils:UpdateColor(_V["COLOR_IDS"][id], r, g, b);
 	if (color) then
 		WQT.settings.colors[id] = color:GenerateHexColor();
@@ -608,86 +616,86 @@ _V["SETTING_LIST"] = {
 			, ["valueChangedFunc"] = UpdateColorID, ["colorID"] = "timeVeryLong",["getValueFunc"] = GetColorByID
 		},
 	-- Rewards
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = NONE, ["defaultColor"] = _V["WQT_COLOR_NONE"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = NONE, ["defaultColor"] = _V["WQT_COLOR_NONE"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardNone", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = WEAPON, ["defaultColor"] = _V["WQT_COLOR_WEAPON"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = WEAPON, ["defaultColor"] = _V["WQT_COLOR_WEAPON"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardWeapon", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ARMOR, ["defaultColor"] = _V["WQT_COLOR_ARMOR"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ARMOR, ["defaultColor"] = _V["WQT_COLOR_ARMOR"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardArmor", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = _L["REWARD_CONDUITS"], ["defaultColor"] = _V["WQT_COLOR_RELIC"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = _L["REWARD_CONDUITS"], ["defaultColor"] = _V["WQT_COLOR_RELIC"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardConduit", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = RELICSLOT, ["defaultColor"] = _V["WQT_COLOR_RELIC"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = RELICSLOT, ["defaultColor"] = _V["WQT_COLOR_RELIC"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardRelic", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = WORLD_QUEST_REWARD_FILTERS_ANIMA, ["defaultColor"] = _V["WQT_COLOR_ARTIFACT"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = WORLD_QUEST_REWARD_FILTERS_ANIMA, ["defaultColor"] = _V["WQT_COLOR_ARTIFACT"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardAnima", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ITEM_QUALITY6_DESC, ["defaultColor"] = _V["WQT_COLOR_ARTIFACT"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ITEM_QUALITY6_DESC, ["defaultColor"] = _V["WQT_COLOR_ARTIFACT"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardArtifact", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ITEMS, ["defaultColor"] = _V["WQT_COLOR_ITEM"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ITEMS, ["defaultColor"] = _V["WQT_COLOR_ITEM"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardItem", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = POWER_TYPE_EXPERIENCE, ["defaultColor"] = _V["WQT_COLOR_ITEM"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = POWER_TYPE_EXPERIENCE, ["defaultColor"] = _V["WQT_COLOR_ITEM"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardXp", ["getValueFunc"] = GetColorByID
-		},	
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["defaultColor"] = _V["WQT_COLOR_GOLD"], 
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["defaultColor"] = _V["WQT_COLOR_GOLD"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardGold", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = CURRENCY, ["defaultColor"] = _V["WQT_COLOR_CURRENCY"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = CURRENCY, ["defaultColor"] = _V["WQT_COLOR_CURRENCY"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardCurrency", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = REPUTATION, ["defaultColor"] = _V["WQT_COLOR_CURRENCY"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = REPUTATION, ["defaultColor"] = _V["WQT_COLOR_CURRENCY"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardReputation", ["getValueFunc"] = GetColorByID
-		},	
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = HONOR, ["defaultColor"] = _V["WQT_COLOR_HONOR"], 
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = HONOR, ["defaultColor"] = _V["WQT_COLOR_HONOR"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardHonor", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ADDON_MISSING, ["defaultColor"] = _V["WQT_COLOR_MISSING"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ADDON_MISSING, ["defaultColor"] = _V["WQT_COLOR_MISSING"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardMissing", ["getValueFunc"] = GetColorByID
-		},	
+		},
 	-- Rewards
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = WEAPON, ["defaultColor"] = _V["WQT_COLOR_WEAPON"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = WEAPON, ["defaultColor"] = _V["WQT_COLOR_WEAPON"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextWeapon", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ARMOR, ["defaultColor"] = _V["WQT_COLOR_ARMOR"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ARMOR, ["defaultColor"] = _V["WQT_COLOR_ARMOR"],
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextArmor", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = _L["REWARD_CONDUITS"], ["defaultColor"] = WHITE_FONT_COLOR, 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = _L["REWARD_CONDUITS"], ["defaultColor"] = WHITE_FONT_COLOR,
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextConduit", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = RELICSLOT, ["defaultColor"] = WHITE_FONT_COLOR, 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = RELICSLOT, ["defaultColor"] = WHITE_FONT_COLOR,
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextRelic", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = WORLD_QUEST_REWARD_FILTERS_ANIMA, ["defaultColor"] = GREEN_FONT_COLOR, 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = WORLD_QUEST_REWARD_FILTERS_ANIMA, ["defaultColor"] = GREEN_FONT_COLOR,
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextAnima", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ITEM_QUALITY6_DESC, ["defaultColor"] = GREEN_FONT_COLOR, 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ITEM_QUALITY6_DESC, ["defaultColor"] = GREEN_FONT_COLOR,
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextArtifact", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ITEMS, ["defaultColor"] = WHITE_FONT_COLOR, 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ITEMS, ["defaultColor"] = WHITE_FONT_COLOR,
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextItem", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = POWER_TYPE_EXPERIENCE, ["defaultColor"] = WHITE_FONT_COLOR, 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = POWER_TYPE_EXPERIENCE, ["defaultColor"] = WHITE_FONT_COLOR,
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextXp", ["getValueFunc"] = GetColorByID
-		},	
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["defaultColor"] = WHITE_FONT_COLOR, 
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["defaultColor"] = WHITE_FONT_COLOR,
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextGold", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = CURRENCY, ["defaultColor"] = WHITE_FONT_COLOR, 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = CURRENCY, ["defaultColor"] = WHITE_FONT_COLOR,
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextCurrency", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = REPUTATION, ["defaultColor"] = WHITE_FONT_COLOR, 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = REPUTATION, ["defaultColor"] = WHITE_FONT_COLOR,
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextReputation", ["getValueFunc"] = GetColorByID
-		},	
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = HONOR, ["defaultColor"] = WHITE_FONT_COLOR, 
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = HONOR, ["defaultColor"] = WHITE_FONT_COLOR,
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextHonor", ["getValueFunc"] = GetColorByID
 		},
-		
+
 	{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "PROFILES", ["label"] = _L["CURRENT_PROFILE"], ["tooltip"] = _L["CURRENT_PROFILE_TT"], ["options"] = function() return WQT_Profiles:GetProfiles() end
 			, ["valueChangedFunc"] = function(arg1, arg2)
 				if (arg1 == WQT_Profiles:GetActiveProfileId()) then
@@ -695,33 +703,33 @@ _V["SETTING_LIST"] = {
 					return;
 				end
 				WQT_Profiles:Load(arg1);
-				
+
 				WQT_WorldQuestFrame:ApplyAllSettings();
 			end
 			,["getValueFunc"] = function() return WQT_Profiles:GetIndexById(WQT.db.char.activeProfile) end
 			}
-	,{["template"] = "WQT_SettingTextInputTemplate", ["categoryID"] = "PROFILES", ["label"] = _L["PROFILE_NAME"] , ["tooltip"] = _L["PROFILE_NAME_TT"] 
-			, ["valueChangedFunc"] = function(value) 
+	,{["template"] = "WQT_SettingTextInputTemplate", ["categoryID"] = "PROFILES", ["label"] = _L["PROFILE_NAME"] , ["tooltip"] = _L["PROFILE_NAME_TT"]
+			, ["valueChangedFunc"] = function(value)
 				WQT_Profiles:ChangeActiveProfileName(value);
 			end
-			,["getValueFunc"] = function() 
-				return WQT_Profiles:GetActiveProfileName(); 
+			,["getValueFunc"] = function()
+				return WQT_Profiles:GetActiveProfileName();
 			end
 			,["isDisabled"] = function() return WQT_Profiles:DefaultIsActive() end
 			}
 	,{["template"] = "WQT_SettingButtonTemplate", ["categoryID"] = "PROFILES", ["label"] = _L["NEW_PROFILE"], ["tooltip"] = _L["NEW_PROFILE_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT_Profiles:CreateNew();
 			end
 			}
 	,{["template"] = "WQT_SettingConfirmButtonTemplate", ["categoryID"] = "PROFILES", ["label"] =_L["RESET_PROFILE"], ["tooltip"] = _L["RESET_PROFILE_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT_Profiles:ResetActive();
 				WQT_WorldQuestFrame:ApplyAllSettings();
 			end
 			}
 	,{["template"] = "WQT_SettingConfirmButtonTemplate", ["categoryID"] = "PROFILES", ["label"] =_L["REMOVE_PROFILE"], ["tooltip"] = _L["REMOVE_PROFILE_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT_Profiles:Delete(WQT_Profiles:GetActiveProfileId());
 				WQT_WorldQuestFrame:ApplyAllSettings();
 			end
@@ -729,55 +737,55 @@ _V["SETTING_LIST"] = {
 			}
 	-- General settings
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["DEFAULT_TAB"], ["tooltip"] = _L["DEFAULT_TAB_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.general.defaultTab = value;
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.defaultTab end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["SAVE_SETTINGS"], ["tooltip"] = _L["SAVE_SETTINGS_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.general.saveFilters = value;
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.saveFilters end
-			}	
+			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["PRECISE_FILTER"], ["tooltip"] = _L["PRECISE_FILTER_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				for i=1, 3 do
 					if (not WQT:IsUsingFilterNr(i)) then
 						WQT:SetAllFilterTo(i, not value);
 					end
 				end
-			
+
 				WQT.settings.general.preciseFilters = value;
 				WQT_QuestScrollFrame:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.preciseFilters end
-			}	
+			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["LFG_BUTTONS"], ["tooltip"] = _L["LFG_BUTTONS_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.general.useLFGButtons = value;
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.useLFGButtons end
-			}	
-		
+			}
+
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["QUEST_COUNTER"], ["tooltip"] = _L["QUEST_COUNTER_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.general.questCounter = value;
 				WQT_QuestLogFiller:UpdateVisibility();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.questCounter; end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["ALWAYS_ALL"], ["tooltip"] = _L["ALWAYS_ALL_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.list.alwaysAllQuests = value;
 				local mapAreaID = WorldMapFrame.mapID;
 				WQT_WorldQuestFrame.dataProvider:LoadQuestsInZone(mapAreaID);
 				WQT_QuestScrollFrame:UpdateQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.alwaysAllQuests end
-			}	
+			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["INCLUDE_DAILIES"], ["tooltip"] = _L["INCLUDE_DAILIES_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.list.includeDaily = value;
 				local mapAreaID = WorldMapFrame.mapID;
 				WQT_WorldQuestFrame.dataProvider:LoadQuestsInZone(mapAreaID);
@@ -795,100 +803,100 @@ _V["SETTING_LIST"] = {
 			,["getValueFunc"] = function() return WQT.settings.general.df_goldPurses end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["CALLINGS_BOARD"], ["tooltip"] = _L["CALLINGS_BOARD_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.general.sl_callingsBoard = value;
 				WQT_CallingsBoard:UpdateVisibility();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.sl_callingsBoard end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["GENERIC_ANIMA"], ["tooltip"] = _L["GENERIC_ANIMA_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.general.sl_genericAnimaIcons = value;
 				WQT_WorldQuestFrame.dataProvider:ReloadQuestRewards();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.sl_genericAnimaIcons end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_OLDCONTENT", ["label"] = _L["AUTO_EMISARRY"], ["tooltip"] = _L["AUTO_EMISARRY_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.general.autoEmisarry = value;
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.autoEmisarry end
-			}	
+			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_OLDCONTENT", ["label"] = _L["EMISSARY_COUNTER"], ["tooltip"] = _L["EMISSARY_COUNTER_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.general.bountyCounter = value;
 				WQT_WorldQuestFrame:UpdateBountyCounters();
 				WQT_WorldQuestFrame:RepositionBountyTabs();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.bountyCounter end
-			}	
+			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_OLDCONTENT", ["label"] = _L["EMISSARY_REWARD"], ["tooltip"] = _L["EMISSARY_REWARD_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.general.bountyReward = value;
 				WQT_WorldQuestFrame:UpdateBountyCounters();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.bountyReward end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_OLDCONTENT", ["label"] = _L["EMISSARY_SELECTED_ONLY"], ["tooltip"] = _L["EMISSARY_SELECTED_ONLY_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.general.bountySelectedOnly = value;
 				WQT_QuestScrollFrame:UpdateQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.bountySelectedOnly end
 			}
 	-- Quest List
-	,{["frameName"] = "WQT_SettingsQuestListPreview", ["categoryID"] = "QUESTLIST"}	
+	,{["frameName"] = "WQT_SettingsQuestListPreview", ["categoryID"] = "QUESTLIST"}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["SHOW_TYPE"], ["tooltip"] = _L["SHOW_TYPE_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.list.typeIcon = value;
 				WQT_QuestScrollFrame:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.typeIcon end
-			}	
+			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["SHOW_FACTION"], ["tooltip"] = _L["SHOW_FACTION_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.list.factionIcon = value;
 				WQT_QuestScrollFrame:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.factionIcon end
-			}	
+			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["SHOW_ZONE"], ["tooltip"] = _L["SHOW_ZONE_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.list.showZone = value;
 				WQT_QuestScrollFrame:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.showZone end
 			}
 	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["REWARD_NUM_DISPLAY"], ["tooltip"] = _L["REWARD_NUM_DISPLAY_TT"], ["min"] = 0, ["max"] = 3, ["valueStep"] = 1
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.list.rewardNumDisplay = value;
 				WQT_QuestScrollFrame:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.rewardNumDisplay end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["AMOUNT_COLORS"], ["tooltip"] = _L["AMOUNT_COLORS_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.list.amountColors = value;
 				WQT_QuestScrollFrame:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.amountColors end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["LIST_COLOR_TIME"], ["tooltip"] = _L["LIST_COLOR_TIME_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.list.colorTime = value;
 				WQT_QuestScrollFrame:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.colorTime end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["LIST_FULL_TIME"], ["tooltip"] = _L["LIST_FULL_TIME_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.list.fullTime = value;
 				WQT_QuestScrollFrame:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.fullTime end
-			}	
+			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["PIN_FADE_ON_PING"], ["tooltip"] = _L["PIN_FADE_ON_PING_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.fadeOnPing = value;
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.fadeOnPing end
@@ -896,7 +904,7 @@ _V["SETTING_LIST"] = {
 			}
 	-- Map Pin
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_DISABLE"], ["tooltip"] = _L["PIN_DISABLE_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.disablePoI = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
 				if (value) then
@@ -906,13 +914,13 @@ _V["SETTING_LIST"] = {
 			,["getValueFunc"] = function() return WQT.settings.pin.disablePoI end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["FILTER_PINS"], ["tooltip"] = _L["FILTER_PINS_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.filterPoI = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.filterPoI end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
-			}		
+			}
 	--[[,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_SHOW_CONTINENT"], ["tooltip"] = _L["PIN_SHOW_CONTINENT_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.pin.continentPins = value;
@@ -925,15 +933,15 @@ _V["SETTING_LIST"] = {
 	-- Pin appearance
 	,{["template"] =" WQT_SettingSubTitleTemplate", ["categoryID"] = "MAPPINS", ["label"] = APPEARANCE_LABEL}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_TIME"], ["tooltip"] = _L["PIN_TIME_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.timeLabel  = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.timeLabel  end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
-			}		
+			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_ELITE_RING"], ["tooltip"] = _L["PIN_ELITE_RING_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.eliteRing  = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
@@ -941,7 +949,7 @@ _V["SETTING_LIST"] = {
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
 	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_SCALE"], ["tooltip"] = _L["PIN_SCALE_TT"], ["min"] = 0.8, ["max"] = 1.5, ["valueStep"] = 0.01
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.scale = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
@@ -949,7 +957,7 @@ _V["SETTING_LIST"] = {
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
 	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_CENTER"], ["tooltip"] = _L["PIN_CENTER_TT"], ["options"] = _V["PIN_CENTER_LABELS"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.centerType = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
@@ -957,15 +965,15 @@ _V["SETTING_LIST"] = {
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
 	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_RING_TITLE"], ["tooltip"] = _L["PIN_RING_TT"], ["options"] = _V["RING_TYPES_LABELS"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.ringType = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.ringType end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
-			}	
+			}
 	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_VISIBILITY_ZONE"], ["tooltip"] = _L["PIN_VISIBILITY_ZONE_TT"], ["options"] = _V["PIN_VISIBILITY_ZONE"], ["isNew"] = true
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.zoneVisible = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
@@ -973,7 +981,7 @@ _V["SETTING_LIST"] = {
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
 	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_VISIBILITY_CONTINENT"], ["tooltip"] = _L["PIN_VISIBILITY_CONTINENT_TT"], ["options"] = _V["PIN_VISIBILITY_CONTINENT"], ["isNew"] = true
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.continentVisible = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
@@ -983,7 +991,7 @@ _V["SETTING_LIST"] = {
 	-- Pin icons
 	--,{["template"] = "WQT_SettingSubTitleTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["MINI_ICONS"]}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS_MINIICONS", ["label"] = _L["PIN_TYPE"], ["tooltip"] = _L["PIN_TYPE_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.typeIcon = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
 			end
@@ -991,23 +999,23 @@ _V["SETTING_LIST"] = {
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI; end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS_MINIICONS", ["label"] = _L["PIN_RARITY_ICON"], ["tooltip"] = _L["PIN_RARITY_ICON_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.rarityIcon = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.rarityIcon; end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI;  end
-			}		
+			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS_MINIICONS", ["label"] = _L["PIN_TIME_ICON"], ["tooltip"] = _L["PIN_TIME_ICON_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.timeIcon = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.timeIcon; end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI;  end
-			}	
+			}
 	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "MAPPINS_MINIICONS", ["label"] = _L["REWARD_NUM_DISPLAY_PIN"], ["tooltip"] = _L["REWARD_NUM_DISPLAY_PIN_TT"], ["min"] = 0, ["max"] = 3, ["valueStep"] = 1
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.numRewardIcons = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
@@ -1018,16 +1026,16 @@ _V["SETTING_LIST"] = {
 
 _V["SETTING_UTILITIES_LIST"] = {
 	{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "WQTU", ["label"] = _L["LOAD_UTILITIES"], ["tooltip"] = _L["LOAD_UTILITIES_TT"], ["disabledTooltip"] = _L["LOAD_UTILITIES_TT_DISABLED"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.general.loadUtilities = value;
-				if (value and not IsAddOnLoaded("WorldQuestTabUtilities")) then
-					LoadAddOn("WorldQuestTabUtilities");
+				if (value and not C_AddOns.IsAddOnLoaded("WorldQuestTabUtilities")) then
+					C_AddOns.LoadAddOn("WorldQuestTabUtilities");
 					WQT_QuestScrollFrame:UpdateQuestList();
 				end
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.loadUtilities end
-			,["isDisabled"] = function() return GetAddOnEnableState(nil, "WorldQuestTabUtilities") == 0 end
-			}	
+			,["isDisabled"] = function() return C_AddOns.GetAddOnEnableState(nil, "WorldQuestTabUtilities") == 0 end
+			}
 }
 
 _V["TIME_REMAINING_CATEGORY"] = {
@@ -1078,14 +1086,14 @@ _V["WQT_CVAR_LIST"] = {
 		,["Gold"] = "worldQuestFilterGold"
 		,["Currency"] = "worldQuestFilterResources"
 	}
-	
+
 _V["WQT_TYPEFLAG_LABELS"] = {
 		[2] = {["Default"] = DEFAULT, ["Elite"] = ELITE, ["PvP"] = PVP, ["Petbattle"] = PET_BATTLE_PVP_QUEUE, ["Dungeon"] = TRACKER_HEADER_DUNGEON, ["Raid"] = RAID, ["Profession"] = BATTLE_PET_SOURCE_4, ["Invasion"] = _L["TYPE_INVASION"], ["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE
 			, ["Daily"] = DAILY, ["Threat"] = REPORT_THREAT, ["Bonus"] = SCENARIO_BONUS_LABEL}
 		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = CURRENCY, ["Artifact"] = ITEM_QUALITY6_DESC, ["Anima"] = WORLD_QUEST_REWARD_FILTERS_ANIMA, ["Conduits"] = _L["REWARD_CONDUITS"]
 			, ["Relic"] = RELICSLOT, ["None"] = NONE, ["Experience"] = POWER_TYPE_EXPERIENCE, ["Honor"] = HONOR, ["Reputation"] = REPUTATION}
 	};
-	
+
 _V["FILTER_TYPE_OLD_CONTENT"] = {
 	[2] = {["Invasion"] = true, ["Assault"] = true, ["Threat"] = true}
 	,[3] = {["Anima"] = true, ["Conduits"] = true, ["Artifact"] = true, ["Relic"] = true}
@@ -1102,34 +1110,34 @@ _V["SORT_OPTION_ORDER"] = {
 	[7] = {"rewardQuality", "rewardType", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"},
 }
 _V["SORT_FUNCTIONS"] = {
-	["rewardType"] = function(a, b) 
+	["rewardType"] = function(a, b)
 			local aType, aSubType = a:GetRewardType();
 			local bType, bSubType = b:GetRewardType();
-			if (aType and bType and aType ~= bType) then 
+			if (aType and bType and aType ~= bType) then
 				if (aType == WQT_REWARDTYPE.none or bType == WQT_REWARDTYPE.none) then
-					return aType > bType; 
+					return aType > bType;
 				end
 				return aType < bType;
 			elseif (aType == bType and aSubType and bSubType) then
 				return aSubType < bSubType;
-			end 
+			end
 		end
-	,["rewardQuality"] = function(a, b) 
+	,["rewardQuality"] = function(a, b)
 			local aQuality = a:GetRewardQuality();
 			local bQuality = b:GetRewardQuality();
-			if (aQuality and bQuality and aQuality ~= bQuality) then 
-				return aQuality > bQuality; 
-			end 
+			if (aQuality and bQuality and aQuality ~= bQuality) then
+				return aQuality > bQuality;
+			end
 		end
-	,["canUpgrade"] = function(a, b) 
+	,["canUpgrade"] = function(a, b)
 			local aCanUpgrade = a:GetRewardCanUpgrade();
 			local bCanUpgrade = b:GetRewardCanUpgrade();
 			if (aCanUpgrade and bCanUpgrade and aCanUpgrade ~= bCanUpgrade) then
-				return aCanUpgrade and not bCanUpgrade; 
+				return aCanUpgrade and not bCanUpgrade;
 			end
 		end
 	,["seconds"] = function(a, b) if (a.time.seconds ~= b.time.seconds) then return a.time.seconds < b.time.seconds; end end
-	,["rewardAmount"] = function(a, b) 
+	,["rewardAmount"] = function(a, b)
 			local amountA = a:GetRewardAmount();
 			local amountB = b:GetRewardAmount();
 			if (C_PvP.IsWarModeDesired()) then
@@ -1144,80 +1152,105 @@ _V["SORT_FUNCTIONS"] = {
 				end
 			end
 
-			if (amountA ~= amountB) then 
+			if (amountA ~= amountB) then
 				return amountA > amountB;
-			end 
+			end
 		end
 	,["rewardId"] = function(a, b)
 			local aId = a:GetRewardId();
 			local bId = b:GetRewardId();
-			if (aId and bId and aId ~= bId) then 
-				return aId < bId; 
-			end 
+			if (aId and bId and aId ~= bId) then
+				return aId < bId;
+			end
 		end
-	,["faction"] = function(a, b) 
+	--,["faction"] = function(a, b)
+			--local _, factionIdA = C_TaskQuest.GetQuestInfoByQuestID(a.questId);
+			--local _, factionIdB = C_TaskQuest.GetQuestInfoByQuestID(b.questId);
+			--if (factionIdA ~= factionIdB) then
+				--local factionA = WQT_Utils:GetFactionDataInternal(factionIdA);
+				--local factionB = WQT_Utils:GetFactionDataInternal(factionIdB);
+				--return factionA.name < factionB.name;
+			--end
+		--end
+		,["faction"] = function(a, b)
 			local _, factionIdA = C_TaskQuest.GetQuestInfoByQuestID(a.questId);
 			local _, factionIdB = C_TaskQuest.GetQuestInfoByQuestID(b.questId);
-			if (factionIdA ~= factionIdB) then 
-				local factionA = WQT_Utils:GetFactionDataInternal(factionIdA);
-				local factionB = WQT_Utils:GetFactionDataInternal(factionIdB);
-				return factionA.name < factionB.name; 
-			end 
+
+			-- Fetch faction data
+			local factionA = factionIdA and WQT_Utils:GetFactionDataInternal(factionIdA) or nil;
+			local factionB = factionIdB and WQT_Utils:GetFactionDataInternal(factionIdB) or nil;
+
+			-- Handle nil faction data
+			if not factionA or not factionB then
+				-- If either faction is missing, treat as equal
+				return false;
+			end
+
+			-- Ensure both factionA.name and factionB.name are valid and are strings
+			local nameA = factionA.name;
+			local nameB = factionB.name;
+
+			-- If nameA or nameB are not strings, treat them as "Unknown"
+			if type(nameA) ~= "string" then nameA = "Unknown" end
+			if type(nameB) ~= "string" then nameB = "Unknown" end
+
+			-- Compare faction names
+			return nameA < nameB;
 		end
-	,["questType"] = function(a, b) 
+	,["questType"] = function(a, b)
 			if (a.isQuestStart ~= b.isQuestStart) then
 				return a.isQuestStart and not b.isQuestStart;
-			end		
+			end
 			if (a.isDaily ~= b.isDaily) then
 				return a.isDaily and not b.isDaily;
-			end			
-			
+			end
+
 			local tagInfoA = a:GetTagInfo();
 			local tagInfoB = b:GetTagInfo();
-			if (tagInfoA and tagInfoB and tagInfoA.worldQuestType and tagInfoB.worldQuestType and tagInfoA.worldQuestType ~= tagInfoB.worldQuestType) then 
-				return tagInfoA.worldQuestType > tagInfoB.worldQuestType; 
-			end 
+			if (tagInfoA and tagInfoB and tagInfoA.worldQuestType and tagInfoB.worldQuestType and tagInfoA.worldQuestType ~= tagInfoB.worldQuestType) then
+				return tagInfoA.worldQuestType > tagInfoB.worldQuestType;
+			end
 		end
 	,["questRarity"] = function(a, b)
 			local tagInfoA = a:GetTagInfo();
 			local tagInfoB = b:GetTagInfo();
-			if (tagInfoA and tagInfoB and tagInfoA.quality and tagInfoB.quality and tagInfoA.quality ~= tagInfoB.quality) then 
-				return tagInfoA.quality > tagInfoB.quality; 
-			end 
+			if (tagInfoA and tagInfoB and tagInfoA.quality and tagInfoB.quality and tagInfoA.quality ~= tagInfoB.quality) then
+				return tagInfoA.quality > tagInfoB.quality;
+			end
 		end
 	,["title"] = function(a, b)
 			local titleA = C_TaskQuest.GetQuestInfoByQuestID(a.questId);
 			local titleB = C_TaskQuest.GetQuestInfoByQuestID(b.questId);
-			if (titleA ~= titleB) then 
+			if (titleA ~= titleB) then
 				return titleA < titleB;
-			end 
+			end
 		end
-	,["elite"] = function(a, b) 
+	,["elite"] = function(a, b)
 			local tagInfoA = a:GetTagInfo();
 			local tagInfoB = b:GetTagInfo();
 			local aIsElite = tagInfoA and tagInfoA.isElite;
 			local bIsElite = tagInfoB and tagInfoB.isElite;
-			if (aIsElite ~= bIsElite) then 
-				return aIsElite and not bIsElite; 
-			end 
+			if (aIsElite ~= bIsElite) then
+				return aIsElite and not bIsElite;
+			end
 		end
-	,["criteria"] = function(a, b) 
+	,["criteria"] = function(a, b)
 			local aIsCriteria = a:IsCriteria(WQT.settings.general.bountySelectedOnly);
 			local bIsCriteria = b:IsCriteria(WQT.settings.general.bountySelectedOnly);
-			if (aIsCriteria ~= bIsCriteria) then return aIsCriteria and not bIsCriteria; end 
+			if (aIsCriteria ~= bIsCriteria) then return aIsCriteria and not bIsCriteria; end
 		end
-	,["zone"] = function(a, b) 
+	,["zone"] = function(a, b)
 			local mapInfoA = WQT_Utils:GetMapInfoForQuest(a.questId);
 			local mapInfoB = WQT_Utils:GetMapInfoForQuest(b.questId);
-			if (mapInfoA and mapInfoA.name and mapInfoB and mapInfoB.name and mapInfoA.mapID ~= mapInfoB.mapID) then 
-				if (WQT.settings.list.alwaysAllQuests and (mapInfoA.mapID == WorldMapFrame.mapID or mapInfoB.mapID == WorldMapFrame.mapID)) then 
+			if (mapInfoA and mapInfoA.name and mapInfoB and mapInfoB.name and mapInfoA.mapID ~= mapInfoB.mapID) then
+				if (WQT.settings.list.alwaysAllQuests and (mapInfoA.mapID == WorldMapFrame.mapID or mapInfoB.mapID == WorldMapFrame.mapID)) then
 					return mapInfoA.mapID == WorldMapFrame.mapID and mapInfoB.mapID ~= WorldMapFrame.mapID;
 				end
 				return mapInfoA.name < mapInfoB.name;
 			end
 		end
 }
-	
+
 _V["REWARD_TYPE_ATLAS"] = {
 		[WQT_REWARDTYPE.weapon] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.211, ["r"] = 0.277, ["t"] = 0.246, ["b"] = 0.277} -- Weapon
 		,[WQT_REWARDTYPE.equipment] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.847, ["r"] = 0.91, ["t"] = 0.459, ["b"] = 0.49} -- Armor
@@ -1236,21 +1269,21 @@ _V["REWARD_TYPE_ATLAS"] = {
 			[_V["CONDUIT_SUBTYPE"].endurance] = {["texture"] =  "soulbinds_tree_conduit_icon_protect", ["scale"] = 1.15};
 			[_V["CONDUIT_SUBTYPE"].finesse] = {["texture"] =  "soulbinds_tree_conduit_icon_utility", ["scale"] = 1.15};
 		}-- Conduits
-	}	
+	}
 
 _V["FILTER_FUNCTIONS"] = {
 		[2] = { -- Types
-			["PvP"] 			= function(questInfo, tagInfo) return tagInfo and (tagInfo.worldQuestType == Enum.QuestTagType.PvP or tagInfo.worldQuestType == Enum.QuestTagType.Bounty); end 
-			,["Petbattle"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PetBattle; end 
-			,["Dungeon"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Dungeon; end 
-			,["Raid"] 		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Raid; end 
-			,["Profession"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Profession; end 
-			,["Invasion"] 	= function(questInfo, tagInfo) return tagInfo and (tagInfo.worldQuestType == Enum.QuestTagType.Invasion or tagInfo.worldQuestType == Enum.QuestTagType.InvasionWrapper); end 
-			,["Assault"]	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.FactionAssault; end 
+			["PvP"] 			= function(questInfo, tagInfo) return tagInfo and (tagInfo.worldQuestType == Enum.QuestTagType.PvP or tagInfo.worldQuestType == Enum.QuestTagType.Bounty); end
+			,["Petbattle"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PetBattle; end
+			,["Dungeon"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Dungeon; end
+			,["Raid"] 		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Raid; end
+			,["Profession"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Profession; end
+			,["Invasion"] 	= function(questInfo, tagInfo) return tagInfo and (tagInfo.worldQuestType == Enum.QuestTagType.Invasion or tagInfo.worldQuestType == Enum.QuestTagType.InvasionWrapper); end
+			,["Assault"]	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.FactionAssault; end
 			,["Elite"]		= function(questInfo, tagInfo) return tagInfo and tagInfo.isElite and tagInfo.worldQuestType ~= Enum.QuestTagType.Dungeon; end
-			,["Default"]	= function(questInfo, tagInfo) return tagInfo and ((not tagInfo.isElite and tagInfo.worldQuestType == Enum.QuestTagType.Normal) or tagInfo.worldQuestType == Enum.QuestTagType.DragonRiderRacing or tagInfo.worldQuestType == Enum.QuestTagType.CovenantCalling); end 
-			,["Daily"]		= function(questInfo, tagInfo) return questInfo.isDaily; end 
-			,["Threat"]		= function(questInfo, tagInfo) return C_QuestLog.IsThreatQuest(questInfo.questId); end 
+			,["Default"]	= function(questInfo, tagInfo) return tagInfo and ((not tagInfo.isElite and tagInfo.worldQuestType == Enum.QuestTagType.Normal) or tagInfo.worldQuestType == Enum.QuestTagType.DragonRiderRacing or tagInfo.worldQuestType == Enum.QuestTagType.CovenantCalling); end
+			,["Daily"]		= function(questInfo, tagInfo) return questInfo.isDaily; end
+			,["Threat"]		= function(questInfo, tagInfo) return C_QuestLog.IsThreatQuest(questInfo.questId); end
 			,["Bonus"]		= function(questInfo, tagInfo) return not tagInfo; end
 			}
 		,[3] = { -- Reward filters
@@ -1285,7 +1318,7 @@ _V["WQT_CONTINENT_GROUPS"] = {
 		,[1504]	= {875, 876} -- Nazjatar flightmap
 		,[619]	= {905} -- Legion
 		,[905]	= {619} -- Argus
-		
+
 	}
 
 _V["ZONE_SUBZONES"] = {
@@ -1315,15 +1348,15 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 			[1355] = {["x"] = 0, ["y"] = 0} -- Nazjatar
 		}
 		,[905] 	= WQT_LEGION_ARGUS -- Argus
-		,[619] 	= WQT_LEGION 
+		,[619] 	= WQT_LEGION
 		,[993] 	= WQT_LEGION -- Flightmap	
-		,[12] 	= WQT_KALIMDOR 
+		,[12] 	= WQT_KALIMDOR
 		,[1209] = WQT_KALIMDOR -- Flightmap
 		,[13]	= WQT_EASTERN_KINGDOMS
 		,[1208]	= WQT_EASTERN_KINGDOMS -- Flightmap
 		,[101]	= WQT_OUTLAND
 		,[1467]	= WQT_OUTLAND -- Flightmap
-		,[113]	= WQT_NORTHREND 
+		,[113]	= WQT_NORTHREND
 		,[1384]	= WQT_NORTHREND  -- Flightmap
 		,[424]	= WQT_PANDARIA
 		,[989]	= WQT_PANDARIA -- Flightmap
@@ -1409,23 +1442,27 @@ _V["WQT_FACTION_DATA"] = {
 	,[2615] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5315246 } -- Azerothian Archives	
 }
 -- Add localized faction names
-for k, v in pairs(_V["WQT_FACTION_DATA"]) do
-	v.name = GetFactionInfoByID(k);
+if C_Reputation and C_Reputation.GetFactionInfoByID then
+    local factionInfo = C_Reputation.GetFactionInfoByID(k)
+    if factionInfo then
+		for k, v in pairs(_V["WQT_FACTION_DATA"]) do
+        	v.name = factionInfo.name
+		end
+    end
 end
 
-
 _V["WQT_DEFAULTS"] = {
-	global = {	
+	global = {
 		versionCheck = "";
 		updateSeen = false;
-		
+
 		["colors"] = {
 			["timeCritical"] = RED_FONT_COLOR:GenerateHexColor();
 			["timeShort"] = _V["WQT_ORANGE_FONT_COLOR"]:GenerateHexColor();
 			["timeMedium"] = _V["WQT_GREEN_FONT_COLOR"]:GenerateHexColor();
 			["timeLong"] = _V["WQT_BLUE_FONT_COLOR"]:GenerateHexColor();
 			["timeVeryLong"] = _V["WQT_PURPLE_FONT_COLOR"]:GenerateHexColor();
-			
+
 			["rewardNone"] = _V["WQT_COLOR_NONE"]:GenerateHexColor();
 			["rewardWeapon"] = _V["WQT_COLOR_WEAPON"]:GenerateHexColor();
 			["rewardArmor"] = _V["WQT_COLOR_ARMOR"]:GenerateHexColor();
@@ -1440,7 +1477,7 @@ _V["WQT_DEFAULTS"] = {
 			["rewardHonor"] = _V["WQT_COLOR_HONOR"]:GenerateHexColor();
 			["rewardReputation"] = _V["WQT_COLOR_CURRENCY"]:GenerateHexColor();
 			["rewardMissing"] = _V["WQT_COLOR_MISSING"]:GenerateHexColor();
-			
+
 			["rewardTextWeapon"] = _V["WQT_COLOR_WEAPON"]:GenerateHexColor();
 			["rewardTextArmor"] = _V["WQT_COLOR_ARMOR"]:GenerateHexColor();
 			["rewardTextConduit"] = WHITE_FONT_COLOR:GenerateHexColor();
@@ -1454,12 +1491,12 @@ _V["WQT_DEFAULTS"] = {
 			["rewardTextHonor"] = WHITE_FONT_COLOR:GenerateHexColor();
 			["rewardTextReputation"] = WHITE_FONT_COLOR:GenerateHexColor();
 		};
-		
+
 		["general"] = {
 			sortBy = 1;
 			fullScreenButtonPos = {["anchor"] = "TOPRIGHT", ["x"] = -2, ["y"] = -35};
 			fullScreenContainerPos = {["anchor"] = "TOPLEFT", ["x"] = 0, ["y"] = -25};
-		
+
 			defaultTab = false;
 			saveFilters = true;
 			preciseFilters = false;
@@ -1474,21 +1511,21 @@ _V["WQT_DEFAULTS"] = {
 			df_goldPurses = false;
 			sl_callingsBoard = true;
 			sl_genericAnimaIcons = false;
-			
+
 			filterPasses = {
 				["calling"] = true;
 				["threat"] = true,
 				["combatAlly"] = true,
 			};
 			dislikedQuests = {};
-			
+
 			loadUtilities = true;
-			
+
 			useTomTom = true;
 			TomTomAutoArrow = true;
 			TomTomArrowOnClick = false;
 		};
-		
+
 		["list"] = {
 			typeIcon = true;
 			factionIcon = true;
@@ -1509,7 +1546,7 @@ _V["WQT_DEFAULTS"] = {
 			timeIcon = false;
 			continentVisible = _V["ENUM_PIN_CONTINENT"].none;
 			zoneVisible = _V["ENUM_PIN_ZONE"].all;
-			
+
 			filterPoI = true;
 			scale = 1;
 			disablePoI = false;
@@ -1529,9 +1566,9 @@ _V["WQT_DEFAULTS"] = {
 				,[_V["FILTER_TYPES"].reward] = {["name"] = REWARD
 						, ["flags"] = {["Item"] = true, ["Armor"] = true, ["Gold"] = true, ["Currency"] = true, ["Anima"] = true, ["Conduits"] = true, ["Artifact"] = true, ["Relic"] = true, ["None"] = true, ["Experience"] = true, ["Honor"] = true, ["Reputation"] = true}}
 			};
-			
+
 		["profiles"] = {
-			
+
 		};
 	}
 }
@@ -1771,9 +1808,9 @@ _V["PATCH_NOTES"] = {
 			},
 		},
 	}
-	
+
 _V["LATEST_UPDATE"] = "";
-	
+
 function _V:GeneratePatchNotes()
 	_V["LATEST_UPDATE"] =  WQT_Utils:FormatPatchNotes(_V["PATCH_NOTES"], "World Quest Tab");
 	_DeepWipeTable(_V["PATCH_NOTES"]);
