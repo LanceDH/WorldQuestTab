@@ -1,4 +1,4 @@
- <Ui xmlns="http://www.blizzard.com/wow/ui/"
+﻿ <Ui xmlns="http://www.blizzard.com/wow/ui/"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ../../FrameXML/UI.xsd">
 
@@ -91,11 +91,12 @@
 		<Size x="28" y="29" />
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="Icon" file="Interface\ICONS\INV_Misc_QuestionMark"/>
-				<Anchors>
-					<Anchor point="TOPLEFT" x="1" y="-1"/>
-					<Anchor point="BOTTOMRIGHT" x="-1" y="1"/>
-				</Anchors>
+				<Texture parentKey="Icon" file="Interface\ICONS\INV_Misc_QuestionMark">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="1" y="-1"/>
+						<Anchor point="BOTTOMRIGHT" x="-1" y="1"/>
+					</Anchors>
+				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
 				<FontString parentKey="Amount" inherits="WQT_NumberFontOutline" maxLines="1" justifyH="RIGHT">
@@ -1209,7 +1210,7 @@
 				self:SetParent(LFGListFrame.SearchPanel.SearchBox);
 				self:SetFrameLevel(LFGListFrame.SearchPanel.SearchBox:GetFrameLevel()+5);
 				self:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "BOTTOMLEFT", -2, -3);
-				self:SetPoint("RIGHT", LFGListFrame.SearchPanel, "RIGHT", -30, 0);
+				self:SetPoint("RIGHT", LFGListFrame.SearchPanel.SearchBox, "RIGHT", -30, 0);
 			</OnLoad>
 			<OnShow>
 				local height = self.Text:GetHeight();
