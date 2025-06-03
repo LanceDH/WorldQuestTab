@@ -217,17 +217,6 @@
 	
 	<Frame name="WQT_ContainerTemplate" virtual="true">
 		<Size x="296.5" y="518"/>
-		<Backdrop edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
-			<EdgeSize>
-				<AbsValue val="12"/>
-			</EdgeSize>
-			<TileSize>
-				<AbsValue val="16"/>
-			</TileSize>
-			<BackgroundInsets>
-				<AbsInset left="0" right="0" top="5" bottom="5"/>
-			</BackgroundInsets>
-		</Backdrop>
 		<Frames>
 			<Frame parentKey="Inset" inherits="ShadowOverlaySmallTemplate">
 				<Anchors>

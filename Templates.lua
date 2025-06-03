@@ -344,9 +344,9 @@ function WQT_Utils:GetFactionDataInternal(id)
 
 	if (not factionData[id]) then
 		-- Add new faction in case it's not in our data yet
-		factionData[id] = { ["expansion"] = 0 ,["faction"] = nil ,["texture"] = 1103069, ["unknown"] = true } 
-		factionData[id].name = GetFactionInfoByID(id) or "Unknown Faction";
-		WQT:debugPrint("Added new faction", id,factionData[id].name);
+		local data = C_Reputation.GetFactionDataByID(id);
+		factionData[id] = { ["expansion"] = 0,["faction"] = nil ,["texture"] = 1103069, ["unknown"] = true, ["name"] = data and data.name or "Unknown Faction" };
+		WQT:debugPrint("Added new faction", factionData[id].name);
 	end
 	
 	return factionData[id];
@@ -374,7 +374,8 @@ function WQT_Utils:GetCachedTypeIconData(questInfo, pinVersion)
 	local tagInfo = questInfo:GetTagInfo();
 	-- If there is no tag info, it's a bonus objective
 	if (not tagInfo) then
-		return "QuestBonusObjective", 21, 21, true;
+		--return "QuestBonusObjective", 21, 21, true;
+		return "Bonus-Objective-Star", 16, 16, false;
 	end
 	
 	local isNew = false;
@@ -398,9 +399,9 @@ function WQT_Utils:GetCachedTypeIconData(questInfo, pinVersion)
 		-- cachedData becomes subtype
 		cachedData = cachedSubType;
 	end
-	
+
 	if (isNew) then
-		local atlasTexture, sizeX, sizeY  = QuestUtil.GetWorldQuestAtlasInfo(originalType, false, tagInfo.tradeskillLineID);
+		local atlasTexture, sizeX, sizeY  = QuestUtil.GetWorldQuestAtlasInfo(questInfo.questId, tagInfo);
 		cachedData.texture = atlasTexture;
 		cachedData.x = sizeX;
 		cachedData.y = sizeY;
@@ -489,7 +490,7 @@ function WQT_Utils:GetPinTime(questInfo)
 			maxTime = 5760*60;
 			offset = -720*60;
 			local tagInfo = questInfo:GetTagInfo();
-			if (timeLeft > maxTime or (tagInfo.isElite and tagInfo.quality == Enum.WorldQuestQuality.Epic)) then
+			if (timeLeft > maxTime or (tagInfo and tagInfo.isElite and tagInfo.quality == Enum.WorldQuestQuality.Epic)) then
 				maxTime = 1440 * 7*60;
 				offset = 0;
 			end
@@ -517,13 +518,15 @@ function WQT_Utils:GetMapInfoForQuest(questId)
 end
 
 function WQT_Utils:ItterateAllBonusObjectivePins(func)
-	if(WorldMapFrame.pinPools.BonusObjectivePinTemplate) then
-		for mapPin in pairs(WorldMapFrame.pinPools.BonusObjectivePinTemplate.activeObjects) do
+	local bonusObjectivePinTemplate = WorldMapFrame.pinPools.BonusObjectivePinTemplate;
+	if(bonusObjectivePinTemplate and bonusObjectivePinTemplate.activeObjects) then
+		for mapPin in pairs(bonusObjectivePinTemplate.activeObjects) do
 			func(mapPin)
 		end
 	end
-	if(WorldMapFrame.pinPools.ThreatObjectivePinTemplate) then
-		for mapPin in pairs(WorldMapFrame.pinPools.ThreatObjectivePinTemplate.activeObjects) do
+	local threatObjectivePinTemplate = WorldMapFrame.pinPools.ThreatObjectivePinTemplate;
+	if(threatObjectivePinTemplate and threatObjectivePinTemplate.activeObjects) then
+		for mapPin in pairs(threatObjectivePinTemplate.activeObjects) do
 			func(mapPin)
 		end
 	end
@@ -587,7 +590,7 @@ local function _AddQuestRewardsToTooltip(tooltip, questID, style)
 	-- items
 	local showRetrievingData = false;
 	local numQuestRewards = GetNumQuestLogRewards(questID);
-	local numCurrencyRewards = GetNumQuestLogRewardCurrencies(questID);
+	local numCurrencyRewards = #C_QuestLog.GetQuestRewardCurrencies(questID);
 	local showingItem = false;
 	if numQuestRewards > 0 and (not style.prioritizeCurrencyOverItem or numCurrencyRewards == 0) then
 		if style.fullItemDescription then
@@ -623,8 +626,7 @@ local function _AddQuestRewardsToTooltip(tooltip, questID, style)
 	end
 
 	-- spells
-	local numQuestSpellRewards = GetNumQuestLogRewardSpells(questID);
-	if numQuestSpellRewards > 0 and not tooltip.ItemTooltip:IsShown() then
+	if C_QuestInfoSystem.HasQuestRewardSpells(questID) and not tooltip.ItemTooltip:IsShown() then
 		if not EmbeddedItemTooltip_SetSpellByQuestReward(tooltip.ItemTooltip, 1, questID) then
 			showRetrievingData = true;
 		end
@@ -650,9 +652,10 @@ end
 function WQT_Utils:AddQuestRewardsToTooltip(tooltip, questID, style)
 	style = style or TOOLTIP_QUEST_REWARDS_STYLE_DEFAULT;
 
-	if ( GetQuestLogRewardXP(questID) > 0 or GetNumQuestLogRewardCurrencies(questID) > 0 or GetNumQuestLogRewards(questID) > 0 or
-		GetQuestLogRewardMoney(questID) > 0 or GetQuestLogRewardArtifactXP(questID) > 0 or GetQuestLogRewardHonor(questID) > 0 or
-		GetNumQuestLogRewardSpells(questID) > 0) then
+	-- TODO figure out if this has a point still
+	-- if ( GetQuestLogRewardXP(questID) > 0 or #C_QuestLog.GetQuestRewardCurrencies(questID) > 0 or GetNumQuestLogRewards(questID) > 0 or
+	-- 	GetQuestLogRewardMoney(questID) > 0 or GetQuestLogRewardArtifactXP(questID) > 0 or GetQuestLogRewardHonor(questID) > 0 or
+	-- 	GetNumQuestLogRewardSpells(questID) > 0) then
 		if tooltip.ItemTooltip then
 			tooltip.ItemTooltip:Hide();
 		end
@@ -671,7 +674,7 @@ function WQT_Utils:AddQuestRewardsToTooltip(tooltip, questID, style)
 				GameTooltip_AddColoredLine(tooltip, RETRIEVING_DATA, RED_FONT_COLOR);
 			end
 		end
-	end
+	-- end
 end
 
 function WQT_Utils:ShowQuestTooltip(button, questInfo, style)
@@ -707,7 +710,8 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style)
 	
 	-- faction
 	if ( factionID ) then
-		local factionName = GetFactionInfoByID(factionID);
+		local factionData = C_Reputation.GetFactionDataByID(factionID)
+		local factionName = factionData and factionData.name;
 		if ( factionName ) then
 			if (capped) then
 				GameTooltip:AddLine(factionName, GRAY_FONT_COLOR:GetRGB());

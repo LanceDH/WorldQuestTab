@@ -86,10 +86,10 @@ local _emptyTable = {};
 local _playerFaction = GetPlayerFactionGroup();
 local _playerName = UnitName("player");
 
-local utilitiesStatus = select(5, GetAddOnInfo("WorldQuestTabUtilities"));
+local utilitiesStatus = select(5, C_AddOns.GetAddOnInfo("WorldQuestTabUtilities"));
 local _utilitiesInstalled = not utilitiesStatus or utilitiesStatus ~= "MISSING";
 
-local _WFMLoaded = IsAddOnLoaded("WorldFlightMap");
+local _WFMLoaded = C_AddOns.IsAddOnLoaded("WorldFlightMap");
 
 -- Custom number abbreviation to fit inside reward icons in the list.
 local function GetLocalizedAbbreviatedNumber(number)
@@ -223,12 +223,16 @@ local function FilterDDFunc(ddFrame)
 				local filter = WQT.settings.filters[_V["FILTER_TYPES"].faction];
 				local options = filter.flags;
 				local order = WQT.filterOrders[_V["FILTER_TYPES"].faction] 
-				local currExp = _V["CURRENT_EXPANSION"];
 				for k, flagKey in pairs(order) do
 					local factionInfo = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
 					-- Only factions that are current expansion and match the player's faction
-					if (factionInfo and factionInfo.expansion == currExp and (not factionInfo.playerFaction or factionInfo.playerFaction == _playerFaction)) then
-						info.text = type(flagKey) == "number" and GetFactionInfoByID(flagKey) or flagKey;
+					if (factionInfo and factionInfo.expansion == LE_EXPANSION_LEVEL_CURRENT and (not factionInfo.playerFaction or factionInfo.playerFaction == _playerFaction)) then
+						local text = flagKey;
+						if (type(flagKey) == "number") then
+							local data = C_Reputation.GetFactionDataByID(flagKey);
+							text = data and data.name or text;
+						end
+						info.text = text;
 						info.func = function(_, _, _, value)
 											options[flagKey] = value;
 											WQT_QuestScrollFrame:UpdateQuestList();
@@ -258,6 +262,16 @@ local function FilterDDFunc(ddFrame)
 				
 				-- Other expansions
 				info = ddFrame:CreateButtonInfo("expand");
+				-- Dragon
+				info.text = EXPANSION_NAME9;
+				info.value = 304;
+				ddFrame:AddButton(info);
+
+				-- SL
+				info.text = EXPANSION_NAME8;
+				info.value = 303;
+				ddFrame:AddButton(info);
+
 				-- BFA
 				info.text = EXPANSION_NAME7;
 				info.value = 302;
@@ -367,10 +381,15 @@ local function FilterDDFunc(ddFrame)
 	elseif level == 3 then
 		info = ddFrame:CreateButtonInfo("checkbox");
 		
-		if value == 301 then -- Legion factions
+		if (value == 301 or value == 302 or value == 303 or value == 304) then
+			local currExp = LE_EXPANSION_LEGION;
+			if (value == 302) then currExp = LE_EXPANSION_BATTLE_FOR_AZEROTH
+			elseif (value == 303) then currExp = LE_EXPANSION_SHADOWLANDS
+			elseif (value == 304) then currExp = LE_EXPANSION_DRAGONFLIGHT
+			end
+
 			local options = WQT.settings.filters[1].flags;
 			local order = WQT.filterOrders[1] 
-			local currExp = LE_EXPANSION_LEGION;
 			for k, flagKey in pairs(order) do
 				local factionInfo = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
 				if (factionInfo and factionInfo.expansion == currExp and (not factionInfo.playerFaction or factionInfo.playerFaction == _playerFaction)) then
@@ -384,26 +403,6 @@ local function FilterDDFunc(ddFrame)
 									end
 					info.checked = function() return options[flagKey] end;
 					ddFrame:AddButton(info);			
-				end
-			end
-		elseif value == 302 then -- BfA
-			local options = WQT.settings.filters[1].flags;
-			local order = WQT.filterOrders[1] 
-			local currExp = LE_EXPANSION_BATTLE_FOR_AZEROTH;
-			for k, flagKey in pairs(order) do
-				local factionInfo = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
-				
-				if (factionInfo and factionInfo.expansion == currExp and (not factionInfo.playerFaction or factionInfo.playerFaction == _playerFaction)) then
-					info.text = type(flagKey) == "number" and factionInfo.name or flagKey;
-					info.func = function(_, _, _, value)
-										options[flagKey] = value;
-										if (value) then
-											WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-										end
-										WQT_QuestScrollFrame:UpdateQuestList();
-									end
-					info.checked = function() return options[flagKey] end;
-					ddFrame:AddButton(info);	
 				end
 			end
 		elseif value:find("OldFilters") then
@@ -523,8 +522,10 @@ local function GetSortedFilterOrder(filterId)
 				if (filterId == _V["FILTER_TYPES"].faction) then
 					-- Compare 2 factions
 					if(type(a) == "number" and type(b) == "number")then
-						local nameA = GetFactionInfoByID(tonumber(a));
-						local nameB = GetFactionInfoByID(tonumber(b));
+						local infoA = C_Reputation.GetFactionDataByID(tonumber(a));
+						local infoB = C_Reputation.GetFactionDataByID(tonumber(b));
+						local nameA = infoA and infoA.name;
+						local nameB = infoB and infoB.name;
 						if nameA and nameB then
 							return nameA < nameB;
 						end
@@ -1029,7 +1030,7 @@ function WQT:OnInitialize()
 	WQT_Profiles:InitSettings();
 	
 	-- Hightlight 'what's new'
-	local currentVersion = GetAddOnMetadata(addonName, "version")
+	local currentVersion = C_AddOns.GetAddOnMetadata(addonName, "version")
 	if (WQT.db.global.versionCheck < currentVersion) then
 		WQT.db.global.updateSeen = false;
 		WQT.db.global.versionCheck  = currentVersion;
@@ -1039,13 +1040,20 @@ function WQT:OnInitialize()
 end
 
 function WQT:OnEnable()
-	WQT_TabNormal.Highlight:Show();
-	WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
-	WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
+	-- Add QuestMapTab to next empty id
+	local numDisplayModes = 0;
+	for k, v in pairs(QuestLogDisplayMode) do
+		numDisplayModes = numDisplayModes + 1;
+	end
+	QuestLogDisplayMode.WQT = numDisplayModes + 1;
+
+	--WQT_TabNormal.Highlight:Show();
+	--WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
+	--WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
 	
 	-- load WorldQuestTabUtilities
-	if (WQT.settings.general.loadUtilities and GetAddOnEnableState(_playerName, "WorldQuestTabUtilities") > 0 and not IsAddOnLoaded("WorldQuestTabUtilities")) then
-		LoadAddOn("WorldQuestTabUtilities");
+	if (WQT.settings.general.loadUtilities and C_AddOns.GetAddOnEnableState(_playerName, "WorldQuestTabUtilities") > 0 and not C_AddOns.IsAddOnLoaded("WorldQuestTabUtilities")) then
+		C_AddOns.LoadAddOn("WorldQuestTabUtilities");
 	end
 	
 	-- Place fullscreen button in saved location
@@ -1073,7 +1081,12 @@ function WQT:OnEnable()
 	end
 	
 	-- Show default tab depending on setting
-	WQT_WorldQuestFrame:SelectTab(self.settings.general.defaultTab and WQT_TabWorld or WQT_TabNormal);
+	--WQT_WorldQuestFrame:SelectTab(self.settings.general.defaultTab and WQT_TabWorld or WQT_TabNormal);
+	if (self.settings.general.defaultTab) then
+		WQT_WorldQuestFrame:SelectTab(WQT_QuestMapTab);
+	else
+		WQT_WorldQuestFrame:QuestMapChangedTab(0);
+	end
 	WQT_WorldQuestFrame.tabBeforeAnchor = WQT_WorldQuestFrame.selectedTab;
 	
 	-- Show quest log counter
@@ -1710,16 +1723,16 @@ function WQT_ScrollListMixin:DisplayQuestList()
 end
 
 function WQT_ScrollListMixin:UpdateBackground()
-	if (IsAddOnLoaded("Aurora") or (WorldMapFrame:IsShown() and WQT_WorldMapContainer:IsShown())) then
+	if (C_AddOns.IsAddOnLoaded("Aurora") or (WorldMapFrame:IsShown() and WQT_WorldMapContainer:IsShown())) then
 		WQT_WorldQuestFrame.Background:SetAlpha(0);
 	else
 		WQT_WorldQuestFrame.Background:SetAlpha(1);
 		-- Don't change the backgound if data is buffering to prevent the background flashing
 		if (not WQT_WorldQuestFrame.dataProvider:IsBuffereingQuests()) then
 			if (self.numDisplayed == 0) then
-				WQT_WorldQuestFrame.Background:SetAtlas("NoQuestsBackground", true);
+				WQT_WorldQuestFrame.Background:SetAtlas("QuestLog-empty-quest-background", true);
 			else
-				WQT_WorldQuestFrame.Background:SetAtlas("QuestLogBackground", true);
+				WQT_WorldQuestFrame.Background:SetAtlas("QuestLog-main-background", true);
 			end
 		end
 	end
@@ -1780,8 +1793,8 @@ function WQT_QuestCounterMixin:UpdateText()
 end
 
 function WQT_QuestCounterMixin:UpdateVisibility()
-	local shouldShow = WQT.settings.general.questCounter and QuestScrollFrame:IsShown();
-	self:SetShown(shouldShow);
+	-- local shouldShow = WQT.settings.general.questCounter and QuestScrollFrame:IsShown();
+	-- self:SetShown(shouldShow);
 end
 
 ------------------------------------------
@@ -2021,6 +2034,121 @@ function WQT_CoreMixin:HideWorldmapHighlight()
 	end
 end
 
+function WQT_CoreMixin:QuestMapChangedTab(displayMode)
+	if (displayMode == QuestLogDisplayMode.WQT) then
+		WQT_QuestMapTab.Icon:SetAtlas(WQT_QuestMapTab.activeAtlas);
+		WQT_QuestMapTab.Icon:SetSize(24, 24);
+		WQT_QuestMapTab.SelectedTexture:SetShown(true);
+		WQT_QuestMapTab.Icon:SetPoint("CENTER", -2, 0);
+		WQT_QuestMapTab.Icon:SetAlpha(1);
+		PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB);
+		self:Show();
+	else
+		self:Hide();
+		WQT_QuestMapTab:SetChecked(false);
+		WQT_QuestMapTab.Icon:SetAlpha(0.5);
+		WQT_QuestMapTab.Icon:SetSize(24,24);
+	end
+end
+
+
+
+function WQT_CoreMixin:DoDebugThing()
+	print("Debug");
+
+	-- local timeStart = GetTimePreciseSec();
+	-- for contID in pairs(_V["WQT_ZONE_MAPCOORDS"][947]) do
+	-- 	-- Every ID is a continent, get every zone on every continent
+	-- 	local continentZones = _V["WQT_ZONE_MAPCOORDS"][contID];
+	-- 	for zoneID  in pairs(continentZones) do
+	-- 		local quests = C_TaskQuest.GetQuestsOnMap(zoneID);
+	-- 		print(zoneID, quests and #quests or "nil");
+	-- 	end
+	-- end
+
+	-- print(GetTimePreciseSec() - timeStart);
+
+	-- WQT_Test.done = 1;
+	local list = {}
+	for k, v in ipairs(C_Map.GetMapChildrenInfo(946, Enum.UIMapType.Zone, true)) do
+		list[v.mapID] = true;
+		
+	end
+	for k, v in ipairs(C_Map.GetMapChildrenInfo(946, Enum.UIMapType.Orphan, true)) do
+		list[v.mapID] = true;
+	end
+
+	local count = 0;
+	for zoneID in pairs(list) do
+		self.dataProvider:AddZoneToBuffer(zoneID);
+		count = count + 1;
+	end
+
+	print("Sent", count);
+	--for k, v in ipairs(C_Map.GetMapChildrenInfo(WorldMapFrame.mapID)) do print(string.format("  %s: %s (%s)",v.mapType, v.name, v.mapID)) end
+
+
+	-- local mapID = WorldMapFrame.mapID;
+	-- print(mapID);
+	-- local childInfo = C_Map.GetMapChildrenInfo(mapID, Enum.UIMapType.Zone, true);
+
+	-- for k, v in ipairs(childInfo) do
+	-- 	print(string.format("  %s: %s (%s)",v.mapType, v.name, v.mapID))
+	-- end
+
+	if true then return end
+
+
+	for k, v in ipairs(C_Map.GetMapChildrenInfo(mapID, Enum.UIMapType.Orphan, true)) do
+		tinsert(childInfo, v);
+	end
+	-- for k, v in ipairs(C_Map.GetMapChildrenInfo(WorldMapFrame.mapID)) do print(string.format("  %s: %s (%s)",v.mapType, v.name, v.mapID)) end
+	local yes = {};
+	local no = {};
+	local questInfo = {};
+	for k, v in pairs(childInfo) do
+		local x,x2=C_Map.GetMapRectOnMap(v.mapID, mapID);
+		local accept = false;
+		--if(v.mapType == Enum.UIMapType.Zone or v.mapType == Enum.UIMapType.Orphan) then
+			accept = true;
+		--end
+
+		tinsert(accept and yes or no, v);
+	end
+
+	print("Yes");
+	for _, v in pairs(yes) do
+		local quests = C_TaskQuest.GetQuestsOnMap(v.mapID);
+		if (quests and #quests > 0) then
+			for _, quest in ipairs(quests) do
+				if (not questInfo[quest.questID]) then
+					C_TaskQuest.GetQuestZoneID(quest.questID)
+					local info = { ["questID"] = quest.questID, ["mapID"] = v.mapID };
+
+					questInfo[quest.questID] = info;
+				end
+					
+			end
+			
+		end
+		print(string.format("  %s: %s (%s) -> %s",v.mapType, v.name, v.mapID, quests and #quests or "nil"));
+	end
+
+	-- print("No");
+	-- for k, v in pairs(no) do
+	-- 	print(string.format("  %s: %s (%s)",v.mapType, v.name, v.mapID));
+	-- end
+
+	print("quests");
+	local questCount = 0;
+	for k, v in pairs(questInfo) do
+		questCount = questCount + 1;
+		print(v.questID, v.mapID);
+	end
+
+	print(#childInfo, questCount);
+end
+
 function WQT_CoreMixin:OnLoad()
 	self.WQT_Utils = WQT_Utils;
 	self.variables = addon.variables;
@@ -2056,7 +2184,6 @@ function WQT_CoreMixin:OnLoad()
 
 	-- Settings
 	ADD:LinkDropDown(self.SettingsButton, SettingsDDFunc, "TOPLEFT", "RIGHT", -10, 5);
-	
 
 	
 	self.dataProvider:RegisterCallback("WaitingRoom", function() 
@@ -2075,11 +2202,11 @@ function WQT_CoreMixin:OnLoad()
 		end, addonName)
 	
 	self.dataProvider:RegisterCallback("BufferUpdated", function(progress) 
-			if (progress == 0) then
-				self.ProgressBar:Hide();
-			end
 			CooldownFrame_SetDisplayAsPercentage(self.ProgressBar, progress);
 			self.ProgressBar.Pointer:SetRotation(-progress*6.2831);
+			if (progress == 0 or progress == 1) then
+				self.ProgressBar:Hide();
+			end
 		end, addonName)
 
 	-- Events
@@ -2108,20 +2235,21 @@ function WQT_CoreMixin:OnLoad()
 	SLASH_WQTSLASH2 = '/worldquesttab';
 	SlashCmdList["WQTSLASH"] = slashcmd
 	
-	
-
 	--
 	-- Function hooks
 	-- 
+
+	EventRegistry:RegisterCallback("QuestLog.SetDisplayMode", self.QuestMapChangedTab, self);
+	--self:QuestMapChangedTab(0);
 	
 	-- Show quest tab when leaving quest details
 	hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
-			self:SelectTab(WQT_TabNormal);
+			--self:SelectTab(WQT_TabNormal);
 		end)
 	-- When untracking a quest with details open
 	hooksecurefunc("QuestMapFrame_CloseQuestDetails", function()
 			if (self.selectedTab == WQT_TabDetails) then
-				self:SelectTab(WQT_TabNormal);
+				--self:SelectTab(WQT_TabNormal);
 			end
 		end)
 		
@@ -2130,7 +2258,7 @@ function WQT_CoreMixin:OnLoad()
 	-- If we were reading details when we switch maps, change back to normal quests
 	hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
 			if (self.selectedTab == WQT_TabDetails) then
-				self:SelectTab(WQT_TabNormal); 
+				--self:SelectTab(WQT_TabNormal); 
 			end
 		end)
 	
@@ -2143,9 +2271,9 @@ function WQT_CoreMixin:OnLoad()
 			-- Prevent opening empty quest details
 			local currentTab = self.selectedTab;
 			if (currentTab == WQT_TabDetails and not QuestMapFrame.DetailsFrame.questID) then
-				currentTab = WQT_TabNormal;
+				--currentTab = WQT_TabNormal;
 			end
-			self:SelectTab(currentTab); 
+			--self:SelectTab(currentTab); 
 
 			-- If emissaryOnly was automaticaly set, and there's none in the current list, turn it off again.
 			if (WQT_WorldQuestFrame.autoEmisarryId and not WQT_WorldQuestFrame.dataProvider:ListContainsEmissary()) then
@@ -2165,14 +2293,14 @@ function WQT_CoreMixin:OnLoad()
 	QuestScrollFrame:SetScript("OnShow", function() 
 			--ElvUI fix
 			if (QuestMapFrame.DetailsFrame:IsShown()) then
-				self:SelectTab(WQT_TabDetails); 
+				--self:SelectTab(WQT_TabDetails); 
 				return;
 			end
 			
 			if (self.selectedTab and self.selectedTab:GetID() == 2) then
-				self:SelectTab(WQT_TabWorld); 
+				--self:SelectTab(WQT_TabWorld); 
 			else
-				self:SelectTab(WQT_TabNormal); 
+				--self:SelectTab(WQT_TabNormal); 
 			end
 		end)
 		
@@ -2199,7 +2327,7 @@ function WQT_CoreMixin:OnLoad()
 		
 	-- Opening quest details
 	hooksecurefunc("QuestMapFrame_ShowQuestDetails", function(questId)
-			self:SelectTab(WQT_TabDetails);
+			--self:SelectTab(WQT_TabDetails);
 			if QuestMapFrame.DetailsFrame.questID == nil then
 				QuestMapFrame.DetailsFrame.questID = questId;
 			end
@@ -2297,6 +2425,7 @@ function WQT_CoreMixin:OnLoad()
 			end
 		end);
 
+		--[[
 	local LFGParent = LFGListSearchPanelScrollFrameScrollChild;
 	LFGParent.StartGroupButton:HookScript("OnClick", function() 
 			-- If we are creating a group because we couldn't find one, show the info on the create frame
@@ -2317,6 +2446,7 @@ function WQT_CoreMixin:OnLoad()
 				WQT_GroupSearch:Show();
 			end
 		end)
+		]]--
 
 	-- Hook hiding of official pins if we replace them with our own
 	local mapWQProvider = WQT_Utils:GetMapWQProvider();
@@ -2329,14 +2459,6 @@ function WQT_CoreMixin:OnLoad()
 				QuestMapFrame.QuestSessionManagement:Hide();
 			end
 		end);
-		
-	-- Shift questlog around to make room for the tabs
-	local a,b,c,d =QuestMapFrame:GetPoint(1);
-	QuestMapFrame:SetPoint(a,b,c,d,-65);
-	QuestScrollFrame:SetPoint("BOTTOMRIGHT",QuestMapFrame, "BOTTOMRIGHT", 0, -2);
-	QuestMapFrame.Background:SetPoint("BOTTOMRIGHT",QuestMapFrame, "BOTTOMRIGHT", 0, -2);
-	QuestMapFrame.DetailsFrame:SetPoint("TOPRIGHT", QuestMapFrame, "TOPRIGHT", -26, -2)
-	QuestMapFrame.VerticalSeparator:SetHeight(463);
 end
 
 function WQT_CoreMixin:ApplyAllSettings()
@@ -2705,8 +2827,14 @@ function WQT_CoreMixin:SetCustomEnabled(value)
 end
 
 function WQT_CoreMixin:SelectTab(tab)
-	
 	local id = tab and tab:GetID() or 0;
+	if(id == QuestLogDisplayMode.WQT) then
+		QuestMapFrame:SetDisplayMode(QuestLogDisplayMode.WQT);
+	end
+
+if true then return end
+--[[
+	
 	if self.selectedTab ~= tab then
 		ADD:CloseAll();
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
@@ -2714,12 +2842,12 @@ function WQT_CoreMixin:SelectTab(tab)
 	end
 	self.selectedTab = tab;
 	
-	WQT_TabNormal:Show();
-	WQT_TabWorld:Show();
-	WQT_TabNormal:SetFrameLevel(2);
-	WQT_TabWorld:SetFrameLevel(2);
-	WQT_TabNormal.Hider:Show();
-	WQT_TabWorld.Hider:Show();
+	--WQT_TabNormal:Show();
+	--WQT_TabWorld:Show();
+	--WQT_TabNormal:SetFrameLevel(2);
+	--WQT_TabWorld:SetFrameLevel(2);
+	--WQT_TabNormal.Hider:Show();
+	--WQT_TabWorld.Hider:Show();
 
 	-- Hide/show when quest details are shown
 	QuestMapFrame_UpdateQuestSessionState(QuestMapFrame);
@@ -2728,12 +2856,12 @@ function WQT_CoreMixin:SelectTab(tab)
 	if (not QuestScrollFrame.Contents:IsShown() and not QuestMapFrame.DetailsFrame:IsShown()) or id == 1 then
 		-- Default questlog
 		self:Hide();
-		WQT_TabNormal:SetFrameLevel(10);
-		WQT_TabNormal.Hider:Hide();
-		WQT_TabNormal.Highlight:Show();
-		WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
-		WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
-		QuestScrollFrame:Show();
+		--WQT_TabNormal:SetFrameLevel(10);
+		--WQT_TabNormal.Hider:Hide();
+		--WQT_TabNormal.Highlight:Show();
+		--WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
+		--WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
+		--QuestScrollFrame:Show();
 	elseif id == 2 then
 		-- WQT
 		WQT_TabWorld:SetFrameLevel(10);
@@ -2755,6 +2883,7 @@ function WQT_CoreMixin:SelectTab(tab)
 	end
 	
 	WQT_QuestLogFiller:UpdateVisibility();
+	]]--
 end
 
 function WQT_CoreMixin:ChangeAnchorLocation(anchor)
@@ -2783,7 +2912,7 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	elseif (anchor == _V["LIST_ANCHOR_TYPE"].taxi) then
 		parent = WQT_OldTaxiMapContainer;
 	elseif (anchor == _V["LIST_ANCHOR_TYPE"].world) then
-		point = "TOPLEFT";
+		point = "BOTTOMRIGHT";
 		xOffset = -2;
 		yOffset = 3;
 		tab = self.tabBeforeAnchor;
@@ -2801,7 +2930,7 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	WQT_WorldQuestFrame:ClearAllPoints(); 
 	WQT_WorldQuestFrame:SetPoint(point, parent, point, xOffset, yOffset);
 	WQT_WorldQuestFrame:SetParent(parent);
-	WQT_WorldQuestFrame:SelectTab(tab);
+	--WQT_WorldQuestFrame:SelectTab(tab);
 	
 	WQT_WorldQuestFrame:TriggerCallback("AnchorChanged", anchor);
 end

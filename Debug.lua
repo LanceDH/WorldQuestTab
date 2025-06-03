@@ -15,8 +15,8 @@ if (addon.debug and LDHDebug) then
 end
 
 function WQT:debugPrint(...)
-	if (addon.debug and LDHDebug) then 
-		LDHDebug:Print(...);
+	if (addon.debug) then 
+		print(...);
 	end
 end
 
@@ -75,6 +75,9 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		AddIndentedDoubleLine(tooltip, "Through functions:", "", 0, color);
 		local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
 		AddIndentedDoubleLine(tooltip, "title", title, 1, color);
+		
+		local classifictaion = C_QuestInfoSystem.GetQuestClassification(questInfo.questId)
+		AddIndentedDoubleLine(tooltip, "classifictaion", classifictaion, 1, color);
 		-- Time
 		local seconds, timeString, timeColor, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo, true, true);
 		AddIndentedDoubleLine(tooltip, "time", "", 1, color);
@@ -98,6 +101,11 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		AddIndentedDoubleLine(tooltip, "mapID", mapInfo.mapID, 2, color);
 		AddIndentedDoubleLine(tooltip, "parentMapID", mapInfo.parentMapID, 2, color);
 		AddIndentedDoubleLine(tooltip, "mapType", mapInfo.mapType, 2, color);
+		local continentID, worldPosition = C_Map.GetWorldPosFromMapPos(mapInfo.mapID, CreateVector2D(questInfo.mapInfo.mapX, questInfo.mapInfo.mapY))
+		AddIndentedDoubleLine(tooltip, "continentID", continentID, 2, color);
+		AddIndentedDoubleLine(tooltip, "worldPosition.x", worldPosition.x, 2, color);
+		AddIndentedDoubleLine(tooltip, "worldPosition.y", worldPosition.x, 2, color);
+		
 	end
 end
 
@@ -167,7 +175,7 @@ local function GetWorldQuestDump()
 end
 
 local function GetPlayerDump()
-	local version = GetAddOnMetadata(addonName, "version");
+	local version = C_AddOns.GetAddOnMetadata(addonName, "version");
 	local map = C_Map.GetBestMapForUnit("player");
 	local coords = nil;
 	if (map) then

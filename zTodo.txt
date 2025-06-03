@@ -1,0 +1,24 @@
+If you're reading this; temper your hopes and expectations
+
+Todo
+- Look at moving from HybridScrollFrame to new systems
+- Update visuals to match the new UI
+- Figure out error in filter dropdown -> Check new dropdown system
+- Error with combat block overlay
+- Improve Dataprovider 
+- Check if I can use Blizzard's dataprovider instead of my own, because why not
+- Check if things in Data.lua can be improved
+- Probably remove quest log counter
+- Something up with LFG
+- Anchoring system with full screen and flight map
+- Figure out War Within data and testing, preferably without buying the expansion :|
+- Probably no longer bother with WorldQuestTab Utilities
+- Check support for external addons, maybe
+- Figure out what else needs to be on this list
+- Determine feasibility of continued support
+
+Done
+- General compatibility with 11.1
+- Integrate in new Worldmap tab structure 
+- Improved expansion zones in data a bit
+- Curse at C_Map.GetMapChildrenInfo for not being perfect... Like why doesn't it include Dalaran in the Broken Shores

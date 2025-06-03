@@ -48,7 +48,7 @@ function WQT_CallbackMixin:TriggerCallback(event, ...)
 	end
 end
 
--- Hook Micin
+-- Hook Mixin
 WQT_EventHookMixin = {};
 
 function WQT_EventHookMixin:HookEvent(event, func)
@@ -146,29 +146,76 @@ local function _DeepWipeTable(t)
 	t = nil;
 end
 
-local WQT_SHADOWLANDS = {
-	[1543] =  {["x"] = 0.23, ["y"] = 0.13}, -- The Maw
-	[1536] = {["x"] = 0.62, ["y"] = 0.21}, -- Maldraxxus
-	[1525] = {["x"] = 0.24, ["y"] = 0.54}, -- Revendreth
-	[1670] = {["x"] = 0.47, ["y"] = 0.51}, -- Oribos
-	[1533] = {["x"] = 0.71, ["y"] = 0.57}, -- Bastion
-	[1565] = {["x"] = 0.48, ["y"] = 0.80}, -- Ardenweald
+
+
+
+local WQT_ZARALEK = {
+	[2022]	= {["x"] = 0.88, ["y"] = 0.84}, -- Waking Shores
+	[2023]	= {["x"] = 0.88, ["y"] = 0.84}, -- Ohn'ahran Plains
+	[2200]	= {["x"] = 0.88, ["y"] = 0.84}, -- Emerald Dream
+	[2239]	= {["x"] = 0.88, ["y"] = 0.84}, -- Amirdrassil
+	[2024]	= {["x"] = 0.88, ["y"] = 0.84}, -- Azure Span
+	[2025]	= {["x"] = 0.88, ["y"] = 0.84}, -- Thaldraszus
+	[2151]	= {["x"] = 0.88, ["y"] = 0.84}, -- Forbidden Reach
+	[2112]	= {["x"] = 0.88, ["y"] = 0.84}, -- Valdrakken
 }
+local WQT_DRAGONLANDS = {
+	[2022]	= {["x"] = 0.48, ["y"] = 0.35}, -- Waking Shores
+	[2023]	= {["x"] = 0.44, ["y"] = 0.56}, -- Ohn'ahran Plains
+	[2200]	= {["x"] = 0.31, ["y"] = 0.57}, -- Emerald Dream
+	[2239]	= {["x"] = 0.24, ["y"] = 0.58}, -- Amirdrassil
+	[2024]	= {["x"] = 0.55, ["y"] = 0.74}, -- Azure Span
+	[2025]	= {["x"] = 0.63, ["y"] = 0.51}, -- Thaldraszus
+	[2151]	= {["x"] = 0.65, ["y"] = 0.10}, -- Forbidden Reach
+	[2133]	= {["x"] = 0.88, ["y"] = 0.84}, -- Zaralek Cavern
+}
+local WQT_SHADOWLANDS = {
+	[1543]	= {["x"] = 0.23, ["y"] = 0.13}, -- The Maw
+	[1536]	= {["x"] = 0.62, ["y"] = 0.21}, -- Maldraxxus
+	[1525]	= {["x"] = 0.24, ["y"] = 0.54}, -- Revendreth
+	[1670]	= {["x"] = 0.47, ["y"] = 0.51}, -- Oribos
+	[1533]	= {["x"] = 0.71, ["y"] = 0.57}, -- Bastion
+	[1565]	= {["x"] = 0.48, ["y"] = 0.80}, -- Ardenweald
+	[1970]	= {["x"] = 0.85, ["y"] = 0.81}, -- Zereth Mortis
+}
+local WQT_NAZJATAR = {
+	[864]	= {["x"] = 0.11, ["y"] = 0.52}, -- Vol'dun
+	[863]	= {["x"] = 0.11, ["y"] = 0.52}, -- Nazmir
+	[862]	= {["x"] = 0.11, ["y"] = 0.52}, -- Zuldazar
+	[1165]	= {["x"] = 0.11, ["y"] = 0.52}, -- Dazar'alor
+
+	[942]	= {["x"] = 0.77, ["y"] = 0.77}, -- Stromsong Valley
+	[896]	= {["x"] = 0.77, ["y"] = 0.77}, -- Drustvar
+	[895]	= {["x"] = 0.77, ["y"] = 0.77}, -- Tiragarde Sound
+	[1161]	= {["x"] = 0.77, ["y"] = 0.77}, -- Boralus
+	[1169]	= {["x"] = 0.77, ["y"] = 0.77}, -- Tol Dagor
+	[1462]	= {["x"] = 0.77, ["y"] = 0.77}, -- Mechagon
+}
+
 local WQT_ZANDALAR = {
-	[864] =  {["x"] = 0.39, ["y"] = 0.32}, -- Vol'dun
-	[863] = {["x"] = 0.57, ["y"] = 0.28}, -- Nazmir
-	[862] = {["x"] = 0.55, ["y"] = 0.61}, -- Zuldazar
-	[1165] = {["x"] = 0.55, ["y"] = 0.61}, -- Dazar'alor
-	[1355] = {["x"] = 0.86, ["y"] = 0.14}, -- Nazjatar
+	[864]	= {["x"] = 0.39, ["y"] = 0.32}, -- Vol'dun
+	[863]	= {["x"] = 0.57, ["y"] = 0.28}, -- Nazmir
+	[862]	= {["x"] = 0.55, ["y"] = 0.61}, -- Zuldazar
+	[1165]	= {["x"] = 0.55, ["y"] = 0.61}, -- Dazar'alor
+	[1355]	= {["x"] = 0.86, ["y"] = 0.14}, -- Nazjatar
+
+	[1527]	= {["x"] = 0.0, ["y"] = 0.0}, -- Uldum
+	[1530]	= {["x"] = 0.0, ["y"] = 0.0}, -- Vale of Eternam Blossom
 }
 local WQT_KULTIRAS = {
-	[942] =  {["x"] = 0.55, ["y"] = 0.25}, -- Stromsong Valley
-	[896] = {["x"] = 0.36, ["y"] = 0.67}, -- Drustvar
-	[895] = {["x"] = 0.56, ["y"] = 0.54}, -- Tiragarde Sound
-	[1161] = {["x"] = 0.56, ["y"] = 0.54}, -- Boralus
-	[1169] = {["x"] = 0.78, ["y"] = 0.61}, -- Tol Dagor
-	[1355] = {["x"] = 0.86, ["y"] = 0.14}, -- Nazjatar
-	[1462] = {["x"] = 0.17, ["y"] = 0.28}, -- Mechagon
+	[942]	= {["x"] = 0.55, ["y"] = 0.25}, -- Stromsong Valley
+	[896]	= {["x"] = 0.36, ["y"] = 0.67}, -- Drustvar
+	[895]	= {["x"] = 0.56, ["y"] = 0.54}, -- Tiragarde Sound
+	[1161]	= {["x"] = 0.56, ["y"] = 0.54}, -- Boralus
+	[1169]	= {["x"] = 0.78, ["y"] = 0.61}, -- Tol Dagor
+	[1355]	= {["x"] = 0.86, ["y"] = 0.14}, -- Nazjatar
+	[1462]	= {["x"] = 0.17, ["y"] = 0.28}, -- Mechagon
+}
+
+local WQT_ARGUS = {
+	[830]	= {["x"] = 0.61, ["y"] = 0.68}, -- Krokuun
+	[885]	= {["x"] = 0.31, ["y"] = 0.51}, -- Antoran Wastes
+	[882]	= {["x"] = 0.62, ["y"] = 0.26}, -- Eredath
 }
 local WQT_LEGION = {
 	[630]	= {["x"] = 0.33, ["y"] = 0.58}, -- Azsuna
@@ -181,15 +228,15 @@ local WQT_LEGION = {
 	[627]	= {["x"] = 0.45, ["y"] = 0.64}, -- Dalaran
 	[830]	= {["x"] = 0.86, ["y"] = 0.15}, -- Krokuun
 	[885]	= {["x"] = 0.86, ["y"] = 0.15}, -- Antoran Wastes
-	[882]	= {["x"] = 0.86, ["y"] = 0.15}, -- Mac'Aree
+	[882]	= {["x"] = 0.86, ["y"] = 0.15}, -- Eredath
 }
 local WQT_KALIMDOR = { 
 	[81] 	= {["x"] = 0.42, ["y"] = 0.82}, -- Silithus
-	[64]	= {["x"] = 0.5, ["y"] = 0.72}, -- Thousand Needles
+	[64]	= {["x"] = 0.50, ["y"] = 0.72}, -- Thousand Needles
 	[249]	= {["x"] = 0.47, ["y"] = 0.91}, -- Uldum
 	[1527]	= {["x"] = 0.47, ["y"] = 0.91}, -- Uldum BfA
 	[71]	= {["x"] = 0.55, ["y"] = 0.84}, -- Tanaris
-	[78]	= {["x"] = 0.5, ["y"] = 0.81}, -- Ungoro
+	[78]	= {["x"] = 0.50, ["y"] = 0.81}, -- Ungoro
 	[69]	= {["x"] = 0.43, ["y"] = 0.7}, -- Feralas
 	[70]	= {["x"] = 0.55, ["y"] = 0.67}, -- Dustwallow
 	[199]	= {["x"] = 0.51, ["y"] = 0.67}, -- S Barrens
@@ -207,7 +254,7 @@ local WQT_KALIMDOR = {
 	[83]	= {["x"] = 0.58, ["y"] = 0.23}, -- Winterspring
 	[57]	= {["x"] = 0.42, ["y"] = 0.1}, -- Teldrassil
 	[97]	= {["x"] = 0.33, ["y"] = 0.27}, -- Azuremyst
-	[106]	= {["x"] = 0.3, ["y"] = 0.18}, -- Bloodmyst
+	[106]	= {["x"] = 0.30, ["y"] = 0.18}, -- Bloodmyst
 }
 local WQT_EASTERN_KINGDOMS = {
 	[210]	= {["x"] = 0.47, ["y"] = 0.87}, -- Cape of STV
@@ -216,7 +263,7 @@ local WQT_EASTERN_KINGDOMS = {
 	[51]	= {["x"] = 0.54, ["y"] = 0.78}, -- Swamp of Sorrow
 	[42]	= {["x"] = 0.49, ["y"] = 0.79}, -- Deadwind
 	[47]	= {["x"] = 0.45, ["y"] = 0.8}, -- Duskwood
-	[52]	= {["x"] = 0.4, ["y"] = 0.79}, -- Westfall
+	[52]	= {["x"] = 0.40, ["y"] = 0.79}, -- Westfall
 	[37]	= {["x"] = 0.47, ["y"] = 0.75}, -- Elwynn
 	[49]	= {["x"] = 0.51, ["y"] = 0.75}, -- Redridge
 	[36]	= {["x"] = 0.49, ["y"] = 0.7}, -- Burning Steppes
@@ -225,11 +272,11 @@ local WQT_EASTERN_KINGDOMS = {
 	[27]	= {["x"] = 0.44, ["y"] = 0.61}, -- Dun Morogh
 	[48]	= {["x"] = 0.52, ["y"] = 0.6}, -- Loch Modan
 	[241]	= {["x"] = 0.56, ["y"] = 0.55}, -- Twilight Highlands
-	[56]	= {["x"] = 0.5, ["y"] = 0.53}, -- Wetlands
+	[56]	= {["x"] = 0.50, ["y"] = 0.53}, -- Wetlands
 	[14]	= {["x"] = 0.51, ["y"] = 0.46}, -- Arathi Highlands
 	[26]	= {["x"] = 0.57, ["y"] = 0.4}, -- Hinterlands
 	[25]	= {["x"] = 0.46, ["y"] = 0.4}, -- Hillsbrad
-	[217]	= {["x"] = 0.4, ["y"] = 0.48}, -- Ruins of Gilneas
+	[217]	= {["x"] = 0.40, ["y"] = 0.48}, -- Ruins of Gilneas
 	[21]	= {["x"] = 0.41, ["y"] = 0.39}, -- Silverpine
 	[18]	= {["x"] = 0.39, ["y"] = 0.32}, -- Tirisfall
 	[22]	= {["x"] = 0.49, ["y"] = 0.31}, -- W Plaugelands
@@ -241,7 +288,7 @@ local WQT_EASTERN_KINGDOMS = {
 local WQT_OUTLAND = {
 	[104]	= {["x"] = 0.74, ["y"] = 0.8}, -- Shadowmoon Valley
 	[108]	= {["x"] = 0.45, ["y"] = 0.77}, -- Terrokar
-	[107]	= {["x"] = 0.3, ["y"] = 0.65}, -- Nagrand
+	[107]	= {["x"] = 0.30, ["y"] = 0.65}, -- Nagrand
 	[100]	= {["x"] = 0.52, ["y"] = 0.51}, -- Hellfire
 	[102]	= {["x"] = 0.33, ["y"] = 0.47}, -- Zangarmarsh
 	[105]	= {["x"] = 0.36, ["y"] = 0.23}, -- Blade's Edge
@@ -258,16 +305,16 @@ local WQT_NORTHREND = {
 	[113]	= {["x"] = 0.78, ["y"] = 0.74}, -- Howling Fjord
 }
 local WQT_PANDARIA = {
-	[554]	= {["x"] = 0.9, ["y"] = 0.68}, -- Timeless Isles
+	[554]	= {["x"] = 0.90, ["y"] = 0.68}, -- Timeless Isles
 	[371]	= {["x"] = 0.67, ["y"] = 0.52}, -- Jade Forest
 	[418]	= {["x"] = 0.53, ["y"] = 0.75}, -- Karasang
 	[376]	= {["x"] = 0.51, ["y"] = 0.65}, -- Four Winds
 	[422]	= {["x"] = 0.35, ["y"] = 0.62}, -- Dread Waste
-	[390]	= {["x"] = 0.5, ["y"] = 0.52}, -- Eternal Blossom
+	[390]	= {["x"] = 0.50, ["y"] = 0.52}, -- Eternal Blossom
 	[379]	= {["x"] = 0.45, ["y"] = 0.35}, -- Kun-lai Summit
 	[507]	= {["x"] = 0.48, ["y"] = 0.05}, -- Isle of Giants
 	[388]	= {["x"] = 0.32, ["y"] = 0.45}, -- Townlong Steppes
-	[504]	= {["x"] = 0.2, ["y"] = 0.11}, -- Isle of Thunder
+	[504]	= {["x"] = 0.20, ["y"] = 0.11}, -- Isle of Thunder
 	[1530]	= {["x"] = 0.51, ["y"] = 0.53}, -- Vale Of Eternal Blossom BfA
 }
 local WQT_DRAENOR = {
@@ -281,91 +328,54 @@ local WQT_DRAENOR = {
 	[558]	= {["x"] = 0.73, ["y"] = 0.43}, -- Ashran
 }
 
-local ZonesByExpansion = {
+local expZones =
+{
+	[0] = -- Anything lower than Draenor really
+	{
+		WQT_KALIMDOR,
+		WQT_EASTERN_KINGDOMS,
+		WQT_OUTLAND,
+		WQT_NORTHREND,
+		WQT_PANDARIA,
+	},
+	[LE_EXPANSION_WARLORDS_OF_DRAENOR] = {
+		WQT_DRAENOR,
+	},
+	[LE_EXPANSION_LEGION] = {
+		WQT_LEGION,
+		WQT_ARGUS,
+	},
+	[LE_EXPANSION_BATTLE_FOR_AZEROTH] = {
+		WQT_ZANDALAR,
+		WQT_KULTIRAS,
+		WQT_NAZJATAR,
+	},
 	[LE_EXPANSION_SHADOWLANDS] = {
-		1543, -- The Maw
-		1536, -- Maldraxxus
-		1525, -- Revendreth
-		1670, -- Oribos
-		1533, -- Bastion
-		1565, -- Ardenweald
-	}
-	,[LE_EXPANSION_BATTLE_FOR_AZEROTH] = {
-		875, -- Zandalar
-		864, -- Vol'dun
-		863, -- Nazmir
-		862, -- Zuldazar
-		1165, -- Dazar'alor
-		876, -- Kul Tiras
-		942, -- Stromsong Valley
-		896, -- Drustvar
-		895, -- Tiragarde Sound
-		1161, -- Boralus
-		1169, -- Tol Dagor
-		1355, -- Nazjatar
-		1462, -- Mechagon
-		--Classic zones with BfA WQ
-		14, -- Arathi Highlands
-		62, -- Darkshore
-		1527, -- Uldum
-		1530, -- Vale of Eternam Blossom
-		
-	}
-	,[LE_EXPANSION_LEGION] = {
-		619, -- Broken Isles
-		630, -- Azsuna
-		680, -- Suramar
-		634, -- Stormheim
-		650, -- Highmountain
-		641, -- Val'sharah
-		790, -- Eye of Azshara
-		646, -- Broken Shore
-		627, -- Dalaran
-		830, -- Krokuun
-		885, -- Antoran Wastes
-		882, -- Mac'Aree
-		905, -- Argus
-	}
-	,[LE_EXPANSION_WARLORDS_OF_DRAENOR] = {
-		572, -- Draenor
-		525, -- Frostfire Ridge
-		543, -- Gorgrond
-		534, -- Tanaan Jungle
-		535, -- Talador
-		550, -- Nagrand
-		542, -- Spires of Arak
-		588, -- Ashran
+		WQT_SHADOWLANDS,
+	},
+	[LE_EXPANSION_DRAGONFLIGHT] = {
+		WQT_DRAGONLANDS,
+		WQT_ZARALEK,
 	}
 }
 
 -- A list of every zones linked to an expansion level
 _V["WQT_ZONE_EXPANSIONS"] = {}
 
-
-local function AddZonesToList(t)
-	for mapID, v in pairs(t) do
-		_V["WQT_ZONE_EXPANSIONS"][mapID] = 0;
+-- Make table linking zones to expansion level.
+-- Increasing order in case newer expansions re-use old zones
+for expID=0, LE_EXPANSION_LEVEL_CURRENT, 1 do
+	local zoneList = expZones[expID];
+	if (zoneList) then 
+		for _, mapList in pairs(zoneList) do
+			for mapID, _ in pairs(mapList) do
+				_V["WQT_ZONE_EXPANSIONS"][mapID] = expID;
+			end
+		end
 	end
 end
 
-AddZonesToList(WQT_SHADOWLANDS);
-AddZonesToList(WQT_ZANDALAR);
-AddZonesToList(WQT_KULTIRAS);
-AddZonesToList(WQT_LEGION);
-AddZonesToList(WQT_KALIMDOR);
-AddZonesToList(WQT_EASTERN_KINGDOMS);
-AddZonesToList(WQT_DRAENOR);
-AddZonesToList(WQT_PANDARIA);
-AddZonesToList(WQT_NORTHREND);
-AddZonesToList(WQT_OUTLAND);
-
-for expId, zones in pairs(ZonesByExpansion) do
-	for k, zoneId in ipairs(zones) do
-		_V["WQT_ZONE_EXPANSIONS"][zoneId] = expId;
-	end
-end
-
-_DeepWipeTable(ZonesByExpansion);
+table.wipe(expZones);
 
 ------------------------
 -- SHARED
@@ -374,7 +384,6 @@ _DeepWipeTable(ZonesByExpansion);
 
 _V["PATH_CUSTOM_ICONS"] = "Interface/Addons/WorldQuestTab/Images/CustomIcons";
 _V["LIST_ANCHOR_TYPE"] = {["flight"] = 1, ["world"] = 2, ["full"] = 3, ["taxi"] = 4};
-_V["CURRENT_EXPANSION"] = LE_EXPANSION_SHADOWLANDS;
 
 _V["TOOLTIP_STYLES"] = { 
 	["default"] = {},
@@ -487,6 +496,30 @@ MakeIndexArg1(_V["PIN_CENTER_LABELS"]);
 MakeIndexArg1(_V["RING_TYPES_LABELS"]);
 MakeIndexArg1(_V["PIN_VISIBILITY_CONTINENT"]);
 MakeIndexArg1(_V["PIN_VISIBILITY_ZONE"]);
+
+-- Not where they should be. Count them as invalid
+_V["BUGGED_POI"] =  {
+	[69964] = 864
+	,[74441] = 864
+	,[72128] = 864
+	,[69849] = 864
+	,[66004] = 864
+	,[66356] = 864
+	,[69882] = 864
+	,[69865] = 864
+	,[69850] = 864
+	,[69951] = 864
+	,[69961] = 864
+	,[69960] = 864
+	,[69956] = 864
+	,[69954] = 864
+	,[69970] = 864
+	,[69953] = 864
+	,[69975] = 864
+	,[69973] = 864
+	,[69969] = 864
+	,[69972] = 864
+}
 
 -------------------------------
 -- Settings List
@@ -970,13 +1003,13 @@ _V["SETTING_UTILITIES_LIST"] = {
 	{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "WQTU", ["label"] = _L["LOAD_UTILITIES"], ["tooltip"] = _L["LOAD_UTILITIES_TT"], ["disabledTooltip"] = _L["LOAD_UTILITIES_TT_DISABLED"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.loadUtilities = value;
-				if (value and not IsAddOnLoaded("WorldQuestTabUtilities")) then
-					LoadAddOn("WorldQuestTabUtilities");
+				if (value and not C_AddOns.IsAddOnLoaded("WorldQuestTabUtilities")) then
+					C_AddOns.LoadAddOn("WorldQuestTabUtilities");
 					WQT_QuestScrollFrame:UpdateQuestList();
 				end
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.loadUtilities end
-			,["isDisabled"] = function() return GetAddOnEnableState(nil, "WorldQuestTabUtilities") == 0 end
+			,["isDisabled"] = function() return C_AddOns.GetAddOnEnableState("WorldQuestTabUtilities") == 0 end
 			}	
 }
 
@@ -1233,18 +1266,22 @@ _V["ZONE_SUBZONES"] = {
 }
 
 _V["WQT_ZONE_MAPCOORDS"] = {
-		[1647] 	= WQT_SHADOWLANDS -- Shadowlands flightmap
+		[1978] = WQT_DRAGONLANDS -- Dragonlands
+		,[2057] = WQT_DRAGONLANDS -- Dragonlands flightmap
+		,[2133] = WQT_ZARALEK -- Zaralek Cavern
 		,[1550]	= WQT_SHADOWLANDS -- Shadowlands
+		,[1647] = WQT_SHADOWLANDS -- Shadowlands flightmap
 		,[875]	= WQT_ZANDALAR -- Zandalar
 		,[1011]	= WQT_ZANDALAR -- Zandalar flightmap
 		,[876]	= WQT_KULTIRAS -- Kul Tiras
 		,[1014]	= WQT_KULTIRAS -- Kul Tiras flightmap
+		,[1355]	= WQT_NAZJATAR -- Nazjatar
 		,[1504]	= { -- Nazjatar flightmap
 			[1355] = {["x"] = 0, ["y"] = 0} -- Nazjatar
 		}
 		,[619] 	= WQT_LEGION 
 		,[993] 	= WQT_LEGION -- Flightmap	
-		,[905] 	= WQT_LEGION -- Argus
+		,[905] 	= WQT_ARGUS -- Argus
 		,[12] 	= WQT_KALIMDOR 
 		,[1209] 	= WQT_KALIMDOR -- Flightmap
 		,[13]	= WQT_EASTERN_KINGDOMS
@@ -1262,8 +1299,10 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 			,[50] = {["x"] = 0.67, ["y"] = 0.40} -- North
 		}
 		,[947]		= {	
-		} -- All of Azeroth
+		} -- All of Azeroth. Dynamic based on level and expansion in Dataprovider UpdateAzerothZones
 	}
+
+	WQT_Test = { ["done"] = true, ["zones"] = {}};
 
 _V["WQT_NO_FACTION_DATA"] = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L["NO_FACTION"] } -- No faction
 _V["WQT_FACTION_DATA"] = {
@@ -1302,17 +1341,40 @@ _V["WQT_FACTION_DATA"] = {
 	,[2400] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Alliance" ,["texture"] = 2909043 } -- Waveblade Ankoan
 	,[2417] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 3196264 } -- Uldum Accord
 	,[2415] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 3196265 } -- Rajani
-	-- Shadowlands - Speculation at this point, I can't test
+	-- Shadowlands
 	,[2407] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3257748 } -- The Ascended
 	,[2410] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3641396 } -- The Undying Army
 	,[2413] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3257751 } -- Court of Harvesters
 	,[2465] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3641394 } -- The Wild Hunt
 	,[2432] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3729461 } -- Ve'nari
-	,[2470] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 4083292 } -- Death's Advance
+	,[2470] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 4083292 } -- Korthia
+	,[2472] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 4067928 } -- Korthia Codex
+	,[2478] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 4226232 } -- Zereth Mortis
+	-- LE_EXPANSION_DRAGONFLIGHT
+	,[2507] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687628 } -- Dragonscale Expedition
+	,[2511] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687629 } -- Iskaara Tuskarr
+	,[2503] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687627 } -- Maruuk Centaur
+	,[2510] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687630 } -- Valdrakken Accord
+	,[2544] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4548878 } -- Artisan's Consortium
+	,[2517] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4640487 } -- Wrathion
+	,[2518] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4640488 } -- Sabellian
+	,[2550] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 134565 } -- Cobalt Assembly
+	,[2523] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4528811 } -- Dark Talons
+	,[2524] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4528812 } -- Obsidian Warders
+	,[2526] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4901295 } -- Winterpelt Furbolg
+	,[2564] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5140835 } -- Loamm Niffen
+	,[2553] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 609811 } -- Soridormi
+	,[2574] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5244643 } -- Dream Wardens
+	,[2615] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5315246 } -- Azerothian Archives	
+	-- LE_EXPANSION_WAR_WITHIN
+	-- Yea, about that....
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
-	v.name = GetFactionInfoByID(k);
+	local info = C_Reputation.GetFactionDataByID(k);
+	if(info) then
+		v.name = info.name;
+	end
 end
 
 
@@ -1445,153 +1507,19 @@ for k, v in pairs(_V["WQT_FACTION_DATA"]) do
 end
 
 -- This is just easier to maintain than changing the entire string every time
+-- version			Version number 
+-- minor			Minor version number (gets added after version number)
+-- intro			Message for some extra details
+-- new				List of new additions
+-- changes			List of things that got changed
+-- fixes			List of bugfixes
+
 _V["PATCH_NOTES"] = {
-		{["version"] = "9.1.01",
-			["intro"] = { "Update for 9.1 content" },
+		{["version"] = "11.1.01",
 			["changes"] = {
-				"Changed the calling board progress icons to a texture that looks better at their small scale.",
+				"Compatibility with patch 11.1.5",
 			},
-		},
-		{["version"] = "9.0.08",
-			["minor"] = "2",
-			["fixes"] = {
-				"Fixed an error for those also running TomTom.",
-			},
-		},
-		{["version"] = "9.0.08",
-			["new"] ={
-				"New filter 'Ignores Filters': Allows special quest types such as Callings and Threat quests to ignore filters settings and always show (if they would show in the list otherwise)"
-			},
-			["changes"] = {
-				"Calling quests now have their own icon in the quest list and mini icons for pins. When using Blizzard pin icons, pins for callings will now also have a blue inner circle.",
-				"Tooltips rewarding currency and an item will now show everything. In other words, callings will now show if they'll reward an Emblem of Renown.",
-				"Quests will now sort their rewards by quality over type. As an example, callings will prioritize showing the Emblem of Renown over the loot container.",
-				"Some minor tooltip tweaks both in terms of functionality and information.",
-			},
-			["fixes"] = {
-				"Fixed some missing info in tooltips on the callings board.",
-			},
-		},
-		{["version"] = "9.0.07",
-			["intro"] = { "9.0.5 compatibility and fixes." },
-			["fixes"] = {
-				"Fixed the calling board always showing as Necrolord rather than the player's covenant.",
-				"Fixed pin highlights lagging behind when the world quest tab isn't visible.",
-			},
-		},
-		{["version"] = "9.0.06",
-			["minor"] = "3 (beta)",
-			["changes"] = {
-				"Callings on the callings board with either a progress bar or a high number objective will now be displayed as a progress bar instead.",
-			},
-			["fixes"] = {
-				"Clicking a world quest will now correctly set it as the currently tracked quest.",
-				"Fixed TomTom settings not showing up for those using the add-on.",
-				"Fixed an error that could happen using a wormhole generation. (Maybe?)",
-				"Potentially fixed a couple of other errors."
-			},
-		},
-		{["version"] = "9.0.06",
-			["minor"] = 2,
-			["fixes"] = {
-				"Fixed an error related to the LFG buttons setting.",
-			},
-		},
-		{["version"] = "9.0.06",
-			["new"] ={
-				"Added the option to mark quests as 'uninterested'. You (un)mark a quest as uninterested either by shift-right clicking or through the right click menu. Uninterested quests will be placed at the bottom of the list and become less visible.",
-				"Added a 'Uninterested' filter. Take a guess what it does.",
-				"Added custom color settings allowing you to change most of the add-on specific colors to your liking.",
-			},
-			["changes"] = {
-				"Mini icons for conduits will now match their type (Finesse, Potency, or Endurance).",
-				"The quest list should no longer jump back to the top when it gets updated. Finally... that's been bugging me for ages.",
-				"Moved filters related to older content to their own sub menus.",
-				"You can now control right click a quest to place the waypoint at its location.",
-				"Added tooltips to the right-click menu to inform about shortcuts.",
-			},
-			["fixes"] = {
-				"Improved memory usage in different parts of the add-on.",
-				"Fixed an issue that could cause duplicate callings to show up on the calling board or not callings to show up at all.",
-				"Fixed an issue with shift-clicking to track quests.",
-				"Fixed quests in covenant areas not being included on some maps.",
-				"Fixed the entire quest frame disappearing when untracking a quest while quest details are shown.",
-				"Focusing on a calling will no longer hide relevant world quests. (Doesn't apply when the map is in full screen mode)",
-			},
-		},
-		{["version"] = "9.0.05",
-			["minor"] = 2,
-			["fixes"] = {
-				"Fixed an error that would happen for those that have the 'alwaysCompareItems' cvar set to 1.",
-			},
-		},
-		{["version"] = "9.0.05",
-			["new"] = {
-				"Added a callings board to the world map similar to the ones in Legion and BfA. This is enabled by default but can be turned off in the settings.",
-				"Conduits are now their own reward type which includes filtering and reward displays in the quest list.",
-			},
-			["changes"] = {
-				"Replaced all covenant factions icons to their covenant sigil and added an icon for Ve'nari.",
-				"Moved some of the settings around so the ones relevant to older content are out of the way.",
-				"Subcategories in settings can now also be expanded and collapsed.",
-			},
-			["fixes"] = {
-				"Fixed the quest log disappearing when changing maps while quest details are open.",
-				"Fixed a potential error when right clicking a world quest.",
-				"Fixed some tainting issues should prevent combat errors.",
-			},
-		},
-		{["version"] = "9.0.04",
-			["minor"] = "0 (beta)",
-			["new"] = {
-				"Anima is now it's own reward type and should show the total anima rather than number of tokens.",
-			},
-			["fixes"] = {
-				"Fixed Shadowlands world quests not showing up at flight masters.",
-				"Fixed an error related to covenant callings.",
-				"Fixed an issue where disabled filters wouldn't show tooltips.",
-			},
-		},
-		{["version"] = "9.0.03",
-			["fixes"] = {
-				"Fixed default icon for factions which don't have a designated icon yet.",
-				"Fixed a quest detail issue with ElvUI.",
-				"Fixed one of the Shadowlands factions having switched IDs.",
-			},
-		},
-		{["version"] = "9.0.02",
-			["new"] = {
-				"New map pin option: Zone Map Pins (default All). Which quests should be allowed to show map pins on zone maps. (None, Tracked, or All)",
-				"New map pin option: Continent Map Pins (default None). Which quests should be allowed to show map pins on continent maps. (None, Tracked, or All)",
-			},
-			["changes"] = {
-				"The 'Pins On Continent' setting has been replaced by the new 'Continent Map Pins'. Its value has been transfered over.",
-				"Moved the settings and 'What's new' options from the filters to a separate button.",
-			},
-			["fixes"] = {
-				"Fixed Ally Quests in Nazjatar not showing the daily quest icon on their map pins.",
-				"Fixed the missing backdrop in the debug dump window.",
-				"'Fixed' the quest log counter.",
-				"Fixed an error that could occur when trying to right-click certain quests.",
-				"Fixed flickering of the quest list background when it's being reloaded",
-				"Fixed being able to add daily quests to the quest watch list, as the official API doesn't support them.",
-			},
-		},
-		{["version"] = "9.0.01",
-			["intro"] = {"Update for the new 9.0 UI."},
-			["new"] = {
-				"New type filter: Bonus. Filters out what the game considers bonus quests.",
-				"New general option: Emissary Reward Icon (default off). Adds an icon to the emissary tabs indicating the type of reward it offers.",
-				"New general option: Selected Emissary Only (default on). Only mark quests for the currently selected emissary. Turning this off will instead mark quests for any of the active emissaries.",
-				"Right clicking a quest now includes an option to place the new official map pin at the quest's location.",
-			},
-			["changes"] = {
-				"Moved the TomTom waypoint option to the bottom of the right click menu.",
-			},
-			["fixes"] = {
-				"Fixed map pin visuals for quests with no rewards.",
-			},
-		},
+		}
 	}
 	
 _V["LATEST_UPDATE"] = "";

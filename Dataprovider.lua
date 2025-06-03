@@ -9,7 +9,7 @@ local _L = addon.L;
 local _V = addon.variables;
 local WQT_Utils = addon.WQT_Utils;
 
-local _WFMLoaded = IsAddOnLoaded("WorldFlightMap");
+local _WFMLoaded = C_AddOns.IsAddOnLoaded("WorldFlightMap");
 local _azuriteID = C_CurrencyInfo.GetAzeriteCurrencyID();
 
 ----------------------------
@@ -30,11 +30,10 @@ local function UpdateAzerothZones(newLevel)
 	worldTable[13] = {["x"] = 0.88, ["y"] = 0.56} -- Eastern Kingdom
 	
 	-- Always take the highest expansion
-	if (expLevel >= LE_EXPANSION_BATTLE_FOR_AZEROTH and newLevel >= 50) then
-		worldTable[875] = {["x"] = 0.54, ["y"] = 0.61} -- Zandalar
-		worldTable[876] = {["x"] = 0.72, ["y"] = 0.49} -- Kul Tiras
-	elseif (expLevel >= LE_EXPANSION_LEGION and newLevel >= 50) then
-		worldTable[619] = {["x"] = 0.6, ["y"] = 0.41} -- Broken Isles
+	if (expLevel >= LE_EXPANSION_WAR_WITHIN and newLevel >= 70) then
+		worldTable[2274] = {["x"] = 0.28, ["y"] = 0.84} -- Khaz Algar
+	elseif (newLevel >= 10) then
+		worldTable[1978] = {["x"] = 0.77, ["y"] = 0.22} -- Dragon Isles
 	end
 end
 
@@ -130,15 +129,14 @@ local function QuestResetFunc(pool, questInfo)
 	questInfo:Reset();
 end
 
-function QuestInfoMixin:Init(questId, isDaily, isCombatAllyQuest, alwaysHide, posX, posY)
+function QuestInfoMixin:Init(questId, qInfo, alwaysHide, posX, posY)
 	self.questId = questId;
-	self.isDaily = isDaily;
-	self.isAllyQuest = isCombatAllyQuest;
+	self.isDaily = qInfo.isDaily;
+	self.isAllyQuest = qInfo.isCombatAllyQuest;
 	self.alwaysHide = alwaysHide;
 	self:SetMapPos(posX, posY);
 	self.tagInfo = C_QuestLog.GetQuestTagInfo(questId);
-	
-	self.isValid = HaveQuestData(self.questId);
+	self.isValid = HaveQuestData(self.questId) and _V["BUGGED_POI"][questId] ~=  qInfo.mapID;
 	self.time.seconds = WQT_Utils:GetQuestTimeString(self); -- To check if expired or never had a time limit
 	self.passedFilter = true;
 	
@@ -195,7 +193,7 @@ function QuestInfoMixin:LoadRewards(force)
 			local _, texture, numItems, quality, _, rewardId, ilvl = GetQuestLogRewardInfo(1, self.questId);
 
 			if (rewardId) then
-				local price, typeID, subTypeID = select(11, GetItemInfo(rewardId));
+				local price, typeID, subTypeID = select(11, C_Item.GetItemInfo(rewardId));
 				if (C_Soulbinds.IsItemConduitByItemInfo(rewardId)) then
 					-- Conduits
 					-- Lovely yikes on getting the type
@@ -245,9 +243,15 @@ function QuestInfoMixin:LoadRewards(force)
 			end
 		end
 		-- Spells
-		if (GetQuestLogRewardSpell(1, self.questId)) then
-			local texture, _, _, _, _, _, _, _, rewardId = GetQuestLogRewardSpell(1, self.questId);
-			self:AddReward(WQT_REWARDTYPE.spell, 1, texture, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardItem), rewardId);
+		if (C_QuestInfoSystem.HasQuestRewardSpells(self.questId)) then
+			local spellIds = C_QuestInfoSystem.GetQuestRewardSpells(self.questId);
+
+			for k, spelldId in ipairs(spellIds) do
+				local spellInfo = C_Spell.GetSpellInfo(spelldId)
+
+				self:AddReward(WQT_REWARDTYPE.spell, 1, spellInfo.texture, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardItem), spellIds);
+			end
+			
 		end
 		-- Honor
 		if (GetQuestLogRewardHonor(self.questId) > 0) then
@@ -260,19 +264,14 @@ function QuestInfoMixin:LoadRewards(force)
 			self:AddReward(WQT_REWARDTYPE.gold, numItems, 133784, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardGold));
 		end
 		-- Currency
-		local numCurrencies = GetNumQuestLogRewardCurrencies(self.questId);
-		for i=1, numCurrencies do
-			local _, _, amount, currencyId = GetQuestLogRewardCurrencyInfo(i, self.questId);
-			if (currencyId) then
-				local currencyInfo = C_CurrencyInfo.GetCurrencyInfo(currencyId);
-				local isRep = C_CurrencyInfo.GetFactionGrantedByCurrency(currencyId) ~= nil;
-				local name, texture, _, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(currencyId, amount, currencyInfo.name, currencyInfo.iconFileID, currencyInfo.quality); 
-				local currType = currencyId == _azuriteID and WQT_REWARDTYPE.artifact or (isRep and WQT_REWARDTYPE.reputation or WQT_REWARDTYPE.currency);
-				local color = currType == WQT_REWARDTYPE.artifact and WQT_Utils:GetColor(_V["COLOR_IDS"].rewardArtiface) or  WQT_Utils:GetColor(_V["COLOR_IDS"].rewardCurrency);
-				self:AddReward(currType, amount, texture, quality, color, currencyId);
-			end
+		local currencies = C_QuestLog.GetQuestRewardCurrencies(self.questId);
+		for k, currency in ipairs(currencies) do
+			local isRep = C_CurrencyInfo.GetFactionGrantedByCurrency(currency.currencyID) ~= nil;
+			local currType = currency.currencyID == _azuriteID and WQT_REWARDTYPE.artifact or (isRep and WQT_REWARDTYPE.reputation or WQT_REWARDTYPE.currency);
+			local color = currType == WQT_REWARDTYPE.artifact and WQT_Utils:GetColor(_V["COLOR_IDS"].rewardArtiface) or  WQT_Utils:GetColor(_V["COLOR_IDS"].rewardCurrency);
+			self:AddReward(currType, currency.totalRewardAmount, currency.texture, currency.quality, color, currency.currencyID);
 		end
-		-- Player experience 
+		-- XP
 		if (GetQuestLogRewardXP(self.questId) > 0) then
 			local numItems = GetQuestLogRewardXP(self.questId);
 			self:AddReward(WQT_REWARDTYPE.xp, numItems, 894556, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardXp));
@@ -468,6 +467,7 @@ function WQT_DataProvider:Init()
 	self.frame = CreateFrame("FRAME");
 	self.frame:SetScript("OnUpdate", function(frame, ...) self:OnUpdate(...); end);
 	self.frame:SetScript("OnEvent", function(frame, ...) self:OnEvent(...); end);
+	self.frame:SetScript("OnLoad", function(frame, ...) self:OnEvent(...); end);
 	self.frame:RegisterEvent("QUEST_LOG_UPDATE");
 	self.frame:RegisterEvent("PLAYER_LEVEL_UP");
 	
@@ -476,54 +476,66 @@ function WQT_DataProvider:Init()
 	self.keyList = {};
 	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room
 	self.waitingRoomRewards = {};
+	self.ignoreNextLogUpdate = false;
 	
 	self.bufferedZones = {};
-	hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
-			-- If we change map, reset the CD, we want new quest info
-			self:LoadQuestsInZone(WorldMapFrame.mapID);
-		end);
+
+	EventRegistry:RegisterCallback("MapCanvas.MapSet", self.MapCanvasMapSet, self);
 
 	UpdateAzerothZones(); 
 	
 	self.updateCD = 0;
 end
 
+function WQT_DataProvider:MapCanvasMapSet(mapID)
+	self.ignoreNextLogUpdate = true;
+	self:LoadQuestsInZone(mapID);
+end
+
 function WQT_DataProvider:OnEvent(event, ...)
 	if (event == "QUEST_LOG_UPDATE") then
-		-- If the last update was too recent, it's probably just quest data becoming available
-		if (self.updateCD > 0) then
-			self:UpdateWaitingRoom();
-		else
-			self:LoadQuestsInZone(WorldMapFrame.mapID);
-		end
-			
+	-- If the last update was too recent, it's probably just quest data becoming available
+	if (self.updateCD > 0) then
+		self:UpdateWaitingRoom();
+	else
+		self:LoadQuestsInZone(WorldMapFrame.mapID);
+	end
+
 	elseif (event == "PLAYER_LEVEL_UP") then
 		local level = ...;
 		UpdateAzerothZones(level); 
 	end
 end
 
+local MAX_PROCESSING_TIME = 0.005;
 function WQT_DataProvider:OnUpdate(elapsed)
 	if (self.updateCD > 0) then
 		self.updateCD = max(0, self.updateCD - elapsed);
 	end
 
 	if (#self.bufferedZones > 0) then
-		-- Figure out how many zoned to check each frame
 		local numQuests = #self.bufferedZones;
-		local num = 10;
-		num =  min (numQuests, num);
 		local questsAdded = false;
-		
+		local timeStart = GetTimePreciseSec();
+
+		local timeSpent = 0;
+		local count = 0;
 		-- Load quests
-		for i = numQuests, numQuests - num + 1, -1 do
+		for i = numQuests, 1, -1 do
 			local zoneId = self.bufferedZones[i];
 			local zoneInfo = WQT_Utils:GetCachedMapInfo(zoneId);
 			local hadQuests = self:AddQuestsInZone(zoneId, zoneInfo.parentMapID);
 			questsAdded = questsAdded or hadQuests;
 			tremove(self.bufferedZones, i);
 			self.numZonesProcessed = self.numZonesProcessed + 1;
+			count = count + 1;
+			timeSpent = GetTimePreciseSec() - timeStart;
+			if (timeSpent >= MAX_PROCESSING_TIME) then
+				break;
+			end
 		end
+
+		WQT:debugPrint(string.format("Buffered: %3s (%s) in %.5fs ", count, #self.bufferedZones, timeSpent));
 		
 		self:UpdateBufferProgress();
 		
@@ -592,6 +604,8 @@ function WQT_DataProvider:AddZoneToBuffer(zoneID)
 end
 
 function WQT_DataProvider:LoadQuestsInZone(zoneID)
+
+	if (not zoneID) then return end
 	self.isUpdating = true;
 	self:ClearData();
 	zoneID = zoneID or self.latestZoneId or C_Map.GetBestMapForUnit("player");
@@ -648,18 +662,26 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 end
 
 function WQT_DataProvider:AddQuestsInZone(zoneID, continentId)
-	local questsById = C_TaskQuest.GetQuestsForPlayerByMapID(zoneID, continentId);
-	local hadQuests;
-	if (questsById) then
-		for k, info in ipairs(questsById) do
-			if (info.mapID == zoneID) then
-				self:AddQuest(info);
-			end
+	local taskPOIs = C_TaskQuest.GetQuestsOnMap(zoneID);
+	local numPoIs = taskPOIs and #taskPOIs or 0;
+	if (numPoIs > 0) then
+		for k, info in ipairs(taskPOIs) do
+			self:AddQuest(info);
 		end
-		hadQuests = #questsById > 0;
 	end
+
+	--local questsById = C_TaskQuest.GetQuestsOnMap(zoneID, continentId);
+	-- local hadQuests;
+	-- if (taskPOIs) then
+	-- 	for k, info in ipairs(questsById) do
+	-- 		if (info.mapID == zoneID) then
+	-- 			self:AddQuest(info);
+	-- 		end
+	-- 	end
+	-- 	hadQuests = #questsById > 0;
+	-- end
 	
-	return hadQuests;
+	return numPoIs > 0;
 end
 
 function WQT_DataProvider:AddQuest(qInfo)
@@ -668,11 +690,11 @@ function WQT_DataProvider:AddQuest(qInfo)
 		return true;
 	end
 
-	local duplicate = self:FindDuplicate(qInfo.questId);
+	local duplicate = self:FindDuplicate(qInfo.questID);
 	-- If there is a duplicate, we don't want to go through all the info again
 	if (duplicate) then
 		-- Check if the new zone is the 'official' zone, if so, use that one instead
-		if (qInfo.mapID == C_TaskQuest.GetQuestZoneID(qInfo.questId) ) then
+		if (qInfo.mapID == C_TaskQuest.GetQuestZoneID(qInfo.questID) ) then
 			duplicate:SetMapPos(qInfo.x, qInfo.y);
 		end
 		
@@ -681,13 +703,13 @@ function WQT_DataProvider:AddQuest(qInfo)
 	
 	local questInfo = self.pool:Acquire();
 	local alwaysHide = not MapUtil.ShouldShowTask(qInfo.mapID, qInfo);
-	local posX, posY = WQT_Utils:GetQuestMapLocation(qInfo.questId, qInfo.mapID);
-	local haveRewardData = questInfo:Init(qInfo.questId, qInfo.isDaily, qInfo.isCombatAllyQuest, alwaysHide, posX, posY);
+	local posX, posY = WQT_Utils:GetQuestMapLocation(qInfo.questID, qInfo.mapID);
+	local haveRewardData = questInfo:Init(qInfo.questID, qInfo, alwaysHide, posX, posY);
 
 	-- If we have no data for the quest, don't include them in the waiting room, they are probably messed up
 	-- Worst case we do get their data at a later point, it will cause everything to refresh anyway
-	if (not haveRewardData and HaveQuestData(qInfo.questId)) then
-		C_TaskQuest.RequestPreloadRewardData(qInfo.questId);
+	if (not haveRewardData and HaveQuestData(qInfo.questID)) then
+		C_TaskQuest.RequestPreloadRewardData(qInfo.questID);
 		tinsert(self.waitingRoomRewards, questInfo);
 		return false;
 	end;
@@ -753,6 +775,7 @@ end
 
 function WQT_DataProvider:UpdateBufferProgress()
 	local total = #self.bufferedZones + self.numZonesProcessed;
+	if (total == 0) then return end
 	local progress = 1-(#self.bufferedZones / total);
 	
 	self:TriggerCallback("BufferUpdated", progress);

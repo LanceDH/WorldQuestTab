@@ -200,7 +200,7 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Slider parentKey="Slider" inherits="HorizontalSliderTemplate">
+			<Slider parentKey="Slider" inherits="UISliderTemplate">
 				<Size y="17"/>
 				<Anchors>
 					<Anchor point="BOTTOMLEFT" x="30" y="5"/>

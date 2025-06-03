@@ -91,11 +91,12 @@
 		<Size x="28" y="29" />
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="Icon" file="Interface\ICONS\INV_Misc_QuestionMark"/>
-				<Anchors>
-					<Anchor point="TOPLEFT" x="1" y="-1"/>
-					<Anchor point="BOTTOMRIGHT" x="-1" y="1"/>
-				</Anchors>
+				<Texture parentKey="Icon" file="Interface\ICONS\INV_Misc_QuestionMark">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="1" y="-1"/>
+						<Anchor point="BOTTOMRIGHT" x="-1" y="1"/>
+					</Anchors>
+				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
 				<FontString parentKey="Amount" inherits="WQT_NumberFontOutline" maxLines="1" justifyH="RIGHT">
@@ -152,6 +153,10 @@
 	 
 	<Button name="WQT_QuestTemplate" mixin="WQT_ListButtonMixin" hidden="true" virtual="true" registerForClicks="LeftButtonUp, RightButtonUp" >
 		<Size x="260" y="32"/>
+		<Anchors>
+			<Anchor point="LEFT" x="0" y="0" />
+			<Anchor point="RIGHT" x="0" y="0" />
+		</Anchors>
 		<Frames>
 			<Frame parentKey="Type" hidden="true">
 				<Size x="28" y="28" />
@@ -566,18 +571,35 @@
 		</Scripts>
 	</Button>
 	
+	<Frame name="WQT_QuestMapTab" parent="QuestMapFrame" inherits="QuestLogTabButtonTemplate" id="4">
+		<KeyValues>
+			<KeyValue key="displayMode" value="QuestLogDisplayMode.WQT" type="global" />
+			<KeyValue key="activeAtlas" value="Worldquest-icon" type="string" />
+			<KeyValue key="inactiveAtlas" value="Worldquest-icon" type="string" />
+			<KeyValue key="tooltipText" value="TRACKER_HEADER_WORLD_QUESTS" type="global" />
+		</KeyValues>
+		<Anchors>
+			<Anchor point="TOP" relativeKey="$parent.MapLegendTab" relativePoint="BOTTOM" x="0" y="-3"/>
+		</Anchors>
+		<Scripts>
+			<OnMouseUp>
+				WQT_WorldQuestFrame:SelectTab(self, button);
+			</OnMouseUp>
+		</Scripts>
+	</Frame>	
+
 	<!--
 		Main frame
 	-->
 	 
-	<Frame name="WQT_WorldQuestFrame" mixin="WQT_CoreMixin" parent="QuestMapFrame" enableMouse="true" hidden="false">
-		<Size x="287" y="468"/>
+	<Frame name="WQT_WorldQuestFrame" mixin="WQT_CoreMixin" parent="QuestMapFrame" enableMouse="true" hidden="true">
+		<Size x="327" y="468"/>
 		<Anchors>
-			<Anchor point="TOPLEFT" y="-2"/>
+			<Anchor point="BOTTOMRIGHT" y="-2"/>
 		</Anchors>
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="Background" atlas="QuestLogBackground" useAtlasSize="true">
+				<Texture parentKey="Background" atlas="QuestLog-main-background" useAtlasSize="true">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="2" y="0"/>
 						<Anchor point="BOTTOMRIGHT" x="1" y="-3"/>
@@ -687,10 +709,10 @@
 				</Frames>
 			</Frame>
 			<ScrollFrame parentKey="ScrollFrame" name="WQT_QuestScrollFrame" mixin="WQT_ScrollListMixin" inherits="HybridScrollFrameTemplate">
-				<Size x="259" y="462"/>
+				<Size x="299" y="462"/>
 				<Anchors>
-					<Anchor point="TOP" relativeKey="$parent.FilterBar" relativePoint="BOTTOM" x="0" y="-2"/>
-					<Anchor point="BOTTOM" relativeTo="WQT_WorldQuestFrame" x="0" y="0"/>
+					<Anchor point="TOPLEFT"  x="0" y="-2"/>
+					<Anchor point="BOTTOMRRIGHT" relativeTo="WQT_WorldQuestFrame" x="0" y="0"/>
 				</Anchors>
 				<Frames>
 					<Slider name="$parentScrollBar" inherits="MinimalHybridScrollBarTemplate" parentKey="scrollBar">
@@ -937,7 +959,62 @@
 		</Scripts>
 	</Frame>
 	
-	<Button name="WQT_TabNormal" inherits="WQT_TabTemplate" parent="QuestMapFrame" enableMouse="true" id="1">
+	<Button name="WQT_DebugButton" inherits="WQT_TabTemplate" parent="WQT_WorldQuestFrame" enableMouse="true" id="1" hidden="true">
+		<Anchors>
+			<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="10" y="0"/>
+		</Anchors>
+		<Scripts>
+			<OnClick>
+				WQT_WorldQuestFrame:DoDebugThing();
+			</OnClick>
+		</Scripts>
+	</Button>
+
+	<Frame name="WQT_NewListContainer" parent="WQT_WorldQuestFrame" enableMouse="true" hidden="true">
+		<Size x="286" y="0" />
+		<Anchors>
+			<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="70" y="0"/>
+			<Anchor point="BOTTOM" relativePoint="BOTTOM" x="0" y="0"/>
+		</Anchors>
+		<Frames>
+			<Frame parentKey="BorderFrame" inherits="QuestLogBorderFrameTemplate" />
+			<!-- <ScrollFrame parentKey="ScrollFrame" name="MapLegendScrollFrame"
+				inherits="ScrollFrameTemplate">
+				<KeyValues>
+					<KeyValue key="scrollBarX" value="8" type="number" />
+					<KeyValue key="scrollBarTopY" value="2" type="number" />
+					<KeyValue key="scrollBarBottomY" value="-4" type="number" />
+				</KeyValues>
+				<Anchors>
+					<Anchor point="TOPLEFT" />
+					<Anchor point="BOTTOMRIGHT" />
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture parentKey="Background" atlas="QuestLog-main-background"
+							useAtlasSize="true">
+							<Anchors>
+								<Anchor point="TOPLEFT" />
+								<Anchor point="BOTTOMRIGHT" />
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+				<ScrollChild>
+					<Frame parentKey="ScrollChild" inherits="VerticalLayoutFrame">
+						<KeyValues>
+							<KeyValue key="leftPadding" value="12" type="number" />
+							<KeyValue key="topPadding" value="25" type="number" />
+							<KeyValue key="spacing" value="10" type="number" />
+						</KeyValues>
+					</Frame>
+				</ScrollChild>
+			</ScrollFrame> -->
+		</Frames>
+	</Frame>
+
+
+	<!-- <Button name="WQT_TabNormal" inherits="WQT_TabTemplate" parent="QuestMapFrame" enableMouse="true" id="1">
 		<Anchors>
 			<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="3" y="4"/>
 		</Anchors>
@@ -970,12 +1047,14 @@
 		<Anchors>
 			<Anchor point="LEFT" relativeTo="WQT_TabWorld" relativePoint="RIGHT"/>
 		</Anchors>
-	</Button>
+	</Button> -->
+
+			
 	
-	<Frame name="WQT_QuestLogFiller" mixin="WQT_QuestCounterMixin" hidden="false" parent="QuestMapFrame" flattenRenderLayers="true">
+	<Frame name="WQT_QuestLogFiller" mixin="WQT_QuestCounterMixin" hidden="true" parent="QuestMapFrame" flattenRenderLayers="true">
 		<Size x="60" y="22"/>
 		<Anchors>
-			<Anchor point="BOTTOM" relativeTo="QuestMapFrame" relativePoint="TOP" x="20" y="4"/>
+			<Anchor point="BOTTOM" relativeTo="QuestMapFrame" relativePoint="TOP" x="20" y="50"/>
 		</Anchors>
 		<Layers>
 		
@@ -1056,7 +1135,7 @@
 	</Frame>
 
 	<Frame name="WQT_PoISelectIndicator" inherits="WQT_PoISelectTemplate" />
-	
+
 	<!-- This exists for tooltip scanning -->
 	<GameTooltip name="WQT_CompareScrapeTooltip1" clampedToScreen="true"  frameStrata="TOOLTIP" hidden="true" parent="UIParent" inherits="ShoppingTooltipTemplate"/>
 	<GameTooltip name="WQT_CompareScrapeTooltip2" clampedToScreen="true" frameStrata="TOOLTIP" hidden="true" parent="UIParent" inherits="ShoppingTooltipTemplate"/>
