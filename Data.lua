@@ -497,7 +497,7 @@ MakeIndexArg1(_V["RING_TYPES_LABELS"]);
 MakeIndexArg1(_V["PIN_VISIBILITY_CONTINENT"]);
 MakeIndexArg1(_V["PIN_VISIBILITY_ZONE"]);
 
--- Not where they should be. Count them as invalid
+-- Not where they should be. Count them as invalid. Thanks Blizzard
 _V["BUGGED_POI"] =  {
 	[69964] = 864
 	,[74441] = 864
@@ -570,7 +570,7 @@ local function UpdateColorID(id, r, g, b)
 	local color = WQT_Utils:UpdateColor(_V["COLOR_IDS"][id], r, g, b);
 	if (color) then
 		WQT.settings.colors[id] = color:GenerateHexColor();
-		WQT_QuestScrollFrame:DisplayQuestList();
+		WQT_ListContainer:DisplayQuestList();
 		WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 	end
 end
@@ -738,7 +738,7 @@ _V["SETTING_LIST"] = {
 				end
 			
 				WQT.settings.general.preciseFilters = value;
-				WQT_QuestScrollFrame:DisplayQuestList();
+				WQT_ListContainer:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.preciseFilters end
 			}	
@@ -761,7 +761,7 @@ _V["SETTING_LIST"] = {
 				WQT.settings.list.alwaysAllQuests = value;
 				local mapAreaID = WorldMapFrame.mapID;
 				WQT_WorldQuestFrame.dataProvider:LoadQuestsInZone(mapAreaID);
-				WQT_QuestScrollFrame:UpdateQuestList();
+				WQT_ListContainer:UpdateQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.alwaysAllQuests end
 			}	
@@ -777,14 +777,14 @@ _V["SETTING_LIST"] = {
 			,["getValueFunc"] = function() return WQT.settings.list.includeDaily end
 			}
 	
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["CALLINGS_BOARD"], ["tooltip"] = _L["CALLINGS_BOARD_TT"], ["isNew"] = true
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["CALLINGS_BOARD"], ["tooltip"] = _L["CALLINGS_BOARD_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.sl_callingsBoard = value;
 				WQT_CallingsBoard:UpdateVisibility();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.sl_callingsBoard end
 			}
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["GENERIC_ANIMA"], ["tooltip"] = _L["GENERIC_ANIMA_TT"], ["isNew"] = true
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["GENERIC_ANIMA"], ["tooltip"] = _L["GENERIC_ANIMA_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.sl_genericAnimaIcons = value;
 				WQT_WorldQuestFrame.dataProvider:ReloadQuestRewards();
@@ -815,7 +815,7 @@ _V["SETTING_LIST"] = {
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_OLDCONTENT", ["label"] = _L["EMISSARY_SELECTED_ONLY"], ["tooltip"] = _L["EMISSARY_SELECTED_ONLY_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.bountySelectedOnly = value;
-				WQT_QuestScrollFrame:UpdateQuestList();
+				WQT_ListContainer:UpdateQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.bountySelectedOnly end
 			}
@@ -824,49 +824,49 @@ _V["SETTING_LIST"] = {
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["SHOW_TYPE"], ["tooltip"] = _L["SHOW_TYPE_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.list.typeIcon = value;
-				WQT_QuestScrollFrame:DisplayQuestList();
+				WQT_ListContainer:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.typeIcon end
 			}	
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["SHOW_FACTION"], ["tooltip"] = _L["SHOW_FACTION_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.list.factionIcon = value;
-				WQT_QuestScrollFrame:DisplayQuestList();
+				WQT_ListContainer:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.factionIcon end
 			}	
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["SHOW_ZONE"], ["tooltip"] = _L["SHOW_ZONE_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.list.showZone = value;
-				WQT_QuestScrollFrame:DisplayQuestList();
+				WQT_ListContainer:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.showZone end
 			}
 	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["REWARD_NUM_DISPLAY"], ["tooltip"] = _L["REWARD_NUM_DISPLAY_TT"], ["min"] = 0, ["max"] = 3, ["valueStep"] = 1
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.list.rewardNumDisplay = value;
-				WQT_QuestScrollFrame:DisplayQuestList();
+				WQT_ListContainer:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.rewardNumDisplay end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["AMOUNT_COLORS"], ["tooltip"] = _L["AMOUNT_COLORS_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.list.amountColors = value;
-				WQT_QuestScrollFrame:DisplayQuestList();
+				WQT_ListContainer:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.amountColors end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["LIST_COLOR_TIME"], ["tooltip"] = _L["LIST_COLOR_TIME_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.list.colorTime = value;
-				WQT_QuestScrollFrame:DisplayQuestList();
+				WQT_ListContainer:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.colorTime end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["LIST_FULL_TIME"], ["tooltip"] = _L["LIST_FULL_TIME_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.list.fullTime = value;
-				WQT_QuestScrollFrame:DisplayQuestList();
+				WQT_ListContainer:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.fullTime end
 			}	
@@ -947,7 +947,7 @@ _V["SETTING_LIST"] = {
 			,["getValueFunc"] = function() return WQT.settings.pin.ringType end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}	
-	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_VISIBILITY_ZONE"], ["tooltip"] = _L["PIN_VISIBILITY_ZONE_TT"], ["options"] = _V["PIN_VISIBILITY_ZONE"], ["isNew"] = true
+	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_VISIBILITY_ZONE"], ["tooltip"] = _L["PIN_VISIBILITY_ZONE_TT"], ["options"] = _V["PIN_VISIBILITY_ZONE"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.pin.zoneVisible = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
@@ -955,7 +955,7 @@ _V["SETTING_LIST"] = {
 			,["getValueFunc"] = function() return WQT.settings.pin.zoneVisible end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
-	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_VISIBILITY_CONTINENT"], ["tooltip"] = _L["PIN_VISIBILITY_CONTINENT_TT"], ["options"] = _V["PIN_VISIBILITY_CONTINENT"], ["isNew"] = true
+	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_VISIBILITY_CONTINENT"], ["tooltip"] = _L["PIN_VISIBILITY_CONTINENT_TT"], ["options"] = _V["PIN_VISIBILITY_CONTINENT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.pin.continentVisible = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
@@ -1005,7 +1005,7 @@ _V["SETTING_UTILITIES_LIST"] = {
 				WQT.settings.general.loadUtilities = value;
 				if (value and not C_AddOns.IsAddOnLoaded("WorldQuestTabUtilities")) then
 					C_AddOns.LoadAddOn("WorldQuestTabUtilities");
-					WQT_QuestScrollFrame:UpdateQuestList();
+					WQT_ListContainer:UpdateQuestList();
 				end
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.loadUtilities end
@@ -1367,7 +1367,21 @@ _V["WQT_FACTION_DATA"] = {
 	,[2574] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5244643 } -- Dream Wardens
 	,[2615] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5315246 } -- Azerothian Archives	
 	-- LE_EXPANSION_WAR_WITHIN
-	-- Yea, about that....
+	,[2570] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5891368 } -- Hallowfall Arathi
+	,[2594] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5891367 } -- The Assembly of the Deeps
+	,[2590] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5891369 } -- Council of Dornogal
+	,[2600] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5891370 } -- The Severed Threads
+	,[2601] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5862764 } -- The Weaver
+	--,[2645] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5930319 } -- Earthen
+	,[2605] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5862762 } -- The General
+	,[2607] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5862763 } -- The Vizier
+	,[2640] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5453546 } -- Brann Bronzebeard
+	,[2653] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 632354 } -- The Cartels of Undermine
+	,[2671] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 632354 } -- Venture Company
+	,[2673] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 632354 } -- Bilgewater Cartel
+	,[2675] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 632354 } -- Blackwater Cartel
+	,[2677] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 632354 } -- Steamwheedle Cartel
+
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
@@ -1516,6 +1530,9 @@ end
 
 _V["PATCH_NOTES"] = {
 		{["version"] = "11.1.01",
+			["intro"] = {
+				"Shoutout to the people who tried their best to keep things running for the past 4 years. I'd name you all but I only now realize how many of you there are.<br/>If you created a fork, helped those forks, or even guided other people to said forks; Thank you."
+			},
 			["changes"] = {
 				"Compatibility with patch 11.1.5",
 			},

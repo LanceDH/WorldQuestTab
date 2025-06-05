@@ -818,9 +818,9 @@ function WQT_PinMixin:OnEnter()
 	if (self.questInfo) then
 		WQT_Utils:ShowQuestTooltip(self, self.questInfo);
 		-- Highlight quest in list
-		if (self.questId ~= WQT_QuestScrollFrame.PoIHoverId) then
-			WQT_QuestScrollFrame.PoIHoverId = self.questId;
-			WQT_QuestScrollFrame:DisplayQuestList();
+		if (self.questId ~= WQT_ListContainer.PoIHoverId) then
+			WQT_ListContainer.PoIHoverId = self.questId;
+			WQT_ListContainer:DisplayQuestList();
 		end
 	end
 end
@@ -831,8 +831,8 @@ function WQT_PinMixin:OnLeave()
 	GameTooltip:Hide();
 	WQT:HideDebugTooltip()
 	-- Stop highlight quest in list
-	WQT_QuestScrollFrame.PoIHoverId = nil;
-	WQT_QuestScrollFrame:DisplayQuestList();
+	WQT_ListContainer.PoIHoverId = nil;
+	WQT_ListContainer:DisplayQuestList();
 end
 
 function WQT_PinMixin:OnClick(button)

@@ -358,7 +358,7 @@ function WQT_SettingsColorMixin:StartPicking()
 	local color = self.getValueFunc(self.colorID);
 	local r, g, b = color:GetRGB();
 	
-	local info = {
+	local colorInfo = {
 		["swatchFunc"] = function () self:UpdateFromPicker() end,
 		["opacityFunc"] = function () self:UpdateFromPicker(true) end,
 		["cancelFunc"] = function () self:ResetColor(); self:StopPicking(); end,
@@ -372,7 +372,7 @@ function WQT_SettingsColorMixin:StartPicking()
 	self.ExampleText:Show();
 	self.ExampleRing:Show();
 	
-	OpenColorPicker(info);
+	ColorPickerFrame:SetupColorPickerAndShow(colorInfo);
 end
 
 function WQT_SettingsColorMixin:StopPicking()

@@ -1,24 +1,36 @@
 If you're reading this; temper your hopes and expectations
 
 Todo
-- Look at moving from HybridScrollFrame to new systems
-- Update visuals to match the new UI
-- Figure out error in filter dropdown -> Check new dropdown system
-- Error with combat block overlay
 - Improve Dataprovider 
 - Check if I can use Blizzard's dataprovider instead of my own, because why not
 - Check if things in Data.lua can be improved
 - Probably remove quest log counter
 - Something up with LFG
+- Something up with my bountyboard
 - Anchoring system with full screen and flight map
+- Look into new ItemQuality colors stuff
+- Look at old dropdown features
+    - FilterButton indicator for official filtering
+    - Used to disable filter linked to official filter (disbale, tooltip with info, matching icon in name instead?)
+    - Used to disabled with settings or what's new open. Probaly just hide them with some layout changes
+- Update settings UI
+- Update What's New UI
 - Figure out War Within data and testing, preferably without buying the expansion :|
 - Probably no longer bother with WorldQuestTab Utilities
 - Check support for external addons, maybe
 - Figure out what else needs to be on this list
 - Determine feasibility of continued support
 
+- Maybe change quest design with faction as sort of fade on the left
+
 Done
 - General compatibility with 11.1
 - Integrate in new Worldmap tab structure 
 - Improved expansion zones in data a bit
 - Curse at C_Map.GetMapChildrenInfo for not being perfect... Like why doesn't it include Dalaran in the Broken Shores
+- Error with combat block overlay
+- Colorpicker used in the settings is kaput
+- Figure out error in filter dropdown -> Check new dropdown system
+- Look at moving from HybridScrollFrame to new systems
+- Update visuals to match the new UI
+

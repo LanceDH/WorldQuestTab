@@ -131,6 +131,7 @@ end
 
 function QuestInfoMixin:Init(questId, qInfo, alwaysHide, posX, posY)
 	self.questId = questId;
+	self.questID = questId;
 	self.isDaily = qInfo.isDaily;
 	self.isAllyQuest = qInfo.isCombatAllyQuest;
 	self.alwaysHide = alwaysHide;

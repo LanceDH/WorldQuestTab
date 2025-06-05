@@ -108,9 +108,13 @@ local function ApplyVersionChanges(profile, version)
 	end
 end
 
-function WQT_Profiles:InitSettings()
+function WQT_Profiles:OnLoad()
 	self.externalDefaults = {};
+	WQT.settings = {["colors"] = {}, ["general"] = {}, ["list"] = {}, ["pin"] = {}, ["filters"] = {}};
+end
 
+
+function WQT_Profiles:InitSettings()
 	-- Version checking
 	local settingVersion = WQT.db.global.versionCheck or"0";
 	local currentVersion = C_AddOns.GetAddOnMetadata(addonName, "version");
@@ -118,9 +122,8 @@ function WQT_Profiles:InitSettings()
 		WQT.db.global.updateSeen = false;
 		WQT.db.global.versionCheck  = currentVersion;
 	end
-	
+
 	-- Setup profiles
-	WQT.settings = {["colors"] = {}, ["general"] = {}, ["list"] = {}, ["pin"] = {}, ["filters"] = {}};
 	if (not WQT.db.global.profiles[0]) then
 		local profile = {
 			["name"] = DEFAULT

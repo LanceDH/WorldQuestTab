@@ -230,6 +230,7 @@
 		
 		<Scripts>
 			<OnLoad method="OnLoad"/>
+			<OnUpdate method="OnUpdate"/>
 			<OnShow>
 				PlaySound(SOUNDKIT.IG_QUEST_LOG_OPEN);
 			</OnShow>
@@ -238,4 +239,16 @@
 			</OnHide>
 		</Scripts>
 	</Frame>
+
+	<Button name="WQT_DebugButton" inherits="UIMenuButtonStretchTemplate" parent="WorldMapFrame" enableMouse="true" hidden="true">
+		<Size x="30" y="30" />
+		<Anchors>
+			<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="10" y="0"/>
+		</Anchors>
+		<Scripts>
+			<OnClick>
+				WQT_DebugFrame:DoDebugThing();
+			</OnClick>
+		</Scripts>
+	</Button>
  </Ui>

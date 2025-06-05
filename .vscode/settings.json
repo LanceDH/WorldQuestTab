@@ -157,6 +157,20 @@
         "LE_EXPANSION_LEVEL_CURRENT",
         "EXPANSION_NAME9",
         "LE_EXPANSION_DRAGONFLIGHT",
-        "LE_EXPANSION_WAR_WITHIN"
+        "LE_EXPANSION_WAR_WITHIN",
+        "WQT_WorldQuestFrame",
+        "WQT_QuestScrollFrame",
+        "WQT_CallingsBoard",
+        "SOURCES",
+        "ORDER_HALL_ZONE_SUPPORT",
+        "MountJournal_SetAllSourceFilters",
+        "MenuResponse",
+        "Background",
+        "ScrollUtil",
+        "CreateScrollBoxListLinearView",
+        "MountJournal_InitMountButton",
+        "CreateDataProvider",
+        "MountJournal",
+        "ScrollBoxConstants"
     ]
 }
