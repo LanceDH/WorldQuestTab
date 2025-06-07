@@ -116,13 +116,7 @@ local QuestInfoMixin = {};
 function WQT_Utils:QuestCreationFunc(questId)
 	local questInfo = CreateFromMixins(QuestInfoMixin);
 	questInfo:OnCreate();
-	
-	local hasRewardData = false;
-	if (questId) then
-		hasRewardData = questInfo:Init(questId);
-	end
-	
-	return questInfo, hasRewardData;
+	return questInfo;
 end
 
 local function QuestResetFunc(pool, questInfo)
@@ -137,21 +131,28 @@ function QuestInfoMixin:Init(questId, qInfo, alwaysHide, posX, posY)
 	self.alwaysHide = alwaysHide;
 	self:SetMapPos(posX, posY);
 	self.tagInfo = C_QuestLog.GetQuestTagInfo(questId);
-	self.isValid = HaveQuestData(self.questId) and _V["BUGGED_POI"][questId] ~=  qInfo.mapID;
+	self.isBonusQuest = self.tagInfo == nil;
+	self.isBanned = _V["BUGGED_POI"][questId] ==  qInfo.mapID;
 	self.time.seconds = WQT_Utils:GetQuestTimeString(self); -- To check if expired or never had a time limit
 	self.passedFilter = true;
+	self:UpdateValidity();
 	
 	-- quest type
 	self.typeBits = WQT_QUESTTYPE.normal;
-	if (isDaily) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.daily); end
+	if (self.isDaily) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.daily); end
 	if (C_QuestLog.IsThreatQuest(self.questId)) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.threat); end
 	if (C_QuestLog.IsQuestCalling(self.questId)) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.calling); end
-	if (isCombatAllyQuest) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.combatAlly); end
+	if (self.isCombatAllyQuest) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.combatAlly); end
 
 	-- rewards
 	self:LoadRewards();
 	
 	return self.hasRewardData;
+end
+
+function QuestInfoMixin:UpdateValidity()
+	self.isValid = not self.isBanned and HaveQuestData(self.questId);
+	return self.isValid;
 end
 
 function QuestInfoMixin:OnCreate()
@@ -311,7 +312,7 @@ end
 function QuestInfoMixin:TryDressUpReward()
 	for k, rewardInfo in self:IterateRewards() do
 		if (bit.band(rewardInfo.type, WQT_REWARDTYPE.gear) > 0) then
-			local _, link = GetItemInfo(rewardInfo.id);
+			local _, link = C_Item.GetItemInfo(rewardInfo.id);
 			DressUpItemLink(link)
 		end
 	end
@@ -429,11 +430,6 @@ function QuestInfoMixin:IsCriteria(forceSingle)
 	return false;
 end
 
-function QuestInfoMixin:GetTitle()
-	local title = C_TaskQuest.GetQuestInfoByQuestID(self.questId);
-	return title;
-end
-
 function QuestInfoMixin:GetTagInfo()
 	return self.tagInfo;
 end
@@ -474,33 +470,28 @@ function WQT_DataProvider:Init()
 	
 	self.pool = CreateObjectPool(WQT_Utils.QuestCreationFunc, QuestResetFunc);
 	self.iterativeList = {};
-	self.keyList = {};
 	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room
 	self.waitingRoomRewards = {};
 	self.ignoreNextLogUpdate = false;
 	
-	self.bufferedZones = {};
-
-	EventRegistry:RegisterCallback("MapCanvas.MapSet", self.MapCanvasMapSet, self);
+	self.zoneLoading = {
+		startTimestamp = 0,
+		remainingZones = {},
+		numRemaining = 0,
+		numTotal = 0,
+		questsFound = {},
+		questsActive = {},
+	};
 
 	UpdateAzerothZones(); 
 	
 	self.updateCD = 0;
 end
 
-function WQT_DataProvider:MapCanvasMapSet(mapID)
-	self.ignoreNextLogUpdate = true;
-	self:LoadQuestsInZone(mapID);
-end
-
 function WQT_DataProvider:OnEvent(event, ...)
 	if (event == "QUEST_LOG_UPDATE") then
-	-- If the last update was too recent, it's probably just quest data becoming available
-	if (self.updateCD > 0) then
-		self:UpdateWaitingRoom();
-	else
-		self:LoadQuestsInZone(WorldMapFrame.mapID);
-	end
+		local mapID = WorldMapFrame.mapID;
+		self:LoadQuestsInZone(mapID);
 
 	elseif (event == "PLAYER_LEVEL_UP") then
 		local level = ...;
@@ -510,68 +501,109 @@ end
 
 local MAX_PROCESSING_TIME = 0.005;
 function WQT_DataProvider:OnUpdate(elapsed)
-	if (self.updateCD > 0) then
-		self.updateCD = max(0, self.updateCD - elapsed);
-	end
-
-	if (#self.bufferedZones > 0) then
-		local numQuests = #self.bufferedZones;
-		local questsAdded = false;
-		local timeStart = GetTimePreciseSec();
-
+	if(self.zoneLoading.numRemaining > 0) then
+		
+		local processedCount = 0;
+		local updateStart = GetTimePreciseSec();
 		local timeSpent = 0;
-		local count = 0;
-		-- Load quests
-		for i = numQuests, 1, -1 do
-			local zoneId = self.bufferedZones[i];
-			local zoneInfo = WQT_Utils:GetCachedMapInfo(zoneId);
-			local hadQuests = self:AddQuestsInZone(zoneId, zoneInfo.parentMapID);
-			questsAdded = questsAdded or hadQuests;
-			tremove(self.bufferedZones, i);
-			self.numZonesProcessed = self.numZonesProcessed + 1;
-			count = count + 1;
-			timeSpent = GetTimePreciseSec() - timeStart;
+
+		-- Get quests from all the zones in our list
+		-- Only spend a max amount of time on it each frame to prevent extreme stutters when we have a lot of zones
+		for zoneID in pairs(self.zoneLoading.remainingZones) do
+			self.zoneLoading.remainingZones[zoneID] = nil;
+			self.zoneLoading.numRemaining = self.zoneLoading.numRemaining - 1;
+			processedCount = processedCount + 1;
+
+			local taskPOIs = C_TaskQuest.GetQuestsOnMap(zoneID);
+			local numPoIs = taskPOIs and #taskPOIs or 0;
+			if (numPoIs > 0) then
+				for k, apiInfo in ipairs(taskPOIs) do
+					self.zoneLoading.questsFound[apiInfo.questID] = apiInfo;
+				end
+			end
+
+			timeSpent = GetTimePreciseSec() - updateStart;
 			if (timeSpent >= MAX_PROCESSING_TIME) then
 				break;
 			end
 		end
 
-		WQT:debugPrint(string.format("Buffered: %3s (%s) in %.5fs ", count, #self.bufferedZones, timeSpent));
-		
-		self:UpdateBufferProgress();
-		
-		if (#self.bufferedZones == 0) then
-			self.isUpdating = false;
+		-- Current progress
+		local progress = (self.zoneLoading.numTotal - self.zoneLoading.numRemaining) / self.zoneLoading.numTotal;
+		--WQT:debugPrint(string.format("Buffered: %3s (%s) in %.5fs ", processedCount, self.zoneLoading.numRemaining, timeSpent));
+
+		if (self.zoneLoading.numRemaining == 0) then
+			-- We're done getting quests from all the zones. Turn them into quest info for the add-on
+			-- Remove quests we no longer need, and add new ones.
+
+			local questForRemove = {};
+			local questsToAdd = {};
+			-- Mark all for removal
+			for addonInfo in self.pool:EnumerateActive() do
+				questForRemove[addonInfo.questID] = addonInfo;
+			end
+
+			local acceptedCount = 0;
+			local updated = 0;
+			-- Go through quests, mark for add if we don't currently have it, otherwise unmark for removal
+			for questID, apiInfo in pairs(self.zoneLoading.questsFound) do
+				acceptedCount = acceptedCount + 1;
+				if (not questForRemove[questID]) then
+					questsToAdd[questID] = apiInfo;
+				else
+					local addonInfo = questForRemove[questID];
+					questForRemove[questID] = nil;
+					local updateSuccess = false;
+					-- Quest log update might have been for missing data
+					if (not addonInfo.hasRewardData) then
+						updateSuccess = updateSuccess or addonInfo:LoadRewards(true);
+					end
+					if (not addonInfo.isValid) then
+						updateSuccess = updateSuccess or addonInfo:UpdateValidity();
+					end
+					if (updateSuccess) then
+						updated = updated + 1;
+					end
+				end
+			end
+
+			local removed = 0;
+			-- Remove everything still marked for removal
+			for questID, addonInfo in pairs(questForRemove) do
+				removed = removed + 1;
+				self.pool:Release(addonInfo);
+			end
+
+			local added = 0;
+			-- Add all new ones
+			for questID, apiInfo in pairs(questsToAdd) do
+				added = added + 1;
+				local questInfo = self.pool:Acquire();
+				local alwaysHide = not MapUtil.ShouldShowTask(apiInfo.mapID, apiInfo);
+				local posX, posY = WQT_Utils:GetQuestMapLocation(apiInfo.questID, apiInfo.mapID);
+				questInfo:Init(apiInfo.questID, apiInfo, alwaysHide, posX, posY);
+			end
+
+			-- local timeSinceStart = GetTimePreciseSec() - self.zoneLoading.startTimestamp;
+
+			-- for info in self.pool:EnumerateActive() do
+			-- 	--print("Active", info.questID);
+			-- end
+
+			WQT:debugPrint(string.format("Done: %s quests (-%s +%s ~%s)", acceptedCount, removed, added, updated));
+
+			self.zoneLoading.startTimestamp = 0;
+			progress = 0;
 			self:TriggerCallback("QuestsLoaded");
 		end
+
+		self:TriggerCallback("BufferUpdated", progress);
 	end
 end
 
 function WQT_DataProvider:ClearData()
-	self.pool:ReleaseAll();
 	wipe(self.iterativeList);
-	wipe(self.keyList);
 	wipe(self.waitingRoomRewards);
-	wipe(self.bufferedZones);
-	self.numZonesProcessed = 0;
-end
-
-function WQT_DataProvider:UpdateWaitingRoom()
-	local questInfo;
-	local updatedData = false;
-
-	for i = #self.waitingRoomRewards, 1, -1 do
-		questInfo = self.waitingRoomRewards[i];
-		if ( questInfo.questId and HaveQuestRewardData(questInfo.questId)) then
-			questInfo:LoadRewards(true);
-			table.remove(self.waitingRoomRewards, i);
-			updatedData = true;
-		end
-	end
-	
-	if (updatedData) then
-		self:TriggerCallback("WaitingRoom");
-	end
 end
 
 function WQT_DataProvider:AddContinentMapQuests(continentZones, continentId)
@@ -592,14 +624,22 @@ function WQT_DataProvider:AddWorldMapQuests(worldContinents)
 	end
 end
 
+function WQT_DataProvider:AddZoneToRemainingUnique(zoneID)
+	if(self.zoneLoading.remainingZones[zoneID]) then return; end
+
+	self.zoneLoading.remainingZones[zoneID] = true;
+	self.zoneLoading.numRemaining = self.zoneLoading.numRemaining + 1;
+	self.zoneLoading.numTotal = self.zoneLoading.numTotal + 1;
+end
+
 function WQT_DataProvider:AddZoneToBuffer(zoneID)
-	tinsert(self.bufferedZones, zoneID);
+	self:AddZoneToRemainingUnique(zoneID);
 	
 	-- Check for subzones and add those as well
 	local subZones = _V["ZONE_SUBZONES"][zoneID];
 	if (subZones) then
 		for k, subID in ipairs(subZones) do
-			tinsert(self.bufferedZones, subID);
+			self:AddZoneToRemainingUnique(zoneID);
 		end
 	end
 end
@@ -607,11 +647,25 @@ end
 function WQT_DataProvider:LoadQuestsInZone(zoneID)
 
 	if (not zoneID) then return end
-	self.isUpdating = true;
 	self:ClearData();
 	zoneID = zoneID or self.latestZoneId or C_Map.GetBestMapForUnit("player");
 	
 	if (not zoneID) then return end;
+
+	if (not WorldMapFrame:IsShown()) then
+		print("No update while invisible");
+		return;
+	end
+
+	if(self.zoneLoading.startTimestamp > 0) then print("Interrupt") end
+
+	
+	self.zoneLoading.startTimestamp = GetTimePreciseSec();
+	self.zoneLoading.numRemaining = 0;
+	self.zoneLoading.numTotal = 0;
+	wipe(self.zoneLoading.remainingZones);
+	wipe(self.zoneLoading.questsFound);
+
 	
 	self.updateCD = 0.5;
 	self.latestZoneId = zoneID
@@ -652,80 +706,9 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 		end
 	end
 	-- Sort current expansion to front, they are more likely to have quests
-	table.sort(self.bufferedZones, ZonesByExpansionSort);
-	self:UpdateBufferProgress();
+	--table.sort(self.bufferedZones, ZonesByExpansionSort);
 
-	if (self.bufferedZones == 0) then
-		self.isUpdating = false;
-		
-	end
-	self:TriggerCallback("QuestsLoaded");
-end
-
-function WQT_DataProvider:AddQuestsInZone(zoneID, continentId)
-	local taskPOIs = C_TaskQuest.GetQuestsOnMap(zoneID);
-	local numPoIs = taskPOIs and #taskPOIs or 0;
-	if (numPoIs > 0) then
-		for k, info in ipairs(taskPOIs) do
-			self:AddQuest(info);
-		end
-	end
-
-	--local questsById = C_TaskQuest.GetQuestsOnMap(zoneID, continentId);
-	-- local hadQuests;
-	-- if (taskPOIs) then
-	-- 	for k, info in ipairs(questsById) do
-	-- 		if (info.mapID == zoneID) then
-	-- 			self:AddQuest(info);
-	-- 		end
-	-- 	end
-	-- 	hadQuests = #questsById > 0;
-	-- end
-	
-	return numPoIs > 0;
-end
-
-function WQT_DataProvider:AddQuest(qInfo)
-	-- Setting to filter daily world quests
-	if (not WQT.settings.list.includeDaily and qInfo.isDaily) then
-		return true;
-	end
-
-	local duplicate = self:FindDuplicate(qInfo.questID);
-	-- If there is a duplicate, we don't want to go through all the info again
-	if (duplicate) then
-		-- Check if the new zone is the 'official' zone, if so, use that one instead
-		if (qInfo.mapID == C_TaskQuest.GetQuestZoneID(qInfo.questID) ) then
-			duplicate:SetMapPos(qInfo.x, qInfo.y);
-		end
-		
-		return duplicate;
-	end
-	
-	local questInfo = self.pool:Acquire();
-	local alwaysHide = not MapUtil.ShouldShowTask(qInfo.mapID, qInfo);
-	local posX, posY = WQT_Utils:GetQuestMapLocation(qInfo.questID, qInfo.mapID);
-	local haveRewardData = questInfo:Init(qInfo.questID, qInfo, alwaysHide, posX, posY);
-
-	-- If we have no data for the quest, don't include them in the waiting room, they are probably messed up
-	-- Worst case we do get their data at a later point, it will cause everything to refresh anyway
-	if (not haveRewardData and HaveQuestData(qInfo.questID)) then
-		C_TaskQuest.RequestPreloadRewardData(qInfo.questID);
-		tinsert(self.waitingRoomRewards, questInfo);
-		return false;
-	end;
-
-	return true;
-end
-
-function WQT_DataProvider:FindDuplicate(questId)
-	for questInfo, v in self.pool:EnumerateActive() do
-		if (questInfo.questId == questId) then
-			return questInfo;
-		end
-	end
-	
-	return nil;
+	--self:TriggerCallback("QuestsLoaded");
 end
 
 function WQT_DataProvider:GetIterativeList()
@@ -736,18 +719,6 @@ function WQT_DataProvider:GetIterativeList()
 	end
 	
 	return self.iterativeList;
-end
-
-function WQT_DataProvider:GetKeyList()
-	for id in pairs(self.keyList) do
-		self.keyList[id] = nil;
-	end
-	
-	for questInfo, v in self.pool:EnumerateActive() do
-		self.keyList[questInfo.questId] = questInfo;
-	end
-	
-	return self.keyList;
 end
 
 function WQT_DataProvider:GetQuestById(id)
@@ -764,32 +735,9 @@ function WQT_DataProvider:ListContainsEmissary()
 	return false
 end
 
-function WQT_DataProvider:HasNoQuests()
-	if (self:IsBuffereingQuests()) then return false; end
-	if (self.pool:GetNumActive() > 0) then return false; end
-	return true;
-end
-
-function WQT_DataProvider:IsBuffereingQuests()
-	return #self.bufferedZones > 0;
-end 
-
-function WQT_DataProvider:UpdateBufferProgress()
-	local total = #self.bufferedZones + self.numZonesProcessed;
-	if (total == 0) then return end
-	local progress = 1-(#self.bufferedZones / total);
-	
-	self:TriggerCallback("BufferUpdated", progress);
-end	
-
 function WQT_DataProvider:ReloadQuestRewards()
 	for questInfo, v in self.pool:EnumerateActive() do
 		questInfo:LoadRewards(true);
 	end
 	self:TriggerCallback("QuestsLoaded");
 end
-
-function WQT_DataProvider:IsUpdating()
-	return self.isUpdating or #self.bufferedZones > 0 or #self.waitingRoomRewards > 0;
-end
-

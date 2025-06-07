@@ -1584,8 +1584,8 @@ function WQT_ScrollListMixin:DisplayQuestList()
 		local taxiId = GetTaxiMapID()
 		mapId = (taxiId and taxiId > 0) and taxiId or mapId;
 	end
-	local mapInfo = WQT_Utils:GetCachedMapInfo(mapId or 0);	
-	local shouldShowZone = WQT.settings.list.showZone and (WQT.settings.list.alwaysAllQuests or (mapInfo and (mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World))); 
+
+	local shouldShowZone = WQT.settings.list.showZone; 
 
 	self:UpdateFilterDisplay();
 
@@ -1593,6 +1593,7 @@ function WQT_ScrollListMixin:DisplayQuestList()
 	local newDataProvider = CreateDataProvider();
 	
 	local list = self.questListDisplay;
+	self.numDisplayed = #list;
 	for index, questInfo in ipairs(list) do
 		newDataProvider:Insert({index = index, questInfo = questInfo, showZone = shouldShowZone});
 	end
@@ -1610,13 +1611,10 @@ function WQT_ScrollListMixin:UpdateBackground()
 		WQT_ListContainer.Background:SetAlpha(0);
 	else
 		WQT_ListContainer.Background:SetAlpha(1);
-		-- Don't change the backgound if data is buffering to prevent the background flashing
-		if (not WQT_WorldQuestFrame.dataProvider:IsBuffereingQuests()) then
-			if (self.numDisplayed == 0) then
-				WQT_ListContainer.Background:SetAtlas("QuestLog-empty-quest-background", true);
-			else
-				WQT_ListContainer.Background:SetAtlas("QuestLog-main-background", true);
-			end
+		if (self.numDisplayed == 0) then
+			WQT_ListContainer.Background:SetAtlas("QuestLog-empty-quest-background", true);
+		else
+			WQT_ListContainer.Background:SetAtlas("QuestLog-main-background", true);
 		end
 	end
 end
@@ -1975,9 +1973,8 @@ function WQT_CoreMixin:OnLoad()
 			WQT_WorldQuestFrame:TriggerCallback("QuestsLoaded")
 		end, addonName)
 	
-	self.dataProvider:RegisterCallback("BufferUpdated", function(progress) 
+	self.dataProvider:RegisterCallback("BufferUpdated", function(progress)
 			CooldownFrame_SetDisplayAsPercentage(self.ProgressBar, progress);
-			self.ProgressBar.Pointer:SetRotation(-progress*6.2831);
 			if (progress == 0 or progress == 1) then
 				self.ProgressBar:Hide();
 			end
@@ -2038,17 +2035,6 @@ function WQT_CoreMixin:OnLoad()
 	
 	-- Update when opening the map
 	WorldMapFrame:HookScript("OnShow", function() 
-			local mapAreaID = WorldMapFrame.mapID;
-			self.dataProvider:LoadQuestsInZone(mapAreaID);
-			self.ScrollFrame:UpdateQuestList();
-			
-			-- Prevent opening empty quest details
-			local currentTab = self.selectedTab;
-			if (currentTab == WQT_TabDetails and not QuestMapFrame.DetailsFrame.questID) then
-				--currentTab = WQT_TabNormal;
-			end
-			--self:SelectTab(currentTab); 
-
 			-- If emissaryOnly was automaticaly set, and there's none in the current list, turn it off again.
 			if (WQT_WorldQuestFrame.autoEmisarryId and not WQT_WorldQuestFrame.dataProvider:ListContainsEmissary()) then
 				WQT_WorldQuestFrame.autoEmisarryId = nil;
@@ -2505,7 +2491,6 @@ function WQT_CoreMixin:TAXIMAP_OPENED(system)
 	end
 	
 	WQT_WorldQuestFrame:ChangeAnchorLocation(anchor);
-	self.dataProvider:LoadQuestsInZone(GetTaxiMapID());
 end
 
 -- Reset official map filters
@@ -2547,8 +2532,6 @@ function WQT_CoreMixin:ShowOverlayFrame(frame, offsetLeft, offsetRight, offsetTo
 	frame:SetFrameStrata(blocker:GetFrameStrata())
 	frame:Show();
 	
-	-- WQT_ListContainer.DetailFrame:Hide();
-	
 	self.manualCloseOverlay = true;
 	ADD:CloseAll();
 	
@@ -2563,7 +2546,6 @@ function WQT_CoreMixin:HideOverlayFrame()
 	self:SetCustomEnabled(true);
 	blocker:Hide();
 	blocker.CurrentOverlayFrame:Hide();
-	-- WQT_ListContainer.DetailFrame:Show();
 	
 	blocker.CurrentOverlayFrame = nil;
 	

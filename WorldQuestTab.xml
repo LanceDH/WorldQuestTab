@@ -206,8 +206,7 @@
 					<Layer level="ARTWORK">
 						<Texture parentKey="Icon">
 							<Anchors>
-								<!-- <Anchor point="TOPLEFT" x="5" y="-5"/>
-								<Anchor point="BOTTOMRIGHT" x="-5" y="5"/> -->
+
 								<Anchor point="TOPLEFT" x="0" y="0"/>
 								<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
 							</Anchors>
@@ -617,9 +616,9 @@
 		</Anchors>
 		<Frames>
 			<Cooldown parentKey="ProgressBar" hideCountdownNumbers="true" reverse="true">
-				<Size x="32" y="32"/>
+				<Size x="20" y="20"/>
 				<Anchors>
-					<Anchor point="CENTER"/>
+					<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="2" y="8"/>
 				</Anchors>
 				<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing">
 					<Color r="1" g="0.82" b="0" a="0.7"/>
@@ -634,28 +633,7 @@
 							<Color r="0" g="0" b="0" a="0.6"/>
 						</Texture>
 					</Layer>
-					<Layer level="OVERLAY">
-							<!-- Edge highlight of the timer. Custom so it can be colored -->
-							<Texture parentKey="Pointer" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingPointer">
-								<Color r="1" g="0.82" b="0" a="0.7"/>
-							</Texture>
-					</Layer>
 				</Layers>
-				<Animations>
-					<AnimationGroup parentKey="fadeInAnim" looping="NONE" setToFinalAlpha="true">
-						<Alpha parentKey="Alpha" fromAlpha="0" toAlpha="1" duration="0.2" startDelay="0.1"/>
-					</AnimationGroup>
-				</Animations>
-				
-				<Scripts>
-					<OnShow>
-						self.fadeInAnim:Play();
-					</OnShow>
-					<OnHide>
-						self.fadeInAnim:Stop();
-						self:SetAlpha(0);
-					</OnHide>
-				</Scripts>
 			</Cooldown>
 		
 			<Frame name="WQT_ListContainer" parentKey="ScrollFrame" mixin="WQT_ScrollListMixin" enableMouse="true"  hidden="false">

@@ -1,8 +1,7 @@
 If you're reading this; temper your hopes and expectations
 
 Todo
-- Improve Dataprovider 
-- Check if I can use Blizzard's dataprovider instead of my own, because why not
+- Check if I can use Blizzard's callback system instead of my own, because why not
 - Check if things in Data.lua can be improved
 - Probably remove quest log counter
 - Something up with LFG
@@ -15,6 +14,7 @@ Todo
     - Used to disabled with settings or what's new open. Probaly just hide them with some layout changes
 - Update settings UI
 - Update What's New UI
+- Fix map pins lingering until quests are done loading when switching map
 - Figure out War Within data and testing, preferably without buying the expansion :|
 - Probably no longer bother with WorldQuestTab Utilities
 - Check support for external addons, maybe
@@ -33,4 +33,8 @@ Done
 - Figure out error in filter dropdown -> Check new dropdown system
 - Look at moving from HybridScrollFrame to new systems
 - Update visuals to match the new UI
+- Improve Dataprovider 
+- Weird sort behaviours
+    - Faction sorting with bonus quests puts no-faction bonus at top
+    - Tpye sort mixes bonus with actualy WQ
 

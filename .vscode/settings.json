@@ -171,6 +171,7 @@
         "MountJournal_InitMountButton",
         "CreateDataProvider",
         "MountJournal",
-        "ScrollBoxConstants"
+        "ScrollBoxConstants",
+        "WORLD_QUEST_REWARD_FILTERS_ANIMA"
     ]
 }

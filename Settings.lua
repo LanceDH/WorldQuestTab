@@ -287,7 +287,12 @@ end
 WQT_SettingsColorMixin = CreateFromMixins(WQT_SettingsBaseMixin);
 
 function WQT_SettingsColorMixin:OnLoad()
-	
+	-- New colorpicker no longer has a way to check when confirm is pressed
+	ColorPickerFrame:HookScript("OnHide", function() 
+		self.Label:Show();
+		self.ExampleText:Hide();
+		self.ExampleRing:Hide();
+	end);
 end
 
 function WQT_SettingsColorMixin:Init(data)
@@ -310,10 +315,6 @@ function WQT_SettingsColorMixin:UpdateState()
 		local canReset = color:GenerateHexColor() ~= self.defaultColor:GenerateHexColor();
 		self:SetResetEnabled(canReset);
 	end
-	
-	self.Label:Show();
-	self.ExampleText:Hide();
-	self.ExampleRing:Hide();
 end
 
 function WQT_SettingsColorMixin:SetResetEnabled(enable)
@@ -343,11 +344,7 @@ end
 function WQT_SettingsColorMixin:UpdateFromPicker(isConfirmed)
 	local r, g, b = ColorPickerFrame:GetColorRGB();
 	self:SetWidgetRGB(r, g, b);
-	
-	if (isConfirmed) then
-		self:OnValueChanged(self.colorID, true, r, g, b);
-		self:StopPicking();
-	end
+	self:OnValueChanged(self.colorID, true, r, g, b);
 end
 
 function WQT_SettingsColorMixin:StartPicking()
@@ -371,7 +368,7 @@ function WQT_SettingsColorMixin:StartPicking()
 	self.Label:Hide();
 	self.ExampleText:Show();
 	self.ExampleRing:Show();
-	
+
 	ColorPickerFrame:SetupColorPickerAndShow(colorInfo);
 end
 
@@ -379,7 +376,6 @@ function WQT_SettingsColorMixin:StopPicking()
 	self.Label:Show();
 	self.ExampleText:Hide();
 	self.ExampleRing:Hide();
-	
 	self:UpdateState();
 end
 

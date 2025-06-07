@@ -415,7 +415,7 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 	local timeLeftSeconds = 0
 	local timeString = "";
 	local timeStringShort = "";
-	local color = _V["WQT_COLOR_CURRENCY"];
+	local color = WQT_Utils:GetColor(_V["COLOR_IDS"].timeNone);
 	local category = _V["TIME_REMAINING_CATEGORY"].none;
 	
 	if (not questInfo or not questInfo.questId) then return timeLeftSeconds, timeString, color ,timeStringShort, timeLeftMinutes, category end
@@ -1185,7 +1185,7 @@ function WQT_Utils:SetQuestDisliked(questID, isDisliked)
 	
 	WQT.settings.general.dislikedQuests[questID] = isDisliked;
 	
-	WQT_QuestScrollFrame:UpdateQuestList();
+	WQT_ListContainer:UpdateQuestList();
 	
 	local soundID;
 	if (isDisliked) then

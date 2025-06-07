@@ -596,6 +596,9 @@ _V["SETTING_LIST"] = {
 	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_TIME", ["label"] = _L["TIME_VERYLONG"], ["tooltip"] = _L["TIME_VERYLONG_TT"], ["defaultColor"] = _V["WQT_PURPLE_FONT_COLOR"]
 			, ["valueChangedFunc"] = UpdateColorID, ["colorID"] = "timeVeryLong",["getValueFunc"] = GetColorByID
 		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_TIME", ["label"] = NONE, ["tooltip"] = _L["TIME_VERYLONG_TT"], ["defaultColor"] = _V["WQT_COLOR_CURRENCY"]
+			, ["valueChangedFunc"] = UpdateColorID, ["colorID"] = "timeNone",["getValueFunc"] = GetColorByID
+		},
 	-- Rewards
 	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = NONE, ["defaultColor"] = _V["WQT_COLOR_NONE"], 
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardNone", ["getValueFunc"] = GetColorByID
@@ -612,7 +615,7 @@ _V["SETTING_LIST"] = {
 	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = RELICSLOT, ["defaultColor"] = _V["WQT_COLOR_RELIC"], 
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardRelic", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ANIMA, ["defaultColor"] = _V["WQT_COLOR_ARTIFACT"], 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = WORLD_QUEST_REWARD_FILTERS_ANIMA, ["defaultColor"] = _V["WQT_COLOR_ARTIFACT"], 
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardAnima", ["getValueFunc"] = GetColorByID
 		},
 	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_RING", ["label"] = ITEM_QUALITY6_DESC, ["defaultColor"] = _V["WQT_COLOR_ARTIFACT"], 
@@ -652,7 +655,7 @@ _V["SETTING_LIST"] = {
 	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = RELICSLOT, ["defaultColor"] = WHITE_FONT_COLOR, 
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextRelic", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ANIMA, ["defaultColor"] = GREEN_FONT_COLOR, 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = WORLD_QUEST_REWARD_FILTERS_ANIMA, ["defaultColor"] = GREEN_FONT_COLOR, 
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextAnima", ["getValueFunc"] = GetColorByID
 		},
 	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ITEM_QUALITY6_DESC, ["defaultColor"] = GREEN_FONT_COLOR, 
@@ -1109,8 +1112,20 @@ _V["SORT_FUNCTIONS"] = {
 				return aCanUpgrade and not bCanUpgrade; 
 			end
 		end
-	,["seconds"] = function(a, b) if (a.time.seconds ~= b.time.seconds) then return a.time.seconds < b.time.seconds; end end
+	,["seconds"] = function(a, b) 
+			if (a.isBonusQuest ~= b.isBonusQuest) then
+				return b.isBonusQuest;
+			end
+
+			if (a.time.seconds ~= b.time.seconds) then
+				return a.time.seconds < b.time.seconds;
+			end
+		end
 	,["rewardAmount"] = function(a, b) 
+			if (a.isBonusQuest ~= b.isBonusQuest) then
+				return b.isBonusQuest;
+			end
+
 			local amountA = a:GetRewardAmount();
 			local amountB = b:GetRewardAmount();
 			if (C_PvP.IsWarModeDesired()) then
@@ -1139,13 +1154,25 @@ _V["SORT_FUNCTIONS"] = {
 	,["faction"] = function(a, b) 
 			local _, factionIdA = C_TaskQuest.GetQuestInfoByQuestID(a.questId);
 			local _, factionIdB = C_TaskQuest.GetQuestInfoByQuestID(b.questId);
+			
+
 			if (factionIdA ~= factionIdB) then 
+				if(not factionIdA or not factionIdB) then
+					return factionIdB == nil;
+				end
+
 				local factionA = WQT_Utils:GetFactionDataInternal(factionIdA);
 				local factionB = WQT_Utils:GetFactionDataInternal(factionIdB);
 				return factionA.name < factionB.name; 
 			end 
+
+			
 		end
+
 	,["questType"] = function(a, b) 
+			if (a.isBonusQuest ~= b.isBonusQuest) then
+				return b.isBonusQuest;
+			end
 			if (a.isQuestStart ~= b.isQuestStart) then
 				return a.isQuestStart and not b.isQuestStart;
 			end		
@@ -1195,6 +1222,10 @@ _V["SORT_FUNCTIONS"] = {
 					return mapInfoA.mapID == WorldMapFrame.mapID and mapInfoB.mapID ~= WorldMapFrame.mapID;
 				end
 				return mapInfoA.name < mapInfoB.name;
+			elseif (mapInfoA.mapID == mapInfoB.mapID) then
+				if (a.isBonusQuest ~= b.isBonusQuest) then
+					return b.isBonusQuest;
+				end
 			end
 		end
 }
@@ -1403,6 +1434,7 @@ _V["WQT_DEFAULTS"] = {
 			["timeMedium"] = _V["WQT_GREEN_FONT_COLOR"]:GenerateHexColor();
 			["timeLong"] = _V["WQT_BLUE_FONT_COLOR"]:GenerateHexColor();
 			["timeVeryLong"] = _V["WQT_PURPLE_FONT_COLOR"]:GenerateHexColor();
+			["timeNone"] = _V["WQT_COLOR_CURRENCY"]:GenerateHexColor();
 			
 			["rewardNone"] = _V["WQT_COLOR_NONE"]:GenerateHexColor();
 			["rewardWeapon"] = _V["WQT_COLOR_WEAPON"]:GenerateHexColor();
