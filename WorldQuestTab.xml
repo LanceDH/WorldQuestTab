@@ -5,8 +5,6 @@
 	<Script file="Libs\LibStub\LibStub.lua"/>
 	<Include file="libs\AceAddon-3.0\AceAddon-3.0.xml"/>
 	<Include file="libs\AceDB-3.0\AceDB-3.0.xml"/>
-	<Include file="libs\AddonDropDown-2.0\AddonDropDown-2.0.xml"/>
-	
 	
 	<Script file="Locals.lua"/>
 	

@@ -438,6 +438,14 @@
 				</FontString>
 			</Layer>
 		</Layers>
+		<Frames>
+			<DropdownButton parentKey="Dropdown" inherits="WowStyle1DropdownTemplate">
+				<Anchors>
+					<Anchor point="BOTTOMLEFT" x="30" y="6"/>
+					<Anchor point="RIGHT" x="-35" y="0"/>
+				</Anchors>
+			</DropdownButton>
+		</Frames>
 		<Scripts>
 			<OnLoad method="OnLoad"/>
 		</Scripts>
@@ -682,8 +690,8 @@
 		<Frames>
 			<ScrollFrame inherits="WQT_OverlayScrollFrameTemplate" parentKey="ScrollFrame">
 				<Anchors>
-					<Anchor point="TOPLEFT"/>
-					<Anchor point="BOTTOMRIGHT" x="-20"/>
+					<Anchor point="TOPLEFT" />
+					<Anchor point="BOTTOMRIGHT" />
 				</Anchors>
 			</ScrollFrame>
 		</Frames>

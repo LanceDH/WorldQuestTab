@@ -54,26 +54,14 @@
 -- local timeLeftSeconds, timeString, color, timeStringShort, category = WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated);
 -- local x, y = WQT_Utils:GetQuestMapLocation(questId, mapId); | More up to date position than mapInfo
 
+-- Callbacks using EventRegistry
 --
--- Callbacks (WQT_WorldQuestFrame:RegisterCallback(event, func, addonName))
---
--- "InitFilter" 			(self, level) After InitFilter finishes
--- "InitSettings"			(self, level) After InitSettings finishes
--- "DisplayQuestList" 		(skipPins) After all buttons in the list have been updated
--- "FilterQuestList"		() After the list has been filtered
--- "UpdateQuestList"		() After the list has been both filtered and updated
--- "QuestsLoaded"			() After the dataprovider updated its quest data
--- "WaitingRoomUpdated"		() After data in the dataprovider's waitingroom got updated
--- "SortChanged"			(category) After sort category was changed to a different one
--- "ListButtonUpdate"		(button) After a button was updated and shown
--- "AnchorChanged"			(anchor) After the anchor of the quest list has changed
--- "MapPinInitialized"		(pin) After a map pin has been fully setup to be shown
--- "WorldQuestCompleted"	(questId, questInfo) When a world quest is completed. questInfo gets cleared shortly after this callback is triggered
+-- "WQT.DataProvider.QuestsLoaded"		() After InitFilter finishes
+-- "WQT.DataProvider.ProgressUpdated"	(progress) Progress in gethering quests from zones (% from 0-1)
 
 local addonName, addon = ...
 
 local WQT = addon.WQT;
-local ADD = LibStub("AddonDropDown-2.0");
 
 local _L = addon.L
 local _V = addon.variables;
@@ -208,7 +196,6 @@ local function AddFilterSubmenu(rootDescription, filterType)
 end
 
 local function AddExpansionFactionsToMenu(rootDescription, expansionLevel)
-	--rootDescription:SetMaximumWidth(300);
 	local filterType = _V["FILTER_TYPES"].faction;
 	local options = WQT.settings.filters[filterType].flags;
 	local order = WQT.filterOrders[filterType];
@@ -654,104 +641,8 @@ function WQT:Sort_OnClick(self, category)
 	if ( category and WQT.settings.general.sortBy ~= category ) then
 		WQT.settings.general.sortBy = category;
 		WQT_ListContainer:UpdateQuestList();
-		WQT_WorldQuestFrame:TriggerCallback("SortChanged", category);
+		--WQT_WorldQuestFrame:TriggerCallback("SortChanged", category);
 	end
-end
-
-function WQT:TrackDDFunc(ddFrame)
-	local sourceParent = ddFrame:GetSourceParent();
-
-	local questInfo = sourceParent.questInfo;
-	if (not questInfo) then return; end
-	
-	local questID = questInfo.questId;
-	local mapInfo = WQT_Utils:GetMapInfoForQuest(questID);
-	local info = ddFrame:CreateButtonInfo();
-	local tagInfo = questInfo:GetTagInfo();
-	
-	-- Title
-	local title = C_TaskQuest.GetQuestInfoByQuestID(questID);
-	
-	info = ddFrame:CreateButtonInfo("title");
-	info.text = title;
-	info.overflow = true;
-	
-	ddFrame:AddButton(info);
-
-	-- Don't allow tracking for quests that don't support it in the ObjectiveTrackerFrame
-	
-	if (tagInfo and tagInfo.worldQuestType) then
-		info = ddFrame:CreateButtonInfo("option");
-		info.tooltipFunc = function(tooltip)
-				GameTooltip_AddInstructionLine(tooltip, _L["SHORTCUT_TRACK"]);
-			end
-		-- Tracking
-		if (QuestUtils_IsQuestWatched(questID)) then
-			info.text = UNTRACK_QUEST;
-			info.func = function()
-						C_QuestLog.RemoveWorldQuestWatch(questID);
-						if WQT_WorldQuestFrame:GetAlpha() > 0 then 
-							WQT_ListContainer:DisplayQuestList();
-						end
-					end
-		else
-			info.text = TRACK_QUEST;
-			info.func = function()
-						C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual);
-						C_SuperTrack.SetSuperTrackedQuestID(questID);
-						if WQT_WorldQuestFrame:GetAlpha() > 0 then 
-							WQT_ListContainer:DisplayQuestList();
-						end
-					end
-		end	
-		ddFrame:AddButton(info);
-	end
-	
-	-- New 9.0 waypoint system
-	info = ddFrame:CreateButtonInfo("option");
-	info.text = _L["PLACE_MAP_PIN"];
-	info.func = function()
-			questInfo:SetAsWaypoint();
-			C_SuperTrack.SetSuperTrackedUserWaypoint(true);
-		end
-	info.tooltipFunc = function(tooltip)
-				GameTooltip_AddInstructionLine(tooltip, _L["SHORTCUT_WAYPOINT"]);
-			end
-	
-	ddFrame:AddButton(info);
-	
-	-- LFG if possible
-	info = ddFrame:CreateButtonInfo("option");
-	if (WQT_WorldQuestFrame:ShouldAllowLFG(questInfo)) then
-		info.text = OBJECTIVES_FIND_GROUP;
-		info.func = function()
-			WQT_WorldQuestFrame:SearchGroup(questInfo);
-		end
-		ddFrame:AddButton(info);
-	end
-	
-	-- Dislike toggle
-	info = ddFrame:CreateButtonInfo("checkbox");
-	
-	info.keepShownOnClick = false;
-	info.text = _L["UNINTERESTED"];
-	info.func = function()
-			local dislike = not WQT_Utils:QuestIsDisliked(questID);
-			WQT_Utils:SetQuestDisliked(questID, dislike);
-			ddFrame:Refresh();
-		end
-	info.checked = function() return WQT_Utils:QuestIsDisliked(questID) end;
-	info.tooltipFunc = function(tooltip)
-				GameTooltip_AddInstructionLine(tooltip, _L["SHORTCUT_DISLIKE"]);
-			end
-	
-	ddFrame:AddButton(info);
-	
-	WQT_WorldQuestFrame:TriggerCallback("InitTrackDropDown", ddFrame)
-	
-	
-	info = ddFrame:CreateButtonInfo("cancel");
-	ddFrame:AddButton(info);
 end
 
 function WQT:IsWorldMapFiltering()
@@ -1076,7 +967,7 @@ end
 function WQT_RewardDisplayMixin:UpdateVisuals()
 	for i= 1, self.numDisplayed do
 		local rewardFrame = self.rewardFrames[i];
-		local r, g, b = GetItemQualityColor(rewardFrame.quality);
+		local r, g, b = C_Item.GetItemQualityColor(rewardFrame.quality);
 	
 		rewardFrame:Show();
 		rewardFrame.Icon:SetTexture(rewardFrame.texture);
@@ -1404,7 +1295,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 		self.TrackedBorder:Hide();
 	end
 	
-	WQT_WorldQuestFrame:TriggerCallback("ListButtonUpdate", self)
+	--WQT_WorldQuestFrame:TriggerCallback("ListButtonUpdate", self)
 end
 
 function WQT_ListButtonMixin:FactionOnEnter(frame)
@@ -1552,7 +1443,7 @@ function WQT_ScrollListMixin:FilterQuestList()
 		end
 	end
 	
-	WQT_WorldQuestFrame:TriggerCallback("FilterQuestList");
+	--WQT_WorldQuestFrame:TriggerCallback("FilterQuestList");
 end
 
 function WQT_ScrollListMixin:UpdateQuestList()
@@ -1568,14 +1459,11 @@ function WQT_ScrollListMixin:UpdateQuestList()
 		questInfo:ParseRewards();
 	end
 
-	
-	
 	self:FilterQuestList();
 	self:ApplySort();
 	self:DisplayQuestList();
 
-	
-	WQT_WorldQuestFrame:TriggerCallback("UpdateQuestList");
+	--WQT_WorldQuestFrame:TriggerCallback("UpdateQuestList");
 end
 
 function WQT_ScrollListMixin:DisplayQuestList()
@@ -1603,7 +1491,7 @@ function WQT_ScrollListMixin:DisplayQuestList()
 	-- Update background
 	self:UpdateBackground();
 	
-	WQT_WorldQuestFrame:TriggerCallback("DisplayQuestList");
+	--WQT_WorldQuestFrame:TriggerCallback("DisplayQuestList");
 end
 
 function WQT_ScrollListMixin:UpdateBackground()
@@ -1831,7 +1719,7 @@ end
 -- ChangeAnchorLocation(anchor)		Show list on a different container using _V["LIST_ANCHOR_TYPE"] variable
 -- :<event> -> ADDON_LOADED, PLAYER_REGEN_DISABLED, PLAYER_REGEN_ENABLED, QUEST_TURNED_IN, PVP_TIMER_UPDATE, WORLD_QUEST_COMPLETED_BY_SPELL, QUEST_LOG_UPDATE, QUEST_WATCH_LIST_CHANGED
 
-WQT_CoreMixin = CreateFromMixins(WQT_CallbackMixin, WQT_EventHookMixin);
+WQT_CoreMixin = {};
 
 function WQT_CoreMixin:TryHideOfficialMapPin(pin)
 	if (WQT.settings.pin.disablePoI) then return; end
@@ -1957,28 +1845,24 @@ function WQT_CoreMixin:OnLoad()
 	-- Hide the little detail at the top of the frame, it blocks our view. Thanks for making that a separate texture
 	WQT_ListContainer.BorderFrame.TopDetail:Hide();
 
-
-	self.dataProvider:RegisterCallback("WaitingRoom", function() 
-			--if (InCombatLockdown()) then return end;
-			WQT_ListContainer:ApplySort();
-			WQT_ListContainer:FilterQuestList();
-			WQT_ListContainer:UpdateQuestList();
-			WQT_WorldQuestFrame:TriggerCallback("WaitingRoomUpdated")
-		end, addonName)
-		
-	self.dataProvider:RegisterCallback("QuestsLoaded", function() 
-			self.ScrollFrame:UpdateQuestList(); 
-			-- Update the quest number counter
-			WQT_QuestLogFiller:UpdateText();
-			WQT_WorldQuestFrame:TriggerCallback("QuestsLoaded")
-		end, addonName)
-	
-	self.dataProvider:RegisterCallback("BufferUpdated", function(progress)
-			CooldownFrame_SetDisplayAsPercentage(self.ProgressBar, progress);
-			if (progress == 0 or progress == 1) then
-				self.ProgressBar:Hide();
+	EventRegistry:RegisterCallback(
+		"WQT.DataProvider.QuestsLoaded"
+		,function()
+				self.ScrollFrame:UpdateQuestList(); 
+				-- Update the quest number counter
+				WQT_QuestLogFiller:UpdateText();
 			end
-		end, addonName)
+		, self);
+	
+	EventRegistry:RegisterCallback(
+		"WQT.DataProvider.ProgressUpdated"
+		,function(_, progress)
+				CooldownFrame_SetDisplayAsPercentage(self.ProgressBar, progress);
+				if (progress == 0 or progress == 1) then
+					self.ProgressBar:Hide();
+				end
+			end
+		, self);
 
 	-- Events
 	self:RegisterEvent("PLAYER_REGEN_DISABLED");
@@ -1997,8 +1881,6 @@ function WQT_CoreMixin:OnLoad()
 			else 
 				WQT:debugPrint("WQT missing function for:",event); 
 			end 
-			
-			WQT_EventHookMixin.OnEvent(self, event, ...);
 		end)
 
 	-- Slashcommands
@@ -2113,12 +1995,7 @@ function WQT_CoreMixin:OnLoad()
 			end);
 		self.worldMapFilter = worldMapFilter;
 	end
-	
-	-- Close all our custom dropdowns when opening an Blizzard dropdown
-	hooksecurefunc("ToggleDropDownMenu", function()
-			ADD:CloseAll();
-		end);
-	
+
 	-- Auto emisarry when clicking on one of the buttons
 	local bountyBoard = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]];
 	self.bountyBoard = bountyBoard;
@@ -2327,7 +2204,6 @@ function WQT_CoreMixin:ShowHighlightOnMapFilters()
 end
 
 function WQT_CoreMixin:FilterClearButtonOnClick()
-	ADD:CloseAll();
 	if WQT_WorldQuestFrame.autoEmisarryId then
 		WQT_WorldQuestFrame.autoEmisarryId = nil;
 	elseif WQT.settings.general.emissaryOnly then
@@ -2447,7 +2323,6 @@ function WQT_CoreMixin:PLAYER_REGEN_DISABLED()
 	-- 		block.WQTButton:SetEnabled(false);
 	-- 	end
 	-- end
-	ADD:CloseAll();
 end
 
 function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
@@ -2457,13 +2332,6 @@ function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
 	-- 		block.WQTButton:SetEnabled(true);
 	-- 	end
 	-- end
-end
-
-function WQT_CoreMixin:QUEST_TURNED_IN(questId)
-	local questInfo = WQT_WorldQuestFrame.dataProvider:GetQuestById(questId);
-	if (questInfo) then
-		WQT_WorldQuestFrame:TriggerCallback("WorldQuestCompleted", questId, questInfo);
-	end
 end
 
  -- Warmode toggle because WAR_MODE_STATUS_UPDATE doesn't seems to fire when toggling warmode
@@ -2533,7 +2401,6 @@ function WQT_CoreMixin:ShowOverlayFrame(frame, offsetLeft, offsetRight, offsetTo
 	frame:Show();
 	
 	self.manualCloseOverlay = true;
-	ADD:CloseAll();
 	
 	-- Hide quest and filter to prevent bleeding through when walking around
 	WQT_ListContainer:Hide();
@@ -2592,7 +2459,6 @@ if true then return end
 --[[
 	
 	if self.selectedTab ~= tab then
-		ADD:CloseAll();
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 		WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 	end
@@ -2700,7 +2566,7 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	WQT_WorldQuestFrame:SetParent(parent);
 	--WQT_WorldQuestFrame:SelectTab(tab);
 	
-	WQT_WorldQuestFrame:TriggerCallback("AnchorChanged", anchor);
+	--WQT_WorldQuestFrame:TriggerCallback("AnchorChanged", anchor);
 end
 
 function WQT_CoreMixin:LoadExternal(external)

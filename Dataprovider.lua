@@ -453,12 +453,8 @@ end
 ----------------------------
 -- MIXIN
 ----------------------------
--- Callbacks:
--- "BufferUpdated"	(progress): % of buffered quests has changed. progress = 0-1
--- "QuestsLoaded"	(): Buffer emptied
--- "WaitingRoom"	(): Quest in the waiting room had data updated
 
-WQT_DataProvider = CreateFromMixins(WQT_CallbackMixin);
+WQT_DataProvider = {};
 
 function WQT_DataProvider:Init()
 	self.frame = CreateFrame("FRAME");
@@ -470,8 +466,6 @@ function WQT_DataProvider:Init()
 	
 	self.pool = CreateObjectPool(WQT_Utils.QuestCreationFunc, QuestResetFunc);
 	self.iterativeList = {};
-	-- If we added a quest which we didn't have rewarddata for yet, it gets added to the waiting room
-	self.waitingRoomRewards = {};
 	self.ignoreNextLogUpdate = false;
 	
 	self.zoneLoading = {
@@ -594,16 +588,15 @@ function WQT_DataProvider:OnUpdate(elapsed)
 
 			self.zoneLoading.startTimestamp = 0;
 			progress = 0;
-			self:TriggerCallback("QuestsLoaded");
+			EventRegistry:TriggerEvent("WQT.DataProvider.QuestsLoaded");
 		end
 
-		self:TriggerCallback("BufferUpdated", progress);
+		EventRegistry:TriggerEvent("WQT.DataProvider.ProgressUpdated", progress);
 	end
 end
 
 function WQT_DataProvider:ClearData()
 	wipe(self.iterativeList);
-	wipe(self.waitingRoomRewards);
 end
 
 function WQT_DataProvider:AddContinentMapQuests(continentZones, continentId)
@@ -705,10 +698,6 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 			self:AddZoneToBuffer(zoneID);
 		end
 	end
-	-- Sort current expansion to front, they are more likely to have quests
-	--table.sort(self.bufferedZones, ZonesByExpansionSort);
-
-	--self:TriggerCallback("QuestsLoaded");
 end
 
 function WQT_DataProvider:GetIterativeList()
@@ -739,5 +728,5 @@ function WQT_DataProvider:ReloadQuestRewards()
 	for questInfo, v in self.pool:EnumerateActive() do
 		questInfo:LoadRewards(true);
 	end
-	self:TriggerCallback("QuestsLoaded");
+	--self:TriggerCallback("QuestsLoaded");
 end

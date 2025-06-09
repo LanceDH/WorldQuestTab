@@ -14,109 +14,41 @@ local WQT = addon.WQT;
 local _emptyTable = {};
 local _playerFaction = UnitFactionGroup("Player");
 
---------------------------------
--- Custom Event mixin
---------------------------------
-
-WQT_CallbackMixin = {};
-
-function WQT_CallbackMixin:RegisterCallback(event, func)
-	-- Find the source calling the function
-	local debugLine = debugstack(2, 1, 1);
-	local source = string.match(debugLine, "Interface\\AddOns\\(%a+)\\") or "Unknown";
-
-	if (not self.callbacks) then
-		self.callbacks = {};
-	end
-
-	local callback = self.callbacks[event];
-	if (not callback) then 
-		callback = {};
-		self.callbacks[event] = callback;
-	end
-	
-	tinsert(callback, {["func"] = func, ["source"] = source});
-end
-
-function WQT_CallbackMixin:TriggerCallback(event, ...)
-	if (not self.callbacks or not self.callbacks[event]) then
-		return;
-	end
-	
-	for k, callback in ipairs(self.callbacks[event]) do
-		callback.func(...);
-	end
-end
-
--- Hook Mixin
-WQT_EventHookMixin = {};
-
-function WQT_EventHookMixin:HookEvent(event, func)
-	-- Find the source calling the function
-	local debugLine = debugstack(2, 1, 1);
-	local source = string.match(debugLine, "Interface\\AddOns\\(%a+)\\") or "Unknown";
-
-	if (not self.eventHooks) then
-		self.eventHooks = {};
-	end
-
-	local callback = self.eventHooks[event];
-	if (not callback) then 
-		callback = {};
-		self.eventHooks[event] = callback;
-	end
-
-	tinsert(callback, {["func"] = func, ["source"] = source});
-end
-
-function WQT_EventHookMixin:OnEvent(event, ...)
-	if (not self.eventHooks or not self.eventHooks[event]) then
-		return;
-	end
-	
-	for k, callback in ipairs(self.eventHooks[event]) do
-		callback.func(event, ...);
-	end
-end
 
 
-
-addon.WQT_Profiles =  CreateFromMixins(WQT_CallbackMixin);
+addon.WQT_Profiles =  {};
 local WQT_Profiles = addon.WQT_Profiles;
-
-
 
 ------------------------
 -- PUBLIC
 ------------------------
 
-WQT_REWARDTYPE = {
-	["none"] = 			0,		--0
-	["weapon"] = 		2^0,	--1
-	["equipment"] =		2^1,	--2
-	["conduit"] = 		2^2,	--4
-	["relic"] = 			2^3,	--8
-	["anima"] = 			2^4,	--16
-	["artifact"] = 		2^5,	--32
-	["spell"] = 			2^6,	--64
-	["item"] = 			2^7,	--128
-	["gold"] = 			2^8,	--256
-	["currency"] = 		2^9,	--512
-	["honor"] = 			2^10,	--1024
-	["reputation"] =		2^11,	--2048
-	["xp"] = 			2^12,	--4096
-	["missing"] = 		2^13,	--8192
-	
-};
+WQT_REWARDTYPE = FlagsUtil.MakeFlags(
+	"weapon",		--1
+	"equipment",	--2
+	"conduit",		--4
+	"relic",		--8
+	"anima",		--16
+	"artifact",		--32
+	"spell",		--64
+	"item",			--128
+	"gold",			--256
+	"currency",		--512
+	"honor",		--1024
+	"reputation",	--2048
+	"xp",			--4096
+	"missing"		--8192
+);
+WQT_REWARDTYPE.none = 0;
 
-WQT_QUESTTYPE = {
-	["normal"] = 	0,
-	["daily"] = 		2^0,	--1
-	["threat"] =		2^1,	--2
-	["calling"] = 	2^2,	--4
-	["bonus"] = 		2^3,	--8
-	["combatAlly"] =	2^4,	--16
-}
+WQT_QUESTTYPE = FlagsUtil.MakeFlags(
+	"daily",		--1
+	"threat",		--2
+	"calling",		--4
+	"bonus",		--8
+	"combatAlly"	--16
+);
+WQT_QUESTTYPE.normal = 0;
 
 _V["CONDUIT_SUBTYPE"] = {
 	["endurance"] = 1,

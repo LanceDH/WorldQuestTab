@@ -117,10 +117,10 @@ function TomTomExternal:Init(utils)
 	_activeSettings = WQT_Utils:RegisterExternalSettings("TomTom", _defaultSettings);
 	WQT_Utils:AddExternalSettingsOptions(_settings);
 	-- Remove point on quest complete
-	WQT_WorldQuestFrame:RegisterCallback("WorldQuestCompleted", function(questId) WQT_Utils:RemoveTomTomArrowbyQuestId(questId) end);
-	WQT_WorldQuestFrame:RegisterCallback("InitTrackDropDown", TrackDropDownHook);
+	--WQT_WorldQuestFrame:RegisterCallback("WorldQuestCompleted", function(questId) WQT_Utils:RemoveTomTomArrowbyQuestId(questId) end);
+	--WQT_WorldQuestFrame:RegisterCallback("InitTrackDropDown", TrackDropDownHook);
 	-- Hook onto Blizzard's events
-	WQT_WorldQuestFrame:HookEvent("QUEST_WATCH_LIST_CHANGED", QuestListChangedHook);
+	--WQT_WorldQuestFrame:HookEvent("QUEST_WATCH_LIST_CHANGED", QuestListChangedHook);
 end
 
 WQT_WorldQuestFrame:LoadExternal(TomTomExternal);

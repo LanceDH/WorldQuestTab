@@ -1,20 +1,19 @@
 If you're reading this; temper your hopes and expectations
 
 Todo
-- Check if I can use Blizzard's callback system instead of my own, because why not
 - Check if things in Data.lua can be improved
 - Probably remove quest log counter
 - Something up with LFG
 - Something up with my bountyboard
 - Anchoring system with full screen and flight map
-- Look into new ItemQuality colors stuff
 - Look at old dropdown features
     - FilterButton indicator for official filtering
     - Used to disable filter linked to official filter (disbale, tooltip with info, matching icon in name instead?)
     - Used to disabled with settings or what's new open. Probaly just hide them with some layout changes
 - Update settings UI
 - Update What's New UI
-- Fix map pins lingering until quests are done loading when switching map
+- Check for issues while in combat
+- Ctrl clicking no longer sets waypoint
 - Figure out War Within data and testing, preferably without buying the expansion :|
 - Probably no longer bother with WorldQuestTab Utilities
 - Check support for external addons, maybe
@@ -37,4 +36,9 @@ Done
 - Weird sort behaviours
     - Faction sorting with bonus quests puts no-faction bonus at top
     - Tpye sort mixes bonus with actualy WQ
-
+- Look into new ItemQuality colors stuff - Nvm it's part of the normal api
+- Check if I can use Blizzard's callback system instead of my own, because why not
+- Fix map pins lingering until quests are done loading when switching map
+- Replace Dropdown lib entirely
+    - Change right click to new dropdown system
+    - Move settings to new dropdown systems and such

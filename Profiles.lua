@@ -2,7 +2,6 @@
 local WQT = addon.WQT;
 local _L = addon.L
 local _V = addon.variables;
-local ADD = LibStub("AddonDropDown-2.0");
 local WQT_Utils = addon.WQT_Utils;
 local WQT_Profiles = addon.WQT_Profiles;
 
@@ -256,7 +255,6 @@ function WQT_Profiles:Load(id)
 		return;
 	end
 	self:LoadProfileInternal(id, profile);
-	WQT_WorldQuestFrame:TriggerCallback("LoadProfile");
 end
 
 function WQT_Profiles:Delete(id)
@@ -367,7 +365,6 @@ function WQT_Profiles:ClearDefaultsFromActive()
 		ClearDefaults(externals[external], settings);
 	end
 	
-	WQT_WorldQuestFrame:TriggerCallback("ClearDefaults");
 end
 
 function WQT_Profiles:ResetActive()
@@ -399,8 +396,6 @@ function WQT_Profiles:ResetActive()
 			CopyIfNil(externals[external], settings);
 		end
 	end
-	
-	WQT_WorldQuestFrame:TriggerCallback("ResetActive");
 end
 
 function WQT_Profiles:RegisterExternalSettings(key, settings)

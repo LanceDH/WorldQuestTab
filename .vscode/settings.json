@@ -172,6 +172,9 @@
         "CreateDataProvider",
         "MountJournal",
         "ScrollBoxConstants",
-        "WORLD_QUEST_REWARD_FILTERS_ANIMA"
+        "WORLD_QUEST_REWARD_FILTERS_ANIMA",
+        "FlagsUtil",
+        "WQT_SettingsCheckboxMixin",
+        "WARDROBE_TRANSMOGRIFY_AS"
     ]
 }

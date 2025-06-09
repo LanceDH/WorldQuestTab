@@ -2,7 +2,6 @@
 local WQT = addon.WQT;
 local _L = addon.L
 local _V = addon.variables;
-local ADD = LibStub("AddonDropDown-2.0");
 local WQT_Utils = addon.WQT_Utils;
 
 local _pinType = {
@@ -116,16 +115,22 @@ function WQT_PinDataProvider:Init()
 	self.activePins = {};
 	self.pingedQuests = {};
 	self.hookedCanvasChanges = {};
-	
-	WQT_WorldQuestFrame:RegisterCallback("UpdateQuestList", function() 
-			self:RefreshAllData();
-		end, addonName);
-		
-	-- Fix pings and fades when switching map
-	hooksecurefunc(WorldMapFrame, "OnMapChanged", function() 
-			wipe(self.pingedQuests);
-			self:UpdateQuestPings();
-		end);
+
+	EventRegistry:RegisterCallback(
+		"WQT.DataProvider.QuestsLoaded"
+		,function()
+				self:RefreshAllData();
+			end
+		, self);
+
+	-- Remove pins on changing map. Quest info being processed will trigger showing them if they are needed.
+	EventRegistry:RegisterCallback(
+		"MapCanvas.MapSet"
+		,function()
+				wipe(self.pingedQuests);
+				self:RemoveAllData();
+			end
+		, self);
 		
 	self.clusterDistance = 0.5;
 	self.clusterSpread = 0.2;
@@ -171,7 +176,6 @@ end
 function WQT_PinDataProvider:PlacePins()
 	local wqp = WQT_Utils:GetMapWQProvider();
 	
-	--self:RemoveAllData();
 	if (WQT_Utils:GetSetting("pin", "disablePoI")) then 
 		self.isUpdating = false;
 		return; 
@@ -512,7 +516,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.baseFrameLevel = PIN_FRAME_LEVEL_BASE;
 
 	self:UpdateVisuals();
-	WQT_WorldQuestFrame:TriggerCallback("MapPinInitialized", self);
+	--WQT_WorldQuestFrame:TriggerCallback("MapPinInitialized", self);
 end
 
 function WQT_PinMixin:UpdateVisuals()
@@ -802,7 +806,7 @@ function WQT_PinMixin:UpdatePlacement(alpha)
 	
 	self:ApplyScaledPosition(parentScaleFactor);
 	self:SetFrameLevel(self.baseFrameLevel + self.index);
-	WQT_WorldQuestFrame:TriggerCallback("MapPinPlaced", self);
+	--WQT_WorldQuestFrame:TriggerCallback("MapPinPlaced", self);
 end
 
 function WQT_PinMixin:GetAlphas()

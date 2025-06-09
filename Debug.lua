@@ -294,7 +294,7 @@ function WQT_DebugFrameMixin:DoDebugThing()
 	-- 	end
 	-- end
 
-	-- print(GetTimePreciseSec() - timeStart);
+	-- print(GetTimePreciseSec() - timeStart);`
 
 	-- WQT_Test.done = 1;
 	local dataprovider = WQT_WorldQuestFrame.dataProvider;

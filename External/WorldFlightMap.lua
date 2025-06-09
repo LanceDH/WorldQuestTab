@@ -22,8 +22,8 @@ function WorldFlightMapExternal:GetName()
 end
 
 function WorldFlightMapExternal:Init()
-	WQT_WorldQuestFrame:RegisterCallback("AnchorChanged", ReAnchor);
-	WQT_WorldQuestFrame:RegisterCallback("MapPinInitialized", ReApplyPinAlphas);
+	--WQT_WorldQuestFrame:RegisterCallback("AnchorChanged", ReAnchor);
+	--WQT_WorldQuestFrame:RegisterCallback("MapPinInitialized", ReApplyPinAlphas);
 end
 
 WQT_WorldQuestFrame:LoadExternal(WorldFlightMapExternal);

@@ -4,7 +4,6 @@ local _L = addon.L
 local _V = addon.variables;
 local WQT_Utils = addon.WQT_Utils;
 local WQT_Profiles = addon.WQT_Profiles;
-local ADD = LibStub("AddonDropDown-2.0");
 
 --------------------------------
 -- WQT_MiniIconMixin
@@ -1096,6 +1095,83 @@ function WQT_Utils:GetRewardIconInfo(rewardType, subType)
 	return rewardTypeAtlas;
 end
 
+local function AddInstructionTooltipToDropdownItem(item, text)
+	item:SetOnEnter(function(button)
+			GameTooltip:SetOwner(button, "ANCHOR_RIGHT");
+			GameTooltip_AddInstructionLine(GameTooltip, text);
+			GameTooltip:Show();
+		end);
+	
+	item:SetOnLeave(function(button)
+			GameTooltip:Hide();
+		end);
+end
+
+local function QuestContextSetup(frame, rootDescription, questInfo)
+	rootDescription:SetTag("WQT_QUEST_CONTEXTMENU");
+
+	-- Title
+	local title = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questID);
+	rootDescription:CreateTitle(title);
+
+	-- Tracking here
+	if (questInfo.tagInfo and questInfo.tagInfo.worldQuestType) then
+		local title = ""
+		local func = nil;
+		
+		if (QuestUtils_IsQuestWatched(questInfo.questID)) then
+			title = UNTRACK_QUEST;
+			func = function()
+						C_QuestLog.RemoveWorldQuestWatch(questInfo.questID);
+						if WQT_WorldQuestFrame:GetAlpha() > 0 then 
+							WQT_ListContainer:DisplayQuestList();
+						end
+					end
+		else
+			title = TRACK_QUEST;
+			func = function()
+						C_QuestLog.AddWorldQuestWatch(questInfo.questID, Enum.QuestWatchType.Manual);
+						C_SuperTrack.SetSuperTrackedQuestID(questInfo.questID);
+						if WQT_WorldQuestFrame:GetAlpha() > 0 then 
+							WQT_ListContainer:DisplayQuestList();
+						end
+					end
+		end	
+		local trackBtn = rootDescription:CreateButton(title, func);
+		AddInstructionTooltipToDropdownItem(trackBtn, _L["SHORTCUT_TRACK"]);
+	end
+
+	-- 9.0 waypoint
+	local waypointBtn = rootDescription:CreateButton(
+		_L["PLACE_MAP_PIN"],
+		function()
+			questInfo:SetAsWaypoint();
+			C_SuperTrack.SetSuperTrackedUserWaypoint(true);
+		end);
+	AddInstructionTooltipToDropdownItem(waypointBtn, _L["SHORTCUT_WAYPOINT"]);
+
+	-- LFG if possible
+	if (WQT_WorldQuestFrame:ShouldAllowLFG(questInfo)) then
+		rootDescription:CreateButton(OBJECTIVES_FIND_GROUP, function() WQT_WorldQuestFrame:SearchGroup(questInfo) end);
+	end
+
+	-- Uninterested
+	local checkbox = rootDescription:CreateCheckbox(
+		_L["UNINTERESTED"],
+		function()
+			 return WQT_Utils:QuestIsDisliked(questInfo.questID);
+		end,
+		function()
+			local dislike = not WQT_Utils:QuestIsDisliked(questInfo.questID);
+ 			WQT_Utils:SetQuestDisliked(questInfo.questID, dislike);
+		end
+	);
+	AddInstructionTooltipToDropdownItem(checkbox, _L["SHORTCUT_DISLIKE"]);
+
+	-- Cancel. apparently a function is required for it to close the menu on click
+	rootDescription:CreateButton(CANCEL, function() end);
+end
+
 function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 	if (not questInfo or not questInfo.questId) then return end
 	
@@ -1165,7 +1241,7 @@ function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 			playSound = false;
 		else
 			-- Context menu
-			ADD:CursorDropDown(frame, function(...) WQT:TrackDDFunc(...) end);
+			MenuUtil.CreateContextMenu(frame, QuestContextSetup, questInfo);
 		end
 	end
 

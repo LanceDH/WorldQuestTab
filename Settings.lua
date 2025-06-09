@@ -2,7 +2,6 @@
 local WQT = addon.WQT;
 local _L = addon.L
 local _V = addon.variables;
-local ADD = LibStub("AddonDropDown-2.0");
 local WQT_Utils = addon.WQT_Utils;
 
 local SETTINGS_PADDING_TOP = 5;
@@ -74,7 +73,7 @@ function WQT_SettingsBaseMixin:OnValueChanged(value, userInput, ...)
 		if (self.valueChangedFunc) then
 			self.valueChangedFunc(value, ...);
 		end
-		self:GetParent():GetParent():GetParent():UpdateList();
+		self.parentFrame:UpdateList();
 	end
 end
 
@@ -269,7 +268,7 @@ function WQT_SettingsSliderMixin:OnValueChanged(value, userInput)
 	if (not value) then 
 		-- Reset displayed values
 		self:UpdateState();
-		return; 
+		return;
 	end
 
 	value = Round(value*100)/100;
@@ -350,7 +349,7 @@ end
 function WQT_SettingsColorMixin:StartPicking()
 	if (not self.getValueFunc) then return; end
 	
-	self:GetParent():GetParent():GetParent():UpdateList();
+	self.parentFrame:UpdateList();
 	
 	local color = self.getValueFunc(self.colorID);
 	local r, g, b = color:GetRGB();
@@ -385,85 +384,49 @@ end
 
 WQT_SettingsDropDownMixin = CreateFromMixins(WQT_SettingsBaseMixin);
 
-function WQT_SettingsDropDownMixin:OnLoad()
-	self.DropDown = ADD:CreateMenuTemplate(nil, self, nil, "BUTTON");
-	self.DropDown:SetSize(150, 22);
-	self.DropDown:SetPoint("BOTTOMLEFT", self, 27, 10);
-	self.DropDown:SetPoint("RIGHT", self, -35, 10);
-	self.DropDown.Text:SetJustifyH("LEFT");
-	self.DropDown:EnableMouse(true);
-	self.DropDown:SetScript("OnEnter", function() self:OnEnter(self.DropDown) end);
-	self.DropDown:SetScript("OnLeave", function() self:OnLeave() end);
-end
-
 function WQT_SettingsDropDownMixin:SetDisabled(value)
 	WQT_SettingsBaseMixin.SetDisabled(self, value);
-	if (value) then
-		self.DropDown:Disable();
-	else
-		self.DropDown:Enable();
+	self.Dropdown:SetEnabled(not value);
+end
+
+function WQT_SettingsDropDownMixin:DropdownSetup(dropdown, rootDescription)
+	local tag = string.format("WQT_SETTINGS_DROPDOWN_%s", dropdown.data.label);
+	rootDescription:SetTag(tag);
+
+	local options = dropdown.data.options;
+	if (type(options) ==  "function") then
+		options = options();
+	end
+
+	for index, displayInfo in pairs(options) do
+		local label = displayInfo.label or "Invalid label";
+		local id = displayInfo.arg1;
+		local radio = rootDescription:CreateRadio(
+			label,
+			function() return index == dropdown.data.getValueFunc() end,
+			function() self:OnValueChanged(id, true); end,
+			id);
+
+		radio:SetOnEnter(function(button)
+			GameTooltip:SetOwner(button, "ANCHOR_RIGHT");
+			GameTooltip_SetTitle(GameTooltip, label);
+			GameTooltip_AddNormalLine(GameTooltip, displayInfo.tooltip);
+			GameTooltip:Show();
+		end);
+	
+		radio:SetOnLeave(function(button)
+			GameTooltip:Hide();
+		end);
 	end
 end
 
 function WQT_SettingsDropDownMixin:Init(data)
 	WQT_SettingsBaseMixin.Init(self, data);
-	self.getValueFunc = data.getValueFunc;
-	if (data.options) then
-		self.options = data.options;
-		
-		local function temp (frame, level, value)
-			local info = frame:CreateButtonInfo();
-			info.func = function(option, arg1, arg2) 
-					self:OnValueChanged(arg1, true);
-					self.DropDown:SetDisplayText(arg2);
-				end
-			local selected;
-			if (data.getValueFunc) then
-				selected = data.getValueFunc();
-			end
-			
-			local options = self.options;
-			if (type(options) ==  "function") then
-				options = options();
-			end
-			
-			for id, displayInfo in pairs(options) do
-				local label = displayInfo.label or "Invalid label";
-				info.value = id;
-				info.arg1 = displayInfo.arg1;
-				info.text = label; 
-				info.arg2 = label;
-				info.tooltipTitle = label;
-				info.tooltipText = displayInfo.tooltip;
-				info.tooltipOnButton = true;
 
-				if id == selected then
-					info.checked = 1;
-				else
-					info.checked = nil;
-				end
-				frame:AddButton(info);
-			end
-		end
-		ADD:LinkDropDown(self.DropDown, temp, nil, nil, nil, nil, "LIST");
-		
-	end
+	self.Dropdown.data = data;
+	self.Dropdown:SetupMenu(function(dropdown, rootDescription) self:DropdownSetup(dropdown, rootDescription) end);
 	
 	self:UpdateState();
-end
-
-function WQT_SettingsDropDownMixin:UpdateState()
-	WQT_SettingsBaseMixin.UpdateState(self);
-	if (self.getValueFunc and self.options) then
-		local options = self.options;
-		if (type(options) ==  "function") then
-			options = options();
-		end
-		local index = self.getValueFunc();
-		local option = options[index]
-		local label = option and option.label or "Invalid label";
-		self.DropDown:SetDisplayText(label);
-	end
 end
 
 --------------------------------
@@ -617,7 +580,7 @@ end
 
 function WQT_SettingsCategoryMixin:SetExpanded(value)
 	self.isExpanded = value;
-	self:GetParent():GetParent():GetParent():Refresh();
+	self.parentFrame:Refresh();
 end
 
 --------------------------------
@@ -683,7 +646,6 @@ function WQT_SettingsFrameMixin:RegisterCategory(data)
 	end
 	
 	category =  self:CreateCategory(data)
-	
 end
 
 function WQT_SettingsFrameMixin:CreateCategory(data)
@@ -711,6 +673,7 @@ function WQT_SettingsFrameMixin:CreateCategory(data)
 	
 	category:Init(data);
 	category.Title:SetText(data.label or data.id)
+	category.parentFrame = self;
 	
 	if (not isSubCategory) then
 		tinsert(self.categories, category);
@@ -795,6 +758,7 @@ function WQT_SettingsFrameMixin:AddSetting(data, isFromList)
 
 	-- Get a frame from the pool, initialize it, and link it to a category
 	if (frame) then
+		frame.parentFrame = self;
 		frame:Init(data);
 		local list = self.categoryless;
 		local category = self.categoriesLookup[data.categoryID];
