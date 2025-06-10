@@ -2,23 +2,24 @@ If you're reading this; temper your hopes and expectations
 
 Todo
 - Check if things in Data.lua can be improved
-- Probably remove quest log counter
-- Something up with LFG
-- Something up with my bountyboard
 - Anchoring system with full screen and flight map
 - Look at old dropdown features
     - FilterButton indicator for official filtering
     - Used to disable filter linked to official filter (disbale, tooltip with info, matching icon in name instead?)
     - Used to disabled with settings or what's new open. Probaly just hide them with some layout changes
-- Update settings UI
-- Update What's New UI
+- Something up with map pins not showing correctly for actual world quests
 - Check for issues while in combat
-- Ctrl clicking no longer sets waypoint
-- Figure out War Within data and testing, preferably without buying the expansion :|
+- Improve loca file readability
 - Probably no longer bother with WorldQuestTab Utilities
 - Check support for external addons, maybe
+
 - Figure out what else needs to be on this list
+- Figure out War Within data and testing, preferably without buying the expansion :|
 - Determine feasibility of continued support
+
+Can't test on trial account, need PTR Up
+- Something up with LFG.
+- Something up with my bountyboard
 
 - Maybe change quest design with faction as sort of fade on the left
 
@@ -42,3 +43,7 @@ Done
 - Replace Dropdown lib entirely
     - Change right click to new dropdown system
     - Move settings to new dropdown systems and such
+- Ctrl clicking no longer sets waypoint - Needed right click, updated tooltips
+- Probably remove quest log counter
+- Update What's New UI
+- Update settings UI

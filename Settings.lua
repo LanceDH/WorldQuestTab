@@ -65,7 +65,7 @@ function WQT_SettingsBaseMixin:IsDisabled()
 	if (type(self.isDisabled) == "function") then
 		return self.isDisabled();
 	end
-	return  self.isDisabled;
+	return false;
 end
 
 function WQT_SettingsBaseMixin:OnValueChanged(value, userInput, ...)
@@ -224,16 +224,20 @@ end
 -- WQT_SettingsSliderMixin
 --------------------------------
 
-WQT_SettingsSliderMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+WQT_SettingsSliderMixin = CreateFromMixins(WQT_SettingsBaseMixin, CallbackRegistryMixin);
 
 function WQT_SettingsSliderMixin:Init(data)
 	WQT_SettingsBaseMixin.Init(self, data);
 	self.getValueFunc = data.getValueFunc;
 	self.min = data.min or 0;
 	self.max = data.max or 1;
-	self.Slider:SetMinMaxValues(self.min, self.max);
-	self.Slider:SetValueStep(data.valueStep);
-	self.Slider:SetObeyStepOnDrag(data.valueStep and true or false)
+	local steps = (self.max - self.min) / data.valueStep;
+	self.SliderWithSteppers:Init(0, self.min, self.max, steps);
+	-- Can't get the callback thing working. Don't know why. I'm over it
+	self.SliderWithSteppers.Slider:HookScript("OnValueChanged", function(_, value) 
+			self:OnValueChanged(value, true)
+		end)
+
 	self:UpdateState();
 end
 
@@ -245,7 +249,7 @@ function WQT_SettingsSliderMixin:UpdateState()
 	WQT_SettingsBaseMixin.UpdateState(self);
 	if (self.getValueFunc) then
 		local currentValue = self.getValueFunc();
-		self.Slider:SetValue(currentValue);
+		self.SliderWithSteppers:SetValue(currentValue);
 		self.TextBox:SetText(Round(currentValue*100)/100);
 		self.current = currentValue;
 	end
@@ -253,13 +257,8 @@ end
 
 function WQT_SettingsSliderMixin:SetDisabled(value)
 	WQT_SettingsBaseMixin.SetDisabled(self, value);
-	if (value) then
-		self.Slider:Disable();
-		self.TextBox:Disable();
-	else
-		self.Slider:Enable();
-		self.TextBox:Enable();
-	end
+	self.SliderWithSteppers:SetEnabled(not value);
+	self.TextBox:SetEnabled(not value);
 end
 
 function WQT_SettingsSliderMixin:OnValueChanged(value, userInput)
@@ -571,10 +570,10 @@ end
 
 function WQT_SettingsCategoryMixin:UpdateState()
 	WQT_SettingsBaseMixin.UpdateState(self);
-	if (self.isExpanded) then
-		self.ExpandIcon:SetAtlas("friendslist-categorybutton-arrow-down", true);
-	else
-		self.ExpandIcon:SetAtlas("friendslist-categorybutton-arrow-right", true);
+	if(self.ExpandIcon) then
+		self.ExpandIcon:SetAtlas(self.isExpanded and "UI-QuestTrackerButton-Secondary-Collapse" or "UI-QuestTrackerButton-Secondary-Expand", true);
+	elseif(self.BGRight) then
+		self.BGRight:SetAtlas(self.isExpanded and "Options_ListExpand_Right_Expanded" or "Options_ListExpand_Right", true);
 	end
 end
 
@@ -591,8 +590,8 @@ WQT_SettingsFrameMixin = {};
 
 function WQT_SettingsFrameMixin:OnLoad()
 	-- Because we can't destroy frames, keep a pool of each type to re-use
-	self.categoryPool = CreateFramePool("BUTTON", self.ScrollFrame.ScrollChild, "WQT_SettingCategoryTemplate");
-	self.subCategoryPool = CreateFramePool("BUTTON", self.ScrollFrame.ScrollChild, "WQT_SettingSubCategoryTemplate");
+	self.categoryPool = CreateFramePool("BUTTON", self.ScrollBox.ScrollContent, "WQT_SettingCategoryTemplate");
+	self.subCategoryPool = CreateFramePool("BUTTON", self.ScrollBox.ScrollContent, "WQT_SettingSubCategoryTemplate");
 	
 	self.templatePools = {};
 	
@@ -602,6 +601,10 @@ function WQT_SettingsFrameMixin:OnLoad()
 	
 	self.bufferedSettings = {};
 	self.bufferedCategories = {};
+
+	self.TitleText:SetText(SETTINGS);
+
+	ScrollUtil.InitScrollBoxWithScrollBar(self.ScrollBox, self.ScrollBar, CreateScrollBoxLinearView());
 end
 
 function WQT_SettingsFrameMixin:Init(categories, settings)
@@ -712,7 +715,7 @@ function WQT_SettingsFrameMixin:AcquireFrameOfTemplate(template)
 	if not (template) then return; end
 	local pool = self.templatePools[template];
 	if (not pool and DoesTemplateExist(template)) then
-		pool = CreateFramePool("FRAME", self.ScrollFrame.ScrollChild, template, function(pool, frame) frame:Reset(); end);
+		pool = CreateFramePool("FRAME", self.ScrollBox.ScrollContent, template, function(pool, frame) frame:Reset(); end);
 		self.templatePools[template] = pool;
 	end
 	
@@ -753,7 +756,7 @@ function WQT_SettingsFrameMixin:AddSetting(data, isFromList)
 		frame = self:AcquireFrameOfTemplate(template);
 	elseif (data.frameName) then
 		frame = _G[data.frameName];
-		frame:SetParent(self.ScrollFrame.ScrollChild);
+		frame:SetParent(self.ScrollBox.ScrollContent);
 	end
 
 	-- Get a frame from the pool, initialize it, and link it to a category
@@ -788,9 +791,9 @@ function WQT_SettingsFrameMixin:PlaceSetting(setting)
 	if (self.previous) then
 		setting:SetPoint("TOPLEFT", self.previous, "BOTTOMLEFT");
 	else
-		setting:SetPoint("TOPLEFT", self.ScrollFrame.ScrollChild, 0, -SETTINGS_PADDING_TOP);
+		setting:SetPoint("TOPLEFT", self.ScrollBox.ScrollContent, 0, -SETTINGS_PADDING_TOP);
 	end
-	setting:SetPoint("RIGHT", self.ScrollFrame.ScrollChild);
+	setting:SetPoint("RIGHT", self.ScrollBox.ScrollContent);
 	setting:Show();
 	if (setting.UpdateState) then
 		setting:UpdateState();
@@ -811,7 +814,8 @@ function WQT_SettingsFrameMixin:Refresh()
 	
 	self:PlaceCategories(self.categories);
 	
-	self.ScrollFrame:SetChildHeight(self.totalHeight);
+	self.ScrollBox.ScrollContent:SetHeight(self.totalHeight);
+	self.ScrollBox:FullUpdate(ScrollBoxConstants.UpdateImmediately);
 end
 
 function WQT_SettingsFrameMixin:CategoryTreeHasSettings(category)

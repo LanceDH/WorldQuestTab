@@ -56,6 +56,7 @@ _V["CONDUIT_SUBTYPE"] = {
 	["potency"] = 3,
 }
 
+
 -- Combos
 WQT_REWARDTYPE.gear = bit.bor(WQT_REWARDTYPE.weapon, WQT_REWARDTYPE.equipment);
 
@@ -528,7 +529,7 @@ _V["SETTING_LIST"] = {
 	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_TIME", ["label"] = _L["TIME_VERYLONG"], ["tooltip"] = _L["TIME_VERYLONG_TT"], ["defaultColor"] = _V["WQT_PURPLE_FONT_COLOR"]
 			, ["valueChangedFunc"] = UpdateColorID, ["colorID"] = "timeVeryLong",["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_TIME", ["label"] = NONE, ["tooltip"] = _L["TIME_VERYLONG_TT"], ["defaultColor"] = _V["WQT_COLOR_CURRENCY"]
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_TIME", ["label"] = NONE, ["tooltip"] = _L["TIME_NONE_TT"], ["defaultColor"] = _V["WQT_COLOR_CURRENCY"]
 			, ["valueChangedFunc"] = UpdateColorID, ["colorID"] = "timeNone",["getValueFunc"] = GetColorByID
 		},
 	-- Rewards
@@ -683,14 +684,6 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.useLFGButtons end
 			}	
-		
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["QUEST_COUNTER"], ["tooltip"] = _L["QUEST_COUNTER_TT"]
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.general.questCounter = value;
-				WQT_QuestLogFiller:UpdateVisibility();
-			end
-			,["getValueFunc"] = function() return WQT.settings.general.questCounter; end
-			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["ALWAYS_ALL"], ["tooltip"] = _L["ALWAYS_ALL_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.list.alwaysAllQuests = value;
@@ -1028,7 +1021,7 @@ _V["SORT_FUNCTIONS"] = {
 				return aType < bType;
 			elseif (aType == bType and aSubType and bSubType) then
 				return aSubType < bSubType;
-			end 
+			end
 		end
 	,["rewardQuality"] = function(a, b) 
 			local aQuality = a:GetRewardQuality();
@@ -1502,10 +1495,40 @@ _V["PATCH_NOTES"] = {
 			},
 		}
 	}
-	
-_V["LATEST_UPDATE"] = "";
-	
-function _V:GeneratePatchNotes()
-	_V["LATEST_UPDATE"] =  WQT_Utils:FormatPatchNotes(_V["PATCH_NOTES"], "World Quest Tab");
-	_DeepWipeTable(_V["PATCH_NOTES"]);
+
+local FORMAT_VERSION_MINOR = "%s|cFF888888.%s|r"
+local FORMAT_H1 = "%s<h1 align='center'>%s</h1>";
+local FORMAT_H2 = "%s<h2>%s:</h2>";
+local FORMAT_p = "%s<p>%s</p>";
+local FORMAT_WHITESPACE = "%s<h3>&#160;</h3>"
+
+local function AddNotes(updateMessage, title, notes)
+	if (not notes) then return updateMessage; end
+	if (title) then
+		updateMessage = FORMAT_H2:format(updateMessage, title);
+	end
+	for k, note in ipairs(notes) do
+		updateMessage = FORMAT_p:format(updateMessage, note);
+		updateMessage = FORMAT_WHITESPACE:format(updateMessage);
+	end
+	updateMessage = FORMAT_WHITESPACE:format(updateMessage);
+	return updateMessage;
 end
+
+local function FormatPatchNotes(notes)
+	local updateMessage = "<html><body><h3>&#160;</h3>";
+	updateMessage = FORMAT_WHITESPACE:format(updateMessage);
+	for i=1, #notes do
+		local patch = notes[i];
+		local version = patch.minor and FORMAT_VERSION_MINOR:format(patch.version, patch.minor) or patch.version;
+		updateMessage = FORMAT_H1:format(updateMessage, version);
+		updateMessage = AddNotes(updateMessage, nil, patch.intro);
+		updateMessage = AddNotes(updateMessage, "New", patch.new);
+		updateMessage = AddNotes(updateMessage, "Changes", patch.changes);
+		updateMessage = AddNotes(updateMessage, "Fixes", patch.fixes);
+	end
+	return updateMessage .. "</body></html>";
+end
+
+_V["LATEST_UPDATE"] =  FormatPatchNotes(_V["PATCH_NOTES"]);
+_DeepWipeTable(_V["PATCH_NOTES"]);

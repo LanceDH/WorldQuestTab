@@ -431,6 +431,42 @@
 			</OnHide>
 		</Scripts>
 	</Frame>
+
+	<Button Name="WQT_PanelCloseButtonTemplate" virtual="True">
+		<Size x="15" y="15" />
+		<Anchors>
+			<Anchor point="TOPRIGHT" x="19" y="25" />
+		</Anchors>
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture atlas="common-search-clearbutton" alpha="0.5" parentKey="texture" />
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad>
+				self:SetFrameLevel(self:GetParent():GetFrameLevel() + 20);
+			</OnLoad>
+			<OnClick>
+				WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Quests);
+				PlaySound(MenuVariants.GetDropdownCloseSoundKit());
+			</OnClick>
+			<OnEnter>
+				self.texture:SetAlpha(1.0);
+			</OnEnter>
+			<OnLeave>
+				self.texture:SetAlpha(0.5);
+			</OnLeave>
+			<OnMouseDown>
+				if self:IsEnabled() then
+				self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 1, -1);
+				end
+			</OnMouseDown>
+			<OnMouseUp>
+				self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 0);
+			</OnMouseUp>
+		</Scripts>
+	</Button>
+
 	
 	<Frame name="WQT_OldTaxiMapContainer" inherits="WQT_ContainerTemplate" hidden="true" parent="TaxiFrame">
 		<Anchors>
@@ -605,7 +641,7 @@
 	<!--
 		Main frame
 	-->
-	 
+
 	<Frame name="WQT_WorldQuestFrame" mixin="WQT_CoreMixin" parent="QuestMapFrame" enableMouse="true" hidden="false">
 		<Size x="286" y="0" />
 		<Anchors>
@@ -613,44 +649,95 @@
 			<Anchor point="BOTTOMRIGHT" RelativeKey="$parent.ContentsAnchor" x="-22" />
 		</Anchors>
 		<Frames>
-			<Cooldown parentKey="ProgressBar" hideCountdownNumbers="true" reverse="true">
-				<Size x="20" y="20"/>
-				<Anchors>
-					<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="2" y="8"/>
-				</Anchors>
-				<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing">
-					<Color r="1" g="0.82" b="0" a="0.7"/>
-				</SwipeTexture>
-				<Layers>
-					<Layer level="BACKGROUND">
-						<Texture parentKey="Background"  file="Interface\Addons\WorldQuestTab\Images\PoIRing" setAllPoints="true">
-							<Anchors>
-								<Anchor point="TOPLEFT"/>
-								<Anchor point="BOTTOMRIGHT"/>
-							</Anchors>
-							<Color r="0" g="0" b="0" a="0.6"/>
-						</Texture>
-					</Layer>
-				</Layers>
-			</Cooldown>
-		
-			<Frame name="WQT_ListContainer" parentKey="ScrollFrame" mixin="WQT_ScrollListMixin" enableMouse="true"  hidden="false">
+			<!-- Quest panel -->
+			<Frame name="WQT_ListContainer" parentKey="ScrollFrame" mixin="WQT_ScrollListMixin" parentArray="panels" enableMouse="true" hidden="false">
 				<Size x="286" y="0" />
 				<Anchors>
 					<Anchor point="TOPLEFT" />
 					<Anchor point="BOTTOMRIGHT" />
 				</Anchors>
+				<KeyValues>
+					<!-- <KeyValue key="panelID" type="number" value="1" /> -->
+					<KeyValue key="panelID" value="WQT_PanelID.Quests" type="global"/>
+				</KeyValues>
 				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture parentKey="Background" atlas="QuestLog-main-background"
+							useAtlasSize="true">
+							<Anchors>
+								<Anchor point="TOPLEFT" />
+								<Anchor point="BOTTOMRIGHT" />
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+				<Frames>
+					<Cooldown parentKey="ProgressBar" hideCountdownNumbers="true" reverse="true">
+						<Size x="20" y="20" />
+						<Anchors>
+							<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="2" y="8" />
+						</Anchors>
+						<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing">
+							<Color r="1" g="0.82" b="0" a="0.7" />
+						</SwipeTexture>
+						<Layers>
 							<Layer level="BACKGROUND">
-								<Texture parentKey="Background" atlas="QuestLog-main-background" useAtlasSize="true">
+								<Texture parentKey="Background" file="Interface\Addons\WorldQuestTab\Images\PoIRing" setAllPoints="true">
 									<Anchors>
 										<Anchor point="TOPLEFT" />
 										<Anchor point="BOTTOMRIGHT" />
 									</Anchors>
+									<Color r="0" g="0" b="0" a="0.6" />
 								</Texture>
 							</Layer>
 						</Layers>
-				<Frames>
+					</Cooldown>
+
+					<DropdownButton parentKey="FilterDropdown" inherits="WowStyle1FilterDropdownTemplate">
+						<KeyValues>
+							<KeyValue key="menuRelativePoint" type="string" value="TOPRIGHT" />
+							<KeyValue key="menuPointX" type="number" value="-4" />
+							<KeyValue key="menuPointY" type="number" value="1" />
+							<KeyValue key="resizeToText" type="boolean" value="false" />
+						</KeyValues>
+						<Anchors>
+							<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" x="-28" y="8" />
+						</Anchors>
+					</DropdownButton>
+
+					<DropdownButton parentKey="SortDropdown" inherits="WowStyle1DropdownTemplate">
+						<Anchors>
+							<Anchor point="RIGHT" relativeKey="$parent.FilterDropdown" relativePoint="LEFT" x="-10" y="0" />
+						</Anchors>
+					</DropdownButton>
+
+					<DropdownButton parentKey="SettingsDropdown" mixin="QuestLogSettingsButtonMixin">
+						<Size x="15" y="16" />
+						<Anchors>
+							<Anchor point="TOPRIGHT" x="19" y="25" />
+						</Anchors>
+						<Layers>
+							<Layer level="ARTWORK">
+								<Texture parentKey="Icon" atlas="questlog-icon-setting" useAtlasSize="true">
+									<Anchors>
+										<Anchor point="CENTER" />
+									</Anchors>
+								</Texture>
+							</Layer>
+							<Layer level="HIGHLIGHT">
+								<Texture atlas="questlog-icon-setting" useAtlasSize="true" inherits="QuestLogHighlightTextureTemplate">
+									<Anchors>
+										<Anchor point="CENTER" relativeKey="$parent.Icon" />
+									</Anchors>
+								</Texture>
+							</Layer>
+						</Layers>
+						<Scripts>
+							<OnMouseDown method="OnMouseDown" />
+							<OnMouseUp method="OnMouseUp" />
+						</Scripts>
+					</DropdownButton>						
+
 					<Frame parentKey="BorderFrame" inherits="QuestLogBorderFrameTemplate" />
 					<Frame parentKey="FilterBar">
 						<Size x="259" y="0.1" />
@@ -734,196 +821,96 @@
 				</Scripts>
 			</Frame>
 
-			<Frame name="WQT_OverlayFrame" parentKey="Blocker" enableMouse="true" hidden="true">
+			<!-- What's New -->
+			<Frame name="WQT_WhatsNewFrame" parentKey="WhatsNewFrame" parentArray="panels" hidden="true">
+				<Size x="286" y="0" />
 				<Anchors>
-					<Anchor point="TOPLEFT" x="2"/>
-					<Anchor point="BOTTOMRIGHT"/>
+					<Anchor point="TOPLEFT" />
+					<Anchor point="BOTTOMRIGHT" />
 				</Anchors>
+				<KeyValues>
+					<!-- <KeyValue key="panelID" type="number" value="2" /> -->
+					<KeyValue key="panelID" value="WQT_PanelID.WhatsNew" type="global"/>
+				</KeyValues>
 				<Layers>
 					<Layer level="BACKGROUND">
-						<Texture parentKey="Bg">
-							<Color r="0" g="0" b="0" a="0.5"/>
-						</Texture>
-					</Layer>
-					<Layer level="BORDER">
-						<Texture parentKey="UpdatesBG" file="Interface/Artifacts/ArtifactForge">
-							<TexCoords left="0" right="0.8984375" top="0" bottom="0.5986328125"/>
+						<Texture parentKey="Background" file="interface\professions\professionsminimizedview">
+							<TexCoords top="0.0009765625" right="0.787109375" bottom="0.533" left="0.001953125"/>
+							<Anchors>
+								<Anchor point="TOPLEFT" />
+								<Anchor point="BOTTOMRIGHT" />
+							</Anchors>
 						</Texture>
 					</Layer>
 				</Layers>
-				<Frames>
-					<Button parentKey="CloseButton" hidden="false">
-						<Size x="20" y="20"/>
+				<frames>
+					<Frame parentKey="BorderFrame" inherits="QuestLogBorderFrameTemplate" />
+
+					<Frame parentKey="ScrollBox" inherits="WowScrollBox" frameStrata="HIGH">
 						<Anchors>
-							<Anchor point="TOPRIGHT" relativePoint="TOPRIGHT" x="-2" y="-4"/>
+							<Anchor point="TOPLEFT" />
+							<Anchor point="BOTTOMRIGHT" />
 						</Anchors>
-						<Layers>
-							<Layer level="ARTWORK">
-								<Texture file="Interface\FriendsFrame\ClearBroadcastIcon" alpha="0.5" parentKey="texture">
-									<TexCoords right="0.9" bottom="0.9" />
-								</Texture>
-							</Layer>
-						</Layers>
-						<Scripts>
-							<OnLoad>
-								self:SetFrameLevel(self:GetParent():GetFrameLevel() + 20);
-							</OnLoad>
-							<OnClick>
-								WQT_WorldQuestFrame:HideOverlayFrame();
-							</OnClick>
-							<OnEnter>
-								self.texture:SetAlpha(1.0);
-							</OnEnter>
-							<OnLeave>
-								self.texture:SetAlpha(0.5);
-							</OnLeave>
-							<OnMouseDown>
-								if self:IsEnabled() then
-									self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 1, -1);
-								end
-							</OnMouseDown>
-							<OnMouseUp>
-								self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 0);
-							</OnMouseUp>
-						</Scripts>
-					</Button>
-				</Frames>
-			</Frame>
+						<KeyValues>
+							<KeyValue key="wheelPanScalar" type="number" value="0.1" />
+						</KeyValues>
+						<Frames>
+							<Frame parentKey="ScrollContent">
+								<Size x="268" y="400" />
+								<KeyValues>
+									<KeyValue key="scrollable" value="true" type="boolean" />
+								</KeyValues>
+								<Frames>
+									<SimpleHTML parentKey="Text">
+										<Size x="268" y="400" />
+										<Anchors>
+											<Anchor point="TOPLEFT" x="20" />
+											<Anchor point="BOTTOMRIGHT" x="-20" />
+										</Anchors>
+										<FontString inherits="GameFontNormal" spacing="2" wordwrap="true" />
+										<FontStringHeader1 inherits="Fancy24Font" spacing="5" />
+										<FontStringHeader2 inherits="Fancy16Font" spacing="4" />
+										<FontStringHeader3 inherits="GameFontNormalTiny" spacing="0" />
 
-			<DropdownButton parentKey="FilterDropdown" inherits="WowStyle1FilterDropdownTemplate">
-				<KeyValues>
-					<KeyValue key="menuRelativePoint" type="string" value="TOPRIGHT"/>
-					<KeyValue key="menuPointX" type="number" value="-4"/>
-					<KeyValue key="menuPointY" type="number" value="1"/>
-					<KeyValue key="resizeToText" type="boolean" value="false"/>
-				</KeyValues>
-				<Anchors>
-					<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" x="-28" y="8"/>
-				</Anchors>
-			</DropdownButton>
+									</SimpleHTML>
+								</Frames>
+								<Scripts>
+									<OnLoad>
+										<!-- Hate it. -->
+										self:SetWidth(WQT_WhatsNewFrame:GetWidth());
+									</OnLoad>
+								</Scripts>
+							</Frame>
 
-			<DropdownButton parentKey="SortDropdown" inherits="WowStyle1DropdownTemplate">
-				<Anchors>
-					<Anchor point="RIGHT" relativeKey="$parent.FilterDropdown" relativePoint="LEFT" x="-10" y="0"/>
-				</Anchors>
-			</DropdownButton>
+						</Frames>
+					</Frame>
+					<EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">
+						<Anchors>
+							<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="8" y="2"/>
+							<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="8" y="-4"/>
+						</Anchors>
+					</EventFrame>
 
-			<DropdownButton parentKey="SettingsDropdown" mixin="QuestLogSettingsButtonMixin">
-				<Size x="15" y="16" />
-				<Anchors>
-					<Anchor point="TOPRIGHT" x="19" y="25" />
-				</Anchors>
+					<Button parentKey="CloseButton" inherits="WQT_PanelCloseButtonTemplate"/>
+				</frames>
 				<Layers>
 					<Layer level="ARTWORK">
-						<Texture parentKey="Icon" atlas="questlog-icon-setting" useAtlasSize="true">
+						<FontString parentKey="TitleText" inherits="Game15Font_Shadow" wordwrap="false" text="MAP_LEGEND_FRAME_LABEL">
 							<Anchors>
-								<Anchor point="CENTER" />
+								<Anchor point="BOTTOM" relativeKey="$parent.BorderFrame" relativePoint="TOP" x="-1" y="3" />
 							</Anchors>
-						</Texture>
-					</Layer>
-					<Layer level="HIGHLIGHT">
-						<Texture atlas="questlog-icon-setting" useAtlasSize="true"
-							inherits="QuestLogHighlightTextureTemplate">
-							<Anchors>
-								<Anchor point="CENTER" relativeKey="$parent.Icon" />
-							</Anchors>
-						</Texture>
+						</FontString>
 					</Layer>
 				</Layers>
-				<Scripts>
-					<OnMouseDown method="OnMouseDown" />
-					<OnMouseUp method="OnMouseUp" />
-				</Scripts>
-			</DropdownButton>						
+			</Frame>
+
+			<!-- Settings frame in Settings.lua -->
 		</Frames>
 		<Scripts>
 			<OnLoad method="OnLoad"/>
 		</Scripts>
 	</Frame>
 	
-	<Frame name="WQT_QuestLogFiller" mixin="WQT_QuestCounterMixin" hidden="true" parent="QuestMapFrame" flattenRenderLayers="true">
-		<Size x="60" y="22"/>
-		<Anchors>
-			<Anchor point="BOTTOM" relativeTo="QuestMapFrame" relativePoint="TOP" x="20" y="50"/>
-		</Anchors>
-		<Layers>
-		
-			<Layer level="BACKGROUND">
-				<Texture parentKey="BoxLeft" file="Interface\AUCTIONFRAME\UI-AuctionFrame-ItemSlot">
-					<Size x="33" y="25"/>
-					<Anchors>
-						<Anchor point="BOTTOMLEFT" x="-2" />
-					</Anchors>
-					<TexCoords left="0.32421875" right="0.48046875" top="0.15625" bottom="0.84375"/>
-				</Texture>
-				<Texture parentKey="BoxRight" file="Interface\AUCTIONFRAME\UI-AuctionFrame-ItemSlot">
-					<Size x="33" y="25"/>
-					<Anchors>
-						<Anchor point="LEFT" relativeKey="$parent.BoxLeft" relativePoint="RIGHT"/>
-					</Anchors>
-					<TexCoords left="0.6796875" right="0.83984375" top="0.15625" bottom="0.84375"/>
-				</Texture>
-			</Layer>
-			<Layer level="BACKGROUND" textureSubLevel="-1">
-				<Texture parentKey="BoxBG">
-					<Size x="40" y="30"/>
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.BoxLeft" x="1" y="-1"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BoxRight" x="-2" y="1"/>
-					</Anchors>
-					<Color r="0" g="0" b="0" a=".5" />
-				</Texture>
-			</Layer>
-			<Layer level="ARTWORK">
-				<Texture parentKey="DecorLeft" file="Interface\ItemSocketingFrame\UI-ItemSockets" desaturated="true">
-					<Size x="35" y="27"/>
-					<Anchors>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BoxLeft" relativePoint="BOTTOMLEFT" x="6" y="-2"/>
-					</Anchors>
-					<TexCoords left="0" right="0.28515625" top="0" bottom="0.21484375"/>
-					
-					<Color r="0.85" g="0.75" b="0.7" />
-				</Texture>
-				<Texture parentKey="DecorRight" file="Interface\ItemSocketingFrame\UI-ItemSockets" desaturated="true">
-					<Size x="35" y="27"/>
-					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BoxRight" relativePoint="BOTTOMRIGHT" x="-6" y="-2"/>
-					</Anchors>
-					<TexCoords left="0.28515625" right="0.565" top="0" bottom="0.21484375"/>
-					<Color r="0.85" g="0.75" b="0.7" />
-				</Texture>
-				
-				<FontString inherits="GameFontNormalMed3" justifyV="MIDDLE" justifyH="CENTER" parentKey="QuestCount" text="00/00">
-					<Size x="80" y="25"/>
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.BoxLeft"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BoxRight"/>
-					</Anchors>
-					<Color r="1" g="1" b="1"/>
-				</FontString>
-
-				<Texture parentKey="DecorRight2" file="Interface\ItemSocketingFrame\UI-ItemSockets" desaturated="true">
-					<Size x="35" y="27"/>
-					<Anchors>
-						<Anchor point="BOTTOMRIGHT" relativeTo="QuestMapFrame" relativePoint="TOPRIGHT" x="5" y="3"/>
-					</Anchors>
-					<TexCoords left="0" right="0.28515625" top="0.21484375" bottom="0.39453125"/>
-					<Color r="0.85" g="0.75" b="0.7" />
-				</Texture>
-			</Layer>
-		</Layers>
-		
-		<Scripts>
-			<OnLoad method="OnLoad"/>
-			<OnEnter>
-				self:InfoOnEnter(self);
-			</OnEnter>
-			<OnLeave>
-				GameTooltip:Hide();
-			</OnLeave>
-		</Scripts>
-	</Frame>
-
 	<Frame name="WQT_PoISelectIndicator" inherits="WQT_PoISelectTemplate" />
 
 	<!-- This exists for tooltip scanning -->
@@ -1119,79 +1106,7 @@
 		</Scripts>
 	</Button>
 
-	<ScrollFrame name="WQT_VersionFrame" parent="WQT_OverlayFrame" parentKey="ScrollFrame" hidden="true" inherits="HybridScrollFrameTemplate">
-		<Anchors>
-			<Anchor point="TOPLEFT" x="10" y="-3"/>
-			<Anchor point="BOTTOMRIGHT" x="-18" y="3"/>
-		</Anchors>
-		<Frames>
-			<Slider parentKey="scrollBar">	
-				<Size x="4"/>
-				<HitRectInsets left="-5" right="-4" />
-				<Anchors>
-					<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="5" y="-27"/>
-					<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="5" y="0"/>
-				</Anchors>
-				<Layers>
-					<Layer level="BACKGROUND">
-						<Texture name="$parentTrack" parentKey="trackBG">
-							<Anchors>
-								<Anchor point="TOPLEFT" x="0" y="0"/>
-								<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
-							</Anchors>
-							<Color r="0" g="0" b="0" a="1"/>
-						</Texture>
-					</Layer>
-				</Layers>
-				<ThumbTexture name="$parentThumbTexture" inherits="HybridScrollBarButton" file="Interface\Buttons\UI-ScrollBar-Knob" parentKey="thumbTexture">
-					<Size x="18" y="24"/>
-					<TexCoords left="0.20" right="0.80" top="0.125" bottom="0.875"/>
-				</ThumbTexture>
-				<Scripts>
-					<OnValueChanged>
-						local parent = self:GetParent();
-						parent.offset = value;
-						self:GetParent().Text:SetPoint("TOPLEFT", 0, parent.offset);
-					</OnValueChanged>
-					<OnMouseWheel>
-						local parent = self:GetParent();
-						local change = delta*30;
-						parent.offset = parent.offset - change;
-						parent.offset = max(0, parent.offset);
-						parent.offset = min(parent.offset, parent.limit);
-						
-						parent.scrollBar:SetValue(parent.offset);
-					</OnMouseWheel>
-				</Scripts>
-			</Slider>
-		</Frames>
-		<ScrollChild>
-			<SimpleHTML parentKey="Text">
-				<Size x="250" y="400" />
-				<FontString inherits="GameFontNormal" spacing="2" wordwrap="true"/>
-				<FontStringHeader1 inherits="Fancy24Font" spacing="5"/>
-				<FontStringHeader2 inherits="Fancy16Font" spacing="4"/>
-				<FontStringHeader3 inherits="GameFontNormalTiny" spacing="0"/>
-			</SimpleHTML>
-		</ScrollChild>
-		<Scripts>
-			<OnLoad>
-				self.offset = 0;
-				self.limit = max(0, self.Text:GetHeight() - self:GetHeight());
-				self.scrollBar.doNotHide = true;
-				self.scrollBar:SetMinMaxValues(0, self.limit)
-				self.scrollBar:SetValue(0);
-			</OnLoad>
-			<OnMouseWheel>
-				local change = delta*30;
-				self.offset = self.offset - change;
-				self.offset = max(0, self.offset);
-				self.offset = min(self.offset, self.limit);
-				
-				self.scrollBar:SetValue(self.offset);
-			</OnMouseWheel>
-		</Scripts>
-	</ScrollFrame>
+	
 	
 	
  </Ui>

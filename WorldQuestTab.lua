@@ -79,6 +79,8 @@ local _utilitiesInstalled = not utilitiesStatus or utilitiesStatus ~= "MISSING";
 
 local _WFMLoaded = C_AddOns.IsAddOnLoaded("WorldFlightMap");
 
+WQT_PanelID = EnumUtil.MakeEnum("Quests", "WhatsNew", "Settings");
+
 -- Custom number abbreviation to fit inside reward icons in the list.
 local function GetLocalizedAbbreviatedNumber(number)
 	if type(number) ~= "number" then return "NaN" end;
@@ -340,27 +342,15 @@ local function SettingsDropdownSetup(dropdown, rootDescription)
 	rootDescription:SetTag("WQT_SETTINGS_DROPDOWN");
 	-- Settings
 	rootDescription:CreateButton(SETTINGS, function()
-				WQT_WorldQuestFrame:ShowOverlayFrame(WQT_SettingsFrame);
+				WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Settings);
 			end);
 	
 	-- What's new
 	local newLabel = WQT.db.global.updateSeen and "" or "|TInterface\\FriendsFrame\\InformationIcon:14|t ";
 	newLabel = newLabel .. _L["WHATS_NEW"];
 	rootDescription:CreateButton(newLabel, function()
-						local scrollFrame = WQT_VersionFrame;
-						local blockerText = scrollFrame.Text;
-						
-						blockerText:SetText(_V["LATEST_UPDATE"]);
-						blockerText:SetHeight(blockerText:GetContentHeight());
-						scrollFrame.limit = max(0, blockerText:GetHeight() - scrollFrame:GetHeight());
-						scrollFrame.scrollBar:SetMinMaxValues(0, scrollFrame.limit)
-						scrollFrame.scrollBar:SetValue(0);
-						
-						WQT.db.global.updateSeen = true;
-						
-						WQT_WorldQuestFrame:ShowOverlayFrame(scrollFrame, 10, -18, -3, 3);
-						
-					end);
+				WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.WhatsNew);
+			end);
 end
 
 local function IsSortSelected(sortID)
@@ -803,8 +793,6 @@ function WQT:OnInitialize()
 		WQT.db.global.updateSeen = false;
 		WQT.db.global.versionCheck  = currentVersion;
 	end
-	
-	_V:GeneratePatchNotes();
 end
 
 function WQT:OnEnable()
@@ -850,9 +838,7 @@ function WQT:OnEnable()
 	end
 	WQT_WorldQuestFrame.tabBeforeAnchor = WQT_WorldQuestFrame.selectedTab;
 	
-	-- Show quest log counter
-	WQT_QuestLogFiller:UpdateVisibility();
-	
+
 	-- Add LFG buttons to objective tracker
 	if self.settings.general.useLFGButtons then
 		WQT_WorldQuestFrame.LFGButtonPool = CreateFramePool("BUTTON", nil, "WQT_LFGEyeButtonTemplate");
@@ -881,6 +867,27 @@ function WQT:OnEnable()
 				end
 			end);
 	end
+
+
+	
+	-- Quest list scroll
+	local view = CreateScrollBoxListLinearView();
+	view:SetElementInitializer("WQT_QuestTemplate", function(button, elementData)
+		InitQuestButton(button, elementData);
+	end);
+	ScrollUtil.InitScrollBoxListWithScrollBar(WQT_ListContainer.QuestScrollBox, WQT_ListContainer.ScrollBar, view);
+
+	-- What's New Frame
+	WQT_WhatsNewFrame.TitleText:SetText(_L["WHATS_NEW"]);
+
+	ScrollUtil.InitScrollBoxWithScrollBar(WQT_WhatsNewFrame.ScrollBox, WQT_WhatsNewFrame.ScrollBar, CreateScrollBoxLinearView());
+
+	local whatsNewContent = WQT_WhatsNewFrame.ScrollBox.ScrollContent;
+	whatsNewContent.Text:SetText(_V["LATEST_UPDATE"]);
+	whatsNewContent.Text:SetHeight(whatsNewContent.Text:GetContentHeight());
+	whatsNewContent:SetHeight(whatsNewContent.Text:GetContentHeight());
+	WQT_WhatsNewFrame.ScrollBox:FullUpdate(ScrollBoxConstants.UpdateImmediately);
+
 	
 	-- Load settings
 	WQT_SettingsFrame:Init(_V["SETTING_CATEGORIES"], _V["SETTING_LIST"]);
@@ -907,24 +914,19 @@ function WQT:OnEnable()
 	-- We need to do this after settings are available now
 
 	-- Sorting
-	WQT_WorldQuestFrame.SortDropdown:SetWidth(150);
-	WQT_WorldQuestFrame.SortDropdown:SetupMenu(SortDropdownSetup);
+	WQT_ListContainer.SortDropdown:SetWidth(150);
+	WQT_ListContainer.SortDropdown:SetupMenu(SortDropdownSetup);
 
 	-- Filter
-	WQT_WorldQuestFrame.FilterDropdown:SetWidth(90);
-	WQT_WorldQuestFrame.FilterDropdown.Text:SetPoint("TOP", 0, 1);
-	WQT_WorldQuestFrame.FilterDropdown:SetupMenu(FilterDropdownSetup);
+	WQT_ListContainer.FilterDropdown:SetWidth(90);
+	WQT_ListContainer.FilterDropdown.Text:SetPoint("TOP", 0, 1);
+	WQT_ListContainer.FilterDropdown:SetupMenu(FilterDropdownSetup);
 
 	-- Settings
-	WQT_WorldQuestFrame.SettingsDropdown:SetupMenu(SettingsDropdownSetup);
+	WQT_ListContainer.SettingsDropdown:SetupMenu(SettingsDropdownSetup);
 
+	
 
-	-- Quest list scroll
-	local view = CreateScrollBoxListLinearView();
-	view:SetElementInitializer("WQT_QuestTemplate", function(button, elementData)
-		InitQuestButton(button, elementData);
-	end);
-	ScrollUtil.InitScrollBoxListWithScrollBar(WQT_ListContainer.QuestScrollBox, WQT_ListContainer.ScrollBar, view);
 
 	self.isEnabled = true;
 end
@@ -1325,6 +1327,16 @@ WQT_ScrollListMixin = {};
 function WQT_ScrollListMixin:OnLoad()
 	self.questList = {};
 	self.questListDisplay = {};
+
+	EventRegistry:RegisterCallback(
+		"WQT.DataProvider.ProgressUpdated"
+		,function(_, progress)
+				CooldownFrame_SetDisplayAsPercentage(self.ProgressBar, progress);
+				if (progress == 0 or progress == 1) then
+					self.ProgressBar:Hide();
+				end
+			end
+		, self);
 	-- self.scrollBar.trackBG:Hide();
 	-- self.scrollBar.doNotHide = true;
 	-- self.update = function() self:DisplayQuestList() end;
@@ -1518,55 +1530,6 @@ function WQT_ScrollListMixin:ScrollFrameSetEnabled(enabled)
 end
 
 ------------------------------------------
--- 			QUESTCOUNTER MIXIN			--
-------------------------------------------
---
--- OnLoad()
--- InfoOnEnter(frame)
--- UpdateText()
-
-WQT_QuestCounterMixin = {}
-
-function WQT_QuestCounterMixin:OnLoad()
-	self:SetFrameLevel(self:GetParent():GetFrameLevel() +5);
-	self.falseCounted = {};
-	self.numQuests = 0
-end
-
--- Entering the hidden quests indicator
-function WQT_QuestCounterMixin:InfoOnEnter(frame)
-	GameTooltip:SetOwner(frame, "ANCHOR_RIGHT");
-	GameTooltip:SetText(_L["QUEST_COUNTER_TITLE"], 1, 1, 1, 1, true);
-	GameTooltip:AddLine(_L["QUEST_COUNTER_INFO"]:format(#self.falseCounted), nil, nil, nil, true);
-	
-	local _, questCount = C_QuestLog.GetNumQuestLogEntries();
-	GameTooltip:AddDoubleLine("API - Addon = Displayed", ("|cFFFFFFFF%d - %d = %d|r"):format(questCount , #self.falseCounted, self.numQuests), 1, 1, 1, 1, 1, 1, true);
-	--GameTooltip:AddLine(, nil, nil, nil, true);
-	
-	-- Add culprits
-	for k, i in ipairs(self.falseCounted) do
-		local info = C_QuestLog.GetInfo(i);
-		local tagInfo = C_QuestLog.GetQuestTagInfo(info.questID);
-		GameTooltip:AddDoubleLine(string.format("%s (%s)", info.title, info.questID), tagInfo and tagInfo.tagName or "No tag", 1, 1, 1, 1, 1, 1, true);
-	end
-	
-	GameTooltip:Show();
-end
-
-function WQT_QuestCounterMixin:UpdateText()
-	local numQuests, maxQuests, color = WQT_Utils:GetQuestLogInfo(self.falseCounted);
-	self.QuestCount:SetText(GENERIC_FRACTION_STRING_WITH_SPACING:format(numQuests, maxQuests));
-	self.QuestCount:SetTextColor(color.r, color.g, color.b);
-	
-	self.numQuests = numQuests;
-end
-
-function WQT_QuestCounterMixin:UpdateVisibility()
-	-- local shouldShow = WQT.settings.general.questCounter and QuestScrollFrame:IsShown();
-	-- self:SetShown(shouldShow);
-end
-
-------------------------------------------
 -- 		CONSTRAINED CHILD MIXIN		--
 ------------------------------------------
 -- 
@@ -1714,7 +1677,6 @@ end
 -- SearchGroup(questInfo)
 -- ShouldAllowLFG(questInfo)
 -- SetCvarValue(flagKey, value)
--- SetCustomEnabled(value)
 -- SelectTab(tab)		1. Default questlog  2. WQT  3. Quest details
 -- ChangeAnchorLocation(anchor)		Show list on a different container using _V["LIST_ANCHOR_TYPE"] variable
 -- :<event> -> ADDON_LOADED, PLAYER_REGEN_DISABLED, PLAYER_REGEN_ENABLED, QUEST_TURNED_IN, PVP_TIMER_UPDATE, WORLD_QUEST_COMPLETED_BY_SPELL, QUEST_LOG_UPDATE, QUEST_WATCH_LIST_CHANGED
@@ -1811,6 +1773,7 @@ function WQT_CoreMixin:QuestMapChangedTab(displayMode)
 		WQT_QuestMapTab.Icon:SetPoint("CENTER", -2, 0);
 		WQT_QuestMapTab.Icon:SetAlpha(1);
 		PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB);
+		self:ChangePanel(WQT_PanelID.Quests);
 		self:Show();
 	else
 		self:Hide();
@@ -1840,8 +1803,7 @@ function WQT_CoreMixin:OnLoad()
 	self.bountyCounterPool = CreateFramePool("FRAME", self, "WQT_BountyCounterTemplate");
 	
 	self:SetFrameLevel(self:GetParent():GetFrameLevel()+4);
-	self.Blocker:SetFrameLevel(self:GetFrameLevel()+4);
-	
+
 	-- Hide the little detail at the top of the frame, it blocks our view. Thanks for making that a separate texture
 	WQT_ListContainer.BorderFrame.TopDetail:Hide();
 
@@ -1849,18 +1811,6 @@ function WQT_CoreMixin:OnLoad()
 		"WQT.DataProvider.QuestsLoaded"
 		,function()
 				self.ScrollFrame:UpdateQuestList(); 
-				-- Update the quest number counter
-				WQT_QuestLogFiller:UpdateText();
-			end
-		, self);
-	
-	EventRegistry:RegisterCallback(
-		"WQT.DataProvider.ProgressUpdated"
-		,function(_, progress)
-				CooldownFrame_SetDisplayAsPercentage(self.ProgressBar, progress);
-				if (progress == 0 or progress == 1) then
-					self.ProgressBar:Hide();
-				end
 			end
 		, self);
 
@@ -1925,25 +1875,8 @@ function WQT_CoreMixin:OnLoad()
 		end)
 
 	-- Wipe data when hiding map
-	WorldMapFrame:HookScript("OnHide", function() 
-			self:HideOverlayFrame()
-			wipe(WQT_ListContainer.questListDisplay);
-			self.dataProvider:ClearData();
-		end)
-
-	-- Fix tabs when official quests are shown
-	QuestScrollFrame:SetScript("OnShow", function() 
-			--ElvUI fix
-			if (QuestMapFrame.DetailsFrame:IsShown()) then
-				--self:SelectTab(WQT_TabDetails); 
-				return;
-			end
-			
-			if (self.selectedTab and self.selectedTab:GetID() == 2) then
-				--self:SelectTab(WQT_TabWorld); 
-			else
-				--self:SelectTab(WQT_TabNormal); 
-			end
+	WorldMapFrame:HookScript("OnHide", function()
+			WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Quests);
 		end)
 		
 	-- Re-anchor list when maxi/minimizing world map
@@ -2374,79 +2307,10 @@ function WQT_CoreMixin:SetCvarValue(flagKey, value)
 	return false;
 end
 
--- Show a frame over the world quest list
-function WQT_CoreMixin:ShowOverlayFrame(frame, offsetLeft, offsetRight, offsetTop, offsetBottom)
-	if (not frame) then return end
-	offsetLeft = offsetLeft or 0;
-	offsetRight = offsetRight or 0;
-	offsetTop = offsetTop or 0;
-	offsetBottom = offsetBottom or 0;
-
-	local blocker = self.Blocker;
-	-- Hide the previous frame if any
-	if (blocker.CurrentOverlayFrame) then
-		self:HideOverlayFrame();
+function WQT_CoreMixin:ChangePanel(panelID)
+	for k, panel in ipairs(self.panels) do
+		panel:SetShown(panel.panelID == panelID);
 	end
-	blocker.CurrentOverlayFrame = frame;
-	
-	blocker:Show();
-	self:SetCustomEnabled(false);
-	
-	frame:SetParent(blocker);
-	frame:ClearAllPoints();
-	frame:SetPoint("TOPLEFT", blocker, offsetLeft, offsetTop);
-	frame:SetPoint("BOTTOMRIGHT", blocker, offsetRight, offsetBottom);
-	frame:SetFrameLevel(blocker:GetFrameLevel()+1)
-	frame:SetFrameStrata(blocker:GetFrameStrata())
-	frame:Show();
-	
-	self.manualCloseOverlay = true;
-	
-	-- Hide quest and filter to prevent bleeding through when walking around
-	WQT_ListContainer:Hide();
-	WQT_ListContainer.FilterBar:Hide();
-end
-
-function WQT_CoreMixin:HideOverlayFrame()
-	local blocker = self.Blocker;
-	if (not blocker.CurrentOverlayFrame) then return end
-	self:SetCustomEnabled(true);
-	blocker:Hide();
-	blocker.CurrentOverlayFrame:Hide();
-	
-	blocker.CurrentOverlayFrame = nil;
-	
-	-- Show everything again
-	WQT_ListContainer:Show();
-	WQT_ListContainer.FilterBar:Show();
-end
-
--- Enable/Disable all world quest list functionality
-function WQT_CoreMixin:SetCustomEnabled(value)
-	value = value==nil and true or value;
-	
-	self:EnableMouse(value);
-	self:EnableMouseWheel(value);
-	-- WQT_ListContainer:EnableMouseWheel(value);
-	-- WQT_ListContainer:EnableMouse(value);
-	-- WQT_ListContainer.scrollBar:EnableMouseWheel(value);
-	-- WQT_ListContainer.scrollBar:EnableMouse(value);
-	-- WQT_ListContainerScrollChild:EnableMouseWheel(value);
-	-- WQT_ListContainerScrollChild:EnableMouse(value);
-	-- if value then
-	-- 	self.FilterButton:Enable();
-	-- 	self.sortButton:Enable();
-	-- 	self.SettingsButton:Enable();
-	-- 	self.SettingsButton.darken:SetAlpha(0.15);
-	-- else
-	-- 	self.FilterButton:Disable();
-	-- 	self.sortButton:Disable();
-	-- 	self.SettingsButton:Disable();
-	-- 	self.SettingsButton.darken:SetAlpha(0.35);
-	-- end
-
-	self.ScrollFrame:SetButtonsEnabled(value);
-	self.ScrollFrame:EnableMouseWheel(value);
 end
 
 function WQT_CoreMixin:SelectTab(tab)
@@ -2454,58 +2318,6 @@ function WQT_CoreMixin:SelectTab(tab)
 	if(id == QuestLogDisplayMode.WQT) then
 		QuestMapFrame:SetDisplayMode(QuestLogDisplayMode.WQT);
 	end
-
-if true then return end
---[[
-	
-	if self.selectedTab ~= tab then
-		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-		WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
-	end
-	self.selectedTab = tab;
-	
-	--WQT_TabNormal:Show();
-	--WQT_TabWorld:Show();
-	--WQT_TabNormal:SetFrameLevel(2);
-	--WQT_TabWorld:SetFrameLevel(2);
-	--WQT_TabNormal.Hider:Show();
-	--WQT_TabWorld.Hider:Show();
-
-	-- Hide/show when quest details are shown
-	QuestMapFrame_UpdateQuestSessionState(QuestMapFrame);
-	self:HideOverlayFrame();
-
-	if (not QuestScrollFrame.Contents:IsShown() and not QuestMapFrame.DetailsFrame:IsShown()) or id == 1 then
-		-- Default questlog
-		self:Hide();
-		--WQT_TabNormal:SetFrameLevel(10);
-		--WQT_TabNormal.Hider:Hide();
-		--WQT_TabNormal.Highlight:Show();
-		--WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
-		--WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
-		--QuestScrollFrame:Show();
-	elseif id == 2 then
-		-- WQT
-		WQT_TabWorld:SetFrameLevel(10);
-		WQT_TabWorld.Hider:Hide();
-		WQT_TabWorld.Highlight:Show();
-		self:Show();
-		WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
-		WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
-		QuestScrollFrame:Hide();
-		-- Prevent the party sync block from showing through the quest list. 
-		QuestMapFrame.QuestSessionManagement:Hide();
-	elseif id == 3 then
-		-- Quest details
-		self:Hide();
-		WQT_TabNormal:Hide();
-		WQT_TabWorld:Hide()
-		QuestScrollFrame:Hide();
-		QuestMapFrame.DetailsFrame:Show();
-	end
-	
-	WQT_QuestLogFiller:UpdateVisibility();
-	]]--
 end
 
 function WQT_CoreMixin:ChangeAnchorLocation(anchor)
@@ -2528,11 +2340,6 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	local xOffset = 3;
 	local yOffset = 5;
 	local tab = WQT_TabWorld;
-
-	-- WQT_WorldQuestFrame:ClearAllPoints(); 
-	-- WQT_WorldQuestFrame:SetPoint("TOPLEFT", parent.ContentsAnchor, "TOPLEFT", 0, -29);
-	-- WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", parent.ContentsAnchor, "BOTTOMRIGHT", -22, 0);
-	-- WQT_WorldQuestFrame:SetParent(parent);
 
 
 	WQT_WorldMapContainer:Hide();

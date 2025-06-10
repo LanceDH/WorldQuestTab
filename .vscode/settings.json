@@ -175,6 +175,10 @@
         "WORLD_QUEST_REWARD_FILTERS_ANIMA",
         "FlagsUtil",
         "WQT_SettingsCheckboxMixin",
-        "WARDROBE_TRANSMOGRIFY_AS"
+        "WARDROBE_TRANSMOGRIFY_AS",
+        "CreateScrollBoxLinearView",
+        "EnumUtil",
+        "EventUtil",
+        "MinimalSliderWithSteppersMixin"
     ]
 }

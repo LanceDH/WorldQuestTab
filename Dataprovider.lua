@@ -645,12 +645,14 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 	
 	if (not zoneID) then return end;
 
+	-- No update while invisible
 	if (not WorldMapFrame:IsShown()) then
-		print("No update while invisible");
 		return;
 	end
 
-	if(self.zoneLoading.startTimestamp > 0) then print("Interrupt") end
+	if(self.zoneLoading.startTimestamp > 0) then 
+		WQT:debugPrint("Interrupt");
+	end
 
 	
 	self.zoneLoading.startTimestamp = GetTimePreciseSec();

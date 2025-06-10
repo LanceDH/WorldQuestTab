@@ -5,59 +5,51 @@
 	<Script file="Settings.lua"/>
 
 	<Button name="WQT_SettingCategoryTemplate" mixin="WQT_SettingsCategoryMixin" virtual="true">
-		<Size y="40"/>	
+		<Size y="34"/>	
 		<Layers>
-			<Layer level="BORDER">
-				<Texture parentKey="BGLeft" atlas="PetJournal-BattleSlotTitle-Left" useAtlasSize="true" desaturated="true">
+			<Layer level="BACKGROUND">
+				<Texture parentKey="BGLeft" atlas="Options_ListExpand_Left" useAtlasSize="true">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="3"/>
+						<Anchor point="TOPLEFT" x="10" y="-2"/>
 					</Anchors>
-					<Color r="0.75" g="0.75" b="0.75"/>
 				</Texture>
-				<Texture parentKey="BGRight" atlas="PetJournal-BattleSlotTitle-Right" useAtlasSize="true" desaturated="true">
+				<Texture parentKey="BGRight" atlas="Options_ListExpand_Right" useAtlasSize="true">
 					<Anchors>
-						<Anchor point="TOPRIGHT" x="0"/>
+						<Anchor point="TOPRIGHT" x="-10" y="-2"/>
 					</Anchors>
-					<Color r="0.75" g="0.75" b="0.75"/>
 				</Texture>
-				<Texture parentKey="BGMiddle" atlas="_BattleSlotTitle-Mid" horizTile="true" desaturated="true">
+				<Texture parentKey="BGMiddle" atlas="_Options_ListExpand_Middle" horizTile="true">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.BGLeft" relativePoint="TOPRIGHT"/>
 						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BGRight" relativePoint="BOTTOMLEFT"/>
 					</Anchors>
-					<Color r="0.75" g="0.75" b="0.75"/>
-				</Texture>
-			</Layer>
-			<Layer level="BACKGROUND">
-				<Texture parentKey="BGLeft" atlas="_BattleSlotTitle-BG" horizTile="true" desaturated="true">
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.BGLeft" x="30" y="-7"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BGRight" x="-30" y="7"/>
-					</Anchors>
-					<Color r="0.75" g="0.75" b="0.75"/>
 				</Texture>
 			</Layer>
 			
 			<Layer level="ARTWORK">
 				<FontString parentKey="Title" inherits="GameFontHighlight" maxLines="1" justifyH="CENTER" text="testing">
 					<Anchors>
-						<Anchor point="LEFT" relativeKey="$parent.BGMiddle" x="15" y="1"/>
-						<Anchor point="RIGHT" relativeKey="$parent.BGMiddle" x="-15" y="1"/>
+						<Anchor point="LEFT" x="30" y="2"/>
+						<Anchor point="RIGHT" x="-30" y="2"/>
 					</Anchors>
 				</FontString>
-				<Texture parentKey="ExpandIcon" atlas="friendslist-categorybutton-arrow-right" useAtlasSize="true" desaturated="true">
-					<Anchors>
-						<Anchor point="CENTER" relativeKey="$parent.BGMiddle" relativePoint="LEFT" x="10" y="-1"/>
-					</Anchors>
-				</Texture>
-				
 			</Layer>
 			
 			<Layer level="HIGHLIGHT">
-				<Texture parentKey="Highlight" atlas="groupfinder-highlightbar-blue" alphaMode="ADD">
+				<Texture parentKey="HighlightLeft" atlas="Section_Expand_glowing_Left" useAtlasSize="true">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.BGLeft" x="0" y="-1"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BGRight" x="-30" y="8"/>
+						<Anchor point="TOPLEFT" x="10" y="-2"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="HighlightRight" atlas="Section_Expand_glowing_right" useAtlasSize="true">
+					<Anchors>
+						<Anchor point="TOPRIGHT" x="-10" y="-2"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="HighlightMiddle" atlas="Section_Expand_glowing_middle" horizTile="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.HighlightLeft" relativePoint="TOPRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.HighlightRight" relativePoint="BOTTOMLEFT"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -71,38 +63,37 @@
 	</Button>
 	
 	<Button name="WQT_SettingSubCategoryTemplate" mixin="WQT_SettingsCategoryMixin" virtual="true">
-		<Size y="30"/>	
+		<Size y="34"/>	
 		<KeyValues>
 			<KeyValue key="staticLabelFont" value="true" type="boolean"/>
 		</KeyValues>
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="Background" file="Interface\ACHIEVEMENTFRAME\UI-Achievement-RecentHeader" desaturated="true" alpha="0.75">
+				<Texture parentKey="Background" atlas="UI-Frame-Mechagon-DisableSubtitle" useAtlasSize="true" alpha="0.5">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="15" y="-5"/>
-						<Anchor point="BOTTOMRIGHT" x="-20" y="5"/>
+						<Anchor point="TOPLEFT" x="15" y="-6"/>
+						<Anchor point="BOTTOMRIGHT" x="-15" y="6"/>
 					</Anchors>
-					<TexCoords bottom="0.75"/>
 				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
 				<FontString parentKey="Title" inherits="GameFontHighlight" maxLines="1" justifyH="CENTER">
 					<Anchors>
-						<Anchor point="LEFT" x="15" y="2"/>
-						<Anchor point="RIGHT" x="-15" y="2"/>
+						<Anchor point="LEFT" x="15" y="1"/>
+						<Anchor point="RIGHT" x="-15" y="1"/>
 					</Anchors>
 				</FontString>
 				<Texture parentKey="ExpandIcon" atlas="friendslist-categorybutton-arrow-right" useAtlasSize="true" desaturated="true">
 					<Anchors>
-						<Anchor point="CENTER" relativePoint="LEFT" x="40" y="-1"/>
+						<Anchor point="CENTER" relativePoint="LEFT" x="40" y="0"/>
 					</Anchors>
 				</Texture>
 			</Layer>
 			<Layer level="HIGHLIGHT">
-				<Texture parentKey="Highlight" atlas="groupfinder-highlightbar-blue" alphaMode="ADD" alpha="0.5"> <!--  -->
+				<Texture parentKey="Highlight" atlas="UI-Frame-Mechagon-Subtitle" alphaMode="ADD" alpha="0.5">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.BGLeft" x="30" y="-7"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BGRight" x="-30" y="8"/>
+						<Anchor point="TOPLEFT" x="15" y="-6"/>
+						<Anchor point="BOTTOMRIGHT" x="-15" y="6"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -138,14 +129,18 @@
 	</Frame>
 	
 	<Frame name="WQT_SettingCheckboxTemplate" mixin="WQT_SettingsCheckboxMixin" virtual="true">
-		<Size y="30"/>	
+		<Size y="32"/>	
 		<Frames>
-			<CheckButton parentKey="CheckBox" inherits="UICheckButtonTemplate">
+			<CheckButton parentKey="CheckBox">
 				<Size x="25" y="25"/>
-				<HitRectInsets right="-75"/>
+				<HitRectInsets right="-150"/>
 				<Anchors>
-					<Anchor point="LEFT" x="25"/>
+					<Anchor point="LEFT" x="40"/>
 				</Anchors>
+				<NormalTexture atlas="checkbox-minimal" useAtlasSize="true" />
+				<PushedTexture atlas="checkbox-minimal" useAtlasSize="true" />
+				<CheckedTexture atlas="checkmark-minimal" useAtlasSize="true" />
+				<DisabledCheckedTexture atlas="checkmark-minimal-disabled" useAtlasSize="true" />
 				<Scripts>
 					<OnEnter>
 						self:GetParent():OnEnter(self);
@@ -160,7 +155,7 @@
 				</Scripts>
 			</CheckButton>
 			<Frame parentKey="DisabledOverlay">
-				<HitRectInsets right="-75"/>
+				<HitRectInsets right="-150"/>
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeKey="$parent.CheckBox"/>
 					<Anchor point="BOTTOMRIGHT" relativeKey="$parent.CheckBox"/>
@@ -188,42 +183,32 @@
 	</Frame>
 	
 	<Frame name="WQT_SettingSliderTemplate" mixin="WQT_SettingsSliderMixin" virtual="true">
-		<Size y="47"/>	
+		<Size y="49"/>	
 		<Layers>
 			<Layer level="ARTWORK">
 				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="LEFT">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="30" y="-7"/>
+						<Anchor point="TOPLEFT" x="42" y="-7"/>
 						<Anchor point="RIGHT" x="-15"/>
 					</Anchors>
 				</FontString>
 			</Layer>
 		</Layers>
 		<Frames>
-			<Slider parentKey="Slider" inherits="UISliderTemplate">
-				<Size y="17"/>
+
+			<Frame parentKey="SliderWithSteppers" inherits="MinimalSliderWithSteppersTemplate">
+				<Size y="20"/>
 				<Anchors>
-					<Anchor point="BOTTOMLEFT" x="30" y="5"/>
-					<Anchor point="RIGHT" x="-75"/>
+					<Anchor point="BOTTOMLEFT" x="40" y="4"/>
+					<Anchor point="RIGHT" x="-80"/>
 				</Anchors>
-				<Scripts>
-					<OnEnter>
-						self:GetParent():OnEnter(self);
-					</OnEnter>
-					<OnLeave>
-						self:GetParent():OnLeave();
-					</OnLeave>
-					<OnValueChanged>
-						self:GetParent():OnValueChanged(value, userInput);
-					</OnValueChanged>
-				</Scripts>
-			</Slider>
+			</Frame>
 			<EditBox parentKey="TextBox" inherits="InputBoxTemplate" autoFocus="false">
 				<Size x="30" y="20"/>
 				<HitRectInsets left="-10"/>
 				<Anchors>
-					<Anchor point="LEFT" relativeKey="$parent.Slider" relativePoint="RIGHT" x="10" y="1"/>
-					<Anchor point="RIGHT" x="-35" y="1"/>
+					<Anchor point="LEFT" relativeKey="$parent.SliderWithSteppers" relativePoint="RIGHT" x="10" y="1"/>
+					<Anchor point="RIGHT" x="-40" y="1"/>
 				</Anchors>
 				<FontString inherits="NumberFont_Shadow_Small"/>
 				<Scripts>
@@ -272,14 +257,14 @@
 	</Frame>
 	
 	<Frame name="WQT_SettingColorTemplate" mixin="WQT_SettingsColorMixin" virtual="true">
-		<Size y="30"/>
+		<Size y="32"/>
 		<HitRectInsets top="3" right="75" bottom="3" left="75"/>
 	
 		<Frames>
 			<Button parentKey="Picker" inherits="UIMenuButtonStretchTemplate">
 				<Size x="26" y="26"/>
 				<Anchors>
-					<Anchor point="LEFT" x="27" y="0"/>
+					<Anchor point="LEFT" x="42" y="0"/>
 				</Anchors>
 				
 				<Layers>
@@ -288,10 +273,6 @@
 							<Size x="14" y="14"/>
 							<Anchors>
 								<Anchor point="CENTER"/>
-							<!--
-								<Anchor point="TOPLEFT" x="6" y="-6"/>
-								<Anchor point="BOTTOMRIGHT" x="-6" y="6"/>
-								-->
 							</Anchors>
 						</Texture>
 					</Layer>
@@ -432,7 +413,7 @@
 			<Layer level="ARTWORK">
 				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="LEFT">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="30" y="-7"/>
+						<Anchor point="TOPLEFT" x="42" y="-7"/>
 						<Anchor point="RIGHT" x="-15"/>
 					</Anchors>
 				</FontString>
@@ -441,8 +422,8 @@
 		<Frames>
 			<DropdownButton parentKey="Dropdown" inherits="WowStyle1DropdownTemplate">
 				<Anchors>
-					<Anchor point="BOTTOMLEFT" x="30" y="6"/>
-					<Anchor point="RIGHT" x="-35" y="0"/>
+					<Anchor point="BOTTOMLEFT" x="42" y="6"/>
+					<Anchor point="RIGHT" x="-42" y="0"/>
 				</Anchors>
 			</DropdownButton>
 		</Frames>
@@ -452,13 +433,13 @@
 	</Frame>
 	
 	<Frame name="WQT_SettingButtonTemplate" mixin="WQT_SettingsButtonMixin" virtual="true">
-		<Size y="30"/>
+		<Size y="32"/>
 		<Frames>
 			<Button parentKey="Button" inherits="UIMenuButtonStretchTemplate">
 				<Size  y="26"/>
 				<Anchors>
-					<Anchor point="LEFT" x="27" y="0"/>
-					<Anchor point="RIGHT" x="-35" y="0"/>
+					<Anchor point="LEFT" x="40" y="0"/>
+					<Anchor point="RIGHT" x="-40" y="0"/>
 				</Anchors>
 				
 				<Layers>
@@ -504,13 +485,13 @@
 	</Frame>
 	
 	<Frame name="WQT_SettingConfirmButtonTemplate" mixin="WQT_SettingsConfirmButtonMixin" virtual="true">
-		<Size y="30"/>
+		<Size y="32"/>
 		<Frames>
 			<Button parentKey="Button" inherits="UIMenuButtonStretchTemplate">
 				<Size  y="26"/>
 				<Anchors>
-					<Anchor point="LEFT" x="27" y="0"/>
-					<Anchor point="RIGHT" x="-35" y="0"/>
+					<Anchor point="LEFT" x="40" y="0"/>
+					<Anchor point="RIGHT" x="-40" y="0"/>
 				</Anchors>
 				
 				<Layers>
@@ -649,7 +630,7 @@
 			<Layer level="ARTWORK">
 				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="LEFT">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="30" y="-7"/>
+						<Anchor point="TOPLEFT" x="32" y="-7"/>
 						<Anchor point="RIGHT" x="-15"/>
 					</Anchors>
 				</FontString>
@@ -660,8 +641,8 @@
 				<Size y="25"/>
 				<HitRectInsets left="-10"/>
 				<Anchors>
-					<Anchor point="BOTTOMLEFT" x="35" y="5"/>
-					<Anchor point="RIGHT" x="-35" />
+					<Anchor point="BOTTOMLEFT" x="37" y="5"/>
+					<Anchor point="RIGHT" x="-32" />
 				</Anchors>
 				<FontString inherits="NumberFont_Shadow_Small"/>
 				<Scripts>
@@ -684,20 +665,73 @@
 			<OnLoad method="OnLoad"/>
 		</Scripts>
 	</Frame>
-	
-	<Frame name="WQT_SettingsFrame" parent="WQT_OverlayFrame" mixin="WQT_SettingsFrameMixin" hidden="true">
+
+	<Frame name="WQT_SettingsFrame" parent="WQT_WorldQuestFrame" parentKey="SettingsFrame" mixin="WQT_SettingsFrameMixin" parentArray="panels">
 		<Size x="257" y="462" />
+		<Anchors>
+			<Anchor point="TOPLEFT" />
+			<Anchor point="BOTTOMRIGHT" />
+		</Anchors>
+		<KeyValues>
+			<KeyValue key="panelID" value="WQT_PanelID.Settings" type="global" />
+		</KeyValues>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Background" file="interface\professions\professionsminimizedview">
+					<TexCoords top="0.0009765625" right="0.787109375" bottom="0.533" left="0.001953125" />
+					<Anchors>
+						<Anchor point="TOPLEFT" />
+						<Anchor point="BOTTOMRIGHT" />
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
 		<Frames>
-			<ScrollFrame inherits="WQT_OverlayScrollFrameTemplate" parentKey="ScrollFrame">
+			<Frame parentKey="BorderFrame" inherits="QuestLogBorderFrameTemplate" />
+
+			<Button parentKey="CloseButton" inherits="WQT_PanelCloseButtonTemplate"/>
+			<Frame parentKey="ScrollBox" inherits="WowScrollBox" frameStrata="HIGH">
 				<Anchors>
 					<Anchor point="TOPLEFT" />
 					<Anchor point="BOTTOMRIGHT" />
 				</Anchors>
-			</ScrollFrame>
+				<KeyValues>
+					<KeyValue key="wheelPanScalar" type="number" value="0.1" />
+				</KeyValues>
+				<Frames>
+					<Frame parentKey="ScrollContent">
+						<Size x="268" y="400" />
+						<KeyValues>
+							<KeyValue key="scrollable" value="true" type="boolean" />
+						</KeyValues>
+						<Scripts>
+							<OnLoad>
+								self:SetWidth(WQT_SettingsFrame:GetWidth());
+							</OnLoad>
+						</Scripts>
+					</Frame>
+
+				</Frames>
+			</Frame>
+			<EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="8" y="2" />
+					<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="8" y="-4" />
+				</Anchors>
+			</EventFrame>
 		</Frames>
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString parentKey="TitleText" inherits="Game15Font_Shadow" wordwrap="false" text="MAP_LEGEND_FRAME_LABEL">
+					<Anchors>
+						<Anchor point="BOTTOM" relativeKey="$parent.BorderFrame" relativePoint="TOP" x="-1" y="3" />
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
 		<Scripts>
-			<OnLoad method="OnLoad"/>
-			<OnShow method="Refresh"/>
+			<OnLoad method="OnLoad" />
+			<OnShow method="Refresh" />
 		</Scripts>
 	</Frame>
  </Ui>
