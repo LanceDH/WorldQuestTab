@@ -56,13 +56,14 @@ local function OnPinRelease(pool, pin)
 	pin.timeIcon = nil;
 	pin:Hide();
 	pin:ClearAllPoints();
+	
 end
 
 
 local function ShouldShowPin(questInfo, mapType, settingsZoneVisible, settingsPinContinent, settingsFilterPins, isFlightMap)
 	-- Don't show if not valid
 	if (not questInfo.isValid) then return false; end
-	
+
 	-- Don't show if filtering and doesn't pass
 	if (settingsFilterPins and not questInfo.passedFilter) then return false; end
 	
@@ -100,6 +101,63 @@ local function GetPinType(mapType)
 end
 
 ------------------------------------
+-- Official pin suppressor
+------------------------------------
+
+WQT_OfficialPinSuppressorMixin = CreateFromMixins(MapCanvasPinMixin);
+
+function WQT_OfficialPinSuppressorMixin:IsPinSuppressor()
+	return true;
+end
+
+function WQT_OfficialPinSuppressorMixin:FinalizeSuppression()
+end
+
+function WQT_OfficialPinSuppressorMixin:TrackSuppressedPin(pin)
+	if not self.suppressedPins then
+		self.suppressedPins = {};
+	end
+
+	self.suppressedPins[pin] = true;
+end
+
+function WQT_OfficialPinSuppressorMixin:ResetSuppression()
+	local suppressedPins = self:GetSuppressedPins();
+	if suppressedPins then
+		for pin in pairs(suppressedPins) do
+			pin:ClearSuppression();
+		end
+	end
+
+	self.suppressedPins = nil;
+end
+
+function WQT_OfficialPinSuppressorMixin:GetSuppressedPins()
+	return self.suppressedPins;
+end
+
+function WQT_OfficialPinSuppressorMixin:ShouldSuppressPin(pin)
+	if (WQT.settings.pin.disablePoI) then return false; end
+	local shouldSuppress = pin.pinTemplate == WorldMap_WorldQuestDataProviderMixin:GetPinTemplate()
+			or pin.pinTemplate == "BonusObjectivePinTemplate"
+			or (FlightMap_WorldQuestDataProviderMixin and pin.pinTemplate == FlightMap_WorldQuestDataProviderMixin:GetPinTemplate());
+	return shouldSuppress
+end
+
+WQT_OfficialPinSuppressorProviderMixin = CreateFromMixins(MapCanvasDataProviderMixin);
+
+function WQT_OfficialPinSuppressorProviderMixin:OnAdded(mapCanvas)
+	MapCanvasDataProviderMixin.OnAdded(self, mapCanvas);
+	local pin = self:GetMap():AcquirePin("WQT_OfficialPinSuppressorTemplate");
+	pin:SetPosition(0.5, 0.5);
+	self.pin = pin;
+end
+
+
+
+
+
+------------------------------------
 -- DataProvider
 ------------------------------------
 
@@ -117,7 +175,7 @@ function WQT_PinDataProvider:Init()
 	self.hookedCanvasChanges = {};
 
 	EventRegistry:RegisterCallback(
-		"WQT.DataProvider.QuestsLoaded"
+		"WQT.DataProvider.FilteredListUpdated"
 		,function()
 				self:RefreshAllData();
 			end
@@ -137,6 +195,8 @@ function WQT_PinDataProvider:Init()
 	self.enableNudging = true;
 	self.pinClusters = {};
 	self.pinClusterLookup = {};
+
+	WorldMapFrame:AddDataProvider(CreateFromMixins(WQT_OfficialPinSuppressorProviderMixin));
 end
 
 function WQT_PinDataProvider:OnEvent(event, ...)
@@ -180,7 +240,6 @@ function WQT_PinDataProvider:PlacePins()
 		self.isUpdating = false;
 		return; 
 	end
-	WQT_WorldQuestFrame:HideOfficialMapPins();
 	
 	local parentMapFrame;
 	local isFlightMap = false;
@@ -207,7 +266,7 @@ function WQT_PinDataProvider:PlacePins()
 	wipe(self.activePins);
 	
 	if (mapInfo.mapType >= Enum.UIMapType.Continent) then
-		for k, questInfo in ipairs(WQT_WorldQuestFrame.dataProvider:GetIterativeList()) do
+		for k, questInfo in ipairs(WQT_WorldQuestFrame.dataProvider.fitleredQuestsList) do
 			local officialShow = true;
 			if (wqp.focusedQuestID) then
 				officialShow = C_QuestLog.IsQuestCalling(wqp.focusedQuestID) and wqp:ShouldHighlightInfo(questInfo.questId);
@@ -806,7 +865,6 @@ function WQT_PinMixin:UpdatePlacement(alpha)
 	
 	self:ApplyScaledPosition(parentScaleFactor);
 	self:SetFrameLevel(self.baseFrameLevel + self.index);
-	--WQT_WorldQuestFrame:TriggerCallback("MapPinPlaced", self);
 end
 
 function WQT_PinMixin:GetAlphas()

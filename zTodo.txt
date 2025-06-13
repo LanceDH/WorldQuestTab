@@ -7,7 +7,6 @@ Todo
     - FilterButton indicator for official filtering
     - Used to disable filter linked to official filter (disbale, tooltip with info, matching icon in name instead?)
     - Used to disabled with settings or what's new open. Probaly just hide them with some layout changes
-- Something up with map pins not showing correctly for actual world quests
 - Check for issues while in combat
 - Improve loca file readability
 - Probably no longer bother with WorldQuestTab Utilities
@@ -19,7 +18,6 @@ Todo
 
 Can't test on trial account, need PTR Up
 - Something up with LFG.
-- Something up with my bountyboard
 
 - Maybe change quest design with faction as sort of fade on the left
 
@@ -47,3 +45,5 @@ Done
 - Probably remove quest log counter
 - Update What's New UI
 - Update settings UI
+- Something up with map pins not showing correctly for actual world quests
+- Something up with my bountyboard

@@ -812,15 +812,13 @@ function WQT_Utils:GetFlightWQProvider()
 	if (WQT.FlightmapPins) then return WQT.FlightmapPins; end
 	if (not FlightMapFrame) then return nil; end
 	
-	for k in pairs(FlightMapFrame.dataProviders) do 
-		if (type(k) == "table") then 
-			for k2 in pairs(k) do 
-				if (k2 == "activePins") then 
-					WQT.FlightmapPins = k;
-					break;
-				end 
-			end 
-		end 
+	local wqPinTemplate = FlightMap_WorldQuestDataProviderMixin:GetPinTemplate();
+
+	for k in pairs(FlightMapFrame.dataProviders) do
+		if (k.GetPinTemplate and k:GetPinTemplate() == wqPinTemplate) then
+			WQT.FlightmapPins = k;
+			break;
+		end
 	end
 	return WQT.FlightmapPins;
 end
@@ -1226,7 +1224,7 @@ function WQT_Utils:SetQuestDisliked(questID, isDisliked)
 	
 	WQT.settings.general.dislikedQuests[questID] = isDisliked;
 	
-	WQT_ListContainer:UpdateQuestList();
+	EventRegistry:TriggerEvent("WQT.FiltersUpdated");
 	
 	local soundID;
 	if (isDisliked) then

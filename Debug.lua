@@ -96,15 +96,17 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		AddIndentedDoubleLine(tooltip, "expansion", factionInfo.expansion, 2, color);
 		-- MapInfo
 		local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questId);
-		AddIndentedDoubleLine(tooltip, "mapInfo", "", 1, color);
-		AddIndentedDoubleLine(tooltip, "name", mapInfo.name, 2, color);
-		AddIndentedDoubleLine(tooltip, "mapID", mapInfo.mapID, 2, color);
-		AddIndentedDoubleLine(tooltip, "parentMapID", mapInfo.parentMapID, 2, color);
-		AddIndentedDoubleLine(tooltip, "mapType", mapInfo.mapType, 2, color);
-		local continentID, worldPosition = C_Map.GetWorldPosFromMapPos(mapInfo.mapID, CreateVector2D(questInfo.mapInfo.mapX, questInfo.mapInfo.mapY))
-		AddIndentedDoubleLine(tooltip, "continentID", continentID, 2, color);
-		AddIndentedDoubleLine(tooltip, "worldPosition.x", worldPosition.x, 2, color);
-		AddIndentedDoubleLine(tooltip, "worldPosition.y", worldPosition.x, 2, color);
+		if (questInfo.mapinfo) then
+			AddIndentedDoubleLine(tooltip, "mapInfo", "", 1, color);
+			AddIndentedDoubleLine(tooltip, "name", mapInfo.name, 2, color);
+			AddIndentedDoubleLine(tooltip, "mapID", mapInfo.mapID, 2, color);
+			AddIndentedDoubleLine(tooltip, "parentMapID", mapInfo.parentMapID, 2, color);
+			AddIndentedDoubleLine(tooltip, "mapType", mapInfo.mapType, 2, color);
+			local continentID, worldPosition = C_Map.GetWorldPosFromMapPos(mapInfo.mapID, CreateVector2D(questInfo.mapInfo.mapX, questInfo.mapInfo.mapY))
+			AddIndentedDoubleLine(tooltip, "continentID", continentID, 2, color);
+			AddIndentedDoubleLine(tooltip, "worldPosition.x", worldPosition.x, 2, color);
+			AddIndentedDoubleLine(tooltip, "worldPosition.y", worldPosition.x, 2, color);
+		end
 		
 	end
 end

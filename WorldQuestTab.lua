@@ -56,8 +56,11 @@
 
 -- Callbacks using EventRegistry
 --
--- "WQT.DataProvider.QuestsLoaded"		() After InitFilter finishes
--- "WQT.DataProvider.ProgressUpdated"	(progress) Progress in gethering quests from zones (% from 0-1)
+-- "WQT.DataProvider.QuestsLoaded"			() After InitFilter finishes
+-- "WQT.DataProvider.ProgressUpdated"		(progress) Progress in gethering quests from zones (% from 0-1)
+-- "WQT.DataProvider.FilteredListUpdated"	() Quest list have been filtered and sorted (get though fitleredQuestsList)
+-- "WQT.FiltersUpdated"						() A filter was changed. Used to update dataprovider
+-- "WQT.SortUpdated"						() Sorting was changed. Used to update dataprovider
 
 local addonName, addon = ...
 
@@ -147,7 +150,7 @@ end
 
 local function FilterTypesGeneralOnClick(data)
 	WQT:SetAllFilterTo(data[1], data[2]);
-	WQT_ListContainer:UpdateQuestList();
+	EventRegistry:TriggerEvent("WQT.FiltersUpdated");
 	return MenuResponse.Refresh;
 end
 
@@ -165,7 +168,7 @@ local function GenericFilterFlagChecked(data)
 		if(refreshPins) then
 			WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
 		end
-		WQT_ListContainer:UpdateQuestList();
+		EventRegistry:TriggerEvent("WQT.FiltersUpdated");
 	end
 
 local function AddFilterSubmenu(rootDescription, filterType)
@@ -230,7 +233,7 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 		end
 		local function OtherFactionsOnSelect()
 			factionFilters.misc.other = not factionFilters.misc.other;
-			WQT_ListContainer:UpdateQuestList();
+			EventRegistry:TriggerEvent("WQT.FiltersUpdated");
 		end
 		local cb = factionsSubmenu:CreateCheckbox(OTHER, OtherFactionsChecked, OtherFactionsOnSelect);
 
@@ -240,7 +243,7 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 		end
 		local function NoFactionOnSelect()
 			factionFilters.misc.none = not factionFilters.misc.none;
-			WQT_ListContainer:UpdateQuestList();
+			EventRegistry:TriggerEvent("WQT.FiltersUpdated");
 		end
 		factionsSubmenu:CreateCheckbox(_L["NO_FACTION"], NoFactionChecked, NoFactionOnSelect);
 
@@ -280,7 +283,7 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 		end
 		local function IgnoredCallindsOnSelect()
 			WQT.settings.general.filterPasses.calling = not WQT.settings.general.filterPasses.calling;
-			WQT_ListContainer:UpdateQuestList();
+			EventRegistry:TriggerEvent("WQT.FiltersUpdated");
 		end
 		irgnoreSubmenu:CreateCheckbox(CALLINGS_QUESTS, IgnoredCallindsChecked, IgnoredCallindsOnSelect);
 
@@ -290,7 +293,7 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 		end
 		local function IgnoredThreatOnSelect()
 			WQT.settings.general.filterPasses.threat = not WQT.settings.general.filterPasses.threat;
-			WQT_ListContainer:UpdateQuestList();
+			EventRegistry:TriggerEvent("WQT.FiltersUpdated");
 		end
 		irgnoreSubmenu:CreateCheckbox(REPORT_THREAT, IgnoredThreatChecked, IgnoredThreatOnSelect);
 
@@ -300,7 +303,7 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 		end
 		local function IgnoredAllyOnSelect()
 			WQT.settings.general.filterPasses.combatAlly = not WQT.settings.general.filterPasses.combatAlly;
-			WQT_ListContainer:UpdateQuestList();
+			EventRegistry:TriggerEvent("WQT.FiltersUpdated");
 		end
 		irgnoreSubmenu:CreateCheckbox(ORDER_HALL_ZONE_SUPPORT, IgnoredAllyChecked, IgnoredAllyOnSelect);
 	end
@@ -313,7 +316,7 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 
 	local function DDUninterededOnSelect()
 		WQT.settings.general.showDisliked = not WQT.settings.general.showDisliked;
-		WQT_ListContainer:UpdateQuestList();
+		EventRegistry:TriggerEvent("WQT.FiltersUpdated");
 	end
 	local uninterestedCB = rootDescription:CreateCheckbox(_L["UNINTERESTED"], DDUninterededChecked, DDUninterededOnSelect);
 	AddBasicTooltipFunctionsToDropdownItem(uninterestedCB, _L["UNINTERESTED"], _L["UNINTERESTED_TT"]);
@@ -327,7 +330,7 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 		local value = not WQT.settings.general.emissaryOnly;
 		WQT_WorldQuestFrame.autoEmisarryId = nil;
 		WQT.settings.general.emissaryOnly = value;
-		WQT_ListContainer:UpdateQuestList();
+		EventRegistry:TriggerEvent("WQT.FiltersUpdated");
 
 		-- If we turn it off, remove the auto set as well
 		if not value then
@@ -418,53 +421,6 @@ local function GetSortedFilterOrder(filterId)
 				return tostring(a) < tostring(b);
 			end)
 	return tbl;
-end
-
-local function SortQuestList(a, b, sortID)
-	-- Invalid goes to the bottom
-	if (not a.isValid or not b.isValid) then
-		if (a.isValid == b.isValid) then 
-			return a.questId < b.questId;
-		end;
-		return a.isValid and not b.isValid;
-	end
-	
-	-- Filtered out quests go to the back (for debug view mainly)
-	if (not a.passedFilter or not b.passedFilter) then
-		if (a.passedFilter == b.passedFilter) then 
-			return a.questId < b.questId; 
-		end;
-		return a.passedFilter and not b.passedFilter;
-	end
-	
-	-- Disliked quests go to the back of the list
-	local aDisliked = a:IsDisliked();
-	local bDisliked = b:IsDisliked();
-	if (aDisliked ~= bDisliked) then 
-		return not aDisliked;
-	end 
-
-	-- Sort by a list of filters depending on the current filter choice
-	local order = _V["SORT_OPTION_ORDER"][sortID];
-	if (not order) then
-		order = _emptyTable;
-		WQT:debugPrint("No sort order for", sortID);
-		return a.questId < b.questId;
-	end
-	
-	for k, criteria in ipairs(order) do
-		if(_V["SORT_FUNCTIONS"][criteria]) then
-			local result = _V["SORT_FUNCTIONS"][criteria](a, b);
-			if (result ~= nil) then 
-				return result 
-			end;
-		else
-			WQT:debugPrint("Invalid sort criteria", criteria);
-		end
-	end
-	
-	-- Worst case fallback
-	return a.questId < b.questId;
 end
 
 local function GetNewSettingData(old, default)
@@ -630,8 +586,7 @@ end
 function WQT:Sort_OnClick(self, category)
 	if ( category and WQT.settings.general.sortBy ~= category ) then
 		WQT.settings.general.sortBy = category;
-		WQT_ListContainer:UpdateQuestList();
-		--WQT_WorldQuestFrame:TriggerCallback("SortChanged", category);
+		EventRegistry:TriggerEvent("WQT.SortUpdated");
 	end
 end
 
@@ -803,10 +758,6 @@ function WQT:OnEnable()
 	end
 	QuestLogDisplayMode.WQT = numDisplayModes + 1;
 
-	--WQT_TabNormal.Highlight:Show();
-	--WQT_TabNormal.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.78906250, 0.95703125);
-	--WQT_TabWorld.TabBg:SetTexCoord(0.01562500, 0.79687500, 0.61328125, 0.78125000);
-	
 	-- load WorldQuestTabUtilities
 	if (WQT.settings.general.loadUtilities and C_AddOns.GetAddOnEnableState(_playerName, "WorldQuestTabUtilities") > 0 and not C_AddOns.IsAddOnLoaded("WorldQuestTabUtilities")) then
 		C_AddOns.LoadAddOn("WorldQuestTabUtilities");
@@ -1040,9 +991,8 @@ function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, 
 	end
 	
 	local rewardWidth = self.Reward1:GetWidth();
-	local padding = 0;--(num-1) * self.rewardPadding;
 
-	self:SetWidth(num * rewardWidth + padding);
+	self:SetWidth(num * rewardWidth);
 	local rewardFrame = self.rewardFrames[num];
 	rewardFrame.rewardType = rewardType;
 	rewardFrame.texture = texture;
@@ -1325,9 +1275,6 @@ end
 WQT_ScrollListMixin = {};
 
 function WQT_ScrollListMixin:OnLoad()
-	self.questList = {};
-	self.questListDisplay = {};
-
 	EventRegistry:RegisterCallback(
 		"WQT.DataProvider.ProgressUpdated"
 		,function(_, progress)
@@ -1337,10 +1284,6 @@ function WQT_ScrollListMixin:OnLoad()
 				end
 			end
 		, self);
-	-- self.scrollBar.trackBG:Hide();
-	-- self.scrollBar.doNotHide = true;
-	-- self.update = function() self:DisplayQuestList() end;
-	-- HybridScrollFrame_CreateButtons(self, "WQT_QuestTemplate", 1, 0);
 end
 
 function WQT_ScrollListMixin:ResetButtons()
@@ -1365,12 +1308,6 @@ function WQT_ScrollListMixin:SetButtonsEnabled(value)
 	-- 	button:EnableMouse(value);
 	-- 	button:EnableMouseWheel(value);
 	-- end
-end
-
-function WQT_ScrollListMixin:ApplySort()
-	local list = self.questListDisplay;
-	local sortOption =  WQT.settings.general.sortBy;
-	table.sort(list, function (a, b) return SortQuestList(a, b, sortOption); end);
 end
 
 function WQT_ScrollListMixin:UpdateFilterDisplay()
@@ -1409,7 +1346,7 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 	
 	local numHidden = 0;
 	local totalValid = 0;
-	for k, questInfo in ipairs(self.questList) do
+	for k, questInfo in ipairs(WQT_WorldQuestFrame.dataProvider.fitleredQuestsList) do
 		if (questInfo.isValid and questInfo.hasRewardData) then
 			if (questInfo.passedFilter) then
 				numHidden = numHidden + 1;
@@ -1422,60 +1359,12 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 	WQT_ListContainer.FilterBar.Text:SetText(filterFormat:format(numHidden, totalValid, filterList)); 
 end
 
-function WQT_ScrollListMixin:FilterQuestList()
-	wipe(self.questListDisplay);
-	local WQTFiltering = WQT:IsFiltering();
-	local BlizFiltering = WQT:IsWorldMapFiltering();
-	for k, questInfo in ipairs(self.questList) do
-		questInfo.passedFilter = false;
-		if (questInfo.isValid and not questInfo.alwaysHide and questInfo.hasRewardData and not questInfo:IsExpired()) then
-			local passed = false;
-			-- Filter passes don't care about anything else
-			if(WQT_Utils:QuestIsVIQ(questInfo)) then 
-				passed = true;
-			else
-				-- Official filtering
-				passed = BlizFiltering and WorldMap_DoesWorldQuestInfoPassFilters(questInfo) or not BlizFiltering;
-				-- Add-on filters
-				if (passed and WQTFiltering) then
-					passed = WQT:PassesAllFilters(questInfo);
-				end
-			end
-			
-			questInfo.passedFilter = passed;
-			
-			if (questInfo.passedFilter) then
-				table.insert(self.questListDisplay, questInfo);
-			end
-		end
-		
-		-- In debug, still filter, but show everything.
-		if (not questInfo.passedFilter and addon.debug) then
-				table.insert(self.questListDisplay, questInfo);
-		end
-	end
-	
-	--WQT_WorldQuestFrame:TriggerCallback("FilterQuestList");
-end
-
 function WQT_ScrollListMixin:UpdateQuestList()
 	local flightShown = (FlightMapFrame and FlightMapFrame:IsShown() or TaxiRouteMap:IsShown() );
 	local worldShown = WorldMapFrame:IsShown();
 	
 	if (not (flightShown or worldShown)) then return end	
-	
-	
-	self.questList = WQT_WorldQuestFrame.dataProvider:GetIterativeList();
-	-- Update reward priorities
-	for index, questInfo in ipairs(self.questList) do
-		questInfo:ParseRewards();
-	end
-
-	self:FilterQuestList();
-	self:ApplySort();
 	self:DisplayQuestList();
-
-	--WQT_WorldQuestFrame:TriggerCallback("UpdateQuestList");
 end
 
 function WQT_ScrollListMixin:DisplayQuestList()
@@ -1492,7 +1381,7 @@ function WQT_ScrollListMixin:DisplayQuestList()
 	-- New scroll frame
 	local newDataProvider = CreateDataProvider();
 	
-	local list = self.questListDisplay;
+	local list = WQT_WorldQuestFrame.dataProvider.fitleredQuestsList;
 	self.numDisplayed = #list;
 	for index, questInfo in ipairs(list) do
 		newDataProvider:Insert({index = index, questInfo = questInfo, showZone = shouldShowZone});
@@ -1679,36 +1568,15 @@ end
 -- SetCvarValue(flagKey, value)
 -- SelectTab(tab)		1. Default questlog  2. WQT  3. Quest details
 -- ChangeAnchorLocation(anchor)		Show list on a different container using _V["LIST_ANCHOR_TYPE"] variable
--- :<event> -> ADDON_LOADED, PLAYER_REGEN_DISABLED, PLAYER_REGEN_ENABLED, QUEST_TURNED_IN, PVP_TIMER_UPDATE, WORLD_QUEST_COMPLETED_BY_SPELL, QUEST_LOG_UPDATE, QUEST_WATCH_LIST_CHANGED
+-- :<event> -> ADDON_LOADED, PLAYER_REGEN_DISABLED, PLAYER_REGEN_ENABLED, PVP_TIMER_UPDATE, WORLD_QUEST_COMPLETED_BY_SPELL, QUEST_LOG_UPDATE, QUEST_WATCH_LIST_CHANGED
 
 WQT_CoreMixin = {};
-
-function WQT_CoreMixin:TryHideOfficialMapPin(pin)
-	if (WQT.settings.pin.disablePoI) then return; end
-	
-	local questInfo = self.dataProvider:GetQuestById(pin.questID)
-	if (questInfo and questInfo.isValid) then
-		pin:Hide();
-	end
-end
-
-function WQT_CoreMixin:HideOfficialMapPins()
-	if (WQT.settings.pin.disablePoI) then return; end
-	
-	if (WorldMapFrame:IsShown()) then
-		local mapWQProvider = WQT_Utils:GetMapWQProvider();
-		for _, pin in pairs(mapWQProvider.activePins) do
-			self:TryHideOfficialMapPin(pin);
-		end
-		
-		WQT_Utils:ItterateAllBonusObjectivePins(function(pin) self:TryHideOfficialMapPin(pin); end);
-	end
-end
 
 -- Mimics hovering over a zone or continent, based on the zone the map is in
 function WQT_CoreMixin:ShowWorldmapHighlight(questId)
 	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
 	local areaId = WorldMapFrame.mapID;
+	
 	local coords = _V["WQT_ZONE_MAPCOORDS"][areaId] and _V["WQT_ZONE_MAPCOORDS"][areaId][zoneId];
 	local mapInfo = WQT_Utils:GetCachedMapInfo(zoneId);
 	-- We can't use parentMapID for cases like Cape of Stranglethorn
@@ -1726,8 +1594,10 @@ function WQT_CoreMixin:ShowWorldmapHighlight(questId)
 
 	-- Now we cheat by acting like we moved our mouse over the relevant zone
 	WQT_MapZoneHightlight:SetParent(WorldMapFrame.ScrollContainer.Child);
+	WQT_MapZoneHightlight:ClearAllPoints();
+	WQT_MapZoneHightlight:SetPoint("Center", WorldMapFrame.ScrollContainer.Child, 0.5, 0.5);
 	WQT_MapZoneHightlight:SetFrameLevel(5);
-	local fileDataID, atlasID, texPercentageX, texPercentageY, textureX, textureY, scrollChildX, scrollChildY = C_Map.GetMapHighlightInfoAtPosition(WorldMapFrame.mapID, coords.x, coords.y);
+	local fileDataID, atlasID, texPercentageX, texPercentageY, textureX, textureY, scrollChildX, scrollChildY = C_Map.GetMapHighlightInfoAtPosition(areaId, coords.x, coords.y);
 	if (fileDataID and fileDataID > 0) or (atlasID) then
 		WQT_MapZoneHightlight.Texture:SetTexCoord(0, texPercentageX, 0, texPercentageY);
 		local width = WorldMapFrame.ScrollContainer.Child:GetWidth();
@@ -1808,7 +1678,7 @@ function WQT_CoreMixin:OnLoad()
 	WQT_ListContainer.BorderFrame.TopDetail:Hide();
 
 	EventRegistry:RegisterCallback(
-		"WQT.DataProvider.QuestsLoaded"
+		"WQT.DataProvider.FilteredListUpdated"
 		,function()
 				self.ScrollFrame:UpdateQuestList(); 
 			end
@@ -1817,7 +1687,6 @@ function WQT_CoreMixin:OnLoad()
 	-- Events
 	self:RegisterEvent("PLAYER_REGEN_DISABLED");
 	self:RegisterEvent("PLAYER_REGEN_ENABLED");
-	self:RegisterEvent("QUEST_TURNED_IN");
 	self:RegisterEvent("WORLD_QUEST_COMPLETED_BY_SPELL"); -- Class hall items
 	self:RegisterEvent("PVP_TIMER_UPDATE"); -- Warmode toggle because WAR_MODE_STATUS_UPDATE doesn't seems to fire when toggling warmode
 	self:RegisterEvent("ADDON_LOADED");
@@ -1843,27 +1712,6 @@ function WQT_CoreMixin:OnLoad()
 	-- 
 
 	EventRegistry:RegisterCallback("QuestLog.SetDisplayMode", self.QuestMapChangedTab, self);
-	--self:QuestMapChangedTab(0);
-	
-	-- Show quest tab when leaving quest details
-	hooksecurefunc("QuestMapFrame_ReturnFromQuestDetails", function()
-			--self:SelectTab(WQT_TabNormal);
-		end)
-	-- When untracking a quest with details open
-	hooksecurefunc("QuestMapFrame_CloseQuestDetails", function()
-			if (self.selectedTab == WQT_TabDetails) then
-				--self:SelectTab(WQT_TabNormal);
-			end
-		end)
-		
-	
-	-- World map
-	-- If we were reading details when we switch maps, change back to normal quests
-	hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
-			if (self.selectedTab == WQT_TabDetails) then
-				--self:SelectTab(WQT_TabNormal); 
-			end
-		end)
 	
 	-- Update when opening the map
 	WorldMapFrame:HookScript("OnShow", function() 
@@ -1874,7 +1722,7 @@ function WQT_CoreMixin:OnLoad()
 			end
 		end)
 
-	-- Wipe data when hiding map
+	-- Go back to quest list when closing map
 	WorldMapFrame:HookScript("OnHide", function()
 			WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Quests);
 		end)
@@ -1902,7 +1750,6 @@ function WQT_CoreMixin:OnLoad()
 		
 	-- Opening quest details
 	hooksecurefunc("QuestMapFrame_ShowQuestDetails", function(questId)
-			--self:SelectTab(WQT_TabDetails);
 			if QuestMapFrame.DetailsFrame.questID == nil then
 				QuestMapFrame.DetailsFrame.questID = questId;
 			end
@@ -2018,11 +1865,6 @@ function WQT_CoreMixin:OnLoad()
 		end)
 		]]--
 
-	-- Hook hiding of official pins if we replace them with our own
-	local mapWQProvider = WQT_Utils:GetMapWQProvider();
-	hooksecurefunc(mapWQProvider, "RefreshAllData", function() 
-			self:HideOfficialMapPins();
-		end);
 		
 	QuestMapFrame.QuestSessionManagement:HookScript("OnShow", function() 
 			if(self:IsShown()) then
@@ -2043,22 +1885,22 @@ function WQT_CoreMixin:ApplyAllSettings()
 end
 
 function WQT_CoreMixin:UpdateBountyCounters()
-	-- self.bountyCounterPool:ReleaseAll();
-	-- if (not WQT.settings.general.bountyCounter) then return end
+	self.bountyCounterPool:ReleaseAll();
+	if (not WQT.settings.general.bountyCounter) then return end
 	
-	-- if (not self.bountyInfo) then
-	-- 	self.bountyInfo = {};
-	-- end
+	if (not self.bountyInfo) then
+		self.bountyInfo = {};
+	end
 	
-	-- for tab, v in pairs(self.bountyBoard.bountyTabPool.activeObjects) do
-	-- 	self:AddBountyCountersToTab(tab);
-	-- end
+	for tab, v in self.bountyBoard.bountyTabPool:EnumerateActive() do
+		self:AddBountyCountersToTab(tab);
+	end
 end
 
 function WQT_CoreMixin:RepositionBountyTabs()
-	-- for tab, v in pairs(self.bountyBoard.bountyTabPool.activeObjects) do
-	-- 	self.bountyBoard:AnchorBountyTab(tab);
-	-- end
+	for tab, v in pairs(self.bountyBoard.bountyTabPool.activeObjects) do
+		self.bountyBoard:AnchorBountyTab(tab);
+	end
 end
 
 function WQT_CoreMixin:AddBountyCountersToTab(tab)
@@ -2150,7 +1992,7 @@ function WQT_CoreMixin:FilterClearButtonOnClick()
 	
 	WQT.settings.general.showDisliked = true;
 	
-	self.ScrollFrame:UpdateQuestList();
+	EventRegistry:TriggerEvent("WQT.FiltersUpdated");
 end
 
 function WQT_CoreMixin:SearchGroup(questInfo)
@@ -2210,22 +2052,9 @@ end
 function WQT_CoreMixin:ADDON_LOADED(loaded)
 	WQT:UpdateFilterIndicator();
 	if (loaded == "Blizzard_FlightMap") then
-		-- Hook official pins to hide on show
-		-- I'd rather not do it this way but the Flight map pins update so much I might as well
-		local flightWQProvider = WQT_Utils:GetFlightWQProvider();
-		hooksecurefunc(flightWQProvider, "AddWorldQuest", function(frame, info) 
-				local pool = FlightMapFrame.pinPools[FlightMap_WorldQuestDataProviderMixin:GetPinTemplate()];
-				if (not pool) then return; end
-				for pin in pairs(pool.activeObjects) do
-					if (not pin.WQTHooked) then
-						pin.WQTHooked = true;
-						pin:HookScript("OnShow", function() 
-							self:TryHideOfficialMapPin(pin) 
-						end);
-					end
-				end	
-			end);
-		
+		-- Add dataprovider to hide official pins
+		FlightMapFrame:AddDataProvider(CreateFromMixins(WQT_OfficialPinSuppressorProviderMixin));
+
 		WQT_FlightMapContainer:SetParent(FlightMapFrame);
 		WQT_FlightMapContainer:SetPoint("BOTTOMLEFT", FlightMapFrame, "BOTTOMRIGHT", -6, 0);
 		WQT_FlightMapContainerButton:SetParent(FlightMapFrame);
@@ -2371,8 +2200,7 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	WQT_WorldQuestFrame:ClearAllPoints(); 
 	WQT_WorldQuestFrame:SetPoint(point, parent, point, xOffset, yOffset);
 	WQT_WorldQuestFrame:SetParent(parent);
-	--WQT_WorldQuestFrame:SelectTab(tab);
-	
+
 	--WQT_WorldQuestFrame:TriggerCallback("AnchorChanged", anchor);
 end
 

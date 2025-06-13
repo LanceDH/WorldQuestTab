@@ -179,6 +179,12 @@
         "CreateScrollBoxLinearView",
         "EnumUtil",
         "EventUtil",
-        "MinimalSliderWithSteppersMixin"
+        "MinimalSliderWithSteppersMixin",
+        "BonusObjectiveDataProviderMixin",
+        "MapCanvasDataProviderMixin",
+        "MapHighlightDataProviderMixin",
+        "MapCanvasPinMixin",
+        "WorldMap_WorldQuestDataProviderMixin",
+        "QuestHubPinMixin"
     ]
 }

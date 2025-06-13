@@ -8,24 +8,25 @@ local WQT_Profiles = addon.WQT_Profiles;
 local MAX_CALLINGS = 3;
 
 local MAP_ANCHORS = {
-	[1543] = "BOTTOMLEFT", -- The Maw
-	[1536] = "BOTTOMLEFT", -- Maldraxxus
-	[1698] = "BOTTOMLEFT", -- Maldraxxus
-	[1525] = "BOTTOMLEFT", -- Revendreth
-	[1699] = "BOTTOMLEFT", -- Revendreth Covenant
-	[1700] = "BOTTOMLEFT", -- Revendreth Covenant
-	[1670] = "BOTTOMRIGHT", -- Oribos
-	[1671] = "BOTTOMRIGHT", -- Oribos
-	[1672] = "BOTTOMRIGHT", -- Oribos
-	[1673] = "BOTTOMRIGHT", -- Oribos
-	[1533] = "BOTTOMLEFT", -- Bastion
-	[1707] = "BOTTOMLEFT", -- Bastion Covenant
-	[1708] = "BOTTOMLEFT", -- Bastion Covenant
-	[1565] = "BOTTOMLEFT", -- Ardenweald
-	[1701] = "BOTTOMLEFT", -- Ardenweald Covenant
-	[1702] = "BOTTOMLEFT", -- Ardenweald Covenant
-	[1703] = "BOTTOMLEFT", -- Ardenweald Covenant
-	[1550] = "BOTTOMRIGHT", -- Shadowlands
+	[1543] = { ["Point"] = "BOTTOMLEFT"}, -- The Maw
+	[1536] = { ["Point"] = "BOTTOMLEFT"}, -- Maldraxxus
+	[1698] = { ["Point"] = "BOTTOMLEFT"}, -- Maldraxxus
+	[1525] = { ["Point"] = "BOTTOMLEFT"}, -- Revendreth
+	[1699] = { ["Point"] = "BOTTOMLEFT"}, -- Revendreth Covenant
+	[1700] = { ["Point"] = "BOTTOMLEFT"}, -- Revendreth Covenant
+	[1670] = { ["Point"] = "BOTTOMRIGHT"}, -- Oribos
+	[1671] = { ["Point"] = "BOTTOMRIGHT"}, -- Oribos
+	[1672] = { ["Point"] = "BOTTOMRIGHT"}, -- Oribos
+	[1673] = { ["Point"] = "BOTTOMRIGHT"}, -- Oribos
+	[1533] = { ["Point"] = "BOTTOMLEFT"}, -- Bastion
+	[1707] = { ["Point"] = "BOTTOMLEFT"}, -- Bastion Covenant
+	[1708] = { ["Point"] = "BOTTOMLEFT"}, -- Bastion Covenant
+	[1565] = { ["Point"] = "BOTTOMLEFT"}, -- Ardenweald
+	[1701] = { ["Point"] = "BOTTOMLEFT"}, -- Ardenweald Covenant
+	[1702] = { ["Point"] = "BOTTOMLEFT"}, -- Ardenweald Covenant
+	[1703] = { ["Point"] = "BOTTOMLEFT"}, -- Ardenweald Covenant
+	[1550] = { ["Point"] = "BOTTOMLEFT", ["y"] = 80}, -- Shadowlands
+	[1970] = { ["Point"] = "BOTTOMLEFT"}, -- Zereth
 }
 
 local CovenantCallingsEvents = {
@@ -121,11 +122,12 @@ function WQT_CallingsBoardMixin:OnMapChanged(mapID)
 	end
 	
 	self:ClearAllPoints();
-	if(anchorPoint == "BOTTOMLEFT") then
-		self:SetPoint("BOTTOMLEFT", 15, 15);
-	else	
-		self:SetPoint("BOTTOMRIGHT", -30, 15);
+	local x = anchorPoint.x or -30;
+	local y = anchorPoint.y or 15;
+	if(anchorPoint.Point == "BOTTOMLEFT") then
+		x = 15;
 	end
+	self:SetPoint(anchorPoint.Point, x, y);
 	self.showOnCurrentMap = true;
 	
 	self:UpdateVisibility();

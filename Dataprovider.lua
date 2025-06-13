@@ -107,6 +107,54 @@ local function ZonesByExpansionSort(a, b)
 	return expB > expA;
 end
 
+
+local function SortQuestList(a, b, sortID)
+	-- Invalid goes to the bottom
+	if (not a.isValid or not b.isValid) then
+		if (a.isValid == b.isValid) then 
+			return a.questId < b.questId;
+		end;
+		return a.isValid and not b.isValid;
+	end
+	
+	-- Filtered out quests go to the back (for debug view mainly)
+	if (not a.passedFilter or not b.passedFilter) then
+		if (a.passedFilter == b.passedFilter) then 
+			return a.questId < b.questId; 
+		end;
+		return a.passedFilter and not b.passedFilter;
+	end
+	
+	-- Disliked quests go to the back of the list
+	local aDisliked = a:IsDisliked();
+	local bDisliked = b:IsDisliked();
+	if (aDisliked ~= bDisliked) then 
+		return not aDisliked;
+	end 
+
+	-- Sort by a list of filters depending on the current filter choice
+	local order = _V["SORT_OPTION_ORDER"][sortID];
+	if (not order) then
+		order = _emptyTable;
+		WQT:debugPrint("No sort order for", sortID);
+		return a.questId < b.questId;
+	end
+	
+	for k, criteria in ipairs(order) do
+		if(_V["SORT_FUNCTIONS"][criteria]) then
+			local result = _V["SORT_FUNCTIONS"][criteria](a, b);
+			if (result ~= nil) then 
+				return result 
+			end;
+		else
+			WQT:debugPrint("Invalid sort criteria", criteria);
+		end
+	end
+	
+	-- Worst case fallback
+	return a.questId < b.questId;
+end
+
 ----------------------------
 -- QuestInfoMixin
 ----------------------------
@@ -126,13 +174,13 @@ end
 function QuestInfoMixin:Init(questId, qInfo, alwaysHide, posX, posY)
 	self.questId = questId;
 	self.questID = questId;
-	self.isDaily = qInfo.isDaily;
-	self.isAllyQuest = qInfo.isCombatAllyQuest;
+	self.isDaily = qInfo and qInfo.isDaily;
+	self.isAllyQuest = qInfo and qInfo.isCombatAllyQuest;
 	self.alwaysHide = alwaysHide;
 	self:SetMapPos(posX, posY);
 	self.tagInfo = C_QuestLog.GetQuestTagInfo(questId);
 	self.isBonusQuest = self.tagInfo == nil;
-	self.isBanned = _V["BUGGED_POI"][questId] ==  qInfo.mapID;
+	self.isBanned = qInfo and _V["BUGGED_POI"][questId] == qInfo.mapID;
 	self.time.seconds = WQT_Utils:GetQuestTimeString(self); -- To check if expired or never had a time limit
 	self.passedFilter = true;
 	self:UpdateValidity();
@@ -463,10 +511,14 @@ function WQT_DataProvider:Init()
 	self.frame:SetScript("OnLoad", function(frame, ...) self:OnEvent(...); end);
 	self.frame:RegisterEvent("QUEST_LOG_UPDATE");
 	self.frame:RegisterEvent("PLAYER_LEVEL_UP");
+	self.frame:RegisterEvent("TAXIMAP_OPENED");
 	
 	self.pool = CreateObjectPool(WQT_Utils.QuestCreationFunc, QuestResetFunc);
 	self.iterativeList = {};
 	self.ignoreNextLogUpdate = false;
+
+	self.fitleredQuestsList = {};
+	self.shouldUpdateFiltedList = false;
 	
 	self.zoneLoading = {
 		startTimestamp = 0,
@@ -477,19 +529,25 @@ function WQT_DataProvider:Init()
 		questsActive = {},
 	};
 
-	UpdateAzerothZones(); 
+	UpdateAzerothZones();
 	
-	self.updateCD = 0;
+	EventRegistry:RegisterCallback("WQT.FiltersUpdated" ,function() self.shouldUpdateFiltedList = true;  end, self);
+	EventRegistry:RegisterCallback("WQT.SortUpdated" ,function() self.shouldUpdateFiltedList = true;  end, self);
 end
 
 function WQT_DataProvider:OnEvent(event, ...)
+	local mapIDToLoad = -1;
 	if (event == "QUEST_LOG_UPDATE") then
-		local mapID = WorldMapFrame.mapID;
-		self:LoadQuestsInZone(mapID);
-
+		mapIDToLoad = WorldMapFrame.mapID;
+	elseif (event == "TAXIMAP_OPENED") then
+		mapIDToLoad = FlightMapFrame.mapID;
 	elseif (event == "PLAYER_LEVEL_UP") then
 		local level = ...;
 		UpdateAzerothZones(level); 
+	end
+
+	if (mapIDToLoad and mapIDToLoad > 0) then
+		self:LoadQuestsInZone(mapIDToLoad);
 	end
 end
 
@@ -555,6 +613,12 @@ function WQT_DataProvider:OnUpdate(elapsed)
 					if (not addonInfo.isValid) then
 						updateSuccess = updateSuccess or addonInfo:UpdateValidity();
 					end
+					if (addonInfo.alwaysHide and MapUtil.ShouldShowTask(apiInfo.mapID, apiInfo)) then
+						-- Have only encountered this once and not been able to replicate to test if this even works
+						addonInfo.alwaysHide = false;
+						WQT:debugPrint(string.format("Quest alwaysHide updated (%s)", questID));
+						updateSuccess = updateSuccess or addonInfo:UpdateValidity();
+					end
 					if (updateSuccess) then
 						updated = updated + 1;
 					end
@@ -589,10 +653,56 @@ function WQT_DataProvider:OnUpdate(elapsed)
 			self.zoneLoading.startTimestamp = 0;
 			progress = 0;
 			EventRegistry:TriggerEvent("WQT.DataProvider.QuestsLoaded");
+			self.shouldUpdateFiltedList = true;
 		end
 
 		EventRegistry:TriggerEvent("WQT.DataProvider.ProgressUpdated", progress);
 	end
+
+	if (self.shouldUpdateFiltedList) then
+		self.shouldUpdateFiltedList = false;
+		self:FilterAndSortQuestList();
+	end
+end
+
+function WQT_DataProvider:FilterAndSortQuestList()
+	wipe(self.fitleredQuestsList);
+	local WQTFiltering = WQT:IsFiltering();
+	local BlizFiltering = WQT:IsWorldMapFiltering();
+	for k, questInfo in ipairs(self:GetIterativeList()) do
+		questInfo.passedFilter = false;
+		if (questInfo.isValid and not questInfo.alwaysHide and questInfo.hasRewardData and not questInfo:IsExpired()) then
+			local passed = false;
+			-- Filter passes don't care about anything else
+			if(WQT_Utils:QuestIsVIQ(questInfo)) then 
+				passed = true;
+			else
+				-- Official filtering
+				passed = BlizFiltering and WorldMap_DoesWorldQuestInfoPassFilters(questInfo) or not BlizFiltering;
+				-- Add-on filters
+				if (passed and WQTFiltering) then
+					passed = WQT:PassesAllFilters(questInfo);
+				end
+			end
+			
+			questInfo.passedFilter = passed;		
+		end
+		
+		-- In debug, still filter, but show everything.
+		if (questInfo.passedFilter or addon.debug) then
+				table.insert(self.fitleredQuestsList, questInfo);
+		end
+
+		-- Update reward orders in case the filtering for one of the changed
+		questInfo:ParseRewards();
+	end
+
+	-- Apply sorting
+	local list = self.fitleredQuestsList;
+	local sortOption =  WQT.settings.general.sortBy;
+	table.sort(list, function (a, b) return SortQuestList(a, b, sortOption); end);
+
+	EventRegistry:TriggerEvent("WQT.DataProvider.FilteredListUpdated");
 end
 
 function WQT_DataProvider:ClearData()
@@ -646,7 +756,8 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 	if (not zoneID) then return end;
 
 	-- No update while invisible
-	if (not WorldMapFrame:IsShown()) then
+	if (not WorldMapFrame:IsShown()
+		and not (FlightMapFrame and FlightMapFrame:IsShown())) then
 		return;
 	end
 
@@ -661,8 +772,6 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 	wipe(self.zoneLoading.remainingZones);
 	wipe(self.zoneLoading.questsFound);
 
-	
-	self.updateCD = 0.5;
 	self.latestZoneId = zoneID
 	-- If the flight map is open, we want all quests no matter what
 	if ((FlightMapFrame and FlightMapFrame:IsShown()) ) then 
