@@ -5,6 +5,7 @@
 	<Script file="Libs\LibStub\LibStub.lua"/>
 	<Include file="libs\AceAddon-3.0\AceAddon-3.0.xml"/>
 	<Include file="libs\AceDB-3.0\AceDB-3.0.xml"/>
+	<Include file="libs\Krowi_WorldMapButtons-1.4.8\Krowi_WorldMapButtons-1.4.xml"/>
 	
 	<Script file="Locals.lua"/>
 	
@@ -489,47 +490,16 @@
 		</Scripts>
 	</Frame>
 	
-	<Frame name="WQT_FlightMapContainer" inherits="WQT_ContainerTemplate" hidden="true">
-		<Layers>
-			<Layer level="BACKGROUND">
-				<Texture parentKey="Background" file="Interface\FrameGeneral\UI-Background-Rock" horizTile="true" vertTile="true">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="2" y="-2"/>
-						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-		</Layers>
-	</Frame>
+	<Frame name="WQT_FlightMapContainer" inherits="WQT_ContainerTemplate" hidden="true" />
 	
 	<Frame name="WQT_WorldMapContainer" inherits="WQT_ContainerTemplate" mixin="WQT_ConstrainedChildMixin" parent="WorldMapFrame" hidden="false" enableMouse="true" movable="true">
-		<Layers>
-			<Layer level="BACKGROUND">
-				<Texture parentKey="Background"  horizTile="true" vertTile="true">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="2" y="-2"/>
-						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
-					</Anchors>
-					<Color r="0.1" g="0.05" b="0" a="0.75" />
-				</Texture>
-			</Layer>
-		</Layers>
 		<Frames>
 			<Frame parentKey="DragFrame" enableMouse="true" movable="true">
-				<HitRectInsets bottom="5" />
+				<HitRectInsets bottom="0" />
 				<Anchors>
-					<Anchor point="TOPLEFT" x="3" y="-3"/>
+					<Anchor point="TOPLEFT" x="5" y="-3"/>
 					<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" x="-3" y="-20"/>
 				</Anchors>
-				
-				<Layers>
-					<Layer level="HIGHLIGHT">
-						<Texture file="Interface/ENCOUNTERJOURNAL/UI-EncounterJournalTextures"> 
-							<Color r="1" g="1" b="1" a="0.35" />
-							<TexCoords left="0.55078125" right="0.62109375" top="0.0146015625" bottom="0"/>
-						</Texture>
-					</Layer>
-				</Layers>
 				<Scripts>
 					<OnLoad>
 						self:RegisterForDrag("LeftButton")
@@ -563,6 +533,7 @@
 				self:SetParent(WorldMapFrame.ScrollContainer);
 				self:SetPoint("BOTTOMLEFT", WorldMapFrame.ScrollContainer, 0, 0);
 				self:OnLoad();
+				self.Bg:SetAlpha(0.65);
 			</OnLoad>
 			<OnShow>
 				WQT_ListContainer:DisplayQuestList(UpdateBackground);
@@ -581,43 +552,86 @@
 		</Scripts>
 	</Button>
 	
-	<Button name="WQT_FlightMapContainerButton" inherits="WQT_ContainerButtonTemplate" hidden="false">
+	<Button name="WQT_FlightMapContainerButton" mixin="WQT_ContainerButtonMixin" hidden="false">
+		<Size x="48" y="40"/> 
+		<HitRectInsets left="5" right="5" top="3" bottom="5"/>
+		<KeyValues>
+			<KeyValue key="container" value="WQT_FlightMapContainer" type="global" />
+		</KeyValues>
+		<NormalTexture atlas="common-button-tertiary-normal" />
+		<PushedTexture atlas="common-button-tertiary-pressed" />
+		<HighlightTexture file="Interface\Buttons\UI-Common-MouseHilight" alphaMode="ADD" alpha=".5" />
+
+		<Layers>
+			<Layer level="OVERLAY">
+				<Texture parentKey="Icon" atlas="Worldquest-icon" parentArray="Icons">
+					<Size x="20" y="20"/> 
+					<Anchors>
+						<Anchor point="RIGHT" x="-9" y="0"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="Arrow" atlas="common-icon-forwardarrow" parentArray="Icons">
+					<Size x="10" y="14"/> 
+					<Anchors>
+						<Anchor point="LEFT" x="9" y="0"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
 		<Scripts>
-			<OnLoad>
-				self.container = WQT_FlightMapContainer;
-			</OnLoad>
+			<OnClick method="OnClick"/>
+			<OnEnter method="OnEnter"/>
+			<OnLeave method="OnLeave"/>
+			<OnMouseDown method="OnMouseDown"/>
+			<OnMouseUp method="OnMouseUp"/>
 		</Scripts>
 	</Button>
 	
-	<Button name="WQT_WorldMapContainerButton" inherits="WQT_ContainerButtonTemplate" mixin="WQT_ConstrainedChildMixin" hidden="false" movable="true">
+	<Button name="WQT_WorldMapButtonTemplate" mixin="WQT_WorldMapContainerButtonMixin" frameStrata="HIGH" virtual="true">
+		<Size x="32" y="32"/>
+		<KeyValues>
+			<KeyValue key="container" value="WQT_WorldMapContainer" type="global" />
+			<KeyValue key="pressOffset" value="1" type="number" />
+		</KeyValues>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Background" file="Interface\Minimap\UI-Minimap-Background">
+					<Size x="25" y="25"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" x="3" y="-4"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY" textureSubLevel="1">
+				<Texture parentKey="Icon" atlas="Worldquest-icon" parentArray="Icons">
+					<Size x="18" y="18"/> 
+					<Anchors>
+						<Anchor point="Center" x="1" y="0"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="Border" file="Interface\Minimap\MiniMap-TrackingBorder">
+					<Size x="54" y="54"/>
+					<Anchors>
+						<Anchor point="TOPLEFT"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY" textureSubLevel="2">
+				<Texture parentKey="ActiveTexture" file="Interface\Minimap\UI-Minimap-ZoomButton-Toggle" alphaMode="ADD" hidden="true">
+					<Size x="37" y="37"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.Border" x="-2" y="1"/>
+					</Anchors>					
+				</Texture>
+			</Layer>			
+		</Layers>
+		<HighlightTexture alphaMode="ADD" file="Interface\Minimap\UI-Minimap-ZoomButton-Highlight"/>
 		<Scripts>
-			<OnLoad>
-				self:RegisterForDrag("RightButton")
-				self.container = WQT_WorldMapContainer;
-				self:SetParent(WorldMapFrame.ScrollContainer);
-				self:SetPoint("BOTTOMLEFT", WorldMapFrame.ScrollContainer, 0, 0);
-				
-				self:SetFrameLevel(WorldMapFrame.ScrollContainer:GetFrameLevel()+10);
-				self:OnLoad();
-			</OnLoad>
-			<OnClick inherit="prepend">
-				if (InCombatLockdown()) then return end
-				if (self.isSelected) then
-					WQT_WorldMapContainer:Show();
-				else
-					WQT_WorldMapContainer:Hide();
-				end
-				WQT_WorldMapContainer:ConstrainPosition();
-			</OnClick>
-			<OnEnter>
-				GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-				GameTooltip:SetText(TRACKER_HEADER_WORLD_QUESTS, 1, 1, 1, true);
-				GameTooltip:AddLine(WQT_FULLSCREEN_BUTTON_TT, nil, nil, nil, true);
-				GameTooltip:Show();
-			</OnEnter>	
-			<OnDragStart method="OnDragStart"/>
-			<OnDragStop method="OnDragStop"/>
-			<OnUpdate method="OnUpdate"/>
+			<OnClick method="OnClick"/>
+			<OnEnter method="OnEnter"/>
+			<OnLeave method="OnLeave"/>
+			<OnMouseDown method="OnMouseDown"/>
+			<OnMouseUp method="OnMouseUp"/>
 		</Scripts>
 	</Button>
 	
@@ -643,7 +657,7 @@
 	-->
 
 	<Frame name="WQT_WorldQuestFrame" mixin="WQT_CoreMixin" parent="QuestMapFrame" enableMouse="true" hidden="false">
-		<Size x="286" y="0" />
+		<Size x="308" y="0" />
 		<Anchors>
 			<Anchor point="TOPLEFT" RelativeKey="$parent.ContentsAnchor" y="-29" />
 			<Anchor point="BOTTOMRIGHT" RelativeKey="$parent.ContentsAnchor" x="-22" />

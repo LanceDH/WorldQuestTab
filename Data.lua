@@ -1394,7 +1394,6 @@ _V["WQT_DEFAULTS"] = {
 		
 		["general"] = {
 			sortBy = 1;
-			fullScreenButtonPos = {["anchor"] = "TOPRIGHT", ["x"] = -74, ["y"] = -2};
 			fullScreenContainerPos = {["anchor"] = "TOPLEFT", ["x"] = 0, ["y"] = -25};
 		
 			defaultTab = false;

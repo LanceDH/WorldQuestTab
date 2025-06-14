@@ -153,10 +153,6 @@ function WQT_OfficialPinSuppressorProviderMixin:OnAdded(mapCanvas)
 	self.pin = pin;
 end
 
-
-
-
-
 ------------------------------------
 -- DataProvider
 ------------------------------------

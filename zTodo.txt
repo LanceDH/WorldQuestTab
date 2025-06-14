@@ -2,7 +2,6 @@ If you're reading this; temper your hopes and expectations
 
 Todo
 - Check if things in Data.lua can be improved
-- Anchoring system with full screen and flight map
 - Look at old dropdown features
     - FilterButton indicator for official filtering
     - Used to disable filter linked to official filter (disbale, tooltip with info, matching icon in name instead?)
@@ -11,6 +10,9 @@ Todo
 - Improve loca file readability
 - Probably no longer bother with WorldQuestTab Utilities
 - Check support for external addons, maybe
+- Move external stuff to external, where they should be
+    - WorldFlightMap, anchoring quest list
+    - Aurora affecting background transparency
 
 - Figure out what else needs to be on this list
 - Figure out War Within data and testing, preferably without buying the expansion :|
@@ -47,3 +49,4 @@ Done
 - Update settings UI
 - Something up with map pins not showing correctly for actual world quests
 - Something up with my bountyboard
+- Anchoring system with full screen and flight map

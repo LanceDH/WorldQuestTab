@@ -185,6 +185,20 @@
         "MapHighlightDataProviderMixin",
         "MapCanvasPinMixin",
         "WorldMap_WorldQuestDataProviderMixin",
-        "QuestHubPinMixin"
+        "QuestHubPinMixin",
+        "WQT_WorldMapContainer",
+        "WQT_WorldMapContainerButton",
+        "WQT_ListContainer",
+        "WQT_DebugFrame",
+        "QuestLogDisplayMode",
+        "WQT_QuestMapTab",
+        "WQT_WhatsNewFrame",
+        "WQT_SettingsFrame",
+        "WQT_MapZoneHightlight",
+        "WQT_FlightMapContainer",
+        "WQT_FlightMapContainerButton",
+        "WorldMapTrackingOptionsButtonMixin",
+        "WorldMapTrackingPinButtonMixin",
+        "Add"
     ]
 }

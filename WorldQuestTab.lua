@@ -544,6 +544,11 @@ local function ConvertOldSettings(version)
 		WQT.db.global.pin.continentVisible = WQT.db.global.pin.continentPins and _V["ENUM_PIN_CONTINENT"].all or _V["ENUM_PIN_CONTINENT"].none;
 		WQT.db.global.pin.continentPins = nil
 	end
+
+	if (version < "11.1.01") then
+		-- Reworked full map button
+		WQT.db.global.fullScreenButtonPos = nil
+	end
 end
 
 -- Display an indicator on the filter if some official map filters might hide quest
@@ -748,6 +753,9 @@ function WQT:OnInitialize()
 		WQT.db.global.updateSeen = false;
 		WQT.db.global.versionCheck  = currentVersion;
 	end
+
+	local mapButtonsLib = LibStub("Krowi_WorldMapButtons-1.4");
+	self.mapButton = mapButtonsLib:Add("WQT_WorldMapButtonTemplate", "BUTTON");
 end
 
 function WQT:OnEnable()
@@ -764,7 +772,6 @@ function WQT:OnEnable()
 	end
 	
 	-- Place fullscreen button in saved location
-	WQT_WorldMapContainerButton:LinkSettings(WQT.settings.general.fullScreenButtonPos);
 	WQT_WorldMapContainer:LinkSettings(WQT.settings.general.fullScreenContainerPos);
 	
 	-- Apply saved filters
@@ -1396,15 +1403,20 @@ function WQT_ScrollListMixin:DisplayQuestList()
 end
 
 function WQT_ScrollListMixin:UpdateBackground()
-	if (C_AddOns.IsAddOnLoaded("Aurora") or (WorldMapFrame:IsShown() and WQT_WorldMapContainer:IsShown())) then
-		WQT_ListContainer.Background:SetAlpha(0);
+	local backgroundAlpha = 1;
+	if (C_AddOns.IsAddOnLoaded("Aurora")) then
+		-- This should be an external
+		backgroundAlpha = 0;
+	elseif (WorldMapFrame:IsShown() and WQT_WorldMapContainer:IsShown()) then
+		backgroundAlpha = 0.75;
+	end
+	WQT_ListContainer.Background:SetAlpha(backgroundAlpha);
+	WQT_WhatsNewFrame.Background:SetAlpha(backgroundAlpha);
+	WQT_SettingsFrame.Background:SetAlpha(backgroundAlpha);
+	if (#WQT_WorldQuestFrame.dataProvider.fitleredQuestsList == 0) then
+		WQT_ListContainer.Background:SetAtlas("QuestLog-empty-quest-background", true);
 	else
-		WQT_ListContainer.Background:SetAlpha(1);
-		if (self.numDisplayed == 0) then
-			WQT_ListContainer.Background:SetAtlas("QuestLog-empty-quest-background", true);
-		else
-			WQT_ListContainer.Background:SetAtlas("QuestLog-main-background", true);
-		end
+		WQT_ListContainer.Background:SetAtlas("QuestLog-main-background", true);
 	end
 end
 
@@ -1880,7 +1892,6 @@ function WQT_CoreMixin:ApplyAllSettings()
 	WQT_Utils:RefreshOfficialDataProviders();
 	WQT_ListContainer:UpdateQuestList();
 	WQT:Sort_OnClick(nil, WQT.settings.general.sortBy);
-	WQT_WorldMapContainerButton:LinkSettings(WQT.settings.general.fullScreenButtonPos);
 	WQT_WorldMapContainer:LinkSettings(WQT.settings.general.fullScreenContainerPos);
 end
 
@@ -2056,7 +2067,7 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 		FlightMapFrame:AddDataProvider(CreateFromMixins(WQT_OfficialPinSuppressorProviderMixin));
 
 		WQT_FlightMapContainer:SetParent(FlightMapFrame);
-		WQT_FlightMapContainer:SetPoint("BOTTOMLEFT", FlightMapFrame, "BOTTOMRIGHT", -6, 0);
+		WQT_FlightMapContainer:SetPoint("BOTTOMLEFT", FlightMapFrame, "BOTTOMRIGHT", -7, 0);
 		WQT_FlightMapContainerButton:SetParent(FlightMapFrame);
 		WQT_FlightMapContainerButton:SetAlpha(1);
 		WQT_FlightMapContainerButton:SetPoint("BOTTOMRIGHT", FlightMapFrame, "BOTTOMRIGHT", -8, 8);
@@ -2163,45 +2174,30 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	if (not anchor) then return end
 	
 	self.anchor = anchor;
-	
-	local parent = QuestMapFrame;
-	local point =  "BOTTOMLEFT";
-	local xOffset = 3;
-	local yOffset = 5;
-	local tab = WQT_TabWorld;
-
 
 	WQT_WorldMapContainer:Hide();
-	WQT_WorldMapContainerButton:Hide();
+	WQT.mapButton:SetShown(anchor == _V["LIST_ANCHOR_TYPE"].full);
 
-	-- WQT_WorldQuestFrame:TriggerCallback("AnchorChanged", anchor);
-	 if true then return end;
-	
 	if (anchor == _V["LIST_ANCHOR_TYPE"].flight) then
-		parent = WQT_FlightMapContainer;
+		WQT_WorldQuestFrame:ClearAllPoints(); 
+		WQT_WorldQuestFrame:SetParent(WQT_FlightMapContainer);
+		WQT_WorldQuestFrame:SetPoint("TOPLEFT", WQT_FlightMapContainer, 10, -56);
+		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", WQT_FlightMapContainer, -28, 12);
 	elseif (anchor == _V["LIST_ANCHOR_TYPE"].taxi) then
-		parent = WQT_OldTaxiMapContainer;
+		-- Exists in frame data but no longer used?
 	elseif (anchor == _V["LIST_ANCHOR_TYPE"].world) then
-		point = "BOTTOMRIGHT";
-		xOffset = -2;
-		yOffset = 3;
-		tab = self.tabBeforeAnchor;
-		WQT_WorldMapContainer:Hide();
-		WQT_WorldMapContainerButton:Hide();
+		WQT_WorldQuestFrame:ClearAllPoints(); 
+		WQT_WorldQuestFrame:SetParent(QuestMapFrame);
+		WQT_WorldQuestFrame:SetPoint("TOPLEFT", QuestMapFrame.ContentsAnchor, 0, -29);
+		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", QuestMapFrame.ContentsAnchor, -22, 0);
 	elseif (anchor == _V["LIST_ANCHOR_TYPE"].full) then
-		parent = WQT_WorldMapContainer;
+		WQT_WorldQuestFrame:ClearAllPoints(); 
+		WQT_WorldQuestFrame:SetParent(WQT_WorldMapContainer);
+		WQT_WorldQuestFrame:SetPoint("TOPLEFT", WQT_WorldMapContainer, 14, -56);
+		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", WQT_WorldMapContainer, -28, 12);
 		WQT_WorldMapContainer:ConstrainPosition();
-		WQT_WorldMapContainerButton:ConstrainPosition();
-		WQT_WorldQuestFrame:SetFrameLevel(WQT_WorldMapContainer:GetFrameLevel()+2);
-		WQT_WorldMapContainerButton:Show();
-		WQT_WorldMapContainer:SetShown(WQT_WorldMapContainerButton.isSelected);
+		WQT_WorldMapContainer:SetShown(WQT.mapButton.isSelected);
 	end
-
-	WQT_WorldQuestFrame:ClearAllPoints(); 
-	WQT_WorldQuestFrame:SetPoint(point, parent, point, xOffset, yOffset);
-	WQT_WorldQuestFrame:SetParent(parent);
-
-	--WQT_WorldQuestFrame:TriggerCallback("AnchorChanged", anchor);
 end
 
 function WQT_CoreMixin:LoadExternal(external)

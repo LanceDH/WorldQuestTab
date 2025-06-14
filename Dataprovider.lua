@@ -171,25 +171,25 @@ local function QuestResetFunc(pool, questInfo)
 	questInfo:Reset();
 end
 
-function QuestInfoMixin:Init(questId, qInfo, alwaysHide, posX, posY)
-	self.questId = questId;
-	self.questID = questId;
+function QuestInfoMixin:Init(questID, qInfo, alwaysHide, posX, posY)
+	self.questId = questID;
+	self.questID = questID;
 	self.isDaily = qInfo and qInfo.isDaily;
 	self.isAllyQuest = qInfo and qInfo.isCombatAllyQuest;
 	self.alwaysHide = alwaysHide;
 	self:SetMapPos(posX, posY);
-	self.tagInfo = C_QuestLog.GetQuestTagInfo(questId);
+	self.tagInfo = C_QuestLog.GetQuestTagInfo(questID);
 	self.isBonusQuest = self.tagInfo == nil;
-	self.isBanned = qInfo and _V["BUGGED_POI"][questId] == qInfo.mapID;
-	self.time.seconds = WQT_Utils:GetQuestTimeString(self); -- To check if expired or never had a time limit
+	self.isBanned = qInfo and _V["BUGGED_POI"][questID] == qInfo.mapID;
 	self.passedFilter = true;
 	self:UpdateValidity();
+	self:UpdateTimeRemaining();
 	
 	-- quest type
 	self.typeBits = WQT_QUESTTYPE.normal;
 	if (self.isDaily) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.daily); end
-	if (C_QuestLog.IsThreatQuest(self.questId)) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.threat); end
-	if (C_QuestLog.IsQuestCalling(self.questId)) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.calling); end
+	if (C_QuestLog.IsThreatQuest(self.questID)) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.threat); end
+	if (C_QuestLog.IsQuestCalling(self.questID)) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.calling); end
 	if (self.isCombatAllyQuest) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.combatAlly); end
 
 	-- rewards
@@ -199,8 +199,14 @@ function QuestInfoMixin:Init(questId, qInfo, alwaysHide, posX, posY)
 end
 
 function QuestInfoMixin:UpdateValidity()
-	self.isValid = not self.isBanned and HaveQuestData(self.questId);
+	self.isValid = not self.isBanned and HaveQuestData(self.questID);
 	return self.isValid;
+end
+
+function QuestInfoMixin:UpdateTimeRemaining()
+	local oldTime = self.time.seconds;
+	self.time.seconds = C_TaskQuest.GetQuestTimeLeftSeconds(self.questID) or 0;
+	return self.time.seconds ~= oldTime;
 end
 
 function QuestInfoMixin:OnCreate()
@@ -510,6 +516,7 @@ function WQT_DataProvider:Init()
 	self.frame:SetScript("OnEvent", function(frame, ...) self:OnEvent(...); end);
 	self.frame:SetScript("OnLoad", function(frame, ...) self:OnEvent(...); end);
 	self.frame:RegisterEvent("QUEST_LOG_UPDATE");
+	self.frame:RegisterEvent("QUEST_DATA_LOAD_RESULT");
 	self.frame:RegisterEvent("PLAYER_LEVEL_UP");
 	self.frame:RegisterEvent("TAXIMAP_OPENED");
 	
@@ -521,6 +528,7 @@ function WQT_DataProvider:Init()
 	self.shouldUpdateFiltedList = false;
 	
 	self.zoneLoading = {
+		needsUpdate = false,
 		startTimestamp = 0,
 		remainingZones = {},
 		numRemaining = 0,
@@ -533,26 +541,47 @@ function WQT_DataProvider:Init()
 	
 	EventRegistry:RegisterCallback("WQT.FiltersUpdated" ,function() self.shouldUpdateFiltedList = true;  end, self);
 	EventRegistry:RegisterCallback("WQT.SortUpdated" ,function() self.shouldUpdateFiltedList = true;  end, self);
+
+	-- Needed to trigger update in full screen map
+	EventRegistry:RegisterCallback(
+		"MapCanvas.MapSet"
+		,function()
+				self.zoneLoading.needsUpdate = true;
+			end
+		, self);
 end
 
 function WQT_DataProvider:OnEvent(event, ...)
-	local mapIDToLoad = -1;
 	if (event == "QUEST_LOG_UPDATE") then
-		mapIDToLoad = WorldMapFrame.mapID;
+		self.zoneLoading.needsUpdate = true;
+	elseif (event == "QUEST_DATA_LOAD_RESULT") then
+		self.zoneLoading.needsUpdate = true;
 	elseif (event == "TAXIMAP_OPENED") then
-		mapIDToLoad = FlightMapFrame.mapID;
+		self.zoneLoading.needsUpdate = true;
 	elseif (event == "PLAYER_LEVEL_UP") then
 		local level = ...;
 		UpdateAzerothZones(level); 
 	end
 
-	if (mapIDToLoad and mapIDToLoad > 0) then
-		self:LoadQuestsInZone(mapIDToLoad);
-	end
 end
 
 local MAX_PROCESSING_TIME = 0.005;
 function WQT_DataProvider:OnUpdate(elapsed)
+	if(self.zoneLoading.needsUpdate) then
+		self.zoneLoading.needsUpdate = false;
+
+		local mapIDToLoad = nil;
+		if(WorldMapFrame:IsShown()) then
+			mapIDToLoad = WorldMapFrame.mapID;
+		elseif(FlightMapFrame and FlightMapFrame:IsShown()) then
+			mapIDToLoad = FlightMapFrame.mapID;
+		end
+
+		if (mapIDToLoad) then
+			self:LoadQuestsInZone(mapIDToLoad);
+		end
+	end
+
 	if(self.zoneLoading.numRemaining > 0) then
 		
 		local processedCount = 0;
@@ -606,6 +635,8 @@ function WQT_DataProvider:OnUpdate(elapsed)
 					local addonInfo = questForRemove[questID];
 					questForRemove[questID] = nil;
 					local updateSuccess = false;
+					-- Just always update time. This has been an issue on the full screen map, and might as well make sure we are up to date
+					updateSuccess = updateSuccess and addonInfo:UpdateTimeRemaining();
 					-- Quest log update might have been for missing data
 					if (not addonInfo.hasRewardData) then
 						updateSuccess = updateSuccess or addonInfo:LoadRewards(true);
@@ -644,9 +675,15 @@ function WQT_DataProvider:OnUpdate(elapsed)
 
 			-- local timeSinceStart = GetTimePreciseSec() - self.zoneLoading.startTimestamp;
 
+			-- local count = 0;
 			-- for info in self.pool:EnumerateActive() do
-			-- 	--print("Active", info.questID);
+			-- 	if (not info.hasRewardData) then
+			-- 		print("requesting reward data");
+			-- 		C_TaskQuest.RequestPreloadRewardData(info.questID);
+			-- 		count = count + 1;
+			-- 	end
 			-- end
+			-- print(count);
 
 			WQT:debugPrint(string.format("Done: %s quests (-%s +%s ~%s)", acceptedCount, removed, added, updated));
 

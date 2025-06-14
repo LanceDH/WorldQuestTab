@@ -206,15 +206,29 @@ end
 function WQT_ContainerButtonMixin:SetSelected(isSelected)
 	self.isSelected = isSelected;	
 	if (self.container) then
-		if (self.isSelected) then
-			self.container:Show();
-			self.Selected:SetAlpha(0.5);
-			WQT_WorldQuestFrame:SelectTab(WQT_TabWorld);
-		else
-			self.container:Hide();
-			self.Selected:SetAlpha(0);
-			WQT_WorldQuestFrame:SelectTab(WQT_TabNormal);
+		self.container:SetShown(self.isSelected);
+		if (self.Arrow) then
+			self.Arrow:SetAtlas(self.isSelected and "common-icon-backarrow" or "common-icon-forwardarrow");
 		end
+		if (self.ActiveTexture) then
+			self.ActiveTexture:SetShown(self.isSelected);
+		end
+	end
+end
+
+function WQT_ContainerButtonMixin:OnMouseDown()
+	if (not self.Icons) then return end
+	local offset = self.pressOffset or 2;
+	for k, frame in ipairs(self.Icons) do
+		frame:AdjustPointsOffset(offset, -offset);
+	end
+end
+
+function WQT_ContainerButtonMixin:OnMouseUp()
+	if (not self.Icons) then return end
+	local offset = self.pressOffset or 2;
+	for k, frame in ipairs(self.Icons) do
+		frame:AdjustPointsOffset(-offset, offset);
 	end
 end
 
@@ -227,6 +241,10 @@ end
 function WQT_ContainerButtonMixin:OnLeave()
 	GameTooltip:Hide();
 end
+
+WQT_WorldMapContainerButtonMixin = CreateFromMixins(WQT_ContainerButtonMixin);
+
+function WQT_WorldMapContainerButtonMixin:Refresh() end
 
 ----------------------------
 -- WQT_MiniIconOverlayMixin
@@ -428,7 +446,7 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 	end
 	
 	timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(questInfo.questId) or 0;
-	timeLeftSeconds =  C_TaskQuest.GetQuestTimeLeftSeconds(questInfo.questId) or 0;
+	timeLeftSeconds = C_TaskQuest.GetQuestTimeLeftSeconds(questInfo.questId) or 0;
 	if ( timeLeftSeconds  and timeLeftSeconds > 0) then
 		local displayTime = timeLeftSeconds
 		if (displayTime < SECONDS_PER_HOUR  and displayTime >= SECONDS_PER_MIN ) then

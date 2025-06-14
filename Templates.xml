@@ -215,16 +215,8 @@
 		</Scripts>
 	</Button>
 	
-	<Frame name="WQT_ContainerTemplate" virtual="true">
-		<Size x="296.5" y="518"/>
-		<Frames>
-			<Frame parentKey="Inset" inherits="ShadowOverlaySmallTemplate">
-				<Anchors>
-					<Anchor point="TOPLEFT" x="4" y="-4"/>
-					<Anchor point="BOTTOMRIGHT" x="-4" y="4"/>
-				</Anchors>
-			</Frame>
-		</Frames>
+	<Frame name="WQT_ContainerTemplate" virtual="true" inherits="DefaultPanelTemplate">
+		<Size x="346" y="506"/>
 	</Frame>
 	
 	<Frame name="WQT_MiniIconTemplate" flattenRenderLayers="true" mixin="WQT_MiniIconMixin" virtual="true">
