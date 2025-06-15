@@ -77,7 +77,7 @@ local WQT_Utils = addon.WQT_Utils;
 local WQT_Profiles = addon.WQT_Profiles;
 
 local _; -- local trash 
-local _emptyTable = {};
+
 
 local _playerFaction = GetPlayerFactionGroup();
 local _playerName = UnitName("player");
@@ -1696,14 +1696,6 @@ function WQT_CoreMixin:OnLoad()
 			WQT_WorldQuestFrame:ChangeAnchorLocation(_V["LIST_ANCHOR_TYPE"].full);
 		end)
 		
-	-- Opening quest details
-	hooksecurefunc("QuestMapFrame_ShowQuestDetails", function(questId)
-			if QuestMapFrame.DetailsFrame.questID == nil then
-				QuestMapFrame.DetailsFrame.questID = questId;
-			end
-			-- Anchor to small map in case details were opened through clicking a quest in the obejctive tracker
-			WQT_WorldQuestFrame:ChangeAnchorLocation(_V["LIST_ANCHOR_TYPE"].world);
-		end)	
 	
 	-- Update our filters when changes are made to the world map filters
 	local worldMapFilter;

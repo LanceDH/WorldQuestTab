@@ -17,74 +17,8 @@
 	<Include file="MapPinProvider.xml"/>
 	
 	<include file="Callings\CallingsBoard.xml"/>
-	
-	<!--<Include file="External\External.xml"/>-->
+
 	<Include file="Debug.xml"/>
-	
-	<Button name="WQT_TabTemplate" virtual="true">
-		<Size x="33" y="35"/>
-		<Layers>
-			<Layer level="BACKGROUND">
-				<Texture file="Interface\PaperDollInfoFrame\PaperDollSidebarTabs" parentKey="TabBg">
-					<Size x="50" y="42"/>
-					<Anchors>
-						<Anchor point="BOTTOMLEFT" x="-9" y="-2"/>
-					</Anchors>
-					<TexCoords left="0.01562500" right="0.79687500" top="0.61328125" bottom="0.78125000"/>
-				</Texture>
-			</Layer>
-			<Layer level="ARTWORK">
-				<Texture parentKey="Icon">
-					<Size x="19" y="21"/>
-					<Anchors>
-						<Anchor point="BOTTOM" x="1" y="4"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-			<Layer level="OVERLAY">
-				<Texture parentKey="Hider" file="Interface\PaperDollInfoFrame\PaperDollSidebarTabs">
-					<Size x="32" y="19"/>
-					<Anchors>
-						<Anchor point="BOTTOM"/>
-					</Anchors>
-					<TexCoords left="0.01562500" right="0.54687500" top="0.11328125" bottom="0.18750000"/>
-				</Texture>
-			</Layer>
-			<Layer level="HIGHLIGHT">
-				<Texture parentKey="Highlight" file="Interface\PaperDollInfoFrame\PaperDollSidebarTabs">
-					<Size x="31" y="31"/>	
-					<Anchors>
-						<Anchor point="TOPLEFT" x="2" y="-4"/>
-					</Anchors>
-					<TexCoords left="0.01562500" right="0.50000000" top="0.19531250" bottom="0.31640625"/>
-				</Texture>
-			</Layer>
-		</Layers>
-		<Scripts>
-			<OnClick>
-				WQT_WorldQuestFrame:SelectTab(self, button);
-				self.Highlight:Hide();
-			</OnClick>
-			<OnEnter>
-				if self.tooltipText then
-					GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-					GameTooltip:SetText(self.tooltipText, nil, nil, nil, nil, true);
-					GameTooltip:Show();
-				end
-				if WQT_WorldQuestFrame.selectedTab == self then
-					self.Highlight:Hide();
-				else
-					self.Highlight:Show();
-				end
-			</OnEnter>
-			<OnLeave>
-				GameTooltip:Hide();
-			</OnLeave>
-			<OnLoad>
-				self:RegisterForClicks("LeftButtonUp");
-			</OnLoad>
-		</Scripts>
-	</Button>
 
 	<Frame name="WQT_RewardTemplate" parentArray="rewardFrames" virtual="true">
 		<Size x="32" y="32" />

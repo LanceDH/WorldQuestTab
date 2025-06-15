@@ -149,50 +149,6 @@ function WQT_MiniIconMixin:Update()
 	self.Icon:SetVertexColor(r, g, b);
 end
 
---------------------------------
--- WQT_ScrollFrameMixin
---------------------------------
-
-WQT_ScrollFrameMixin = {};
-
-function WQT_ScrollFrameMixin:OnLoad()
-	self.offset = 0;
-	self.scrollStep = 30;
-	self.max = 0;
-	self.ScrollBar:SetMinMaxValues(0, 0);
-	self.ScrollBar:SetValue(0);
-	self.ScrollChild:SetPoint("RIGHT", self)
-end
-
-function WQT_ScrollFrameMixin:OnShow()
-	self:SetChildHeight(self.ScrollChild:GetHeight());
-end
-
-function WQT_ScrollFrameMixin:UpdateChildFramePosition()
-	if (self.ScrollChild) then
-		self.ScrollChild:SetPoint("TOPLEFT", self, 0, self.offset);
-	end
-end
-
-function WQT_ScrollFrameMixin:ScrollValueChanged(value)
-	self.offset = max(0, min(value, self.max));
-	self:UpdateChildFramePosition();
-end
-
-function WQT_ScrollFrameMixin:OnMouseWheel(delta)
-	self.offset = self.offset - delta * self.scrollStep;
-	self.offset = max(0, min(self.offset, self.max));
-	self:UpdateChildFramePosition();
-	self.ScrollBar:SetValue(self.offset);
-end
-
-function WQT_ScrollFrameMixin:SetChildHeight(height)
-	self.ScrollChild:SetHeight(height);
-	self.max = max(0, height - self:GetHeight());
-	self.offset = min(self.offset, self.max);
-	self.ScrollBar:SetMinMaxValues(0, self.max);
-end
-
 ----------------------------
 -- Containers
 ----------------------------
@@ -846,35 +802,6 @@ function WQT_Utils:RefreshOfficialDataProviders()
 	end
 end
 
--- Compatibility with the TomTom add-on
-function WQT_Utils:AddTomTomArrowByQuestId(questId)
-	if (not questId) then return; end
-	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
-	if (zoneId) then
-		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
-		local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
-		if (title and x and y) then
-			TomTom:AddWaypoint(zoneId, x, y, {["title"] = title, ["crazy"] = true});
-		end
-	end
-end
-
-function WQT_Utils:RemoveTomTomArrowbyQuestId(questId)
-	if (not questId) then return; end
-	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
-	if (zoneId) then
-		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
-		local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
-		if (title and x and y) then
-			local key = TomTom:GetKeyArgs(zoneId, x, y, title);
-			local wp = TomTom.waypoints[zoneId] and TomTom.waypoints[zoneId][key];
-			if (wp) then
-				TomTom:RemoveWaypoint(wp);
-			end
-		end
-	end
-end
-
 function WQT_Utils:QuestIncorrectlyCounts(questLogIndex)
 	local questInfo = C_QuestLog.GetInfo(questLogIndex);
 	if (not questInfo or questInfo.isHeader or questInfo.isTask or questInfo.isBounty) then
@@ -947,13 +874,6 @@ function WQT_Utils:GetQuestMapLocation(questId, mapId)
 		end
 		isSameMap = mapInfo.mapID == mapId;
 	end
-	-- Threat quest specific
-	if (isSameMap and C_QuestLog.IsThreatQuest(questId)) then
-		local completed, x, y = QuestPOIGetIconInfo(questId);
-		if (x and y) then
-			return x, y;
-		end
-	end
 	-- General tasks
 	local x, y = C_TaskQuest.GetQuestLocation(questId, mapId);
 	if (x and y) then
@@ -994,27 +914,6 @@ function WQT_Utils:RewardTypePassesFilter(rewardType)
 	end
 
 	return true;
-end
-
-function WQT_Utils:GetQuestRewardIcon(questID)
-	local texture;
-	-- Item
-	texture = select(2, GetQuestLogRewardInfo(1, questID));
-	if (texture) then return texture; end
-	-- Spell
-	texture = GetQuestLogRewardSpell(1, questID);
-	if (texture) then return texture; end
-	-- Honor
-	if (GetQuestLogRewardHonor(questID) > 0) then return 1455894 end;
-	-- Gold
-	if (GetQuestLogRewardMoney(questID) > 0) then return 133784 end;
-	-- Currency
-	local _, _, amount, currencyId = GetQuestLogRewardCurrencyInfo(1, questID);
-	if (currencyId) then
-		local currencyInfo = C_CurrencyInfo.GetCurrencyInfo(currencyId);
-		texture = select(2, CurrencyContainerUtil.GetCurrencyContainerInfo(currencyId, amount, currencyInfo.name, currencyInfo.iconFileID, currencyInfo.quality));
-		if (texture) then return texture; end
-	end
 end
 
 function WQT_Utils:CalculateWarmodeAmount(rewardType, amount)

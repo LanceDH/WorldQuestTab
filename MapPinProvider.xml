@@ -4,9 +4,6 @@
 
 	<Script file="MapPinProvider.lua"/>
 
- 	<Frame name="WQT_OfficialPinSuppressorTemplate" mixin="WQT_OfficialPinSuppressorMixin" virtual="true" />
-
-
 	<Button name="WQT_PinTemplate" mixin="WQT_PinMixin" flattenRenderLayers="true" virtual="true" frameStrata="MEDIUM">
 		<Size x="25" y="25" />
 		<HitRectInsets left="3" right="3" top="3" bottom="3"/>

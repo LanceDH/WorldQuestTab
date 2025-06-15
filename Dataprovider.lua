@@ -134,7 +134,7 @@ local function SortQuestList(a, b, sortID)
 	-- Sort by a list of filters depending on the current filter choice
 	local order = _V["SORT_OPTION_ORDER"][sortID];
 	if (not order) then
-		order = _emptyTable;
+		order = {};
 		WQT:debugPrint("No sort order for", sortID);
 		return a.questId < b.questId;
 	end

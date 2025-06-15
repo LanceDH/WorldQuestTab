@@ -8,12 +8,6 @@ local WQT_Utils = addon.WQT_Utils;
 ------------------------
 -- DEBUGGING
 ------------------------
-
-local _debugTable;
-if (addon.debug and LDHDebug) then
-	LDHDebug:Monitor(addonName);
-end
-
 function WQT:debugPrint(...)
 	if (addon.debug) then 
 		print("WQT", ...);
@@ -215,9 +209,9 @@ end
 local function GetAddonDump()
 	local output = "Addons\n";
 	
-	for i = 1, GetNumAddOns() do
-		if (IsAddOnLoaded(i)) then
-			output = FORMAT_ADDON:format(output, GetAddOnInfo(i));
+	for i = 1, C_AddOns.GetNumAddOns() do
+		if (C_AddOns.IsAddOnLoaded(i)) then
+			output = FORMAT_ADDON:format(output, C_AddOns.GetAddOnInfo(i));
 		end
 	end
 	
@@ -284,99 +278,4 @@ end
 
 
 function WQT_DebugFrameMixin:DoDebugThing()
-	print("Debug");
-
-	-- local timeStart = GetTimePreciseSec();
-	-- for contID in pairs(_V["WQT_ZONE_MAPCOORDS"][947]) do
-	-- 	-- Every ID is a continent, get every zone on every continent
-	-- 	local continentZones = _V["WQT_ZONE_MAPCOORDS"][contID];
-	-- 	for zoneID  in pairs(continentZones) do
-	-- 		local quests = C_TaskQuest.GetQuestsOnMap(zoneID);
-	-- 		print(zoneID, quests and #quests or "nil");
-	-- 	end
-	-- end
-
-	-- print(GetTimePreciseSec() - timeStart);`
-
-	-- WQT_Test.done = 1;
-	local dataprovider = WQT_WorldQuestFrame.dataProvider;
-
-	local list = {}
-	for k, v in ipairs(C_Map.GetMapChildrenInfo(946, Enum.UIMapType.Zone, true)) do
-		list[v.mapID] = true;
-		
-	end
-	for k, v in ipairs(C_Map.GetMapChildrenInfo(946, Enum.UIMapType.Orphan, true)) do
-		list[v.mapID] = true;
-	end
-
-	local count = 0;
-	for zoneID in pairs(list) do
-		dataprovider:AddZoneToBuffer(zoneID);
-		count = count + 1;
-	end
-
-	print("Sent", count);
-	--for k, v in ipairs(C_Map.GetMapChildrenInfo(WorldMapFrame.mapID)) do print(string.format("  %s: %s (%s)",v.mapType, v.name, v.mapID)) end
-
-
-	-- local mapID = WorldMapFrame.mapID;
-	-- print(mapID);
-	-- local childInfo = C_Map.GetMapChildrenInfo(mapID, Enum.UIMapType.Zone, true);
-
-	-- for k, v in ipairs(childInfo) do
-	-- 	print(string.format("  %s: %s (%s)",v.mapType, v.name, v.mapID))
-	-- end
-
-	if true then return end
-
-
-	for k, v in ipairs(C_Map.GetMapChildrenInfo(mapID, Enum.UIMapType.Orphan, true)) do
-		tinsert(childInfo, v);
-	end
-	-- for k, v in ipairs(C_Map.GetMapChildrenInfo(WorldMapFrame.mapID)) do print(string.format("  %s: %s (%s)",v.mapType, v.name, v.mapID)) end
-	local yes = {};
-	local no = {};
-	local questInfo = {};
-	for k, v in pairs(childInfo) do
-		local x,x2=C_Map.GetMapRectOnMap(v.mapID, mapID);
-		local accept = false;
-		--if(v.mapType == Enum.UIMapType.Zone or v.mapType == Enum.UIMapType.Orphan) then
-			accept = true;
-		--end
-
-		tinsert(accept and yes or no, v);
-	end
-
-	print("Yes");
-	for _, v in pairs(yes) do
-		local quests = C_TaskQuest.GetQuestsOnMap(v.mapID);
-		if (quests and #quests > 0) then
-			for _, quest in ipairs(quests) do
-				if (not questInfo[quest.questID]) then
-					C_TaskQuest.GetQuestZoneID(quest.questID)
-					local info = { ["questID"] = quest.questID, ["mapID"] = v.mapID };
-
-					questInfo[quest.questID] = info;
-				end
-					
-			end
-			
-		end
-		print(string.format("  %s: %s (%s) -> %s",v.mapType, v.name, v.mapID, quests and #quests or "nil"));
-	end
-
-	-- print("No");
-	-- for k, v in pairs(no) do
-	-- 	print(string.format("  %s: %s (%s)",v.mapType, v.name, v.mapID));
-	-- end
-
-	print("quests");
-	local questCount = 0;
-	for k, v in pairs(questInfo) do
-		questCount = questCount + 1;
-		print(v.questID, v.mapID);
-	end
-
-	print(#childInfo, questCount);
 end
