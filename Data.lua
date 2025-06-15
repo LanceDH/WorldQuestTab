@@ -7,14 +7,10 @@ addon.debug = false;
 addon.setupPhase = true;
 addon.WQT_Utils = {};
 local WQT_Utils = addon.WQT_Utils;
-local WQT_Profiles = addon.WQT_Profiles;
 local _L = addon.L;
 local _V = addon.variables;
 local WQT = addon.WQT;
-local _emptyTable = {};
 local _playerFaction = UnitFactionGroup("Player");
-
-
 
 addon.WQT_Profiles =  {};
 local WQT_Profiles = addon.WQT_Profiles;
@@ -679,12 +675,6 @@ _V["SETTING_LIST"] = {
 				WQT_ListContainer:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.preciseFilters end
-			}	
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["LFG_BUTTONS"], ["tooltip"] = _L["LFG_BUTTONS_TT"]
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.general.useLFGButtons = value;
-			end
-			,["getValueFunc"] = function() return WQT.settings.general.useLFGButtons end
 			}	
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["ALWAYS_ALL"], ["tooltip"] = _L["ALWAYS_ALL_TT"]
 			, ["valueChangedFunc"] = function(value) 
@@ -1400,7 +1390,6 @@ _V["WQT_DEFAULTS"] = {
 			saveFilters = true;
 			preciseFilters = false;
 			emissaryOnly = false;
-			useLFGButtons = false;
 			autoEmisarry = true;
 			questCounter = true;
 			bountyCounter = true;
@@ -1493,6 +1482,8 @@ _V["PATCH_NOTES"] = {
 			},
 			["changes"] = {
 				"Compatibility with patch 11.1.5",
+				"A bunch of refactoring of which you hopefully only notice positive things",
+				"Things that didn't survive:<br/>- Quest counter on the normal quest tab<br/>- Anything LFG related<br/>- Support for WQT Utilities",
 			},
 		}
 	}

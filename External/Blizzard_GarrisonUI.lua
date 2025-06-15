@@ -18,7 +18,6 @@ local function ShowCustomTooltip(display)
 
 	-- Look for quest info in the callings board
 	local questInfo, calling = WQT_CallingsBoard:GetQuestData(display.questID);
-	
 	-- If we got the info, replace the tooltip
 	if (questInfo and calling) then
 		GameTooltip:Hide();

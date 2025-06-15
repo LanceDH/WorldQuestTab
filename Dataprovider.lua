@@ -9,7 +9,6 @@ local _L = addon.L;
 local _V = addon.variables;
 local WQT_Utils = addon.WQT_Utils;
 
-local _WFMLoaded = C_AddOns.IsAddOnLoaded("WorldFlightMap");
 local _azuriteID = C_CurrencyInfo.GetAzeriteCurrencyID();
 
 ----------------------------
@@ -785,7 +784,6 @@ function WQT_DataProvider:AddZoneToBuffer(zoneID)
 end
 
 function WQT_DataProvider:LoadQuestsInZone(zoneID)
-
 	if (not zoneID) then return end
 	self:ClearData();
 	zoneID = zoneID or self.latestZoneId or C_Map.GetBestMapForUnit("player");
@@ -802,7 +800,6 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 		WQT:debugPrint("Interrupt");
 	end
 
-	
 	self.zoneLoading.startTimestamp = GetTimePreciseSec();
 	self.zoneLoading.numRemaining = 0;
 	self.zoneLoading.numTotal = 0;
@@ -810,15 +807,6 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 	wipe(self.zoneLoading.questsFound);
 
 	self.latestZoneId = zoneID
-	-- If the flight map is open, we want all quests no matter what
-	if ((FlightMapFrame and FlightMapFrame:IsShown()) ) then 
-		local taxiId = GetTaxiMapID()
-		zoneID = (taxiId and taxiId > 0) and taxiId or zoneID;
-		-- World Flight Map add-on overwrite
-		if (_WFMLoaded) then
-			zoneID = WorldMapFrame.mapID;
-		end
-	end
 	
 	local currentMapInfo = WQT_Utils:GetCachedMapInfo(zoneID);
 	if not currentMapInfo then return end;
@@ -876,5 +864,4 @@ function WQT_DataProvider:ReloadQuestRewards()
 	for questInfo, v in self.pool:EnumerateActive() do
 		questInfo:LoadRewards(true);
 	end
-	--self:TriggerCallback("QuestsLoaded");
 end

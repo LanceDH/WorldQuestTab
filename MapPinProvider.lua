@@ -103,54 +103,35 @@ end
 ------------------------------------
 -- Official pin suppressor
 ------------------------------------
+WQT_OfficialPinSuppressorProviderMixin = CreateFromMixins(MapCanvasDataProviderMixin);
 
-WQT_OfficialPinSuppressorMixin = CreateFromMixins(MapCanvasPinMixin);
-
-function WQT_OfficialPinSuppressorMixin:IsPinSuppressor()
-	return true;
+local function HideOfficialPin(pin)
+	if (WQT.settings.pin.disablePoI) then return; end
+	pin:Hide();
 end
 
-function WQT_OfficialPinSuppressorMixin:FinalizeSuppression()
-end
-
-function WQT_OfficialPinSuppressorMixin:TrackSuppressedPin(pin)
-	if not self.suppressedPins then
-		self.suppressedPins = {};
-	end
-
-	self.suppressedPins[pin] = true;
-end
-
-function WQT_OfficialPinSuppressorMixin:ResetSuppression()
-	local suppressedPins = self:GetSuppressedPins();
-	if suppressedPins then
-		for pin in pairs(suppressedPins) do
-			pin:ClearSuppression();
+function WQT_OfficialPinSuppressorProviderMixin:RefreshAllData()
+	-- Supressor pins error during combat, so we're doing it the potato way
+	for k, template in ipairs(self.templatedToSuppress) do
+		for pin in self:GetMap():EnumeratePinsByTemplate(template) do
+			if (not pin.WQTHooked) then
+				pin.WQTHooked = true;
+				pin:HookScript("OnShow", HideOfficialPin);
+			end
 		end
 	end
-
-	self.suppressedPins = nil;
 end
-
-function WQT_OfficialPinSuppressorMixin:GetSuppressedPins()
-	return self.suppressedPins;
-end
-
-function WQT_OfficialPinSuppressorMixin:ShouldSuppressPin(pin)
-	if (WQT.settings.pin.disablePoI) then return false; end
-	local shouldSuppress = pin.pinTemplate == WorldMap_WorldQuestDataProviderMixin:GetPinTemplate()
-			or pin.pinTemplate == "BonusObjectivePinTemplate"
-			or (FlightMap_WorldQuestDataProviderMixin and pin.pinTemplate == FlightMap_WorldQuestDataProviderMixin:GetPinTemplate());
-	return shouldSuppress
-end
-
-WQT_OfficialPinSuppressorProviderMixin = CreateFromMixins(MapCanvasDataProviderMixin);
 
 function WQT_OfficialPinSuppressorProviderMixin:OnAdded(mapCanvas)
 	MapCanvasDataProviderMixin.OnAdded(self, mapCanvas);
-	local pin = self:GetMap():AcquirePin("WQT_OfficialPinSuppressorTemplate");
-	pin:SetPosition(0.5, 0.5);
-	self.pin = pin;
+	self.templatedToSuppress = {
+		"BonusObjectivePinTemplate",
+		WorldMap_WorldQuestDataProviderMixin:GetPinTemplate()
+	};
+
+	if(FlightMap_WorldQuestDataProviderMixin) then
+		tinsert(self.templatedToSuppress, FlightMap_WorldQuestDataProviderMixin:GetPinTemplate());
+	end
 end
 
 ------------------------------------
@@ -571,7 +552,8 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.baseFrameLevel = PIN_FRAME_LEVEL_BASE;
 
 	self:UpdateVisuals();
-	--WQT_WorldQuestFrame:TriggerCallback("MapPinInitialized", self);
+
+	EventRegistry:TriggerEvent("WQT.MapPinProvider.PinInitialized", self);
 end
 
 function WQT_PinMixin:UpdateVisuals()

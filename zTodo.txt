@@ -1,25 +1,18 @@
 If you're reading this; temper your hopes and expectations
 
 Todo
+- Play through DF and look for issues
+
 - Check if things in Data.lua can be improved
 - Look at old dropdown features
     - FilterButton indicator for official filtering
     - Used to disable filter linked to official filter (disbale, tooltip with info, matching icon in name instead?)
     - Used to disabled with settings or what's new open. Probaly just hide them with some layout changes
-- Check for issues while in combat
-- Improve loca file readability
 - Probably no longer bother with WorldQuestTab Utilities
-- Check support for external addons, maybe
-- Move external stuff to external, where they should be
-    - WorldFlightMap, anchoring quest list
-    - Aurora affecting background transparency
 
 - Figure out what else needs to be on this list
 - Figure out War Within data and testing, preferably without buying the expansion :|
 - Determine feasibility of continued support
-
-Can't test on trial account, need PTR Up
-- Something up with LFG.
 
 - Maybe change quest design with faction as sort of fade on the left
 
@@ -50,3 +43,11 @@ Done
 - Something up with map pins not showing correctly for actual world quests
 - Something up with my bountyboard
 - Anchoring system with full screen and flight map
+- Improve loca file readability
+- Fixed TomTom integration
+- Check support for external addons, maybe
+- Move external stuff to external, where they should be
+    - WorldFlightMap, anchoring quest list
+    - Aurora affecting background transparency
+- Something up with LFG. Group finder and button on objective tracker
+- Check for issues while in combat

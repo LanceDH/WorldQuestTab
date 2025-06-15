@@ -630,7 +630,7 @@
 			<Layer level="ARTWORK">
 				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="LEFT">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="32" y="-7"/>
+						<Anchor point="TOPLEFT" x="42" y="-7"/>
 						<Anchor point="RIGHT" x="-15"/>
 					</Anchors>
 				</FontString>
@@ -641,8 +641,8 @@
 				<Size y="25"/>
 				<HitRectInsets left="-10"/>
 				<Anchors>
-					<Anchor point="BOTTOMLEFT" x="37" y="5"/>
-					<Anchor point="RIGHT" x="-32" />
+					<Anchor point="BOTTOMLEFT" x="47" y="5"/>
+					<Anchor point="RIGHT" x="-41" />
 				</Anchors>
 				<FontString inherits="NumberFont_Shadow_Small"/>
 				<Scripts>

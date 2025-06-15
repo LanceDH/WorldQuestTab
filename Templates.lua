@@ -534,21 +534,6 @@ function WQT_Utils:GetMapInfoForQuest(questId)
 	return WQT_Utils:GetCachedMapInfo(zoneId);
 end
 
-function WQT_Utils:ItterateAllBonusObjectivePins(func)
-	local bonusObjectivePinTemplate = WorldMapFrame.pinPools.BonusObjectivePinTemplate;
-	if(bonusObjectivePinTemplate and bonusObjectivePinTemplate.activeObjects) then
-		for mapPin in pairs(bonusObjectivePinTemplate.activeObjects) do
-			func(mapPin)
-		end
-	end
-	local threatObjectivePinTemplate = WorldMapFrame.pinPools.ThreatObjectivePinTemplate;
-	if(threatObjectivePinTemplate and threatObjectivePinTemplate.activeObjects) then
-		for mapPin in pairs(threatObjectivePinTemplate.activeObjects) do
-			func(mapPin)
-		end
-	end
-end
-
 -- Copy of QuestUtils_AddQuestRewardsToTooltip to prevent SetTooltipMoney from causing taint 
 -- Edited to prevent items from overwriting currencies
 local function _AddQuestRewardsToTooltip(tooltip, questID, style)
@@ -1131,11 +1116,6 @@ local function QuestContextSetup(frame, rootDescription, questInfo)
 		end);
 	AddInstructionTooltipToDropdownItem(waypointBtn, _L["SHORTCUT_WAYPOINT"]);
 
-	-- LFG if possible
-	if (WQT_WorldQuestFrame:ShouldAllowLFG(questInfo)) then
-		rootDescription:CreateButton(OBJECTIVES_FIND_GROUP, function() WQT_WorldQuestFrame:SearchGroup(questInfo) end);
-	end
-
 	-- Uninterested
 	local checkbox = rootDescription:CreateCheckbox(
 		_L["UNINTERESTED"],
@@ -1148,6 +1128,9 @@ local function QuestContextSetup(frame, rootDescription, questInfo)
 		end
 	);
 	AddInstructionTooltipToDropdownItem(checkbox, _L["SHORTCUT_DISLIKE"]);
+
+	-- Trigger event for externals to add more
+	EventRegistry:TriggerEvent("WQT.QuestContextSetup", rootDescription, questInfo);
 
 	-- Cancel. apparently a function is required for it to close the menu on click
 	rootDescription:CreateButton(CANCEL, function() end);
@@ -1203,7 +1186,14 @@ function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 			if (WorldMapFrame:IsShown()) then
 				local zoneID =  C_TaskQuest.GetQuestZoneID(questID);
 				if (WorldMapFrame:GetMapID() ~= zoneID) then
-					WorldMapFrame:SetMapID(zoneID);
+					if(InCombatLockdown()) then
+						if(not WQT.combatLockWarned) then
+							WQT.combatLockWarned = true;
+							print(string.format("|cFFFF5555WQT: %s|r", _L["COMBATLOCK_MAP_CHANGE"]));
+						end
+					else
+						C_Map.OpenWorldMap(zoneID);
+					end
 				end
 			end
 		end

@@ -6,6 +6,11 @@ function WQT_ExternalMixin:GetName()
 	return "";
 end
 
+function WQT_ExternalMixin:GetRequiredEvents()
+	-- Override me
+	return {};
+end
+
 function WQT_ExternalMixin:Init()
 	-- Override me
 end

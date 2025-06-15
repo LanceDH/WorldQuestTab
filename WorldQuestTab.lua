@@ -59,8 +59,13 @@
 -- "WQT.DataProvider.QuestsLoaded"			() After InitFilter finishes
 -- "WQT.DataProvider.ProgressUpdated"		(progress) Progress in gethering quests from zones (% from 0-1)
 -- "WQT.DataProvider.FilteredListUpdated"	() Quest list have been filtered and sorted (get though fitleredQuestsList)
+-- "WQT.CoreFrame.AnchorUpdated"			(anchor) Anchor for the core frame has been changed
+-- "WQT.ScrollList.BackgroundUpdated"		() Updated the background of the quest list
+-- "WQT.MapPinProvider.PinInitialized"		(pin) A pin has been set up 
 -- "WQT.FiltersUpdated"						() A filter was changed. Used to update dataprovider
 -- "WQT.SortUpdated"						() Sorting was changed. Used to update dataprovider
+-- "WQT.RegisterdEventTriggered"			(event, ...) An event registered to our core frame triggered
+-- "WQT.QuestContextSetup"					(rootDescription, questInfo) Right-click context menu is being set up. Before Cancel is added
 
 local addonName, addon = ...
 
@@ -79,8 +84,6 @@ local _playerName = UnitName("player");
 
 local utilitiesStatus = select(5, C_AddOns.GetAddOnInfo("WorldQuestTabUtilities"));
 local _utilitiesInstalled = not utilitiesStatus or utilitiesStatus ~= "MISSING";
-
-local _WFMLoaded = C_AddOns.IsAddOnLoaded("WorldFlightMap");
 
 WQT_PanelID = EnumUtil.MakeEnum("Quests", "WhatsNew", "Settings");
 
@@ -155,21 +158,21 @@ local function FilterTypesGeneralOnClick(data)
 end
 
 local function GenericFilterFlagChecked(data)
-		local options = data[1];
-		local flagKey = data[2];
-		return options[flagKey]
-	end
+	local options = data[1];
+	local flagKey = data[2];
+	return options[flagKey]
+end
 
-	local function GenericFilterOnSelect(data)
-		local options = data[1];
-		local flagKey = data[2];
-		local refreshPins = #data > 2 and data[3] or false;
-		options[flagKey] = not options[flagKey];
-		if(refreshPins) then
-			WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-		end
-		EventRegistry:TriggerEvent("WQT.FiltersUpdated");
+local function GenericFilterOnSelect(data)
+	local options = data[1];
+	local flagKey = data[2];
+	local refreshPins = #data > 2 and data[3] or false;
+	options[flagKey] = not options[flagKey];
+	if (refreshPins) then
+		WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
 	end
+	EventRegistry:TriggerEvent("WQT.FiltersUpdated");
+end
 
 local function AddFilterSubmenu(rootDescription, filterType)
 	rootDescription:CreateButton(CHECK_ALL, FilterTypesGeneralOnClick, { filterType, true });
@@ -370,21 +373,7 @@ local function SortDropdownSetup(dropdown, rootDescription)
 	for sortID, sortName in pairs(_V["WQT_SORT_OPTIONS"]) do
 		rootDescription:CreateRadio(sortName, IsSortSelected, SortOnSelect, sortID);
 	end
--- local selectedValue = WQT.settings.general.sortBy;
--- 	local info = ddFrame:CreateButtonInfo();
--- 	info.func = function(self, category) WQT:Sort_OnClick(self, category) end
 
--- 	for k, option in pairs(_V["WQT_SORT_OPTIONS"]) do
--- 		info.text = option;
--- 		info.arg1 = k;
--- 		info.value = k;
--- 		if k == selectedValue then
--- 			info.checked = 1;
--- 		else
--- 			info.checked = nil;
--- 		end
--- 		ddFrame:AddButton(info);
--- 	end
 end
 
 local function InitQuestButton(button, data)
@@ -453,7 +442,6 @@ local function ConvertOldSettings(version)
 		WQT.db.global.general.defaultTab =		GetNewSettingData(WQT.db.global.defaultTab, false);
 		WQT.db.global.general.saveFilters = 		GetNewSettingData(WQT.db.global.saveFilters, true);
 		WQT.db.global.general.emissaryOnly = 	GetNewSettingData(WQT.db.global.emissaryOnly, false);
-		WQT.db.global.general.useLFGButtons = 	GetNewSettingData(WQT.db.global.useLFGButtons, false);
 		WQT.db.global.general.autoEmisarry = 	GetNewSettingData(WQT.db.global.autoEmisarry, true);
 		WQT.db.global.general.questCounter = 	GetNewSettingData(WQT.db.global.questCounter, true);
 		WQT.db.global.general.bountyCounter = 	GetNewSettingData(WQT.db.global.bountyCounter, true);
@@ -508,26 +496,12 @@ local function ConvertOldSettings(version)
 			end
 		end
 	end
-	
-	if (version < "8.3.03")  then
-		-- Anchoring changed, reset to default position
-		if (not WQT.db.global.fullScreenButtonPos) then
-			WQT.db.global.fullScreenButtonPos = {};
-		end
-		WQT.db.global.fullScreenButtonPos.anchor =  _V["WQT_DEFAULTS"].global.general.fullScreenButtonPos.anchor;
-		WQT.db.global.fullScreenButtonPos.x = _V["WQT_DEFAULTS"].global.general.fullScreenButtonPos.x;
-		WQT.db.global.fullScreenButtonPos.y = _V["WQT_DEFAULTS"].global.general.fullScreenButtonPos.y;
-	end
-	
+
 	if (version < "8.3.04")  then
 		-- Changes for profiles
 		if (WQT.db.global.sortBy) then
 			WQT.db.global.general.sortBy = WQT.db.global.sortBy;
 			WQT.db.global.sortBy = nil;
-		end
-		if (WQT.db.global.fullScreenButtonPos) then
-			WQT.db.global.general.fullScreenButtonPos = WQT.db.global.fullScreenButtonPos;
-			WQT.db.global.fullScreenButtonPos = nil;
 		end
 		if (WQT.db.global.fullScreenContainerPos) then
 			WQT.db.global.general.fullScreenContainerPos = WQT.db.global.fullScreenContainerPos;
@@ -542,12 +516,14 @@ local function ConvertOldSettings(version)
 	if (version < "9.0.02") then
 		-- More specific options for map pins
 		WQT.db.global.pin.continentVisible = WQT.db.global.pin.continentPins and _V["ENUM_PIN_CONTINENT"].all or _V["ENUM_PIN_CONTINENT"].none;
-		WQT.db.global.pin.continentPins = nil
+		WQT.db.global.pin.continentPins = nil;
 	end
 
 	if (version < "11.1.01") then
 		-- Reworked full map button
-		WQT.db.global.fullScreenButtonPos = nil
+		WQT.db.global.fullScreenButtonPos = nil;
+		-- Cba to deal with this anymore
+		WQT.db.global.general.useLFGButtons = nil;
 	end
 end
 
@@ -747,6 +723,8 @@ function WQT:OnInitialize()
 	ConvertOldSettings(WQT.db.global.versionCheck)
 	WQT_Profiles:InitSettings();
 	
+	WQT.combatLockWarned = false;
+
 	-- Hightlight 'what's new'
 	local currentVersion = C_AddOns.GetAddOnMetadata(addonName, "version")
 	if (WQT.db.global.versionCheck < currentVersion) then
@@ -754,8 +732,8 @@ function WQT:OnInitialize()
 		WQT.db.global.versionCheck  = currentVersion;
 	end
 
-	local mapButtonsLib = LibStub("Krowi_WorldMapButtons-1.4");
-	self.mapButton = mapButtonsLib:Add("WQT_WorldMapButtonTemplate", "BUTTON");
+	WQT.mapButtonsLib = LibStub("Krowi_WorldMapButtons-1.4");
+	self.mapButton = WQT.mapButtonsLib:Add("WQT_WorldMapButtonTemplate", "BUTTON");
 end
 
 function WQT:OnEnable()
@@ -788,45 +766,12 @@ function WQT:OnEnable()
 	end
 	
 	-- Show default tab depending on setting
-	--WQT_WorldQuestFrame:SelectTab(self.settings.general.defaultTab and WQT_TabWorld or WQT_TabNormal);
 	if (self.settings.general.defaultTab) then
 		WQT_WorldQuestFrame:SelectTab(WQT_QuestMapTab);
 	else
 		WQT_WorldQuestFrame:QuestMapChangedTab(0);
 	end
 	WQT_WorldQuestFrame.tabBeforeAnchor = WQT_WorldQuestFrame.selectedTab;
-	
-
-	-- Add LFG buttons to objective tracker
-	if self.settings.general.useLFGButtons then
-		WQT_WorldQuestFrame.LFGButtonPool = CreateFramePool("BUTTON", nil, "WQT_LFGEyeButtonTemplate");
-	
-		hooksecurefunc("ObjectiveTracker_AddBlock", function(block)
-				local questID = block.id;
-				if (not questID) then return; end
-				
-				-- release button if it exists
-				if (block.WQTButton) then
-					WQT_WorldQuestFrame.LFGButtonPool:Release(block.WQTButton);
-					block.WQTButton = nil;
-				end
-				
-				if (not (block.groupFinderButton) and QuestUtils_IsQuestWorldQuest(questID)) then
-					if (WQT_WorldQuestFrame:ShouldAllowLFG(questID)) then
-						local button = WQT_WorldQuestFrame.LFGButtonPool:Acquire();
-						button.questId = questID;
-						button:SetParent(block);
-						button:ClearAllPoints();
-						local offsetX = (block.rightButton or block.itemButton) and -18 or 11; 
-						button:SetPoint("TOPRIGHT", block, offsetX, 4);
-						button:Show();
-						block.WQTButton = button;
-					end
-				end
-			end);
-	end
-
-
 	
 	-- Quest list scroll
 	local view = CreateScrollBoxListLinearView();
@@ -857,6 +802,7 @@ function WQT:OnEnable()
 	for k, external in ipairs(addon.externals) do
 		if (external:IsLoaded()) then
 			external:Init(WQT_Utils);
+			WQT_WorldQuestFrame:RegisterEventsForExternal(external);
 			WQT:debugPrint("External", external:GetName(), "loaded on first try.");
 		elseif (external:IsLoadable()) then
 			self.loadableExternals[external:GetName()] = external;
@@ -1375,12 +1321,6 @@ function WQT_ScrollListMixin:UpdateQuestList()
 end
 
 function WQT_ScrollListMixin:DisplayQuestList()
-	local mapId = WorldMapFrame.mapID;
-	if (((FlightMapFrame and FlightMapFrame:IsShown()) or TaxiRouteMap:IsShown()) and not _WFMLoaded) then 
-		local taxiId = GetTaxiMapID()
-		mapId = (taxiId and taxiId > 0) and taxiId or mapId;
-	end
-
 	local shouldShowZone = WQT.settings.list.showZone; 
 
 	self:UpdateFilterDisplay();
@@ -1398,16 +1338,11 @@ function WQT_ScrollListMixin:DisplayQuestList()
 	
 	-- Update background
 	self:UpdateBackground();
-	
-	--WQT_WorldQuestFrame:TriggerCallback("DisplayQuestList");
 end
 
 function WQT_ScrollListMixin:UpdateBackground()
 	local backgroundAlpha = 1;
-	if (C_AddOns.IsAddOnLoaded("Aurora")) then
-		-- This should be an external
-		backgroundAlpha = 0;
-	elseif (WorldMapFrame:IsShown() and WQT_WorldMapContainer:IsShown()) then
+	if (WorldMapFrame:IsShown() and WQT_WorldMapContainer:IsShown()) then
 		backgroundAlpha = 0.75;
 	end
 	WQT_ListContainer.Background:SetAlpha(backgroundAlpha);
@@ -1418,6 +1353,8 @@ function WQT_ScrollListMixin:UpdateBackground()
 	else
 		WQT_ListContainer.Background:SetAtlas("QuestLog-main-background", true);
 	end
+
+	EventRegistry:TriggerEvent("WQT.ScrollList.BackgroundUpdated");
 end
 
 function WQT_ScrollListMixin:ScrollFrameSetEnabled(enabled)
@@ -1575,8 +1512,6 @@ end
 -- AddBountyCountersToTab(tab)
 -- ShowHighlightOnMapFilters()
 -- FilterClearButtonOnClick()
--- SearchGroup(questInfo)
--- ShouldAllowLFG(questInfo)
 -- SetCvarValue(flagKey, value)
 -- SelectTab(tab)		1. Default questlog  2. WQT  3. Quest details
 -- ChangeAnchorLocation(anchor)		Show list on a different container using _V["LIST_ANCHOR_TYPE"] variable
@@ -1671,11 +1606,11 @@ function WQT_CoreMixin:OnLoad()
 	WQT_Profiles:OnLoad();
 
 	-- Add utilities options to the settings if it's installed but not enabled
-	if (_utilitiesInstalled) then
-		for k, setting in ipairs(_V["SETTING_UTILITIES_LIST"]) do
-			tinsert(_V["SETTING_LIST"], setting);
-		end
-	end
+	-- if (_utilitiesInstalled) then
+	-- 	for k, setting in ipairs(_V["SETTING_UTILITIES_LIST"]) do
+	-- 		tinsert(_V["SETTING_LIST"], setting);
+	-- 	end
+	-- end
 
 	-- Quest Dataprovider
 	self.dataProvider = CreateAndInitFromMixin(WQT_DataProvider);
@@ -1696,22 +1631,23 @@ function WQT_CoreMixin:OnLoad()
 			end
 		, self);
 
+	self.ExternalEvents = {};
 	-- Events
 	self:RegisterEvent("PLAYER_REGEN_DISABLED");
-	self:RegisterEvent("PLAYER_REGEN_ENABLED");
-	self:RegisterEvent("WORLD_QUEST_COMPLETED_BY_SPELL"); -- Class hall items
 	self:RegisterEvent("PVP_TIMER_UPDATE"); -- Warmode toggle because WAR_MODE_STATUS_UPDATE doesn't seems to fire when toggling warmode
 	self:RegisterEvent("ADDON_LOADED");
 	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
 	self:RegisterEvent("TAXIMAP_OPENED");
 	self:RegisterEvent("PLAYER_LOGOUT");
-	
-	self:SetScript("OnEvent", function(self, event, ...) 
+
+	self:SetScript("OnEvent", function(self, event, ...)
 			if (self[event]) then 
-				self[event](self, ...) 
-			else 
-				WQT:debugPrint("WQT missing function for:",event); 
+				self[event](self, ...);
+			elseif (not self.ExternalEvents[event]) then
+				WQT:debugPrint("WQT missing function for:",event);
 			end 
+
+			EventRegistry:TriggerEvent("WQT.RegisterdEventTriggered", event, ...);
 		end)
 
 	-- Slashcommands
@@ -1818,71 +1754,23 @@ function WQT_CoreMixin:OnLoad()
 			WQT_ListContainer:UpdateQuestList(true);
 			self.notTracked = nil;
 		end)
-		
-	-- PVEFrame quest grouping
-	LFGListFrame:HookScript("OnHide", function() 
-			WQT_GroupSearch:Hide(); 
-			WQT_GroupSearch.questId = nil;
-			WQT_GroupSearch.title = nil;
-		end)
 
-	hooksecurefunc("LFGListSearchPanel_UpdateResults", function(self)
-			if (self.searching and not InCombatLockdown()) then
-				local searchString = LFGListFrame.SearchPanel.SearchBox:GetText();
-				searchString = searchString:lower();
-			
-				if (WQT_GroupSearch.questId and WQT_GroupSearch.title and not (searchString:find(WQT_GroupSearch.questId) or WQT_GroupSearch.title:lower():find(searchString))) then
-					WQT_GroupSearch.Text:SetText(_L["FORMAT_GROUP_TYPO"]:format(WQT_GroupSearch.questId, WQT_GroupSearch.title));
-					WQT_GroupSearch:Show();
-				else
-					WQT_GroupSearch:Hide();
-				end
-			end
-		end);
-		
-	LFGListFrame.EntryCreation:HookScript("OnHide", function() 
-			if (not InCombatLockdown()) then
-				WQT_GroupSearch:Hide();
-			end
-		end);
-		
-	hooksecurefunc("LFGListUtil_FindQuestGroup", function(questID, isFromGreenEyeButton)
-			if (isFromGreenEyeButton) then
-				WQT_GroupSearch:Hide();
-				WQT_GroupSearch.questId = nil;
-				WQT_GroupSearch.title = nil;
-			end
-		end);
-
-		--[[
-	local LFGParent = LFGListSearchPanelScrollFrameScrollChild;
-	LFGParent.StartGroupButton:HookScript("OnClick", function() 
-			-- If we are creating a group because we couldn't find one, show the info on the create frame
-			if InCombatLockdown() then return; end
-			local searchString = LFGListFrame.SearchPanel.SearchBox:GetText();
-			searchString = searchString:lower();
-			if (WQT_GroupSearch.questId and WQT_GroupSearch.title and (searchString:find(WQT_GroupSearch.questId) or WQT_GroupSearch.title:lower():find(searchString))) then
-				WQT_GroupSearch.Text:SetText(_L["FORMAT_GROUP_CREATE"]:format(WQT_GroupSearch.questId, WQT_GroupSearch.title));
-				WQT_GroupSearch:SetParent(LFGListFrame.EntryCreation.Name);
-				WQT_GroupSearch:SetFrameLevel(LFGListFrame.EntryCreation.Name:GetFrameLevel()+5);
-				WQT_GroupSearch:ClearAllPoints();
-				WQT_GroupSearch:SetPoint("BOTTOMLEFT", LFGListFrame.EntryCreation.Name, "TOPLEFT", -2, 3);
-				WQT_GroupSearch:SetPoint("BOTTOMRIGHT", LFGListFrame.EntryCreation.Name, "TOPRIGHT", -2, 3);
-				WQT_GroupSearch.downArrow = true;
-				WQT_GroupSearch.questId = nil;
-				WQT_GroupSearch.title = nil;
-				WQT_GroupSearch:Hide();
-				WQT_GroupSearch:Show();
-			end
-		end)
-		]]--
-
-		
 	QuestMapFrame.QuestSessionManagement:HookScript("OnShow", function() 
 			if(self:IsShown()) then
 				QuestMapFrame.QuestSessionManagement:Hide();
 			end
 		end);
+end
+
+function WQT_CoreMixin:RegisterEventsForExternal(external)
+	if (not external.GetRequiredEvents or not external.GetName) then return end;
+
+	for k, event in pairs(external:GetRequiredEvents()) do
+		if (self:RegisterEvent(event)) then
+			self.ExternalEvents[event] = true;
+			WQT:debugPrint("Registered new event", event, "for external", external:GetName());
+		end
+	end
 end
 
 function WQT_CoreMixin:ApplyAllSettings()
@@ -1909,7 +1797,7 @@ function WQT_CoreMixin:UpdateBountyCounters()
 end
 
 function WQT_CoreMixin:RepositionBountyTabs()
-	for tab, v in pairs(self.bountyBoard.bountyTabPool.activeObjects) do
+	for tab, v in self.bountyBoard.bountyTabPool:EnumerateActive() do
 		self.bountyBoard:AnchorBountyTab(tab);
 	end
 end
@@ -2006,53 +1894,6 @@ function WQT_CoreMixin:FilterClearButtonOnClick()
 	EventRegistry:TriggerEvent("WQT.FiltersUpdated");
 end
 
-function WQT_CoreMixin:SearchGroup(questInfo)
-	local id, title;
-	if (type(questInfo) == "number") then
-		id = questInfo;
-	else
-		id = questInfo.questId;
-	end
-	title = C_TaskQuest.GetQuestInfoByQuestID(id);
-	
-	WQT_GroupSearch:Hide();
-	LFGListUtil_FindQuestGroup(id);
-	
-	-- If we can't automatically make a group, show a message on what the player should type
-	if (not C_LFGList.CanCreateQuestGroup(id)) then
-		WQT_GroupSearch:SetParent(LFGListFrame.SearchPanel.SearchBox);
-		WQT_GroupSearch:SetFrameLevel(LFGListFrame.SearchPanel.SearchBox:GetFrameLevel()+5);
-		WQT_GroupSearch:ClearAllPoints();
-		WQT_GroupSearch:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "BOTTOMLEFT", -2, -3);
-		WQT_GroupSearch:SetPoint("RIGHT", LFGListFrame.SearchPanel, "RIGHT", -30, 0);
-	
-		WQT_GroupSearch.Text:SetText(_L["FORMAT_GROUP_SEARCH"]:format(id, title));
-		WQT_GroupSearch.downArrow = false;
-		WQT_GroupSearch:Hide();
-		WQT_GroupSearch:Show();
-		
-		WQT_GroupSearch.questId = id;
-		WQT_GroupSearch.title = title;
-	end
-end
-
--- Only allow LFG for quests that would actually allow it
-function WQT_CoreMixin:ShouldAllowLFG(questInfo)
-	if (not questInfo) then return false; end
-
-	local tagInfo;
-	if (type(questInfo) == "number") then
-		tagInfo = C_QuestLog.GetQuestTagInfo(questInfo);
-	else
-		if (questInfo.isDaily) then 
-			return false; 
-		end
-		tagInfo = questInfo:GetTagInfo();
-	end
-	
-	return tagInfo and tagInfo.worldQuestType and not (tagInfo.worldQuestType == Enum.QuestTagType.PetBattle or tagInfo.worldQuestType == Enum.QuestTagType.Dungeon or tagInfo.worldQuestType == Enum.QuestTagType.Progession or tagInfo.worldQuestType == Enum.QuestTagType.Raid);
-end
-
 function WQT_CoreMixin:UnhookEvent(event, func)
 	local list = self.eventHooks[event];
 	if (list) then
@@ -2072,8 +1913,6 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 		WQT_FlightMapContainerButton:SetAlpha(1);
 		WQT_FlightMapContainerButton:SetPoint("BOTTOMRIGHT", FlightMapFrame, "BOTTOMRIGHT", -8, 8);
 		WQT_FlightMapContainerButton:SetFrameLevel(FlightMapFrame:GetFrameLevel()+2);
-	elseif (loaded == "WorldFlightMap") then
-		_WFMLoaded = true;
 	elseif (loaded == "WorldQuestTabUtilities") then
 		WQT.settings.general.loadUtilities = true;
 	end
@@ -2083,6 +1922,7 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 		local external = WQT.loadableExternals[loaded];
 		if (external) then
 			external:Init(WQT_Utils);
+			self:RegisterEventsForExternal(external);
 			WQT:debugPrint("External", external:GetName(), "delayed load.");
 			WQT.loadableExternals[loaded] = nil;
 		end
@@ -2090,29 +1930,11 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 end
 
 function WQT_CoreMixin:PLAYER_REGEN_DISABLED()
-	-- Custom LFG buttons disabled during combat, because the LFG frame is protected
-	-- for k, block in ipairs({ObjectiveTrackerBlocksFrame:GetChildren()}) do
-	-- 	if (block.WQTButton) then
-	-- 		block.WQTButton:SetEnabled(false);
-	-- 	end
-	-- end
-end
-
-function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
-	-- Custom LFG buttons disabled during combat, because the LFG frame is protected
-	-- for k, block in ipairs({ObjectiveTrackerBlocksFrame:GetChildren()}) do
-	-- 	if (block.WQTButton) then
-	-- 		block.WQTButton:SetEnabled(true);
-	-- 	end
-	-- end
+	WQT.combatLockWarned = false;
 end
 
  -- Warmode toggle because WAR_MODE_STATUS_UPDATE doesn't seems to fire when toggling warmode
 function WQT_CoreMixin:PVP_TIMER_UPDATE()
-	self.ScrollFrame:UpdateQuestList();
-end
-
-function WQT_CoreMixin:WORLD_QUEST_COMPLETED_BY_SPELL()
 	self.ScrollFrame:UpdateQuestList();
 end
 
@@ -2177,7 +1999,10 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 
 	WQT_WorldMapContainer:Hide();
 	WQT.mapButton:SetShown(anchor == _V["LIST_ANCHOR_TYPE"].full);
+	-- Changing map to full screen doesn't call refresh on the buttons
+	WQT.mapButtonsLib:SetPoints();
 
+	local forceShow = true;
 	if (anchor == _V["LIST_ANCHOR_TYPE"].flight) then
 		WQT_WorldQuestFrame:ClearAllPoints(); 
 		WQT_WorldQuestFrame:SetParent(WQT_FlightMapContainer);
@@ -2190,6 +2015,7 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 		WQT_WorldQuestFrame:SetParent(QuestMapFrame);
 		WQT_WorldQuestFrame:SetPoint("TOPLEFT", QuestMapFrame.ContentsAnchor, 0, -29);
 		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", QuestMapFrame.ContentsAnchor, -22, 0);
+		forceShow = QuestMapFrame.displayMode == QuestLogDisplayMode.WQT;
 	elseif (anchor == _V["LIST_ANCHOR_TYPE"].full) then
 		WQT_WorldQuestFrame:ClearAllPoints(); 
 		WQT_WorldQuestFrame:SetParent(WQT_WorldMapContainer);
@@ -2198,6 +2024,10 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 		WQT_WorldMapContainer:ConstrainPosition();
 		WQT_WorldMapContainer:SetShown(WQT.mapButton.isSelected);
 	end
+
+	WQT_WorldQuestFrame:SetShown(forceShow);
+
+	EventRegistry:TriggerEvent("WQT.CoreFrame.AnchorUpdated", anchor);
 end
 
 function WQT_CoreMixin:LoadExternal(external)

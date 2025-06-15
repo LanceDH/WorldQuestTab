@@ -25,7 +25,7 @@ local _settings = {
 			end
 			,["getValueFunc"] = function() return _activeSettings.TomTomAutoArrow; end
 			,["isDisabled"] = function() return not _activeSettings.useTomTom; end
-			}	
+			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "TOMTOM", ["label"] = _L["TOMTOM_CLICK_ARROW"], ["tooltip"] = _L["TOMTOM_CLICK_ARROW_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				_activeSettings.TomTomArrowOnClick = value;
@@ -36,11 +36,39 @@ local _settings = {
 			end
 			,["getValueFunc"] = function() return _activeSettings.TomTomArrowOnClick; end
 			,["isDisabled"] = function() return not _activeSettings.useTomTom; end
-			}		
+			}
 }
 
-local function QuestListChangedHook(event, ...)
-	local questId, added = ...;
+-- Compatibility with the TomTom add-on
+local function AddTomTomArrowByQuestId(questId)
+	if (not questId) then return; end
+	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
+	if (zoneId) then
+		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+		local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
+		if (title and x and y) then
+			TomTom:AddWaypoint(zoneId, x, y, {["title"] = title, ["crazy"] = true});
+		end
+	end
+end
+
+local function RemoveTomTomArrowbyQuestId(questId)
+	if (not questId) then return; end
+	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
+	if (zoneId) then
+		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+		local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
+		if (title and x and y) then
+			local key = TomTom:GetKeyArgs(zoneId, x, y, title);
+			local wp = TomTom.waypoints[zoneId] and TomTom.waypoints[zoneId][key];
+			if (wp) then
+				TomTom:RemoveWaypoint(wp);
+			end
+		end
+	end
+end
+
+local function QuestListChangedHook(questId, added)
 	-- We don't have settings (yet?)
 	if (not _activeSettings) then return; end
 	
@@ -52,10 +80,10 @@ local function QuestListChangedHook(event, ...)
 		if (added) then
 			local questHardWatched = WQT_Utils:QuestIsWatchedManual(questId);
 			if (clickArrow or questHardWatched) then
-				WQT_Utils:AddTomTomArrowByQuestId(questId);
+				AddTomTomArrowByQuestId(questId);
 				--If click arrow is active, we want to clear the previous click arrow
 				if (clickArrow and WQT_WorldQuestFrame.softTomTomArrow and not WQT_Utils:QuestIsWatchedManual(WQT_WorldQuestFrame.softTomTomArrow)) then
-					WQT_Utils:RemoveTomTomArrowbyQuestId(WQT_WorldQuestFrame.softTomTomArrow);
+					RemoveTomTomArrowbyQuestId(WQT_WorldQuestFrame.softTomTomArrow);
 				end
 				
 				if (clickArrow and not questHardWatched) then
@@ -64,46 +92,58 @@ local function QuestListChangedHook(event, ...)
 			end
 			
 		else
-			WQT_Utils:RemoveTomTomArrowbyQuestId(questId)
+			RemoveTomTomArrowbyQuestId(questId)
 		end
 	end
 end
 
-local function TrackDropDownHook(ddFrame)
-	local questInfo = ddFrame:GetSourceParent().questInfo;
+local function TomTomIsOK()
+	return TomTom.WaypointExists and TomTom.AddWaypoint and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints;
+end
+
+local function TomTomIsChecked(questInfo)
+	if (not TomTomIsOK()) then return false; end
+	
 	local questId = questInfo.questId;
 	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
 	local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
 	local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
-	
-	
-	-- TomTom functionality
-	if (TomTom and _activeSettings.useTomTom) then
-		local info = ddFrame:CreateButtonInfo("checkbox");
-	
-		info.keepShownOnClick = false;
-		info.text = _L["TOMTOM_PIN"];
 
-		if (TomTom.WaypointExists and TomTom.AddWaypoint and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints) then
-			info.func = function()
-				if(TomTom:WaypointExists(zoneId, x, y, title)) then
-					WQT_Utils:RemoveTomTomArrowbyQuestId(questId);
-				else
-					WQT_Utils:AddTomTomArrowByQuestId(questId);
-				end
-				ddFrame:Refresh();
-			end
-			info.checked = function() return TomTom:WaypointExists(zoneId, x, y, title) end;
-		else
-			-- Something wrong with TomTom
-			info.func = function()
-				print("Something is wrong with TomTom. Either it failed to load correctly, or an update changed its functionality.");
-			end
-		end
-		
-		ddFrame:AddButton(info);
+	return TomTom:WaypointExists(zoneId, x, y, title);
+end
+
+local function TomTomOnPressed(questInfo)
+	if (not TomTomIsOK()) then 
+		print("Something is wrong with TomTom. Either it failed to load correctly, or an update changed its functionality."); 
+		return;
+	end
+
+	local questId = questInfo.questId;
+	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
+	local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
+	local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+
+	if (TomTom:WaypointExists(zoneId, x, y, title)) then
+		RemoveTomTomArrowbyQuestId(questId);
+	else
+		AddTomTomArrowByQuestId(questId);
 	end
 end
+
+local function AddTomTomToQuestContext(source, rootDescription, questInfo)
+	if(not _activeSettings or not _activeSettings.useTomTom) then return; end
+	rootDescription:CreateCheckbox(_L["TOMTOM_PIN"], TomTomIsChecked, TomTomOnPressed, questInfo);
+end
+
+local function EventTriggered(source, event, ...)
+	if(event == "QUEST_WATCH_LIST_CHANGED") then
+		QuestListChangedHook(...);
+	elseif(event == "QUEST_TURNED_IN") then
+		local questID = ...;
+		RemoveTomTomArrowbyQuestId(questID);
+	end
+end
+
 
 local TomTomExternal = CreateFromMixins(WQT_ExternalMixin);
 
@@ -111,16 +151,18 @@ function TomTomExternal:GetName()
 	return "TomTom";
 end
 
+function TomTomExternal:GetRequiredEvents()
+	return { "QUEST_WATCH_LIST_CHANGED",  "QUEST_TURNED_IN"};
+end
+
 function TomTomExternal:Init(utils)
 	WQT_Utils = utils;
 	
 	_activeSettings = WQT_Utils:RegisterExternalSettings("TomTom", _defaultSettings);
 	WQT_Utils:AddExternalSettingsOptions(_settings);
-	-- Remove point on quest complete
-	--WQT_WorldQuestFrame:RegisterCallback("WorldQuestCompleted", function(questId) WQT_Utils:RemoveTomTomArrowbyQuestId(questId) end);
-	--WQT_WorldQuestFrame:RegisterCallback("InitTrackDropDown", TrackDropDownHook);
-	-- Hook onto Blizzard's events
-	--WQT_WorldQuestFrame:HookEvent("QUEST_WATCH_LIST_CHANGED", QuestListChangedHook);
+
+	EventRegistry:RegisterCallback("WQT.QuestContextSetup", AddTomTomToQuestContext, self);
+	EventRegistry:RegisterCallback("WQT.RegisterdEventTriggered", EventTriggered, self);
 end
 
 WQT_WorldQuestFrame:LoadExternal(TomTomExternal);
