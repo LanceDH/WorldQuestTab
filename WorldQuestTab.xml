@@ -659,7 +659,7 @@
 						</Anchors>
 					</DropdownButton>
 
-					<DropdownButton parentKey="SettingsDropdown" mixin="QuestLogSettingsButtonMixin">
+					<DropdownButton parentKey="SettingsDropdown" mixin="WQT_QuestLogSettingsButtonMixin">
 						<Size x="15" y="16" />
 						<Anchors>
 							<Anchor point="TOPRIGHT" x="19" y="25" />
@@ -683,6 +683,8 @@
 						<Scripts>
 							<OnMouseDown method="OnMouseDown" />
 							<OnMouseUp method="OnMouseUp" />
+							<OnDisable method="OnDisable" />
+							<OnEnable method="OnEnable" />
 						</Scripts>
 					</DropdownButton>						
 

@@ -348,36 +348,20 @@ function WQT_Utils:GetCachedTypeIconData(questInfo, pinVersion)
 	-- If there is no tag info, it's a bonus objective
 	if (not tagInfo) then
 		--return "QuestBonusObjective", 21, 21, true;
-		return "Bonus-Objective-Star", 16, 16, false;
+		return "Bonus-Objective-Star", 14, 14, false;
 	end
 	
-	local isNew = false;
-	local originalType = tagInfo.worldQuestType;
-	tagInfo.worldQuestType = tagInfo.worldQuestType or _V["WQT_TYPE_BONUSOBJECTIVE"];
-	local cachedData = cachedTypeData[tagInfo.worldQuestType];
+	local tagID = tagInfo.tagID or _V["WQT_TYPE_BONUSOBJECTIVE"];
+	local cachedData = cachedTypeData[tagID];
 	if (not cachedData) then 
 		-- creating basetype
-		cachedTypeData[tagInfo.worldQuestType] = {};
-		cachedData = cachedTypeData[tagInfo.worldQuestType];
-		isNew = true;
-	end
-	if (tagInfo.tradeskillLineID) then
-		local cachedSubType = cachedData[tagInfo.tradeskillLineID];
-		if (not cachedSubType) then 
-			-- creating subtype
-			cachedData[tagInfo.tradeskillLineID] = {};
-			cachedSubType = cachedData[tagInfo.tradeskillLineID];
-			isNew = true;
-		end
-		-- cachedData becomes subtype
-		cachedData = cachedSubType;
-	end
-
-	if (isNew) then
-		local atlasTexture, sizeX, sizeY  = QuestUtil.GetWorldQuestAtlasInfo(questInfo.questId, tagInfo);
+		cachedData = {};
+		local atlasTexture, sizeX, sizeY = QuestUtil.GetWorldQuestAtlasInfo(questInfo.questId, tagInfo);
 		cachedData.texture = atlasTexture;
 		cachedData.x = sizeX;
 		cachedData.y = sizeY;
+
+		cachedTypeData[tagID] = cachedData;
 	end
 
 	return cachedData.texture or "", cachedData.x or 0, cachedData.y or 0;
@@ -780,26 +764,6 @@ function WQT_Utils:GetFlightWQProvider()
 		end
 	end
 	return WQT.FlightmapPins;
-end
-
-function WQT_Utils:RefreshOfficialDataProviders()
-	-- Have to force remove the WQ data from the map because RefreshAllData doesn't do it
-	local mapWQProvider = WQT_Utils:GetMapWQProvider();
-	if (mapWQProvider) then
-		mapWQProvider:RemoveAllData();
-	end
-	
-	-- If there are no dataproviders, we haven't opened the map yet, so don't force a refresh on it
-	if (#WorldMapFrame.dataProviders > 0) then 
-		WorldMapFrame:RefreshAllDataProviders();
-	end
-
-	-- Flight map world quests
-	local flightWQProvider = WQT_Utils:GetFlightWQProvider();
-	if (flightWQProvider) then
-		flightWQProvider:RemoveAllData();
-		flightWQProvider:RefreshAllData();
-	end
 end
 
 function WQT_Utils:QuestIncorrectlyCounts(questLogIndex)

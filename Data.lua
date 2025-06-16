@@ -76,9 +76,8 @@ local function _DeepWipeTable(t)
 end
 
 
-
-
 local WQT_ZARALEK = {
+	[2133]	= {["x"] = 0.00, ["y"] = 0.00}, -- Zaralek Cavern
 	[2022]	= {["x"] = 0.88, ["y"] = 0.84}, -- Waking Shores
 	[2023]	= {["x"] = 0.88, ["y"] = 0.84}, -- Ohn'ahran Plains
 	[2200]	= {["x"] = 0.88, ["y"] = 0.84}, -- Emerald Dream
@@ -108,6 +107,7 @@ local WQT_SHADOWLANDS = {
 	[1970]	= {["x"] = 0.85, ["y"] = 0.81}, -- Zereth Mortis
 }
 local WQT_NAZJATAR = {
+	[1355]	= {["x"] = 0.00, ["y"] = 0.00}, -- Nazjatar
 	[864]	= {["x"] = 0.11, ["y"] = 0.52}, -- Vol'dun
 	[863]	= {["x"] = 0.11, ["y"] = 0.52}, -- Nazmir
 	[862]	= {["x"] = 0.11, ["y"] = 0.52}, -- Zuldazar
@@ -341,7 +341,7 @@ _V["WQT_PURPLE_FONT_COLOR"] = CreateColor(0.73, 0.33, 0.82);
 
 
 _V["WQT_BOUNDYBOARD_OVERLAYID"] = 4;
-_V["WQT_TYPE_BONUSOBJECTIVE"] = 99;
+_V["WQT_TYPE_BONUSOBJECTIVE"] = 0;
 _V["WQT_LISTITTEM_HEIGHT"] = 32;
 
 _V["DEBUG_OUTPUT_TYPE"] = {
@@ -685,14 +685,11 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.alwaysAllQuests end
 			}	
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["INCLUDE_DAILIES"], ["tooltip"] = _L["INCLUDE_DAILIES_TT"]
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["INCLUDE_DAILIES"], ["tooltip"] = _L["INCLUDE_DAILIES_TT"], ["suggestReload"] = true
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.list.includeDaily = value;
 				local mapAreaID = WorldMapFrame.mapID;
 				WQT_WorldQuestFrame.dataProvider:LoadQuestsInZone(mapAreaID);
-				if (not value) then
-					WQT_Utils:RefreshOfficialDataProviders();
-				end
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.includeDaily end
 			}
@@ -798,13 +795,10 @@ _V["SETTING_LIST"] = {
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
 	-- Map Pin
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_DISABLE"], ["tooltip"] = _L["PIN_DISABLE_TT"]
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_DISABLE"], ["tooltip"] = _L["PIN_DISABLE_TT"], ["suggestReload"] = true
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.pin.disablePoI = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-				if (value) then
-					WQT_Utils:RefreshOfficialDataProviders();
-				end
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.disablePoI end
 			}
@@ -1254,81 +1248,84 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 
 _V["WQT_NO_FACTION_DATA"] = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L["NO_FACTION"] } -- No faction
 _V["WQT_FACTION_DATA"] = {
-	[67] = 		{ ["expansion"] = LE_EXPANSION_CLASSIC ,["playerFaction"] = nil ,["texture"] = 2203914 } -- Horde
-	,[469] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC ,["playerFaction"] = nil ,["texture"] = 2203912 } -- Alliance
-	,[609] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC ,["playerFaction"] = nil ,["texture"] = 1396983 } -- Cenarion Circle - Call of the Scarab
-	,[910] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC ,["playerFaction"] = nil ,["texture"] = 236232 } -- Brood of Nozdormu - Call of the Scarab
-	,[1090] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1450997 } -- Kirin Tor
-	,[1106] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC ,["playerFaction"] = nil ,["texture"] = 236690 } -- Argent Crusade
-	,[1445] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["playerFaction"] = nil ,["texture"] = 133283 } -- Draenor Frostwolf Orcs
-	,[1515] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["playerFaction"] = nil ,["texture"] = 1002596 } -- Dreanor Arakkoa Outcasts
-	,[1731] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["playerFaction"] = nil ,["texture"] = 1048727 } -- Dreanor Council of Exarchs
-	,[1681] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["playerFaction"] = nil ,["texture"] = 1042727 } -- Dreanor Vol'jin's Spear
-	,[1682] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR ,["playerFaction"] = nil ,["texture"] = 1042294 } -- Dreanor Wrynn's Vanguard
-	,[1828] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1450996 } -- Highmountain Tribes
-	,[1859] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1450998 } -- Nightfallen
-	,[1883] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1450995 } -- Dreamweavers
-	,[1894] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1451000 } -- Wardens
-	,[1900] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1450994 } -- Court of Farnodis
-	,[1948] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1450999 } -- Valarjar
-	,[2045] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1708507 } -- Legionfall
-	,[2103] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Horde" ,["texture"] = 2058217 } -- Zandalari Empire
-	,[2165] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1708506 } -- Army of the Light
-	,[2170] = 	{ ["expansion"] = LE_EXPANSION_LEGION ,["playerFaction"] = nil ,["texture"] = 1708505 } -- Argussian Reach
-	,[2156] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Horde" ,["texture"] = 2058211 } -- Talanji's Expedition
-	,[2157] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Horde" ,["texture"] = 2058207 } -- The Honorbound
-	,[2158] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Horde" ,["texture"] = 2058213 } -- Voldunai
-	,[2159] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Alliance" ,["texture"] = 2058204 } -- 7th Legion
-	,[2160] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Alliance" ,["texture"] = 2058209 } -- Proudmoore Admirality
-	,[2161] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Alliance" ,["texture"] = 2058208 } -- Order of Embers
-	,[2162] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Alliance" ,["texture"] = 2058210 } -- Storm's Wake
-	,[2163] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 2058212 } -- Tortollan Seekers
-	,[2164] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 2058205 } -- Champions of Azeroth
-	,[2373] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Horde" ,["texture"] = 2909044 } -- Unshackled
-	,[2391] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 2909316 } -- Rustbolt
-	,[2400] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = "Alliance" ,["texture"] = 2909043 } -- Waveblade Ankoan
-	,[2417] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 3196264 } -- Uldum Accord
-	,[2415] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH ,["playerFaction"] = nil ,["texture"] = 3196265 } -- Rajani
+	[67] = 		{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 2203914 } -- Horde
+	,[469] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 2203912 } -- Alliance
+	,[609] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 1396983 } -- Cenarion Circle - Call of the Scarab
+	,[910] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 236232 } -- Brood of Nozdormu - Call of the Scarab
+	,[1106] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 236690 } -- Argent Crusade
+
+	,[1445] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 133283 } -- Draenor Frostwolf Orcs
+	,[1515] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 1002596 } -- Dreanor Arakkoa Outcasts
+	,[1731] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 1048727 } -- Dreanor Council of Exarchs
+	,[1681] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 1042727 } -- Dreanor Vol'jin's Spear
+	,[1682] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 1042294 } -- Dreanor Wrynn's Vanguard
+
+	,[1090] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1450997 } -- Kirin Tor
+	,[1828] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1450996 } -- Highmountain Tribes
+	,[1859] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1450998 } -- Nightfallen
+	,[1883] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1450995 } -- Dreamweavers
+	,[1894] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1451000 } -- Wardens
+	,[1900] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1450994 } -- Court of Farnodis
+	,[1948] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1450999 } -- Valarjar
+	,[2045] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1708507 } -- Legionfall
+	,[2165] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1708506 } -- Army of the Light
+	,[2170] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1708505 } -- Argussian Reach
+
+	,[2103] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058217 ,["playerFaction"] = "Horde" } -- Zandalari Empire
+	,[2156] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058211, ["playerFaction"] = "Horde" } -- Talanji's Expedition
+	,[2157] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058207, ["playerFaction"] = "Horde" } -- The Honorbound
+	,[2158] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058213, ["playerFaction"] = "Horde" } -- Voldunai
+	,[2159] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058204, ["playerFaction"] = "Alliance" } -- 7th Legion
+	,[2160] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058209, ["playerFaction"] = "Alliance" } -- Proudmoore Admirality
+	,[2161] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058208, ["playerFaction"] = "Alliance" } -- Order of Embers
+	,[2162] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058210, ["playerFaction"] = "Alliance" } -- Storm's Wake
+	,[2163] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058212 } -- Tortollan Seekers
+	,[2164] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058205 } -- Champions of Azeroth
+	,[2391] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2909316 } -- Rustbolt
+	,[2373] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2909044, ["playerFaction"] = "Horde" } -- Unshackled
+	,[2400] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2909043, ["playerFaction"] = "Alliance" } -- Waveblade Ankoan
+	,[2417] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 3196264 } -- Uldum Accord
+	,[2415] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 3196265 } -- Rajani
 	-- Shadowlands
-	,[2407] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3257748 } -- The Ascended
-	,[2410] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3641396 } -- The Undying Army
-	,[2413] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3257751 } -- Court of Harvesters
-	,[2465] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3641394 } -- The Wild Hunt
-	,[2432] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 3729461 } -- Ve'nari
-	,[2470] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 4083292 } -- Korthia
-	,[2472] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 4067928 } -- Korthia Codex
-	,[2478] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS,["playerFaction"] = nil ,["texture"] = 4226232 } -- Zereth Mortis
+	,[2407] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 3257748 } -- The Ascended
+	,[2410] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 3641396 } -- The Undying Army
+	,[2413] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 3257751 } -- Court of Harvesters
+	,[2465] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 3641394 } -- The Wild Hunt
+	,[2432] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 3729461 } -- Ve'nari
+	,[2470] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 4083292 } -- Korthia
+	,[2472] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 4067928 } -- Korthia Codex
+	,[2478] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 4226232 } -- Zereth Mortis
 	-- LE_EXPANSION_DRAGONFLIGHT
-	,[2507] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687628 } -- Dragonscale Expedition
-	,[2511] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687629 } -- Iskaara Tuskarr
-	,[2503] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687627 } -- Maruuk Centaur
-	,[2510] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4687630 } -- Valdrakken Accord
-	,[2544] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4548878 } -- Artisan's Consortium
-	,[2517] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4640487 } -- Wrathion
-	,[2518] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4640488 } -- Sabellian
-	,[2550] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 134565 } -- Cobalt Assembly
-	,[2523] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4528811 } -- Dark Talons
-	,[2524] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4528812 } -- Obsidian Warders
-	,[2526] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 4901295 } -- Winterpelt Furbolg
-	,[2564] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5140835 } -- Loamm Niffen
-	,[2553] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 609811 } -- Soridormi
-	,[2574] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5244643 } -- Dream Wardens
-	,[2615] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT,["playerFaction"] = nil ,["texture"] = 5315246 } -- Azerothian Archives	
+	,[2507] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687628 } -- Dragonscale Expedition
+	,[2511] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687629 } -- Iskaara Tuskarr
+	,[2503] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687627 } -- Maruuk Centaur
+	,[2510] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687630 } -- Valdrakken Accord
+	,[2544] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4548878 } -- Artisan's Consortium
+	,[2517] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4640487 } -- Wrathion
+	,[2518] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4640488 } -- Sabellian
+	,[2550] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 134565 } -- Cobalt Assembly
+	,[2523] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4528811 } -- Dark Talons
+	,[2524] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4528812 } -- Obsidian Warders
+	,[2526] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4901295 } -- Winterpelt Furbolg
+	,[2564] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 5140835 } -- Loamm Niffen
+	,[2553] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 609811 } -- Soridormi
+	,[2574] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 5244643 } -- Dream Wardens
+	,[2615] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 5315246 } -- Azerothian Archives	
 	-- LE_EXPANSION_WAR_WITHIN
-	,[2570] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5891368 } -- Hallowfall Arathi
-	,[2594] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5891367 } -- The Assembly of the Deeps
-	,[2590] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5891369 } -- Council of Dornogal
-	,[2600] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5891370 } -- The Severed Threads
-	,[2601] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5862764 } -- The Weaver
-	--,[2645] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5930319 } -- Earthen
-	,[2605] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5862762 } -- The General
-	,[2607] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5862763 } -- The Vizier
-	,[2640] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 5453546 } -- Brann Bronzebeard
-	,[2653] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 632354 } -- The Cartels of Undermine
-	,[2671] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 632354 } -- Venture Company
-	,[2673] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 632354 } -- Bilgewater Cartel
-	,[2675] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 632354 } -- Blackwater Cartel
-	,[2677] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN,["playerFaction"] = nil ,["texture"] = 632354 } -- Steamwheedle Cartel
+	,[2570] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5891368 } -- Hallowfall Arathi
+	,[2594] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5891367 } -- The Assembly of the Deeps
+	,[2590] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5891369 } -- Council of Dornogal
+	,[2600] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5891370 } -- The Severed Threads
+	,[2601] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5862764 } -- The Weaver
+	--,[2645] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5930319 } -- Earthen
+	,[2605] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5862762 } -- The General
+	,[2607] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5862763 } -- The Vizier
+	,[2640] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5453546 } -- Brann Bronzebeard
+	,[2653] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 632354 } -- The Cartels of Undermine
+	,[2671] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 632354 } -- Venture Company
+	,[2673] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 632354 } -- Bilgewater Cartel
+	,[2675] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 632354 } -- Blackwater Cartel
+	,[2677] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 632354 } -- Steamwheedle Cartel
 
 }
 -- Add localized faction names

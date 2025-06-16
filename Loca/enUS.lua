@@ -168,4 +168,4 @@ L["WHATS_NEW"] = "What's New"
 L["WHATS_NEW_TT"] = "View World Quest Tab patch notes."
 L["WQT_FULLSCREEN_BUTTON_TT"] = "Left click to toggle the world quest list. Right click and drag to change position."
 L["IGNORES_FILTERS"] = "Ignores Filters"
-
+L["SUGGEST_RELOAD"] = "UI reload advised after changing"

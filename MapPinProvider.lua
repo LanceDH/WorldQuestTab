@@ -111,15 +111,27 @@ local function HideOfficialPin(pin)
 end
 
 function WQT_OfficialPinSuppressorProviderMixin:RefreshAllData()
+	if (WQT.settings.pin.disablePoI) then return end
+
 	-- Supressor pins error during combat, so we're doing it the potato way
 	for k, template in ipairs(self.templatedToSuppress) do
 		for pin in self:GetMap():EnumeratePinsByTemplate(template) do
 			if (not pin.WQTHooked) then
 				pin.WQTHooked = true;
 				pin:HookScript("OnShow", HideOfficialPin);
+				pin:Hide();
 			end
 		end
 	end
+
+	-- print("- - - - -");
+	-- for template in pairs(self:GetMap().pinPools) do
+	-- 	local count = 0;
+	-- 	for pin in self:GetMap():EnumeratePinsByTemplate(template) do
+	-- 		count = count + 1;
+	-- 	end
+	-- 	print(count, template);
+	-- end
 end
 
 function WQT_OfficialPinSuppressorProviderMixin:OnAdded(mapCanvas)
@@ -444,7 +456,7 @@ function WQT_PinDataProvider:SetQuestIDPinged(questId, shouldPing)
 	
 	-- Official pins
 	if (WQT_Utils:GetSetting("pin", "disablePoI")) then 
-		if (not shouldPing) then return; end
+		if (not shouldPing or InCombatLockdown()) then return; end
 		if (WorldMapFrame:IsShown()) then
 			local WQProvider = WQT_Utils:GetMapWQProvider();
 			if (WQProvider) then
@@ -622,8 +634,7 @@ function WQT_PinMixin:UpdateVisuals()
 	
 	-- Quest Type Icon
 	local typeAtlas =  WQT_Utils:GetCachedTypeIconData(questInfo, false);
-	local showTypeIcon = WQT_Utils:GetSetting("pin", "typeIcon") and (not tagInfo or (questType and questType > 0 and questType ~= Enum.QuestTagType.Normal) or questInfo:IsSpecialType());
-	if (showTypeIcon and typeAtlas) then
+	if (typeAtlas and typeAtlas ~= "Worldquest-icon") then
 		local iconFrame = self:AddIcon();
 		iconFrame:SetupIcon(typeAtlas);
 		iconFrame:SetIconScale(questType == Enum.QuestTagType.PvP and 0.8 or 1);

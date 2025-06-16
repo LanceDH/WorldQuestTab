@@ -179,6 +179,7 @@ function QuestInfoMixin:Init(questID, qInfo, alwaysHide, posX, posY)
 	self:SetMapPos(posX, posY);
 	self.tagInfo = C_QuestLog.GetQuestTagInfo(questID);
 	self.isBonusQuest = self.tagInfo == nil;
+	self.classification = C_QuestInfoSystem.GetQuestClassification(questID);
 	self.isBanned = qInfo and _V["BUGGED_POI"][questID] == qInfo.mapID;
 	self.passedFilter = true;
 	self:UpdateValidity();
@@ -198,7 +199,8 @@ function QuestInfoMixin:Init(questID, qInfo, alwaysHide, posX, posY)
 end
 
 function QuestInfoMixin:UpdateValidity()
-	self.isValid = not self.isBanned and HaveQuestData(self.questID);
+	local correctClassification = self.classification == Enum.QuestClassification.BonusObjective or self.classification == Enum.QuestClassification.WorldQuest;
+	self.isValid = correctClassification and not self.isBanned and HaveQuestData(self.questID);
 	return self.isValid;
 end
 
@@ -259,18 +261,17 @@ function QuestInfoMixin:LoadRewards(force)
 					elseif(conduitType == CONDUIT_TYPE_POTENCY) then
 						subType = _V["CONDUIT_SUBTYPE"].potency;
 					end
-					self:AddReward(WQT_REWARDTYPE.conduit, ilvl, texture, quality, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardRelic), rewardId, false, subType);
+					self:AddReward(WQT_REWARDTYPE.conduit, ilvl, texture, quality, rewardId, false, subType);
 				elseif (typeID == 4 or typeID == 2) then 
 					-- Gear (4 = armor, 2 = weapon)
 					local canUpgrade = ScanTooltipRewardForPattern(self.questId, "(%d+%+)$") and true or false;
 					local rewardType = typeID == 4 and WQT_REWARDTYPE.equipment or WQT_REWARDTYPE.weapon;
-					local color = typeID == 4 and WQT_Utils:GetColor(_V["COLOR_IDS"].rewardArmor) or WQT_Utils:GetColor(_V["COLOR_IDS"].rewardWeapon);
-					self:AddReward(rewardType, ilvl, texture, quality, color, rewardId, canUpgrade);
+					self:AddReward(rewardType, ilvl, texture, quality, rewardId, canUpgrade);
 				elseif (typeID == 3 and subTypeID == 11) then
 					-- Relics
 					-- Find upgrade amount as C_ArtifactUI.GetItemLevelIncreaseProvidedByRelic doesn't scale
 					local numItems = tonumber(ScanTooltipRewardForPattern(self.questId, "^%+(%d+)"));
-					self:AddReward(WQT_REWARDTYPE.relic, numItems, texture, quality,WQT_Utils:GetColor(_V["COLOR_IDS"].rewardRelic), rewardId);
+					self:AddReward(WQT_REWARDTYPE.relic, numItems, texture, quality, rewardId);
 				elseif(C_Item.IsAnimaItemByID(rewardId)) then
 					-- Anima
 					local value = ScanTooltipRewardForPattern(self.questId, " (%d+) ") or 1;
@@ -282,17 +283,17 @@ function QuestInfoMixin:LoadRewards(force)
 							texture = 3528287;
 						end
 					end
-					self:AddReward(WQT_REWARDTYPE.anima, numItems * value, texture, quality, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardAnima), rewardId);
-				else	
+					self:AddReward(WQT_REWARDTYPE.anima, numItems * value, texture, quality, rewardId);
+				else
 					-- Normal items
 					if (texture == 894556) then
 						-- Bonus player xp item is counted as actual xp
-						self:AddReward(WQT_REWARDTYPE.xp, ilvl, texture, quality, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardItem), rewardId);
+						self:AddReward(WQT_REWARDTYPE.xp, ilvl, texture, quality, rewardId);
 					elseif (typeID == 0 and subTypeID == 8 and price == 0 and ilvl > 100) then 
 						-- Item converting into equipment
-						self:AddReward(WQT_REWARDTYPE.equipment, ilvl, texture, quality, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardArmor), rewardId);
+						self:AddReward(WQT_REWARDTYPE.equipment, ilvl, texture, quality, rewardId);
 					else 
-						self:AddReward(WQT_REWARDTYPE.item, numItems, texture, quality, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardItem), rewardId);
+						self:AddReward(WQT_REWARDTYPE.item, numItems, texture, quality, rewardId);
 					end
 				end
 			end
@@ -301,35 +302,32 @@ function QuestInfoMixin:LoadRewards(force)
 		if (C_QuestInfoSystem.HasQuestRewardSpells(self.questId)) then
 			local spellIds = C_QuestInfoSystem.GetQuestRewardSpells(self.questId);
 
-			for k, spelldId in ipairs(spellIds) do
-				local spellInfo = C_Spell.GetSpellInfo(spelldId)
-
-				self:AddReward(WQT_REWARDTYPE.spell, 1, spellInfo.texture, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardItem), spellIds);
+			for k, spellId in ipairs(spellIds) do
+				local spellInfo = C_Spell.GetSpellInfo(spellId)
+				self:AddReward(WQT_REWARDTYPE.spell, 1, spellInfo.iconID, 1, spellId);
 			end
-			
 		end
 		-- Honor
 		if (GetQuestLogRewardHonor(self.questId) > 0) then
 			local numItems = GetQuestLogRewardHonor(self.questId);
-			self:AddReward(WQT_REWARDTYPE.honor, numItems, 1455894, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardHonor));
+			self:AddReward(WQT_REWARDTYPE.honor, numItems, 1455894, 1);
 		end
 		-- Gold
 		if (GetQuestLogRewardMoney(self.questId) > 0) then
 			local numItems = floor(abs(GetQuestLogRewardMoney(self.questId)))
-			self:AddReward(WQT_REWARDTYPE.gold, numItems, 133784, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardGold));
+			self:AddReward(WQT_REWARDTYPE.gold, numItems, 133784, 1);
 		end
 		-- Currency
 		local currencies = C_QuestLog.GetQuestRewardCurrencies(self.questId);
 		for k, currency in ipairs(currencies) do
 			local isRep = C_CurrencyInfo.GetFactionGrantedByCurrency(currency.currencyID) ~= nil;
 			local currType = currency.currencyID == _azuriteID and WQT_REWARDTYPE.artifact or (isRep and WQT_REWARDTYPE.reputation or WQT_REWARDTYPE.currency);
-			local color = currType == WQT_REWARDTYPE.artifact and WQT_Utils:GetColor(_V["COLOR_IDS"].rewardArtiface) or  WQT_Utils:GetColor(_V["COLOR_IDS"].rewardCurrency);
-			self:AddReward(currType, currency.totalRewardAmount, currency.texture, currency.quality, color, currency.currencyID);
+			self:AddReward(currType, currency.totalRewardAmount, currency.texture, currency.quality, currency.currencyID);
 		end
 		-- XP
 		if (GetQuestLogRewardXP(self.questId) > 0) then
 			local numItems = GetQuestLogRewardXP(self.questId);
-			self:AddReward(WQT_REWARDTYPE.xp, numItems, 894556, 1, WQT_Utils:GetColor(_V["COLOR_IDS"].rewardXp));
+			self:AddReward(WQT_REWARDTYPE.xp, numItems, 894556, 1);
 		end
 		
 		self:ParseRewards();
@@ -338,7 +336,7 @@ function QuestInfoMixin:LoadRewards(force)
 	self.hasRewardData = haveData;
 end
 
-function QuestInfoMixin:AddReward(rewardType, amount, texture, quality, color, id, canUpgrade, subType)
+function QuestInfoMixin:AddReward(rewardType, amount, texture, quality, id, canUpgrade, subType)
 	local index = #self.rewardList + 1;
 
 	-- Create reward

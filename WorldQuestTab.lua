@@ -835,6 +835,35 @@ function WQT:OnEnable()
 	self.isEnabled = true;
 end
 
+-----------------------------------------
+--
+--------
+
+WQT_QuestLogSettingsButtonMixin = CreateFromMixins(QuestLogSettingsButtonMixin)
+
+function WQT_QuestLogSettingsButtonMixin:OnMouseDown()
+	if(not self.disabled) then
+		QuestLogSettingsButtonMixin.OnMouseDown(self);
+	end
+end
+
+function WQT_QuestLogSettingsButtonMixin:OnMouseUp()
+	if(not self.disabled) then
+		QuestLogSettingsButtonMixin.OnMouseUp(self);
+	end
+end
+
+function WQT_QuestLogSettingsButtonMixin:OnEnable()
+	self.disabled = false;
+	self.Icon:SetAlpha(1);
+end
+
+function WQT_QuestLogSettingsButtonMixin:OnDisable()
+	self.disabled = true;
+	self.Icon:SetAlpha(0.45);
+end
+
+
 ------------------------------------------
 -- 			REWARDDISPLAY MIXIN			--
 ------------------------------------------
@@ -979,7 +1008,7 @@ function WQT_ListButtonMixin:OnLoad()
 	self.TrackedBorder:SetFrameLevel(self:GetFrameLevel() + 2);
 	self.Highlight:SetFrameLevel(self:GetFrameLevel() + 2);
 	self:EnableKeyboard(false);
-	self.UpdateTooltip = function() self:OnEnter() end;
+	self.UpdateTooltip = function() self:ShowTooltip() end;
 	self.timer = 0;
 end
 
@@ -1032,10 +1061,16 @@ function WQT_ListButtonMixin:OnEnter()
 	local questInfo = self.questInfo;
 	if (not questInfo) then return; end
 	self.Highlight:Show();
-	
 	WQT_WorldQuestFrame.pinDataProvider:SetQuestIDPinged(self.questInfo.questId, true);
 	WQT_WorldQuestFrame:ShowWorldmapHighlight(questInfo.questId);
 	
+	self:ShowTooltip();
+	self:SetAlpha(1);
+end
+
+function WQT_ListButtonMixin:ShowTooltip()
+	local questInfo = self.questInfo;
+	if (not questInfo) then return; end
 	local style = _V["TOOLTIP_STYLES"].default;
 	if (questInfo:IsQuestOfType(WQT_QUESTTYPE.calling)) then
 		if (C_QuestLog.IsOnQuest(questInfo.questId)) then
@@ -1046,7 +1081,6 @@ function WQT_ListButtonMixin:OnEnter()
 	end
 
 	WQT_Utils:ShowQuestTooltip(self, questInfo, style);
-	self:SetAlpha(1);
 end
 
 function WQT_ListButtonMixin:UpdateQuestType(questInfo)
@@ -1634,6 +1668,7 @@ function WQT_CoreMixin:OnLoad()
 	self.ExternalEvents = {};
 	-- Events
 	self:RegisterEvent("PLAYER_REGEN_DISABLED");
+	self:RegisterEvent("PLAYER_REGEN_ENABLED");
 	self:RegisterEvent("PVP_TIMER_UPDATE"); -- Warmode toggle because WAR_MODE_STATUS_UPDATE doesn't seems to fire when toggling warmode
 	self:RegisterEvent("ADDON_LOADED");
 	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
@@ -1769,7 +1804,6 @@ function WQT_CoreMixin:ApplyAllSettings()
 	self:UpdateBountyCounters();
 	self:RepositionBountyTabs();
 	self.pinDataProvider:RefreshAllData()
-	WQT_Utils:RefreshOfficialDataProviders();
 	WQT_ListContainer:UpdateQuestList();
 	WQT:Sort_OnClick(nil, WQT.settings.general.sortBy);
 	WQT_WorldMapContainer:LinkSettings(WQT.settings.general.fullScreenContainerPos);
@@ -1923,6 +1957,13 @@ end
 
 function WQT_CoreMixin:PLAYER_REGEN_DISABLED()
 	WQT.combatLockWarned = false;
+	WQT_ListContainer.SettingsDropdown:SetEnabled(false)
+	self:ChangePanel(WQT_PanelID.Quests);
+end
+
+function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
+	WQT.combatLockWarned = false;
+	WQT_ListContainer.SettingsDropdown:SetEnabled(true)
 end
 
  -- Warmode toggle because WAR_MODE_STATUS_UPDATE doesn't seems to fire when toggling warmode

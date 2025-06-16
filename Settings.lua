@@ -22,9 +22,12 @@ function WQT_SettingsBaseMixin:OnEnter(anchorFrame, anchorType)
 	if (tooltipText) then
 		GameTooltip:SetOwner(anchorFrame or self, anchorType or "ANCHOR_RIGHT");
 		if (self.label) then
-			GameTooltip:SetText(self.label, 1, 1, 1, true);
+			GameTooltip_SetTitle(GameTooltip, self.label);
 		end
-		GameTooltip:AddLine(tooltipText, nil, nil, nil, true);
+		GameTooltip_AddNormalLine(GameTooltip, tooltipText, true);
+		if (self.suggestReload) then
+			GameTooltip_AddHighlightLine(GameTooltip, _L["SUGGEST_RELOAD"], true);
+		end
 		GameTooltip:Show();
 	end
 end
@@ -37,6 +40,7 @@ function WQT_SettingsBaseMixin:Init(data)
 	self.label = data.label;
 	self.tooltip = data.tooltip;
 	self.disabledTooltip = data.disabledTooltip;
+	self.suggestReload = data.suggestReload;
 	self.valueChangedFunc = data.valueChangedFunc;
 	self.isDisabled = data.isDisabled;
 	if (self.Label) then
