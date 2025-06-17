@@ -127,7 +127,7 @@ local URL_WOWI = "https://www.wowinterface.com/downloads/info25042-WorldQuestTab
 -- regionID, locale, textLocale, playerFaction, map, coords, addonVersion
 local FORMAT_PLAYER = "%d;%s;%s;%s;%d;%s;%s\n";
 local FORMAT_QUEST_HEADER = "Quests;%d;%d\nQuestId;Counted;Frequency;IsTask;IsBounty;IsHidden\n"
-local FORMAT_QUEST = "%s%d;%s;%d;%s;%s;%s\n"
+local FORMAT_QUEST = "%s%d;%d;%s;%s;%s\n"
 local FORMAT_WORLDQUEST_HEADER = "World Quests;%d\nQuestId;MapId;PassedFilter;IsValid;AlwaysHide;IsDaily;IsAllyQuest;Seconds;RewardBits\n";
 local FORMAT_WORLDQUEST = "%s%d;%d;%s;%s;%s;%s;%s;%d;%d\n"
 -- output, name
@@ -147,9 +147,8 @@ local function GetQuestDump()
 	local numEntries = C_QuestLog.GetNumQuestLogEntries();
 	for index = 1, numEntries do
 		local info = C_QuestLog.GetInfo(index);
-		local counted = WQT_Utils:QuestCountsToCap(index);
 		if (not info.isHeader) then
-			output = FORMAT_QUEST:format(output, info.questID, bts(counted), info.frequency, bts(info.isTask), bts(info.isBounty), bts(info.isHidden));
+			output = FORMAT_QUEST:format(output, info.questID, info.frequency, bts(info.isTask), bts(info.isBounty), bts(info.isHidden));
 		end
 	end
 	

@@ -937,13 +937,6 @@ _V["TIME_REMAINING_CATEGORY"] = {
 	,["veryLong"] = 6 -- >3d
 }
 
-_V["QUESTS_NOT_COUNTING"] = {
-		[261] = true -- Account Wide
-		,[256] = true -- PvP Conquest
-		,[102] = true -- Island Weekly Quest
-		,[270] = true -- Threat Emissary
-	}
-
 _V["NUMBER_ABBREVIATIONS_ASIAN"] = {
 		{["value"] = 1000000000, ["format"] = _L["NUMBERS_THIRD"]}
 		,{["value"] = 100000000, ["format"] = _L["NUMBERS_SECOND"], ["decimal"] = true}
@@ -975,10 +968,35 @@ _V["WQT_CVAR_LIST"] = {
 	}
 	
 _V["WQT_TYPEFLAG_LABELS"] = {
-		[2] = {["Default"] = DEFAULT, ["Elite"] = ELITE, ["PvP"] = PVP, ["Petbattle"] = PET_BATTLE_PVP_QUEUE, ["Dungeon"] = TRACKER_HEADER_DUNGEON, ["Raid"] = RAID, ["Profession"] = BATTLE_PET_SOURCE_4, ["Invasion"] = _L["TYPE_INVASION"], ["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE
-			, ["Daily"] = DAILY, ["Threat"] = REPORT_THREAT, ["Bonus"] = SCENARIO_BONUS_LABEL}
-		,[3] = {["Item"] = ITEMS, ["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT, ["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["Currency"] = CURRENCY, ["Artifact"] = ITEM_QUALITY6_DESC, ["Anima"] = WORLD_QUEST_REWARD_FILTERS_ANIMA, ["Conduits"] = _L["REWARD_CONDUITS"]
-			, ["Relic"] = RELICSLOT, ["None"] = NONE, ["Experience"] = POWER_TYPE_EXPERIENCE, ["Honor"] = HONOR, ["Reputation"] = REPUTATION}
+		[2] = {
+			["Default"] = DEFAULT,
+			["Elite"] = ELITE,
+			["PvP"] = PVP,
+			["Petbattle"] = PET_BATTLE_PVP_QUEUE,
+			["Dungeon"] = TRACKER_HEADER_DUNGEON,
+			["Raid"] = RAID,
+			["Profession"] = BATTLE_PET_SOURCE_4,
+			["Invasion"] = _L["TYPE_INVASION"],
+			["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE,
+			["Daily"] = DAILY,
+			["Threat"] = REPORT_THREAT,
+			["Bonus"] = SCENARIO_BONUS_LABEL,
+			["Dragonrider"] = DRAGONRIDING_RACES_MAP_TOGGLE
+		}
+		,[3] = {
+			["Item"] = ITEMS,
+			["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT,
+			["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD,
+			["Currency"] = CURRENCY,
+			["Artifact"] = ITEM_QUALITY6_DESC,
+			["Anima"] = WORLD_QUEST_REWARD_FILTERS_ANIMA,
+			["Conduits"] = _L["REWARD_CONDUITS"],
+			["Relic"] = RELICSLOT,
+			["None"] = NONE,
+			["Experience"] = POWER_TYPE_EXPERIENCE,
+			["Honor"] = HONOR,
+			["Reputation"] = REPUTATION
+		}
 	};
 	
 _V["FILTER_TYPE_OLD_CONTENT"] = {
@@ -1164,17 +1182,18 @@ _V["REWARD_TYPE_ATLAS"] = {
 _V["FILTER_FUNCTIONS"] = {
 		[2] = { -- Types
 			["PvP"] 			= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PvP; end 
-			,["Petbattle"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PetBattle; end 
-			,["Dungeon"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Dungeon; end 
-			,["Raid"] 		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Raid; end 
-			,["Profession"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Profession; end 
-			,["Invasion"] 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Invasion; end 
-			,["Assault"]	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.FactionAssault; end 
-			,["Elite"]		= function(questInfo, tagInfo) return tagInfo and tagInfo.isElite and tagInfo.worldQuestType ~= Enum.QuestTagType.Dungeon; end
-			,["Default"]	= function(questInfo, tagInfo) return tagInfo and not tagInfo.isElite and tagInfo.worldQuestType == Enum.QuestTagType.Normal; end 
-			,["Daily"]		= function(questInfo, tagInfo) return questInfo.isDaily; end 
-			,["Threat"]		= function(questInfo, tagInfo) return C_QuestLog.IsThreatQuest(questInfo.questId); end 
-			,["Bonus"]		= function(questInfo, tagInfo) return not tagInfo; end 
+			,["Petbattle"] 		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PetBattle; end 
+			,["Dungeon"] 		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Dungeon; end 
+			,["Raid"] 			= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Raid; end 
+			,["Profession"]		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Profession; end 
+			,["Invasion"] 		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Invasion; end 
+			,["Assault"]		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.FactionAssault; end 
+			,["Elite"]			= function(questInfo, tagInfo) return tagInfo and tagInfo.isElite and tagInfo.worldQuestType ~= Enum.QuestTagType.Dungeon; end
+			,["Default"]		= function(questInfo, tagInfo) return tagInfo and not tagInfo.isElite and tagInfo.worldQuestType == Enum.QuestTagType.Normal; end 
+			,["Daily"]			= function(questInfo, tagInfo) return questInfo.isDaily; end 
+			,["Threat"]			= function(questInfo, tagInfo) return C_QuestLog.IsThreatQuest(questInfo.questId); end 
+			,["Bonus"]			= function(questInfo, tagInfo) return not tagInfo; end
+			,["Dragonrider"]	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.DragonRiderRacing; end 
 			}
 		,[3] = { -- Reward filters
 			["Armor"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.equipment + WQT_REWARDTYPE.weapon) > 0; end
@@ -1445,11 +1464,42 @@ _V["WQT_DEFAULTS"] = {
 
 		["filters"] = {
 				[_V["FILTER_TYPES"].faction] = {["name"] = FACTION
-						,["misc"] = {["none"] = true, ["other"] = true}, ["flags"] = {}}-- Faction filters are assigned later
+						,["misc"] = {
+							["none"] = true,
+							["other"] = true},
+							["flags"] = {} -- Faction filters are assigned later
+						}
 				,[_V["FILTER_TYPES"].type] = {["name"] = TYPE
-						, ["flags"] = {["Default"] = true, ["Elite"] = true, ["PvP"] = true, ["Petbattle"] = true, ["Dungeon"] = true, ["Raid"] = true, ["Profession"] = true, ["Invasion"] = true, ["Assault"] = true, ["Daily"] = true, ["Threat"] = true, ["Bonus"] = true}}
+						, ["flags"] = {
+							["Default"] = true,
+							["Elite"] = true,
+							["PvP"] = true,
+							["Petbattle"] = true,
+							["Dungeon"] = true,
+							["Raid"] = true,
+							["Profession"] = true,
+							["Invasion"] = true,
+							["Assault"] = true,
+							["Daily"] = true,
+							["Threat"] = true,
+							["Bonus"] = true,
+							["Dragonrider"] = true
+						}}
 				,[_V["FILTER_TYPES"].reward] = {["name"] = REWARD
-						, ["flags"] = {["Item"] = true, ["Armor"] = true, ["Gold"] = true, ["Currency"] = true, ["Anima"] = true, ["Conduits"] = true, ["Artifact"] = true, ["Relic"] = true, ["None"] = true, ["Experience"] = true, ["Honor"] = true, ["Reputation"] = true}}
+						, ["flags"] = {
+							["Item"] = true,
+							["Armor"] = true,
+							["Gold"] = true,
+							["Currency"] = true,
+							["Anima"] = true,
+							["Conduits"] = true,
+							["Artifact"] = true,
+							["Relic"] = true,
+							["None"] = true,
+							["Experience"] = true,
+							["Honor"] = true,
+							["Reputation"] = true
+						}}
 			};
 			
 		["profiles"] = {

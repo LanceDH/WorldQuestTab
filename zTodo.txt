@@ -1,7 +1,7 @@
 If you're reading this; temper your hopes and expectations
 
 Todo
-- Play through DF and look for issues
+- Play through WW and look for issues
 
 - Check if things in Data.lua can be improved
 - Look at old dropdown features
@@ -51,3 +51,4 @@ Done
     - Aurora affecting background transparency
 - Something up with LFG. Group finder and button on objective tracker
 - Check for issues while in combat
+- Play through DF and look for issues

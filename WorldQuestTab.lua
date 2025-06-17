@@ -126,18 +126,6 @@ local function slashcmd(msg)
 	end
 end
 
-local function IsRelevantFilter(filterID, key)
-	-- Check any filter outside of factions if disabled by worldmap filter
-	if (filterID > _V["FILTER_TYPES"].faction) then return not WQT:FilterIsWorldMapDisabled(key) end
-	-- Faction filters that are a string get a pass
-	if (not key or type(key) == "string") then return true; end
-	-- Factions with an ID of which the player faction is matching or neutral pass
-	local data = WQT_Utils:GetFactionDataInternal(key);
-	if (data and not data.playerFaction or data.playerFaction == _playerFaction) then return true; end
-	
-	return false;
-end
-
 local function AddBasicTooltipFunctionsToDropdownItem(item, title, body)
 	item:SetOnEnter(function(button)
 			GameTooltip:SetOwner(button, "ANCHOR_RIGHT");
@@ -152,7 +140,7 @@ local function AddBasicTooltipFunctionsToDropdownItem(item, title, body)
 end
 
 local function FilterTypesGeneralOnClick(data)
-	WQT:SetAllFilterTo(data[1], data[2]);
+	WQT:SetAllFilterTo(data.type, data.value, data.maskFunc);
 	EventRegistry:TriggerEvent("WQT.FiltersUpdated");
 	return MenuResponse.Refresh;
 end
@@ -175,15 +163,13 @@ local function GenericFilterOnSelect(data)
 end
 
 local function AddFilterSubmenu(rootDescription, filterType)
-	rootDescription:CreateButton(CHECK_ALL, FilterTypesGeneralOnClick, { filterType, true });
-	rootDescription:CreateButton(UNCHECK_ALL, FilterTypesGeneralOnClick, { filterType, false });
+	rootDescription:CreateButton(CHECK_ALL, FilterTypesGeneralOnClick, { ["type"] = filterType, ["value"] = true});
+	rootDescription:CreateButton(UNCHECK_ALL, FilterTypesGeneralOnClick, { ["type"] = filterType, ["value"] = false});
 
-	local value = filterType;
 	local options = WQT.settings.filters[filterType].flags;
 	local order = WQT.filterOrders[filterType]
 	local haveLabels = (_V["WQT_TYPEFLAG_LABELS"][filterType] ~= nil);
 	local oldContentFlags = {};
-	
 	
 	for k, flagKey in pairs(order) do
 		if (not WQT_Utils:FilterIsOldContent(filterType, flagKey)) then
@@ -207,6 +193,18 @@ local function AddExpansionFactionsToMenu(rootDescription, expansionLevel)
 	local filterType = _V["FILTER_TYPES"].faction;
 	local options = WQT.settings.filters[filterType].flags;
 	local order = WQT.filterOrders[filterType];
+ 
+	local function maskFunc(flagKey) 
+		if (type(flagKey) == "number") then
+			local factionInfo = WQT_Utils:GetFactionDataInternal(flagKey);
+			return factionInfo and factionInfo.expansion == expansionLevel;
+		else
+			return expansionLevel == LE_EXPANSION_LEVEL_CURRENT;
+		end
+	end
+
+	rootDescription:CreateButton(CHECK_ALL, FilterTypesGeneralOnClick, {["type"] = filterType, ["value"] = true, ["maskFunc"] = maskFunc});
+	rootDescription:CreateButton(UNCHECK_ALL, FilterTypesGeneralOnClick, {["type"] = filterType, ["value"] = false, ["maskFunc"] = maskFunc});
 
 	for k, flagKey in pairs(order) do
 		local factionInfo = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
@@ -223,10 +221,6 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 	-- Facation submenu
 	local factionsSubmenu = rootDescription:CreateButton(FACTION);
 	do
-		local filterType = _V["FILTER_TYPES"].faction;
-		factionsSubmenu:CreateButton(CHECK_ALL, FilterTypesGeneralOnClick, { filterType, true });
-		factionsSubmenu:CreateButton(UNCHECK_ALL, FilterTypesGeneralOnClick, { filterType, false });
-
 		AddExpansionFactionsToMenu(factionsSubmenu, LE_EXPANSION_LEVEL_CURRENT);
 
 		local factionFilters = WQT.settings.filters[_V["FILTER_TYPES"].faction];
@@ -536,20 +530,24 @@ function WQT:UpdateFilterIndicator()
 	end
 end
 
-function WQT:SetAllFilterTo(id, value)
+function WQT:SetAllFilterTo(id, value, maskFunc)
 	local filter = WQT.settings.filters[id];
 	if (not filter) then return end;
 	
 	local misc = filter.misc;
 	if (misc) then
 		for k, v in pairs(misc) do
-			misc[k] = value;
+			if(not maskFunc or maskFunc(k)) then
+				misc[k] = value;
+			end
 		end
 	end
 	
 	local flags = filter.flags;
 	for k, v in pairs(flags) do
-		flags[k] = value;
+		if(not maskFunc or maskFunc(k)) then
+			flags[k] = value;
+		end
 	end
 end
 
@@ -1333,7 +1331,7 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 	
 	local numHidden = 0;
 	local totalValid = 0;
-	for k, questInfo in ipairs(WQT_WorldQuestFrame.dataProvider.fitleredQuestsList) do
+	for k, questInfo in ipairs(WQT_WorldQuestFrame.dataProvider:GetIterativeList()) do
 		if (questInfo.isValid and questInfo.hasRewardData) then
 			if (questInfo.passedFilter) then
 				numHidden = numHidden + 1;

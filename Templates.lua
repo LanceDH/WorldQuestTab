@@ -780,23 +780,6 @@ function WQT_Utils:QuestIncorrectlyCounts(questLogIndex)
 	
 end
 
-function WQT_Utils:QuestCountsToCap(questLogIndex)
-	local questInfo = C_QuestLog.GetInfo(questLogIndex);
-	
-	if (not questInfo or questInfo.isHeader or questInfo.isTask or questInfo.isBounty) then
-		return false, questInfo.isHidden;
-	end
-	
-	local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questID);
-	local counts = true;
-	
-	if (tagInfo and tagInfo.tagID and _V["QUESTS_NOT_COUNTING"][tagInfo.tagID]) then
-		counts = false;
-	end
-	
-	return counts, questInfo.isHidden;
-end
-
 -- Count quests counting to the quest log cap and collect the ones that shouldn't count
 function WQT_Utils:GetQuestLogInfo(list)
 	local numEntries, questCount = C_QuestLog.GetNumQuestLogEntries();
