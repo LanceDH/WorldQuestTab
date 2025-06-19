@@ -75,7 +75,17 @@ local function _DeepWipeTable(t)
 	t = nil;
 end
 
+-- /run print(string.format("%.2f %.2f", WorldMapFrame:GetNormalizedCursorPosition()))
+-- /run print(WorldMapFrame.mapID)
+-- /run print(FlightMapFrame.mapID)
 
+local WQT_WARWITHIN = {
+	[2248]	= {["x"] = 0.73, ["y"] = 0.23}, -- Isle of Dorn
+	[2214]	= {["x"] = 0.57, ["y"] = 0.58}, -- Ringing Deeps
+	[2215]	= {["x"] = 0.35, ["y"] = 0.47}, -- Hallowfall
+	[2255]	= {["x"] = 0.46, ["y"] = 0.75}, -- Azj-Kahet
+	[2346]	= {["x"] = 0.82, ["y"] = 0.74} -- Undermine
+}
 local WQT_ZARALEK = {
 	[2133]	= {["x"] = 0.00, ["y"] = 0.00}, -- Zaralek Cavern
 	[2022]	= {["x"] = 0.88, ["y"] = 0.84}, -- Waking Shores
@@ -285,6 +295,9 @@ local expZones =
 	[LE_EXPANSION_DRAGONFLIGHT] = {
 		WQT_DRAGONLANDS,
 		WQT_ZARALEK,
+	},
+	[LE_EXPANSION_WAR_WITHIN] = {
+		WQT_WARWITHIN
 	}
 }
 
@@ -1227,43 +1240,42 @@ _V["ZONE_SUBZONES"] = {
 }
 
 _V["WQT_ZONE_MAPCOORDS"] = {
-		[1978] = WQT_DRAGONLANDS -- Dragonlands
-		,[2057] = WQT_DRAGONLANDS -- Dragonlands flightmap
-		,[2133] = WQT_ZARALEK -- Zaralek Cavern
-		,[1550]	= WQT_SHADOWLANDS -- Shadowlands
-		,[1647] = WQT_SHADOWLANDS -- Shadowlands flightmap
-		,[875]	= WQT_ZANDALAR -- Zandalar
-		,[1011]	= WQT_ZANDALAR -- Zandalar flightmap
-		,[876]	= WQT_KULTIRAS -- Kul Tiras
-		,[1014]	= WQT_KULTIRAS -- Kul Tiras flightmap
-		,[1355]	= WQT_NAZJATAR -- Nazjatar
-		,[1504]	= { -- Nazjatar flightmap
-			[1355] = {["x"] = 0, ["y"] = 0} -- Nazjatar
-		}
-		,[619] 	= WQT_LEGION 
-		,[993] 	= WQT_LEGION -- Flightmap	
-		,[905] 	= WQT_ARGUS -- Argus
-		,[12] 	= WQT_KALIMDOR 
-		,[1209] 	= WQT_KALIMDOR -- Flightmap
-		,[13]	= WQT_EASTERN_KINGDOMS
-		,[1208]	= WQT_EASTERN_KINGDOMS -- Flightmap
-		,[101]	= WQT_OUTLAND
-		,[1467]	= WQT_OUTLAND -- Flightmap
-		,[113]	= WQT_NORTHREND 
-		,[1384]	= WQT_NORTHREND  -- Flightmap
-		,[424]	= WQT_PANDARIA
-		,[989]	= WQT_PANDARIA -- Flightmap
-		,[572]	= WQT_DRAENOR
-		,[990]	= WQT_DRAENOR -- Flightmap
-		,[224]	= { -- Stranglethorn Vale
-			[210] = {["x"] = 0.42, ["y"] = 0.62} -- Cape
-			,[50] = {["x"] = 0.67, ["y"] = 0.40} -- North
-		}
-		,[947]		= {	
-		} -- All of Azeroth. Dynamic based on level and expansion in Dataprovider UpdateAzerothZones
-	}
+		[947]	= {}, -- All of Azeroth. Dynamic based on level and expansion in Dataprovider UpdateAzerothZones
+		[13]	= WQT_EASTERN_KINGDOMS,
+		[1208]	= WQT_EASTERN_KINGDOMS, -- Flightmap
+		[12] 	= WQT_KALIMDOR,
+		[1209] 	= WQT_KALIMDOR, -- Flightmap
+		[224]	= { -- Stranglethorn Vale
+				[210] = {["x"] = 0.42, ["y"] = 0.62}, -- Cape
+				[50] = {["x"] = 0.67, ["y"] = 0.40} -- North
+			},
+		[572]	= WQT_DRAENOR,
+		[990]	= WQT_DRAENOR, 		-- Flightmap
+		[424]	= WQT_PANDARIA,
+		[989]	= WQT_PANDARIA, 	-- Flightmap
+		[113]	= WQT_NORTHREND,
+		[1384]	= WQT_NORTHREND, 	-- Flightmap
+		[101]	= WQT_OUTLAND,
+		[1467]	= WQT_OUTLAND, 		-- Flightmap
+		[619] 	= WQT_LEGION,
+		[993] 	= WQT_LEGION, 		-- Flightmap	
+		[905] 	= WQT_ARGUS, 		
 
-	WQT_Test = { ["done"] = true, ["zones"] = {}};
+		[875]	= WQT_ZANDALAR,
+		[1011]	= WQT_ZANDALAR, 	-- Flightmap
+		[876]	= WQT_KULTIRAS,
+		[1014]	= WQT_KULTIRAS, 	-- Flightmap
+		[1355]	= WQT_NAZJATAR,
+		[1504]	= WQT_NAZJATAR,		-- Flightmap
+		[1550]	= WQT_SHADOWLANDS,
+		[1647]	= WQT_SHADOWLANDS,	-- Flightmap
+		[1978]	= WQT_DRAGONLANDS,
+		[2057]	= WQT_DRAGONLANDS,	-- Flightmap
+		[2133]	= WQT_ZARALEK,
+
+		[2274]	= WQT_WARWITHIN,
+		[2276]	= WQT_WARWITHIN		-- Flightmap
+	}
 
 _V["WQT_NO_FACTION_DATA"] = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L["NO_FACTION"] } -- No faction
 _V["WQT_FACTION_DATA"] = {
@@ -1315,37 +1327,22 @@ _V["WQT_FACTION_DATA"] = {
 	,[2472] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 4067928 } -- Korthia Codex
 	,[2478] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 4226232 } -- Zereth Mortis
 	-- LE_EXPANSION_DRAGONFLIGHT
+	,[2523] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4528811 } -- Dark Talons
 	,[2507] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687628 } -- Dragonscale Expedition
+	,[2574] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 5244643 } -- Dream Wardens
 	,[2511] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687629 } -- Iskaara Tuskarr
+	,[2564] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 5140835 } -- Loamm Niffen
 	,[2503] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687627 } -- Maruuk Centaur
 	,[2510] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687630 } -- Valdrakken Accord
-	,[2544] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4548878 } -- Artisan's Consortium
+	,[2524] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4528812 } -- Obsidian Warders
 	,[2517] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4640487 } -- Wrathion
 	,[2518] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4640488 } -- Sabellian
-	,[2550] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 134565 } -- Cobalt Assembly
-	,[2523] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4528811 } -- Dark Talons
-	,[2524] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4528812 } -- Obsidian Warders
-	,[2526] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4901295 } -- Winterpelt Furbolg
-	,[2564] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 5140835 } -- Loamm Niffen
-	,[2553] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 609811 } -- Soridormi
-	,[2574] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 5244643 } -- Dream Wardens
-	,[2615] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 5315246 } -- Azerothian Archives	
 	-- LE_EXPANSION_WAR_WITHIN
 	,[2570] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5891368 } -- Hallowfall Arathi
-	,[2594] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5891367 } -- The Assembly of the Deeps
-	,[2590] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5891369 } -- Council of Dornogal
+	,[2594] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6029027 } -- The Assembly of the Deeps
+	,[2590] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6029029 } -- Council of Dornogal
 	,[2600] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5891370 } -- The Severed Threads
-	,[2601] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5862764 } -- The Weaver
-	--,[2645] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5930319 } -- Earthen
-	,[2605] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5862762 } -- The General
-	,[2607] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5862763 } -- The Vizier
-	,[2640] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5453546 } -- Brann Bronzebeard
-	,[2653] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 632354 } -- The Cartels of Undermine
-	,[2671] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 632354 } -- Venture Company
-	,[2673] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 632354 } -- Bilgewater Cartel
-	,[2675] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 632354 } -- Blackwater Cartel
-	,[2677] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 632354 } -- Steamwheedle Cartel
-
+	,[2653] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6351805 } -- The Cartels of Undermine
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do

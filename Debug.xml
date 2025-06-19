@@ -240,6 +240,55 @@
 		</Scripts>
 	</Frame>
 
+	<Frame name="WQT_DevFrame" parent="UIParent" mixin="WQT_DevMixin" movable="true" enableMouse="true" toplevel="true" frameStrata="MEDIUM" hidden="true">
+		<Size x="200" y="100"/>
+		<Anchors>
+			<Anchor point="CENTER" x="300" />
+		</Anchors>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture atlas="auctionhouse-background-sell-right" alpha="0.5" />
+			</Layer>
+			<Layer level="ARTWORK">
+				<FontString parentKey="worldMapID" inherits="GameFontHighlight" justifyH="LEFT" text="WorldMap:">
+					<Size y="12" />
+					<Anchors>
+						<Anchor point="TOPLEFT" x="4" y="-4"/>
+						<Anchor point="RIGHT" x="-4"/>
+					</Anchors>
+				</FontString>
+				<FontString parentKey="worldMapMousePos" inherits="GameFontHighlight" justifyH="LEFT" text="WorldMapMouse:">
+					<Size y="12" />
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.worldMapID" relativePoint="BOTTOMLEFT" y="-4"/>
+						<Anchor point="RIGHT" relativeKey="$parent.worldMapID" />
+					</Anchors>
+				</FontString>
+				<FontString parentKey="flightMapID" inherits="GameFontHighlight" justifyH="LEFT" text="FlightMap:">
+					<Size y="12" />
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.worldMapMousePos" relativePoint="BOTTOMLEFT" y="-4"/>
+						<Anchor point="RIGHT" relativeKey="$parent.worldMapMousePos" />
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+
+		<Frames>
+			<Frame parentKey="DragPanel" inherits="PanelDragBarTemplate">
+				<Anchors>
+					<Anchor point="TOPLEFT"/>
+					<Anchor point="BOTTOMRIGHT"/>
+				</Anchors>
+			</Frame>
+		</Frames>
+
+		<Scripts>
+			<OnLoad method="OnLoad" /> 
+			<OnUpdate method="OnUpdate" /> 
+		</Scripts>
+	</Frame>
+
 	<Button name="WQT_DebugButton" inherits="UIMenuButtonStretchTemplate" parent="WorldMapFrame" enableMouse="true" hidden="true">
 		<Size x="30" y="30" />
 		<Anchors>

@@ -2,6 +2,7 @@ If you're reading this; temper your hopes and expectations
 
 Todo
 - Play through WW and look for issues
+    - Get to Undermine
 
 - Check if things in Data.lua can be improved
 - Look at old dropdown features

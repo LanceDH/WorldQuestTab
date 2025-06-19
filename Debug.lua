@@ -278,3 +278,34 @@ end
 
 function WQT_DebugFrameMixin:DoDebugThing()
 end
+
+
+WQT_DevMixin = {};
+
+function WQT_DevMixin:OnLoad()
+	self:RegisterEvent("TAXIMAP_OPENED");
+
+	self:SetScript("OnEvent", function(self, event, ...)
+			if (self[event]) then 
+				self[event](self, ...);
+			end
+		end)
+
+	EventRegistry:RegisterCallback("MapCanvas.MapSet",
+		function(_, mapID)
+			self.worldMapID:SetText(string.format("WorldMap: %s", WorldMapFrame.mapID or 0));
+		end, 
+		self);
+end
+
+function WQT_DevMixin:TAXIMAP_OPENED()
+	self.flightMapID:SetText(string.format("FlightMap: %s", FlightMapFrame.mapID or 0));
+end
+
+function WQT_DevMixin:OnUpdate()
+	if (not self:IsShown()) then return end;
+
+	if (WorldMapFrame:IsShown()) then
+		self.worldMapMousePos:SetText(string.format("WorldMapMouse: %.2f %.2f", WorldMapFrame:GetNormalizedCursorPosition()));
+	end
+end

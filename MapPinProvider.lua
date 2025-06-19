@@ -633,7 +633,7 @@ function WQT_PinMixin:UpdateVisuals()
 	wipe(self.icons);
 	
 	-- Quest Type Icon
-	local typeAtlas =  WQT_Utils:GetCachedTypeIconData(questInfo, false);
+	local typeAtlas = WQT_Utils:GetSetting("pin", "typeIcon") and WQT_Utils:GetCachedTypeIconData(questInfo, false);
 	if (typeAtlas and typeAtlas ~= "Worldquest-icon") then
 		local iconFrame = self:AddIcon();
 		iconFrame:SetupIcon(typeAtlas);

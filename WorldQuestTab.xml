@@ -148,43 +148,21 @@
 							<Anchors>
 								<Anchor point="TOPLEFT" x="1" y="-1" relativeKey="$parent.Icon"/>
 								<Anchor point="BOTTOMRIGHT" x="-1" y="1" relativeKey="$parent.Icon"/>
-								<!-- <Anchor point="TOPLEFT" x="1" y="-1" relativeKey="$parent.Icon"/>
-								<Anchor point="BOTTOMRIGHT" x="-1" y="1" relativeKey="$parent.Icon"/> -->
 							</Anchors>
 							<MaskedTextures>
 								<MaskedTexture childKey="Icon"/>
 							</MaskedTextures>
 						</MaskTexture>
-						<!-- <MaskTexture parentKey="CircleMask" file="Interface\CharacterFrame\TempPortraitAlphaMask" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE">
-							<Anchors>
-								<Anchor point="TOPLEFT" relativeKey="$parent.Icon"/>
-								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Icon"/>
-							</Anchors>
-							<MaskedTextures>
-								<MaskedTexture childKey="Icon"/>
-							</MaskedTextures>
-						</MaskTexture> -->
 					</Layer>
 				</Layers>
 
 				<Layers>
-				
-					<!-- <Layer level="OVERLAY" textureSubLevel="-1">
-						<Texture parentKey="RingShadow" atlas="azsharawards-fallingglow" useAtlasSize="false">
-							<Anchors>
-								<Anchor point="TOPLEFT" x="0" y="-0"/>
-								<Anchor point="BOTTOMRIGHT" x="-0" y="0"/>
-							</Anchors>
-							<Color r="0" g="0" b="0" a="0.5"/>
-						</Texture>
-					</Layer> -->
 					<Layer level="BACKGROUND">
 						<Texture parentKey="Ring" atlas="talents-node-circle-locked" useAtlasSize="false" desaturated="false">
 							<Anchors>
 								<Anchor point="TOPLEFT" x="0" y="0"/>
 								<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
 							</Anchors>
-							<!-- <Color r="0.55" g="0.45" b="0.45"/> -->
 						</Texture>
 					</Layer>
 				</Layers>
