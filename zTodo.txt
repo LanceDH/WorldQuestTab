@@ -1,6 +1,8 @@
 If you're reading this; temper your hopes and expectations
 
 Todo
+- Might unintentially be hiding Nzoth map marker 
+
 - Check if things in Data.lua can be improved
 - Look at old dropdown features
     - FilterButton indicator for official filtering

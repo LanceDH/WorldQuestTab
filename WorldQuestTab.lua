@@ -1682,9 +1682,9 @@ function WQT_CoreMixin:OnLoad()
 	EventRegistry:RegisterCallback("QuestLog.SetDisplayMode", self.QuestMapChangedTab, self);
 	
 	-- Update when opening the map
-	WorldMapFrame:HookScript("OnShow", function() 
-			-- If emissaryOnly was automaticaly set, and there's none in the current list, turn it off again.
-			if (WQT_WorldQuestFrame.autoEmisarryId and not WQT_WorldQuestFrame.dataProvider:ListContainsEmissary()) then
+	WorldMapFrame:HookScript("OnShow", function()
+			-- If emissaryOnly was automaticaly set, turn it off again.
+			if (WQT_WorldQuestFrame.autoEmisarryId) then
 				WQT_WorldQuestFrame.autoEmisarryId = nil;
 				WQT_ListContainer:UpdateQuestList();
 			end
@@ -1737,15 +1737,13 @@ function WQT_CoreMixin:OnLoad()
 	end
 
 	-- Auto emisarry when clicking on one of the buttons
-	local bountyBoard = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]];
-	self.bountyBoard = bountyBoard;
-	
-	hooksecurefunc(bountyBoard, "OnTabClick", function(self, tab) 
+	local bountyBoard = WQT_Utils:GetOldBountyBoard();
+	hooksecurefunc(bountyBoard, "OnTabClick", function(self, tab)
 		if (not WQT.settings.general.autoEmisarry or tab.isEmpty or WQT.settings.general.emissaryOnly) then return; end
 		WQT_WorldQuestFrame.autoEmisarryId = bountyBoard.bounties[tab.bountyIndex];
 		WQT_ListContainer:UpdateQuestList();
 	end)
-	
+
 	hooksecurefunc(bountyBoard, "RefreshSelectedBounty", function() 
 		if (WQT.settings.general.bountyCounter) then
 			self:UpdateBountyCounters();
@@ -1757,6 +1755,14 @@ function WQT_CoreMixin:OnLoad()
 		if (not WQT.settings.general.bountyCounter) then return end
 		local point, relativeTo, relativePoint, x, y = tab:GetPoint(1);
 		tab:SetPoint(point, relativeTo, relativePoint, x, y + 2);
+	end)
+
+	-- Auto emisarry when selecting a bounty
+	local activityBoard = WQT_Utils:GetNewBountyBoard();
+	hooksecurefunc(activityBoard, "SetNextMapForSelectedBounty", function()
+		if (not WQT.settings.general.autoEmisarry or WQT.settings.general.emissaryOnly or not activityBoard.selectedBounty) then return; end
+		WQT_WorldQuestFrame.autoEmisarryId = activityBoard.selectedBounty.factionID;
+		WQT_ListContainer:UpdateQuestList();
 	end)
 	
 	hooksecurefunc("TaskPOI_OnLeave", function(self)
@@ -1802,14 +1808,16 @@ function WQT_CoreMixin:UpdateBountyCounters()
 		self.bountyInfo = {};
 	end
 	
-	for tab, v in self.bountyBoard.bountyTabPool:EnumerateActive() do
+	local bountyBoard = WQT_Utils:GetOldBountyBoard();
+	for tab, v in bountyBoard.bountyTabPool:EnumerateActive() do
 		self:AddBountyCountersToTab(tab);
 	end
 end
 
 function WQT_CoreMixin:RepositionBountyTabs()
-	for tab, v in self.bountyBoard.bountyTabPool:EnumerateActive() do
-		self.bountyBoard:AnchorBountyTab(tab);
+	local bountyBoard = WQT_Utils:GetOldBountyBoard();
+	for tab, v in bountyBoard.bountyTabPool:EnumerateActive() do
+		bountyBoard:AnchorBountyTab(tab);
 	end
 end
 
@@ -1822,10 +1830,11 @@ function WQT_CoreMixin:AddBountyCountersToTab(tab)
 	end
 	tab.WQT_Reward:Reset();
 	
-	local bountyData = self.bountyBoard.bounties[tab.bountyIndex];
+	local bountyBoard = WQT_Utils:GetOldBountyBoard();
+	local bountyData = bountyBoard.bounties[tab.bountyIndex];
 	
 	if (bountyData) then
-		local progress, goal = self.bountyBoard:CalculateBountySubObjectives(bountyData);
+		local progress, goal = bountyBoard:CalculateBountySubObjectives(bountyData);
 		
 		if (progress == goal) then return end;
 		

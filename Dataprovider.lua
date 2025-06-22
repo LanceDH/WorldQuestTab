@@ -21,13 +21,6 @@ local function UpdateAzerothZones(newLevel)
 	local expLevel = GetAccountExpansionLevel();
 	local worldTable = _V["WQT_ZONE_MAPCOORDS"][947]
 	wipe(worldTable);
-	
-	-- world map continents depending on expansion level
-	worldTable[113] = {["x"] = 0.49, ["y"] = 0.13} -- Northrend
-	worldTable[424] = {["x"] = 0.46, ["y"] = 0.92} -- Pandaria
-	worldTable[12] = {["x"] = 0.19, ["y"] = 0.5} -- Kalimdor
-	worldTable[13] = {["x"] = 0.88, ["y"] = 0.56} -- Eastern Kingdom
-	
 	-- Always take the highest expansion
 	if (expLevel >= LE_EXPANSION_WAR_WITHIN and newLevel >= 70) then
 		worldTable[2274] = {["x"] = 0.28, ["y"] = 0.84} -- Khaz Algar
@@ -96,16 +89,6 @@ local function ScanTooltipRewardForPattern(questID, pattern)
 
 	return result;
 end
-
-local function ZonesByExpansionSort(a, b)
-	local expA = _V["WQT_ZONE_EXPANSIONS"][a];
-	local expB = _V["WQT_ZONE_EXPANSIONS"][b];
-	if (not expA or not expB or expA == expB) then
-		return b > a;
-	end
-	return expB > expA;
-end
-
 
 local function SortQuestList(a, b, sortID)
 	-- Invalid goes to the bottom
@@ -183,8 +166,6 @@ function QuestInfoMixin:Reset()
 end
 
 function QuestInfoMixin:Init(questID, qInfo)
-	self.apiInfo = qInfo;
-
 	self.questId = questID;
 	self.questID = questID;
 	self.mapID = qInfo and qInfo.mapID;
@@ -247,7 +228,6 @@ function QuestInfoMixin:OnCreate()
 			["typeBits"] = WQT_REWARDTYPE.missing;
 		};
 	self.rewardList = {};
-	self.mapInfo = {};
 	self.hasRewardData = false;
 end
 
@@ -478,12 +458,20 @@ function QuestInfoMixin:GetRewardCanUpgrade()
 end
 
 function QuestInfoMixin:IsCriteria(forceSingle)
-	local bountyBoard = WorldMapFrame.overlayFrames[_V["WQT_BOUNDYBOARD_OVERLAYID"]];
-	if (not bountyBoard) then return false; end
+	local bountyBoard = WQT_Utils:GetOldBountyBoard();
+	local activityBoard = WQT_Utils:GetNewBountyBoard();
+	if (not bountyBoard or not activityBoard) then return false; end
 	
 	-- Try only selected
 	if (forceSingle) then
-		return bountyBoard:IsWorldQuestCriteriaForSelectedBounty(self.questId);
+		if (bountyBoard:IsWorldQuestCriteriaForSelectedBounty(self.questId)) then
+			return true;
+		end
+		if (activityBoard and activityBoard.selectedBounty) then
+			return self.factionID == activityBoard.selectedBounty.factionID;
+		end
+
+		return false;
 	end
 	
 	-- Try any of them
@@ -494,7 +482,7 @@ function QuestInfoMixin:IsCriteria(forceSingle)
 			end
 		end
 	end
-	
+
 	return false;
 end
 

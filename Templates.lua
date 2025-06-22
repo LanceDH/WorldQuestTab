@@ -1095,6 +1095,34 @@ function WQT_Utils:QuestIsVIQ(questInfo)
 	return false;
 end
 
+function WQT_Utils:EnsureBountyBoards()
+	if (not self.bountyBoards) then
+		self.bountyBoards = {};
+		self.oldBountyBoard = nil;
+		self.newBountyBoard = nil;
+		for k, overlayFrame in ipairs(WorldMapFrame.overlayFrames) do
+			if (overlayFrame.SetNextMapForSelectedBounty) then
+				tinsert(self.bountyBoards, overlayFrame);
+				if (overlayFrame.IsWorldQuestCriteriaForSelectedBounty) then
+					self.oldBountyBoard = overlayFrame;
+				else
+					self.newBountyBoard = overlayFrame;
+				end
+			end
+		end
+	end
+end
+
+function WQT_Utils:GetOldBountyBoard()
+	self:EnsureBountyBoards();
+	return self.oldBountyBoard;
+end
+
+function WQT_Utils:GetNewBountyBoard()
+	self:EnsureBountyBoards();
+	return self.newBountyBoard;
+end
+
 --------------------------
 -- Colors
 --------------------------

@@ -127,14 +127,14 @@
 				</Anchors>
 				<Layers>
 					<Layer level="ARTWORK">
-						<Texture parentKey="Icon" alpha="0.65" alphamode="ADD">
+						<Texture parentKey="Icon" alpha="0.65" >
 							<Anchors>
 								<Anchor point="TOPLEFT" x="0" y="0"/>
 								<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
 							</Anchors>
-							<TexCoords left="0.05" right="0.95" top="0.05" bottom="0.95"/>
+							<TexCoords left="0.02" right="0.98" top="0.05" bottom="0.98"/>
 						</Texture>
-						<MaskTexture parentKey="CircleMask" file="interface\masks\circlemaskscalable" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE">
+						<MaskTexture parentKey="IconMask" file="Interface\Addons\WorldQuestTab\Images\FactionMask" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE">
 							<Anchors>
 								<Anchor point="TOPLEFT" x="1" y="-1" relativeKey="$parent.Icon"/>
 								<Anchor point="BOTTOMRIGHT" x="-1" y="1" relativeKey="$parent.Icon"/>

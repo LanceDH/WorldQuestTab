@@ -29,8 +29,8 @@ WQT_REWARDTYPE = FlagsUtil.MakeFlags(
 	"artifact",		--32
 	"spell",		--64
 	"item",			--128
-	"gold",			--256
-	"currency",		--512
+	"currency",		--256
+	"gold",			--512
 	"honor",		--1024
 	"reputation",	--2048
 	"xp",			--4096
@@ -359,8 +359,6 @@ _V["WQT_GREEN_FONT_COLOR"] = CreateColor(0, 0.75, 0);
 _V["WQT_BLUE_FONT_COLOR"] = CreateColor(0.2, 0.60, 1);
 _V["WQT_PURPLE_FONT_COLOR"] = CreateColor(0.73, 0.33, 0.82);
 
-
-_V["WQT_BOUNDYBOARD_OVERLAYID"] = 4;
 _V["WQT_TYPE_BONUSOBJECTIVE"] = 0;
 _V["WQT_LISTITTEM_HEIGHT"] = 32;
 
