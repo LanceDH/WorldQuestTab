@@ -1540,10 +1540,14 @@ end
 _V["PATCH_NOTES"] = {
 		{["version"] = "11.1.01",
 			["intro"] = {
-				"Shoutout to the people who tried their best to keep things running for the past 4 years. I'd name you all but I only now realize how many of you there are.<br/>If you created a fork, helped those forks, or even guided other people to said forks; Thank you."
+				[[Shoutout to the people who tried their best to keep things running for the past 4 years. I'd name you all but I only now realize how many of you there are.
+				<br/>If you created a fork, helped those forks, or even guided other people to said forks; Thank you.
+				<br/>
+				<br/>Please note that maintaining this add-on is low priority. Which means updates might be slow and unreliable.]]
 			},
 			["changes"] = {
-				"Compatibility with patch 11.1.5",
+				"Compatibility with patch 11.1.7",
+				"Visual update to match the new UI",
 				"A bunch of refactoring of which you hopefully only notice positive things",
 				"Things that didn't survive:<br/>- Quest counter on the normal quest tab<br/>- Anything LFG related<br/>- Support for WQT Utilities",
 			},

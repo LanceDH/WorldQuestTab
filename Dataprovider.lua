@@ -182,7 +182,7 @@ function QuestInfoMixin:Reset()
 	self.tagInfo = nil;
 end
 
-function QuestInfoMixin:Init(questID, qInfo, alwaysHide, posX, posY)
+function QuestInfoMixin:Init(questID, qInfo)
 	self.apiInfo = qInfo;
 
 	self.questId = questID;
@@ -191,8 +191,7 @@ function QuestInfoMixin:Init(questID, qInfo, alwaysHide, posX, posY)
 	self:UpdateTitleAndFaction();
 	self.isDaily = qInfo and qInfo.isDaily;
 	self.isCombatAllyQuest = qInfo and qInfo.isCombatAllyQuest;
-	
-	self:SetMapPos(posX, posY);
+
 	self.tagInfo = C_QuestLog.GetQuestTagInfo(questID);
 	
 	self.classification = C_QuestInfoSystem.GetQuestClassification(questID);
@@ -250,11 +249,6 @@ function QuestInfoMixin:OnCreate()
 	self.rewardList = {};
 	self.mapInfo = {};
 	self.hasRewardData = false;
-end
-
-function QuestInfoMixin:SetMapPos(posX, posY)
-	self.mapInfo.mapX = posX;
-	self.mapInfo.mapY = posY;
 end
 
 
@@ -694,22 +688,8 @@ function WQT_DataProvider:OnUpdate(elapsed)
 			for questID, apiInfo in pairs(questsToAdd) do
 				added = added + 1;
 				local questInfo = self.pool:Acquire();
-				local alwaysHide = not apiInfo.tagInfo;-- and not MapUtil.ShouldShowTask(apiInfo.mapID, apiInfo);
-				local posX, posY = WQT_Utils:GetQuestMapLocation(apiInfo.questID, apiInfo.mapID);
-				questInfo:Init(apiInfo.questID, apiInfo, alwaysHide, posX, posY);
+				questInfo:Init(apiInfo.questID, apiInfo);
 			end
-
-			-- local timeSinceStart = GetTimePreciseSec() - self.zoneLoading.startTimestamp;
-
-			-- local count = 0;
-			-- for info in self.pool:EnumerateActive() do
-			-- 	if (not info.hasRewardData) then
-			-- 		print("requesting reward data");
-			-- 		C_TaskQuest.RequestPreloadRewardData(info.questID);
-			-- 		count = count + 1;
-			-- 	end
-			-- end
-			-- print(count);
 
 			WQT:debugPrint(string.format("Done: %s quests (-%s +%s ~%s)", acceptedCount, removed, added, updated));
 

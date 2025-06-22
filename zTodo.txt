@@ -1,9 +1,6 @@
 If you're reading this; temper your hopes and expectations
 
 Todo
-- Something buggy about the tab icon when you click it when it's the active tab already
-- Click tab to go out of setting/what's new
-
 - Check if things in Data.lua can be improved
 - Look at old dropdown features
     - FilterButton indicator for official filtering
@@ -14,8 +11,6 @@ Todo
 - Figure out what else needs to be on this list
 - Figure out War Within data and testing, preferably without buying the expansion :|
 - Determine feasibility of continued support
-
-- Maybe change quest design with faction as sort of fade on the left
 
 Done
 - General compatibility with 11.1
@@ -58,3 +53,5 @@ Done
 - Redesigned quest list 
 - Fix quest preview in settings
 - Text highlighting on quest hover
+- Something buggy about the tab icon when you click it when it's the active tab already
+- Click tab to go out of setting/what's new

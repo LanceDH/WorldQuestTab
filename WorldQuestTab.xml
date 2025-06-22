@@ -24,7 +24,7 @@
 		<Size x="32" y="32" />
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="QualityColor" file="Interface\Addons\WorldQuestTab\Images\QualityCornerMask" >
+				<Texture parentKey="QualityColor" file="Interface\Addons\WorldQuestTab\Images\QualityCornerMask">
 					<Anchors>
 						<Anchor point="TOPRIGHT" x="1" y="1"/>
 						<Anchor point="BOTTOMLEFT"/>
@@ -32,7 +32,7 @@
 					<TexCoords left="1.0" right="0.0" top="1.0" bottom="0.0"/>
 				</Texture>
 
-				<Texture parentKey="Icon" file="Interface\ICONS\INV_Misc_QuestionMark" alpha="0.9">
+				<Texture parentKey="Icon" file="Interface\ICONS\INV_Misc_QuestionMark" alpha="0.95">
 					<Anchors>
 						<Anchor point="TOPLEFT"/>
 						<Anchor point="BOTTOMRIGHT"/>
@@ -127,7 +127,7 @@
 				</Anchors>
 				<Layers>
 					<Layer level="ARTWORK">
-						<Texture parentKey="Icon" alpha="0.55" alphamode="ADD">
+						<Texture parentKey="Icon" alpha="0.65" alphamode="ADD">
 							<Anchors>
 								<Anchor point="TOPLEFT" x="0" y="0"/>
 								<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
@@ -570,7 +570,7 @@
 		</Scripts>
 	</Button>
 	
-	<Frame name="WQT_QuestMapTab" parent="QuestMapFrame" inherits="QuestLogTabButtonTemplate" id="4">
+	<Frame name="WQT_QuestMapTab" parent="QuestMapFrame" inherits="QuestLogTabButtonTemplate">
 		<KeyValues>
 			<KeyValue key="displayMode" value="QuestLogDisplayMode.WQT" type="global" />
 			<KeyValue key="activeAtlas" value="Worldquest-icon" type="string" />
@@ -582,6 +582,7 @@
 		</Anchors>
 		<Scripts>
 			<OnMouseUp>
+				QuestLogTabButtonMixin.OnMouseUp(self, button);
 				WQT_WorldQuestFrame:SelectTab(self, button);
 			</OnMouseUp>
 		</Scripts>

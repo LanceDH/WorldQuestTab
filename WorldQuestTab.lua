@@ -1994,10 +1994,8 @@ function WQT_CoreMixin:ChangePanel(panelID)
 end
 
 function WQT_CoreMixin:SelectTab(tab)
-	local id = tab and tab:GetID() or 0;
-	if(id == QuestLogDisplayMode.WQT) then
-		QuestMapFrame:SetDisplayMode(QuestLogDisplayMode.WQT);
-	end
+	QuestMapFrame:SetDisplayMode(QuestLogDisplayMode.WQT);
+	self:ChangePanel(WQT_PanelID.Quests);
 end
 
 function WQT_CoreMixin:ChangeAnchorLocation(anchor)
