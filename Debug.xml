@@ -281,6 +281,17 @@
 					<Anchor point="BOTTOMRIGHT"/>
 				</Anchors>
 			</Frame>
+			<Button name="WQT_DebugButton" inherits="UIMenuButtonStretchTemplate" enableMouse="true" hidden="false">
+				<Size x="30" y="20" />
+				<Anchors>
+					<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="0" y="0" />
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						self:GetParent():DoDebugThing();
+					</OnClick>
+				</Scripts>
+			</Button>
 		</Frames>
 
 		<Scripts>
@@ -289,15 +300,5 @@
 		</Scripts>
 	</Frame>
 
-	<Button name="WQT_DebugButton" inherits="UIMenuButtonStretchTemplate" parent="WorldMapFrame" enableMouse="true" hidden="true">
-		<Size x="30" y="30" />
-		<Anchors>
-			<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="10" y="0"/>
-		</Anchors>
-		<Scripts>
-			<OnClick>
-				WQT_DebugFrame:DoDebugThing();
-			</OnClick>
-		</Scripts>
-	</Button>
+	
  </Ui>

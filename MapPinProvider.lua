@@ -20,7 +20,7 @@ local ICON_ANGLE_START = 270;
 local ICON_ANGLE_DISTANCE = 50;
 local ICON_CENTER_DISTANCE = 13;
 local ICON_MAX_AMOUNT = floor(360/ICON_ANGLE_DISTANCE);
-local PIN_FRAME_LEVEL_BASE = 2200;
+local PIN_FRAME_LEVEL_BASE = 2300;
 local PIN_FRAME_LEVEL_FOCUS = 3000;
 	
 ------------------------------------
@@ -575,7 +575,7 @@ function WQT_PinMixin:UpdateVisuals()
 	local settingCenterType = WQT_Utils:GetSetting("pin", "centerType");
 	local _, _, _, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
 	local tagInfo = questInfo:GetTagInfo();
-	local questQuality = tagInfo and tagInfo.quality;
+	local questQuality = questInfo:GetTagInfoQuality();
 	local questType = tagInfo and tagInfo.worldQuestType;
 	local isDisliked = questInfo:IsDisliked();
 	local typeAtlas, typeAtlasWidth, typeAtlasHeight =  WQT_Utils:GetCachedTypeIconData(questInfo);

@@ -334,7 +334,7 @@ function WQT_Utils:GetCachedTypeIconData(questInfo, pinVersion)
 			return "Callings-Available", 16, 21, true;
 			--return "quest-dailycampaign-available", 17, 17, true;
 		end
-	elseif (questInfo.isDaily or questInfo.isAllyQuest) then
+	elseif (questInfo.isDaily or questInfo.isCombatAllyQuest) then
 		return "QuestDaily", 17, 17, true;
 	elseif (questInfo.isQuestStart) then
 		return "QuestNormal", 17, 17, true;
@@ -360,7 +360,7 @@ function WQT_Utils:GetCachedTypeIconData(questInfo, pinVersion)
 		cachedData.texture = atlasTexture;
 		cachedData.x = sizeX;
 		cachedData.y = sizeY;
-
+		
 		cachedTypeData[tagID] = cachedData;
 	end
 
@@ -643,7 +643,7 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style)
 	if (not style.hideType) then
 		if (questInfo:IsQuestOfType(WQT_QUESTTYPE.calling)) then
 			GameTooltip_AddNormalLine(GameTooltip, COVENANT_CALLINGS_AVAILABLE);
-		elseif (questInfo.isAllyQuest) then
+		elseif (questInfo.isCombatAllyQuest) then
 			GameTooltip_AddColoredLine(GameTooltip, AVAILABLE_FOLLOWER_QUEST, HIGHLIGHT_FONT_COLOR, true);
 		elseif (tagInfo and tagInfo.worldQuestType) then
 			QuestUtils_AddQuestTypeToTooltip(GameTooltip, questInfo.questId, NORMAL_FONT_COLOR);
@@ -923,8 +923,7 @@ local function QuestContextSetup(frame, rootDescription, questInfo)
 	rootDescription:SetTag("WQT_QUEST_CONTEXTMENU");
 
 	-- Title
-	local title = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questID);
-	rootDescription:CreateTitle(title);
+	rootDescription:CreateTitle(questInfo.title);
 
 	-- Tracking here
 	if (questInfo.tagInfo and questInfo.tagInfo.worldQuestType) then

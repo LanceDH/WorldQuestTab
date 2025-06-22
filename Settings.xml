@@ -111,7 +111,7 @@
 		<Frames>
 			<Button parentKey="Preview" inherits="WQT_QuestTemplate" enableMouse="false" hidden="false">
 				<Anchors>
-					<Anchor point="LEFT" x="7"/>
+					<Anchor point="LEFT" x="0"/>
 				</Anchors>
 				<!-- Disable all functionality. It's only a preview -->
 				<Scripts>

@@ -9,7 +9,7 @@ local WQT_Utils = addon.WQT_Utils;
 -- DEBUGGING
 ------------------------
 function WQT:debugPrint(...)
-	if (addon.debug) then 
+	if (addon.debugPrint) then 
 		print("WQT", ...);
 	end
 end
@@ -67,8 +67,6 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		color = GRAY_FONT_COLOR;
 		
 		AddIndentedDoubleLine(tooltip, "Through functions:", "", 0, color);
-		local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
-		AddIndentedDoubleLine(tooltip, "title", title, 1, color);
 		
 		local classifictaion = C_QuestInfoSystem.GetQuestClassification(questInfo.questId)
 		AddIndentedDoubleLine(tooltip, "classifictaion", classifictaion, 1, color);
@@ -81,9 +79,8 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		AddIndentedDoubleLine(tooltip, "timeStringShort", timeStringShort, 2, color);
 		AddIndentedDoubleLine(tooltip, "isExpired", questInfo:IsExpired(), 2, color);
 		-- Faction
-		local factionInfo = WQT_Utils:GetFactionDataInternal(factionId);
+		local factionInfo = WQT_Utils:GetFactionDataInternal(questInfo.factionID);
 		AddIndentedDoubleLine(tooltip, "faction", "", 1, color);
-		AddIndentedDoubleLine(tooltip, "factionId", factionId, 2, color);
 		AddIndentedDoubleLine(tooltip, "name", factionInfo.name, 2, color);
 		AddIndentedDoubleLine(tooltip, "playerFaction", factionInfo.playerFaction, 2, color);
 		AddIndentedDoubleLine(tooltip, "texture", factionInfo.texture, 2, color);
@@ -161,9 +158,8 @@ local function GetWorldQuestDump()
 	
 	local list = WQT_WorldQuestFrame.dataProvider:GetIterativeList();
 	for k, questInfo in ipairs(list) do
-		local title = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
 		local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questId)
-		output = FORMAT_WORLDQUEST:format(output, questInfo.questId, mapInfo.mapID, bts(questInfo.passedFilter), bts(questInfo.isValid), bts(questInfo.alwaysHide), bts(questInfo.isDaily), bts(questInfo.isAllyQuest), questInfo.time.seconds, questInfo.reward.typeBits);
+		output = FORMAT_WORLDQUEST:format(output, questInfo.questId, mapInfo.mapID, bts(questInfo.passedFilter), bts(questInfo.isValid), bts(questInfo.alwaysHide), bts(questInfo.isDaily), bts(questInfo.isCombatAllyQuest), questInfo.time.seconds, questInfo.reward.typeBits);
 	end
 	
 	return output;
@@ -276,8 +272,6 @@ function WQT_DebugFrameMixin:DumpDebug(input)
 end
 
 
-function WQT_DebugFrameMixin:DoDebugThing()
-end
 
 
 WQT_DevMixin = {};
@@ -308,4 +302,8 @@ function WQT_DevMixin:OnUpdate()
 	if (WorldMapFrame:IsShown()) then
 		self.worldMapMousePos:SetText(string.format("WorldMapMouse: %.2f %.2f", WorldMapFrame:GetNormalizedCursorPosition()));
 	end
+end
+
+function WQT_DevMixin:DoDebugThing()
+	
 end

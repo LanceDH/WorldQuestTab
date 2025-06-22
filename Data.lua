@@ -4,6 +4,7 @@ addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
 addon.externals = {};
 addon.variables = {};
 addon.debug = false;
+addon.debugPrint = false;
 addon.setupPhase = true;
 addon.WQT_Utils = {};
 local WQT_Utils = addon.WQT_Utils;
@@ -79,12 +80,17 @@ end
 -- /run print(WorldMapFrame.mapID)
 -- /run print(FlightMapFrame.mapID)
 
+local WQT_IsLE_OF_DORN = {
+	[2248]	= {["x"] = 0.00, ["y"] = 0.00}, -- Isle of Dorn
+	[2369]	= {["x"] = 0.18, ["y"] = 0.18}  -- Siren Isle
+}
 local WQT_WARWITHIN = {
 	[2248]	= {["x"] = 0.73, ["y"] = 0.23}, -- Isle of Dorn
 	[2214]	= {["x"] = 0.57, ["y"] = 0.58}, -- Ringing Deeps
 	[2215]	= {["x"] = 0.35, ["y"] = 0.47}, -- Hallowfall
 	[2255]	= {["x"] = 0.46, ["y"] = 0.75}, -- Azj-Kahet
-	[2346]	= {["x"] = 0.82, ["y"] = 0.74} -- Undermine
+	[2346]	= {["x"] = 0.82, ["y"] = 0.74}, -- Undermine
+	[2369]	= {["x"] = 0.00, ["y"] = 0.00}  -- Siren Isle
 }
 local WQT_ZARALEK = {
 	[2133]	= {["x"] = 0.00, ["y"] = 0.00}, -- Zaralek Cavern
@@ -297,7 +303,8 @@ local expZones =
 		WQT_ZARALEK,
 	},
 	[LE_EXPANSION_WAR_WITHIN] = {
-		WQT_WARWITHIN
+		WQT_WARWITHIN,
+		WQT_IsLE_OF_DORN
 	}
 }
 
@@ -337,8 +344,8 @@ _V["COLOR_IDS"] = {
 }
 
 _V["WQT_COLOR_NONE"] =  CreateColor(0.45, 0.45, .45) ;
-_V["WQT_COLOR_ARMOR"] =  CreateColor(0.85, 0.6, 1) ;
-_V["WQT_COLOR_WEAPON"] =  CreateColor(1, 0.40, 1) ;
+_V["WQT_COLOR_ARMOR"] =  CreateColor(0.95, 0.65, 1) ;
+_V["WQT_COLOR_WEAPON"] =  CreateColor(1, 0.45, 1) ;
 _V["WQT_COLOR_ARTIFACT"] = CreateColor(0, 0.75, 0);
 _V["WQT_COLOR_CURRENCY"] = CreateColor(0.6, 0.4, 0.1) ;
 _V["WQT_COLOR_GOLD"] = CreateColor(0.95, 0.8, 0) ;
@@ -346,7 +353,7 @@ _V["WQT_COLOR_HONOR"] = CreateColor(0.8, 0.26, 0);
 _V["WQT_COLOR_ITEM"] = CreateColor(0.85, 0.85, 0.85) ;
 _V["WQT_COLOR_MISSING"] = CreateColor(0.7, 0.1, 0.1);
 _V["WQT_COLOR_RELIC"] = CreateColor(0.3, 0.7, 1);
-_V["WQT_WHITE_FONT_COLOR"] = CreateColor(0.8, 0.8, 0.8);
+_V["WQT_WHITE_FONT_COLOR"] = CreateColor(0.9, 0.9, 0.9);
 _V["WQT_ORANGE_FONT_COLOR"] = CreateColor(1, 0.5, 0);
 _V["WQT_GREEN_FONT_COLOR"] = CreateColor(0, 0.75, 0);
 _V["WQT_BLUE_FONT_COLOR"] = CreateColor(0.2, 0.60, 1);
@@ -593,35 +600,35 @@ _V["SETTING_LIST"] = {
 	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ARMOR, ["defaultColor"] = _V["WQT_COLOR_ARMOR"], 
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextArmor", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = _L["REWARD_CONDUITS"], ["defaultColor"] = WHITE_FONT_COLOR, 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = _L["REWARD_CONDUITS"], ["defaultColor"] = _V["WQT_WHITE_FONT_COLOR"], 
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextConduit", ["getValueFunc"] = GetColorByID
 		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = RELICSLOT, ["defaultColor"] = WHITE_FONT_COLOR, 
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = RELICSLOT, ["defaultColor"] = _V["WQT_WHITE_FONT_COLOR"], 
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextRelic", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ITEMS, ["defaultColor"] = _V["WQT_WHITE_FONT_COLOR"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextItem", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = POWER_TYPE_EXPERIENCE, ["defaultColor"] = _V["WQT_WHITE_FONT_COLOR"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextXp", ["getValueFunc"] = GetColorByID
+		},	
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["defaultColor"] = _V["WQT_WHITE_FONT_COLOR"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextGold", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = CURRENCY, ["defaultColor"] = _V["WQT_WHITE_FONT_COLOR"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextCurrency", ["getValueFunc"] = GetColorByID
+		},
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = REPUTATION, ["defaultColor"] = _V["WQT_WHITE_FONT_COLOR"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextReputation", ["getValueFunc"] = GetColorByID
+		},	
+	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = HONOR, ["defaultColor"] = _V["WQT_WHITE_FONT_COLOR"], 
+			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextHonor", ["getValueFunc"] = GetColorByID
 		},
 	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = WORLD_QUEST_REWARD_FILTERS_ANIMA, ["defaultColor"] = GREEN_FONT_COLOR, 
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextAnima", ["getValueFunc"] = GetColorByID
 		},
 	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ITEM_QUALITY6_DESC, ["defaultColor"] = GREEN_FONT_COLOR, 
 			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextArtifact", ["getValueFunc"] = GetColorByID
-		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = ITEMS, ["defaultColor"] = WHITE_FONT_COLOR, 
-			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextItem", ["getValueFunc"] = GetColorByID
-		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = POWER_TYPE_EXPERIENCE, ["defaultColor"] = WHITE_FONT_COLOR, 
-			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextXp", ["getValueFunc"] = GetColorByID
-		},	
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = WORLD_QUEST_REWARD_FILTERS_GOLD, ["defaultColor"] = WHITE_FONT_COLOR, 
-			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextGold", ["getValueFunc"] = GetColorByID
-		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = CURRENCY, ["defaultColor"] = WHITE_FONT_COLOR, 
-			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextCurrency", ["getValueFunc"] = GetColorByID
-		},
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = REPUTATION, ["defaultColor"] = WHITE_FONT_COLOR, 
-			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextReputation", ["getValueFunc"] = GetColorByID
-		},	
-	{["template"] = "WQT_SettingColorTemplate", ["categoryID"] = "COLORS_REWARD_AMOUNT", ["label"] = HONOR, ["defaultColor"] = WHITE_FONT_COLOR, 
-			["valueChangedFunc"] = UpdateColorID, ["colorID"] = "rewardTextHonor", ["getValueFunc"] = GetColorByID
 		},
 		
 	{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "PROFILES", ["label"] = _L["CURRENT_PROFILE"], ["tooltip"] = _L["CURRENT_PROFILE_TT"], ["options"] = function() return WQT_Profiles:GetProfiles() end
@@ -772,7 +779,7 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.showZone end
 			}
-	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["REWARD_NUM_DISPLAY"], ["tooltip"] = _L["REWARD_NUM_DISPLAY_TT"], ["min"] = 0, ["max"] = 3, ["valueStep"] = 1
+	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["REWARD_NUM_DISPLAY"], ["tooltip"] = _L["REWARD_NUM_DISPLAY_TT"], ["min"] = 0, ["max"] = 4, ["valueStep"] = 1
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.list.rewardNumDisplay = value;
 				WQT_ListContainer:DisplayQuestList();
@@ -1019,13 +1026,13 @@ _V["FILTER_TYPE_OLD_CONTENT"] = {
 
 _V["WQT_SORT_OPTIONS"] = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD, [7] = QUALITY}
 _V["SORT_OPTION_ORDER"] = {
-	[1] = {"seconds", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "title"},
-	[2] = {"faction", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"},
-	[3] = {"criteria", "questType", "questRarity", "elite", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"},
-	[4] = {"zone", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"},
-	[5] = {"title", "rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds"},
-	[6] = {"rewardType", "rewardQuality", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"},
-	[7] = {"rewardQuality", "rewardType", "rewardAmount", "canUpgrade", "rewardId", "seconds", "title"},
+	[1] = {"seconds", "rewardType", "rewardQuality", "rewardAmount", "numRewards", "canUpgrade", "rewardId", "title"},
+	[2] = {"faction", "rewardType", "rewardQuality", "rewardAmount", "numRewards", "canUpgrade", "rewardId", "seconds", "title"},
+	[3] = {"criteria", "questType", "questRarity", "elite", "rewardType", "rewardQuality", "rewardAmount", "numRewards", "canUpgrade", "rewardId", "seconds", "title"},
+	[4] = {"zone", "rewardType", "rewardQuality", "rewardAmount", "numRewards", "canUpgrade", "rewardId", "seconds", "title"},
+	[5] = {"title", "rewardType", "rewardQuality", "rewardAmount", "numRewards", "canUpgrade", "rewardId", "seconds"},
+	[6] = {"rewardType", "rewardQuality", "rewardAmount", "numRewards", "canUpgrade", "rewardId", "seconds", "title"},
+	[7] = {"rewardQuality", "rewardType", "rewardAmount", "numRewards", "canUpgrade", "rewardId", "seconds", "title"},
 }
 _V["SORT_FUNCTIONS"] = {
 	["rewardType"] = function(a, b) 
@@ -1043,6 +1050,10 @@ _V["SORT_FUNCTIONS"] = {
 	,["rewardQuality"] = function(a, b) 
 			local aQuality = a:GetRewardQuality();
 			local bQuality = b:GetRewardQuality();
+			if (not aQuality or not bQuality) then
+				return aQuality and not bQuality;
+			end
+
 			if (aQuality and bQuality and aQuality ~= bQuality) then 
 				return aQuality > bQuality; 
 			end 
@@ -1094,21 +1105,15 @@ _V["SORT_FUNCTIONS"] = {
 			end 
 		end
 	,["faction"] = function(a, b) 
-			local _, factionIdA = C_TaskQuest.GetQuestInfoByQuestID(a.questId);
-			local _, factionIdB = C_TaskQuest.GetQuestInfoByQuestID(b.questId);
-			
-
-			if (factionIdA ~= factionIdB) then 
-				if(not factionIdA or not factionIdB) then
-					return factionIdB == nil;
+			if (a.factionID ~= b.factionID) then 
+				if(not a.factionID or not b.factionID) then
+					return b.factionID == nil;
 				end
 
-				local factionA = WQT_Utils:GetFactionDataInternal(factionIdA);
-				local factionB = WQT_Utils:GetFactionDataInternal(factionIdB);
+				local factionA = WQT_Utils:GetFactionDataInternal(a.factionID);
+				local factionB = WQT_Utils:GetFactionDataInternal(b.factionID);
 				return factionA.name < factionB.name; 
-			end 
-
-			
+			end
 		end
 
 	,["questType"] = function(a, b) 
@@ -1136,10 +1141,8 @@ _V["SORT_FUNCTIONS"] = {
 			end 
 		end
 	,["title"] = function(a, b)
-			local titleA = C_TaskQuest.GetQuestInfoByQuestID(a.questId);
-			local titleB = C_TaskQuest.GetQuestInfoByQuestID(b.questId);
-			if (titleA ~= titleB) then 
-				return titleA < titleB;
+			if (a.title ~= b.title) then 
+				return a.title < b.title;
 			end 
 		end
 	,["elite"] = function(a, b) 
@@ -1168,6 +1171,13 @@ _V["SORT_FUNCTIONS"] = {
 				if (a.isBonusQuest ~= b.isBonusQuest) then
 					return b.isBonusQuest;
 				end
+			end
+		end
+	,["numRewards"] = function(a, b) 
+			local aNumRewards = #a.rewardList;
+			local bNumRewards = #b.rewardList;
+			if (aNumRewards ~= bNumRewards) then
+				return aNumRewards > bNumRewards;
 			end
 		end
 }
@@ -1274,7 +1284,9 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 		[2133]	= WQT_ZARALEK,
 
 		[2274]	= WQT_WARWITHIN,
-		[2276]	= WQT_WARWITHIN		-- Flightmap
+		[2276]	= WQT_WARWITHIN,	-- Flightmap
+		[2248]	= WQT_IsLE_OF_DORN
+		
 	}
 
 _V["WQT_NO_FACTION_DATA"] = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L["NO_FACTION"] } -- No faction
@@ -1290,31 +1302,32 @@ _V["WQT_FACTION_DATA"] = {
 	,[1731] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 1048727 } -- Dreanor Council of Exarchs
 	,[1681] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 1042727 } -- Dreanor Vol'jin's Spear
 	,[1682] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 1042294 } -- Dreanor Wrynn's Vanguard
+	-- Legion
+	,[1090] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394955 } -- Kirin Tor
+	,[1828] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394954 } -- Highmountain Tribes
+	,[1859] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394956 } -- Nightfallen
+	,[1883] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394953 } -- Dreamweavers
+	,[1894] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394958 } -- Wardens
+	,[1900] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394952 } -- Court of Farnodis
 
-	,[1090] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1450997 } -- Kirin Tor
-	,[1828] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1450996 } -- Highmountain Tribes
-	,[1859] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1450998 } -- Nightfallen
-	,[1883] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1450995 } -- Dreamweavers
-	,[1894] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1451000 } -- Wardens
-	,[1900] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1450994 } -- Court of Farnodis
-	,[1948] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1450999 } -- Valarjar
-	,[2045] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1708507 } -- Legionfall
-	,[2165] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1708506 } -- Army of the Light
-	,[2170] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1708505 } -- Argussian Reach
-
-	,[2103] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058217 ,["playerFaction"] = "Horde" } -- Zandalari Empire
-	,[2156] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058211, ["playerFaction"] = "Horde" } -- Talanji's Expedition
-	,[2157] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058207, ["playerFaction"] = "Horde" } -- The Honorbound
-	,[2158] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058213, ["playerFaction"] = "Horde" } -- Voldunai
-	,[2159] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058204, ["playerFaction"] = "Alliance" } -- 7th Legion
-	,[2160] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058209, ["playerFaction"] = "Alliance" } -- Proudmoore Admirality
-	,[2161] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058208, ["playerFaction"] = "Alliance" } -- Order of Embers
-	,[2162] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058210, ["playerFaction"] = "Alliance" } -- Storm's Wake
-	,[2163] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058212 } -- Tortollan Seekers
-	,[2164] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2058205 } -- Champions of Azeroth
+	,[1948] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394957 } -- Valarjar
+	,[2045] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1708498 } -- Legionfall
+	,[2165] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1708497 } -- Army of the Light
+	,[2170] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1708496 } -- Argussian Reach
+	-- BFA
+	,[2103] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2065579 ,["playerFaction"] = "Horde" } -- Zandalari Empire
+	,[2156] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2065575, ["playerFaction"] = "Horde" } -- Talanji's Expedition
+	,[2157] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2065571, ["playerFaction"] = "Horde" } -- The Honorbound
+	,[2158] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2032599, ["playerFaction"] = "Horde" } -- Voldunai
+	,[2159] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2065569, ["playerFaction"] = "Alliance" } -- 7th Legion
+	,[2160] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2065573, ["playerFaction"] = "Alliance" } -- Proudmoore Admirality
+	,[2161] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2032594, ["playerFaction"] = "Alliance" } -- Order of Embers
+	,[2162] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2032596, ["playerFaction"] = "Alliance" } -- Storm's Wake
+	,[2163] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2032598 } -- Tortollan Seekers
+	,[2164] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2032592 } -- Champions of Azeroth
 	,[2391] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2909316 } -- Rustbolt
-	,[2373] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2909044, ["playerFaction"] = "Horde" } -- Unshackled
-	,[2400] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2909043, ["playerFaction"] = "Alliance" } -- Waveblade Ankoan
+	,[2373] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2821782, ["playerFaction"] = "Horde" } -- Unshackled
+	,[2400] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2909045, ["playerFaction"] = "Alliance" } -- Waveblade Ankoan
 	,[2417] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 3196264 } -- Uldum Accord
 	,[2415] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 3196265 } -- Rajani
 	-- Shadowlands
@@ -1343,6 +1356,11 @@ _V["WQT_FACTION_DATA"] = {
 	,[2590] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6029029 } -- Council of Dornogal
 	,[2600] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5891370 } -- The Severed Threads
 	,[2653] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6351805 } -- The Cartels of Undermine
+	,[2673] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439627 } -- Bilgewater
+	,[2669] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439629 } -- Darkfuse
+	,[2675] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439628 } -- Blackwater
+	,[2677] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439630 } -- Steamwheedle
+	,[2671] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439631 } -- Venture Co.
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
@@ -1383,16 +1401,16 @@ _V["WQT_DEFAULTS"] = {
 			
 			["rewardTextWeapon"] = _V["WQT_COLOR_WEAPON"]:GenerateHexColor();
 			["rewardTextArmor"] = _V["WQT_COLOR_ARMOR"]:GenerateHexColor();
-			["rewardTextConduit"] = WHITE_FONT_COLOR:GenerateHexColor();
-			["rewardTextRelic"] = WHITE_FONT_COLOR:GenerateHexColor();
+			["rewardTextConduit"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
+			["rewardTextRelic"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
 			["rewardTextAnima"] = GREEN_FONT_COLOR:GenerateHexColor();
 			["rewardTextArtifact"] = GREEN_FONT_COLOR:GenerateHexColor();
-			["rewardTextItem"] = WHITE_FONT_COLOR:GenerateHexColor();
-			["rewardTextXp"] = WHITE_FONT_COLOR:GenerateHexColor();
-			["rewardTextGold"] = WHITE_FONT_COLOR:GenerateHexColor();
-			["rewardTextCurrency"] = WHITE_FONT_COLOR:GenerateHexColor();
-			["rewardTextHonor"] = WHITE_FONT_COLOR:GenerateHexColor();
-			["rewardTextReputation"] = WHITE_FONT_COLOR:GenerateHexColor();
+			["rewardTextItem"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
+			["rewardTextXp"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
+			["rewardTextGold"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
+			["rewardTextCurrency"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
+			["rewardTextHonor"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
+			["rewardTextReputation"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
 		};
 		
 		["general"] = {

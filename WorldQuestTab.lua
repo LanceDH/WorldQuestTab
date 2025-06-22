@@ -653,19 +653,18 @@ function WQT:PassesFactionFilter(questInfo, checkPrecise)
 	local flags = filter.flags
 	local factionNone = filter.misc.none;
 	local factionOther = filter.misc.other;
-	local _, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
-	local factionInfo = WQT_Utils:GetFactionDataInternal(factionId);
+	local factionInfo = WQT_Utils:GetFactionDataInternal(questInfo.factionID);
 
 	-- Specific filters (matches all)
 	if (checkPrecise) then
-		if (factionNone and factionId) then
+		if (factionNone and questInfo.factionID) then
 			return false;
 		end
-		if (factionOther and (not factionId or not factionInfo.unknown)) then
+		if (factionOther and (not questInfo.factionID or not factionInfo.unknown)) then
 			return false;
 		end 
 		for flagKey, value in pairs(flags) do
-			if (value and type(flagKey) == "number" and flagKey ~= factionId) then
+			if (value and type(flagKey) == "number" and flagKey ~= questInfo.factionID) then
 				return false;
 			end
 		end
@@ -673,11 +672,11 @@ function WQT:PassesFactionFilter(questInfo, checkPrecise)
 	end
 	
 	-- General filters (matchs at least one)
-	if (not factionId) then return factionNone; end
+	if (not questInfo.factionID) then return factionNone; end
 	
 	if (not factionInfo.unknown) then 
 		-- specific faction
-		return flags[factionId];
+		return flags[questInfo.factionID];
 	else
 		-- other faction
 		return factionOther;
@@ -888,8 +887,6 @@ end
 
 function WQT_RewardDisplayMixin:SetDesaturated(desaturate)
 	self.desaturate = desaturate;
-	
-	self:UpdateVisuals();
 end
 
 function WQT_RewardDisplayMixin:AddRewardByInfo(rewardInfo, warmodeBonus)
@@ -898,93 +895,102 @@ function WQT_RewardDisplayMixin:AddRewardByInfo(rewardInfo, warmodeBonus)
 end
 
 function WQT_RewardDisplayMixin:UpdateVisuals()
-	for i= 1, self.numDisplayed do
+	for i = 1, self.numDisplayed do
 		local rewardFrame = self.rewardFrames[i];
-		local r, g, b = C_Item.GetItemQualityColor(rewardFrame.quality);
-	
+
 		rewardFrame:Show();
 		rewardFrame.Icon:SetTexture(rewardFrame.texture);
 		rewardFrame.Icon:SetDesaturated(self.desaturate);
-		rewardFrame.IconBorder:SetDesaturated(self.desaturate);
-		if (self.desaturate) then
-			rewardFrame.IconBorder:SetVertexColor(1, 1, 1);
+
+		
+		if (rewardFrame.quality > 1) then
+			rewardFrame.QualityColor:Show()
+
+			local r, g, b = C_Item.GetItemQualityColor(rewardFrame.quality);
+			if (self.desaturate) then
+				rewardFrame.QualityColor:SetVertexColor(1, 1, 1);
+			else
+				rewardFrame.QualityColor:SetVertexColor(r, g, b);
+			end
 		else
-			rewardFrame.IconBorder:SetVertexColor(r, g, b);
+			rewardFrame.QualityColor:Hide()
 		end
 
-		-- Conduits have special borders
-		rewardFrame.ConduitCorners:Hide();
-		if (rewardFrame.rewardType == WQT_REWARDTYPE.conduit) then
-			rewardFrame.IconBorder:SetAtlas("conduiticonframe");
-			rewardFrame.ConduitCorners:Show();
-		elseif (rewardFrame.rewardType == WQT_REWARDTYPE.relic) then
-			rewardFrame.IconBorder:SetTexture("Interface/Artifacts/RelicIconFrame");
+		if (rewardFrame.isMinor) then
+			rewardFrame.Amount:Hide();
+			rewardFrame.AmountBG:Hide();
 		else
-			rewardFrame.IconBorder:SetTexture("Interface/Common/WhiteIconFrame");
-		end
-		if (self.desaturate) then
-			rewardFrame.ConduitCorners:SetDesaturated(self.desaturate);
-		end
-	
-		local amount = rewardFrame.amount;
-		rewardFrame.Amount:Hide();
-		if (amount > 1) then
-			rewardFrame.Amount:Show();
-			
-			if (rewardFrame.rewardType == WQT_REWARDTYPE.gold) then
-				amount = floor(amount / 10000);
+			local amount = rewardFrame.amount;
+			if (amount > 1) then
+				rewardFrame.Amount:Show();
+				rewardFrame.AmountBG:Show();
+
+				if (rewardFrame.rewardType == WQT_REWARDTYPE.gold) then
+					amount = floor(amount / 10000);
+				end
+
+				local amountDisplay = GetLocalizedAbbreviatedNumber(amount);
+
+				if (rewardFrame.rewardType == WQT_REWARDTYPE.relic) then
+					amountDisplay = "+" .. amountDisplay;
+				elseif (rewardFrame.canUpgrade) then
+					amountDisplay = amountDisplay .. "+";
+				end
+
+				rewardFrame.Amount:SetText(amountDisplay);
+
+				-- Color reward amount for certain types
+				local r, g, b = 1, 1, 1
+				if (not self.desaturate and WQT.settings.list.amountColors) then
+					r, g, b = rewardFrame.typeColor:GetRGB();
+				end
+
+				rewardFrame.Amount:SetVertexColor(r, g, b);
+			else
+				rewardFrame.Amount:Hide();
+				rewardFrame.AmountBG:Hide();
 			end
-			
-			local amountDisplay = GetLocalizedAbbreviatedNumber(amount);
-			
-			if (rewardFrame.rewardType == WQT_REWARDTYPE.relic) then
-				amountDisplay = "+"..amountDisplay;
-			elseif (rewardFrame.canUpgrade) then
-				amountDisplay = amountDisplay.."+";
-			end
-			rewardFrame.Amount:SetText(amountDisplay);
-	
-			-- Color reward amount for certain types
-			r, g, b = 1, 1, 1
-			if (not self.desaturate and WQT.settings.list.amountColors) then
-				r, g, b = rewardFrame.typeColor:GetRGB();
-			end
-	
-			rewardFrame.Amount:SetVertexColor(r, g, b);
 		end
 	end
 end
 
 function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, typeColor, canUpgrade, warmodeBonus)
-	local displayTypeSetting = WQT.settings.list.rewardDisplay;
-
 	-- Limit the amount of rewards shown
 	if (self.numDisplayed >= WQT.settings.list.rewardNumDisplay) then return; end
 	
 	self.numDisplayed = self.numDisplayed + 1;
 	local num = self.numDisplayed;
-	
+
 	amount = amount or 1;
 	-- Calculate warmode bonus
 	if (warmodeBonus) then
 		amount = WQT_Utils:CalculateWarmodeAmount(rewardType, amount);
 	end
 	
-	local rewardWidth = self.Reward1:GetWidth();
-
-	self:SetWidth(num * rewardWidth);
 	local rewardFrame = self.rewardFrames[num];
 	rewardFrame.rewardType = rewardType;
 	rewardFrame.texture = texture;
 	rewardFrame.quality = quality;
 	rewardFrame.amount = amount;
-	rewardFrame.typeColor = typeColor;
+	local _, textColor = WQT_Utils:GetRewardTypeColorIDs(rewardType);
+	rewardFrame.typeColor = textColor;
 	rewardFrame.canUpgrade = canUpgrade;
 	
 	self:UpdateVisuals();
-	
-	
-	
+
+	local minWidth = 0.01;
+
+	if (self.Reward1:IsShown()) then
+		minWidth = self.Reward1:GetWidth();
+		if (self.Reward3:IsShown()) then
+			minWidth = minWidth + self.Reward2:GetWidth();
+			if (self.Reward4:IsShown()) then
+				minWidth = minWidth + self.Reward4:GetWidth();
+			end
+		end
+	end
+
+	self:SetWidth(minWidth);
 end
 
 ------------------------------------------
@@ -1032,14 +1038,23 @@ function WQT_ListButtonMixin:OnUpdate(elapsed)
 end
 
 function WQT_ListButtonMixin:UpdateTime()
-	if ( not self.questInfo or not self:IsShown() or self.questInfo.seconds == 0) then return; end
-	local _, timeString, color, _, _, category = WQT_Utils:GetQuestTimeString(self.questInfo, WQT.settings.list.fullTime);
+	if ( not self.questInfo or not self:IsShown() or self.questInfo.seconds == 0) then
+		return false;
+	end
+
+	local seconds, timeString, color, _, _, category = WQT_Utils:GetQuestTimeString(self.questInfo, WQT.settings.list.fullTime);
+
+	if(seconds == 0) then
+		self.Time:SetText("");
+		return false;
+	end
 
 	if (self.questInfo:IsDisliked() or (not WQT.settings.list.colorTime and category ~= _V["TIME_REMAINING_CATEGORY"].critical)) then
 		color = _V["WQT_WHITE_FONT_COLOR"];
 	end
 	self.Time:SetTextColor(color.r, color.g, color.b, 1);
 	self.Time:SetText(timeString);
+	return true;
 end
 
 function WQT_ListButtonMixin:OnLeave()
@@ -1051,6 +1066,8 @@ function WQT_ListButtonMixin:OnLeave()
 	
 	local isDisliked = self.questInfo:IsDisliked();
 	self:SetAlpha(isDisliked and 0.75 or 1);
+
+	self.Title:SetFontObject(GameFontNormal);
 	
 	WQT:HideDebugTooltip()
 end
@@ -1061,9 +1078,10 @@ function WQT_ListButtonMixin:OnEnter()
 	self.Highlight:Show();
 	WQT_WorldQuestFrame.pinDataProvider:SetQuestIDPinged(self.questInfo.questId, true);
 	WQT_WorldQuestFrame:ShowWorldmapHighlight(questInfo.questId);
+
+	self.Title:SetFontObject(GameFontHighlight);
 	
 	self:ShowTooltip();
-	self:SetAlpha(1);
 end
 
 function WQT_ListButtonMixin:ShowTooltip()
@@ -1092,29 +1110,13 @@ function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 	typeFrame:SetWidth(typeFrame:GetHeight());
 	typeFrame.Texture:Show();
 	typeFrame.Elite:SetShown(isElite);
-
-	if (not tagInfo or not tagInfo.quality or tagInfo.quality == Enum.WorldQuestQuality.Common) then
-		typeFrame.Bg:SetTexture("Interface/WorldMap/UI-QuestPoi-NumberIcons");
-		typeFrame.Bg:SetTexCoord(0.875, 1, 0.375, 0.5);
-		typeFrame.Bg:SetSize(28, 28);
-	elseif (tagInfo.quality == Enum.WorldQuestQuality.Rare) then
-		typeFrame.Bg:SetAtlas("worldquest-questmarker-rare");
-		typeFrame.Bg:SetTexCoord(0, 1, 0, 1);
-		typeFrame.Bg:SetSize(18, 18);
-	elseif (tagInfo.quality == Enum.WorldQuestQuality.Epic) then
-		typeFrame.Bg:SetAtlas("worldquest-questmarker-epic");
-		typeFrame.Bg:SetTexCoord(0, 1, 0, 1);
-		typeFrame.Bg:SetSize(18, 18);
-	end
 	
 	-- Update Icon
-	local atlasTexture, sizeX, sizeY, hideBG = WQT_Utils:GetCachedTypeIconData(questInfo);
-
+	local atlasTexture, sizeX, sizeY = WQT_Utils:GetCachedTypeIconData(questInfo);
 	typeFrame.Texture:SetAtlas(atlasTexture);
 	typeFrame.Texture:SetSize(sizeX, sizeY);
-	typeFrame.Bg:SetAlpha(hideBG and 0 or 1);
 	typeFrame.CriteriaGlow:SetShown(isCriteria);
-	
+
 	if (isCriteria) then
 		if (isElite) then
 			typeFrame.CriteriaGlow:SetAtlas("worldquest-questmarker-dragon-glow", false);
@@ -1135,14 +1137,12 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	
 	self:Show();
 	self.questInfo = questInfo;
-	self.zoneId = C_TaskQuest.GetQuestZoneID(questInfo.questId);
 	self.questId = questInfo.questId;
 	local isDisliked = questInfo:IsDisliked();
 	self:SetAlpha(isDisliked and 0.75 or 1);
 	
 	-- Title
-	local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
-
+	local title = questInfo.title or "Title Misisng";
 	if (not questInfo.isValid) then
 		title = "|cFFFF0000(Invalid) " .. title;
 	elseif (not questInfo.passedFilter) then
@@ -1153,40 +1153,29 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	
 	self.Title:SetText(title);
 	
-	self.Title:ClearAllPoints()
-	self.Title:SetPoint("RIGHT", self.Rewards, "LEFT", -5, 0);
-	
-	if (WQT.settings.list.factionIcon) then
-		self.Title:SetPoint("BOTTOMLEFT", self.Faction, "RIGHT", 5, 1);
-	elseif (WQT.settings.list.typeIcon) then
-		self.Title:SetPoint("BOTTOMLEFT", self.Type, "RIGHT", 5, 1);
-	else
-		self.Title:SetPoint("BOTTOMLEFT", self, "LEFT", 10, 0);
-	end
-
-	-- Time and zone
-	local extraSpace = WQT.settings.list.factionIcon and 0 or 14;
-	extraSpace = extraSpace + (WQT.settings.list.typeIcon and 0 or 14);
-	local timeWidth = extraSpace + (WQT.settings.list.fullTime and 70 or 60);
-	local zoneWidth = extraSpace + (WQT.settings.list.fullTime and 80 or 90);
-	if (not shouldShowZone) then
-		timeWidth = timeWidth + zoneWidth;
-		zoneWidth = 0.1;
-	end
-	self.Time:SetWidth(timeWidth)
-	self.Extra:SetWidth(zoneWidth)
-	
-	self:UpdateTime();
+	local showedTime = self:UpdateTime();
 	
 	local zoneName = "";
 	if (shouldShowZone) then
-		local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questId);
+		local mapInfo = WQT_Utils:GetCachedMapInfo(questInfo.mapID)
 		if (mapInfo) then
 			zoneName = mapInfo.name;
+			if (showedTime) then
+				zoneName = " - " .. zoneName;
+			end
 		end
 	end
 	
 	self.Extra:SetText(zoneName);
+	
+	local tagQuality = questInfo:GetTagInfoQuality();
+
+	if(tagQuality > 0) then
+		self.QualityBg:Show();
+		self.QualityBg:SetVertexColor(WORLD_QUEST_QUALITY_COLORS[tagQuality].color:GetRGB());
+	else
+		self.QualityBg:Hide();
+	end
 	
 	-- Highlight
 	local showHighLight = self:IsMouseOver() or self.Faction:IsMouseOver() or (WQT_ListContainer.PoIHoverId and WQT_ListContainer.PoIHoverId == questInfo.questId)
@@ -1195,7 +1184,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	-- Faction icon
 	if (WQT.settings.list.factionIcon) then
 		self.Faction:Show();
-		local factionData = WQT_Utils:GetFactionDataInternal(factionId);
+		local factionData = WQT_Utils:GetFactionDataInternal(questInfo.factionID);
 
 		self.Faction.Icon:SetTexture(factionData.texture);
 		self.Faction:SetWidth(self.Faction:GetHeight());
@@ -1206,7 +1195,6 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	self.Faction.Icon:SetDesaturated(isDisliked);
 	
 	-- Type icon
-	
 	if (WQT.settings.list.typeIcon) then
 		self:UpdateQuestType(questInfo)
 	else
@@ -1231,15 +1219,12 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	else
 		self.TrackedBorder:Hide();
 	end
-	
-	--WQT_WorldQuestFrame:TriggerCallback("ListButtonUpdate", self)
 end
 
 function WQT_ListButtonMixin:FactionOnEnter(frame)
 	self.Highlight:Show();
-	local _, factionId = C_TaskQuest.GetQuestInfoByQuestID(self.questInfo.questId);
-	if (factionId) then
-		local factionInfo = WQT_Utils:GetFactionDataInternal(factionId)
+	if (self.questInfo.factionID) then
+		local factionInfo = WQT_Utils:GetFactionDataInternal(self.questInfo.factionID);
 		GameTooltip:SetOwner(frame, "ANCHOR_RIGHT", -5, -10);
 		GameTooltip:SetText(factionInfo.name, nil, nil, nil, nil, true);
 	end
@@ -1557,6 +1542,7 @@ function WQT_CoreMixin:ShowWorldmapHighlight(questId)
 	local areaId = WorldMapFrame.mapID;
 	
 	local coords = _V["WQT_ZONE_MAPCOORDS"][areaId] and _V["WQT_ZONE_MAPCOORDS"][areaId][zoneId];
+	
 	local mapInfo = WQT_Utils:GetCachedMapInfo(zoneId);
 	-- We can't use parentMapID for cases like Cape of Stranglethorn
 	local continentID = WQT_Utils:GetContinentForMap(zoneId);
@@ -1575,7 +1561,7 @@ function WQT_CoreMixin:ShowWorldmapHighlight(questId)
 	WQT_MapZoneHightlight:SetParent(WorldMapFrame.ScrollContainer.Child);
 	WQT_MapZoneHightlight:ClearAllPoints();
 	WQT_MapZoneHightlight:SetPoint("Center", WorldMapFrame.ScrollContainer.Child, 0.5, 0.5);
-	WQT_MapZoneHightlight:SetFrameLevel(5);
+	WQT_MapZoneHightlight:SetFrameLevel(2009);
 	local fileDataID, atlasID, texPercentageX, texPercentageY, textureX, textureY, scrollChildX, scrollChildY = C_Map.GetMapHighlightInfoAtPosition(areaId, coords.x, coords.y);
 	if (fileDataID and fileDataID > 0) or (atlasID) then
 		WQT_MapZoneHightlight.Texture:SetTexCoord(0, texPercentageX, 0, texPercentageY);
@@ -1589,15 +1575,16 @@ function WQT_CoreMixin:ShowWorldmapHighlight(questId)
 			WQT_MapZoneHightlight.Texture:SetPoint("CENTER", scrollChildX, scrollChildY);
 			WQT_MapZoneHightlight:Show();
 		else
-			WQT_MapZoneHightlight.Texture:SetTexture(fileDataID, nil, nil, "LINEAR");
+			WQT_MapZoneHightlight.Texture:SetTexture(fileDataID, nil, nil, "TRILINEAR");
 			textureX = textureX * width;
 			textureY = textureY * height;
-			scrollChildX = scrollChildX * width;
-			scrollChildY = -scrollChildY * height;
 			if textureX > 0 and textureY > 0 then
+				scrollChildX = scrollChildX * width;
+				scrollChildY = -scrollChildY * height;
 				WQT_MapZoneHightlight.Texture:SetWidth(textureX);
 				WQT_MapZoneHightlight.Texture:SetHeight(textureY);
 				WQT_MapZoneHightlight.Texture:SetPoint("TOPLEFT", WQT_MapZoneHightlight:GetParent(), "TOPLEFT", scrollChildX, scrollChildY);
+				WQT_MapZoneHightlight.Texture:SetPoint("CENTER");
 				WQT_MapZoneHightlight:Show();
 			end
 		end

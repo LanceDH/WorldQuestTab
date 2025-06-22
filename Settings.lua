@@ -102,93 +102,83 @@ end
 WQT_SettingsQuestListMixin = CreateFromMixins(WQT_SettingsBaseMixin);
 
 function WQT_SettingsQuestListMixin:OnLoad()
-	local questFrame = self.Preview;
-	questFrame.Faction:SetScript("OnEnter", nil);
-	questFrame.Title:SetText("Example Quest Title");
-	questFrame.Faction.Icon:SetTexture(2058205);
-	local typeFrame = questFrame.Type;
-	typeFrame.Texture:Show();
-	typeFrame.Elite:SetShown(true);
-	typeFrame.Bg:SetAtlas("worldquest-questmarker-rare");
-	typeFrame.Bg:SetTexCoord(0, 1, 0, 1);
-	typeFrame.Bg:SetSize(18, 18);
+	self.Preview:SetEnabledMixin(false);
+	self.Preview.UpdateTime = function(rewardFrame) 
+		-- Time display
+		-- 74160s == 20h 36m
+		local timeString = "";
+		if (WQT.settings.list.fullTime) then
+			timeString = SecondsToTime(74160, true, false);
+		else
+			timeString = D_HOURS:format(74160 / SECONDS_PER_HOUR);
+		end
+		rewardFrame.Time:SetText(timeString);
+		if (WQT.settings.list.colorTime) then
+			local color = WQT_Utils:GetColor(_V["COLOR_IDS"].timeMedium)
+			rewardFrame.Time:SetVertexColor(color:GetRGB());
+		else
+			rewardFrame.Time:SetVertexColor(_V["WQT_WHITE_FONT_COLOR"]:GetRGB());
+		end
+
+		return true;
+	 end;
+
+
+	self.dummyQuestInfo = {};
+	self.dummyQuestInfo.questId = 76586;
+	self.dummyQuestInfo.questID = self.dummyQuestInfo.questId;
+	self.dummyQuestInfo.factionID = 2600;
+	self.dummyQuestInfo.mapID = 2214;
+	self.dummyQuestInfo.title = "Worm Sign, Sealed, Delivered";
+	self.dummyQuestInfo.isValid = true;
+	self.dummyQuestInfo.passedFilter = true;
+	self.dummyQuestInfo.classification = Enum.QuestClassification.WorldQuest;
 	
-	typeFrame.Texture:SetAtlas("worldquest-icon-dungeon");
-	typeFrame.Texture:SetSize(16, 17);
-	typeFrame:Show();
-	
-	questFrame.Time:SetVertexColor(0, 0.75, 0);
-	local mapInfo = WQT_Utils:GetCachedMapInfo(942);
-	self.zoneName = mapInfo.name;
-	questFrame.Extra:SetText(self.zoneName);
+	self.dummyQuestInfo.time = { ["seconds"] = 291863; };
+	self.dummyQuestInfo.rewardList = {
+		{
+			["type"] = WQT_REWARDTYPE.equipment,
+			["quality"] = 4,
+			["texture"] = 5371389,
+			["amount"] = 603
+		},
+		{
+			["type"] = WQT_REWARDTYPE.item,
+			["quality"] = 3,
+			["texture"] = 133016,
+			["amount"] = 25
+		},
+		{
+			["type"] = WQT_REWARDTYPE.currency,
+			["quality"] = 1,
+			["texture"] = 5872053,
+			["amount"] = 2
+		},
+		{
+			["type"] = WQT_REWARDTYPE.gold,
+			["quality"] = 1,
+			["texture"] = 133784,
+			["amount"] = 83400000
+		}
+	};
+	self.dummyQuestInfo.tagInfo = {
+		["quality"] = 0,
+		["isElite"] = true,
+		["worldQuestType"] = 2,
+		["tagID"] = 111,
+	};
+	self.dummyQuestInfo.IsDisliked = function() return false; end
+	self.dummyQuestInfo.IsExpired = function() return false; end
+	self.dummyQuestInfo.IsCriteria = function() return false; end
+	self.dummyQuestInfo.GetTagInfo = function() return self.dummyQuestInfo.tagInfo; end
+	self.dummyQuestInfo.GetTagInfoQuality = function() return self.dummyQuestInfo.tagInfo.quality; end
+	self.dummyQuestInfo.IterateRewards = function() return ipairs(self.dummyQuestInfo.rewardList) end
 end
 
 function WQT_SettingsQuestListMixin:UpdateState()
-	local questFrame = self.Preview;
-	questFrame.Title:ClearAllPoints()
-	questFrame.Title:SetPoint("RIGHT", questFrame.Rewards, "LEFT", -5, 0);
-	if (WQT.settings.list.factionIcon) then
-		questFrame.Title:SetPoint("BOTTOMLEFT", questFrame.Faction, "RIGHT", 5, 1);
-	elseif (WQT.settings.list.typeIcon) then
-		questFrame.Title:SetPoint("BOTTOMLEFT", questFrame.Type, "RIGHT", 5, 1);
-	else
-		questFrame.Title:SetPoint("BOTTOMLEFT", questFrame, "LEFT", 10, 0);
-	end
+	if (not self.dummyQuestInfo) then return; end
 
-	-- Faction Icon
-	if (WQT.settings.list.factionIcon) then
-		questFrame.Faction:Show();
-		questFrame.Faction:SetWidth(questFrame.Faction:GetHeight());
-	else
-		questFrame.Faction:Hide();
-		questFrame.Faction:SetWidth(0.1);
-	end
-	
-	-- Type icon
-	if (WQT.settings.list.typeIcon) then
-		questFrame.Type:Show();
-		questFrame.Type:SetWidth(questFrame.Type:GetHeight());
-	else
-		questFrame.Type:Hide();
-		questFrame.Type:SetWidth(0.1);
-	end
-	
-	-- Zone name
-	questFrame.Extra:SetText(WQT.settings.list.showZone and self.zoneName or "");
-
-	-- Adjust time and zone sizes
-	local extraSpace = WQT.settings.list.factionIcon and 0 or 14;
-	extraSpace = extraSpace + (WQT.settings.list.typeIcon and 0 or 14);
-	local timeWidth = extraSpace + (WQT.settings.list.fullTime and 70 or 60);
-	local zoneWidth = extraSpace + (WQT.settings.list.fullTime and 80 or 90);
-	if (not WQT.settings.list.showZone) then
-		timeWidth = timeWidth + zoneWidth;
-		zoneWidth = 0.1;
-	end
-	questFrame.Time:SetWidth(timeWidth);
-	questFrame.Extra:SetWidth(zoneWidth);
-	
-	-- Time display
-	-- 74160s == 20h 36m
-	local timeString;
-	if (WQT.settings.list.fullTime) then
-		timeString = SecondsToTime(74160, true, false);
-	else
-		timeString = D_HOURS:format(74160 / SECONDS_PER_HOUR);
-	end
-	questFrame.Time:SetText(timeString);
-	if (WQT.settings.list.colorTime) then
-		local color = WQT_Utils:GetColor(_V["COLOR_IDS"].timeMedium)
-		questFrame.Time:SetVertexColor(color:GetRGB());
-	else
-		questFrame.Time:SetVertexColor(_V["WQT_WHITE_FONT_COLOR"]:GetRGB());
-	end
-	
-	-- Fake rewards
-	questFrame.Rewards:Reset();
-	questFrame.Rewards:AddReward(WQT_REWARDTYPE.equipment, 1733697, 3, 410, _V["WQT_COLOR_ARMOR"], true);
-	questFrame.Rewards:AddReward(WQT_REWARDTYPE.gold, 133784, 1, 1320000, _V["WQT_COLOR_GOLD"], false);
-	questFrame.Rewards:AddReward(WQT_REWARDTYPE.xp, 894556, 1, 34000, _V["WQT_COLOR_ITEM"], false);
+	self.Preview:Update(self.dummyQuestInfo, true);
 end
 
 --------------------------------

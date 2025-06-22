@@ -61,7 +61,7 @@ local function RewardSortFunc(a, b)
 		return aPassed and not bPassed;
 	end
 	
-	if (a.quality == b.quality) then
+	if (a.type == b.type) then
 		if (a.quality == b.quality) then
 			if (a.id and b.id and a.id ~= b.id) then
 				return a.id > b.id;
@@ -71,9 +71,9 @@ local function RewardSortFunc(a, b)
 			end
 			return a.amount > b.amount;
 		end
-		return a.type  < b.type;
+		return a.quality > b.quality;
 	end
-	return a.quality > b.quality;
+	return a.type < b.type;
 end
 
 local function ScanTooltipRewardForPattern(questID, pattern)
@@ -170,17 +170,36 @@ local function QuestResetFunc(pool, questInfo)
 	questInfo:Reset();
 end
 
+function QuestInfoMixin:Reset()
+	wipe(self.rewardList);
+	
+	WipeQuestInfoRecursive(self);
+	-- Reset defaults
+	self.reward.typeBits = WQT_REWARDTYPE.missing;
+	self.typeBits = WQT_QUESTTYPE.normal;
+	self.hasRewardData = false;
+	self.isValid = false;
+	self.tagInfo = nil;
+end
+
 function QuestInfoMixin:Init(questID, qInfo, alwaysHide, posX, posY)
+	self.apiInfo = qInfo;
+
 	self.questId = questID;
 	self.questID = questID;
+	self.mapID = qInfo and qInfo.mapID;
+	self:UpdateTitleAndFaction();
 	self.isDaily = qInfo and qInfo.isDaily;
-	self.isAllyQuest = qInfo and qInfo.isCombatAllyQuest;
-	self.alwaysHide = alwaysHide;
+	self.isCombatAllyQuest = qInfo and qInfo.isCombatAllyQuest;
+	
 	self:SetMapPos(posX, posY);
 	self.tagInfo = C_QuestLog.GetQuestTagInfo(questID);
-	self.isBonusQuest = self.tagInfo == nil;
+	
 	self.classification = C_QuestInfoSystem.GetQuestClassification(questID);
+	self.isBonusQuest = self.classification == Enum.QuestClassification.BonusObjective;
 	self.isBanned = qInfo and _V["BUGGED_POI"][questID] == qInfo.mapID;
+	self.alwaysHide = self.isBonusQuest and not MapUtil.ShouldShowTask(qInfo.mapID, qInfo);
+	
 	self.passedFilter = true;
 	self:UpdateValidity();
 	self:UpdateTimeRemaining();
@@ -196,6 +215,19 @@ function QuestInfoMixin:Init(questID, qInfo, alwaysHide, posX, posY)
 	self:LoadRewards();
 	
 	return self.hasRewardData;
+end
+
+function QuestInfoMixin:UpdateTitleAndFaction()
+	if (self.factionID == nil or self.title == nil) then
+		local oldTitle = self.title;
+		local oldFaction = self.factionID;
+		local title, factionID = C_TaskQuest.GetQuestInfoByQuestID(self.questID);
+		self.title = title;
+		self.factionID = factionID;
+		return self.factionID ~= oldFaction or self.title ~= oldTitle;
+	end
+
+	return false;
 end
 
 function QuestInfoMixin:UpdateValidity()
@@ -225,17 +257,7 @@ function QuestInfoMixin:SetMapPos(posX, posY)
 	self.mapInfo.mapY = posY;
 end
 
-function QuestInfoMixin:Reset()
-	wipe(self.rewardList);
-	
-	WipeQuestInfoRecursive(self);
-	-- Reset defaults
-	self.reward.typeBits = WQT_REWARDTYPE.missing;
-	self.typeBits = WQT_QUESTTYPE.normal;
-	self.hasRewardData = false;
-	self.isValid = false;
-	self.tagInfo = nil;
-end
+
 
 function QuestInfoMixin:LoadRewards(force)
 	-- If we already have our data, don't try again;
@@ -423,12 +445,12 @@ function QuestInfoMixin:GetRewardType()
 end
 
 function QuestInfoMixin:GetRewardId()
-	local reward = self.rewardList[1];
+	local reward = #self.rewardList > 0 and self.rewardList[1];
 	return reward and reward.id or 0;
 end
 
 function QuestInfoMixin:GetRewardAmount()
-	local reward = self.rewardList[1];
+	local reward = #self.rewardList > 0 and self.rewardList[1];
 	return reward and reward.amount or 0;
 end
 
@@ -443,6 +465,7 @@ function QuestInfoMixin:GetRewardTexture()
 end
 
 function QuestInfoMixin:GetRewardQuality()
+	if(#self.rewardList == 0) then return 0 end
 	local reward = self.rewardList[1];
 	return reward and reward.quality or 1;
 end
@@ -483,6 +506,10 @@ end
 
 function QuestInfoMixin:GetTagInfo()
 	return self.tagInfo;
+end
+
+function QuestInfoMixin:GetTagInfoQuality()
+	return self.tagInfo and self.tagInfo.quality or 0;
 end
 
 function QuestInfoMixin:IsDisliked()
@@ -633,19 +660,21 @@ function WQT_DataProvider:OnUpdate(elapsed)
 					questForRemove[questID] = nil;
 					local updateSuccess = false;
 					-- Just always update time. This has been an issue on the full screen map, and might as well make sure we are up to date
-					updateSuccess = updateSuccess and addonInfo:UpdateTimeRemaining();
+					addonInfo:UpdateTimeRemaining()
+
+					updateSuccess = addonInfo:UpdateTitleAndFaction() or updateSuccess;
 					-- Quest log update might have been for missing data
 					if (not addonInfo.hasRewardData) then
-						updateSuccess = updateSuccess or addonInfo:LoadRewards(true);
+						updateSuccess = addonInfo:LoadRewards(true) or updateSuccess;
 					end
 					if (not addonInfo.isValid) then
-						updateSuccess = updateSuccess or addonInfo:UpdateValidity();
+						updateSuccess = addonInfo:UpdateValidity() or updateSuccess;
 					end
 					if (addonInfo.alwaysHide and MapUtil.ShouldShowTask(apiInfo.mapID, apiInfo)) then
 						-- Have only encountered this once and not been able to replicate to test if this even works
 						addonInfo.alwaysHide = false;
 						WQT:debugPrint(string.format("Quest alwaysHide updated (%s)", questID));
-						updateSuccess = updateSuccess or addonInfo:UpdateValidity();
+						updateSuccess = addonInfo:UpdateValidity() or updateSuccess;
 					end
 					if (updateSuccess) then
 						updated = updated + 1;
@@ -665,7 +694,7 @@ function WQT_DataProvider:OnUpdate(elapsed)
 			for questID, apiInfo in pairs(questsToAdd) do
 				added = added + 1;
 				local questInfo = self.pool:Acquire();
-				local alwaysHide = not MapUtil.ShouldShowTask(apiInfo.mapID, apiInfo);
+				local alwaysHide = not apiInfo.tagInfo;-- and not MapUtil.ShouldShowTask(apiInfo.mapID, apiInfo);
 				local posX, posY = WQT_Utils:GetQuestMapLocation(apiInfo.questID, apiInfo.mapID);
 				questInfo:Init(apiInfo.questID, apiInfo, alwaysHide, posX, posY);
 			end
@@ -718,8 +747,7 @@ function WQT_DataProvider:FilterAndSortQuestList()
 					passed = WQT:PassesAllFilters(questInfo);
 				end
 			end
-			
-			questInfo.passedFilter = passed;		
+			questInfo.passedFilter = passed;
 		end
 		
 		-- In debug, still filter, but show everything.
