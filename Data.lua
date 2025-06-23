@@ -38,21 +38,11 @@ WQT_REWARDTYPE = FlagsUtil.MakeFlags(
 );
 WQT_REWARDTYPE.none = 0;
 
-WQT_QUESTTYPE = FlagsUtil.MakeFlags(
-	"daily",		--1
-	"threat",		--2
-	"calling",		--4
-	"bonus",		--8
-	"combatAlly"	--16
-);
-WQT_QUESTTYPE.normal = 0;
-
 _V["CONDUIT_SUBTYPE"] = {
 	["endurance"] = 1,
 	["finesse"] = 2,
 	["potency"] = 3,
 }
-
 
 -- Combos
 WQT_REWARDTYPE.gear = bit.bor(WQT_REWARDTYPE.weapon, WQT_REWARDTYPE.equipment);
@@ -80,7 +70,7 @@ end
 -- /run print(WorldMapFrame.mapID)
 -- /run print(FlightMapFrame.mapID)
 
-local WQT_IsLE_OF_DORN = {
+local WQT_ISLE_OF_DORN = {
 	[2248]	= {["x"] = 0.00, ["y"] = 0.00}, -- Isle of Dorn
 	[2369]	= {["x"] = 0.18, ["y"] = 0.18}  -- Siren Isle
 }
@@ -304,7 +294,7 @@ local expZones =
 	},
 	[LE_EXPANSION_WAR_WITHIN] = {
 		WQT_WARWITHIN,
-		WQT_IsLE_OF_DORN
+		WQT_ISLE_OF_DORN
 	}
 }
 
@@ -502,7 +492,6 @@ _V["SETTING_CATEGORIES"] = {
 	{["id"]="DEBUG", ["label"] = "Debug"}
 	,{["id"]="PROFILES", ["label"] = _L["PROFILES"]}
 	,{["id"]="GENERAL", ["label"] = GENERAL, ["expanded"] = true}
-	,{["id"]="GENERAL_SHADOWLANDS", ["parentCategory"] = "GENERAL", ["label"] = EXPANSION_NAME8, ["expanded"] = true}
 	,{["id"]="GENERAL_OLDCONTENT", ["parentCategory"] = "GENERAL", ["label"] = _L["PREVIOUS_EXPANSIONS"]}
 	,{["id"]="QUESTLIST", ["label"] = _L["QUEST_LIST"]}
 	,{["id"]="MAPPINS", ["label"] = _L["MAP_PINS"]}
@@ -702,36 +691,27 @@ _V["SETTING_LIST"] = {
 				WQT_ListContainer:UpdateQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.alwaysAllQuests end
-			}	
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["INCLUDE_DAILIES"], ["tooltip"] = _L["INCLUDE_DAILIES_TT"], ["suggestReload"] = true
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.list.includeDaily = value;
-				local mapAreaID = WorldMapFrame.mapID;
-				WQT_WorldQuestFrame.dataProvider:LoadQuestsInZone(mapAreaID);
-			end
-			,["getValueFunc"] = function() return WQT.settings.list.includeDaily end
 			}
-	
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["CALLINGS_BOARD"], ["tooltip"] = _L["CALLINGS_BOARD_TT"]
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["AUTO_EMISARRY"], ["tooltip"] = _L["AUTO_EMISARRY_TT"]
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.general.autoEmisarry = value;
+			end
+			,["getValueFunc"] = function() return WQT.settings.general.autoEmisarry end
+			}
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_OLDCONTENT", ["label"] = _L["CALLINGS_BOARD"], ["tooltip"] = _L["CALLINGS_BOARD_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.sl_callingsBoard = value;
 				WQT_CallingsBoard:UpdateVisibility();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.sl_callingsBoard end
 			}
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_SHADOWLANDS", ["label"] = _L["GENERIC_ANIMA"], ["tooltip"] = _L["GENERIC_ANIMA_TT"]
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_OLDCONTENT", ["label"] = _L["GENERIC_ANIMA"], ["tooltip"] = _L["GENERIC_ANIMA_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.sl_genericAnimaIcons = value;
 				WQT_WorldQuestFrame.dataProvider:ReloadQuestRewards();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.sl_genericAnimaIcons end
 			}
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_OLDCONTENT", ["label"] = _L["AUTO_EMISARRY"], ["tooltip"] = _L["AUTO_EMISARRY_TT"]
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.general.autoEmisarry = value;
-			end
-			,["getValueFunc"] = function() return WQT.settings.general.autoEmisarry end
-			}	
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_OLDCONTENT", ["label"] = _L["EMISSARY_COUNTER"], ["tooltip"] = _L["EMISSARY_COUNTER_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.bountyCounter = value;
@@ -827,16 +807,7 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.filterPoI end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
-			}		
-	--[[,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_SHOW_CONTINENT"], ["tooltip"] = _L["PIN_SHOW_CONTINENT_TT"]
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.pin.continentPins = value;
-				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
-			end
-			,["getValueFunc"] = function() return WQT.settings.pin.continentPins end
-			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
-			]]--
 	-- Pin appearance
 	,{["template"] =" WQT_SettingSubTitleTemplate", ["categoryID"] = "MAPPINS", ["label"] = APPEARANCE_LABEL}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_TIME"], ["tooltip"] = _L["PIN_TIME_TT"]
@@ -997,7 +968,6 @@ _V["WQT_TYPEFLAG_LABELS"] = {
 			["Invasion"] = _L["TYPE_INVASION"],
 			["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE,
 			["Daily"] = DAILY,
-			["Threat"] = REPORT_THREAT,
 			["Bonus"] = SCENARIO_BONUS_LABEL,
 			["Dragonrider"] = DRAGONRIDING_RACES_MAP_TOGGLE
 		}
@@ -1018,7 +988,7 @@ _V["WQT_TYPEFLAG_LABELS"] = {
 	};
 	
 _V["FILTER_TYPE_OLD_CONTENT"] = {
-	[2] = {["Invasion"] = true, ["Assault"] = true, ["Threat"] = true}
+	[2] = {["Invasion"] = true, ["Assault"] = true}
 	,[3] = {["Artifact"] = true, ["Relic"] = true}
 }
 
@@ -1083,10 +1053,10 @@ _V["SORT_FUNCTIONS"] = {
 				local aType = a:GetRewardType();
 				local bType = b:GetRewardType();
 				local bonus = C_PvP.GetWarModeRewardBonus() / 100;
-				if (_V["WARMODE_BONUS_REWARD_TYPES"][aType] and C_QuestLog.QuestHasWarModeBonus(a.questId)) then
+				if (_V["WARMODE_BONUS_REWARD_TYPES"][aType] and C_QuestLog.QuestHasWarModeBonus(a.questID)) then
 					amountA = amountA + floor(amountA * bonus);
 				end
-				if (_V["WARMODE_BONUS_REWARD_TYPES"][bType] and C_QuestLog.QuestHasWarModeBonus(b.questId)) then
+				if (_V["WARMODE_BONUS_REWARD_TYPES"][bType] and C_QuestLog.QuestHasWarModeBonus(b.questID)) then
 					amountB = amountB + floor(amountB * bonus);
 				end
 			end
@@ -1118,12 +1088,6 @@ _V["SORT_FUNCTIONS"] = {
 			if (a.isBonusQuest ~= b.isBonusQuest) then
 				return b.isBonusQuest;
 			end
-			if (a.isQuestStart ~= b.isQuestStart) then
-				return a.isQuestStart and not b.isQuestStart;
-			end		
-			if (a.isDaily ~= b.isDaily) then
-				return a.isDaily and not b.isDaily;
-			end			
 			
 			local tagInfoA = a:GetTagInfo();
 			local tagInfoB = b:GetTagInfo();
@@ -1158,8 +1122,8 @@ _V["SORT_FUNCTIONS"] = {
 			if (aIsCriteria ~= bIsCriteria) then return aIsCriteria and not bIsCriteria; end 
 		end
 	,["zone"] = function(a, b) 
-			local mapInfoA = WQT_Utils:GetMapInfoForQuest(a.questId);
-			local mapInfoB = WQT_Utils:GetMapInfoForQuest(b.questId);
+			local mapInfoA = WQT_Utils:GetMapInfoForQuest(a.questID);
+			local mapInfoB = WQT_Utils:GetMapInfoForQuest(b.questID);
 			if (mapInfoA and mapInfoA.name and mapInfoB and mapInfoB.name and mapInfoA.mapID ~= mapInfoB.mapID) then 
 				if (WQT.settings.list.alwaysAllQuests and (mapInfoA.mapID == WorldMapFrame.mapID or mapInfoB.mapID == WorldMapFrame.mapID)) then 
 					return mapInfoA.mapID == WorldMapFrame.mapID and mapInfoB.mapID ~= WorldMapFrame.mapID;
@@ -1211,8 +1175,6 @@ _V["FILTER_FUNCTIONS"] = {
 			,["Assault"]		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.FactionAssault; end 
 			,["Elite"]			= function(questInfo, tagInfo) return tagInfo and tagInfo.isElite and tagInfo.worldQuestType ~= Enum.QuestTagType.Dungeon; end
 			,["Default"]		= function(questInfo, tagInfo) return tagInfo and not tagInfo.isElite and tagInfo.worldQuestType == Enum.QuestTagType.Normal; end 
-			,["Daily"]			= function(questInfo, tagInfo) return questInfo.isDaily; end 
-			,["Threat"]			= function(questInfo, tagInfo) return C_QuestLog.IsThreatQuest(questInfo.questId); end 
 			,["Bonus"]			= function(questInfo, tagInfo) return not tagInfo; end
 			,["Dragonrider"]	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.DragonRiderRacing; end 
 			}
@@ -1267,7 +1229,7 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 		[1467]	= WQT_OUTLAND, 		-- Flightmap
 		[619] 	= WQT_LEGION,
 		[993] 	= WQT_LEGION, 		-- Flightmap	
-		[905] 	= WQT_ARGUS, 		
+		[905] 	= WQT_ARGUS,
 
 		[875]	= WQT_ZANDALAR,
 		[1011]	= WQT_ZANDALAR, 	-- Flightmap
@@ -1283,7 +1245,7 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 
 		[2274]	= WQT_WARWITHIN,
 		[2276]	= WQT_WARWITHIN,	-- Flightmap
-		[2248]	= WQT_IsLE_OF_DORN
+		[2248]	= WQT_ISLE_OF_DORN
 		
 	}
 
@@ -1429,11 +1391,6 @@ _V["WQT_DEFAULTS"] = {
 			sl_callingsBoard = true;
 			sl_genericAnimaIcons = false;
 			
-			filterPasses = {
-				["calling"] = true;
-				["threat"] = true,
-				["combatAlly"] = true,
-			};
 			dislikedQuests = {};
 			
 			loadUtilities = true;
@@ -1494,7 +1451,6 @@ _V["WQT_DEFAULTS"] = {
 							["Invasion"] = true,
 							["Assault"] = true,
 							["Daily"] = true,
-							["Threat"] = true,
 							["Bonus"] = true,
 							["Dragonrider"] = true
 						}}
@@ -1547,7 +1503,7 @@ _V["PATCH_NOTES"] = {
 				"Compatibility with patch 11.1.7",
 				"Visual update to match the new UI",
 				"A bunch of refactoring of which you hopefully only notice positive things",
-				"Things that didn't survive:<br/>- Quest counter on the normal quest tab<br/>- Anything LFG related<br/>- Support for WQT Utilities",
+				"Things that didn't survive:<br/>- Quest counter on the normal quest tab<br/>- Anything LFG related<br/>- Support for WQT Utilities<br/>- Daily quest things such as old Nzoth quests",
 			},
 		}
 	}

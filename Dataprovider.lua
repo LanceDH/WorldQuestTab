@@ -94,7 +94,7 @@ local function SortQuestList(a, b, sortID)
 	-- Invalid goes to the bottom
 	if (not a.isValid or not b.isValid) then
 		if (a.isValid == b.isValid) then 
-			return a.questId < b.questId;
+			return a.questID < b.questID;
 		end;
 		return a.isValid and not b.isValid;
 	end
@@ -102,7 +102,7 @@ local function SortQuestList(a, b, sortID)
 	-- Filtered out quests go to the back (for debug view mainly)
 	if (not a.passedFilter or not b.passedFilter) then
 		if (a.passedFilter == b.passedFilter) then 
-			return a.questId < b.questId; 
+			return a.questID < b.questID; 
 		end;
 		return a.passedFilter and not b.passedFilter;
 	end
@@ -119,7 +119,7 @@ local function SortQuestList(a, b, sortID)
 	if (not order) then
 		order = {};
 		WQT:debugPrint("No sort order for", sortID);
-		return a.questId < b.questId;
+		return a.questID < b.questID;
 	end
 	
 	for k, criteria in ipairs(order) do
@@ -134,7 +134,7 @@ local function SortQuestList(a, b, sortID)
 	end
 	
 	-- Worst case fallback
-	return a.questId < b.questId;
+	return a.questID < b.questID;
 end
 
 ----------------------------
@@ -159,19 +159,15 @@ function QuestInfoMixin:Reset()
 	WipeQuestInfoRecursive(self);
 	-- Reset defaults
 	self.reward.typeBits = WQT_REWARDTYPE.missing;
-	self.typeBits = WQT_QUESTTYPE.normal;
 	self.hasRewardData = false;
 	self.isValid = false;
 	self.tagInfo = nil;
 end
 
 function QuestInfoMixin:Init(questID, qInfo)
-	self.questId = questID;
 	self.questID = questID;
 	self.mapID = qInfo and qInfo.mapID;
 	self:UpdateTitleAndFaction();
-	self.isDaily = qInfo and qInfo.isDaily;
-	self.isCombatAllyQuest = qInfo and qInfo.isCombatAllyQuest;
 
 	self.tagInfo = C_QuestLog.GetQuestTagInfo(questID);
 	
@@ -183,13 +179,6 @@ function QuestInfoMixin:Init(questID, qInfo)
 	self.passedFilter = true;
 	self:UpdateValidity();
 	self:UpdateTimeRemaining();
-	
-	-- quest type
-	self.typeBits = WQT_QUESTTYPE.normal;
-	if (self.isDaily) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.daily); end
-	if (C_QuestLog.IsThreatQuest(self.questID)) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.threat); end
-	if (C_QuestLog.IsQuestCalling(self.questID)) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.calling); end
-	if (self.isCombatAllyQuest) then self.typeBits = bit.bor(self.typeBits, WQT_QUESTTYPE.combatAlly); end
 
 	-- rewards
 	self:LoadRewards();
@@ -238,19 +227,19 @@ function QuestInfoMixin:LoadRewards(force)
 	if (not force and self.hasRewardData) then return; end
 
 	wipe(self.rewardList);
-	local haveData = HaveQuestRewardData(self.questId);
+	local haveData = HaveQuestRewardData(self.questID);
 	if (haveData) then
 		self.reward.typeBits = WQT_REWARDTYPE.none;
 		-- Items
-		if (GetNumQuestLogRewards(self.questId) > 0) then
-			local _, texture, numItems, quality, _, rewardId, ilvl = GetQuestLogRewardInfo(1, self.questId);
+		if (GetNumQuestLogRewards(self.questID) > 0) then
+			local _, texture, numItems, quality, _, rewardId, ilvl = GetQuestLogRewardInfo(1, self.questID);
 
 			if (rewardId) then
 				local price, typeID, subTypeID = select(11, C_Item.GetItemInfo(rewardId));
 				if (C_Soulbinds.IsItemConduitByItemInfo(rewardId)) then
 					-- Conduits
 					-- Lovely yikes on getting the type
-					local conduitType = ScanTooltipRewardForPattern(self.questId, "(.+)") or "";
+					local conduitType = ScanTooltipRewardForPattern(self.questID, "(.+)") or "";
 					local subType = _V["CONDUIT_SUBTYPE"].endurance;
 					if(conduitType == CONDUIT_TYPE_FINESSE) then
 						subType = _V["CONDUIT_SUBTYPE"].finesse;
@@ -260,17 +249,17 @@ function QuestInfoMixin:LoadRewards(force)
 					self:AddReward(WQT_REWARDTYPE.conduit, ilvl, texture, quality, rewardId, false, subType);
 				elseif (typeID == 4 or typeID == 2) then 
 					-- Gear (4 = armor, 2 = weapon)
-					local canUpgrade = ScanTooltipRewardForPattern(self.questId, "(%d+%+)$") and true or false;
+					local canUpgrade = ScanTooltipRewardForPattern(self.questID, "(%d+%+)$") and true or false;
 					local rewardType = typeID == 4 and WQT_REWARDTYPE.equipment or WQT_REWARDTYPE.weapon;
 					self:AddReward(rewardType, ilvl, texture, quality, rewardId, canUpgrade);
 				elseif (typeID == 3 and subTypeID == 11) then
 					-- Relics
 					-- Find upgrade amount as C_ArtifactUI.GetItemLevelIncreaseProvidedByRelic doesn't scale
-					local numItems = tonumber(ScanTooltipRewardForPattern(self.questId, "^%+(%d+)"));
+					local numItems = tonumber(ScanTooltipRewardForPattern(self.questID, "^%+(%d+)"));
 					self:AddReward(WQT_REWARDTYPE.relic, numItems, texture, quality, rewardId);
 				elseif(C_Item.IsAnimaItemByID(rewardId)) then
 					-- Anima
-					local value = ScanTooltipRewardForPattern(self.questId, " (%d+) ") or 1;
+					local value = ScanTooltipRewardForPattern(self.questID, " (%d+) ") or 1;
 					value = tonumber(value);
 
 					if (WQT.settings.general.sl_genericAnimaIcons) then
@@ -295,8 +284,8 @@ function QuestInfoMixin:LoadRewards(force)
 			end
 		end
 		-- Spells
-		if (C_QuestInfoSystem.HasQuestRewardSpells(self.questId)) then
-			local spellIds = C_QuestInfoSystem.GetQuestRewardSpells(self.questId);
+		if (C_QuestInfoSystem.HasQuestRewardSpells(self.questID)) then
+			local spellIds = C_QuestInfoSystem.GetQuestRewardSpells(self.questID);
 
 			for k, spellId in ipairs(spellIds) do
 				local spellInfo = C_Spell.GetSpellInfo(spellId)
@@ -304,25 +293,25 @@ function QuestInfoMixin:LoadRewards(force)
 			end
 		end
 		-- Honor
-		if (GetQuestLogRewardHonor(self.questId) > 0) then
-			local numItems = GetQuestLogRewardHonor(self.questId);
+		if (GetQuestLogRewardHonor(self.questID) > 0) then
+			local numItems = GetQuestLogRewardHonor(self.questID);
 			self:AddReward(WQT_REWARDTYPE.honor, numItems, 1455894, 1);
 		end
 		-- Gold
-		if (GetQuestLogRewardMoney(self.questId) > 0) then
-			local numItems = floor(abs(GetQuestLogRewardMoney(self.questId)))
+		if (GetQuestLogRewardMoney(self.questID) > 0) then
+			local numItems = floor(abs(GetQuestLogRewardMoney(self.questID)))
 			self:AddReward(WQT_REWARDTYPE.gold, numItems, 133784, 1);
 		end
 		-- Currency
-		local currencies = C_QuestLog.GetQuestRewardCurrencies(self.questId);
+		local currencies = C_QuestLog.GetQuestRewardCurrencies(self.questID);
 		for k, currency in ipairs(currencies) do
 			local isRep = C_CurrencyInfo.GetFactionGrantedByCurrency(currency.currencyID) ~= nil;
 			local currType = currency.currencyID == _azuriteID and WQT_REWARDTYPE.artifact or (isRep and WQT_REWARDTYPE.reputation or WQT_REWARDTYPE.currency);
 			self:AddReward(currType, currency.totalRewardAmount, currency.texture, currency.quality, currency.currencyID);
 		end
 		-- XP
-		if (GetQuestLogRewardXP(self.questId) > 0) then
-			local numItems = GetQuestLogRewardXP(self.questId);
+		if (GetQuestLogRewardXP(self.questID) > 0) then
+			local numItems = GetQuestLogRewardXP(self.questID);
 			self:AddReward(WQT_REWARDTYPE.xp, numItems, 894556, 1);
 		end
 		
@@ -377,13 +366,13 @@ function QuestInfoMixin:GetReward(index)
 end
 
 function QuestInfoMixin:IsExpired()
-	local timeLeftSeconds =  C_TaskQuest.GetQuestTimeLeftSeconds(self.questId) or 0;
+	local timeLeftSeconds =  C_TaskQuest.GetQuestTimeLeftSeconds(self.questID) or 0;
 	return self.time.seconds and self.time.seconds > 0 and timeLeftSeconds < 1;
 end
 
 function QuestInfoMixin:SetAsWaypoint()
-	local mapInfo = WQT_Utils:GetMapInfoForQuest(self.questId);
-	local x, y = WQT_Utils:GetQuestMapLocation(self.questId, mapInfo.mapID);
+	local mapInfo = WQT_Utils:GetMapInfoForQuest(self.questID);
+	local x, y = WQT_Utils:GetQuestMapLocation(self.questID, mapInfo.mapID);
 	local wayPoint = UiMapPoint.CreateFromCoordinates(mapInfo.mapID, x, y);
 	C_Map.SetUserWaypoint(wayPoint);
 end
@@ -464,7 +453,7 @@ function QuestInfoMixin:IsCriteria(forceSingle)
 	
 	-- Try only selected
 	if (forceSingle) then
-		if (bountyBoard:IsWorldQuestCriteriaForSelectedBounty(self.questId)) then
+		if (bountyBoard:IsWorldQuestCriteriaForSelectedBounty(self.questID)) then
 			return true;
 		end
 		if (activityBoard and activityBoard.selectedBounty) then
@@ -477,7 +466,7 @@ function QuestInfoMixin:IsCriteria(forceSingle)
 	-- Try any of them
 	if (bountyBoard.bounties) then
 		for k, bounty in ipairs(bountyBoard.bounties) do
-			if (C_QuestLog.IsQuestCriteriaForBounty(self.questId, bounty.questID)) then
+			if (C_QuestLog.IsQuestCriteriaForBounty(self.questID, bounty.questID)) then
 				return true;
 			end
 		end
@@ -495,19 +484,11 @@ function QuestInfoMixin:GetTagInfoQuality()
 end
 
 function QuestInfoMixin:IsDisliked()
-	return WQT_Utils:QuestIsDisliked(self.questId);
+	return WQT_Utils:QuestIsDisliked(self.questID);
 end
 
 function QuestInfoMixin:DataIsValid()
-	return self.questId ~= nil;
-end
-
-function QuestInfoMixin:IsSpecialType()
-	return self.typeBits ~= WQT_QUESTTYPE.normal;
-end
-
-function QuestInfoMixin:IsQuestOfType(questType)
-	return bit.band(self.typeBits, questType) > 0;
+	return self.questID ~= nil;
 end
 
 ----------------------------
@@ -704,16 +685,11 @@ function WQT_DataProvider:FilterAndSortQuestList()
 		questInfo.passedFilter = false;
 		if (questInfo.isValid and not questInfo.alwaysHide and questInfo.hasRewardData and not questInfo:IsExpired()) then
 			local passed = false;
-			-- Filter passes don't care about anything else
-			if(WQT_Utils:QuestIsVIQ(questInfo)) then 
-				passed = true;
-			else
-				-- Official filtering
-				passed = BlizFiltering and WorldMap_DoesWorldQuestInfoPassFilters(questInfo) or not BlizFiltering;
-				-- Add-on filters
-				if (passed and WQTFiltering) then
-					passed = WQT:PassesAllFilters(questInfo);
-				end
+			-- Official filtering
+			passed = BlizFiltering and WorldMap_DoesWorldQuestInfoPassFilters(questInfo) or not BlizFiltering;
+			-- Add-on filters
+			if (passed and WQTFiltering) then
+				passed = WQT:PassesAllFilters(questInfo);
 			end
 			questInfo.passedFilter = passed;
 		end
@@ -842,7 +818,7 @@ end
 
 function WQT_DataProvider:GetQuestById(id)
 	for questInfo in self.pool:EnumerateActive() do
-		if questInfo.questId == id then return questInfo; end
+		if questInfo.questID == id then return questInfo; end
 	end
 	return nil;
 end

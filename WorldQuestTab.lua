@@ -1,60 +1,4 @@
-﻿--
--- Info structure
---
--- questId					[number] questId
--- isAllyQuest				[boolean] is a quest for combat allies (Nazjatar)
--- isDaily					[boolean] is a daily type quest (Nazjatar & threat quests)
--- isCriteria				[boolean] is part of currently selected emissary
--- alwaysHide				[boolean] If the quest should be hidden no matter what
--- passedFilter				[boolean] passed current filters
--- isValid					[boolean] true if the quest is valid. Quest are invalid when they are missing quest data
--- time						[table] time related values
---		seconds					[number] seconds remaining when the data was gathered (To check the difference between no time and expired time)
--- mapInfo					[table] zone related values, for more accurate position use WQT_Utils:GetQuestMapLocation
---		mapX					[number] x pin position
---		mapY					[number] y pin position
--- Reward					[table]
---		typeBits				[bitfield] a combination of flags for all the types of rewards the quest provides. I.e. AP + gold + rep = 2^3 + 2^6 + 2^9 = 584 (1001001000‬)
--- rewardList				[table] List of rewards sorted by priority and filter settings
---		iterative list of rewardInfo tables
---
--- questInfo Functions
--- 
--- GetRewardType()			Type of the top reward
--- GetRewardId()			Id of the top reward
--- GetRewardAmount()		Amount of the top reward
--- GetRewardTexture()		Texture of the top reward
--- GetRewardQuality()		Quality of the top reward
--- GetRewardColor()			Color of the top reward
--- GetRewardCanUpgrade()	If the top reward has a chance of upgrading
--- TryDressUpReward()		Try all of the rewards to be shown in the dressing room
--- IsExpired()				Whether the quest time is expired or not
--- GetReward(index)			Get a specific reward from the list. nil if index is not available
--- IterateRewards()			Return ipairs of the rewards
-
--- RewardInfo structure
---
---	type					[number] type of reward. See WQT_REWARDTYPE in Data.lua
---	texture					[number/string] texture of the reward. can be string for things like gold or unknown reward
---	amount					[amount] amount of items, gold, rep, or item level
---	id						[number] itemId for reward. 0 if not applicable (i.e. gold)
---	quality					[number] item quality; common, rare, epic, etc
---	canUpgrade				[boolean, nullable] true if item has a chance to upgrade (e.g. ilvl 285+)
---	color					[Color] color based on the type of reward
-
---
--- For other data use following functions
---
--- local title, factionId = C_TaskQuest.GetQuestInfoByQuestID(questId);
--- local mapInfo = WQT_Utils:GetCachedMapInfo(zoneId); 	| mapInfo = {[mapID] = number, [name] = string, [parenMapID] = number, [mapType] = Enum.UIMapType};
--- local mapInfo = WQT_Utils:GetMapInfoForQuest(questId); 	| Quick function that gets the zoneId from the questId first
--- local factionInfo = WQT_Utils:GetFactionDataInternal(factionId); 	| factionInfo = {[name] = string, [texture] = string/number, [playerFaction] = string, [expansion] = number}
--- local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex, displayTimeLeft = GetQuestTagInfo(questId);
--- local texture, sizeX, sizeY = WQT_Utils:GetCachedTypeIconData(worldQuestType, tradeskillLineIndex);
--- local timeLeftSeconds, timeString, color, timeStringShort, category = WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated);
--- local x, y = WQT_Utils:GetQuestMapLocation(questId, mapId); | More up to date position than mapInfo
-
--- Callbacks using EventRegistry
+﻿-- Callbacks using EventRegistry
 --
 -- "WQT.DataProvider.QuestsLoaded"			() After InitFilter finishes
 -- "WQT.DataProvider.ProgressUpdated"		(progress) Progress in gethering quests from zones (% from 0-1)
@@ -78,12 +22,10 @@ local WQT_Profiles = addon.WQT_Profiles;
 
 local _; -- local trash 
 
-
 local _playerFaction = GetPlayerFactionGroup();
 local _playerName = UnitName("player");
 
 local utilitiesStatus = select(5, C_AddOns.GetAddOnInfo("WorldQuestTabUtilities"));
-local _utilitiesInstalled = not utilitiesStatus or utilitiesStatus ~= "MISSING";
 
 WQT_PanelID = EnumUtil.MakeEnum("Quests", "WhatsNew", "Settings");
 
@@ -270,41 +212,6 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 	-- Rewards submenu
 	local rewardsSubmenu = rootDescription:CreateButton(REWARD);
 	AddFilterSubmenu(rewardsSubmenu, _V["FILTER_TYPES"].reward);
-
-	-- Ignores submenu
-	local irgnoreSubmenu = rootDescription:CreateButton(_L["IGNORES_FILTERS"]);
-	do
-		-- Callings
-		local function IgnoredCallindsChecked()
-			return WQT.settings.general.filterPasses.calling;
-		end
-		local function IgnoredCallindsOnSelect()
-			WQT.settings.general.filterPasses.calling = not WQT.settings.general.filterPasses.calling;
-			EventRegistry:TriggerEvent("WQT.FiltersUpdated");
-		end
-		irgnoreSubmenu:CreateCheckbox(CALLINGS_QUESTS, IgnoredCallindsChecked, IgnoredCallindsOnSelect);
-
-		-- Threat
-		local function IgnoredThreatChecked()
-			return WQT.settings.general.filterPasses.threat;
-		end
-		local function IgnoredThreatOnSelect()
-			WQT.settings.general.filterPasses.threat = not WQT.settings.general.filterPasses.threat;
-			EventRegistry:TriggerEvent("WQT.FiltersUpdated");
-		end
-		irgnoreSubmenu:CreateCheckbox(REPORT_THREAT, IgnoredThreatChecked, IgnoredThreatOnSelect);
-
-		-- Combat Ally
-		local function IgnoredAllyChecked()
-			return WQT.settings.general.filterPasses.combatAlly;
-		end
-		local function IgnoredAllyOnSelect()
-			WQT.settings.general.filterPasses.combatAlly = not WQT.settings.general.filterPasses.combatAlly;
-			EventRegistry:TriggerEvent("WQT.FiltersUpdated");
-		end
-		irgnoreSubmenu:CreateCheckbox(ORDER_HALL_ZONE_SUPPORT, IgnoredAllyChecked, IgnoredAllyOnSelect);
-	end
-	-- end Ignores Submenu
 
 	-- Uninterested
 	local function DDUninterededChecked()
@@ -518,6 +425,8 @@ local function ConvertOldSettings(version)
 		WQT.db.global.fullScreenButtonPos = nil;
 		-- Cba to deal with this anymore
 		WQT.db.global.general.useLFGButtons = nil;
+		-- None of that
+		WQT.db.global.general.filterPasses = nil;
 	end
 end
 
@@ -614,9 +523,6 @@ function WQT:IsFiltering()
 end
 
 function WQT:PassesAllFilters(questInfo)
-	-- Filter pass
-	if(WQT_Utils:QuestIsVIQ(questInfo)) then return true; end
-	
 	if (WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId) then 
 		return questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly or WQT_WorldQuestFrame.autoEmisarryId);
 	end
@@ -1059,7 +965,7 @@ end
 
 function WQT_ListButtonMixin:OnLeave()
 	self.Highlight:Hide();
-	WQT_WorldQuestFrame.pinDataProvider:SetQuestIDPinged(self.questInfo.questId, false);
+	WQT_WorldQuestFrame.pinDataProvider:SetQuestIDPinged(self.questInfo.questID, false);
 	WQT_WorldQuestFrame:HideWorldmapHighlight();
 	GameTooltip:Hide();
 	GameTooltip.ItemTooltip:Hide();
@@ -1076,8 +982,8 @@ function WQT_ListButtonMixin:OnEnter()
 	local questInfo = self.questInfo;
 	if (not questInfo) then return; end
 	self.Highlight:Show();
-	WQT_WorldQuestFrame.pinDataProvider:SetQuestIDPinged(self.questInfo.questId, true);
-	WQT_WorldQuestFrame:ShowWorldmapHighlight(questInfo.questId);
+	WQT_WorldQuestFrame.pinDataProvider:SetQuestIDPinged(self.questInfo.questID, true);
+	WQT_WorldQuestFrame:ShowWorldmapHighlight(questInfo.questID);
 
 	self.Title:SetFontObject(GameFontHighlight);
 	
@@ -1088,13 +994,6 @@ function WQT_ListButtonMixin:ShowTooltip()
 	local questInfo = self.questInfo;
 	if (not questInfo) then return; end
 	local style = _V["TOOLTIP_STYLES"].default;
-	if (questInfo:IsQuestOfType(WQT_QUESTTYPE.calling)) then
-		if (C_QuestLog.IsOnQuest(questInfo.questId)) then
-			style = _V["TOOLTIP_STYLES"].callingActive;
-		else
-			style = _V["TOOLTIP_STYLES"].callingAvailable;
-		end
-	end
 
 	WQT_Utils:ShowQuestTooltip(self, questInfo, style);
 end
@@ -1137,7 +1036,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	
 	self:Show();
 	self.questInfo = questInfo;
-	self.questId = questInfo.questId;
+	self.questID = questInfo.questID;
 	local isDisliked = questInfo:IsDisliked();
 	self:SetAlpha(isDisliked and 0.75 or 1);
 	
@@ -1156,7 +1055,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	local showedTime = self:UpdateTime();
 	
 	local zoneName = "";
-	if (shouldShowZone) then
+	if (shouldShowZone and WQT.settings.list.showZone) then
 		local mapInfo = WQT_Utils:GetCachedMapInfo(questInfo.mapID)
 		if (mapInfo) then
 			zoneName = mapInfo.name;
@@ -1178,7 +1077,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	end
 	
 	-- Highlight
-	local showHighLight = self:IsMouseOver() or self.Faction:IsMouseOver() or (WQT_ListContainer.PoIHoverId and WQT_ListContainer.PoIHoverId == questInfo.questId)
+	local showHighLight = self:IsMouseOver() or self.Faction:IsMouseOver() or (WQT_ListContainer.PoIHoverId and WQT_ListContainer.PoIHoverId == questInfo.questID)
 	self.Highlight:SetShown(showHighLight);
 			
 	-- Faction icon
@@ -1209,11 +1108,11 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	self.Rewards:Reset();
 	self.Rewards:SetDesaturated(isDisliked);
 	for k, rewardInfo in questInfo:IterateRewards() do
-		self.Rewards:AddRewardByInfo(rewardInfo, C_QuestLog.QuestCanHaveWarModeBonus(self.questId));
+		self.Rewards:AddRewardByInfo(rewardInfo, C_QuestLog.QuestCanHaveWarModeBonus(self.questID));
 	end
 
 	-- Show border if quest is tracked
-	local isHardWatched = WQT_Utils:QuestIsWatchedManual(questInfo.questId);
+	local isHardWatched = WQT_Utils:QuestIsWatchedManual(questInfo.questID);
 	if (isHardWatched) then
 		self.TrackedBorder:Show();
 	else
@@ -1624,13 +1523,6 @@ function WQT_CoreMixin:OnLoad()
 	self.variables = addon.variables;
 	WQT_Profiles:OnLoad();
 
-	-- Add utilities options to the settings if it's installed but not enabled
-	-- if (_utilitiesInstalled) then
-	-- 	for k, setting in ipairs(_V["SETTING_UTILITIES_LIST"]) do
-	-- 		tinsert(_V["SETTING_LIST"], setting);
-	-- 	end
-	-- end
-
 	-- Quest Dataprovider
 	self.dataProvider = CreateAndInitFromMixin(WQT_DataProvider);
 
@@ -1997,6 +1889,10 @@ function WQT_CoreMixin:SetCvarValue(flagKey, value)
 end
 
 function WQT_CoreMixin:ChangePanel(panelID)
+	if (panelID == WQT_PanelID.WhatsNew) then
+		WQT.db.global.updateSeen = true;
+	end
+
 	for k, panel in ipairs(self.panels) do
 		panel:SetShown(panel.panelID == panelID);
 	end

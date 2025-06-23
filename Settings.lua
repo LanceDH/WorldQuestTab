@@ -125,8 +125,7 @@ function WQT_SettingsQuestListMixin:OnLoad()
 
 
 	self.dummyQuestInfo = {};
-	self.dummyQuestInfo.questId = 76586;
-	self.dummyQuestInfo.questID = self.dummyQuestInfo.questId;
+	self.dummyQuestInfo.questID = 76586;
 	self.dummyQuestInfo.factionID = 2600;
 	self.dummyQuestInfo.mapID = 2214;
 	self.dummyQuestInfo.title = "Worm Sign, Sealed, Delivered";

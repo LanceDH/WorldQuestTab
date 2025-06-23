@@ -12,8 +12,8 @@
 			<Layer level="BACKGROUND" textureSubLevel="3">
 				<Texture parentKey="CustomUnderlay" atlas="worldquest-questmarker-dragon" hidden="true">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="-5" y="4"/>
-						<Anchor point="BOTTOMRIGHT" x="5" y="-5"/>
+						<Anchor point="TOPLEFT" x="-8" y="8"/>
+						<Anchor point="BOTTOMRIGHT" x="8" y="-8"/>
 					</Anchors>
 				</Texture>
 				<Texture parentKey="Icon">
@@ -83,7 +83,7 @@
 				</FontString>
 			</Layer>
 			<Layer level="ARTWORK" textureSubLevel="4">
-				<Texture parentKey="TimeBG" file="Interface/COMMON/NameShadow" hidden="true">
+				<Texture parentKey="TimeBG" file="Interface/COMMON/NameShadow" hidden="true" alpha="0">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.Time" y="0"/>
 						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Time" x="-2" y="4" />

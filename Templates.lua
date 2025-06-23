@@ -325,30 +325,11 @@ function WQT_Utils:GetFactionDataInternal(id)
 	return factionData[id];
 end
 
-function WQT_Utils:GetCachedTypeIconData(questInfo, pinVersion)
-	
-	if (C_QuestLog.IsQuestCalling(questInfo.questId)) then
-		if (pinVersion) then
-			return "QuestDaily", 17, 17, true;
-		else
-			return "Callings-Available", 16, 21, true;
-			--return "quest-dailycampaign-available", 17, 17, true;
-		end
-	elseif (questInfo.isDaily or questInfo.isCombatAllyQuest) then
-		return "QuestDaily", 17, 17, true;
-	elseif (questInfo.isQuestStart) then
-		return "QuestNormal", 17, 17, true;
-	elseif (C_QuestLog.IsThreatQuest(questInfo.questId)) then
-		local themeInfo = C_QuestLog.GetQuestDetailsTheme(questInfo.questId);
-		local atlas = themeInfo and themeInfo.poiIcon or "worldquest-icon-nzoth";
-		return atlas, 16, 16, true;
-	end
-	
+function WQT_Utils:GetCachedTypeIconData(questInfo)
 	local tagInfo = questInfo:GetTagInfo();
 	-- If there is no tag info, it's a bonus objective
-	if (not tagInfo) then
-		--return "QuestBonusObjective", 21, 21, true;
-		return "Bonus-Objective-Star", 14, 14, false;
+	if (questInfo.isBonusQuest or not tagInfo) then
+		return "Bonus-Objective-Star", 16, 16, false;
 	end
 	
 	local tagID = tagInfo.tagID or _V["WQT_TYPE_BONUSOBJECTIVE"];
@@ -356,7 +337,7 @@ function WQT_Utils:GetCachedTypeIconData(questInfo, pinVersion)
 	if (not cachedData) then 
 		-- creating basetype
 		cachedData = {};
-		local atlasTexture, sizeX, sizeY = QuestUtil.GetWorldQuestAtlasInfo(questInfo.questId, tagInfo);
+		local atlasTexture, sizeX, sizeY = QuestUtil.GetWorldQuestAtlasInfo(questInfo.questID, tagInfo);
 		cachedData.texture = atlasTexture;
 		cachedData.x = sizeX;
 		cachedData.y = sizeY;
@@ -375,7 +356,7 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 	local color = WQT_Utils:GetColor(_V["COLOR_IDS"].timeNone);
 	local category = _V["TIME_REMAINING_CATEGORY"].none;
 	
-	if (not questInfo or not questInfo.questId) then return timeLeftSeconds, timeString, color ,timeStringShort, timeLeftMinutes, category end
+	if (not questInfo or not questInfo.questID) then return timeLeftSeconds, timeString, color ,timeStringShort, timeLeftMinutes, category end
 	
 	-- Time ran out, waiting for an update
 	if (questInfo:IsExpired()) then
@@ -385,8 +366,8 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 		return 0, timeString, color,timeStringShort , 0, _V["TIME_REMAINING_CATEGORY"].expired;
 	end
 	
-	timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(questInfo.questId) or 0;
-	timeLeftSeconds = C_TaskQuest.GetQuestTimeLeftSeconds(questInfo.questId) or 0;
+	timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(questInfo.questID) or 0;
+	timeLeftSeconds = C_TaskQuest.GetQuestTimeLeftSeconds(questInfo.questID) or 0;
 	if ( timeLeftSeconds  and timeLeftSeconds > 0) then
 		local displayTime = timeLeftSeconds
 		if (displayTime < SECONDS_PER_HOUR  and displayTime >= SECONDS_PER_MIN ) then
@@ -625,14 +606,14 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style)
 	
 	GameTooltip:SetOwner(button, "ANCHOR_RIGHT");
 	-- In case we somehow don't have data on this quest, even through that makes no sense at this point
-	if (not questInfo.questId or not HaveQuestData(questInfo.questId)) then
+	if (not questInfo.questID or not HaveQuestData(questInfo.questID)) then
 		GameTooltip_SetTitle(GameTooltip, RETRIEVING_DATA, RED_FONT_COLOR);
 		GameTooltip_SetTooltipWaitingForData(GameTooltip, true);
 		GameTooltip:Show();
 		return;
 	end
 	
-	local title, factionID, capped = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questId);
+	local title, factionID, capped = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questID);
 	local tagInfo = questInfo:GetTagInfo();
 	local qualityColor = WORLD_QUEST_QUALITY_COLORS[tagInfo and tagInfo.quality or Enum.WorldQuestQuality.Common];
 
@@ -641,12 +622,8 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style)
 	
 	-- type
 	if (not style.hideType) then
-		if (questInfo:IsQuestOfType(WQT_QUESTTYPE.calling)) then
-			GameTooltip_AddNormalLine(GameTooltip, COVENANT_CALLINGS_AVAILABLE);
-		elseif (questInfo.isCombatAllyQuest) then
-			GameTooltip_AddColoredLine(GameTooltip, AVAILABLE_FOLLOWER_QUEST, HIGHLIGHT_FONT_COLOR, true);
-		elseif (tagInfo and tagInfo.worldQuestType) then
-			QuestUtils_AddQuestTypeToTooltip(GameTooltip, questInfo.questId, NORMAL_FONT_COLOR);
+		if (tagInfo and tagInfo.worldQuestType) then
+			QuestUtils_AddQuestTypeToTooltip(GameTooltip, questInfo.questID, NORMAL_FONT_COLOR);
 		end
 	end
 	
@@ -671,9 +648,9 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style)
 	end
 
 	if (not style.hideObjectives) then
-		local numObjectives = C_QuestLog.GetNumQuestObjectives(questInfo.questId);
+		local numObjectives = C_QuestLog.GetNumQuestObjectives(questInfo.questID);
 		for objectiveIndex = 1, numObjectives do
-			local objectiveText, objectiveType, finished = GetQuestObjectiveInfo(questInfo.questId, objectiveIndex, false);
+			local objectiveText, objectiveType, finished = GetQuestObjectiveInfo(questInfo.questID, objectiveIndex, false);
 	
 			if ( objectiveText and #objectiveText > 0 ) then
 				local objectiveColor = finished and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
@@ -681,7 +658,7 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style)
 			end
 			-- Add a progress bar if that's the type
 			if(objectiveType == "progressbar") then
-				local percent = GetQuestProgressBarPercent(questInfo.questId);
+				local percent = GetQuestProgressBarPercent(questInfo.questID);
 				GameTooltip_ShowProgressBar(GameTooltip, 0, 100, percent, PERCENTAGE_STRING:format(percent));
 			end
 		end
@@ -690,7 +667,7 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style)
 	if (questInfo.reward.type == WQT_REWARDTYPE.missing) then
 		GameTooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
 	else
-		self:AddQuestRewardsToTooltip(GameTooltip, questInfo.questId);
+		self:AddQuestRewardsToTooltip(GameTooltip, questInfo.questID);
 
 		-- reposition compare frame
 		if((questInfo.reward.type == WQT_REWARDTYPE.equipment or questInfo.reward.type == WQT_REWARDTYPE.weapon) and GameTooltip.ItemTooltip:IsShown()) then
@@ -982,9 +959,9 @@ local function QuestContextSetup(frame, rootDescription, questInfo)
 end
 
 function WQT_Utils:HandleQuestClick(frame, questInfo, button)
-	if (not questInfo or not questInfo.questId) then return end
+	if (not questInfo or not questInfo.questID) then return end
 	
-	local questID =  questInfo.questId;
+	local questID =  questInfo.questID;
 	local isBonus = QuestUtils_IsQuestBonusObjective(questID);
 	local reward = questInfo:GetReward(1);
 	local tagInfo = questInfo:GetTagInfo();
@@ -1087,13 +1064,6 @@ function WQT_Utils:SetQuestDisliked(questID, isDisliked)
 	end
 	PlaySound(soundID, nil, false);
 end 
-
-function WQT_Utils:QuestIsVIQ(questInfo)
-	if (questInfo:IsQuestOfType(WQT_QUESTTYPE.calling)) then return WQT.settings.general.filterPasses.calling; end
-	if (questInfo:IsQuestOfType(WQT_QUESTTYPE.threat)) then return WQT.settings.general.filterPasses.threat; end
-	if (questInfo:IsQuestOfType(WQT_QUESTTYPE.combatAlly)) then return WQT.settings.general.filterPasses.combatAlly; end
-	return false;
-end
 
 function WQT_Utils:EnsureBountyBoards()
 	if (not self.bountyBoards) then

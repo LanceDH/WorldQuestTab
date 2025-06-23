@@ -41,6 +41,10 @@ local function AddIndentedDoubleLine(tooltip, a, b, level, color)
 	tooltip:AddDoubleLine(indented, b, color.r, color.g, color.b, color.r, color.g, color.b);
 end
 
+local function KeySortFunc(a, b)
+	return a < b;
+end
+
 function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 	if (not addon.debug) then return end;
 	level = level or 0;
@@ -48,27 +52,39 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 	if(level == 0) then
 		AddIndentedDoubleLine(tooltip, "questInfo data:", "", 0, color);
 	end
-	
+
 	-- First all non table values;
+	local sortedKeys = {}
 	for key, value in pairs(questInfo) do
 		if ((type(value) ~= "table" or value.GetRGBA) and type(value) ~= "function") then
-			AddIndentedDoubleLine(tooltip, key, value, level+1, color);
+			tinsert(sortedKeys, key);
 		end
 	end
+	table.sort(sortedKeys, KeySortFunc);
+	for _, key in ipairs(sortedKeys) do
+		AddIndentedDoubleLine(tooltip, key, questInfo[key], level+1, color);
+	end
+	wipe(sortedKeys);
+
 	-- Actual tables
 	for key, value in pairs(questInfo) do
 		if (type(value) == "table" and not value.GetRGBA and key ~= "debug") then
-			AddIndentedDoubleLine(tooltip, key, "", level+1, color);
-			self:AddDebugToTooltip(tooltip, value, level + 1)
+			tinsert(sortedKeys, key);
 		end
 	end
-	
-	if(level == 0 and questInfo.questId) then
+
+	table.sort(sortedKeys, KeySortFunc);
+	for _, key in ipairs(sortedKeys) do
+		AddIndentedDoubleLine(tooltip, key, "", level+1, color);
+		self:AddDebugToTooltip(tooltip, questInfo[key], level + 1)
+	end
+
+	if(level == 0 and questInfo.questID) then
 		color = GRAY_FONT_COLOR;
 		
 		AddIndentedDoubleLine(tooltip, "Through functions:", "", 0, color);
 		
-		local classifictaion = C_QuestInfoSystem.GetQuestClassification(questInfo.questId)
+		local classifictaion = C_QuestInfoSystem.GetQuestClassification(questInfo.questID)
 		AddIndentedDoubleLine(tooltip, "classifictaion", classifictaion, 1, color);
 		-- Time
 		local seconds, timeString, timeColor, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo, true, true);
@@ -86,7 +102,7 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		AddIndentedDoubleLine(tooltip, "texture", factionInfo.texture, 2, color);
 		AddIndentedDoubleLine(tooltip, "expansion", factionInfo.expansion, 2, color);
 		-- MapInfo
-		local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questId);
+		local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questID);
 		if (questInfo.mapinfo) then
 			AddIndentedDoubleLine(tooltip, "mapInfo", "", 1, color);
 			AddIndentedDoubleLine(tooltip, "name", mapInfo.name, 2, color);
@@ -125,8 +141,8 @@ local URL_WOWI = "https://www.wowinterface.com/downloads/info25042-WorldQuestTab
 local FORMAT_PLAYER = "%d;%s;%s;%s;%d;%s;%s\n";
 local FORMAT_QUEST_HEADER = "Quests;%d;%d\nQuestId;Counted;Frequency;IsTask;IsBounty;IsHidden\n"
 local FORMAT_QUEST = "%s%d;%d;%s;%s;%s\n"
-local FORMAT_WORLDQUEST_HEADER = "World Quests;%d\nQuestId;MapId;PassedFilter;IsValid;AlwaysHide;IsDaily;IsAllyQuest;Seconds;RewardBits\n";
-local FORMAT_WORLDQUEST = "%s%d;%d;%s;%s;%s;%s;%s;%d;%d\n"
+local FORMAT_WORLDQUEST_HEADER = "World Quests;%d\nQuestId;MapId;PassedFilter;IsValid;AlwaysHide;Seconds;RewardBits\n";
+local FORMAT_WORLDQUEST = "%s%d;%d;%s;%s;%s;%d;%d\n"
 -- output, name
 local FORMAT_ADDON = "%s%s\n"
 -- ouput, indentation, key, value
@@ -158,8 +174,8 @@ local function GetWorldQuestDump()
 	
 	local list = WQT_WorldQuestFrame.dataProvider:GetIterativeList();
 	for k, questInfo in ipairs(list) do
-		local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questId)
-		output = FORMAT_WORLDQUEST:format(output, questInfo.questId, mapInfo.mapID, bts(questInfo.passedFilter), bts(questInfo.isValid), bts(questInfo.alwaysHide), bts(questInfo.isDaily), bts(questInfo.isCombatAllyQuest), questInfo.time.seconds, questInfo.reward.typeBits);
+		local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questID)
+		output = FORMAT_WORLDQUEST:format(output, questInfo.questID, mapInfo.mapID, bts(questInfo.passedFilter), bts(questInfo.isValid), bts(questInfo.alwaysHide), questInfo.time.seconds, questInfo.reward.typeBits);
 	end
 	
 	return output;

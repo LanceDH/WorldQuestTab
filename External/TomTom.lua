@@ -104,7 +104,7 @@ end
 local function TomTomIsChecked(questInfo)
 	if (not TomTomIsOK()) then return false; end
 	
-	local questId = questInfo.questId;
+	local questId = questInfo.questID;
 	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
 	local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
 	local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
@@ -118,7 +118,7 @@ local function TomTomOnPressed(questInfo)
 		return;
 	end
 
-	local questId = questInfo.questId;
+	local questId = questInfo.questID;
 	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
 	local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
 	local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
