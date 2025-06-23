@@ -967,7 +967,6 @@ _V["WQT_TYPEFLAG_LABELS"] = {
 			["Profession"] = BATTLE_PET_SOURCE_4,
 			["Invasion"] = _L["TYPE_INVASION"],
 			["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE,
-			["Daily"] = DAILY,
 			["Bonus"] = SCENARIO_BONUS_LABEL,
 			["Dragonrider"] = DRAGONRIDING_RACES_MAP_TOGGLE
 		}
@@ -1406,7 +1405,6 @@ _V["WQT_DEFAULTS"] = {
 			showZone = true;
 			amountColors = true;
 			alwaysAllQuests = false;
-			includeDaily = true;
 			colorTime = true;
 			fullTime = false;
 			rewardNumDisplay = 1;
@@ -1450,7 +1448,6 @@ _V["WQT_DEFAULTS"] = {
 							["Profession"] = true,
 							["Invasion"] = true,
 							["Assault"] = true,
-							["Daily"] = true,
 							["Bonus"] = true,
 							["Dragonrider"] = true
 						}}
