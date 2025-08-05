@@ -86,6 +86,10 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		
 		local classifictaion = C_QuestInfoSystem.GetQuestClassification(questInfo.questID)
 		AddIndentedDoubleLine(tooltip, "classifictaion", classifictaion, 1, color);
+		local difficultyLevel = C_QuestLog.GetQuestDifficultyLevel(questInfo.questID);
+		AddIndentedDoubleLine(tooltip, "difficultyLevel", difficultyLevel, 1, color);
+		local expLevel = GetQuestExpansion(questInfo.questID);
+		AddIndentedDoubleLine(tooltip, "expansion", expLevel, 1, color);
 		-- Time
 		local seconds, timeString, timeColor, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo, true, true);
 		AddIndentedDoubleLine(tooltip, "time", "", 1, color);

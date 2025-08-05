@@ -20,6 +20,8 @@ local WQT_Profiles = addon.WQT_Profiles;
 -- PUBLIC
 ------------------------
 
+WQT_WORLD_QUEST_TAB = "World Quest Tab";
+
 WQT_REWARDTYPE = FlagsUtil.MakeFlags(
 	"weapon",		--1
 	"equipment",	--2
@@ -66,256 +68,6 @@ local function _DeepWipeTable(t)
 	t = nil;
 end
 
--- /run print(string.format("%.2f %.2f", WorldMapFrame:GetNormalizedCursorPosition()))
--- /run print(WorldMapFrame.mapID)
--- /run print(FlightMapFrame.mapID)
-
-local WQT_ISLE_OF_DORN = {
-	[2248]	= {["x"] = 0.00, ["y"] = 0.00}, -- Isle of Dorn
-	[2369]	= {["x"] = 0.18, ["y"] = 0.18}  -- Siren Isle
-}
-local WQT_WARWITHIN = {
-	[2248]	= {["x"] = 0.73, ["y"] = 0.23}, -- Isle of Dorn
-	[2214]	= {["x"] = 0.57, ["y"] = 0.58}, -- Ringing Deeps
-	[2215]	= {["x"] = 0.35, ["y"] = 0.47}, -- Hallowfall
-	[2255]	= {["x"] = 0.46, ["y"] = 0.75}, -- Azj-Kahet
-	[2346]	= {["x"] = 0.82, ["y"] = 0.74}, -- Undermine
-	[2369]	= {["x"] = 0.00, ["y"] = 0.00}  -- Siren Isle
-}
-local WQT_ZARALEK = {
-	[2133]	= {["x"] = 0.00, ["y"] = 0.00}, -- Zaralek Cavern
-	[2022]	= {["x"] = 0.88, ["y"] = 0.84}, -- Waking Shores
-	[2023]	= {["x"] = 0.88, ["y"] = 0.84}, -- Ohn'ahran Plains
-	[2200]	= {["x"] = 0.88, ["y"] = 0.84}, -- Emerald Dream
-	[2239]	= {["x"] = 0.88, ["y"] = 0.84}, -- Amirdrassil
-	[2024]	= {["x"] = 0.88, ["y"] = 0.84}, -- Azure Span
-	[2025]	= {["x"] = 0.88, ["y"] = 0.84}, -- Thaldraszus
-	[2151]	= {["x"] = 0.88, ["y"] = 0.84}, -- Forbidden Reach
-	[2112]	= {["x"] = 0.88, ["y"] = 0.84}, -- Valdrakken
-}
-local WQT_DRAGONLANDS = {
-	[2022]	= {["x"] = 0.48, ["y"] = 0.35}, -- Waking Shores
-	[2023]	= {["x"] = 0.44, ["y"] = 0.56}, -- Ohn'ahran Plains
-	[2200]	= {["x"] = 0.31, ["y"] = 0.57}, -- Emerald Dream
-	[2239]	= {["x"] = 0.24, ["y"] = 0.58}, -- Amirdrassil
-	[2024]	= {["x"] = 0.55, ["y"] = 0.74}, -- Azure Span
-	[2025]	= {["x"] = 0.63, ["y"] = 0.51}, -- Thaldraszus
-	[2151]	= {["x"] = 0.65, ["y"] = 0.10}, -- Forbidden Reach
-	[2133]	= {["x"] = 0.88, ["y"] = 0.84}, -- Zaralek Cavern
-}
-local WQT_SHADOWLANDS = {
-	[1543]	= {["x"] = 0.23, ["y"] = 0.13}, -- The Maw
-	[1536]	= {["x"] = 0.62, ["y"] = 0.21}, -- Maldraxxus
-	[1525]	= {["x"] = 0.24, ["y"] = 0.54}, -- Revendreth
-	[1670]	= {["x"] = 0.47, ["y"] = 0.51}, -- Oribos
-	[1533]	= {["x"] = 0.71, ["y"] = 0.57}, -- Bastion
-	[1565]	= {["x"] = 0.48, ["y"] = 0.80}, -- Ardenweald
-	[1970]	= {["x"] = 0.85, ["y"] = 0.81}, -- Zereth Mortis
-}
-local WQT_NAZJATAR = {
-	[1355]	= {["x"] = 0.00, ["y"] = 0.00}, -- Nazjatar
-	[864]	= {["x"] = 0.11, ["y"] = 0.52}, -- Vol'dun
-	[863]	= {["x"] = 0.11, ["y"] = 0.52}, -- Nazmir
-	[862]	= {["x"] = 0.11, ["y"] = 0.52}, -- Zuldazar
-	[1165]	= {["x"] = 0.11, ["y"] = 0.52}, -- Dazar'alor
-
-	[942]	= {["x"] = 0.77, ["y"] = 0.77}, -- Stromsong Valley
-	[896]	= {["x"] = 0.77, ["y"] = 0.77}, -- Drustvar
-	[895]	= {["x"] = 0.77, ["y"] = 0.77}, -- Tiragarde Sound
-	[1161]	= {["x"] = 0.77, ["y"] = 0.77}, -- Boralus
-	[1169]	= {["x"] = 0.77, ["y"] = 0.77}, -- Tol Dagor
-	[1462]	= {["x"] = 0.77, ["y"] = 0.77}, -- Mechagon
-}
-
-local WQT_ZANDALAR = {
-	[864]	= {["x"] = 0.39, ["y"] = 0.32}, -- Vol'dun
-	[863]	= {["x"] = 0.57, ["y"] = 0.28}, -- Nazmir
-	[862]	= {["x"] = 0.55, ["y"] = 0.61}, -- Zuldazar
-	[1165]	= {["x"] = 0.55, ["y"] = 0.61}, -- Dazar'alor
-	[1355]	= {["x"] = 0.86, ["y"] = 0.14}, -- Nazjatar
-
-	[1527]	= {["x"] = 0.0, ["y"] = 0.0}, -- Uldum
-	[1530]	= {["x"] = 0.0, ["y"] = 0.0}, -- Vale of Eternam Blossom
-}
-local WQT_KULTIRAS = {
-	[942]	= {["x"] = 0.55, ["y"] = 0.25}, -- Stromsong Valley
-	[896]	= {["x"] = 0.36, ["y"] = 0.67}, -- Drustvar
-	[895]	= {["x"] = 0.56, ["y"] = 0.54}, -- Tiragarde Sound
-	[1161]	= {["x"] = 0.56, ["y"] = 0.54}, -- Boralus
-	[1169]	= {["x"] = 0.78, ["y"] = 0.61}, -- Tol Dagor
-	[1355]	= {["x"] = 0.86, ["y"] = 0.14}, -- Nazjatar
-	[1462]	= {["x"] = 0.17, ["y"] = 0.28}, -- Mechagon
-}
-
-local WQT_ARGUS = {
-	[830]	= {["x"] = 0.61, ["y"] = 0.68}, -- Krokuun
-	[885]	= {["x"] = 0.31, ["y"] = 0.51}, -- Antoran Wastes
-	[882]	= {["x"] = 0.62, ["y"] = 0.26}, -- Eredath
-}
-local WQT_LEGION = {
-	[630]	= {["x"] = 0.33, ["y"] = 0.58}, -- Azsuna
-	[680]	= {["x"] = 0.46, ["y"] = 0.45}, -- Suramar
-	[634]	= {["x"] = 0.60, ["y"] = 0.33}, -- Stormheim
-	[650]	= {["x"] = 0.46, ["y"] = 0.23}, -- Highmountain
-	[641]	= {["x"] = 0.34, ["y"] = 0.33}, -- Val'sharah
-	[790]	= {["x"] = 0.46, ["y"] = 0.84}, -- Eye of Azshara
-	[646]	= {["x"] = 0.54, ["y"] = 0.68}, -- Broken Shore
-	[627]	= {["x"] = 0.45, ["y"] = 0.64}, -- Dalaran
-	[830]	= {["x"] = 0.86, ["y"] = 0.15}, -- Krokuun
-	[885]	= {["x"] = 0.86, ["y"] = 0.15}, -- Antoran Wastes
-	[882]	= {["x"] = 0.86, ["y"] = 0.15}, -- Eredath
-}
-local WQT_KALIMDOR = { 
-	[81] 	= {["x"] = 0.42, ["y"] = 0.82}, -- Silithus
-	[64]	= {["x"] = 0.50, ["y"] = 0.72}, -- Thousand Needles
-	[249]	= {["x"] = 0.47, ["y"] = 0.91}, -- Uldum
-	[1527]	= {["x"] = 0.47, ["y"] = 0.91}, -- Uldum BfA
-	[71]	= {["x"] = 0.55, ["y"] = 0.84}, -- Tanaris
-	[78]	= {["x"] = 0.50, ["y"] = 0.81}, -- Ungoro
-	[69]	= {["x"] = 0.43, ["y"] = 0.7}, -- Feralas
-	[70]	= {["x"] = 0.55, ["y"] = 0.67}, -- Dustwallow
-	[199]	= {["x"] = 0.51, ["y"] = 0.67}, -- S Barrens
-	[7]		= {["x"] = 0.47, ["y"] = 0.6}, -- Mulgore
-	[66]	= {["x"] = 0.41, ["y"] = 0.57}, -- Desolace
-	[65]	= {["x"] = 0.43, ["y"] = 0.46}, -- Stonetalon
-	[10]	= {["x"] = 0.52, ["y"] = 0.5}, -- N Barrens
-	[1]		= {["x"] = 0.58, ["y"] = 0.5}, -- Durotar
-	[63]	= {["x"] = 0.49, ["y"] = 0.41}, -- Ashenvale
-	[62]	= {["x"] = 0.46, ["y"] = 0.23}, -- Dakshore
-	[76]	= {["x"] = 0.59, ["y"] = 0.37}, -- Azshara
-	[198]	= {["x"] = 0.54, ["y"] = 0.32}, -- Hyjal
-	[77]	= {["x"] = 0.49, ["y"] = 0.25}, -- Felwood
-	[80]	= {["x"] = 0.53, ["y"] = 0.19}, -- Moonglade
-	[83]	= {["x"] = 0.58, ["y"] = 0.23}, -- Winterspring
-	[57]	= {["x"] = 0.42, ["y"] = 0.1}, -- Teldrassil
-	[97]	= {["x"] = 0.33, ["y"] = 0.27}, -- Azuremyst
-	[106]	= {["x"] = 0.30, ["y"] = 0.18}, -- Bloodmyst
-}
-local WQT_EASTERN_KINGDOMS = {
-	[210]	= {["x"] = 0.47, ["y"] = 0.87}, -- Cape of STV
-	[50]	= {["x"] = 0.47, ["y"] = 0.87}, -- N STV
-	[17]	= {["x"] = 0.54, ["y"] = 0.89}, -- Blasted Lands
-	[51]	= {["x"] = 0.54, ["y"] = 0.78}, -- Swamp of Sorrow
-	[42]	= {["x"] = 0.49, ["y"] = 0.79}, -- Deadwind
-	[47]	= {["x"] = 0.45, ["y"] = 0.8}, -- Duskwood
-	[52]	= {["x"] = 0.40, ["y"] = 0.79}, -- Westfall
-	[37]	= {["x"] = 0.47, ["y"] = 0.75}, -- Elwynn
-	[49]	= {["x"] = 0.51, ["y"] = 0.75}, -- Redridge
-	[36]	= {["x"] = 0.49, ["y"] = 0.7}, -- Burning Steppes
-	[32]	= {["x"] = 0.47, ["y"] = 0.65}, -- Searing Gorge
-	[15]	= {["x"] = 0.52, ["y"] = 0.65}, -- Badlands
-	[27]	= {["x"] = 0.44, ["y"] = 0.61}, -- Dun Morogh
-	[48]	= {["x"] = 0.52, ["y"] = 0.6}, -- Loch Modan
-	[241]	= {["x"] = 0.56, ["y"] = 0.55}, -- Twilight Highlands
-	[56]	= {["x"] = 0.50, ["y"] = 0.53}, -- Wetlands
-	[14]	= {["x"] = 0.51, ["y"] = 0.46}, -- Arathi Highlands
-	[26]	= {["x"] = 0.57, ["y"] = 0.4}, -- Hinterlands
-	[25]	= {["x"] = 0.46, ["y"] = 0.4}, -- Hillsbrad
-	[217]	= {["x"] = 0.40, ["y"] = 0.48}, -- Ruins of Gilneas
-	[21]	= {["x"] = 0.41, ["y"] = 0.39}, -- Silverpine
-	[18]	= {["x"] = 0.39, ["y"] = 0.32}, -- Tirisfall
-	[22]	= {["x"] = 0.49, ["y"] = 0.31}, -- W Plaugelands
-	[23]	= {["x"] = 0.54, ["y"] = 0.32}, -- E Plaguelands
-	[95]	= {["x"] = 0.56, ["y"] = 0.23}, -- Ghostlands
-	[94]	= {["x"] = 0.54, ["y"] = 0.18}, -- Eversong
-	[122]	= {["x"] = 0.55, ["y"] = 0.05}, -- Quel'Danas
-}
-local WQT_OUTLAND = {
-	[104]	= {["x"] = 0.74, ["y"] = 0.8}, -- Shadowmoon Valley
-	[108]	= {["x"] = 0.45, ["y"] = 0.77}, -- Terrokar
-	[107]	= {["x"] = 0.30, ["y"] = 0.65}, -- Nagrand
-	[100]	= {["x"] = 0.52, ["y"] = 0.51}, -- Hellfire
-	[102]	= {["x"] = 0.33, ["y"] = 0.47}, -- Zangarmarsh
-	[105]	= {["x"] = 0.36, ["y"] = 0.23}, -- Blade's Edge
-	[109]	= {["x"] = 0.57, ["y"] = 0.2}, -- Netherstorm
-}
-local WQT_NORTHREND = {
-	[114]	= {["x"] = 0.22, ["y"] = 0.59}, -- Borean Tundra
-	[119]	= {["x"] = 0.25, ["y"] = 0.41}, -- Sholazar Basin
-	[118]	= {["x"] = 0.41, ["y"] = 0.26}, -- Icecrown
-	[127]	= {["x"] = 0.47, ["y"] = 0.55}, -- Crystalsong
-	[120]	= {["x"] = 0.61, ["y"] = 0.21}, -- Stormpeaks
-	[121]	= {["x"] = 0.77, ["y"] = 0.32}, -- Zul'Drak
-	[116]	= {["x"] = 0.71, ["y"] = 0.53}, -- Grizzly Hillsbrad
-	[113]	= {["x"] = 0.78, ["y"] = 0.74}, -- Howling Fjord
-}
-local WQT_PANDARIA = {
-	[554]	= {["x"] = 0.90, ["y"] = 0.68}, -- Timeless Isles
-	[371]	= {["x"] = 0.67, ["y"] = 0.52}, -- Jade Forest
-	[418]	= {["x"] = 0.53, ["y"] = 0.75}, -- Karasang
-	[376]	= {["x"] = 0.51, ["y"] = 0.65}, -- Four Winds
-	[422]	= {["x"] = 0.35, ["y"] = 0.62}, -- Dread Waste
-	[390]	= {["x"] = 0.50, ["y"] = 0.52}, -- Eternal Blossom
-	[379]	= {["x"] = 0.45, ["y"] = 0.35}, -- Kun-lai Summit
-	[507]	= {["x"] = 0.48, ["y"] = 0.05}, -- Isle of Giants
-	[388]	= {["x"] = 0.32, ["y"] = 0.45}, -- Townlong Steppes
-	[504]	= {["x"] = 0.20, ["y"] = 0.11}, -- Isle of Thunder
-	[1530]	= {["x"] = 0.51, ["y"] = 0.53}, -- Vale Of Eternal Blossom BfA
-}
-local WQT_DRAENOR = {
-	[550]	= {["x"] = 0.24, ["y"] = 0.49}, -- Nagrand
-	[525]	= {["x"] = 0.34, ["y"] = 0.29}, -- Frostridge
-	[543]	= {["x"] = 0.49, ["y"] = 0.21}, -- Gorgrond
-	[535]	= {["x"] = 0.43, ["y"] = 0.56}, -- Talador
-	[542]	= {["x"] = 0.46, ["y"] = 0.73}, -- Spired of Arak
-	[539]	= {["x"] = 0.58, ["y"] = 0.67}, -- Shadowmoon
-	[534]	= {["x"] = 0.58, ["y"] = 0.47}, -- Tanaan Jungle
-	[558]	= {["x"] = 0.73, ["y"] = 0.43}, -- Ashran
-}
-
-local expZones =
-{
-	[0] = -- Anything lower than Draenor really
-	{
-		WQT_KALIMDOR,
-		WQT_EASTERN_KINGDOMS,
-		WQT_OUTLAND,
-		WQT_NORTHREND,
-		WQT_PANDARIA,
-	},
-	[LE_EXPANSION_WARLORDS_OF_DRAENOR] = {
-		WQT_DRAENOR,
-	},
-	[LE_EXPANSION_LEGION] = {
-		WQT_LEGION,
-		WQT_ARGUS,
-	},
-	[LE_EXPANSION_BATTLE_FOR_AZEROTH] = {
-		WQT_ZANDALAR,
-		WQT_KULTIRAS,
-		WQT_NAZJATAR,
-	},
-	[LE_EXPANSION_SHADOWLANDS] = {
-		WQT_SHADOWLANDS,
-	},
-	[LE_EXPANSION_DRAGONFLIGHT] = {
-		WQT_DRAGONLANDS,
-		WQT_ZARALEK,
-	},
-	[LE_EXPANSION_WAR_WITHIN] = {
-		WQT_WARWITHIN,
-		WQT_ISLE_OF_DORN
-	}
-}
-
--- A list of every zones linked to an expansion level
-_V["WQT_ZONE_EXPANSIONS"] = {}
-
--- Make table linking zones to expansion level.
--- Increasing order in case newer expansions re-use old zones
-for expID=0, LE_EXPANSION_LEVEL_CURRENT, 1 do
-	local zoneList = expZones[expID];
-	if (zoneList) then 
-		for _, mapList in pairs(zoneList) do
-			for mapID, _ in pairs(mapList) do
-				_V["WQT_ZONE_EXPANSIONS"][mapID] = expID;
-			end
-		end
-	end
-end
-
-table.wipe(expZones);
-
 ------------------------
 -- SHARED
 ------------------------
@@ -348,9 +100,6 @@ _V["WQT_ORANGE_FONT_COLOR"] = CreateColor(1, 0.5, 0);
 _V["WQT_GREEN_FONT_COLOR"] = CreateColor(0, 0.75, 0);
 _V["WQT_BLUE_FONT_COLOR"] = CreateColor(0.2, 0.60, 1);
 _V["WQT_PURPLE_FONT_COLOR"] = CreateColor(0.73, 0.33, 0.82);
-
-_V["WQT_TYPE_BONUSOBJECTIVE"] = 0;
-_V["WQT_LISTITTEM_HEIGHT"] = 32;
 
 _V["DEBUG_OUTPUT_TYPE"] = {
 	["invalid"] = 0
@@ -907,8 +656,8 @@ _V["SETTING_UTILITIES_LIST"] = {
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.loadUtilities = value;
 				if (value and not C_AddOns.IsAddOnLoaded("WorldQuestTabUtilities")) then
-					C_AddOns.LoadAddOn("WorldQuestTabUtilities");
-					WQT_ListContainer:UpdateQuestList();
+					--C_AddOns.LoadAddOn("WorldQuestTabUtilities");
+					--WQT_ListContainer:UpdateQuestList();
 				end
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.loadUtilities end
@@ -1193,13 +942,281 @@ _V["FILTER_FUNCTIONS"] = {
 			}
 	};
 
-_V["WQT_CONTINENT_GROUPS"] = {
-		[875]	= {876} 
-		,[1011]	= {876}  -- Zandalar flightmap
-		,[876]	= {875}
-		,[1014]	= {875} -- Kul Tiras flightmap
-		,[1504]	= {875, 876} -- Nazjatar flightmap
+-- /run print(string.format("%.2f %.2f", WorldMapFrame:GetNormalizedCursorPosition()))
+-- /run print(WorldMapFrame.mapID)
+-- /run print(FlightMapFrame.mapID)
+
+local kareshMapCoords = {
+	[2371]	= {["x"] = 0.00, ["y"] = 0.00}, -- K'aresh
+	[2472]	= {["x"] = 0.67, ["y"] = 0.80}, -- Tazavesh
+}
+local isleOfDornMapCoords = {
+	[2248]	= {["x"] = 0.00, ["y"] = 0.00}, -- Isle of Dorn
+	[2369]	= {["x"] = 0.18, ["y"] = 0.18},  -- Siren Isle
+}
+local khazalgarMapCoords = {
+	[2248]	= {["x"] = 0.73, ["y"] = 0.23}, -- Isle of Dorn
+	[2214]	= {["x"] = 0.57, ["y"] = 0.58}, -- Ringing Deeps
+	[2215]	= {["x"] = 0.35, ["y"] = 0.47}, -- Hallowfall
+	[2255]	= {["x"] = 0.46, ["y"] = 0.75}, -- Azj-Kahet
+	[2346]	= {["x"] = 0.82, ["y"] = 0.74}, -- Undermine
+	[2371]	= {["x"] = 0.17, ["y"] = 0.20}, -- K'aresh
+}
+local zaralekMapCoords = {
+	[2133]	= {["x"] = 0.00, ["y"] = 0.00}, -- Zaralek Cavern
+	[2022]	= {["x"] = 0.88, ["y"] = 0.84}, -- Waking Shores
+	[2023]	= {["x"] = 0.88, ["y"] = 0.84}, -- Ohn'ahran Plains
+	[2200]	= {["x"] = 0.88, ["y"] = 0.84}, -- Emerald Dream
+	[2239]	= {["x"] = 0.88, ["y"] = 0.84}, -- Amirdrassil
+	[2024]	= {["x"] = 0.88, ["y"] = 0.84}, -- Azure Span
+	[2025]	= {["x"] = 0.88, ["y"] = 0.84}, -- Thaldraszus
+	[2151]	= {["x"] = 0.88, ["y"] = 0.84}, -- Forbidden Reach
+	[2112]	= {["x"] = 0.88, ["y"] = 0.84}, -- Valdrakken
+}
+local dragonlandsMapCoords = {
+	[2022]	= {["x"] = 0.48, ["y"] = 0.35}, -- Waking Shores
+	[2023]	= {["x"] = 0.44, ["y"] = 0.56}, -- Ohn'ahran Plains
+	[2200]	= {["x"] = 0.31, ["y"] = 0.57}, -- Emerald Dream
+	[2239]	= {["x"] = 0.24, ["y"] = 0.58}, -- Amirdrassil
+	[2024]	= {["x"] = 0.55, ["y"] = 0.74}, -- Azure Span
+	[2025]	= {["x"] = 0.63, ["y"] = 0.51}, -- Thaldraszus
+	[2151]	= {["x"] = 0.65, ["y"] = 0.10}, -- Forbidden Reach
+
+	[2133]	= {["x"] = 0.88, ["y"] = 0.84}, -- Zaralek Cavern
+}
+local shadowlandsMapCoords = {
+	[1543]	= {["x"] = 0.23, ["y"] = 0.13}, -- The Maw
+	[1536]	= {["x"] = 0.62, ["y"] = 0.21}, -- Maldraxxus
+	[1525]	= {["x"] = 0.24, ["y"] = 0.54}, -- Revendreth
+	[1670]	= {["x"] = 0.47, ["y"] = 0.51}, -- Oribos
+	[1533]	= {["x"] = 0.71, ["y"] = 0.57}, -- Bastion
+	[1565]	= {["x"] = 0.48, ["y"] = 0.80}, -- Ardenweald
+	[1970]	= {["x"] = 0.85, ["y"] = 0.81}, -- Zereth Mortis
+}
+local nazjatarMapCoords = {
+	[1355]	= {["x"] = 0.00, ["y"] = 0.00}, -- Nazjatar
+
+	[864]	= {["x"] = 0.11, ["y"] = 0.52}, -- Vol'dun
+	[863]	= {["x"] = 0.11, ["y"] = 0.52}, -- Nazmir
+	[862]	= {["x"] = 0.11, ["y"] = 0.52}, -- Zuldazar
+	[1165]	= {["x"] = 0.11, ["y"] = 0.52}, -- Dazar'alor
+
+	[942]	= {["x"] = 0.77, ["y"] = 0.77}, -- Stromsong Valley
+	[896]	= {["x"] = 0.77, ["y"] = 0.77}, -- Drustvar
+	[895]	= {["x"] = 0.77, ["y"] = 0.77}, -- Tiragarde Sound
+	[1161]	= {["x"] = 0.77, ["y"] = 0.77}, -- Boralus
+	[1169]	= {["x"] = 0.77, ["y"] = 0.77}, -- Tol Dagor
+	[1462]	= {["x"] = 0.77, ["y"] = 0.77}, -- Mechagon
+}
+local zandalarMapCoords = {
+	[864]	= {["x"] = 0.39, ["y"] = 0.32}, -- Vol'dun
+	[863]	= {["x"] = 0.57, ["y"] = 0.28}, -- Nazmir
+	[862]	= {["x"] = 0.55, ["y"] = 0.61}, -- Zuldazar
+	[1165]	= {["x"] = 0.55, ["y"] = 0.61}, -- Dazar'alor
+
+	[1355]	= {["x"] = 0.86, ["y"] = 0.14}, -- Nazjatar
+}
+local kultirasMapCoords = {
+	[942]	= {["x"] = 0.55, ["y"] = 0.25}, -- Stromsong Valley
+	[896]	= {["x"] = 0.36, ["y"] = 0.67}, -- Drustvar
+	[895]	= {["x"] = 0.56, ["y"] = 0.54}, -- Tiragarde Sound
+	[1161]	= {["x"] = 0.56, ["y"] = 0.54}, -- Boralus
+	[1169]	= {["x"] = 0.78, ["y"] = 0.61}, -- Tol Dagor
+	[1462]	= {["x"] = 0.17, ["y"] = 0.28}, -- Mechagon
+
+	[1355]	= {["x"] = 0.86, ["y"] = 0.14}, -- Nazjatar
+}
+local argusMapCoords = {
+	[830]	= {["x"] = 0.61, ["y"] = 0.68}, -- Krokuun
+	[885]	= {["x"] = 0.31, ["y"] = 0.51}, -- Antoran Wastes
+	[882]	= {["x"] = 0.62, ["y"] = 0.26}, -- Eredath
+}
+local legionMapCoords = {
+	[630]	= {["x"] = 0.33, ["y"] = 0.58}, -- Azsuna
+	[680]	= {["x"] = 0.46, ["y"] = 0.45}, -- Suramar
+	[634]	= {["x"] = 0.60, ["y"] = 0.33}, -- Stormheim
+	[650]	= {["x"] = 0.46, ["y"] = 0.23}, -- Highmountain
+	[641]	= {["x"] = 0.34, ["y"] = 0.33}, -- Val'sharah
+	[790]	= {["x"] = 0.46, ["y"] = 0.84}, -- Eye of Azshara
+	[646]	= {["x"] = 0.54, ["y"] = 0.68}, -- Broken Shore
+	[627]	= {["x"] = 0.45, ["y"] = 0.64}, -- Dalaran
+	[830]	= {["x"] = 0.86, ["y"] = 0.15}, -- Krokuun
+	[885]	= {["x"] = 0.86, ["y"] = 0.15}, -- Antoran Wastes
+	[882]	= {["x"] = 0.86, ["y"] = 0.15}, -- Eredath
+}
+local draenorMapCoords = {
+	[550]	= {["x"] = 0.24, ["y"] = 0.49}, -- Nagrand
+	[525]	= {["x"] = 0.34, ["y"] = 0.29}, -- Frostridge
+	[543]	= {["x"] = 0.49, ["y"] = 0.21}, -- Gorgrond
+	[535]	= {["x"] = 0.43, ["y"] = 0.56}, -- Talador
+	[542]	= {["x"] = 0.46, ["y"] = 0.73}, -- Spired of Arak
+	[539]	= {["x"] = 0.58, ["y"] = 0.67}, -- Shadowmoon
+	[534]	= {["x"] = 0.58, ["y"] = 0.47}, -- Tanaan Jungle
+	[588]	= {["x"] = 0.73, ["y"] = 0.43}, -- Ashran
+}
+local pandariaMapCoords = {
+	[554]	= {["x"] = 0.90, ["y"] = 0.68}, -- Timeless Isles
+	[371]	= {["x"] = 0.67, ["y"] = 0.52}, -- Jade Forest
+	[418]	= {["x"] = 0.53, ["y"] = 0.75}, -- Karasang
+	[376]	= {["x"] = 0.51, ["y"] = 0.65}, -- Four Winds
+	[422]	= {["x"] = 0.35, ["y"] = 0.62}, -- Dread Waste
+	[390]	= {["x"] = 0.50, ["y"] = 0.52}, -- Eternal Blossom
+	[379]	= {["x"] = 0.45, ["y"] = 0.35}, -- Kun-lai Summit
+	[507]	= {["x"] = 0.48, ["y"] = 0.05}, -- Isle of Giants
+	[388]	= {["x"] = 0.32, ["y"] = 0.45}, -- Townlong Steppes
+	[504]	= {["x"] = 0.20, ["y"] = 0.11}, -- Isle of Thunder
+	[1530]	= {["x"] = 0.51, ["y"] = 0.53}, -- Vale Of Eternal Blossom BfA
+}
+local northrendMapCoords = {
+	[114]	= {["x"] = 0.22, ["y"] = 0.59}, -- Borean Tundra
+	[119]	= {["x"] = 0.25, ["y"] = 0.41}, -- Sholazar Basin
+	[118]	= {["x"] = 0.41, ["y"] = 0.26}, -- Icecrown
+	[127]	= {["x"] = 0.47, ["y"] = 0.55}, -- Crystalsong
+	[120]	= {["x"] = 0.61, ["y"] = 0.21}, -- Stormpeaks
+	[121]	= {["x"] = 0.77, ["y"] = 0.32}, -- Zul'Drak
+	[116]	= {["x"] = 0.71, ["y"] = 0.53}, -- Grizzly Hillsbrad
+	[113]	= {["x"] = 0.78, ["y"] = 0.74}, -- Howling Fjord
+}
+local outlandMapCoords = {
+	[104]	= {["x"] = 0.74, ["y"] = 0.80}, -- Shadowmoon Valley
+	[108]	= {["x"] = 0.45, ["y"] = 0.77}, -- Terrokar
+	[107]	= {["x"] = 0.30, ["y"] = 0.65}, -- Nagrand
+	[100]	= {["x"] = 0.52, ["y"] = 0.51}, -- Hellfire
+	[102]	= {["x"] = 0.33, ["y"] = 0.47}, -- Zangarmarsh
+	[105]	= {["x"] = 0.36, ["y"] = 0.23}, -- Blade's Edge
+	[109]	= {["x"] = 0.57, ["y"] = 0.20}, -- Netherstorm
+}
+local stranglethornMapCoords = {
+	[210]	= {["x"] = 0.42, ["y"] = 0.62}, -- Cape
+	[50]	= {["x"] = 0.67, ["y"] = 0.40} -- North
+}
+local kalimdorMapCoords = {
+	[81] 	= {["x"] = 0.42, ["y"] = 0.82}, -- Silithus
+	[64]	= {["x"] = 0.50, ["y"] = 0.72}, -- Thousand Needles
+	[249]	= {["x"] = 0.47, ["y"] = 0.91}, -- Uldum
+	[1527]	= {["x"] = 0.47, ["y"] = 0.91}, -- Uldum BfA
+	[71]	= {["x"] = 0.55, ["y"] = 0.84}, -- Tanaris
+	[78]	= {["x"] = 0.50, ["y"] = 0.81}, -- Ungoro
+	[69]	= {["x"] = 0.43, ["y"] = 0.70}, -- Feralas
+	[70]	= {["x"] = 0.55, ["y"] = 0.67}, -- Dustwallow
+	[199]	= {["x"] = 0.51, ["y"] = 0.67}, -- S Barrens
+	[7]		= {["x"] = 0.47, ["y"] = 0.60}, -- Mulgore
+	[66]	= {["x"] = 0.41, ["y"] = 0.57}, -- Desolace
+	[65]	= {["x"] = 0.43, ["y"] = 0.46}, -- Stonetalon
+	[10]	= {["x"] = 0.52, ["y"] = 0.50}, -- N Barrens
+	[1]		= {["x"] = 0.58, ["y"] = 0.50}, -- Durotar
+	[63]	= {["x"] = 0.49, ["y"] = 0.41}, -- Ashenvale
+	[62]	= {["x"] = 0.46, ["y"] = 0.23}, -- Dakshore
+	[76]	= {["x"] = 0.59, ["y"] = 0.37}, -- Azshara
+	[198]	= {["x"] = 0.54, ["y"] = 0.32}, -- Hyjal
+	[77]	= {["x"] = 0.49, ["y"] = 0.25}, -- Felwood
+	[80]	= {["x"] = 0.53, ["y"] = 0.19}, -- Moonglade
+	[83]	= {["x"] = 0.58, ["y"] = 0.23}, -- Winterspring
+	[57]	= {["x"] = 0.42, ["y"] = 0.10}, -- Teldrassil
+	[97]	= {["x"] = 0.33, ["y"] = 0.27}, -- Azuremyst
+	[106]	= {["x"] = 0.30, ["y"] = 0.18}, -- Bloodmyst
+}
+local easternKingdomsMapCoords = {
+	[210]	= {["x"] = 0.47, ["y"] = 0.87}, -- Cape of STV
+	[50]	= {["x"] = 0.47, ["y"] = 0.87}, -- N STV
+	[17]	= {["x"] = 0.54, ["y"] = 0.89}, -- Blasted Lands
+	[51]	= {["x"] = 0.54, ["y"] = 0.78}, -- Swamp of Sorrow
+	[42]	= {["x"] = 0.49, ["y"] = 0.79}, -- Deadwind
+	[47]	= {["x"] = 0.45, ["y"] = 0.80}, -- Duskwood
+	[52]	= {["x"] = 0.40, ["y"] = 0.79}, -- Westfall
+	[37]	= {["x"] = 0.47, ["y"] = 0.75}, -- Elwynn
+	[49]	= {["x"] = 0.51, ["y"] = 0.75}, -- Redridge
+	[36]	= {["x"] = 0.49, ["y"] = 0.70}, -- Burning Steppes
+	[32]	= {["x"] = 0.47, ["y"] = 0.65}, -- Searing Gorge
+	[15]	= {["x"] = 0.52, ["y"] = 0.65}, -- Badlands
+	[27]	= {["x"] = 0.44, ["y"] = 0.61}, -- Dun Morogh
+	[48]	= {["x"] = 0.52, ["y"] = 0.60}, -- Loch Modan
+	[241]	= {["x"] = 0.56, ["y"] = 0.55}, -- Twilight Highlands
+	[56]	= {["x"] = 0.50, ["y"] = 0.53}, -- Wetlands
+	[14]	= {["x"] = 0.51, ["y"] = 0.46}, -- Arathi Highlands
+	[26]	= {["x"] = 0.57, ["y"] = 0.40}, -- Hinterlands
+	[25]	= {["x"] = 0.46, ["y"] = 0.40}, -- Hillsbrad
+	[217]	= {["x"] = 0.40, ["y"] = 0.48}, -- Ruins of Gilneas
+	[21]	= {["x"] = 0.41, ["y"] = 0.39}, -- Silverpine
+	[18]	= {["x"] = 0.39, ["y"] = 0.32}, -- Tirisfall
+	[22]	= {["x"] = 0.49, ["y"] = 0.31}, -- W Plaugelands
+	[23]	= {["x"] = 0.54, ["y"] = 0.32}, -- E Plaguelands
+	[95]	= {["x"] = 0.56, ["y"] = 0.23}, -- Ghostlands
+	[94]	= {["x"] = 0.54, ["y"] = 0.18}, -- Eversong
+	[122]	= {["x"] = 0.55, ["y"] = 0.05}, -- Quel'Danas
+}
+local azerothMapCoords = {
+	[12]	= {["x"] = 0.17, ["y"] = 0.55, ["expansion"] = 0}; -- Kalimdor
+	[13]	= {["x"] = 0.89, ["y"] = 0.55, ["expansion"] = 0}; -- Eastern Kingdoms
+	[113]	= {["x"] = 0.50, ["y"] = 0.13, ["expansion"] = LE_EXPANSION_WRATH_OF_THE_LICH_KING}; -- Northrend
+	[424]	= {["x"] = 0.50, ["y"] = 0.81, ["expansion"] = LE_EXPANSION_MISTS_OF_PANDARIA}; -- Pandaria
+	[619]	= {["x"] = 0.58, ["y"] = 0.40, ["expansion"] = LE_EXPANSION_LEGION}; -- Broken Isles
+	[875]	= {["x"] = 0.55, ["y"] = 0.63, ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH}; -- Zandalar
+	[876]	= {["x"] = 0.71, ["y"] = 0.49, ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH}; -- Kul Tiras
+	[1978]	= {["x"] = 0.76, ["y"] = 0.22, ["expansion"] = LE_EXPANSION_DRAGONFLIGHT}; -- Dragon Isle
+	[2274]	= {["x"] = 0.28, ["y"] = 0.83, ["expansion"] = LE_EXPANSION_WAR_WITHIN}; -- Khaz Algar
+}
+
+_V["WQT_ZONE_MAPCOORDS"] = {
+		[947]	= azerothMapCoords; -- All of Azeroth.
+		[13]	= easternKingdomsMapCoords;
+		[1208]	= easternKingdomsMapCoords; -- Flightmap
+		[12] 	= kalimdorMapCoords;
+		[1209] 	= kalimdorMapCoords; -- Flightmap
+		[224]	= stranglethornMapCoords; -- Stranglethorn Vale
+
+		[101]	= outlandMapCoords;
+		[1467]	= outlandMapCoords; -- Flightmap
+
+		[113]	= northrendMapCoords;
+		[1384]	= northrendMapCoords; -- Flightmap
+
+		[424]	= pandariaMapCoords;
+		[989]	= pandariaMapCoords; -- Flightmap
+
+		[572]	= draenorMapCoords;
+		[990]	= draenorMapCoords; -- Flightmap
+
+		[619] 	= legionMapCoords;
+		[993] 	= legionMapCoords; -- Flightmap	
+		[905] 	= argusMapCoords;
+
+		[875]	= zandalarMapCoords;
+		[1011]	= zandalarMapCoords; -- Flightmap
+		[876]	= kultirasMapCoords;
+		[1014]	= kultirasMapCoords; -- Flightmap
+		[1355]	= nazjatarMapCoords;
+		[1504]	= nazjatarMapCoords; -- Flightmap
+
+		[1550]	= shadowlandsMapCoords;
+		[1647]	= shadowlandsMapCoords; -- Flightmap
+
+		[1978]	= dragonlandsMapCoords;
+		[2057]	= dragonlandsMapCoords; -- Flightmap
+
+		[2133]	= zaralekMapCoords;
+		[2274]	= khazalgarMapCoords;
+		[2276]	= khazalgarMapCoords; -- Flightmap
+		[2248]	= isleOfDornMapCoords;
+		[2371]	= kareshMapCoords;
+		[2398]	= kareshMapCoords; -- Flightmap
 	}
+
+-- Expansions that span multiple continents (maps containing multiple zones)
+local linkedContinents = {
+	{2274, 2276, 2248, 2371}, -- War Within
+	{1978, 2057, 2133}, -- DragonFlight
+	{875, 1011, 876, 1014, 1355, 1504}, -- BfA
+	{619, 993, 905}, -- Legion
+}
+
+_V["WQT_CONTINENT_LINKS"] = {};
+for _, group in ipairs(linkedContinents) do
+	for _, mapID in ipairs(group) do
+		_V["WQT_CONTINENT_LINKS"][mapID] = group;
+	end
+end
+wipe(linkedContinents);
 
 _V["ZONE_SUBZONES"] = {
 	[1565] = {1701, 1702, 1703}; -- Ardenweald covenant
@@ -1207,46 +1224,6 @@ _V["ZONE_SUBZONES"] = {
 	[1525] = {1699, 1700}; -- Revendreth Covenant
 	[1536] = {1698}; -- Maldraxxus Covenant
 }
-
-_V["WQT_ZONE_MAPCOORDS"] = {
-		[947]	= {}, -- All of Azeroth. Dynamic based on level and expansion in Dataprovider UpdateAzerothZones
-		[13]	= WQT_EASTERN_KINGDOMS,
-		[1208]	= WQT_EASTERN_KINGDOMS, -- Flightmap
-		[12] 	= WQT_KALIMDOR,
-		[1209] 	= WQT_KALIMDOR, -- Flightmap
-		[224]	= { -- Stranglethorn Vale
-				[210] = {["x"] = 0.42, ["y"] = 0.62}, -- Cape
-				[50] = {["x"] = 0.67, ["y"] = 0.40} -- North
-			},
-		[572]	= WQT_DRAENOR,
-		[990]	= WQT_DRAENOR, 		-- Flightmap
-		[424]	= WQT_PANDARIA,
-		[989]	= WQT_PANDARIA, 	-- Flightmap
-		[113]	= WQT_NORTHREND,
-		[1384]	= WQT_NORTHREND, 	-- Flightmap
-		[101]	= WQT_OUTLAND,
-		[1467]	= WQT_OUTLAND, 		-- Flightmap
-		[619] 	= WQT_LEGION,
-		[993] 	= WQT_LEGION, 		-- Flightmap	
-		[905] 	= WQT_ARGUS,
-
-		[875]	= WQT_ZANDALAR,
-		[1011]	= WQT_ZANDALAR, 	-- Flightmap
-		[876]	= WQT_KULTIRAS,
-		[1014]	= WQT_KULTIRAS, 	-- Flightmap
-		[1355]	= WQT_NAZJATAR,
-		[1504]	= WQT_NAZJATAR,		-- Flightmap
-		[1550]	= WQT_SHADOWLANDS,
-		[1647]	= WQT_SHADOWLANDS,	-- Flightmap
-		[1978]	= WQT_DRAGONLANDS,
-		[2057]	= WQT_DRAGONLANDS,	-- Flightmap
-		[2133]	= WQT_ZARALEK,
-
-		[2274]	= WQT_WARWITHIN,
-		[2276]	= WQT_WARWITHIN,	-- Flightmap
-		[2248]	= WQT_ISLE_OF_DORN
-		
-	}
 
 _V["WQT_NO_FACTION_DATA"] = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L["NO_FACTION"] } -- No faction
 _V["WQT_FACTION_DATA"] = {
@@ -1320,6 +1297,7 @@ _V["WQT_FACTION_DATA"] = {
 	,[2675] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439628 } -- Blackwater
 	,[2677] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439630 } -- Steamwheedle
 	,[2671] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439631 } -- Venture Co.
+	,[2658] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6937966 } -- K'aresh Trust
 }
 -- Add localized faction names
 for k, v in pairs(_V["WQT_FACTION_DATA"]) do
@@ -1330,8 +1308,22 @@ for k, v in pairs(_V["WQT_FACTION_DATA"]) do
 end
 
 
+_V["WQT_FILTER_TO_OFFICIAL"] = {
+	["Petbattle"]	= { "showTamersWQ" };
+	["Dragonrider"]	= { "dragonRidingRacesFilterWQ" };
+	["Profession"]	= { "primaryProfessionsFilter", "secondaryProfessionsFilter" };
+
+	["Artifact"]	= { "worldQuestFilterArtifactPower" };
+	["Gold"]		= { "worldQuestFilterGold" };
+	["Armor"]		= { "worldQuestFilterEquipment" };
+	["Reputation"]	= { "worldQuestFilterReputation" };
+	["Anima"]		= { "worldQuestFilterAnima" };
+	-- worldQuestFilterResources
+	-- worldQuestFilterProfessionMaterials
+}
+
 _V["WQT_DEFAULTS"] = {
-	global = {	
+	global = {
 		versionCheck = "";
 		updateSeen = false;
 		
@@ -1488,20 +1480,32 @@ end
 -- changes			List of things that got changed
 -- fixes			List of bugfixes
 
-_V["PATCH_NOTES"] = {
-		{["version"] = "11.1.01",
+local patchNotes = {
+		{["version"] = "11.2.01";
+			["intro"] = {
+				"Update for patch 11.2";
+				"Note: It's possible you might not see all quests available in K'aresh unless you are physically inside the zone. This is an issue on Blizzard's end.";
+			};
+			["changes"] = {
+				"Made some changes to which quests show up in the list";
+			};
+			["fixes"] = {
+				"Fixed a possible error with the custom Shadowlands bounty board";
+				"Using the official map filters will once again affect the pins and quest list";
+			};
+		};
+		{["version"] = "11.1.01";
 			["intro"] = {
 				[[Shoutout to the people who tried their best to keep things running for the past 4 years. I'd name you all but I only now realize how many of you there are.
-				<br/>If you created a fork, helped those forks, or even guided other people to said forks; Thank you.
-				<br/>
-				<br/>Please note that maintaining this add-on is low priority. Which means updates might be slow and unreliable.]]
-			},
+				<br/>If you created a fork, helped those forks, or even guided other people to said forks; Thank you.]];
+				"Please note that maintaining this add-on is low priority. Which means updates might be slow and unreliable.";
+			};
 			["changes"] = {
-				"Compatibility with patch 11.1.7",
-				"Visual update to match the new UI",
-				"A bunch of refactoring of which you hopefully only notice positive things",
-				"Things that didn't survive:<br/>- Quest counter on the normal quest tab<br/>- Anything LFG related<br/>- Support for WQT Utilities<br/>- Daily quest things such as old Nzoth quests",
-			},
+				"Compatibility with patch 11.1.7";
+				"Visual update to match the new UI";
+				"A bunch of refactoring of which you hopefully only notice positive things";
+				"Things that didn't survive:<br/>- Quest counter on the normal quest tab<br/>- Anything LFG related<br/>- Support for WQT Utilities<br/>- Daily quest things such as old Nzoth quests";
+			};
 		}
 	}
 
@@ -1539,5 +1543,5 @@ local function FormatPatchNotes(notes)
 	return updateMessage .. "</body></html>";
 end
 
-_V["LATEST_UPDATE"] =  FormatPatchNotes(_V["PATCH_NOTES"]);
-_DeepWipeTable(_V["PATCH_NOTES"]);
+_V["LATEST_UPDATE"] =  FormatPatchNotes(patchNotes);
+_DeepWipeTable(patchNotes);

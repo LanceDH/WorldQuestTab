@@ -6,6 +6,8 @@
 	<Include file="libs\AceAddon-3.0\AceAddon-3.0.xml"/>
 	<Include file="libs\AceDB-3.0\AceDB-3.0.xml"/>
 	<Include file="libs\Krowi_WorldMapButtons-1.4.8\Krowi_WorldMapButtons-1.4.xml"/>
+
+	<Include file="libs\WorldMapTabsLib-1.0\WorldMapTabsLib-1.0.xml"/>
 	
 	<Include file="Loca/Loca.xml"/>
 	
@@ -570,22 +572,12 @@
 		</Scripts>
 	</Button>
 	
-	<Frame name="WQT_QuestMapTab" parent="QuestMapFrame" inherits="QuestLogTabButtonTemplate">
+	<Frame name="WQT_QuestMapTab" parent="QuestMapFrame" inherits="QuestLogTabButtonTemplate" mixin="WQT_TabButtonMixin">
 		<KeyValues>
-			<KeyValue key="displayMode" value="QuestLogDisplayMode.WQT" type="global" />
 			<KeyValue key="activeAtlas" value="Worldquest-icon" type="string" />
 			<KeyValue key="inactiveAtlas" value="Worldquest-icon" type="string" />
 			<KeyValue key="tooltipText" value="TRACKER_HEADER_WORLD_QUESTS" type="global" />
 		</KeyValues>
-		<Anchors>
-			<Anchor point="TOP" relativeKey="$parent.MapLegendTab" relativePoint="BOTTOM" x="0" y="-3"/>
-		</Anchors>
-		<Scripts>
-			<OnMouseUp>
-				QuestLogTabButtonMixin.OnMouseUp(self, button);
-				WQT_WorldQuestFrame:SelectTab(self, button);
-			</OnMouseUp>
-		</Scripts>
 	</Frame>	
 
 	<!--
@@ -607,7 +599,6 @@
 					<Anchor point="BOTTOMRIGHT" />
 				</Anchors>
 				<KeyValues>
-					<!-- <KeyValue key="panelID" type="number" value="1" /> -->
 					<KeyValue key="panelID" value="WQT_PanelID.Quests" type="global"/>
 				</KeyValues>
 				<Layers>

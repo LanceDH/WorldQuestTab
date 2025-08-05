@@ -666,7 +666,7 @@
 		</Scripts>
 	</Frame>
 
-	<Frame name="WQT_SettingsFrame" parent="WQT_WorldQuestFrame" parentKey="SettingsFrame" mixin="WQT_SettingsFrameMixin" parentArray="panels">
+	<Frame name="WQT_SettingsFrame" parent="WQT_WorldQuestFrame" parentKey="SettingsFrame" mixin="WQT_SettingsFrameMixin" parentArray="panels" hidden="true">
 		<Size x="257" y="462" />
 		<Anchors>
 			<Anchor point="TOPLEFT" />

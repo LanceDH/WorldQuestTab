@@ -204,6 +204,10 @@
         "QuestLogSettingsButtonMixin",
         "GameTooltip_AddErrorLine",
         "GameTooltip_AddHighlightLine",
-        "DRAGONRIDING_RACES_MAP_TOGGLE"
+        "DRAGONRIDING_RACES_MAP_TOGGLE",
+        "LE_EXPANSION_WRATH_OF_THE_LICH_KING",
+        "LE_EXPANSION_MISTS_OF_PANDARIA",
+        "LE_EXPANSION_BURNING_CRUSADE",
+        "QuestFrame"
     ]
 }

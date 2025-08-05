@@ -123,15 +123,6 @@ function WQT_OfficialPinSuppressorProviderMixin:RefreshAllData()
 			end
 		end
 	end
-
-	-- print("- - - - -");
-	-- for template in pairs(self:GetMap().pinPools) do
-	-- 	local count = 0;
-	-- 	for pin in self:GetMap():EnumeratePinsByTemplate(template) do
-	-- 		count = count + 1;
-	-- 	end
-	-- 	print(count, template);
-	-- end
 end
 
 function WQT_OfficialPinSuppressorProviderMixin:OnAdded(mapCanvas)
@@ -157,6 +148,7 @@ function WQT_PinDataProvider:Init()
 	self.frame:SetScript("OnEvent", function(frame, ...) self:OnEvent(...); end);
 	self.frame:RegisterEvent("SUPER_TRACKING_CHANGED");
 	self.frame:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
+	self.frame:RegisterEvent("CVAR_UPDATE");
 
 	self.pinPool = CreateFramePool("BUTTON", nil, "WQT_PinTemplate", OnPinRelease);
 	self.activePins = {};
@@ -164,20 +156,29 @@ function WQT_PinDataProvider:Init()
 	self.hookedCanvasChanges = {};
 
 	EventRegistry:RegisterCallback(
-		"WQT.DataProvider.FilteredListUpdated"
-		,function()
+		"WQT.DataProvider.FilteredListUpdated",
+		function()
 				self:RefreshAllData();
-			end
-		, self);
+			end,
+		self);
 
 	-- Remove pins on changing map. Quest info being processed will trigger showing them if they are needed.
 	EventRegistry:RegisterCallback(
-		"MapCanvas.MapSet"
-		,function()
+		"MapCanvas.MapSet", 
+		function()
 				wipe(self.pingedQuests);
 				self:RemoveAllData();
-			end
-		, self);
+			end,
+		self);
+
+	EventRegistry:RegisterCallback(
+		"WQT.MapButton.HidePins",
+		function(callback, hidePins)
+				if (self.hidePinsByMapButton == hidePins) then return; end
+				self.hidePinsByMapButton = hidePins;
+				self:RefreshAllData();
+			end,
+		self);
 		
 	self.clusterDistance = 0.5;
 	self.clusterSpread = 0.2;
@@ -199,6 +200,11 @@ function WQT_PinDataProvider:OnEvent(event, ...)
 		self:UpdateQuestPings()
 	elseif (event == "QUEST_WATCH_LIST_CHANGED") then
 		self:UpdateAllVisuals();
+	elseif (event == "CVAR_UPDATE") then
+		local cvar, value = ...;
+		if (cvar == "questPOIWQ") then
+			self:RefreshAllData();
+		end
 	end
 end
 
@@ -223,6 +229,10 @@ function WQT_PinDataProvider:RefreshAllData()
 end
 
 function WQT_PinDataProvider:PlacePins()
+	if (self.hidePinsByMapButton) then return; end
+
+	if (not C_CVar.GetCVarBool("questPOIWQ")) then return; end
+
 	local wqp = WQT_Utils:GetMapWQProvider();
 	
 	if (WQT_Utils:GetSetting("pin", "disablePoI")) then 

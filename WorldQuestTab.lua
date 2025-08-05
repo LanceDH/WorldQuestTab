@@ -88,8 +88,14 @@ local function FilterTypesGeneralOnClick(data)
 end
 
 local function GenericFilterFlagChecked(data)
-	local options = data[1];
 	local flagKey = data[2];
+
+	if (WQT_Utils:IsFilterDisabledByOfficial(flagKey)) then
+		return false;
+	end
+
+	local options = data[1];
+	local flagKey = flagKey;
 	return options[flagKey]
 end
 
@@ -104,6 +110,13 @@ local function GenericFilterOnSelect(data)
 	EventRegistry:TriggerEvent("WQT.FiltersUpdated");
 end
 
+local function ShowDisabledFilterTooltip(self)
+	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+	GameTooltip_SetTitle(GameTooltip, _L["MAP_FILTER_DISABLED"]);
+	GameTooltip_AddNormalLine(GameTooltip, _L["MAP_FILTER_DISABLED_INFO"]);
+	GameTooltip:Show();
+end
+
 local function AddFilterSubmenu(rootDescription, filterType)
 	rootDescription:CreateButton(CHECK_ALL, FilterTypesGeneralOnClick, { ["type"] = filterType, ["value"] = true});
 	rootDescription:CreateButton(UNCHECK_ALL, FilterTypesGeneralOnClick, { ["type"] = filterType, ["value"] = false});
@@ -116,7 +129,14 @@ local function AddFilterSubmenu(rootDescription, filterType)
 	for k, flagKey in pairs(order) do
 		if (not WQT_Utils:FilterIsOldContent(filterType, flagKey)) then
 			local text = haveLabels and _V["WQT_TYPEFLAG_LABELS"][filterType][flagKey] or flagKey;
-			rootDescription:CreateCheckbox(text, GenericFilterFlagChecked, GenericFilterOnSelect, { options, flagKey });
+			local checkbox = rootDescription:CreateCheckbox(text, GenericFilterFlagChecked, GenericFilterOnSelect, { options, flagKey });
+
+			if (WQT_Utils:IsFilterDisabledByOfficial(flagKey)) then
+				checkbox:SetEnabled(false);
+				checkbox:SetOnEnter(ShowDisabledFilterTooltip);
+				checkbox:SetOnLeave(function() GameTooltip:Hide(); end);
+			end
+			
 		else
 			tinsert(oldContentFlags, flagKey);
 		end
@@ -462,9 +482,11 @@ end
 
 -- Wheter the quest is being filtered because of official map filter settings
 function WQT:FilterIsWorldMapDisabled(filter)
-	if (filter == "Petbattle" and not C_CVar.GetCVarBool("showTamers")) or (filter == "Artifact" and not C_CVar.GetCVarBool("worldQuestFilterArtifactPower")) or (filter == "Currency" and not C_CVar.GetCVarBool("worldQuestFilterResources"))
-		or (filter == "Gold" and not C_CVar.GetCVarBool("worldQuestFilterGold")) or (filter == "Armor" and not C_CVar.GetCVarBool("worldQuestFilterEquipment")) then
-		
+	if (filter == "Petbattle" and not C_CVar.GetCVarBool("showTamers"))
+		or (filter == "Artifact" and not C_CVar.GetCVarBool("worldQuestFilterArtifactPower"))
+		or (filter == "Currency" and not C_CVar.GetCVarBool("worldQuestFilterResources"))
+		or (filter == "Gold" and not C_CVar.GetCVarBool("worldQuestFilterGold"))
+		or (filter == "Armor" and not C_CVar.GetCVarBool("worldQuestFilterEquipment")) then
 		return true;
 	end
 
@@ -502,10 +524,14 @@ function WQT:IsUsingFilterNr(id)
 	end
 	
 	local flags = WQT.settings.filters[id].flags;
-	for k, flag in pairs(flags) do
+	for flagKey, flag in pairs(flags) do
 		if (WQT.settings.general.preciseFilters and flag) then
 			return true;
 		elseif (not WQT.settings.general.preciseFilters and not flag) then
+			return true;
+		end
+
+		if (WQT_Utils:IsFilterDisabledByOfficial(flagKey)) then
 			return true;
 		end
 	end
@@ -531,7 +557,7 @@ function WQT:PassesAllFilters(questInfo)
 	if (not WQT.settings.general.showDisliked and questInfo:IsDisliked()) then
 		return false;
 	end
-	
+
 	-- For precise filters, all filters have to pass
 	if (WQT.settings.general.preciseFilters)  then
 		if (not  WQT:IsFiltering()) then
@@ -600,11 +626,18 @@ function WQT:PassesFlagId(flagId ,questInfo, checkPrecise)
 	local passesPrecise = true;
 	
 	for flag, filterEnabled in pairs(flags) do
-		if (filterEnabled) then
-			local func = _V["FILTER_FUNCTIONS"][flagId] and _V["FILTER_FUNCTIONS"][flagId][flag] ;
-			if(func) then 
-				local passed = func(questInfo, tagInfo)
+		local func = _V["FILTER_FUNCTIONS"][flagId] and _V["FILTER_FUNCTIONS"][flagId][flag];
+		if (func) then
+			local passed = func(questInfo, tagInfo)
+			if (passed) then
+				if (WQT_Utils:IsFilterDisabledByOfficial(flag)) then
+					return false;
+				end
+			end
+
+			if (filterEnabled) then
 				-- If we are checking precise, combine all results. Otherwise exit out if we pass at least one
+
 				if (WQT.settings.general.preciseFilters) then
 					passesPrecise = passesPrecise and passed;
 				elseif (passed) then
@@ -635,21 +668,22 @@ function WQT:OnInitialize()
 		WQT.db.global.versionCheck  = currentVersion;
 	end
 
+	-- Button on full screen map
 	WQT.mapButtonsLib = LibStub("Krowi_WorldMapButtons-1.4");
 	self.mapButton = WQT.mapButtonsLib:Add("WQT_WorldMapButtonTemplate", "BUTTON");
+
+	-- Map tab and content frame
+	local tabLib = LibStub("WorldMapTabsLib-1.0");
+	tabLib:AddCustomTab(WQT_QuestMapTab);
+	self.contentFrame = tabLib:CreateContentFrameForTab(WQT_QuestMapTab);
+
+	
 end
 
 function WQT:OnEnable()
-	-- Add QuestMapTab to next empty id
-	local numDisplayModes = 0;
-	for k, v in pairs(QuestLogDisplayMode) do
-		numDisplayModes = numDisplayModes + 1;
-	end
-	QuestLogDisplayMode.WQT = numDisplayModes + 1;
-
 	-- load WorldQuestTabUtilities
 	if (WQT.settings.general.loadUtilities and C_AddOns.GetAddOnEnableState(_playerName, "WorldQuestTabUtilities") > 0 and not C_AddOns.IsAddOnLoaded("WorldQuestTabUtilities")) then
-		C_AddOns.LoadAddOn("WorldQuestTabUtilities");
+		--C_AddOns.LoadAddOn("WorldQuestTabUtilities");
 	end
 	
 	-- Place fullscreen button in saved location
@@ -670,9 +704,7 @@ function WQT:OnEnable()
 	
 	-- Show default tab depending on setting
 	if (self.settings.general.defaultTab) then
-		WQT_WorldQuestFrame:SelectTab(WQT_QuestMapTab);
-	else
-		WQT_WorldQuestFrame:QuestMapChangedTab(0);
+		QuestMapFrame:SetDisplayMode(WQT_QuestMapTab.displayMode);
 	end
 	WQT_WorldQuestFrame.tabBeforeAnchor = WQT_WorldQuestFrame.selectedTab;
 	
@@ -766,6 +798,31 @@ function WQT_QuestLogSettingsButtonMixin:OnDisable()
 	self.Icon:SetAlpha(0.45);
 end
 
+------------------------------------------
+-- World Map Tab Mixin
+------------------------------------------
+
+WQT_TabButtonMixin = CreateFromMixins(QuestLogTabButtonMixin);
+
+function WQT_TabButtonMixin:OnMouseUp(button, upInside)
+	QuestLogTabButtonMixin.OnMouseUp(self, button, upInside);
+
+	if (button == "LeftButton" and upInside) then
+		WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Quests);
+	end
+end
+
+function WQT_TabButtonMixin:SetChecked(checked)
+	QuestLogTabButtonMixin.SetChecked(self, checked);
+
+	if (checked) then
+		WQT_QuestMapTab.Icon:SetSize(24, 24);
+		WQT_QuestMapTab.Icon:SetAlpha(1);
+	else
+		WQT_QuestMapTab.Icon:SetAlpha(0.5);
+		WQT_QuestMapTab.Icon:SetSize(24,24);
+	end
+end
 
 ------------------------------------------
 -- 			REWARDDISPLAY MIXIN			--
@@ -1134,7 +1191,6 @@ end
 ------------------------------------------
 --
 -- OnLoad()
--- SetButtonsEnabled(value)
 -- ApplySort()
 -- UpdateFilterDisplay()
 -- UpdateQuestList()
@@ -1153,30 +1209,6 @@ function WQT_ScrollListMixin:OnLoad()
 				end
 			end
 		, self);
-end
-
-function WQT_ScrollListMixin:ResetButtons()
-	-- local buttons = self.buttons;
-	-- if buttons == nil then return; end
-	-- for i=1, #buttons do
-	-- 	local button = buttons[i];
-	-- 	button.TrackedBorder:Hide();
-	-- 	button.Highlight:Hide();
-	-- 	button:Hide();
-	-- 	button.questInfo = nil;
-	-- end
-end
-
-function WQT_ScrollListMixin:SetButtonsEnabled(value)
-	-- value = value==nil and true or value;
-	-- local buttons = self.buttons;
-	-- if not buttons then return end;
-	
-	-- for k, button in ipairs(buttons) do
-	-- 	button:SetEnabledMixin(value);
-	-- 	button:EnableMouse(value);
-	-- 	button:EnableMouseWheel(value);
-	-- end
 end
 
 function WQT_ScrollListMixin:UpdateFilterDisplay()
@@ -1429,7 +1461,6 @@ end
 -- ShowHighlightOnMapFilters()
 -- FilterClearButtonOnClick()
 -- SetCvarValue(flagKey, value)
--- SelectTab(tab)		1. Default questlog  2. WQT  3. Quest details
 -- ChangeAnchorLocation(anchor)		Show list on a different container using _V["LIST_ANCHOR_TYPE"] variable
 -- :<event> -> ADDON_LOADED, PLAYER_REGEN_DISABLED, PLAYER_REGEN_ENABLED, PVP_TIMER_UPDATE, WORLD_QUEST_COMPLETED_BY_SPELL, QUEST_LOG_UPDATE, QUEST_WATCH_LIST_CHANGED
 
@@ -1500,24 +1531,6 @@ function WQT_CoreMixin:HideWorldmapHighlight()
 	end
 end
 
-function WQT_CoreMixin:QuestMapChangedTab(displayMode)
-	if (displayMode == QuestLogDisplayMode.WQT) then
-		WQT_QuestMapTab.Icon:SetAtlas(WQT_QuestMapTab.activeAtlas);
-		WQT_QuestMapTab.Icon:SetSize(24, 24);
-		WQT_QuestMapTab.SelectedTexture:SetShown(true);
-		WQT_QuestMapTab.Icon:SetPoint("CENTER", -2, 0);
-		WQT_QuestMapTab.Icon:SetAlpha(1);
-		PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB);
-		self:ChangePanel(WQT_PanelID.Quests);
-		self:Show();
-	else
-		self:Hide();
-		WQT_QuestMapTab:SetChecked(false);
-		WQT_QuestMapTab.Icon:SetAlpha(0.5);
-		WQT_QuestMapTab.Icon:SetSize(24,24);
-	end
-end
-
 function WQT_CoreMixin:OnLoad()
 	self.WQT_Utils = WQT_Utils;
 	self.variables = addon.variables;
@@ -1571,8 +1584,6 @@ function WQT_CoreMixin:OnLoad()
 	-- Function hooks
 	-- 
 
-	EventRegistry:RegisterCallback("QuestLog.SetDisplayMode", self.QuestMapChangedTab, self);
-	
 	-- Update when opening the map
 	WorldMapFrame:HookScript("OnShow", function()
 			-- If emissaryOnly was automaticaly set, turn it off again.
@@ -1799,6 +1810,18 @@ function WQT_CoreMixin:FilterClearButtonOnClick()
 			local default = not WQT.settings.general.preciseFilters;
 			WQT:SetAllFilterTo(k, default);
 		end
+
+		for _, cvars in pairs(_V["WQT_FILTER_TO_OFFICIAL"]) do
+			for _, cvar in ipairs(cvars) do
+				C_CVar.SetCVar(cvar, 1);
+			end
+		end
+
+		local filterButton = WQT_Utils:GetWoldMapFilterButton();
+		if (filterButton) then
+			filterButton:RefreshFilterCounter();
+			filterButton:ValidateResetState();
+		end
 	end
 	
 	WQT.settings.general.showDisliked = true;
@@ -1898,11 +1921,6 @@ function WQT_CoreMixin:ChangePanel(panelID)
 	end
 end
 
-function WQT_CoreMixin:SelectTab(tab)
-	QuestMapFrame:SetDisplayMode(QuestLogDisplayMode.WQT);
-	self:ChangePanel(WQT_PanelID.Quests);
-end
-
 function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	-- Store the original tab for when we come back to the world anchor
 	if (self.anchor == _V["LIST_ANCHOR_TYPE"].world) then
@@ -1919,11 +1937,11 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	self.anchor = anchor;
 
 	WQT_WorldMapContainer:Hide();
+	local showMapContainer = false;
 	WQT.mapButton:SetShown(anchor == _V["LIST_ANCHOR_TYPE"].full);
 	-- Changing map to full screen doesn't call refresh on the buttons
 	WQT.mapButtonsLib:SetPoints();
 
-	local forceShow = true;
 	if (anchor == _V["LIST_ANCHOR_TYPE"].flight) then
 		WQT_WorldQuestFrame:ClearAllPoints(); 
 		WQT_WorldQuestFrame:SetParent(WQT_FlightMapContainer);
@@ -1932,21 +1950,20 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	elseif (anchor == _V["LIST_ANCHOR_TYPE"].taxi) then
 		-- Exists in frame data but no longer used?
 	elseif (anchor == _V["LIST_ANCHOR_TYPE"].world) then
-		WQT_WorldQuestFrame:ClearAllPoints(); 
-		WQT_WorldQuestFrame:SetParent(QuestMapFrame);
-		WQT_WorldQuestFrame:SetPoint("TOPLEFT", QuestMapFrame.ContentsAnchor, 0, -29);
-		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", QuestMapFrame.ContentsAnchor, -22, 0);
-		forceShow = QuestMapFrame.displayMode == QuestLogDisplayMode.WQT;
+		WQT_WorldQuestFrame:ClearAllPoints();
+		WQT_WorldQuestFrame:SetParent(WQT.contentFrame);
+		WQT_WorldQuestFrame:SetPoint("TOPLEFT", WQT.contentFrame, 0, -29);
+		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", WQT.contentFrame, -22, 9);
 	elseif (anchor == _V["LIST_ANCHOR_TYPE"].full) then
 		WQT_WorldQuestFrame:ClearAllPoints(); 
 		WQT_WorldQuestFrame:SetParent(WQT_WorldMapContainer);
 		WQT_WorldQuestFrame:SetPoint("TOPLEFT", WQT_WorldMapContainer, 14, -56);
 		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", WQT_WorldMapContainer, -28, 12);
 		WQT_WorldMapContainer:ConstrainPosition();
-		WQT_WorldMapContainer:SetShown(WQT.mapButton.isSelected);
+		showMapContainer = WQT.mapButton.isSelected;
 	end
 
-	WQT_WorldQuestFrame:SetShown(forceShow);
+	WQT_WorldMapContainer:SetShown(showMapContainer);
 
 	EventRegistry:TriggerEvent("WQT.CoreFrame.AnchorUpdated", anchor);
 end

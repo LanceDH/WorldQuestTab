@@ -14,21 +14,6 @@ local _azuriteID = C_CurrencyInfo.GetAzeriteCurrencyID();
 ----------------------------
 -- LOCAL FUNCTIONS
 ----------------------------
-
-local function UpdateAzerothZones(newLevel)
-	newLevel = newLevel or UnitLevel("player");
-	
-	local expLevel = GetAccountExpansionLevel();
-	local worldTable = _V["WQT_ZONE_MAPCOORDS"][947]
-	wipe(worldTable);
-	-- Always take the highest expansion
-	if (expLevel >= LE_EXPANSION_WAR_WITHIN and newLevel >= 70) then
-		worldTable[2274] = {["x"] = 0.28, ["y"] = 0.84} -- Khaz Algar
-	elseif (newLevel >= 10) then
-		worldTable[1978] = {["x"] = 0.77, ["y"] = 0.22} -- Dragon Isles
-	end
-end
-
 local function WipeQuestInfoRecursive(questInfo)
 	-- Clean out everthing that isn't a color
 	for k, v in pairs(questInfo) do
@@ -225,7 +210,7 @@ end
 function QuestInfoMixin:LoadRewards(force)
 	-- If we already have our data, don't try again;
 	if (not force and self.hasRewardData) then return; end
-
+	
 	wipe(self.rewardList);
 	local haveData = HaveQuestRewardData(self.questID);
 	if (haveData) then
@@ -233,7 +218,7 @@ function QuestInfoMixin:LoadRewards(force)
 		-- Items
 		if (GetNumQuestLogRewards(self.questID) > 0) then
 			local _, texture, numItems, quality, _, rewardId, ilvl = GetQuestLogRewardInfo(1, self.questID);
-
+			
 			if (rewardId) then
 				local price, typeID, subTypeID = select(11, C_Item.GetItemInfo(rewardId));
 				if (C_Soulbinds.IsItemConduitByItemInfo(rewardId)) then
@@ -305,9 +290,12 @@ function QuestInfoMixin:LoadRewards(force)
 		-- Currency
 		local currencies = C_QuestLog.GetQuestRewardCurrencies(self.questID);
 		for k, currency in ipairs(currencies) do
+			local container = C_CurrencyInfo.GetCurrencyContainerInfo(currency.currencyID, currency.totalRewardAmount);
+			local texture = container and container.icon or currency.texture;
+			local quality = container and container.quality or currency.quality;
 			local isRep = C_CurrencyInfo.GetFactionGrantedByCurrency(currency.currencyID) ~= nil;
 			local currType = currency.currencyID == _azuriteID and WQT_REWARDTYPE.artifact or (isRep and WQT_REWARDTYPE.reputation or WQT_REWARDTYPE.currency);
-			self:AddReward(currType, currency.totalRewardAmount, currency.texture, currency.quality, currency.currencyID);
+			self:AddReward(currType, currency.totalRewardAmount, texture, quality, currency.currencyID);
 		end
 		-- XP
 		if (GetQuestLogRewardXP(self.questID) > 0) then
@@ -504,8 +492,8 @@ function WQT_DataProvider:Init()
 	self.frame:SetScript("OnLoad", function(frame, ...) self:OnEvent(...); end);
 	self.frame:RegisterEvent("QUEST_LOG_UPDATE");
 	self.frame:RegisterEvent("QUEST_DATA_LOAD_RESULT");
-	self.frame:RegisterEvent("PLAYER_LEVEL_UP");
 	self.frame:RegisterEvent("TAXIMAP_OPENED");
+	self.frame:RegisterEvent("CVAR_UPDATE");
 	
 	self.pool = CreateObjectPool(WQT_Utils.QuestCreationFunc, QuestResetFunc);
 	self.iterativeList = {};
@@ -523,8 +511,6 @@ function WQT_DataProvider:Init()
 		questsFound = {},
 		questsActive = {},
 	};
-
-	UpdateAzerothZones();
 	
 	EventRegistry:RegisterCallback("WQT.FiltersUpdated" ,function() self.shouldUpdateFiltedList = true;  end, self);
 	EventRegistry:RegisterCallback("WQT.SortUpdated" ,function() self.shouldUpdateFiltedList = true;  end, self);
@@ -545,11 +531,16 @@ function WQT_DataProvider:OnEvent(event, ...)
 		self.zoneLoading.needsUpdate = true;
 	elseif (event == "TAXIMAP_OPENED") then
 		self.zoneLoading.needsUpdate = true;
-	elseif (event == "PLAYER_LEVEL_UP") then
-		local level = ...;
-		UpdateAzerothZones(level); 
+	elseif (event =="CVAR_UPDATE") then
+		local cvar = ...;
+		for _, officalFilters in pairs(_V["WQT_FILTER_TO_OFFICIAL"]) do
+			for _, officialFilter in ipairs(officalFilters) do
+				if(cvar == officialFilter) then
+					self.shouldUpdateFiltedList = true;
+				end
+			end
+		end
 	end
-
 end
 
 local MAX_PROCESSING_TIME = 0.005;
@@ -598,11 +589,10 @@ function WQT_DataProvider:OnUpdate(elapsed)
 
 		-- Current progress
 		local progress = (self.zoneLoading.numTotal - self.zoneLoading.numRemaining) / self.zoneLoading.numTotal;
-		--WQT:debugPrint(string.format("Buffered: %3s (%s) in %.5fs ", processedCount, self.zoneLoading.numRemaining, timeSpent));
 
 		if (self.zoneLoading.numRemaining == 0) then
 			-- We're done getting quests from all the zones. Turn them into quest info for the add-on
-			-- Remove quests we no longer need, and add new ones.
+			-- Remove quests we no longer need, add new ones, and update existing in case we didn't have all data yet
 
 			local questForRemove = {};
 			local questsToAdd = {};
@@ -655,9 +645,12 @@ function WQT_DataProvider:OnUpdate(elapsed)
 			local added = 0;
 			-- Add all new ones
 			for questID, apiInfo in pairs(questsToAdd) do
-				added = added + 1;
-				local questInfo = self.pool:Acquire();
-				questInfo:Init(apiInfo.questID, apiInfo);
+				local expLevel = GetQuestExpansion(questID);
+				if (self.zoneLoading.expansion == 0 or self.zoneLoading.expansion == expLevel) then
+					added = added + 1;
+					local questInfo = self.pool:Acquire();
+					questInfo:Init(apiInfo.questID, apiInfo);
+				end
 			end
 
 			WQT:debugPrint(string.format("Done: %s quests (-%s +%s ~%s)", acceptedCount, removed, added, updated));
@@ -679,18 +672,10 @@ end
 
 function WQT_DataProvider:FilterAndSortQuestList()
 	wipe(self.fitleredQuestsList);
-	local WQTFiltering = WQT:IsFiltering();
-	local BlizFiltering = WQT:IsWorldMapFiltering();
 	for k, questInfo in ipairs(self:GetIterativeList()) do
 		questInfo.passedFilter = false;
 		if (questInfo.isValid and not questInfo.alwaysHide and questInfo.hasRewardData and not questInfo:IsExpired()) then
-			local passed = false;
-			-- Official filtering
-			passed = BlizFiltering and WorldMap_DoesWorldQuestInfoPassFilters(questInfo) or not BlizFiltering;
-			-- Add-on filters
-			if (passed and WQTFiltering) then
-				passed = WQT:PassesAllFilters(questInfo);
-			end
+			local passed = WQT:PassesAllFilters(questInfo);
 			questInfo.passedFilter = passed;
 		end
 		
@@ -715,20 +700,33 @@ function WQT_DataProvider:ClearData()
 	wipe(self.iterativeList);
 end
 
-function WQT_DataProvider:AddContinentMapQuests(continentZones, continentId)
-	if continentZones then
-		for zoneID  in pairs(continentZones) do
-			self:AddZoneToBuffer(zoneID);
-		end
+function WQT_DataProvider:AddContinentMapQuests(mapID)
+	self:AddZoneToBuffer(mapID);
+
+	local continentZones = _V["WQT_ZONE_MAPCOORDS"][mapID];
+	if (not continentZones) then return end
+
+	for zoneID in pairs(continentZones) do
+		self:AddZoneToBuffer(zoneID);
 	end
 end
 
-function WQT_DataProvider:AddWorldMapQuests(worldContinents)
-	if worldContinents then
-		for contID in pairs(worldContinents) do
-			-- Every ID is a continent, get every zone on every continent
-			local continentZones = _V["WQT_ZONE_MAPCOORDS"][contID];
-			self:AddContinentMapQuests(continentZones, contID)
+function WQT_DataProvider:AddWorldMapQuests()
+	local worldContinents = _V["WQT_ZONE_MAPCOORDS"][947];
+	if (not worldContinents) then return end
+
+	local expLevel = WQT_Utils:GetCharacterExpansionLevel();
+	self.zoneLoading.expansion = expLevel;
+	for contID, data in pairs(worldContinents) do
+		if (data.expansion == expLevel or data.expansion <= LE_EXPANSION_MISTS_OF_PANDARIA) then
+			local linkedZones = _V["WQT_CONTINENT_LINKS"][contID];
+			if (linkedZones) then
+				for _, linkedMapID in pairs(linkedZones) do
+					self:AddContinentMapQuests(linkedMapID)
+				end
+			else
+				self:AddContinentMapQuests(contID)
+			end
 		end
 	end
 end
@@ -748,7 +746,7 @@ function WQT_DataProvider:AddZoneToBuffer(zoneID)
 	local subZones = _V["ZONE_SUBZONES"][zoneID];
 	if (subZones) then
 		for k, subID in ipairs(subZones) do
-			self:AddZoneToRemainingUnique(zoneID);
+			self:AddZoneToRemainingUnique(subID);
 		end
 	end
 end
@@ -773,6 +771,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 	self.zoneLoading.startTimestamp = GetTimePreciseSec();
 	self.zoneLoading.numRemaining = 0;
 	self.zoneLoading.numTotal = 0;
+	self.zoneLoading.expansion = 0;
 	wipe(self.zoneLoading.remainingZones);
 	wipe(self.zoneLoading.questsFound);
 
@@ -780,29 +779,28 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 	
 	local currentMapInfo = WQT_Utils:GetCachedMapInfo(zoneID);
 	if not currentMapInfo then return end;
-	if (WQT.settings.list.alwaysAllQuests ) then
-		local expLevel = _V["WQT_ZONE_EXPANSIONS"][zoneID];
-		if (not expLevel or expLevel == 0) then
-			expLevel = GetAccountExpansionLevel();
-		end
+	if (currentMapInfo.mapType == Enum.UIMapType.World) then
+		self:AddWorldMapQuests();
 		
-		-- Gather quests for all zones either matching current zone's expansion, or matching no expansion (i.e. Stranglethorn fishing quest)
-		local count = 0;
-		for zoneID, expId in pairs(_V["WQT_ZONE_EXPANSIONS"])do
-			if (expId == 0 or expId == expLevel) then
-				self:AddZoneToBuffer(zoneID);
-			end
-			count = count + 1;
-		end
-	else
+	elseif (WQT.settings.list.alwaysAllQuests or currentMapInfo.mapType == Enum.UIMapType.Continent) then
 		local continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneID];
-		if (currentMapInfo.mapType == Enum.UIMapType.World) then
-			self:AddWorldMapQuests(continentZones);
-		elseif (continentZones) then -- Zone with multiple subzones
-			self:AddContinentMapQuests(continentZones);
-		else
-			self:AddZoneToBuffer(zoneID);
+
+		while (not continentZones and currentMapInfo.mapType > Enum.UIMapType.Continent and currentMapInfo.parentMapID and zoneID ~= currentMapInfo.parentMapID) do
+			zoneID = currentMapInfo.parentMapID;
+			currentMapInfo = WQT_Utils:GetCachedMapInfo(zoneID);
+			continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneID];
 		end
+
+		self:AddZoneToBuffer(zoneID)
+		local linkedZones = _V["WQT_CONTINENT_LINKS"][zoneID];
+		if (linkedZones) then
+			for _, continentID in ipairs(linkedZones) do
+				self:AddContinentMapQuests(continentID);
+			end
+		end
+
+	else
+		self:AddContinentMapQuests(zoneID);
 	end
 end
 

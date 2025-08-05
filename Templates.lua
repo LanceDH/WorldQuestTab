@@ -190,7 +190,7 @@ end
 
 function WQT_ContainerButtonMixin:OnEnter()
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip:SetText(TRACKER_HEADER_WORLD_QUESTS, 1, 1, 1, true);
+	GameTooltip:SetText(WQT_WORLD_QUEST_TAB, 1, 1, 1, true);
 	GameTooltip:Show();
 end
 
@@ -332,7 +332,7 @@ function WQT_Utils:GetCachedTypeIconData(questInfo)
 		return "Bonus-Objective-Star", 16, 16, false;
 	end
 	
-	local tagID = tagInfo.tagID or _V["WQT_TYPE_BONUSOBJECTIVE"];
+	local tagID = tagInfo.tagID or 0;
 	local cachedData = cachedTypeData[tagID];
 	if (not cachedData) then 
 		-- creating basetype
@@ -574,30 +574,24 @@ end
 -- Copy of GameTooltip_AddQuestRewardsToTooltip to prevent SetTooltipMoney from causing taint 
 function WQT_Utils:AddQuestRewardsToTooltip(tooltip, questID, style)
 	style = style or TOOLTIP_QUEST_REWARDS_STYLE_DEFAULT;
+	if tooltip.ItemTooltip then
+		tooltip.ItemTooltip:Hide();
+	end
 
-	-- TODO figure out if this has a point still
-	-- if ( GetQuestLogRewardXP(questID) > 0 or #C_QuestLog.GetQuestRewardCurrencies(questID) > 0 or GetNumQuestLogRewards(questID) > 0 or
-	-- 	GetQuestLogRewardMoney(questID) > 0 or GetQuestLogRewardArtifactXP(questID) > 0 or GetQuestLogRewardHonor(questID) > 0 or
-	-- 	GetNumQuestLogRewardSpells(questID) > 0) then
-		if tooltip.ItemTooltip then
-			tooltip.ItemTooltip:Hide();
+	GameTooltip_AddBlankLinesToTooltip(tooltip, style.prefixBlankLineCount);
+	if style.headerText and style.headerColor then
+		GameTooltip_AddColoredLine(tooltip, style.headerText, style.headerColor, style.wrapHeaderText);
+	end
+	GameTooltip_AddBlankLinesToTooltip(tooltip, style.postHeaderBlankLineCount);
+
+	local hasAnySingleLineRewards, showRetrievingData = _AddQuestRewardsToTooltip(tooltip, questID, style);
+
+	if hasAnySingleLineRewards and tooltip.ItemTooltip and tooltip.ItemTooltip:IsShown() then
+		GameTooltip_AddBlankLinesToTooltip(tooltip, 1);
+		if showRetrievingData then
+			GameTooltip_AddColoredLine(tooltip, RETRIEVING_DATA, RED_FONT_COLOR);
 		end
-
-		GameTooltip_AddBlankLinesToTooltip(tooltip, style.prefixBlankLineCount);
-		if style.headerText and style.headerColor then
-			GameTooltip_AddColoredLine(tooltip, style.headerText, style.headerColor, style.wrapHeaderText);
-		end
-		GameTooltip_AddBlankLinesToTooltip(tooltip, style.postHeaderBlankLineCount);
-
-		local hasAnySingleLineRewards, showRetrievingData = _AddQuestRewardsToTooltip(tooltip, questID, style);
-
-		if hasAnySingleLineRewards and tooltip.ItemTooltip and tooltip.ItemTooltip:IsShown() then
-			GameTooltip_AddBlankLinesToTooltip(tooltip, 1);
-			if showRetrievingData then
-				GameTooltip_AddColoredLine(tooltip, RETRIEVING_DATA, RED_FONT_COLOR);
-			end
-		end
-	-- end
+	end
 end
 
 function WQT_Utils:ShowQuestTooltip(button, questInfo, style)
@@ -708,10 +702,10 @@ function WQT_Utils:GetContinentForMap(mapId)
 	local info = WQT_Utils:GetCachedMapInfo(mapId);
 	if not info then return mapId; end
 	local parent = info.parentMapID;
-	if not parent or info.mapType <= Enum.UIMapType.Continent then 
+	if not parent or info.mapType <= Enum.UIMapType.Continent then
 		return mapId, info.mapType
-	end 
-	return self:GetContinentForMap(parent) 
+	end
+	return self:GetContinentForMap(parent);
 end
 
 function WQT_Utils:GetMapWQProvider()
@@ -1091,6 +1085,47 @@ end
 function WQT_Utils:GetNewBountyBoard()
 	self:EnsureBountyBoards();
 	return self.newBountyBoard;
+end
+
+function WQT_Utils:GetWoldMapFilterButton()
+	if (self.filterButton) then
+		return self.filterButton;
+	end
+
+	for _, overlayFrame in ipairs(WorldMapFrame.overlayFrames) do
+		if (overlayFrame.FilterCounterBanner) then
+			self.filterButton = overlayFrame;
+			break;
+		end
+	end
+
+	return self.filterButton;
+end
+
+function WQT_Utils:GetCharacterExpansionLevel()
+	local playerLevel = UnitLevel("player");
+	local expLevel = GetAccountExpansionLevel();
+
+	if (expLevel >= LE_EXPANSION_WAR_WITHIN and playerLevel >= 70) then
+		return LE_EXPANSION_WAR_WITHIN;
+	elseif (playerLevel >= 10) then
+		return LE_EXPANSION_DRAGONFLIGHT;
+	end
+
+	return 0;
+end
+
+function WQT_Utils:IsFilterDisabledByOfficial(key)
+	local officialFilters = _V["WQT_FILTER_TO_OFFICIAL"][key];
+	if (officialFilters) then
+		for k, filter in ipairs(officialFilters) do
+			if (not C_CVar.GetCVarBool(filter)) then
+				return true;
+			end
+		end
+	end
+
+	return false
 end
 
 --------------------------
