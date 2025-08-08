@@ -47,7 +47,7 @@ L["LOAD_UTILITIES_TT"] = [=[Load utility features such as tallies and distance s
 L["LOAD_UTILITIES_TT_DISABLED"] = "|cFFFF5555World Quest Tab Utilities is not enabled in your add-on list.|r"
 L["MAP_FILTER_DISABLED"] = "Disabled by world map filters"
 L["MAP_FILTER_DISABLED_BUTTON_INFO"] = "Right click to re-enable this filter"
-L["MAP_FILTER_DISABLED_INFO"] = "This filter is currently controlled by the official filters in the top right of your world map."
+L["MAP_FILTER_DISABLED_INFO"] = "This filter is currently controlled by Blizzard's filters in the top right of your world map."
 L["MAP_FILTER_DISABLED_TITLE"] = "Some world map filters are disabled"
 L["MAP_PINS"] = "Map Pins"
 L["MINI_ICONS"] = "Mini Icons"

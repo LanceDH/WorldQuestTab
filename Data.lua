@@ -1165,17 +1165,17 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 		[1209] 	= kalimdorMapCoords; -- Flightmap
 		[224]	= stranglethornMapCoords; -- Stranglethorn Vale
 
-		[101]	= outlandMapCoords;
-		[1467]	= outlandMapCoords; -- Flightmap
-
-		[113]	= northrendMapCoords;
-		[1384]	= northrendMapCoords; -- Flightmap
+		[572]	= draenorMapCoords;
+		[990]	= draenorMapCoords; -- Flightmap
 
 		[424]	= pandariaMapCoords;
 		[989]	= pandariaMapCoords; -- Flightmap
 
-		[572]	= draenorMapCoords;
-		[990]	= draenorMapCoords; -- Flightmap
+		[113]	= northrendMapCoords;
+		[1384]	= northrendMapCoords; -- Flightmap
+
+		[101]	= outlandMapCoords;
+		[1467]	= outlandMapCoords; -- Flightmap
 
 		[619] 	= legionMapCoords;
 		[993] 	= legionMapCoords; -- Flightmap	
@@ -1488,10 +1488,10 @@ local patchNotes = {
 			};
 			["changes"] = {
 				"Made some changes to which quests show up in the list";
+				"Using the Blizzard's map filters will once again affect the pins and quest list";
 			};
 			["fixes"] = {
 				"Fixed a possible error with the custom Shadowlands bounty board";
-				"Using the official map filters will once again affect the pins and quest list";
 			};
 		};
 		{["version"] = "11.1.01";

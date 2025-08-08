@@ -658,7 +658,7 @@ function WQT_PinMixin:UpdateVisuals()
 
 	-- Quest tracked icon
 	if (WQT_Utils:GetSetting("pin", "timeIcon")) then
-		local start, total, timeLeft, seconds, color, timeStringShort, timeCategory = WQT_Utils:GetPinTime(self.questInfo);
+		local _, _, color, _, _, timeCategory = WQT_Utils:GetQuestTimeString(self.questInfo);
 		if (timeCategory >= _V["TIME_REMAINING_CATEGORY"].critical) then
 			local iconFrame = self:AddIcon();
 			iconFrame:SetupIcon(_V["PATH_CUSTOM_ICONS"], 0, 0.25, 0.5, 1);
