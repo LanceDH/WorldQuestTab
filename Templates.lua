@@ -258,6 +258,28 @@ end
 local cachedTypeData = {};
 local cachedZoneInfo = {};
 
+local function stringVersionToNumber(s)
+	local a, b, c = strmatch(s, "(%d+)%.(%d+)%.(%d+)");
+	if (not a) then return 0; end
+	return tonumber(a) * 10000 +  tonumber(b) * 100 +  tonumber(c);
+end
+
+function WQT_Utils:GetAddonVersion()
+	local version = C_AddOns.GetAddOnMetadata(addonName, "version");
+	return stringVersionToNumber(version);
+end
+
+function WQT_Utils:GetSettingsVersion()
+	local version = WQT.db.global.versionCheck or 0;
+
+	if (type(version) == "string") then
+		local number = stringVersionToNumber(version);
+		return number, version;
+	end
+
+	return version;
+end
+
 function WQT_Utils:GetSetting(...)
 	local settings =  WQT.settings;
 	local index = 1;

@@ -337,116 +337,122 @@ local function GetNewSettingData(old, default)
 	return old == nil and default or old;
 end
 
-local function ConvertOldSettings(version)
-	if (not version or version == "") then
+local function ConvertOldSettings()
+	local settingVersion, settingVersionString = WQT_Utils:GetSettingsVersion();
+
+	if (not settingVersion) then
 		WQT.db.global.versionCheck = "1";
 		-- It's a new user, their settings are perfect
 		-- Unless I change my mind again
 		return;
 	end
-	-- BfA
-	if (version < "8.0.1") then
-		-- In 8.0.01 factions use ids rather than name
-		local repFlags = WQT.db.global.filters[1].flags;
-		for name in pairs(repFlags) do
-			if (type(name) == "string" and name ~= "Other" and name ~= _L["NO_FACTION"]) then
-				repFlags[name] = nil;
-			end
-		end
-	end
-	-- Pin rework, turn off pin time by default
-	if (version < "8.2.01")  then
-		WQT.db.global.showPinTime = false;
-	end
-	-- Reworked save structure
-	if (version < "8.2.02")  then
-		WQT.db.global.general.defaultTab =		GetNewSettingData(WQT.db.global.defaultTab, false);
-		WQT.db.global.general.saveFilters = 		GetNewSettingData(WQT.db.global.saveFilters, true);
-		WQT.db.global.general.emissaryOnly = 	GetNewSettingData(WQT.db.global.emissaryOnly, false);
-		WQT.db.global.general.autoEmisarry = 	GetNewSettingData(WQT.db.global.autoEmisarry, true);
-		WQT.db.global.general.questCounter = 	GetNewSettingData(WQT.db.global.questCounter, true);
-		WQT.db.global.general.bountyCounter = 	GetNewSettingData(WQT.db.global.bountyCounter, true);
-		WQT.db.global.general.useTomTom = 		GetNewSettingData(WQT.db.global.useTomTom, true);
-		WQT.db.global.general.TomTomAutoArrow = 	GetNewSettingData(WQT.db.global.TomTomAutoArrow, true);
-		
-		WQT.db.global.list.typeIcon = 			GetNewSettingData(WQT.db.global.showTypeIcon, true);
-		WQT.db.global.list.factionIcon = 		GetNewSettingData(WQT.db.global.showFactionIcon, true);
-		WQT.db.global.list.showZone = 			GetNewSettingData(WQT.db.global.listShowZone, true);
-		WQT.db.global.list.amountColors = 		GetNewSettingData(WQT.db.global.rewardAmountColors, true);
-		WQT.db.global.list.alwaysAllQuests =		GetNewSettingData(WQT.db.global.alwaysAllQuests, false);
-		WQT.db.global.list.fullTime = 			GetNewSettingData(WQT.db.global.listFullTime, false);
 
-		WQT.db.global.pin.typeIcon =				GetNewSettingData(WQT.db.global.pinType, true);
-		WQT.db.global.pin.rewardTypeIcon =		GetNewSettingData(WQT.db.global.pinRewardType, false);
-		WQT.db.global.pin.filterPoI =			GetNewSettingData(WQT.db.global.filterPoI, true);
-		WQT.db.global.pin.bigPoI =				GetNewSettingData(WQT.db.global.bigPoI, false);
-		WQT.db.global.pin.disablePoI =			GetNewSettingData(WQT.db.global.disablePoI, false);
-		WQT.db.global.pin.reward =				GetNewSettingData(WQT.db.global.showPinReward, true);
-		WQT.db.global.pin.timeLabel =			GetNewSettingData(WQT.db.global.showPinTime, false);
-		WQT.db.global.pin.ringType =				GetNewSettingData(WQT.db.global.ringType, _V["RING_TYPES"].time);
-		
-		-- Clean up old data
-		local version = WQT.db.global.versionCheck;
-		local sortBy = WQT.db.global.sortBy;
-		local updateSeen = WQT.db.global.updateSeen;
-		
-		if (WQT.settings) then
-			for k, v in pairs(WQT.settings) do
-				if (type(v) ~= "table") then
-					WQT.settings[k] = nil;
+	-- changes from when version was saved as a string (pre 11.2.01)
+	if (settingVersionString) then
+		-- BfA
+		if (settingVersion < 80001) then
+			-- In 8.0.01 factions use ids rather than name
+			local repFlags = WQT.db.global.filters[1].flags;
+			for name in pairs(repFlags) do
+				if (type(name) == "string" and name ~= "Other" and name ~= _L["NO_FACTION"]) then
+					repFlags[name] = nil;
 				end
 			end
 		end
+		-- Pin rework, turn off pin time by default
+		if (settingVersion < 80201)  then
+			WQT.db.global.showPinTime = false;
+		end
+		-- Reworked save structure
+		if (settingVersion < 80202)  then
+			WQT.db.global.general.defaultTab =		GetNewSettingData(WQT.db.global.defaultTab, false);
+			WQT.db.global.general.saveFilters = 	GetNewSettingData(WQT.db.global.saveFilters, true);
+			WQT.db.global.general.emissaryOnly = 	GetNewSettingData(WQT.db.global.emissaryOnly, false);
+			WQT.db.global.general.autoEmisarry = 	GetNewSettingData(WQT.db.global.autoEmisarry, true);
+			WQT.db.global.general.questCounter = 	GetNewSettingData(WQT.db.global.questCounter, true);
+			WQT.db.global.general.bountyCounter = 	GetNewSettingData(WQT.db.global.bountyCounter, true);
+			WQT.db.global.general.useTomTom = 		GetNewSettingData(WQT.db.global.useTomTom, true);
+			WQT.db.global.general.TomTomAutoArrow = GetNewSettingData(WQT.db.global.TomTomAutoArrow, true);
+			
+			WQT.db.global.list.typeIcon = 			GetNewSettingData(WQT.db.global.showTypeIcon, true);
+			WQT.db.global.list.factionIcon = 		GetNewSettingData(WQT.db.global.showFactionIcon, true);
+			WQT.db.global.list.showZone = 			GetNewSettingData(WQT.db.global.listShowZone, true);
+			WQT.db.global.list.amountColors = 		GetNewSettingData(WQT.db.global.rewardAmountColors, true);
+			WQT.db.global.list.alwaysAllQuests =	GetNewSettingData(WQT.db.global.alwaysAllQuests, false);
+			WQT.db.global.list.fullTime = 			GetNewSettingData(WQT.db.global.listFullTime, false);
+
+			WQT.db.global.pin.typeIcon =			GetNewSettingData(WQT.db.global.pinType, true);
+			WQT.db.global.pin.rewardTypeIcon =		GetNewSettingData(WQT.db.global.pinRewardType, false);
+			WQT.db.global.pin.filterPoI =			GetNewSettingData(WQT.db.global.filterPoI, true);
+			WQT.db.global.pin.bigPoI =				GetNewSettingData(WQT.db.global.bigPoI, false);
+			WQT.db.global.pin.disablePoI =			GetNewSettingData(WQT.db.global.disablePoI, false);
+			WQT.db.global.pin.reward =				GetNewSettingData(WQT.db.global.showPinReward, true);
+			WQT.db.global.pin.timeLabel =			GetNewSettingData(WQT.db.global.showPinTime, false);
+			WQT.db.global.pin.ringType =			GetNewSettingData(WQT.db.global.ringType, _V["RING_TYPES"].time);
+			
+			-- Clean up old data
+			local version = WQT.db.global.versionCheck;
+			local sortBy = WQT.db.global.sortBy;
+			local updateSeen = WQT.db.global.updateSeen;
+			
+			if (WQT.settings) then
+				for k, v in pairs(WQT.settings) do
+					if (type(v) ~= "table") then
+						WQT.settings[k] = nil;
+					end
+				end
+			end
+			
+			WQT.db.global.versionCheck = version;
+			WQT.db.global.sortBy = sortBy;
+			WQT.db.global.updateSeen = updateSeen;
+		end
 		
-		WQT.db.global.versionCheck = version;
-		WQT.db.global.sortBy = sortBy;
-		WQT.db.global.updateSeen = updateSeen;
-	end
-	
-	if (version < "8.3.01")  then
-		WQT.db.global.pin.scale = WQT.db.global.pin.bigPoI and 1.15 or 1;
-		WQT.db.global.pin.centerType = WQT.db.global.pin.reward and _V["PIN_CENTER_TYPES"].reward or _V["PIN_CENTER_TYPES"].blizzard;
-	end
-	
-	if (version < "8.3.02")  then
-		local factionFlags = WQT.db.global.filters[_V["FILTER_TYPES"].faction].flags;
-		-- clear out string keys
-		for k in pairs(factionFlags) do
-			if (type(k) == "string") then
-				factionFlags[k] = nil;
+		if (settingVersion < 80301)  then
+			WQT.db.global.pin.scale = WQT.db.global.pin.bigPoI and 1.15 or 1;
+			WQT.db.global.pin.centerType = WQT.db.global.pin.reward and _V["PIN_CENTER_TYPES"].reward or _V["PIN_CENTER_TYPES"].blizzard;
+		end
+		
+		if (settingVersion < 80302)  then
+			local factionFlags = WQT.db.global.filters[_V["FILTER_TYPES"].faction].flags;
+			-- clear out string keys
+			for k in pairs(factionFlags) do
+				if (type(k) == "string") then
+					factionFlags[k] = nil;
+				end
 			end
 		end
-	end
 
-	if (version < "8.3.04")  then
-		-- Changes for profiles
-		if (WQT.db.global.sortBy) then
-			WQT.db.global.general.sortBy = WQT.db.global.sortBy;
-			WQT.db.global.sortBy = nil;
-		end
-		if (WQT.db.global.fullScreenContainerPos) then
-			WQT.db.global.general.fullScreenContainerPos = WQT.db.global.fullScreenContainerPos;
-			WQT.db.global.fullScreenContainerPos = nil;
+		if (settingVersion < 80304)  then
+			-- Changes for profiles
+			if (WQT.db.global.sortBy) then
+				WQT.db.global.general.sortBy = WQT.db.global.sortBy;
+				WQT.db.global.sortBy = nil;
+			end
+			if (WQT.db.global.fullScreenContainerPos) then
+				WQT.db.global.general.fullScreenContainerPos = WQT.db.global.fullScreenContainerPos;
+				WQT.db.global.fullScreenContainerPos = nil;
+			end
+			
+			-- Forgot to clear this in 8.3.01
+			WQT.db.global.pin.bigPoI = nil;
+			WQT.db.global.pin.reward = nil; 
 		end
 		
-		-- Forgot to clear this in 8.3.01
-		WQT.db.global.pin.bigPoI = nil;
-		WQT.db.global.pin.reward = nil; 
-	end
-	
-	if (version < "9.0.02") then
-		-- More specific options for map pins
-		WQT.db.global.pin.continentVisible = WQT.db.global.pin.continentPins and _V["ENUM_PIN_CONTINENT"].all or _V["ENUM_PIN_CONTINENT"].none;
-		WQT.db.global.pin.continentPins = nil;
-	end
+		if (settingVersion < 90002) then
+			-- More specific options for map pins
+			WQT.db.global.pin.continentVisible = WQT.db.global.pin.continentPins and _V["ENUM_PIN_CONTINENT"].all or _V["ENUM_PIN_CONTINENT"].none;
+			WQT.db.global.pin.continentPins = nil;
+		end
 
-	if (version < "11.1.01") then
-		-- Reworked full map button
-		WQT.db.global.fullScreenButtonPos = nil;
-		-- Cba to deal with this anymore
-		WQT.db.global.general.useLFGButtons = nil;
-		-- None of that
-		WQT.db.global.general.filterPasses = nil;
+		if (settingVersion < 110101) then
+			-- Reworked full map button
+			WQT.db.global.fullScreenButtonPos = nil;
+			-- Cba to deal with this anymore
+			WQT.db.global.general.useLFGButtons = nil;
+			-- None of that
+			WQT.db.global.general.filterPasses = nil;
+		end
 	end
 end
 
@@ -656,14 +662,15 @@ end
 
 function WQT:OnInitialize()
 	self.db = LibStub("AceDB-3.0"):New("BWQDB", _V["WQT_DEFAULTS"], true);
-	ConvertOldSettings(WQT.db.global.versionCheck)
+	ConvertOldSettings();
 	WQT_Profiles:InitSettings();
 	
 	WQT.combatLockWarned = false;
 
 	-- Hightlight 'what's new'
-	local currentVersion = C_AddOns.GetAddOnMetadata(addonName, "version")
-	if (WQT.db.global.versionCheck < currentVersion) then
+	local settingsVersion = WQT_Utils:GetSettingsVersion();
+	local currentVersion = WQT_Utils:GetAddonVersion();
+	if (settingsVersion < currentVersion) then
 		WQT.db.global.updateSeen = false;
 		WQT.db.global.versionCheck  = currentVersion;
 	end

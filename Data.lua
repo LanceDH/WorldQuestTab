@@ -1485,6 +1485,9 @@ local patchNotes = {
 			["changes"] = {
 				"Increased the max rewards in the quest list from 4 to 5";
 			};
+			["fixes"] = {
+				"Fixed an issue where some settings wouldn't save between reloads";
+			};
 		};
 		{["version"] = "11.2.01";
 			["intro"] = {

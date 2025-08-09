@@ -101,7 +101,7 @@ local function AddProfileToReferenceList(id, name)
 end
 
 local function ApplyVersionChanges(profile, version)
-	if (version < "8.3.04") then
+	if (version < 80304) then
 		profile.pin.numRewardIcons = profile.pin.rewardTypeIcon and 1 or 0;
 		profile.pin.rewardTypeIcon = nil;
 	end
@@ -112,16 +112,7 @@ function WQT_Profiles:OnLoad()
 	WQT.settings = {["colors"] = {}, ["general"] = {}, ["list"] = {}, ["pin"] = {}, ["filters"] = {}};
 end
 
-
 function WQT_Profiles:InitSettings()
-	-- Version checking
-	local settingVersion = WQT.db.global.versionCheck or"0";
-	local currentVersion = C_AddOns.GetAddOnMetadata(addonName, "version");
-	if (settingVersion < currentVersion) then
-		WQT.db.global.updateSeen = false;
-		WQT.db.global.versionCheck  = currentVersion;
-	end
-
 	-- Setup profiles
 	if (not WQT.db.global.profiles[0]) then
 		local profile = {
@@ -142,7 +133,7 @@ function WQT_Profiles:InitSettings()
 		self:LoadProfileInternal(0, profile);
 	end
 
-	
+	local settingVersion = WQT_Utils:GetSettingsVersion();
 	for id, profile in pairs(WQT.db.global.profiles) do
 		ApplyVersionChanges(profile, settingVersion);
 		AddProfileToReferenceList(id, profile.name);
