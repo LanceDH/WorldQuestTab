@@ -506,7 +506,7 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.showZone end
 			}
-	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["REWARD_NUM_DISPLAY"], ["tooltip"] = _L["REWARD_NUM_DISPLAY_TT"], ["min"] = 0, ["max"] = 4, ["valueStep"] = 1
+	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["REWARD_NUM_DISPLAY"], ["tooltip"] = _L["REWARD_NUM_DISPLAY_TT"], ["min"] = 0, ["max"] = 5, ["valueStep"] = 1
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.list.rewardNumDisplay = value;
 				WQT_ListContainer:DisplayQuestList();
@@ -1481,6 +1481,11 @@ end
 -- fixes			List of bugfixes
 
 local patchNotes = {
+		{["version"] = "11.2.02";
+			["changes"] = {
+				"Increased the max rewards in the quest list from 4 to 5";
+			};
+		};
 		{["version"] = "11.2.01";
 			["intro"] = {
 				"Update for patch 11.2";

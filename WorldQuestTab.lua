@@ -919,7 +919,10 @@ end
 
 function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, typeColor, canUpgrade, warmodeBonus)
 	-- Limit the amount of rewards shown
-	if (self.numDisplayed >= WQT.settings.list.rewardNumDisplay) then return; end
+	if (self.numDisplayed >= WQT.settings.list.rewardNumDisplay
+		or self.numDisplayed >= #self.rewardFrames) then 
+			return;
+	end
 	
 	self.numDisplayed = self.numDisplayed + 1;
 	local num = self.numDisplayed;

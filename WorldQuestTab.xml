@@ -106,6 +106,15 @@
 					<KeyValue key="isMinor" type="bool" value="true" />
 				</KeyValues>
 			</Frame>
+			<Frame parentKey="Reward5" inherits="WQT_RewardTemplate" >
+				<Size x="16" y="16"/>
+				<Anchors>
+					<Anchor point="BOTTOMLEFT" relativeKey="$parent.Reward4" relativePoint="TOPLEFT" x="0" />
+				</Anchors>
+				<KeyValues>
+					<KeyValue key="isMinor" type="bool" value="true" />
+				</KeyValues>
+			</Frame>
 			
 		</Frames>
 		

@@ -136,29 +136,35 @@ function WQT_SettingsQuestListMixin:OnLoad()
 	self.dummyQuestInfo.time = { ["seconds"] = 291863; };
 	self.dummyQuestInfo.rewardList = {
 		{
-			["type"] = WQT_REWARDTYPE.equipment,
-			["quality"] = 4,
-			["texture"] = 5371389,
-			["amount"] = 603
-		},
+			["type"] = WQT_REWARDTYPE.equipment;
+			["quality"] = 4;
+			["texture"] = 5371389;
+			["amount"] = 603;
+		};
 		{
-			["type"] = WQT_REWARDTYPE.item,
-			["quality"] = 3,
-			["texture"] = 133016,
-			["amount"] = 25
-		},
+			["type"] = WQT_REWARDTYPE.item;
+			["quality"] = 3;
+			["texture"] = 133016;
+			["amount"] = 25;
+		};
 		{
-			["type"] = WQT_REWARDTYPE.currency,
-			["quality"] = 1,
-			["texture"] = 5872053,
-			["amount"] = 2
-		},
+			["type"] = WQT_REWARDTYPE.currency;
+			["quality"] = 1;
+			["texture"] = 5872053;
+			["amount"] = 2;
+		};
 		{
-			["type"] = WQT_REWARDTYPE.gold,
-			["quality"] = 1,
-			["texture"] = 133784,
-			["amount"] = 83400000
-		}
+			["type"] = WQT_REWARDTYPE.gold;
+			["quality"] = 1;
+			["texture"] = 133784;
+			["amount"] = 83400000;
+		};
+		{
+			["type"] = WQT_REWARDTYPE.reputation;
+			["quality"] = 3;
+			["texture"] = 5891367;
+			["amount"] = 150;
+		};
 	};
 	self.dummyQuestInfo.tagInfo = {
 		["quality"] = 0,
