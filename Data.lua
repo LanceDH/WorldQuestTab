@@ -1480,9 +1480,10 @@ local patchNotes = {
 			};
 			["fixes"] = {
 				"Fixed an issue where some settings wouldn't save between reloads";
-				"Fixed an issue that caused some quests to show up on the Azeroth map that shouldn't";
-				"Fixed reward amounts using War Mode";
+				"Fixed an issue that caused some quests to show up while on the Azeroth map that shouldn't";
+				"Fixed incorrect reward amounts using War Mode";
 				"Fixed item level on relic rewards";
+				"Fixed Zereth Mortis quests not showing while on the Shadowlands map";
 			};
 		};
 		{["version"] = "11.2.01";

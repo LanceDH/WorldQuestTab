@@ -790,7 +790,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 			continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneID];
 		end
 
-		self:AddZoneToBuffer(zoneID)
+		self:AddContinentMapQuests(zoneID);
 		local linkedZones = _V["WQT_CONTINENT_LINKS"][zoneID];
 		if (linkedZones) then
 			for _, continentID in ipairs(linkedZones) do
