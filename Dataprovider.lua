@@ -240,8 +240,8 @@ function QuestInfoMixin:LoadRewards(force)
 				elseif (typeID == 3 and subTypeID == 11) then
 					-- Relics
 					-- Find upgrade amount as C_ArtifactUI.GetItemLevelIncreaseProvidedByRelic doesn't scale
-					local numItems = tonumber(ScanTooltipRewardForPattern(self.questID, "^%+(%d+)"));
-					self:AddReward(WQT_REWARDTYPE.relic, numItems, texture, quality, rewardId);
+					local numItems = tonumber(ScanTooltipRewardForPattern(self.questID, "(%d+)%+$"));
+					self:AddReward(WQT_REWARDTYPE.relic, numItems, texture, quality, rewardId, true);
 				elseif(C_Item.IsAnimaItemByID(rewardId)) then
 					-- Anima
 					local value = ScanTooltipRewardForPattern(self.questID, " (%d+) ") or 1;
@@ -316,7 +316,7 @@ function QuestInfoMixin:AddReward(rewardType, amount, texture, quality, id, canU
 	local rewardInfo = self.rewardList[index] or {};
 	rewardInfo.id = id or 0;
 	rewardInfo.type = rewardType;
-	rewardInfo.amount = amount;
+	rewardInfo.amount = amount or 1;
 	rewardInfo.texture = texture;
 	rewardInfo.quality = quality;
 	rewardInfo.color, rewardInfo.textColor = WQT_Utils:GetRewardTypeColorIDs(rewardType);
@@ -605,32 +605,34 @@ function WQT_DataProvider:OnUpdate(elapsed)
 			local updated = 0;
 			-- Go through quests, mark for add if we don't currently have it, otherwise unmark for removal
 			for questID, apiInfo in pairs(self.zoneLoading.questsFound) do
-				acceptedCount = acceptedCount + 1;
-				if (not questForRemove[questID]) then
-					questsToAdd[questID] = apiInfo;
-				else
-					local addonInfo = questForRemove[questID];
-					questForRemove[questID] = nil;
-					local updateSuccess = false;
-					-- Just always update time. This has been an issue on the full screen map, and might as well make sure we are up to date
-					addonInfo:UpdateTimeRemaining()
+				if (self.zoneLoading.expansion == 0 or self.zoneLoading.expansion == GetQuestExpansion(questID)) then
+					acceptedCount = acceptedCount + 1;
+					if (not questForRemove[questID]) then
+						questsToAdd[questID] = apiInfo;
+					else
+						local addonInfo = questForRemove[questID];
+						questForRemove[questID] = nil;
+						local updateSuccess = false;
+						-- Just always update time. This has been an issue on the full screen map, and might as well make sure we are up to date
+						addonInfo:UpdateTimeRemaining()
 
-					updateSuccess = addonInfo:UpdateTitleAndFaction() or updateSuccess;
-					-- Quest log update might have been for missing data
-					if (not addonInfo.hasRewardData) then
-						updateSuccess = addonInfo:LoadRewards(true) or updateSuccess;
-					end
-					if (not addonInfo.isValid) then
-						updateSuccess = addonInfo:UpdateValidity() or updateSuccess;
-					end
-					if (addonInfo.alwaysHide and MapUtil.ShouldShowTask(apiInfo.mapID, apiInfo)) then
-						-- Have only encountered this once and not been able to replicate to test if this even works
-						addonInfo.alwaysHide = false;
-						WQT:debugPrint(string.format("Quest alwaysHide updated (%s)", questID));
-						updateSuccess = addonInfo:UpdateValidity() or updateSuccess;
-					end
-					if (updateSuccess) then
-						updated = updated + 1;
+						updateSuccess = addonInfo:UpdateTitleAndFaction() or updateSuccess;
+						-- Quest log update might have been for missing data
+						if (not addonInfo.hasRewardData) then
+							updateSuccess = addonInfo:LoadRewards(true) or updateSuccess;
+						end
+						if (not addonInfo.isValid) then
+							updateSuccess = addonInfo:UpdateValidity() or updateSuccess;
+						end
+						if (addonInfo.alwaysHide and MapUtil.ShouldShowTask(apiInfo.mapID, apiInfo)) then
+							-- Have only encountered this once and not been able to replicate to test if this even works
+							addonInfo.alwaysHide = false;
+							WQT:debugPrint(string.format("Quest alwaysHide updated (%s)", questID));
+							updateSuccess = addonInfo:UpdateValidity() or updateSuccess;
+						end
+						if (updateSuccess) then
+							updated = updated + 1;
+						end
 					end
 				end
 			end
@@ -645,12 +647,9 @@ function WQT_DataProvider:OnUpdate(elapsed)
 			local added = 0;
 			-- Add all new ones
 			for questID, apiInfo in pairs(questsToAdd) do
-				local expLevel = GetQuestExpansion(questID);
-				if (self.zoneLoading.expansion == 0 or self.zoneLoading.expansion == expLevel) then
-					added = added + 1;
-					local questInfo = self.pool:Acquire();
-					questInfo:Init(apiInfo.questID, apiInfo);
-				end
+				added = added + 1;
+				local questInfo = self.pool:Acquire();
+				questInfo:Init(apiInfo.questID, apiInfo);
 			end
 
 			WQT:debugPrint(string.format("Done: %s quests (-%s +%s ~%s)", acceptedCount, removed, added, updated));

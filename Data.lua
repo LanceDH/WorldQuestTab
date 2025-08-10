@@ -691,12 +691,6 @@ _V["NUMBER_ABBREVIATIONS"] = {
 		,{["value"] = 1000, ["format"] = _L["NUMBERS_FIRST"], ["decimal"] = true}
 	}
 
-_V["WARMODE_BONUS_REWARD_TYPES"] = {
-		[WQT_REWARDTYPE.artifact] = true;
-		[WQT_REWARDTYPE.gold] = true;
-		[WQT_REWARDTYPE.currency] = true;
-	}
-
 _V["WQT_CVAR_LIST"] = {
 		["Petbattle"] = "showTamers"
 		,["Artifact"] = "worldQuestFilterArtifactPower"
@@ -797,16 +791,15 @@ _V["SORT_FUNCTIONS"] = {
 
 			local amountA = a:GetRewardAmount();
 			local amountB = b:GetRewardAmount();
-			if (C_PvP.IsWarModeDesired()) then
-				local aType = a:GetRewardType();
-				local bType = b:GetRewardType();
-				local bonus = C_PvP.GetWarModeRewardBonus() / 100;
-				if (_V["WARMODE_BONUS_REWARD_TYPES"][aType] and C_QuestLog.QuestHasWarModeBonus(a.questID)) then
-					amountA = amountA + floor(amountA * bonus);
-				end
-				if (_V["WARMODE_BONUS_REWARD_TYPES"][bType] and C_QuestLog.QuestHasWarModeBonus(b.questID)) then
-					amountB = amountB + floor(amountB * bonus);
-				end
+
+			if (C_QuestLog.QuestCanHaveWarModeBonus(a.questID)) then
+				local rewardA = a:GetReward(1);
+				amountA = WQT_Utils:CalculateWarmodeAmount(rewardA);
+			end
+
+			if (C_QuestLog.QuestCanHaveWarModeBonus(b.questID)) then
+				local rewardB = b:GetReward(1);
+				amountB = WQT_Utils:CalculateWarmodeAmount(rewardB);
 			end
 
 			if (amountA ~= amountB) then 
@@ -1487,6 +1480,9 @@ local patchNotes = {
 			};
 			["fixes"] = {
 				"Fixed an issue where some settings wouldn't save between reloads";
+				"Fixed an issue that caused some quests to show up on the Azeroth map that shouldn't";
+				"Fixed reward amounts using War Mode";
+				"Fixed item level on relic rewards";
 			};
 		};
 		{["version"] = "11.2.01";
@@ -1522,6 +1518,7 @@ local FORMAT_H1 = "%s<h1 align='center'>%s</h1>";
 local FORMAT_H2 = "%s<h2>%s:</h2>";
 local FORMAT_p = "%s<p>%s</p>";
 local FORMAT_WHITESPACE = "%s<h3>&#160;</h3>"
+local FORMAT_WHITESPACE_DOUBLE = "%s<h3>&#160;</h3><h3>&#160;</h3>"
 
 local function AddNotes(updateMessage, title, notes)
 	if (not notes) then return updateMessage; end
@@ -1547,6 +1544,8 @@ local function FormatPatchNotes(notes)
 		updateMessage = AddNotes(updateMessage, "New", patch.new);
 		updateMessage = AddNotes(updateMessage, "Changes", patch.changes);
 		updateMessage = AddNotes(updateMessage, "Fixes", patch.fixes);
+
+		updateMessage = FORMAT_WHITESPACE_DOUBLE:format(updateMessage);
 	end
 	return updateMessage .. "</body></html>";
 end

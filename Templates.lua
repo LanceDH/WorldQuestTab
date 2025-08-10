@@ -856,11 +856,29 @@ function WQT_Utils:RewardTypePassesFilter(rewardType)
 	return true;
 end
 
-function WQT_Utils:CalculateWarmodeAmount(rewardType, amount)
-	if (C_PvP.IsWarModeDesired() and _V["WARMODE_BONUS_REWARD_TYPES"][rewardType]) then
-		amount = amount + floor(amount * C_PvP.GetWarModeRewardBonus() / 100);
+function WQT_Utils:CalculateWarmodeAmount(rewardInfo)
+	if (not rewardInfo) then return 0; end
+
+	local amount = rewardInfo.amount or 1;
+
+	if (not C_PvP.IsWarModeDesired()) then
+		return amount;
 	end
-	return amount;
+
+	local isCurrencyType = rewardInfo.type == WQT_REWARDTYPE.currency or rewardInfo.type == WQT_REWARDTYPE.artifact;
+	local isWarmodeRewardType =	isCurrencyType or rewardInfo.type == WQT_REWARDTYPE.gold or rewardInfo.type == WQT_REWARDTYPE.currency;
+
+	if (not isWarmodeRewardType) then
+		return amount;
+	end
+
+	if (isCurrencyType
+		and (not C_CurrencyInfo.DoesWarModeBonusApply(rewardInfo.id)
+			or C_CurrencyInfo.GetFactionGrantedByCurrency(rewardInfo.id))) then
+		return amount;
+	end
+
+	return amount + floor(amount * C_PvP.GetWarModeRewardBonus() / 100);
 end
 
 function WQT_Utils:DeepWipeTable(t)

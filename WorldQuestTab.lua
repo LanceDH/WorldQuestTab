@@ -834,10 +834,6 @@ end
 ------------------------------------------
 -- 			REWARDDISPLAY MIXIN			--
 ------------------------------------------
--- OnLoad()
--- Reset()
--- AddRewardByInfo(rewardInfo, warmodeBonus)
--- AddReward(rewardType, texture, quality, amount, typeColor, canUpgrade, warmodeBonus)
 
 WQT_RewardDisplayMixin = {};
 
@@ -857,11 +853,6 @@ end
 
 function WQT_RewardDisplayMixin:SetDesaturated(desaturate)
 	self.desaturate = desaturate;
-end
-
-function WQT_RewardDisplayMixin:AddRewardByInfo(rewardInfo, warmodeBonus)
-	-- A bit easier when updating buttons
-	self:AddReward(rewardInfo.type, rewardInfo.texture, rewardInfo.quality, rewardInfo.amount, rewardInfo.textColor, rewardInfo.canUpgrade, warmodeBonus);
 end
 
 function WQT_RewardDisplayMixin:UpdateVisuals()
@@ -924,22 +915,28 @@ function WQT_RewardDisplayMixin:UpdateVisuals()
 	end
 end
 
-function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, typeColor, canUpgrade, warmodeBonus)
+function WQT_RewardDisplayMixin:AddReward(rewardInfo, warmodeBonus)
 	-- Limit the amount of rewards shown
 	if (self.numDisplayed >= WQT.settings.list.rewardNumDisplay
 		or self.numDisplayed >= #self.rewardFrames) then 
 			return;
 	end
-	
+
+	local rewardType = rewardInfo.type;
+	local texture = rewardInfo.texture;
+	local quality = rewardInfo.quality;
+	local amount = rewardInfo.amount;
+	local canUpgrade = rewardInfo.canUpgrade;
+
 	self.numDisplayed = self.numDisplayed + 1;
 	local num = self.numDisplayed;
 
 	amount = amount or 1;
 	-- Calculate warmode bonus
 	if (warmodeBonus) then
-		amount = WQT_Utils:CalculateWarmodeAmount(rewardType, amount);
+		amount = WQT_Utils:CalculateWarmodeAmount(rewardInfo);
 	end
-	
+
 	local rewardFrame = self.rewardFrames[num];
 	rewardFrame.rewardType = rewardType;
 	rewardFrame.texture = texture;
@@ -948,7 +945,7 @@ function WQT_RewardDisplayMixin:AddReward(rewardType, texture, quality, amount, 
 	local _, textColor = WQT_Utils:GetRewardTypeColorIDs(rewardType);
 	rewardFrame.typeColor = textColor;
 	rewardFrame.canUpgrade = canUpgrade;
-	
+
 	self:UpdateVisuals();
 
 	local minWidth = 0.01;
@@ -1175,7 +1172,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	self.Rewards:Reset();
 	self.Rewards:SetDesaturated(isDisliked);
 	for k, rewardInfo in questInfo:IterateRewards() do
-		self.Rewards:AddRewardByInfo(rewardInfo, C_QuestLog.QuestCanHaveWarModeBonus(self.questID));
+		self.Rewards:AddReward(rewardInfo, C_QuestLog.QuestCanHaveWarModeBonus(self.questID));
 	end
 
 	-- Show border if quest is tracked
