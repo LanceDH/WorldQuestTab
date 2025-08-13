@@ -841,7 +841,7 @@ _V["SORT_FUNCTIONS"] = {
 			local tagInfoB = b:GetTagInfo();
 			if (tagInfoA and tagInfoB and tagInfoA.quality and tagInfoB.quality and tagInfoA.quality ~= tagInfoB.quality) then 
 				return tagInfoA.quality > tagInfoB.quality; 
-			end 
+			end
 		end
 	,["title"] = function(a, b)
 			if (a.title ~= b.title) then 
@@ -863,8 +863,12 @@ _V["SORT_FUNCTIONS"] = {
 			if (aIsCriteria ~= bIsCriteria) then return aIsCriteria and not bIsCriteria; end 
 		end
 	,["zone"] = function(a, b) 
-			local mapInfoA = WQT_Utils:GetMapInfoForQuest(a.questID);
-			local mapInfoB = WQT_Utils:GetMapInfoForQuest(b.questID);
+			local mapInfoA = WQT_Utils:GetCachedMapInfo(a.mapID);
+			local mapInfoB = WQT_Utils:GetCachedMapInfo(b.mapID);
+			if (not mapInfoA or not mapInfoB) then
+				return mapInfoA;
+			end
+
 			if (mapInfoA and mapInfoA.name and mapInfoB and mapInfoB.name and mapInfoA.mapID ~= mapInfoB.mapID) then 
 				if (WQT.settings.list.alwaysAllQuests and (mapInfoA.mapID == WorldMapFrame.mapID or mapInfoB.mapID == WorldMapFrame.mapID)) then 
 					return mapInfoA.mapID == WorldMapFrame.mapID and mapInfoB.mapID ~= WorldMapFrame.mapID;
@@ -1408,7 +1412,6 @@ _V["WQT_DEFAULTS"] = {
 			scale = 1;
 			disablePoI = false;
 			timeLabel = false;
-			continentPins = false;
 			fadeOnPing = true;
 			eliteRing = false;
 			ringType = _V["RING_TYPES"].time;
@@ -1474,6 +1477,11 @@ end
 -- fixes			List of bugfixes
 
 local patchNotes = {
+		{["version"] = "11.2.03";
+			["fixes"] = {
+				"Fixed a possible error for characters level 70-79";
+			};
+		};
 		{["version"] = "11.2.02";
 			["changes"] = {
 				"Increased the max rewards in the quest list from 4 to 5";

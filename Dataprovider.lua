@@ -359,9 +359,8 @@ function QuestInfoMixin:IsExpired()
 end
 
 function QuestInfoMixin:SetAsWaypoint()
-	local mapInfo = WQT_Utils:GetMapInfoForQuest(self.questID);
-	local x, y = WQT_Utils:GetQuestMapLocation(self.questID, mapInfo.mapID);
-	local wayPoint = UiMapPoint.CreateFromCoordinates(mapInfo.mapID, x, y);
+	local x, y = WQT_Utils:GetQuestMapLocation(self.questID, self.mapID);
+	local wayPoint = UiMapPoint.CreateFromCoordinates(self.mapID, x, y);
 	C_Map.SetUserWaypoint(wayPoint);
 end
 

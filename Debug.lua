@@ -106,19 +106,16 @@ function WQT:AddDebugToTooltip(tooltip, questInfo, level)
 		AddIndentedDoubleLine(tooltip, "texture", factionInfo.texture, 2, color);
 		AddIndentedDoubleLine(tooltip, "expansion", factionInfo.expansion, 2, color);
 		-- MapInfo
-		local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questID);
-		if (questInfo.mapinfo) then
-			AddIndentedDoubleLine(tooltip, "mapInfo", "", 1, color);
+		local mapInfo = WQT_Utils:GetCachedMapInfo(questInfo.mapID);
+		AddIndentedDoubleLine(tooltip, "mapInfo", "", 1, color);
+		if (mapInfo) then
 			AddIndentedDoubleLine(tooltip, "name", mapInfo.name, 2, color);
 			AddIndentedDoubleLine(tooltip, "mapID", mapInfo.mapID, 2, color);
 			AddIndentedDoubleLine(tooltip, "parentMapID", mapInfo.parentMapID, 2, color);
 			AddIndentedDoubleLine(tooltip, "mapType", mapInfo.mapType, 2, color);
-			local continentID, worldPosition = C_Map.GetWorldPosFromMapPos(mapInfo.mapID, CreateVector2D(questInfo.mapInfo.mapX, questInfo.mapInfo.mapY))
-			AddIndentedDoubleLine(tooltip, "continentID", continentID, 2, color);
-			AddIndentedDoubleLine(tooltip, "worldPosition.x", worldPosition.x, 2, color);
-			AddIndentedDoubleLine(tooltip, "worldPosition.y", worldPosition.x, 2, color);
+		else
+			AddIndentedDoubleLine(tooltip, "Map info missing", "", 2, color);
 		end
-		
 	end
 end
 
@@ -178,8 +175,7 @@ local function GetWorldQuestDump()
 	
 	local list = WQT_WorldQuestFrame.dataProvider:GetIterativeList();
 	for k, questInfo in ipairs(list) do
-		local mapInfo = WQT_Utils:GetMapInfoForQuest(questInfo.questID)
-		output = FORMAT_WORLDQUEST:format(output, questInfo.questID, mapInfo.mapID, bts(questInfo.passedFilter), bts(questInfo.isValid), bts(questInfo.alwaysHide), questInfo.time.seconds, questInfo.reward.typeBits);
+		output = FORMAT_WORLDQUEST:format(output, questInfo.questID, questInfo.mapID, bts(questInfo.passedFilter), bts(questInfo.isValid), bts(questInfo.alwaysHide), questInfo.time.seconds, questInfo.reward.typeBits);
 	end
 	
 	return output;

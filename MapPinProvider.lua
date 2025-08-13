@@ -255,11 +255,12 @@ function WQT_PinDataProvider:PlacePins()
 	end
 	
 	local mapID = parentMapFrame:GetMapID();
-	local settingsContinentPins = WQT_Utils:GetSetting("pin", "continentPins");
+	local mapInfo = WQT_Utils:GetCachedMapInfo(mapID);
+	if (not mapInfo) then return; end
 	local settingsContinentVisible = WQT_Utils:GetSetting("pin", "continentVisible");
 	local settingsZoneVisible = WQT_Utils:GetSetting("pin", "zoneVisible");
 	local settingsFilterPoI  = WQT_Utils:GetSetting("pin", "filterPoI");
-	local mapInfo = WQT_Utils:GetCachedMapInfo(mapID);
+	
 	local canvas = parentMapFrame:GetCanvas();
 	
 	wipe(self.activePins);

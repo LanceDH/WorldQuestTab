@@ -1047,7 +1047,7 @@ function WQT_ListButtonMixin:OnEnter()
 	if (not questInfo) then return; end
 	self.Highlight:Show();
 	WQT_WorldQuestFrame.pinDataProvider:SetQuestIDPinged(self.questInfo.questID, true);
-	WQT_WorldQuestFrame:ShowWorldmapHighlight(questInfo.questID);
+	WQT_WorldQuestFrame:ShowWorldmapHighlight(questInfo);
 
 	self.Title:SetFontObject(GameFontHighlight);
 	
@@ -1474,8 +1474,8 @@ end
 WQT_CoreMixin = {};
 
 -- Mimics hovering over a zone or continent, based on the zone the map is in
-function WQT_CoreMixin:ShowWorldmapHighlight(questId)
-	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
+function WQT_CoreMixin:ShowWorldmapHighlight(questInfo)
+	local zoneId = questInfo.mapID;
 	local areaId = WorldMapFrame.mapID;
 	
 	local coords = _V["WQT_ZONE_MAPCOORDS"][areaId] and _V["WQT_ZONE_MAPCOORDS"][areaId][zoneId];

@@ -806,15 +806,6 @@ function WQT_Utils:QuestIsWatchedAutomatic(questId)
 end
 
 function WQT_Utils:GetQuestMapLocation(questId, mapId)
-	local isSameMap = true;
-	if (mapId) then
-		local mapInfo = WQT_Utils:GetMapInfoForQuest(questId);
-		if (not mapInfo) then
-			return 0, 0;
-		end
-		isSameMap = mapInfo.mapID == mapId;
-	end
-	-- General tasks
 	local x, y = C_TaskQuest.GetQuestLocation(questId, mapId);
 	if (x and y) then
 		return x, y;
