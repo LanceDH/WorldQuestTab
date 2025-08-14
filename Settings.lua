@@ -153,6 +153,7 @@ function WQT_SettingsQuestListMixin:OnLoad()
 			["quality"] = 1;
 			["texture"] = 5872053;
 			["amount"] = 2;
+			["id"] = 2902;
 		};
 		{
 			["type"] = WQT_REWARDTYPE.gold;

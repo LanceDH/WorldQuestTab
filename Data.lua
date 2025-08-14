@@ -1504,6 +1504,7 @@ local patchNotes = {
 				"Fixed a possible error for characters level 70-79";
 				"Fixed some issues with Asian reward amount. Maybe, I can't actually test this myself";
 				"Fixed the zhTW loca just straight up not getting loaded (woops)";
+				"Fixed an error in the settings with Warmode enabled";
 			};
 		};
 		{["version"] = "11.2.02";

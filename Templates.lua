@@ -695,7 +695,7 @@ function WQT_Utils:CalculateWarmodeAmount(rewardInfo)
 		return amount;
 	end
 
-	if (isCurrencyType
+	if (isCurrencyType and rewardInfo.id
 		and (not C_CurrencyInfo.DoesWarModeBonusApply(rewardInfo.id)
 			or C_CurrencyInfo.GetFactionGrantedByCurrency(rewardInfo.id))) then
 		return amount;
