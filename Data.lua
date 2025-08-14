@@ -77,9 +77,9 @@ _V["PATH_CUSTOM_ICONS"] = "Interface/Addons/WorldQuestTab/Images/CustomIcons";
 _V["LIST_ANCHOR_TYPE"] = {["flight"] = 1, ["world"] = 2, ["full"] = 3, ["taxi"] = 4};
 
 _V["TOOLTIP_STYLES"] = { 
-	["default"] = {},
+	["default"] = TOOLTIP_QUEST_REWARDS_STYLE_WORLD_QUEST,
 	["callingAvailable"] = { ["hideObjectives"] = true; },
-	["callingActive"] = { ["hideType"] = true; },
+	["callingActive"] = TOOLTIP_QUEST_REWARDS_STYLE_CALLING_REWARD,
 }
 
 _V["COLOR_IDS"] = {
@@ -1479,6 +1479,8 @@ end
 local patchNotes = {
 		{["version"] = "11.2.03";
 			["fixes"] = {
+				"Fixed tooltip rewards not showing if its appearance isn't collected yet";
+				"Fixed tooltips not showing a message regarding one-time warband bonus reputation";
 				"Fixed a possible error for characters level 70-79";
 			};
 		};

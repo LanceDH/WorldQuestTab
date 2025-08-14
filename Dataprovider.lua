@@ -56,8 +56,8 @@ end
 
 local function ScanTooltipRewardForPattern(questID, pattern)
 	local result;
-	
-	WQT_Utils:AddQuestRewardsToTooltip(WQT_ScrapeTooltip, questID, TOOLTIP_QUEST_REWARDS_STYLE_DEFAULT);
+
+	QuestUtils_AddQuestRewardsToTooltip(WQT_ScrapeTooltip, questID, TOOLTIP_QUEST_REWARDS_STYLE_WORLD_QUEST);
 
 	for i=2, 6 do
 		local line = _G["WQT_ScrapeTooltipTooltipTextLeft"..i];
