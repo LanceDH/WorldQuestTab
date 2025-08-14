@@ -41,16 +41,13 @@
 					</Anchors>
 					<TexCoords left="0.05" right="0.95" top="0.05" bottom="0.95"/>
 				</Texture>
-				<MaskTexture parentKey="BorderMask" file="Interface\Addons\WorldQuestTab\Images\RewardMask" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE">
-					<MaskedTextures>
-						<MaskedTexture childKey="Icon" />
-					</MaskedTextures>
-				</MaskTexture>
+				
 			</Layer>
 			<Layer level="ARTWORK">
-				<FontString parentKey="Amount" inherits="GameFontNormalSmall" maxLines="1" justifyH="RIGHT">
+				<FontString parentKey="Amount" inherits="GameFontNormalSmall" mixin="AutoScalingFontStringMixin" maxLines="1" justifyH="RIGHT" justifyV="BOTTOM">
 					<Anchors>
 						<Anchor point="BOTTOMRIGHT" x="-2" y="0"/>
+						<Anchor point="BOTTOMLEFT" x="0" y="0"/>
 					</Anchors>
 					<Color r="1" g="1" b="1"/>
 				</FontString>
@@ -64,9 +61,16 @@
 						<Anchor point="TOP" relativeKey="$parent.Amount" y="6"/>
 						<Anchor point="BOTTOM" relativeKey="$parent.Amount"/>
 					</Anchors>
-					<TexCoords left="1.0" right="0.0" top="0.0" bottom="1.0"/>
+					<TexCoords left="0.8" right="0.0" top="0.0" bottom="1.0"/>
 					<Color r="0" g="0" b="0"/>
 				</Texture>
+
+				<MaskTexture parentKey="BorderMask" file="Interface\Addons\WorldQuestTab\Images\RewardMask" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE">
+					<MaskedTextures>
+						<MaskedTexture childKey="Icon" />
+						<MaskedTexture childKey="AmountBG" />
+					</MaskedTextures>
+				</MaskTexture>
 			</Layer>
 		</Layers>
 	</Frame>

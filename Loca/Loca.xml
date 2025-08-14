@@ -11,6 +11,7 @@
 	<Script file="itIT.lua" />
 	<Script file="ruRU.lua" />
 	<Script file="zhCN.lua" />
+	<Script file="zhTW.lua" />
 	<Script file="koKR.lua" />
 	
  </Ui>

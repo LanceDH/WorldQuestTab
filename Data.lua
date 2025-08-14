@@ -694,7 +694,7 @@ _V["NUMBER_ABBREVIATIONS_ASIAN"] = {
 		{["value"] = 1000000000, ["format"] = _L["NUMBERS_THIRD"]}
 		,{["value"] = 100000000, ["format"] = _L["NUMBERS_SECOND"], ["decimal"] = true}
 		,{["value"] = 100000, ["format"] = _L["NUMBERS_FIRST"]}
-		,{["value"] = 1000, ["format"] = _L["NUMBERS_FIRST"], ["decimal"] = true}
+		,{["value"] = 10000, ["format"] = _L["NUMBERS_FIRST"], ["decimal"] = true}
 	}
 
 _V["NUMBER_ABBREVIATIONS"] = {
@@ -1502,6 +1502,8 @@ local patchNotes = {
 				"Fixed tooltip rewards not showing if its appearance isn't collected yet";
 				"Fixed tooltips not showing a message regarding one-time warband bonus reputation";
 				"Fixed a possible error for characters level 70-79";
+				"Fixed some issues with Asian reward amount. Maybe, I can't actually test this myself";
+				"Fixed the zhTW loca just straight up not getting loaded (woops)";
 			};
 		};
 		{["version"] = "11.2.02";
