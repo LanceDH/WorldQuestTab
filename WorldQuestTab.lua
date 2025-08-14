@@ -1139,6 +1139,12 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	else
 		self.QualityBg:Hide();
 	end
+
+	-- Warband icon
+	local showWarBand = questInfo.hasWarbandBonus and WQT_Utils:GetSetting("list", "warbandIcon");
+	self.WarbandIcon:SetShown(showWarBand);
+	self.WarbandIcon:SetWidth(showWarBand and self.WarbandIcon:GetHeight() or 0.1);
+	self.WarbandIcon:SetDesaturated(isDisliked);
 	
 	-- Highlight
 	local showHighLight = self:IsMouseOver() or self.Faction:IsMouseOver() or (WQT_ListContainer.PoIHoverId and WQT_ListContainer.PoIHoverId == questInfo.questID)

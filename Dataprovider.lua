@@ -164,6 +164,7 @@ function QuestInfoMixin:Init(questID, qInfo)
 	self.passedFilter = true;
 	self:UpdateValidity();
 	self:UpdateTimeRemaining();
+	self:UpdateHasWarbandBonus();
 
 	-- rewards
 	self:LoadRewards();
@@ -182,6 +183,10 @@ function QuestInfoMixin:UpdateTitleAndFaction()
 	end
 
 	return false;
+end
+
+function QuestInfoMixin:UpdateHasWarbandBonus()
+	self.hasWarbandBonus = C_QuestLog.QuestContainsFirstTimeRepBonusForPlayer(self.questID);
 end
 
 function QuestInfoMixin:UpdateValidity()
@@ -612,8 +617,9 @@ function WQT_DataProvider:OnUpdate(elapsed)
 						local addonInfo = questForRemove[questID];
 						questForRemove[questID] = nil;
 						local updateSuccess = false;
-						-- Just always update time. This has been an issue on the full screen map, and might as well make sure we are up to date
-						addonInfo:UpdateTimeRemaining()
+						-- Just always update these
+						addonInfo:UpdateTimeRemaining();
+						addonInfo:UpdateHasWarbandBonus();
 
 						updateSuccess = addonInfo:UpdateTitleAndFaction() or updateSuccess;
 						-- Quest log update might have been for missing data

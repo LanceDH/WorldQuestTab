@@ -506,6 +506,13 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.list.showZone end
 			}
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["SETTINGS_WARBAND_ICON"], ["tooltip"] = _L["SETTINGS_WARBAND_ICON_TT"]
+			, ["valueChangedFunc"] = function(value)
+				WQT.settings.list.warbandIcon = value;
+				WQT_ListContainer:DisplayQuestList();
+			end
+			,["getValueFunc"] = function() return WQT.settings.list.warbandIcon end
+			}
 	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "QUESTLIST", ["label"] = _L["REWARD_NUM_DISPLAY"], ["tooltip"] = _L["REWARD_NUM_DISPLAY_TT"], ["min"] = 0, ["max"] = 5, ["valueStep"] = 1
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.list.rewardNumDisplay = value;
@@ -639,6 +646,14 @@ _V["SETTING_LIST"] = {
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.timeIcon; end
+			,["isDisabled"] = function() return WQT.settings.pin.disablePoI;  end
+			}	
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS_MINIICONS", ["label"] = _L["SETTINGS_WARBAND_ICON"], ["tooltip"] = _L["SETTINGS_WARBAND_ICON_TT"]
+			, ["valueChangedFunc"] = function(value) 
+				WQT.settings.pin.warbandIcon = value;
+				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
+			end
+			,["getValueFunc"] = function() return WQT.settings.pin.warbandIcon; end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI;  end
 			}	
 	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "MAPPINS_MINIICONS", ["label"] = _L["REWARD_NUM_DISPLAY_PIN"], ["tooltip"] = _L["REWARD_NUM_DISPLAY_PIN_TT"], ["min"] = 0, ["max"] = 3, ["valueStep"] = 1
@@ -1392,6 +1407,7 @@ _V["WQT_DEFAULTS"] = {
 			typeIcon = true;
 			factionIcon = true;
 			showZone = true;
+			warbandIcon = false;
 			amountColors = true;
 			alwaysAllQuests = false;
 			colorTime = true;
@@ -1405,6 +1421,7 @@ _V["WQT_DEFAULTS"] = {
 			numRewardIcons = 0;
 			rarityIcon = false;
 			timeIcon = false;
+			warbandIcon = false;
 			continentVisible = _V["ENUM_PIN_CONTINENT"].none;
 			zoneVisible = _V["ENUM_PIN_ZONE"].all;
 			
@@ -1478,6 +1495,9 @@ end
 
 local patchNotes = {
 		{["version"] = "11.2.03";
+			["new"] = {
+				"Warband bonus reward icons for both the quest list and map pins (default off)";
+			};
 			["fixes"] = {
 				"Fixed tooltip rewards not showing if its appearance isn't collected yet";
 				"Fixed tooltips not showing a message regarding one-time warband bonus reputation";

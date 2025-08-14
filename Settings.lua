@@ -129,6 +129,7 @@ function WQT_SettingsQuestListMixin:OnLoad()
 	self.dummyQuestInfo.factionID = 2600;
 	self.dummyQuestInfo.mapID = 2214;
 	self.dummyQuestInfo.title = "Worm Sign, Sealed, Delivered";
+	self.dummyQuestInfo.hasWarbandBonus = true;
 	self.dummyQuestInfo.isValid = true;
 	self.dummyQuestInfo.passedFilter = true;
 	self.dummyQuestInfo.classification = Enum.QuestClassification.WorldQuest;

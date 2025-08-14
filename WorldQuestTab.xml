@@ -282,12 +282,20 @@
 					</Anchors>
 					<TexCoords left="0.25" right="0.75" top="0.0" bottom="1.0"/>
 				</Texture>
-				<Texture parentKey="QualityBg" file="interface/covenantrenown/covenantrenownscrollmask" alpha="0.15" alphaMode="ADD" hidden="true">
+				<Texture parentKey="QualityBg" file="interface/covenantrenown/covenantrenownscrollmask" alpha="0.12" alphaMode="ADD" hidden="true">
 					<Anchors>
 						<Anchor point="TOPLEFT" y="-1"/>
 						<Anchor point="BOTTOMRIGHT" x="0" y="1"/>
 					</Anchors>
 					<TexCoords left="0.5" right="0.9" top="0.18" bottom="0.79"/>
+				</Texture>
+
+				<Texture parentKey="WarbandIcon" atlas="warbands-icon" alpha="1" hidden="true">
+					<Size x="16" y="16"/>
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Rewards" relativePoint="BOTTOMLEFT" x="-1" y="0"/>
+					</Anchors>
+					<TexCoords left="-0.1" right="1.1" top="0.0" bottom="0.85"/>
 				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
@@ -295,7 +303,7 @@
 					<Size x="150" y="0"/>
 					<Anchors>
 						<Anchor point="BOTTOMLEFT" relativekey="$parent.Type" relativePoint="RIGHT" x="8" y="2"/>
-						<Anchor point="RIGHT" relativeKey="$parent.Rewards" relativePoint="LEFT" x="-5"/>
+						<Anchor point="RIGHT" relativeKey="$parent.WarbandIcon" relativePoint="LEFT" x="-5"/>
 					</Anchors>
 				</FontString>
 
@@ -310,7 +318,7 @@
 				<FontString parentKey="Extra" inherits="GameFontNormalSmall" maxLines="1" justifyH="LEFT" justifyV="BOTTOM" alpha="0">
 					<Anchors>
 						<Anchor point="BOTTOMLEFT" relativeKey="$parent.Time" relativePoint="BOTTOMRIGHT" x="0"/>
-						<Anchor point="RIGHT" relativeKey="$parent.Rewards" relativePoint="LEFT" x="-5"/>
+						<Anchor point="RIGHT" relativeKey="$parent.WarbandIcon" relativePoint="LEFT" x="-5"/>
 					</Anchors>
 					<Color r="0.7" g="0.7" b="0.7"/>
 				</FontString>
