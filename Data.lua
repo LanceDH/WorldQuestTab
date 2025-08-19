@@ -1494,6 +1494,11 @@ end
 -- fixes			List of bugfixes
 
 local patchNotes = {
+		{["version"] = "11.2.04";
+			["fixes"] = {
+				"Fixed a possible error in areas such as Island Expeditions";
+			};
+		};
 		{["version"] = "11.2.03";
 			["new"] = {
 				"Warband bonus reward icons for both the quest list and map pins (default off)";

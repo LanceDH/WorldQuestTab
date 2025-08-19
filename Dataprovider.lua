@@ -790,8 +790,12 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 		local continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneID];
 
 		while (not continentZones and currentMapInfo.mapType > Enum.UIMapType.Continent and currentMapInfo.parentMapID and zoneID ~= currentMapInfo.parentMapID) do
+			local parentMapInfo =  WQT_Utils:GetCachedMapInfo(currentMapInfo.parentMapID);
+			if (not parentMapInfo) then
+				break;
+			end
 			zoneID = currentMapInfo.parentMapID;
-			currentMapInfo = WQT_Utils:GetCachedMapInfo(zoneID);
+			currentMapInfo = parentMapInfo;
 			continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneID];
 		end
 
