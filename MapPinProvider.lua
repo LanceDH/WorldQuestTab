@@ -715,10 +715,14 @@ function WQT_PinMixin:UpdateVisuals()
 	self.Icon:Show();
 	self.InnerGlow:SetShown(false);
 
+	local hasIcon = true;
+
 	if(settingCenterType == _V["PIN_CENTER_TYPES"].reward) then
 		local rewardTexture = questInfo:GetRewardTexture();
 		self.Icon:SetTexture(rewardTexture);
 		self.Icon:SetTexCoord(0, 1, 0, 1);
+
+		hasIcon = questInfo:GetRewardType() ~= WQT_REWARDTYPE.none;
 	elseif(settingCenterType == _V["PIN_CENTER_TYPES"].blizzard) then
 		self.CustomTypeIcon:SetShown(true);
 		local selected = questInfo.questID == C_SuperTrack.GetSuperTrackedQuestID();
@@ -757,6 +761,8 @@ function WQT_PinMixin:UpdateVisuals()
 		self.Icon:Hide();
 	end
 	
+	self.Icon:SetAlpha(hasIcon and 1.0 or 0.7);
+
 	if (isDisliked) then
 		self.Icon:SetDesaturated(true);
 	end
