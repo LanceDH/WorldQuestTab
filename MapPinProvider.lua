@@ -611,22 +611,20 @@ function WQT_PinMixin:UpdateVisuals()
 		r, g, b = 1, 1, 1;
 	end
 	
-	self.RingBG:SetVertexColor(r*0.25, g*0.25, b*0.25);
-	self.Ring:SetSwipeColor(r*.8, g*.8, b*.8);
-	
+	self.RingBG:SetVertexColor(r, g, b);
+	self.Ring:SetSwipeColor(r, g, b);
+
 	-- Elite indicator
 	local isElite = tagInfo and tagInfo.isElite;
 	local settingEliteRing = WQT_Utils:GetSetting("pin", "eliteRing");
 	local useEliteRing = settingEliteRing and ringType ~= _V["RING_TYPES"].hide;
-	self.RingBG:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRing");
-	self.Ring:SetSwipeTexture("Interface/Addons/WorldQuestTab/Images/PoIRing");
+	self.RingBG:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRingBG");
+	self.Ring:SetSwipeTexture("Interface/Addons/WorldQuestTab/Images/PoIRingBar");
 	if (useEliteRing) then
 		self.CustomUnderlay:SetShown(false);
 		if(isElite) then
-			self.RingBG:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRingElite");
-			self.Ring:SetSwipeTexture("Interface/Addons/WorldQuestTab/Images/PoIRingElite");
-		else
-			
+			self.RingBG:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRingBGElite");
+			self.Ring:SetSwipeTexture("Interface/Addons/WorldQuestTab/Images/PoIRingBarElite");
 		end
 	else
 		self.CustomUnderlay:SetShown(isElite);
@@ -814,8 +812,8 @@ function WQT_PinMixin:UpdatePinTime()
 		else
 			self.Ring:SetCooldownUNIX(now,  now);
 		end
-		self.RingBG:SetVertexColor(r*0.25, g*0.25, b*0.25);
-		self.Ring:SetSwipeColor(r*.8, g*.8, b*.8);
+		self.RingBG:SetVertexColor(r, g, b);
+		self.Ring:SetSwipeColor(r, g, b);
 	end
 	
 	-- Time text under pin

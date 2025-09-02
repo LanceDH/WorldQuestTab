@@ -237,15 +237,13 @@ function QuestInfoMixin:LoadRewards(force)
 						subType = _V["CONDUIT_SUBTYPE"].potency;
 					end
 					self:AddReward(WQT_REWARDTYPE.conduit, ilvl, texture, quality, rewardId, false, subType);
-				elseif (typeID == 4 or typeID == 2) then 
-					-- Gear (4 = armor, 2 = weapon)
+				elseif (typeID == Enum.ItemClass.Armor or typeID == Enum.ItemClass.Weapon) then 
 					local canUpgrade = ScanTooltipRewardForPattern(self.questID, "(%d+%+)$") and true or false;
-					local rewardType = typeID == 4 and WQT_REWARDTYPE.equipment or WQT_REWARDTYPE.weapon;
+					local rewardType = typeID == Enum.ItemClass.Armor and WQT_REWARDTYPE.equipment or WQT_REWARDTYPE.weapon;
 					self:AddReward(rewardType, ilvl, texture, quality, rewardId, canUpgrade);
-				elseif (typeID == 3 and subTypeID == 11) then
-					-- Relics
+				elseif (typeID == Enum.ItemClass.Gem and subTypeID == Enum.ItemGemSubclass.Artifactrelic) then
 					-- Find upgrade amount as C_ArtifactUI.GetItemLevelIncreaseProvidedByRelic doesn't scale
-					local numItems = tonumber(ScanTooltipRewardForPattern(self.questID, "(%d+)%+$"));
+					numItems = tonumber(ScanTooltipRewardForPattern(self.questID, "(%d+)%+$")) or 1;
 					self:AddReward(WQT_REWARDTYPE.relic, numItems, texture, quality, rewardId, true);
 				elseif(C_Item.IsAnimaItemByID(rewardId)) then
 					-- Anima
@@ -264,7 +262,7 @@ function QuestInfoMixin:LoadRewards(force)
 					if (texture == 894556) then
 						-- Bonus player xp item is counted as actual xp
 						self:AddReward(WQT_REWARDTYPE.xp, ilvl, texture, quality, rewardId);
-					elseif (typeID == 0 and subTypeID == 8 and price == 0 and ilvl > 100) then 
+					elseif (typeID == Enum.ItemClass.Consumable and subTypeID == Enum.ItemConsumableSubclass.Other and price == 0 and ilvl > 100) then 
 						-- Item converting into equipment
 						self:AddReward(WQT_REWARDTYPE.equipment, ilvl, texture, quality, rewardId);
 					else 

@@ -334,8 +334,8 @@ end
 
 function WQT_SettingsColorMixin:SetWidgetRGB(r, g, b)
 	self.ExampleText:SetVertexColor(r, g, b);
-	self.ExampleRing.Ring:SetSwipeColor(r*0.8, g*0.8, b*0.8);
-	self.ExampleRing.RingBG:SetVertexColor(r*0.25, g*0.25, b*0.25);
+	self.ExampleRing.Ring:SetSwipeColor(r, g, b);
+	self.ExampleRing.RingBG:SetVertexColor(r, g, b);
 	self.ExampleRing.Pointer:SetVertexColor(r*1.1, g*1.1, b*1.1);
 	self.Picker.Color:SetVertexColor(r, g, b);
 end

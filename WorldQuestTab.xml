@@ -639,12 +639,12 @@
 						<Anchors>
 							<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="2" y="8" />
 						</Anchors>
-						<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing">
+						<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRingBar">
 							<Color r="1" g="0.82" b="0" a="0.7" />
 						</SwipeTexture>
 						<Layers>
 							<Layer level="BACKGROUND">
-								<Texture parentKey="Background" file="Interface\Addons\WorldQuestTab\Images\PoIRing" setAllPoints="true">
+								<Texture parentKey="Background" file="Interface\Addons\WorldQuestTab\Images\PoIRingBG" setAllPoints="true">
 									<Anchors>
 										<Anchor point="TOPLEFT" />
 										<Anchor point="BOTTOMRIGHT" />

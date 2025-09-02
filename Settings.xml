@@ -381,7 +381,7 @@
 				<Layers>
 					<Layer level="ARTWORK" textureSubLevel="-1">
 						<!-- This serves as a background for the timer -->
-						<Texture parentKey="RingBG" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRing" />
+						<Texture parentKey="RingBG" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingBG" />
 					</Layer>
 					<Layer level="ARTWORK" textureSubLevel="2" >
 						<!-- Edge highlight of the timer. Custom so it can be colored -->
@@ -390,7 +390,7 @@
 				</Layers>
 				<Frames>
 					<Cooldown parentKey="Ring" useParentLevel="true" setAllPoints="true" hideCountdownNumbers="true">
-						<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing"/>
+						<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRingBar"/>
 					</Cooldown>
 				</Frames>
 			</Button>

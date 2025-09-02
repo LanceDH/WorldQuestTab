@@ -1495,8 +1495,11 @@ end
 
 local patchNotes = {
 		{["version"] = "11.2.04";
+			["changes"] = {
+				"Slightly lightened up the visuals of map pins";
+			};
 			["fixes"] = {
-				"Fixed a possible error in areas such as Island Expeditions";
+				"Fixed a possible error in areas such as Island Expeditions with Always All Quests enabled";
 			};
 		};
 		{["version"] = "11.2.03";

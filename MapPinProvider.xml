@@ -56,7 +56,7 @@
 						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
 					</Anchors>
 				</Texture>
-				<Texture parentKey="InnerGlow" file="Interface\Addons\WorldQuestTab\Images\PoIRing" alphaMode="ADD" hidden="false">
+				<Texture parentKey="InnerGlow" file="Interface\Addons\WorldQuestTab\Images\PoIRingBar" alphaMode="ADD" hidden="false">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="3" y="-3"/>
 						<Anchor point="BOTTOMRIGHT" x="-3" y="3"/>
@@ -68,7 +68,7 @@
 			
 			<Layer level="ARTWORK" textureSubLevel="-1">
 				<!-- This serves as a background for the timer -->
-				<Texture parentKey="RingBG" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRing" />
+				<Texture parentKey="RingBG" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingBG" />
 			</Layer>
 			<Layer level="ARTWORK" textureSubLevel="2" >
 				<!-- Edge highlight of the timer. Custom so it can be colored -->
@@ -112,7 +112,7 @@
 		
 		<Frames>
 			<Cooldown parentKey="Ring" useParentLevel="true" setAllPoints="true" hideCountdownNumbers="true">
-				<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRing"/>
+				<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRingBar"/>
 			</Cooldown>
 		</Frames>
 		
