@@ -1,4 +1,4 @@
-local lib, oldminor = LibStub:NewLibrary('WorldMapTabsLib-1.0', 0);
+local lib, oldminor = LibStub:NewLibrary('WorldMapTabsLib-1.0', 1);
 
 if not lib then return; end
 
@@ -66,42 +66,44 @@ end
 ----------------------
 
 local MAX_TABS_PER_COLUMN = 8;
+local NUMBER_OFFICIAL_TABS = 3;
 
 local function PlaceTabs()
-	local totalIndex = 0;
-
-	if (QuestMapFrame.QuestsTab:IsShown()) then totalIndex = totalIndex + 1; end
-	if (QuestMapFrame.EventsTab:IsShown()) then totalIndex = totalIndex + 1; end
-	if (QuestMapFrame.MapLegendTab:IsShown()) then totalIndex = totalIndex + 1; end
-
+	local numShown = 0;
 	local anchorTab = QuestMapFrame.MapLegendTab;
-
 	local shownTabs = {};
-	for k, tab in ipairs(lib.tabs) do
+
+	for i = 1, #QuestMapFrame.TabButtons, 1 do
+		local tab = QuestMapFrame.TabButtons[i];
+
 		if (tab:IsShown()) then
-			tab:ClearAllPoints();
-			
-			local column = floor(totalIndex / MAX_TABS_PER_COLUMN);
-			local row = totalIndex % MAX_TABS_PER_COLUMN;
+			if (i > NUMBER_OFFICIAL_TABS) then
+				tab:ClearAllPoints();
+				
+				local column = floor(numShown / MAX_TABS_PER_COLUMN);
+				local row = numShown % MAX_TABS_PER_COLUMN;
 
-			if (row == 0) then
-				if (column == 1) then
-					anchorTab = QuestMapFrame.QuestsTab;
+				if (row == 0) then
+					if (column == 1) then
+						anchorTab = QuestMapFrame.QuestsTab;
+					else
+						anchorTab = shownTabs[#shownTabs + 1 - MAX_TABS_PER_COLUMN];
+					end
+
+					tab:SetPoint("TOPLEFT", anchorTab, "TOPRIGHT", 0, 0);
 				else
-					anchorTab = shownTabs[#shownTabs + 1 - MAX_TABS_PER_COLUMN];
+					tab:SetPoint("TOPLEFT", anchorTab, "BOTTOMLEFT", 0, -3);
 				end
+		
+				anchorTab = tab;
 
-				tab:SetPoint("TOPLEFT", anchorTab, "TOPRIGHT", 0, 0);
-			else
-				tab:SetPoint("TOPLEFT", anchorTab, "BOTTOMLEFT", 0, -3);
+				tinsert(shownTabs, tab);
 			end
-	
-			anchorTab = tab;
 
-			totalIndex = totalIndex + 1;
-			tinsert(shownTabs, tab);
 		end
 	end
+
+	wipe(shownTabs);
 end
 
 local function OnMouseUpInternal(tab, button, upInside)
@@ -115,6 +117,8 @@ local function OnShowInternal(tab)
 end
 
 local function OnHideInternal(tab, ...)
+	if (not QuestMapFrame:IsVisible()) then return; end
+
 	-- If the active tab gets hidden directly, revert to official quest tab
 	if (QuestMapFrame:IsVisible() and QuestMapFrame.displayMode == tab.displayMode) then
 		QuestMapFrame:SetDisplayMode(QuestLogDisplayMode.Quests);
@@ -155,7 +159,7 @@ end
 
 -- If the tab for the currently active content is hidden, default back to official quests
 local function WorldMapOnShow(...)
-	if (not lib.tabs or QuestMapFrame.displayMode < BASE_TAB_ID) then return end
+	if (not lib.tabs) then return end
 
 	for _, tab in ipairs(lib.tabs) do
 		if (tab.displayMode == QuestMapFrame.displayMode) then
