@@ -100,6 +100,7 @@ local function PlaceTabs()
 				tinsert(shownTabs, tab);
 			end
 
+			numShown = numShown + 1;
 		end
 	end
 
