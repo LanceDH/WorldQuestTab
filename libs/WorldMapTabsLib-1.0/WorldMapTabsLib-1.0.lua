@@ -5,21 +5,21 @@ if not lib then return; end
 ----------------------
 -- Default Mixin
 ----------------------
-WMTL_DefaultTabMixin = CreateFromMixins(QuestLogTabButtonMixin);
+WMTL_DefaultTabMixin = CreateFromMixins(SidePanelTabButtonMixin);
 
 function WMTL_DefaultTabMixin:OnMouseDown(button)
 	if (not self.Icon) then return; end
-	QuestLogTabButtonMixin.OnMouseDown(self, button);
+	SidePanelTabButtonMixin.OnMouseDown(self, button);
 end
 
 function WMTL_DefaultTabMixin:OnMouseUp(button, upInside)
 	if (not self.Icon) then return; end
-	QuestLogTabButtonMixin.OnMouseUp(self, button, upInside);
+	SidePanelTabButtonMixin.OnMouseUp(self, button, upInside);
 end
 
 function WMTL_DefaultTabMixin:OnEnter()
 	if (not self.tooltipText) then return; end
-	QuestLogTabButtonMixin.OnEnter(self);
+	SidePanelTabButtonMixin.OnEnter(self);
 end
 
 function WMTL_DefaultTabMixin:SetChecked(checked)
@@ -32,7 +32,7 @@ function WMTL_DefaultTabMixin:SetChecked(checked)
 			self.inactiveAtlas = self.activeAtlas;
 		end
 
-		QuestLogTabButtonMixin.SetChecked(self, checked);
+		SidePanelTabButtonMixin.SetChecked(self, checked);
 
 		if(not checked) then
 			alpha = self.activeAtlas == self.inactiveAtlas and 0.55 or 1;

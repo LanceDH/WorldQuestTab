@@ -27,7 +27,7 @@ local _playerName = UnitName("player");
 
 local utilitiesStatus = select(5, C_AddOns.GetAddOnInfo("WorldQuestTabUtilities"));
 
-WQT_PanelID = EnumUtil.MakeEnum("Quests", "WhatsNew", "Settings");
+WQT_PanelID = EnumUtil.MakeEnum("Quests", "Settings");
 
 -- Custom number abbreviation to fit inside reward icons in the list.
 local function GetLocalizedAbbreviatedNumber(number)
@@ -263,21 +263,6 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 	end
 	local emissaryCB = rootDescription:CreateCheckbox(_L["TYPE_EMISSARY"], DDEmissaryChecked, DDEmissaryOnSelect);
 	AddBasicTooltipFunctionsToDropdownItem(emissaryCB, _L["TYPE_EMISSARY"], _L["TYPE_EMISSARY_TT"]);
-end
-
-local function SettingsDropdownSetup(dropdown, rootDescription)
-	rootDescription:SetTag("WQT_SETTINGS_DROPDOWN");
-	-- Settings
-	rootDescription:CreateButton(SETTINGS, function()
-				WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Settings);
-			end);
-	
-	-- What's new
-	local newLabel = WQT.db.global.updateSeen and "" or "|TInterface\\FriendsFrame\\InformationIcon:14|t ";
-	newLabel = newLabel .. _L["WHATS_NEW"];
-	rootDescription:CreateButton(newLabel, function()
-				WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.WhatsNew);
-			end);
 end
 
 local function IsSortSelected(sortID)
@@ -722,18 +707,6 @@ function WQT:OnEnable()
 	end);
 	ScrollUtil.InitScrollBoxListWithScrollBar(WQT_ListContainer.QuestScrollBox, WQT_ListContainer.ScrollBar, view);
 
-	-- What's New Frame
-	WQT_WhatsNewFrame.TitleText:SetText(_L["WHATS_NEW"]);
-
-	ScrollUtil.InitScrollBoxWithScrollBar(WQT_WhatsNewFrame.ScrollBox, WQT_WhatsNewFrame.ScrollBar, CreateScrollBoxLinearView());
-
-	local whatsNewContent = WQT_WhatsNewFrame.ScrollBox.ScrollContent;
-	whatsNewContent.Text:SetText(_V["LATEST_UPDATE"]);
-	whatsNewContent.Text:SetHeight(whatsNewContent.Text:GetContentHeight());
-	whatsNewContent:SetHeight(whatsNewContent.Text:GetContentHeight());
-	WQT_WhatsNewFrame.ScrollBox:FullUpdate(ScrollBoxConstants.UpdateImmediately);
-
-	
 	-- Load settings
 	WQT_SettingsFrame:Init(_V["SETTING_CATEGORIES"], _V["SETTING_LIST"]);
 	
@@ -768,12 +741,6 @@ function WQT:OnEnable()
 	WQT_ListContainer.FilterDropdown.Text:SetPoint("TOP", 0, 1);
 	WQT_ListContainer.FilterDropdown:SetupMenu(FilterDropdownSetup);
 
-	-- Settings
-	WQT_ListContainer.SettingsDropdown:SetupMenu(SettingsDropdownSetup);
-
-	
-
-
 	self.isEnabled = true;
 end
 
@@ -781,17 +748,17 @@ end
 --
 --------
 
-WQT_QuestLogSettingsButtonMixin = CreateFromMixins(QuestLogSettingsButtonMixin)
+WQT_QuestLogSettingsButtonMixin = {};
 
 function WQT_QuestLogSettingsButtonMixin:OnMouseDown()
 	if(not self.disabled) then
-		QuestLogSettingsButtonMixin.OnMouseDown(self);
+		self.Icon:AdjustPointsOffset(1, -1);
 	end
 end
 
 function WQT_QuestLogSettingsButtonMixin:OnMouseUp()
 	if(not self.disabled) then
-		QuestLogSettingsButtonMixin.OnMouseUp(self);
+		self.Icon:AdjustPointsOffset(-1, 1);
 	end
 end
 
@@ -809,10 +776,10 @@ end
 -- World Map Tab Mixin
 ------------------------------------------
 
-WQT_TabButtonMixin = CreateFromMixins(QuestLogTabButtonMixin);
+WQT_TabButtonMixin = CreateFromMixins(SidePanelTabButtonMixin);
 
 function WQT_TabButtonMixin:OnMouseUp(button, upInside)
-	QuestLogTabButtonMixin.OnMouseUp(self, button, upInside);
+	SidePanelTabButtonMixin.OnMouseUp(self, button, upInside);
 
 	if (button == "LeftButton" and upInside) then
 		WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Quests);
@@ -820,7 +787,7 @@ function WQT_TabButtonMixin:OnMouseUp(button, upInside)
 end
 
 function WQT_TabButtonMixin:SetChecked(checked)
-	QuestLogTabButtonMixin.SetChecked(self, checked);
+	SidePanelTabButtonMixin.SetChecked(self, checked);
 
 	if (checked) then
 		WQT_QuestMapTab.Icon:SetSize(24, 24);
@@ -1037,20 +1004,21 @@ function WQT_ListButtonMixin:OnLeave()
 	local isDisliked = self.questInfo:IsDisliked();
 	self:SetAlpha(isDisliked and 0.75 or 1);
 
-	self.Title:SetFontObject(GameFontNormal);
-	
+	local difficultyColor = GetDifficultyColor(Enum.RelativeContentDifficulty.Fair);
+	self.Title:SetTextColor(difficultyColor.r, difficultyColor.g, difficultyColor.b);
+
 	WQT:HideDebugTooltip()
 end
 
 function WQT_ListButtonMixin:OnEnter()
-	local questInfo = self.questInfo;
-	if (not questInfo) then return; end
+	if (not self.questInfo) then return; end
 	self.Highlight:Show();
 	WQT_WorldQuestFrame.pinDataProvider:SetQuestIDPinged(self.questInfo.questID, true);
-	WQT_WorldQuestFrame:ShowWorldmapHighlight(questInfo);
+	WQT_WorldQuestFrame:ShowWorldmapHighlight(self.questInfo);
 
-	self.Title:SetFontObject(GameFontHighlight);
-	
+	local difficultyColor = select(2, GetDifficultyColor(Enum.RelativeContentDifficulty.Fair));
+	self.Title:SetTextColor(difficultyColor.r, difficultyColor.g, difficultyColor.b);
+
 	self:ShowTooltip();
 end
 
@@ -1059,7 +1027,7 @@ function WQT_ListButtonMixin:ShowTooltip()
 	if (not questInfo) then return; end
 	local style = _V["TOOLTIP_STYLES"].default;
 
-	WQT_Utils:ShowQuestTooltip(self, questInfo, style);
+	WQT_Utils:ShowQuestTooltip(self, questInfo, style, 4, -self:GetHeight());
 end
 
 function WQT_ListButtonMixin:UpdateQuestType(questInfo)
@@ -1156,7 +1124,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 		local factionData = WQT_Utils:GetFactionDataInternal(questInfo.factionID);
 
 		self.Faction.Icon:SetTexture(factionData.texture);
-		self.Faction:SetWidth(self.Faction:GetHeight());
+		self.Faction:SetWidth(self.Faction.defaultWidth);
 	else
 		self.Faction:Hide();
 		self.Faction:SetWidth(0.1);
@@ -1307,7 +1275,6 @@ function WQT_ScrollListMixin:UpdateBackground()
 		backgroundAlpha = 0.75;
 	end
 	WQT_ListContainer.Background:SetAlpha(backgroundAlpha);
-	WQT_WhatsNewFrame.Background:SetAlpha(backgroundAlpha);
 	WQT_SettingsFrame.Background:SetAlpha(backgroundAlpha);
 	if (#WQT_WorldQuestFrame.dataProvider.fitleredQuestsList == 0) then
 		WQT_ListContainer.Background:SetAtlas("QuestLog-empty-quest-background", true);
@@ -1879,13 +1846,13 @@ end
 
 function WQT_CoreMixin:PLAYER_REGEN_DISABLED()
 	WQT.combatLockWarned = false;
-	WQT_ListContainer.SettingsDropdown:SetEnabled(false)
+	WQT_ListContainer.SettingsButton:SetEnabled(false)
 	self:ChangePanel(WQT_PanelID.Quests);
 end
 
 function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
 	WQT.combatLockWarned = false;
-	WQT_ListContainer.SettingsDropdown:SetEnabled(true)
+	WQT_ListContainer.SettingsButton:SetEnabled(true)
 end
 
  -- Warmode toggle because WAR_MODE_STATUS_UPDATE doesn't seems to fire when toggling warmode
@@ -1925,10 +1892,6 @@ function WQT_CoreMixin:SetCvarValue(flagKey, value)
 end
 
 function WQT_CoreMixin:ChangePanel(panelID)
-	if (panelID == WQT_PanelID.WhatsNew) then
-		WQT.db.global.updateSeen = true;
-	end
-
 	for k, panel in ipairs(self.panels) do
 		panel:SetShown(panel.panelID == panelID);
 	end

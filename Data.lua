@@ -1,20 +1,25 @@
 ﻿local addonName, addon = ...
 
 addon.WQT = LibStub("AceAddon-3.0"):NewAddon("WorldQuestTab");
-addon.externals = {};
-addon.variables = {};
+local WQT = addon.WQT;
+
 addon.debug = false;
 addon.debugPrint = false;
-addon.setupPhase = true;
+
 addon.WQT_Utils = {};
 local WQT_Utils = addon.WQT_Utils;
-local _L = addon.L;
+
+addon.variables = {};
 local _V = addon.variables;
-local WQT = addon.WQT;
-local _playerFaction = UnitFactionGroup("Player");
 
 addon.WQT_Profiles =  {};
 local WQT_Profiles = addon.WQT_Profiles;
+
+addon.externals = {};
+
+local _L = addon.L;
+local _playerFaction = UnitFactionGroup("Player");
+
 
 ------------------------
 -- PUBLIC
@@ -185,28 +190,28 @@ MakeIndexArg1(_V["PIN_VISIBILITY_ZONE"]);
 
 -- Not where they should be. Count them as invalid. Thanks Blizzard
 _V["BUGGED_POI"] =  {
-	[69964] = 864
-	,[74441] = 864
-	,[72128] = 864
-	,[69849] = 864
-	,[66004] = 864
-	,[66356] = 864
-	,[69882] = 864
-	,[69865] = 864
-	,[69850] = 864
-	,[69951] = 864
-	,[69961] = 864
-	,[69960] = 864
-	,[69956] = 864
-	,[69954] = 864
-	,[69970] = 864
-	,[69953] = 864
-	,[69975] = 864
-	,[69973] = 864
-	,[69969] = 864
-	,[69972] = 864
-	,[69858] = 864
-	,[69861] = 864
+	[66004] = 2022	-- Galgresh
+	,[66356] = 2023	-- Irontree
+	,[69849] = 2022	-- Enraged Steamburst Elemental
+	,[69850] = 2025	-- Woolfang
+	,[69858] = 2024	-- Blightfur
+	,[69861] = 2024	-- Trilvarus Loreweaver
+	,[69865] = 2023	-- Scaleseeker Mezeri
+	,[69882] = 2025	-- Lord Epochbrgi
+	,[69951] = 2022	-- Bouldron
+	,[69953] = 2022	-- Karantun
+	,[69954] = 2022	-- Infernum
+	,[69956] = 2022	-- Grizzlerock
+	,[69960] = 2022	-- Gravlion
+	,[69961] = 2022	-- Frozion
+	,[69964] = 2025	-- Craggravated Elemental
+	,[69969] = 2022	-- Voraazka
+	,[69970] = 2022	-- Kain Firebrand
+	,[69972] = 2022	-- Zurgaz Corebreaker
+	,[69973] = 2022	-- Rouen Icewind
+	,[69975] = 1978	-- Neela Firebane
+	,[72128] = 2022	-- Enkine the Voracious
+	,[74441] = 2023	-- Eaglemaster Niraak
 }
 
 -------------------------------
@@ -239,6 +244,7 @@ _V["BUGGED_POI"] =  {
 
 _V["SETTING_CATEGORIES"] = {
 	{["id"]="DEBUG", ["label"] = "Debug"}
+	,{["id"]="CHANGELOG", ["label"] = _L["WHATS_NEW"]}
 	,{["id"]="PROFILES", ["label"] = _L["PROFILES"]}
 	,{["id"]="GENERAL", ["label"] = GENERAL, ["expanded"] = true}
 	,{["id"]="GENERAL_OLDCONTENT", ["parentCategory"] = "GENERAL", ["label"] = _L["PREVIOUS_EXPANSIONS"]}
@@ -565,7 +571,6 @@ _V["SETTING_LIST"] = {
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
 	-- Pin appearance
-	,{["template"] =" WQT_SettingSubTitleTemplate", ["categoryID"] = "MAPPINS", ["label"] = APPEARANCE_LABEL}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_TIME"], ["tooltip"] = _L["PIN_TIME_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.pin.timeLabel  = value;
@@ -1494,6 +1499,15 @@ end
 -- fixes			List of bugfixes
 
 local patchNotes = {
+		{["version"] = "11.2.05";
+			["intro"] = {
+				"Update for patch 11.2.5";
+			};
+			["changes"] = {
+				"Moved the changelog into the settings menu";
+				"Minor tweaks to the visuals of quests in the list";
+			};
+		};
 		{["version"] = "11.2.04";
 			["changes"] = {
 				"Slightly lightened up the visuals of map pins";
@@ -1543,55 +1557,60 @@ local patchNotes = {
 		};
 		{["version"] = "11.1.01";
 			["intro"] = {
-				[[Shoutout to the people who tried their best to keep things running for the past 4 years. I'd name you all but I only now realize how many of you there are.
-				<br/>If you created a fork, helped those forks, or even guided other people to said forks; Thank you.]];
+				"Shoutout to the people who tried their best to keep things running for the past 4 years. I'd name you all but I only now realize how many of you there are.";
+				"If you created a fork, helped those forks, or even guided other people to said forks; Thank you.";
 				"Please note that maintaining this add-on is low priority. Which means updates might be slow and unreliable.";
 			};
 			["changes"] = {
 				"Compatibility with patch 11.1.7";
 				"Visual update to match the new UI";
 				"A bunch of refactoring of which you hopefully only notice positive things";
-				"Things that didn't survive:<br/>- Quest counter on the normal quest tab<br/>- Anything LFG related<br/>- Support for WQT Utilities<br/>- Daily quest things such as old Nzoth quests";
+				"Things that didn't survive:|n- Quest counter on the normal quest tab|n- Anything LFG related|n- Support for WQT Utilities|n- Daily quest things such as old Nzoth quests";
 			};
 		}
 	}
 
-local FORMAT_VERSION_MINOR = "%s|cFF888888.%s|r"
-local FORMAT_H1 = "%s<h1 align='center'>%s</h1>";
-local FORMAT_H2 = "%s<h2>%s:</h2>";
-local FORMAT_p = "%s<p>%s</p>";
-local FORMAT_WHITESPACE = "%s<h3>&#160;</h3>"
-local FORMAT_WHITESPACE_DOUBLE = "%s<h3>&#160;</h3><h3>&#160;</h3>"
-
-local function AddNotes(updateMessage, title, notes)
-	if (not notes) then return updateMessage; end
+local function AddPatchNotes(categoryId, title, notes)
+	if (not notes) then return; end
 	if (title) then
-		updateMessage = FORMAT_H2:format(updateMessage, title);
+		local setting = {
+			["template"] = "WQT_SettingTextTemplate";
+			["categoryID"] = categoryId;
+			["label"] = title;
+			["font"] = "Fancy14Font";
+			["bottomPadding"] = 0;
+		}
+		tinsert(_V["SETTING_LIST"], setting);
 	end
+
 	for k, note in ipairs(notes) do
-		updateMessage = FORMAT_p:format(updateMessage, note);
-		updateMessage = FORMAT_WHITESPACE:format(updateMessage);
+		local setting = {
+			["template"] = "WQT_SettingTextTemplate";
+			["categoryID"] = categoryId;
+			["label"] = note;
+			["font"] = "GameFontNormal";
+		}
+		tinsert(_V["SETTING_LIST"], setting);
 	end
-	updateMessage = FORMAT_WHITESPACE:format(updateMessage);
-	return updateMessage;
 end
 
-local function FormatPatchNotes(notes)
-	local updateMessage = "<html><body><h3>&#160;</h3>";
-	updateMessage = FORMAT_WHITESPACE:format(updateMessage);
-	for i=1, #notes do
-		local patch = notes[i];
-		local version = patch.minor and FORMAT_VERSION_MINOR:format(patch.version, patch.minor) or patch.version;
-		updateMessage = FORMAT_H1:format(updateMessage, version);
-		updateMessage = AddNotes(updateMessage, nil, patch.intro);
-		updateMessage = AddNotes(updateMessage, "New", patch.new);
-		updateMessage = AddNotes(updateMessage, "Changes", patch.changes);
-		updateMessage = AddNotes(updateMessage, "Fixes", patch.fixes);
+do
+	for i=1, #patchNotes do
+		local patch = patchNotes[i];
+		local categoryId = "CHANGELOG" ..patch.version;
+		local settingsCategory = {
+			["id"] = categoryId;
+			["parentCategory"] = "CHANGELOG";
+			["label"] = patch.version;
+			["expanded"] = i == 1;
+		};
+		tinsert(_V["SETTING_CATEGORIES"], settingsCategory);
 
-		updateMessage = FORMAT_WHITESPACE_DOUBLE:format(updateMessage);
+		AddPatchNotes(categoryId, nil, patch.intro);
+		AddPatchNotes(categoryId, "New", patch.new);
+		AddPatchNotes(categoryId, "Changes", patch.changes);
+		AddPatchNotes(categoryId, "Fixes", patch.fixes);
 	end
-	return updateMessage .. "</body></html>";
-end
 
-_V["LATEST_UPDATE"] =  FormatPatchNotes(patchNotes);
-_DeepWipeTable(patchNotes);
+	_DeepWipeTable(patchNotes);
+end

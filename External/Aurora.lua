@@ -4,7 +4,6 @@ local _L = addon.L;
 
 local function BackgroundUpdated()
 	WQT_ListContainer.Background:SetAlpha(0);
-	WQT_WhatsNewFrame.Background:SetAlpha(0);
 	WQT_SettingsFrame.Background:SetAlpha(0);
 end
 

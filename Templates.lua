@@ -472,11 +472,11 @@ function WQT_Utils:GetPinTime(questInfo)
 	return start, total, timeLeft, seconds, color, timeStringShort, category;
 end
 
-function WQT_Utils:ShowQuestTooltip(button, questInfo, style)
+function WQT_Utils:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset)
 	style = style or _V["TOOLTIP_STYLES"].default;
 	WQT:ShowDebugTooltipForQuest(questInfo, button);
 
-	GameTooltip:SetOwner(button, "ANCHOR_RIGHT");
+	GameTooltip:SetOwner(button, "ANCHOR_RIGHT", xOffset or 0, yOffset or 0);
 	-- In case we somehow don't have data on this quest, even through that makes no sense at this point
 	if (not questInfo.questID or not HaveQuestData(questInfo.questID)) then
 		GameTooltip_SetTitle(GameTooltip, RETRIEVING_DATA, RED_FONT_COLOR);

@@ -22,6 +22,46 @@
 
 	<Include file="Debug.xml"/>
 
+ 	<Frame name="WQT_QuestHighlightTemplate" virtual="true">
+		<KeyValues>
+			<KeyValue key="outerLeftCoord" type="number" value="0.498046875"/>
+			<KeyValue key="innerLeftCoord" type="number" value="0.591796875"/>
+			<KeyValue key="innerRightCoord" type="number" value="0.814453125"/>
+			<KeyValue key="outerRightCoord" type="number" value="0.90625"/>
+			<KeyValue key="topCoord" type="number" value="0"/>
+			<KeyValue key="bottomCoord" type="number" value="1"/>
+		</KeyValues>
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture parentKey="Left" file="Interface\PETBATTLES\PETJOURNAL">
+					<Anchors>
+						<Anchor point="TOPLEFT"/>
+						<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMLEFT" x="46"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="Right" file="Interface\PETBATTLES\PETJOURNAL">
+					<Anchors>
+						<Anchor point="TOPRIGHT"/>
+						<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="-46"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="Center" file="Interface\PETBATTLES\PETJOURNAL">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.Left" relativePoint="TOPRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Right" relativePoint="BOTTOMLEFT"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad>
+				self.Left:SetTexCoord(self.outerLeftCoord, self.innerLeftCoord, self.topCoord, self.bottomCoord);
+				self.Right:SetTexCoord(self.innerRightCoord, self.outerRightCoord, self.topCoord, self.bottomCoord);
+				self.Center:SetTexCoord(self.innerLeftCoord, self.innerRightCoord, self.topCoord, self.bottomCoord);
+			</OnLoad>
+		</Scripts>
+	</Frame>
+
 	<Frame name="WQT_RewardTemplate" parentArray="rewardFrames" virtual="true">
 		<Size x="32" y="32" />
 		<Layers>
@@ -135,8 +175,11 @@
 		</Anchors>
 		<Frames>
 			<Frame parentKey="Faction">
-				<Size x="34" y="34" />
+				<Size x="30" y="34" />
 				<HitRectInsets left="-2" right="0" top="-3" bottom="-3"/>
+				<KeyValues>
+					<KeyValue key="defaultWidth" type="number" value="30"/>
+				</KeyValues>
 				<Anchors>
 					<Anchor point="RIGHT" x="-2"/>
 				</Anchors>
@@ -144,8 +187,8 @@
 					<Layer level="ARTWORK">
 						<Texture parentKey="Icon" alpha="0.65" >
 							<Anchors>
-								<Anchor point="TOPLEFT" x="0" y="0"/>
-								<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
+								<Anchor point="TOPLEFT" x="-2" y="0"/>
+								<Anchor point="BOTTOMRIGHT" x="2" y="0"/>
 							</Anchors>
 							<TexCoords left="0.02" right="0.98" top="0.05" bottom="0.98"/>
 						</Texture>
@@ -174,7 +217,7 @@
 			<Frame parentKey="Type" hidden="true">
 				<Size x="28" y="28" />
 				<Anchors>
-					<Anchor point="LEFT" x="8" y="0"/>
+					<Anchor point="LEFT" x="6" y="0"/>
 				</Anchors>
 				<Layers>
 					<Layer level="BACKGROUND" textureSubLevel="-1">
@@ -207,90 +250,44 @@
 
 			<Frame parentKey="Rewards" inherits="WQT_RewardDisplayTemplate" hidden="false" alpha="1">
 				<Anchors>
-					<Anchor point="RIGHT" relativeKey="$parent.Faction" relativePoint="LEFT" x="0" y="0"/>
+					<Anchor point="RIGHT" relativeKey="$parent.Faction" relativePoint="LEFT" x="-1" y="0"/>
 				</Anchors>
 			</Frame>
 			
-			<Frame parentKey="TrackedBorder" hidden="true" alpha="0.6" >
+			<Frame parentKey="TrackedBorder" inherits="WQT_QuestHighlightTemplate" hidden="true" alpha="0.6">
+				<KeyValues>
+					<KeyValue key="topCoord" type="number" value="0.222"/>
+					<KeyValue key="bottomCoord" type="number" value="0.265625"/>
+				</KeyValues>
 				<Anchors>
 					<Anchor point="TOPLEFT" x="1"/>
 					<Anchor point="BOTTOMRIGHT" x="-1"/>
 				</Anchors>
-				<Layers>
-					<Layer level="ARTWORK">
-						<Texture parentKey="hlLeft" file="Interface\PETBATTLES\PETJOURNAL">
-							<Anchors>
-								<Anchor point="TOPLEFT"/>
-								<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMLEFT" x="30"/>
-							</Anchors>
-							<TexCoords left="0.498046875" right="0.591796875" top="0.222" bottom="0.265625"/>
-						</Texture>
-						<Texture parentKey="hlRight" file="Interface\PETBATTLES\PETJOURNAL">
-							<Anchors>
-								<Anchor point="TOPRIGHT"/>
-								<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="-30"/>
-							</Anchors>
-							<TexCoords left="0.814453125" right="0.90625" top="0.222" bottom="0.265625"/>
-						</Texture>
-						<Texture parentKey="hlCenter" file="Interface\PETBATTLES\PETJOURNAL">
-							<Anchors>
-								<Anchor point="TOPLEFT" relativeKey="$parent.hlLeft" relativePoint="TOPRIGHT"/>
-								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.hlRight" relativePoint="BOTTOMLEFT"/>
-							</Anchors>
-							<TexCoords left="0.591796875" right="0.814453125" top="0.222" bottom="0.265625"/>
-						</Texture>
-					</Layer>
-				</Layers>
 			</Frame>
-			
-			<Frame parentKey="Highlight" hidden="true" alpha="0.75" >
+
+			<Frame parentKey="Highlight" inherits="WQT_QuestHighlightTemplate" hidden="true" alpha="0.75">
+				<KeyValues>
+					<KeyValue key="topCoord" type="number" value="0.1748046875"/>
+					<KeyValue key="bottomCoord" type="number" value="0.2197265625"/>
+				</KeyValues>
 				<Anchors>
-					<Anchor point="TOPLEFT" x="1" />
-					<Anchor point="BOTTOMRIGHT" x="-1"/>
+					<Anchor point="TOPLEFT" relativeKey="$parent.TrackedBorder"/>
+					<Anchor point="BOTTOMRIGHT" relativeKey="$parent.TrackedBorder"/>
 				</Anchors>
-				<Layers>
-					<Layer level="ARTWORK">
-						<Texture parentKey="hlLeft" file="Interface\PETBATTLES\PETJOURNAL">
-							<Anchors>
-								<Anchor point="TOPLEFT"/>
-								<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMLEFT" x="30"/>
-							</Anchors>
-							<TexCoords left="0.498046875" right="0.591796875" top="0.1748046875" bottom="0.2197265625"/>
-						</Texture>
-						<Texture parentKey="hlRight" file="Interface\PETBATTLES\PETJOURNAL">
-							<Anchors>
-								<Anchor point="TOPRIGHT"/>
-								<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="-30"/>
-							</Anchors>
-							<TexCoords left="0.814453125" right="0.90625" top="0.1748046875" bottom="0.2197265625"/>
-						</Texture>
-						<Texture parentKey="hlCenter" file="Interface\PETBATTLES\PETJOURNAL">
-							<Anchors>
-								<Anchor point="TOPLEFT" relativeKey="$parent.hlLeft" relativePoint="TOPRIGHT"/>
-								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.hlRight" relativePoint="BOTTOMLEFT"/>
-							</Anchors>
-							<TexCoords left="0.591796875" right="0.814453125" top="0.1748046875" bottom="0.2197265625"/>
-						</Texture>
-					</Layer>
-				</Layers>
 			</Frame>
-			
 		</Frames>
 		
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="Bg" file="Interface\QUESTFRAME\UI-QuestLogTitleHighlight" alpha="0.05" alphaMode="ADD">
+				<Texture parentKey="Bg" alpha="0.12">
+					<Size y="2"/>
 					<Anchors>
-						<Anchor point="TOPLEFT" y="-1"/>
-						<Anchor point="BOTTOMRIGHT" y="1"/>
+						<Anchor point="LEFT" relativePoint="BOTTOMLEFT"/>
+						<Anchor point="RIGHT" relativePoint="BOTTOMRIGHT"/>
 					</Anchors>
-					<TexCoords left="0.25" right="0.75" top="0.0" bottom="1.0"/>
+					<Color r="0" g="0" b="0"/>
 				</Texture>
 				<Texture parentKey="QualityBg" file="interface/covenantrenown/covenantrenownscrollmask" alpha="0.12" alphaMode="ADD" hidden="true">
-					<Anchors>
-						<Anchor point="TOPLEFT" y="-1"/>
-						<Anchor point="BOTTOMRIGHT" x="0" y="1"/>
-					</Anchors>
 					<TexCoords left="0.5" right="0.9" top="0.18" bottom="0.79"/>
 				</Texture>
 
@@ -315,7 +312,7 @@
 					<Size x="0" y="0"/>
 					<Anchors>
 						<Anchor point="LEFT" relativeKey="$parent.Title"/>
-						<Anchor point="BOTTOM" y="6"/>
+						<Anchor point="BOTTOM" y="7"/>
 					</Anchors>
 					<Color r="0.75" g="0.61" b="0"/>
 				</FontString>
@@ -417,11 +414,11 @@
 			</OnLeave>
 			<OnMouseDown>
 				if self:IsEnabled() then
-				self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 1, -1);
+					self.texture:AdjustPointsOffset(1, -1);
 				end
 			</OnMouseDown>
 			<OnMouseUp>
-				self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 0);
+				self.texture:AdjustPointsOffset(-1, 1);
 			</OnMouseUp>
 		</Scripts>
 	</Button>
@@ -673,7 +670,7 @@
 						</Anchors>
 					</DropdownButton>
 
-					<DropdownButton parentKey="SettingsDropdown" mixin="WQT_QuestLogSettingsButtonMixin">
+					<Button parentKey="SettingsButton" Mixin="WQT_QuestLogSettingsButtonMixin">
 						<Size x="15" y="16" />
 						<Anchors>
 							<Anchor point="TOPRIGHT" x="19" y="25" />
@@ -695,13 +692,17 @@
 							</Layer>
 						</Layers>
 						<Scripts>
-							<OnMouseDown method="OnMouseDown" />
-							<OnMouseUp method="OnMouseUp" />
-							<OnDisable method="OnDisable" />
-							<OnEnable method="OnEnable" />
+							<OnClick>
+								WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Settings);
+								PlaySound(MenuVariants.GetDropdownCloseSoundKit());
+							</OnClick>
+							<OnMouseDown Method="OnMouseDown"/>
+							<OnMouseUp Method="OnMouseUp"/>
+							<OnEnable Method="OnEnable"/>
+							<OnDisable Method="OnDisable"/>
 						</Scripts>
-					</DropdownButton>						
-
+					</Button>
+				
 					<Frame parentKey="BorderFrame" inherits="QuestLogBorderFrameTemplate" />
 					<Frame parentKey="FilterBar">
 						<Size x="259" y="0.1" />
@@ -769,8 +770,8 @@
 					<Frame parentKey="QuestScrollBox" inherits="WowScrollBoxList" frameStrata="HIGH">
 						<Anchors>
 							<Anchor point="TOP" relativeKey="$parent.FilterBar" relativePoint="BOTTOM" />
-							<Anchor point="LEFT" />
-							<Anchor point="BOTTOMRIGHT"/>
+							<Anchor point="LEFT" x="2"/>
+							<Anchor point="BOTTOMRIGHT" x="-2"/>
 						</Anchors>
 					</Frame>
 					<EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">
@@ -783,89 +784,6 @@
 				<Scripts>
 					<OnLoad method="OnLoad" />
 				</Scripts>
-			</Frame>
-
-			<!-- What's New -->
-			<Frame name="WQT_WhatsNewFrame" parentKey="WhatsNewFrame" parentArray="panels" hidden="true">
-				<Size x="286" y="0" />
-				<Anchors>
-					<Anchor point="TOPLEFT" />
-					<Anchor point="BOTTOMRIGHT" />
-				</Anchors>
-				<KeyValues>
-					<!-- <KeyValue key="panelID" type="number" value="2" /> -->
-					<KeyValue key="panelID" value="WQT_PanelID.WhatsNew" type="global"/>
-				</KeyValues>
-				<Layers>
-					<Layer level="BACKGROUND">
-						<Texture parentKey="Background" file="interface\professions\professionsminimizedview">
-							<TexCoords top="0.0009765625" right="0.787109375" bottom="0.533" left="0.001953125"/>
-							<Anchors>
-								<Anchor point="TOPLEFT" />
-								<Anchor point="BOTTOMRIGHT" />
-							</Anchors>
-						</Texture>
-					</Layer>
-				</Layers>
-				<frames>
-					<Frame parentKey="BorderFrame" inherits="QuestLogBorderFrameTemplate" />
-
-					<Frame parentKey="ScrollBox" inherits="WowScrollBox" frameStrata="HIGH">
-						<Anchors>
-							<Anchor point="TOPLEFT" />
-							<Anchor point="BOTTOMRIGHT" />
-						</Anchors>
-						<KeyValues>
-							<KeyValue key="wheelPanScalar" type="number" value="0.1" />
-						</KeyValues>
-						<Frames>
-							<Frame parentKey="ScrollContent">
-								<Size x="268" y="400" />
-								<KeyValues>
-									<KeyValue key="scrollable" value="true" type="boolean" />
-								</KeyValues>
-								<Frames>
-									<SimpleHTML parentKey="Text">
-										<Size x="268" y="400" />
-										<Anchors>
-											<Anchor point="TOPLEFT" x="20" />
-											<Anchor point="BOTTOMRIGHT" x="-20" />
-										</Anchors>
-										<FontString inherits="GameFontNormal" spacing="2" wordwrap="true" />
-										<FontStringHeader1 inherits="Fancy24Font" spacing="5" />
-										<FontStringHeader2 inherits="Fancy16Font" spacing="4" />
-										<FontStringHeader3 inherits="GameFontNormalTiny" spacing="0" />
-
-									</SimpleHTML>
-								</Frames>
-								<Scripts>
-									<OnLoad>
-										<!-- Hate it. -->
-										self:SetWidth(WQT_WhatsNewFrame:GetWidth());
-									</OnLoad>
-								</Scripts>
-							</Frame>
-
-						</Frames>
-					</Frame>
-					<EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">
-						<Anchors>
-							<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="8" y="2"/>
-							<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="8" y="-4"/>
-						</Anchors>
-					</EventFrame>
-
-					<Button parentKey="CloseButton" inherits="WQT_PanelCloseButtonTemplate"/>
-				</frames>
-				<Layers>
-					<Layer level="ARTWORK">
-						<FontString parentKey="TitleText" inherits="Game15Font_Shadow" wordwrap="false" text="MAP_LEGEND_FRAME_LABEL">
-							<Anchors>
-								<Anchor point="BOTTOM" relativeKey="$parent.BorderFrame" relativePoint="TOP" x="-1" y="3" />
-							</Anchors>
-						</FontString>
-					</Layer>
-				</Layers>
 			</Frame>
 
 			<!-- Settings frame in Settings.lua -->

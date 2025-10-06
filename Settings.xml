@@ -38,12 +38,12 @@
 			<Layer level="HIGHLIGHT">
 				<Texture parentKey="HighlightLeft" atlas="Section_Expand_glowing_Left" useAtlasSize="true">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="10" y="-2"/>
+						<Anchor point="TOPLEFT" x="10" y="-3"/>
 					</Anchors>
 				</Texture>
 				<Texture parentKey="HighlightRight" atlas="Section_Expand_glowing_right" useAtlasSize="true">
 					<Anchors>
-						<Anchor point="TOPRIGHT" x="-10" y="-2"/>
+						<Anchor point="TOPRIGHT" x="-10" y="-3"/>
 					</Anchors>
 				</Texture>
 				<Texture parentKey="HighlightMiddle" atlas="Section_Expand_glowing_middle" horizTile="true">
@@ -85,7 +85,7 @@
 				</FontString>
 				<Texture parentKey="ExpandIcon" atlas="friendslist-categorybutton-arrow-right" useAtlasSize="true" desaturated="true">
 					<Anchors>
-						<Anchor point="CENTER" relativePoint="LEFT" x="40" y="0"/>
+						<Anchor point="CENTER" relativePoint="RIGHT" x="-40" y="0"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -255,6 +255,27 @@
 			</Layer>
 		</Layers>
 	</Frame>
+
+	<Frame name="WQT_SettingTextTemplate" mixin="WQT_SettingsTextMixin" virtual="true">
+		<Size y="30"/>	
+		<KeyValues>
+			<KeyValue key="staticLabelFont" value="true" type="boolean"/>
+			<KeyValue key="topPadding" value="2" type="number"/>
+			<KeyValue key="bottomPadding" value="10" type="number"/>
+		</KeyValues>
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Label" inherits="GameFontHighlight" justifyH="LEFT" justifyV="TOP">
+					<Anchors>
+						<Anchor point="LEFT" x="40"/>
+						<Anchor point="TOP" y="0"/>
+						<Anchor point="RIGHT" x="-30"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+	</Frame>
+	
 	
 	<Frame name="WQT_SettingColorTemplate" mixin="WQT_SettingsColorMixin" virtual="true">
 		<Size y="32"/>

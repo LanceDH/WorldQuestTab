@@ -157,7 +157,5 @@ L["UNINTERESTED"] = "Uninteressant"
 L["UNINTERESTED_TT"] = "Zeige Quests, die als 'Uninteressant' markiert sind weiterhin in der Liste an."
 L["USE_TOMTOM"] = "Erlaube TomTom"
 L["USE_TOMTOM_TT"] = "Füge Funktionen von TomTom zu diesem Addon hinzu."
-L["WHATS_NEW"] = "Was ist neu?"
-L["WHATS_NEW_TT"] = "Zeige die World Quest Tab Patchnotes an."
 L["WQT_FULLSCREEN_BUTTON_TT"] = [=[Zeige und Blende die Weltquestliste mit einem Linksklick ein oder aus.
 Mit einem Rechtsklick kann die Position verschoben werden.]=]

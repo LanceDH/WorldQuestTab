@@ -555,6 +555,29 @@ function WQT_SettingsTextInputMixin:OnValueChanged(value, userInput)
 	self:UpdateState();
 end
 
+
+--------------------------------
+-- WQT_SettingsTextMixin
+--------------------------------
+
+WQT_SettingsTextMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+
+function WQT_SettingsTextMixin:Init(data)
+	WQT_SettingsBaseMixin.Init(self, data);
+	self.Label:SetFontObject(data.font or "GameFontHighlight");
+	self.topPadding = data.topPadding or self.topPadding;
+	self.bottomPadding = data.bottomPadding or self.bottomPadding;
+end
+
+function WQT_SettingsTextMixin:UpdateState()
+	WQT_SettingsBaseMixin.UpdateState(self);
+
+	local topPadding = self.topPadding or 0;
+	local bottomPadding = self.bottomPadding or 0;
+	self.Label:SetPoint("TOP", self, 0, -topPadding);
+	self:SetHeight(self.Label:GetStringHeight() + topPadding + bottomPadding);
+end
+
 --------------------------------
 -- WQT_SettingsCategoryMixin
 --------------------------------
@@ -753,6 +776,7 @@ function WQT_SettingsFrameMixin:AddSetting(data, isFromList)
 
 	-- Get a frame of supplied template, or specific frame from _G
 	local frame;
+
 	if (template) then
 		frame = self:AcquireFrameOfTemplate(template);
 	elseif (data.frameName) then
@@ -796,6 +820,7 @@ function WQT_SettingsFrameMixin:PlaceSetting(setting)
 	end
 	setting:SetPoint("RIGHT", self.ScrollBox.ScrollContent);
 	setting:Show();
+
 	if (setting.UpdateState) then
 		setting:UpdateState();
 	end
