@@ -240,7 +240,7 @@
 		</Scripts>
 	</Frame>
 
-	<Frame name="WQT_DevFrame" parent="UIParent" mixin="WQT_DevMixin" movable="true" enableMouse="true" toplevel="true" frameStrata="MEDIUM" hidden="true">
+	<Frame name="WQT_DevFrame" parent="UIParent" mixin="WQT_DevMixin" movable="true" enableMouse="true" toplevel="true" frameStrata="MEDIUM" hidden="false">
 		<Size x="200" y="100"/>
 		<Anchors>
 			<Anchor point="CENTER" x="300" />
@@ -292,6 +292,395 @@
 					</OnClick>
 				</Scripts>
 			</Button>
+
+
+			<Frame parentKey="TestMain">
+				<Size x="300" y="40"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativePoint="BOTTOMLEFT" y="-4"/>
+				</Anchors>
+
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture>
+							<Color r="0" g="0" b="0"/>
+						</Texture>
+					</Layer>
+				</Layers>
+
+				<Frames>
+					<Frame parentKey="HorizontalFrameRight" inherits="HorizontalLayoutFrame" mixin="WQT_HorizontalLayoutMixin">
+						<KeyValues>
+							<!-- <KeyValue key="fixedWidth" value="300" type="number"/>
+							<KeyValue key="fixedHeight" value="40" type="number"/> -->
+							<KeyValue key="spacing" value="4" type="number"/>
+							<KeyValue key="rightPadding" value="4" type="number"/>
+						</KeyValues>
+
+						<Anchors>
+							<Anchor point="RIGHT"/>
+						</Anchors>
+
+						<Layers>
+							<Layer level="BACKGROUND">
+								<Texture>
+									<Color r="0" g="0" b="1"/>
+								</Texture>
+							</Layer>
+						</Layers>
+
+						<Frames>
+							<Frame parentKey="testLeft" hidden="false" mixin="WQT_GridLayoutMixin">
+								<Size x="80" y="20"/>
+								<KeyValues>
+									<KeyValue key="layoutIndex" value="1" type="number"/>
+								
+									<KeyValue key="stride" value="2" type="number"/>
+									<KeyValue key="leftPadding" value="2" type="number"/>
+									<KeyValue key="rightPadding" value="2" type="number"/>
+								</KeyValues>
+								
+								<Layers>
+									<Layer level="BACKGROUND">
+										<Texture>
+											<Color r="1" g="0.3" b="0.3"/>
+										</Texture>
+									</Layer>
+								</Layers>
+
+								<Layers>
+									<Layer level="ARTWORK">
+										<Texture>
+											<Size x="36" y="36"/>
+											<Color r="1" g="1" b="1"/>
+											<KeyValues>
+												<KeyValue key="layoutIndex" value="1" type="number"/>
+												<KeyValue key="strideSize" value="2" type="number"/>
+												<KeyValue key="leftPadding" value="2" type="number"/>
+											</KeyValues>
+										</Texture>
+										<Texture>
+											<Size x="18" y="18"/>
+											<Color r="0" g="1" b="1"/>
+											<KeyValues>
+												<KeyValue key="layoutIndex" value="2" type="number"/>
+											</KeyValues>
+										</Texture>
+										<Texture hidden="true">
+											<Size x="18" y="18"/>
+											<Color r="1" g="1" b="0"/>
+											<KeyValues>
+												<KeyValue key="layoutIndex" value="3" type="number"/>
+											</KeyValues>
+										</Texture>
+										<Texture>
+											<Size x="18" y="18"/>
+											<Color r="0" g="1" b="0"/>
+											<KeyValues>
+												<KeyValue key="layoutIndex" value="4" type="number"/>
+											</KeyValues>
+										</Texture>
+										<Texture>
+											<Size x="18" y="18"/>
+											<Color r="0" g="0" b="0"/>
+											<KeyValues>
+												<KeyValue key="layoutIndex" value="5" type="number"/>
+											</KeyValues>
+										</Texture>
+									</Layer>
+								</Layers>
+							</Frame>
+							<Frame parentKey="testRight" hidden="false">
+								<Size x="32" y="30"/>
+								<KeyValues>
+									<KeyValue key="layoutIndex" value="2" type="number"/>
+									<KeyValue key="expand" value="true" type="boolean"/>
+								</KeyValues>
+								<Layers>
+									<Layer level="BACKGROUND">
+										<Texture>
+											<Color r="0" g="1" b="0"/>
+										</Texture>
+									</Layer>
+								</Layers>
+							</Frame>
+						</Frames>
+					</Frame>
+
+					<Frame parentKey="HorizontalFrameLeft" inherits="HorizontalLayoutFrame" mixin="WQT_HorizontalLayoutMixin">
+						<KeyValues>
+							<!-- <KeyValue key="fixedWidth" value="300" type="number"/>
+							<KeyValue key="fixedHeight" value="40" type="number"/> -->
+							<KeyValue key="minimumWidth" value="0.1" type="number"/>
+							<KeyValue key="minimumHeight" value="0.1" type="number"/>
+							<KeyValue key="spacing" value="4" type="number"/>
+							<KeyValue key="leftPadding" value="4" type="number"/>
+						</KeyValues>
+
+						<Anchors>
+							<Anchor point="LEFT"/>
+						</Anchors>
+
+						<Layers>
+							<Layer level="BACKGROUND">
+								<Texture>
+									<Color r="0" g="0" b="1"/>
+								</Texture>
+							</Layer>
+						</Layers>
+
+						<Frames>
+							<Frame parentKey="testRight" hidden="true">
+								<Size x="32" y="30"/>
+								<KeyValues>
+									<KeyValue key="layoutIndex" value="2" type="number"/>
+									<KeyValue key="expand" value="true" type="boolean"/>
+								</KeyValues>
+								<Layers>
+									<Layer level="BACKGROUND">
+										<Texture>
+											<Color r="0" g="1" b="0"/>
+										</Texture>
+									</Layer>
+								</Layers>
+							</Frame>
+						</Frames>
+
+						<Scripts>
+							<OnLoad>
+								self:Layout();
+							</OnLoad>
+						</Scripts>
+					</Frame>
+
+					<Frame parentKey="CenterPanel" inherits="VerticalLayoutFrame">
+						<Anchors>
+							<Anchor point="TOP"/>
+							<Anchor point="BOTTOM"/>
+							<Anchor point="LEFT" relativeKey="$parent.HorizontalFrameLeft" relativePoint="RIGHT" x="4"/>
+							<Anchor point="RIGHT" relativeKey="$parent.HorizontalFrameRight" relativePoint="LEFT" x="-4"/>
+						</Anchors>
+
+						<Layers>
+							<Layer level="BACKGROUND">
+								<Texture>
+									<Color r="1" g="0" b="1"/>
+								</Texture>
+							</Layer>
+						</Layers>
+					</Frame>
+				</Frames>
+			</Frame>
+
+			<Frame parentKey="TestMain2">
+				<Size x="300" y="40" />
+				<Anchors>
+					<Anchor point="TOPLEFT" relativePoint="BOTTOMLEFT" y="-48" />
+				</Anchors>
+
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture>
+							<Color r="0" g="0" b="0" />
+						</Texture>
+					</Layer>
+				</Layers>
+
+				<Frames>
+					<Frame parentKey="GridPanel" inherits="GridLayoutFrame">
+						<KeyValues>
+							<!-- <KeyValue key="fixedWidth" value="300" type="number"/>
+							<KeyValue key="fixedHeight" value="40" type="number"/> -->
+							<!-- <KeyValue key="isHorizontal" type="boolean" value="true"/>
+							<KeyValue key="minimumHeight" value="0.1" type="number"/> -->
+							<KeyValue key="stride" value="1" type="number"/>
+							<KeyValue key="leftPadding" value="4" type="number"/>
+							<KeyValue key="layoutFramesGoingRight" value="true" type="boolean"/>
+							<KeyValue key="childXPadding" value="0" type="number"/>
+							<KeyValue key="alwaysUpdateLayout" value="true" type="boolean"/>
+						</KeyValues>
+						<Anchors>
+							<Anchor point="TOP"/>
+							<Anchor point="BOTTOM"/>
+							<Anchor point="LEFT"/>
+							<Anchor point="RIGHT"/>
+							<!-- <Anchor point="LEFT" relativeKey="$parent.HorizontalFrameLeft" relativePoint="RIGHT" x="4"/>
+							<Anchor point="RIGHT" relativeKey="$parent.HorizontalFrameRight" relativePoint="LEFT" x="-4"/> -->
+						</Anchors>
+
+						<Layers>
+							<Layer level="BACKGROUND">
+								<Texture>
+									<Color r="1" g="0" b="1"/>
+								</Texture>
+							</Layer>
+						</Layers>
+						<Frames>
+							<Frame parentKey="testRight" hidden="false">
+								<Size x="32" y="30"/>
+								<KeyValues>
+									<KeyValue key="layoutIndex" value="1" type="number"/>
+									<!-- <KeyValue key="expand" value="true" type="boolean"/> -->
+								</KeyValues>
+								<Layers>
+									<Layer level="BACKGROUND">
+										<Texture>
+											<Color r="0" g="1" b="0"/>
+										</Texture>
+									</Layer>
+								</Layers>
+							</Frame>
+							<Frame parentKey="testRight2" hidden="false">
+								<Size  y="30"/>
+								<KeyValues>
+									<KeyValue key="layoutIndex" value="1" type="number"/>
+									<!-- <KeyValue key="expand" value="true" type="boolean"/> -->
+								</KeyValues>
+								<Layers>
+									<Layer level="BACKGROUND">
+										<Texture>
+											<Color r="0" g="0" b="1"/>
+										</Texture>
+									</Layer>
+								</Layers>
+							</Frame>
+						</Frames>
+
+					</Frame>
+				</Frames>
+			</Frame>
+
+			<Frame parentKey="TestMain3" hidden="true">
+				<Size x="300" y="40" />
+				<Anchors>
+					<Anchor point="TOPLEFT" relativePoint="BOTTOMLEFT" y="-92" />
+				</Anchors>
+
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture>
+							<Color r="0" g="0" b="0" />
+						</Texture>
+					</Layer>
+				</Layers>
+
+				<Frames>
+					<Frame parentKey="CustomPanel" inherits="BaseLayoutFrameTemplate" mixin="WQT_HorizontalFlexLayoutMixin">
+						<KeyValues>
+							<KeyValue key="fixedHeight" value="40" type="number"/>
+							<KeyValue key="spacing" value="4" type="number"/>
+							<KeyValue key="rightPadding" value="4" type="number"/>
+							<KeyValue key="leftPadding" value="4" type="number"/>
+						</KeyValues>
+						<Anchors>
+							<!-- <Anchor point="TOP"/>
+							<Anchor point="BOTTOM"/> -->
+							<Anchor point="LEFT"/>
+							<Anchor point="RIGHT"/>
+							<!-- <Anchor point="LEFT" relativeKey="$parent.HorizontalFrameLeft" relativePoint="RIGHT" x="4"/>
+							<Anchor point="RIGHT" relativeKey="$parent.HorizontalFrameRight" relativePoint="LEFT" x="-4"/> -->
+						</Anchors>
+
+						<Layers>
+							<Layer level="BACKGROUND">
+								<Texture>
+									<Color r="1" g="0" b="1"/>
+								</Texture>
+							</Layer>
+						</Layers>
+						<Frames>
+							<Frame parentKey="testRight" hidden="false">
+								<Size x="32" y="30"/>
+								<KeyValues>
+									<KeyValue key="layoutIndex" value="1" type="number"/>
+									<!-- <KeyValue key="expand" value="true" type="boolean"/> -->
+								</KeyValues>
+								<Layers>
+									<Layer level="BACKGROUND">
+										<Texture>
+											<Color r="0" g="1" b="0"/>
+										</Texture>
+									</Layer>
+								</Layers>
+							</Frame>
+							<Frame parentKey="testRight2" hidden="false">
+								<Size  y="30"/>
+								<KeyValues>
+									<KeyValue key="layoutIndex" value="2" type="number"/>
+									<KeyValue key="flexSize" value="1" type="number"/>
+									<!-- <KeyValue key="expand" value="true" type="boolean"/> -->
+								</KeyValues>
+								<Layers>
+									<Layer level="BACKGROUND">
+										<Texture>
+											<Color r="0" g="0" b="1"/>
+										</Texture>
+									</Layer>
+								</Layers>
+							</Frame>
+
+						<Frame parentKey="HorizontalFrameRight" inherits="HorizontalLayoutFrame" hidden="true" mixin="WQT_HorizontalLayoutMixin">
+						<KeyValues>
+							<!-- <KeyValue key="fixedWidth" value="300" type="number"/>
+							<KeyValue key="fixedHeight" value="40" type="number"/> -->
+							<KeyValue key="layoutIndex" value="3" type="number"/>
+							<KeyValue key="spacing" value="4" type="number"/>
+						</KeyValues>
+
+						<!-- <Anchors>
+							<Anchor point="RIGHT"/>
+						</Anchors> -->
+
+						<Layers>
+							<Layer level="BACKGROUND">
+								<Texture>
+									<Color r="0" g="0" b="1"/>
+								</Texture>
+							</Layer>
+						</Layers>
+
+						<Frames>
+							<Frame parentKey="testLeft" hidden="true">
+								<Size x="80" y="20"/>
+								<KeyValues>
+									<KeyValue key="layoutIndex" value="1" type="number"/>
+									<KeyValue key="expand" value="true" type="boolean"/>
+								</KeyValues>
+								
+								<Layers>
+									<Layer level="BACKGROUND">
+										<Texture>
+											<Color r="1" g="0" b="0"/>
+										</Texture>
+									</Layer>
+								</Layers>
+							</Frame>
+							<Frame parentKey="testRight" hidden="true">
+								<Size x="32" y="30"/>
+								<KeyValues>
+									<KeyValue key="layoutIndex" value="2" type="number"/>
+									<KeyValue key="expand" value="true" type="boolean"/>
+								</KeyValues>
+								<Layers>
+									<Layer level="BACKGROUND">
+										<Texture>
+											<Color r="0" g="1" b="0"/>
+										</Texture>
+									</Layer>
+								</Layers>
+							</Frame>
+						</Frames>
+					</Frame>
+						</Frames>
+
+						<Scripts>
+							<OnLoad>
+								self:Layout();
+							</OnLoad>
+						</Scripts>
+					</Frame>
+				</Frames>
+			</Frame>
 		</Frames>
 
 		<Scripts>
@@ -299,6 +688,4 @@
 			<OnUpdate method="OnUpdate" /> 
 		</Scripts>
 	</Frame>
-
-	
  </Ui>

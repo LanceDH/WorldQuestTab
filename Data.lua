@@ -1499,6 +1499,11 @@ end
 -- fixes			List of bugfixes
 
 local patchNotes = {
+		{["version"] = "11.2.06";
+			["changes"] = {
+				"Reworked how quests info structured. Easier to maintain and seems to have fixed glitchy quest title positioning";
+			};
+		};
 		{["version"] = "11.2.05";
 			["intro"] = {
 				"Update for patch 11.2.5";

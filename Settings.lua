@@ -101,23 +101,26 @@ end
 
 WQT_SettingsQuestListMixin = CreateFromMixins(WQT_SettingsBaseMixin);
 
+-- 74160s == 20h 36m
+local SETTINGS_QUEST_TIME = 74160;
+
 function WQT_SettingsQuestListMixin:OnLoad()
 	self.Preview:SetEnabledMixin(false);
 	self.Preview.UpdateTime = function(rewardFrame) 
-		-- Time display
-		-- 74160s == 20h 36m
+		local timeFrame = rewardFrame:GetTimeFontString();
+
 		local timeString = "";
 		if (WQT.settings.list.fullTime) then
-			timeString = SecondsToTime(74160, true, false);
+			timeString = SecondsToTime(SETTINGS_QUEST_TIME, true, false);
 		else
-			timeString = D_HOURS:format(74160 / SECONDS_PER_HOUR);
+			timeString = D_HOURS:format(SETTINGS_QUEST_TIME / SECONDS_PER_HOUR);
 		end
-		rewardFrame.Time:SetText(timeString);
+		timeFrame:SetText(timeString);
 		if (WQT.settings.list.colorTime) then
 			local color = WQT_Utils:GetColor(_V["COLOR_IDS"].timeMedium)
-			rewardFrame.Time:SetVertexColor(color:GetRGB());
+			timeFrame:SetVertexColor(color:GetRGB());
 		else
-			rewardFrame.Time:SetVertexColor(_V["WQT_WHITE_FONT_COLOR"]:GetRGB());
+			timeFrame:SetVertexColor(_V["WQT_WHITE_FONT_COLOR"]:GetRGB());
 		end
 
 		return true;

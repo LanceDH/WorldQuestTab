@@ -115,51 +115,48 @@
 		</Layers>
 	</Frame>
 	
-	<Frame name="WQT_RewardDisplayTemplate" mixin="WQT_RewardDisplayMixin" virtual="true">
+	<Frame name="WQT_RewardDisplayTemplate" inherits="HorizontalLayoutFrame" mixin="WQT_RewardDisplayMixin, WQT_GridLayoutMixin" virtual="true">
 		<Size x="32" y="32" />
+		<KeyValues>
+			<KeyValue key="stride" value="2" type="number"/>
+		</KeyValues>
+
 		<Frames>
 			<Frame parentKey="Reward1" inherits="WQT_RewardTemplate" >
-				<Anchors>
-					<Anchor point="RIGHT"/>
-				</Anchors>
-			</Frame>
-			<Frame parentKey="Reward3" inherits="WQT_RewardTemplate" >
-				<Size x="16" y="16"/>
-				<Anchors>
-					<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Reward1" relativePoint="BOTTOMLEFT" x="-1"/>
-				</Anchors>
 				<KeyValues>
-					<KeyValue key="isMinor" type="bool" value="true" />
+					<KeyValue key="layoutIndex" value="1" type="number"/>
+					<KeyValue key="strideSize" value="2" type="number"/>
+					<KeyValue key="leftPadding" value="1" type="number"/>
 				</KeyValues>
 			</Frame>
 			<Frame parentKey="Reward2" inherits="WQT_RewardTemplate" >
 				<Size x="16" y="16"/>
-				<Anchors>
-					<Anchor point="BOTTOMLEFT" relativeKey="$parent.Reward3" relativePoint="TOPLEFT" x="0" />
-				</Anchors>
 				<KeyValues>
-					<KeyValue key="isMinor" type="bool" value="true" />
+					<KeyValue key="hideAmount" type="bool" value="true" />
+					<KeyValue key="layoutIndex" value="2" type="number"/>
+				</KeyValues>
+			</Frame>
+			<Frame parentKey="Reward3" inherits="WQT_RewardTemplate" >
+				<Size x="16" y="16"/>
+				<KeyValues>
+					<KeyValue key="hideAmount" type="bool" value="true" />
+					<KeyValue key="layoutIndex" value="3" type="number"/>
 				</KeyValues>
 			</Frame>
 			<Frame parentKey="Reward4" inherits="WQT_RewardTemplate" >
 				<Size x="16" y="16"/>
-				<Anchors>
-					<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Reward3" relativePoint="BOTTOMLEFT" x="0"/>
-				</Anchors>
 				<KeyValues>
-					<KeyValue key="isMinor" type="bool" value="true" />
+					<KeyValue key="hideAmount" type="bool" value="true" />
+					<KeyValue key="layoutIndex" value="4" type="number"/>
 				</KeyValues>
 			</Frame>
 			<Frame parentKey="Reward5" inherits="WQT_RewardTemplate" >
 				<Size x="16" y="16"/>
-				<Anchors>
-					<Anchor point="BOTTOMLEFT" relativeKey="$parent.Reward4" relativePoint="TOPLEFT" x="0" />
-				</Anchors>
 				<KeyValues>
-					<KeyValue key="isMinor" type="bool" value="true" />
+					<KeyValue key="hideAmount" type="bool" value="true" />
+					<KeyValue key="layoutIndex" value="5" type="number"/>
 				</KeyValues>
 			</Frame>
-			
 		</Frames>
 		
 		<Scripts>
@@ -167,58 +164,26 @@
 		</Scripts>
 	</Frame>
 	 
-	<Button name="WQT_QuestTemplate" mixin="WQT_ListButtonMixin" hidden="true" virtual="true" registerForClicks="LeftButtonUp, RightButtonUp" >
+	<Button name="WQT_QuestTemplate" mixin="WQT_ListButtonMixin, WQT_HorizontalFlexLayoutMixin" hidden="true" virtual="true" registerForClicks="LeftButtonUp, RightButtonUp" >
 		<Size y="38"/>
 		<Anchors>
 			<Anchor point="LEFT" x="0" y="0" />
 			<Anchor point="RIGHT" x="0" y="0" />
 		</Anchors>
-		<Frames>
-			<Frame parentKey="Faction">
-				<Size x="30" y="34" />
-				<HitRectInsets left="-2" right="0" top="-3" bottom="-3"/>
-				<KeyValues>
-					<KeyValue key="defaultWidth" type="number" value="30"/>
-				</KeyValues>
-				<Anchors>
-					<Anchor point="RIGHT" x="-2"/>
-				</Anchors>
-				<Layers>
-					<Layer level="ARTWORK">
-						<Texture parentKey="Icon" alpha="0.65" >
-							<Anchors>
-								<Anchor point="TOPLEFT" x="-2" y="0"/>
-								<Anchor point="BOTTOMRIGHT" x="2" y="0"/>
-							</Anchors>
-							<TexCoords left="0.02" right="0.98" top="0.05" bottom="0.98"/>
-						</Texture>
-						<MaskTexture parentKey="IconMask" file="Interface\Addons\WorldQuestTab\Images\FactionMask" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE">
-							<Anchors>
-								<Anchor point="TOPLEFT" x="1" y="-1" relativeKey="$parent.Icon"/>
-								<Anchor point="BOTTOMRIGHT" x="-1" y="1" relativeKey="$parent.Icon"/>
-							</Anchors>
-							<MaskedTextures>
-								<MaskedTexture childKey="Icon"/>
-							</MaskedTextures>
-						</MaskTexture>
-					</Layer>
-				</Layers>
-				<Scripts>
-					<OnEnter>
-						self:GetParent():FactionOnEnter(self);
-					</OnEnter>
-					<OnLeave>
-						self:GetParent().Highlight:Hide();
-						GameTooltip:Hide();
-					</OnLeave>
-				</Scripts>
-			</Frame>
 
+		<KeyValues>
+			<KeyValue key="spacing" value="4" type="number"/>
+			<KeyValue key="rightPadding" value="4" type="number"/>
+			<KeyValue key="leftPadding" value="6" type="number"/>
+		</KeyValues>
+
+		<Frames>
 			<Frame parentKey="Type" hidden="true">
 				<Size x="28" y="28" />
-				<Anchors>
-					<Anchor point="LEFT" x="6" y="0"/>
-				</Anchors>
+				<KeyValues>
+					<KeyValue key="layoutIndex" value="1" type="number" />
+					<KeyValue key="align" value="center" type="string" />
+				</KeyValues>
 				<Layers>
 					<Layer level="BACKGROUND" textureSubLevel="-1">
 						<Texture parentKey="Elite" atlas="worldquest-questmarker-dragon"/>
@@ -248,10 +213,132 @@
 				</Layers>
 			</Frame>
 
-			<Frame parentKey="Rewards" inherits="WQT_RewardDisplayTemplate" hidden="false" alpha="1">
-				<Anchors>
-					<Anchor point="RIGHT" relativeKey="$parent.Faction" relativePoint="LEFT" x="-1" y="0"/>
-				</Anchors>
+			<Frame parentKey="CenterContent" inherits="BaseLayoutFrameTemplate" mixin="WQT_VerticalFlexLayoutMixin">
+				<KeyValues>
+					<KeyValue key="layoutIndex" value="2" type="number" />
+					<KeyValue key="flexSize" value="1" type="number" />
+					<KeyValue key="spacing" value="2" type="number"/>
+					<KeyValue key="expand" value="true" type="boolean" />
+				</KeyValues>
+				<Layers>
+					<Layer level="ARTWORK">
+						<FontString parentKey="Title" inherits="GameFontNormal" maxLines="1" justifyH="LEFT" justifyV="BOTTOM">
+							<KeyValues>
+								<KeyValue key="layoutIndex" value="1" type="number" />
+								<KeyValue key="expand" value="true" type="boolean" />
+								<KeyValue key="flexSize" value="1" type="number" />
+							</KeyValues>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Frames>
+					<Frame parentKey="BottomRow" inherits="BaseLayoutFrameTemplate" mixin="WQT_HorizontalFlexLayoutMixin">
+						<KeyValues>
+							<KeyValue key="layoutIndex" value="2" type="number" />
+							<KeyValue key="spacing" value="2" type="number" />
+							<KeyValue key="expand" value="true" type="boolean" />
+							<KeyValue key="flexSize" value="1" type="number" />
+						</KeyValues>
+						<Layers>
+							<Layer level="ARTWORK">
+								<FontString parentKey="Time" inherits="GameFontNormalSmall" maxLines="1" justifyH="LEFT" justifyV="TOP">
+									<KeyValues>
+										<KeyValue key="layoutIndex" value="1" type="number" />
+										<KeyValue key="align" value="top" type="string" />
+									</KeyValues>
+									<Color r="0.75" g="0.61" b="0"/>
+								</FontString>
+
+								<FontString parentKey="ZoneSeparator" inherits="GameFontNormalSmall" maxLines="1" justifyH="LEFT" text="-">
+									<KeyValues>
+										<KeyValue key="layoutIndex" value="2" type="number" />
+										<KeyValue key="align" value="top" type="string" />
+									</KeyValues>
+									<Color r="0.75" g="0.61" b="0"/>
+								</FontString>
+
+								<FontString parentKey="Extra" inherits="GameFontNormalSmall" maxLines="1" justifyH="LEFT" justifyV="TOP">
+									<KeyValues>
+										<KeyValue key="layoutIndex" value="3" type="number" />
+										<KeyValue key="flexSize" value="1" type="number" />
+										<KeyValue key="align" value="top" type="string" />
+									</KeyValues>
+									<Color r="0.7" g="0.7" b="0.7"/>
+								</FontString>
+							</Layer>
+						</Layers>
+					</Frame>
+				</Frames>
+			</Frame>	
+
+			<Frame parentKey="RightContent" inherits="HorizontalLayoutFrame" mixin="WQT_HorizontalLayoutMixin">
+				<KeyValues>
+					<KeyValue key="layoutIndex" value="3" type="number" />
+					<KeyValue key="align" value="center" type="string" />
+				</KeyValues>
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture parentKey="WarbandIcon" atlas="warbands-icon" alpha="1" hidden="false">
+							<Size x="16" y="16"/>
+							<Anchors>
+								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Rewards" relativePoint="BOTTOMLEFT" x="-1" y="0"/>
+							</Anchors>
+							<KeyValues>
+								<KeyValue key="layoutIndex" value="1" type="number" />
+								<KeyValue key="align" value="bottom" type="string" />
+							</KeyValues>
+							<TexCoords left="-0.1" right="1.1" top="0.0" bottom="0.85"/>
+						</Texture>
+					</Layer>
+				</Layers>
+
+				<Frames>
+					<Frame parentKey="Rewards" inherits="WQT_RewardDisplayTemplate">
+						<KeyValues>
+							<KeyValue key="layoutIndex" value="2" type="number" />
+							<KeyValue key="align" value="center" type="string" />
+						</KeyValues>
+					</Frame>
+
+					<Frame parentKey="Faction">
+						<Size x="30" y="34" />
+						<HitRectInsets left="-2" right="0" top="-3" bottom="-3"/>
+						<KeyValues>
+							<KeyValue key="defaultWidth" type="number" value="30"/>
+							<KeyValue key="layoutIndex" value="3" type="number" />
+							<KeyValue key="align" value="center" type="string" />
+						</KeyValues>
+						<Layers>
+							<Layer level="ARTWORK">
+								<Texture parentKey="Icon" alpha="0.65" >
+									<Anchors>
+										<Anchor point="TOPLEFT" x="-2" y="0"/>
+										<Anchor point="BOTTOMRIGHT" x="2" y="0"/>
+									</Anchors>
+									<TexCoords left="0.02" right="0.98" top="0.05" bottom="0.98"/>
+								</Texture>
+								<MaskTexture parentKey="IconMask" file="Interface\Addons\WorldQuestTab\Images\FactionMask" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE">
+									<Anchors>
+										<Anchor point="TOPLEFT" x="1" y="-1" relativeKey="$parent.Icon"/>
+										<Anchor point="BOTTOMRIGHT" x="-1" y="1" relativeKey="$parent.Icon"/>
+									</Anchors>
+									<MaskedTextures>
+										<MaskedTexture childKey="Icon"/>
+									</MaskedTextures>
+								</MaskTexture>
+							</Layer>
+						</Layers>
+						<Scripts>
+							<OnEnter>
+								self:GetParent():GetParent():FactionOnEnter(self);
+							</OnEnter>
+							<OnLeave>
+								self:GetParent():GetParent().Highlight:Hide();
+								GameTooltip:Hide();
+							</OnLeave>
+						</Scripts>
+					</Frame>
+				</Frames>
 			</Frame>
 			
 			<Frame parentKey="TrackedBorder" inherits="WQT_QuestHighlightTemplate" hidden="true" alpha="0.6">
@@ -290,39 +377,6 @@
 				<Texture parentKey="QualityBg" file="interface/covenantrenown/covenantrenownscrollmask" alpha="0.12" alphaMode="ADD" hidden="true">
 					<TexCoords left="0.5" right="0.9" top="0.18" bottom="0.79"/>
 				</Texture>
-
-				<Texture parentKey="WarbandIcon" atlas="warbands-icon" alpha="1" hidden="true">
-					<Size x="16" y="16"/>
-					<Anchors>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Rewards" relativePoint="BOTTOMLEFT" x="-1" y="0"/>
-					</Anchors>
-					<TexCoords left="-0.1" right="1.1" top="0.0" bottom="0.85"/>
-				</Texture>
-			</Layer>
-			<Layer level="ARTWORK">
-				<FontString parentKey="Title" inherits="GameFontNormal" maxLines="1" justifyH="LEFT" justifyV="TOP">
-					<Size x="150" y="0"/>
-					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativekey="$parent.Type" relativePoint="RIGHT" x="8" y="2"/>
-						<Anchor point="RIGHT" relativeKey="$parent.WarbandIcon" relativePoint="LEFT" x="-5"/>
-					</Anchors>
-				</FontString>
-
-				<FontString parentKey="Time" inherits="GameFontNormalSmall" maxLines="1" justifyH="LEFT">
-					<Size x="0" y="0"/>
-					<Anchors>
-						<Anchor point="LEFT" relativeKey="$parent.Title"/>
-						<Anchor point="BOTTOM" y="7"/>
-					</Anchors>
-					<Color r="0.75" g="0.61" b="0"/>
-				</FontString>
-				<FontString parentKey="Extra" inherits="GameFontNormalSmall" maxLines="1" justifyH="LEFT" justifyV="BOTTOM" alpha="0">
-					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativeKey="$parent.Time" relativePoint="BOTTOMRIGHT" x="0"/>
-						<Anchor point="RIGHT" relativeKey="$parent.WarbandIcon" relativePoint="LEFT" x="-5"/>
-					</Anchors>
-					<Color r="0.7" g="0.7" b="0.7"/>
-				</FontString>
 			</Layer>
 		</Layers>
 
