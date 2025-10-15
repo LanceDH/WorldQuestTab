@@ -755,6 +755,9 @@ function WQT_PinMixin:UpdateVisuals()
 		self.CustomTypeIcon:SetAtlas(typeAtlas);
 		self.CustomTypeIcon:SetSize(typeAtlasWidth, typeAtlasHeight);
 		self.CustomTypeIcon:SetScale(.8);
+	elseif(settingCenterType == _V["PIN_CENTER_TYPES"].faction) then
+		local factionData = WQT_Utils:GetFactionDataInternal(questInfo.factionID);
+		self.Icon:SetTexture(factionData.texture);
 	elseif(settingCenterType == _V["PIN_CENTER_TYPES"].none) then
 		self.Icon:Hide();
 	end
@@ -766,11 +769,25 @@ function WQT_PinMixin:UpdateVisuals()
 	end
 	self.CustomTypeIcon:SetDesaturated(isDisliked);
 
-	-- Time
-	local settingPinTimeLabel =  WQT_Utils:GetSetting("pin", "timeLabel");
-	local showTimeString = settingPinTimeLabel and timeStringShort ~= "";
-	self.Time:SetShown(showTimeString);
-	self.TimeBG:SetShown(showTimeString);
+	-- Label
+	local settingPinTimeLabel =  WQT_Utils:GetSetting("pin", "label");
+	local labelColor = _V["WQT_WHITE_FONT_COLOR"];
+	-- Time text is set in UpdatePinTime()
+	local showLabel = settingPinTimeLabel == _V["ENUM_PIN_LABEL"].time and timeStringShort ~= "";
+	if (settingPinTimeLabel == _V["ENUM_PIN_LABEL"].amount) then
+		local questCanWarmode = C_QuestLog.QuestCanHaveWarModeBonus(questInfo.questID);
+		local amountString, rawAmount = WQT_Utils:GetDisplayRewardAmount(questInfo:GetReward(1), questCanWarmode);
+		showLabel = rawAmount > 1;
+		self.Time:SetText(amountString);
+		if (WQT_Utils:GetSetting("pin", "labelColors")) then
+			local _, textColor = WQT_Utils:GetRewardTypeColorIDs(questInfo:GetRewardType());
+			labelColor = textColor;
+		end
+	end
+	self.Time:SetVertexColor(labelColor:GetRGB());
+	self.Time:SetShown(showLabel);
+	self.TimeBG:SetShown(showLabel);
+
 	local timeOffset = 4;
 	if(#self.icons > 0) then
 		timeOffset = (#self.icons % 2 == 0) and 2 or 0;
@@ -786,17 +803,16 @@ function WQT_PinMixin:OnUpdate(elapsed)
 	self.updateTime = self.updateTime + elapsed;
 	if (self.isExpired or self.updateTime < self.updateInterval) then return; end
 	self.updateTime = self.updateTime - self.updateInterval;
-	
+
 	local timeLeft = self:UpdatePinTime();
 	-- For the last minute we want to update every second for the time label
 	self.updateInterval = timeLeft > SECONDS_PER_MIN * 16 and 60 or 1;
-	
 end
 
 function WQT_PinMixin:UpdatePinTime()
 	local start, total, timeLeft, seconds, color, timeStringShort, timeCategory = WQT_Utils:GetPinTime(self.questInfo);
 	local isDisliked = self.questInfo:IsDisliked();
-	
+
 	if (WQT_Utils:GetSetting("pin", "ringType") == _V["RING_TYPES"].time) then
 		local r, g, b = color:GetRGB();
 		local now = time();
@@ -804,7 +820,7 @@ function WQT_PinMixin:UpdatePinTime()
 		if (isDisliked) then
 			r, g, b = .8, .8, .8;
 		end
-		
+
 		if (total > 0) then
 			self.Pointer:SetRotation((timeLeft)/(total)*6.2831);
 			self.Pointer:SetVertexColor(r*1.1, g*1.1, b*1.1);
@@ -815,15 +831,17 @@ function WQT_PinMixin:UpdatePinTime()
 		self.RingBG:SetVertexColor(r, g, b);
 		self.Ring:SetSwipeColor(r, g, b);
 	end
-	
+
 	-- Time text under pin
-	if(WQT_Utils:GetSetting("pin", "timeLabel")) then
+	local settingPinTimeLabel =  WQT_Utils:GetSetting("pin", "label");
+	if(settingPinTimeLabel == _V["ENUM_PIN_LABEL"].time) then
 		self.Time:SetText(timeStringShort);
-		if (isDisliked) then
-			self.Time:SetVertexColor(1, 1, 1);
-		else
-			self.Time:SetVertexColor(color.r, color.g, color.b);
+
+		local labelColor = _V["WQT_WHITE_FONT_COLOR"];
+		if (not isDisliked and WQT_Utils:GetSetting("pin", "labelColors")) then
+			labelColor = color;
 		end
+		self.Time:SetVertexColor(labelColor:GetRGB());
 	end
 
 	-- Small icon indicating time category

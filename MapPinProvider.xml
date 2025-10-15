@@ -75,7 +75,7 @@
 				<Texture parentKey="Pointer" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingPointer"/>
 			</Layer>
 			<Layer level="ARTWORK" textureSubLevel="5">
-				 <FontString parentKey="Time" inherits="WQT_NumberFontOutline" maxLines="1" justifyV="MIDDLE" text="Uh oh" hidden="true">
+				 <FontString parentKey="Time" inherits="Game11Font_Shadow" maxLines="1" justifyV="MIDDLE" hidden="true">
 					<size y="18"/>
 					<Anchors>
 						<Anchor point="TOP" relativePoint="BOTTOM" x="2" y="2"/>
@@ -83,12 +83,12 @@
 				</FontString>
 			</Layer>
 			<Layer level="ARTWORK" textureSubLevel="4">
-				<Texture parentKey="TimeBG" file="Interface/COMMON/NameShadow" hidden="true" alpha="0">
+				<Texture parentKey="TimeBG" atlas="AftLevelup-ToastBG" hidden="true" alpha="0.9">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.Time" y="0"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Time" x="-2" y="4" />
+						<Anchor point="TOPLEFT" relativeKey="$parent.Time" y="-3" x="-2"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Time" x="2" y="3"/>
 					</Anchors>
-					<TexCoords left="0.05" right="0.95" top="0.8" bottom="0"/>
+					<Color r="0" g="0" b="0"/>
 				</Texture>
 			</Layer>
 		</Layers>

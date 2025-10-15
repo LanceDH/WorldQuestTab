@@ -123,11 +123,13 @@ _V["FILTER_TYPES"] = {
 _V["PIN_CENTER_TYPES"] =	{
 	["blizzard"] = 1
 	,["reward"] = 2
+	,["faction"] = 3
 }
 
 _V["PIN_CENTER_LABELS"] ={
 	[_V["PIN_CENTER_TYPES"].blizzard] = {["label"] = _L["BLIZZARD"], ["tooltip"] = _L["PIN_BLIZZARD_TT"]} 
 	,[_V["PIN_CENTER_TYPES"].reward] = {["label"] = REWARD, ["tooltip"] = _L["PIN_REWARD_TT"]}
+	,[_V["PIN_CENTER_TYPES"].faction] = {["label"] = FACTION, ["tooltip"] = _L["PIN_FACTION_TT"]}
 }
 
 _V["RING_TYPES"] = {
@@ -168,6 +170,18 @@ _V["PIN_VISIBILITY_ZONE"] = {
 	,[_V["ENUM_PIN_ZONE"].all] = {["label"] = ALL, ["tooltip"] = _L["PIN_VISIBILITY_ALL_TT"]} 
 }
 
+_V["ENUM_PIN_LABEL"] = {
+	["none"] = 1
+	,["time"] = 2
+	,["amount"] = 3
+}
+
+_V["PIN_LABEL_LABELS"] = {
+	[_V["ENUM_PIN_LABEL"].none] = {["label"] = NONE, ["tooltip"] = _L["PIN_LABEL_NONE_TT"]}
+	,[_V["ENUM_PIN_LABEL"].time] = {["label"] = _L["PIN_TIME"], ["tooltip"] = _L["PIN_TIME_TT"]}
+	,[_V["ENUM_PIN_LABEL"].amount] = {["label"] = _L["PIN_LABEL_REWARD"], ["tooltip"] = _L["PIN_LABEL_REWARD_TT"]}
+}
+
 _V["SETTING_TYPES"] = {
 	["category"] = 1
 	,["subTitle"] = 2
@@ -185,6 +199,7 @@ end
 
 MakeIndexArg1(_V["PIN_CENTER_LABELS"]);
 MakeIndexArg1(_V["RING_TYPES_LABELS"]);
+MakeIndexArg1(_V["PIN_LABEL_LABELS"]);
 MakeIndexArg1(_V["PIN_VISIBILITY_CONTINENT"]);
 MakeIndexArg1(_V["PIN_VISIBILITY_ZONE"]);
 
@@ -570,17 +585,9 @@ _V["SETTING_LIST"] = {
 			,["getValueFunc"] = function() return WQT.settings.pin.filterPoI end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
-	-- Pin appearance
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_TIME"], ["tooltip"] = _L["PIN_TIME_TT"]
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.pin.timeLabel  = value;
-				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
-			end
-			,["getValueFunc"] = function() return WQT.settings.pin.timeLabel  end
-			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
-			}		
+	-- Pin appearance	
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_ELITE_RING"], ["tooltip"] = _L["PIN_ELITE_RING_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.eliteRing  = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
@@ -588,7 +595,7 @@ _V["SETTING_LIST"] = {
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
 	,{["template"] = "WQT_SettingSliderTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_SCALE"], ["tooltip"] = _L["PIN_SCALE_TT"], ["min"] = 0.8, ["max"] = 1.5, ["valueStep"] = 0.01
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.scale = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
@@ -596,7 +603,7 @@ _V["SETTING_LIST"] = {
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
 	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_CENTER"], ["tooltip"] = _L["PIN_CENTER_TT"], ["options"] = _V["PIN_CENTER_LABELS"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.centerType = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
@@ -604,15 +611,31 @@ _V["SETTING_LIST"] = {
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
 	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_RING_TITLE"], ["tooltip"] = _L["PIN_RING_TT"], ["options"] = _V["RING_TYPES_LABELS"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.ringType = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.ringType end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
-			}	
+			}
+	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_LABEL"], ["tooltip"] = _L["PIN_LABEL_TT"], ["options"] = _V["PIN_LABEL_LABELS"]
+			, ["valueChangedFunc"] = function(value)
+				WQT.settings.pin.label = value;
+				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
+			end
+			,["getValueFunc"] = function() return WQT.settings.pin.label end
+			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
+			}
+	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_LABEL_COLORS"], ["tooltip"] = _L["PIN_LABEL_COLORS_TT"]
+			, ["valueChangedFunc"] = function(value)
+				WQT.settings.pin.labelColors = value;
+				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
+			end
+			,["getValueFunc"] = function() return WQT.settings.pin.labelColors end
+			,["isDisabled"] = function() return WQT.settings.pin.label == _V["ENUM_PIN_LABEL"].none; end
+			}
 	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_VISIBILITY_ZONE"], ["tooltip"] = _L["PIN_VISIBILITY_ZONE_TT"], ["options"] = _V["PIN_VISIBILITY_ZONE"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.zoneVisible = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
@@ -620,7 +643,7 @@ _V["SETTING_LIST"] = {
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
 			}
 	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_VISIBILITY_CONTINENT"], ["tooltip"] = _L["PIN_VISIBILITY_CONTINENT_TT"], ["options"] = _V["PIN_VISIBILITY_CONTINENT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.continentVisible = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
 			end
@@ -630,7 +653,7 @@ _V["SETTING_LIST"] = {
 	-- Pin icons
 	--,{["template"] = "WQT_SettingSubTitleTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["MINI_ICONS"]}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS_MINIICONS", ["label"] = _L["PIN_TYPE"], ["tooltip"] = _L["PIN_TYPE_TT"]
-			, ["valueChangedFunc"] = function(value) 
+			, ["valueChangedFunc"] = function(value)
 				WQT.settings.pin.typeIcon = value;
 				WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
 			end
@@ -765,37 +788,37 @@ _V["SORT_OPTION_ORDER"] = {
 	[7] = {"rewardQuality", "rewardType", "rewardAmount", "numRewards", "canUpgrade", "rewardId", "seconds", "title"},
 }
 _V["SORT_FUNCTIONS"] = {
-	["rewardType"] = function(a, b) 
+	["rewardType"] = function(a, b)
 			local aType, aSubType = a:GetRewardType();
 			local bType, bSubType = b:GetRewardType();
-			if (aType and bType and aType ~= bType) then 
+			if (aType and bType and aType ~= bType) then
 				if (aType == WQT_REWARDTYPE.none or bType == WQT_REWARDTYPE.none) then
-					return aType > bType; 
+					return aType > bType;
 				end
 				return aType < bType;
 			elseif (aType == bType and aSubType and bSubType) then
 				return aSubType < bSubType;
 			end
 		end
-	,["rewardQuality"] = function(a, b) 
+	,["rewardQuality"] = function(a, b)
 			local aQuality = a:GetRewardQuality();
 			local bQuality = b:GetRewardQuality();
 			if (not aQuality or not bQuality) then
 				return aQuality and not bQuality;
 			end
 
-			if (aQuality and bQuality and aQuality ~= bQuality) then 
-				return aQuality > bQuality; 
-			end 
+			if (aQuality and bQuality and aQuality ~= bQuality) then
+				return aQuality > bQuality;
+			end
 		end
-	,["canUpgrade"] = function(a, b) 
+	,["canUpgrade"] = function(a, b)
 			local aCanUpgrade = a:GetRewardCanUpgrade();
 			local bCanUpgrade = b:GetRewardCanUpgrade();
 			if (aCanUpgrade and bCanUpgrade and aCanUpgrade ~= bCanUpgrade) then
-				return aCanUpgrade and not bCanUpgrade; 
+				return aCanUpgrade and not bCanUpgrade;
 			end
 		end
-	,["seconds"] = function(a, b) 
+	,["seconds"] = function(a, b)
 			if (a.isBonusQuest ~= b.isBonusQuest) then
 				return b.isBonusQuest;
 			end
@@ -804,36 +827,26 @@ _V["SORT_FUNCTIONS"] = {
 				return a.time.seconds < b.time.seconds;
 			end
 		end
-	,["rewardAmount"] = function(a, b) 
+	,["rewardAmount"] = function(a, b)
 			if (a.isBonusQuest ~= b.isBonusQuest) then
 				return b.isBonusQuest;
 			end
 
-			local amountA = a:GetRewardAmount();
-			local amountB = b:GetRewardAmount();
+			local amountA = a:GetRewardAmount(C_QuestLog.QuestCanHaveWarModeBonus(a.questID));
+			local amountB = b:GetRewardAmount(C_QuestLog.QuestCanHaveWarModeBonus(b.questID));
 
-			if (C_QuestLog.QuestCanHaveWarModeBonus(a.questID)) then
-				local rewardA = a:GetReward(1);
-				amountA = WQT_Utils:CalculateWarmodeAmount(rewardA);
-			end
-
-			if (C_QuestLog.QuestCanHaveWarModeBonus(b.questID)) then
-				local rewardB = b:GetReward(1);
-				amountB = WQT_Utils:CalculateWarmodeAmount(rewardB);
-			end
-
-			if (amountA ~= amountB) then 
+			if (amountA ~= amountB) then
 				return amountA > amountB;
-			end 
+			end
 		end
 	,["rewardId"] = function(a, b)
 			local aId = a:GetRewardId();
 			local bId = b:GetRewardId();
-			if (aId and bId and aId ~= bId) then 
-				return aId < bId; 
-			end 
+			if (aId and bId and aId ~= bId) then
+				return aId < bId;
+			end
 		end
-	,["faction"] = function(a, b) 
+	,["faction"] = function(a, b)
 			if (a.factionID ~= b.factionID) then 
 				if(not a.factionID or not b.factionID) then
 					return b.factionID == nil;
@@ -841,56 +854,56 @@ _V["SORT_FUNCTIONS"] = {
 
 				local factionA = WQT_Utils:GetFactionDataInternal(a.factionID);
 				local factionB = WQT_Utils:GetFactionDataInternal(b.factionID);
-				return factionA.name < factionB.name; 
+				return factionA.name < factionB.name;
 			end
 		end
 
-	,["questType"] = function(a, b) 
+	,["questType"] = function(a, b)
 			if (a.isBonusQuest ~= b.isBonusQuest) then
 				return b.isBonusQuest;
 			end
 			
 			local tagInfoA = a:GetTagInfo();
 			local tagInfoB = b:GetTagInfo();
-			if (tagInfoA and tagInfoB and tagInfoA.worldQuestType and tagInfoB.worldQuestType and tagInfoA.worldQuestType ~= tagInfoB.worldQuestType) then 
-				return tagInfoA.worldQuestType > tagInfoB.worldQuestType; 
+			if (tagInfoA and tagInfoB and tagInfoA.worldQuestType and tagInfoB.worldQuestType and tagInfoA.worldQuestType ~= tagInfoB.worldQuestType) then
+				return tagInfoA.worldQuestType > tagInfoB.worldQuestType;
 			end 
 		end
 	,["questRarity"] = function(a, b)
 			local tagInfoA = a:GetTagInfo();
 			local tagInfoB = b:GetTagInfo();
-			if (tagInfoA and tagInfoB and tagInfoA.quality and tagInfoB.quality and tagInfoA.quality ~= tagInfoB.quality) then 
-				return tagInfoA.quality > tagInfoB.quality; 
+			if (tagInfoA and tagInfoB and tagInfoA.quality and tagInfoB.quality and tagInfoA.quality ~= tagInfoB.quality) then
+				return tagInfoA.quality > tagInfoB.quality;
 			end
 		end
 	,["title"] = function(a, b)
-			if (a.title ~= b.title) then 
+			if (a.title ~= b.title) then
 				return a.title < b.title;
 			end 
 		end
-	,["elite"] = function(a, b) 
+	,["elite"] = function(a, b)
 			local tagInfoA = a:GetTagInfo();
 			local tagInfoB = b:GetTagInfo();
 			local aIsElite = tagInfoA and tagInfoA.isElite;
 			local bIsElite = tagInfoB and tagInfoB.isElite;
-			if (aIsElite ~= bIsElite) then 
-				return aIsElite and not bIsElite; 
+			if (aIsElite ~= bIsElite) then
+				return aIsElite and not bIsElite;
 			end 
 		end
-	,["criteria"] = function(a, b) 
+	,["criteria"] = function(a, b)
 			local aIsCriteria = a:IsCriteria(WQT.settings.general.bountySelectedOnly);
 			local bIsCriteria = b:IsCriteria(WQT.settings.general.bountySelectedOnly);
-			if (aIsCriteria ~= bIsCriteria) then return aIsCriteria and not bIsCriteria; end 
+			if (aIsCriteria ~= bIsCriteria) then return aIsCriteria and not bIsCriteria; end
 		end
-	,["zone"] = function(a, b) 
+	,["zone"] = function(a, b)
 			local mapInfoA = WQT_Utils:GetCachedMapInfo(a.mapID);
 			local mapInfoB = WQT_Utils:GetCachedMapInfo(b.mapID);
 			if (not mapInfoA or not mapInfoB) then
 				return mapInfoA;
 			end
 
-			if (mapInfoA and mapInfoA.name and mapInfoB and mapInfoB.name and mapInfoA.mapID ~= mapInfoB.mapID) then 
-				if (WQT.settings.list.alwaysAllQuests and (mapInfoA.mapID == WorldMapFrame.mapID or mapInfoB.mapID == WorldMapFrame.mapID)) then 
+			if (mapInfoA and mapInfoA.name and mapInfoB and mapInfoB.name and mapInfoA.mapID ~= mapInfoB.mapID) then
+				if (WQT.settings.list.alwaysAllQuests and (mapInfoA.mapID == WorldMapFrame.mapID or mapInfoB.mapID == WorldMapFrame.mapID)) then
 					return mapInfoA.mapID == WorldMapFrame.mapID and mapInfoB.mapID ~= WorldMapFrame.mapID;
 				end
 				return mapInfoA.name < mapInfoB.name;
@@ -900,7 +913,7 @@ _V["SORT_FUNCTIONS"] = {
 				end
 			end
 		end
-	,["numRewards"] = function(a, b) 
+	,["numRewards"] = function(a, b)
 			local aNumRewards = #a.rewardList;
 			local bNumRewards = #b.rewardList;
 			if (aNumRewards ~= bNumRewards) then
@@ -1433,11 +1446,12 @@ _V["WQT_DEFAULTS"] = {
 			filterPoI = true;
 			scale = 1;
 			disablePoI = false;
-			timeLabel = false;
 			fadeOnPing = true;
 			eliteRing = false;
+			labelColors = true;
 			ringType = _V["RING_TYPES"].time;
 			centerType = _V["PIN_CENTER_TYPES"].reward;
+			label = _V["ENUM_PIN_LABEL"].none;
 		};
 
 		["filters"] = {
@@ -1500,7 +1514,13 @@ end
 
 local patchNotes = {
 		{["version"] = "11.2.06";
+			["new"] = {
+				"Added map pin option to change the center icon to the quest's faction icon";
+				"Added an option for the pin label to show the amount of the main quest reward.";
+				"Added an option to toggle the text colors of the map pin label.";
+			};
 			["changes"] = {
+				"Moved the map pin Time Label setting into a dropdown together with the new reward amount setting.";
 				"Reworked how quests info structured. Easier to maintain and seems to have fixed glitchy quest title positioning";
 			};
 		};

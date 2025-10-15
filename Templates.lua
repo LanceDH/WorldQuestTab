@@ -1253,6 +1253,57 @@ function WQT_Utils:IsFilterDisabledByOfficial(key)
 	return false
 end
 
+function WQT_Utils:GetLocalizedAbbreviatedNumber(number)
+	if type(number) ~= "number" then return "NaN" end;
+
+	local intervals = _L["IS_AZIAN_CLIENT"] and _V["NUMBER_ABBREVIATIONS_ASIAN"] or _V["NUMBER_ABBREVIATIONS"];
+	
+	for i = 1, #intervals do
+		local interval = intervals[i];
+		local value = interval.value;
+		local valueDivTen = value / 10;
+		if (number >= value) then
+			if (interval.decimal) then
+				local rest = number - floor(number/value)*value;
+				if (rest < valueDivTen) then
+					return interval.format:format(floor(number/value));
+				else
+					return interval.format:format(floor(number/valueDivTen)/10);
+				end
+			end
+			return interval.format:format(floor(number/valueDivTen));
+		end
+	end
+	
+	return number;
+end
+
+function WQT_Utils:GetDisplayRewardAmount(rewardInfo, warmode)
+	local reward = rewardInfo;
+	local amount = reward and reward.amount or 0;
+	local display = "";
+	if (reward and amount > 0) then
+		if (warmode) then
+			amount = WQT_Utils:CalculateWarmodeAmount(reward);
+		end
+
+		local displayAmount =  amount
+		if (reward.type == WQT_REWARDTYPE.gold) then
+			displayAmount = floor(displayAmount / 10000);
+		end
+
+		display = WQT_Utils:GetLocalizedAbbreviatedNumber(displayAmount);
+
+		if (reward.type == WQT_REWARDTYPE.relic) then
+			display = string.format("+%s", display);
+		elseif (reward.canUpgrade) then
+			display = string.format("%s+", display);
+		end
+	end
+
+	return display, amount;
+end
+
 --------------------------
 -- Colors
 --------------------------

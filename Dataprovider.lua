@@ -402,9 +402,14 @@ function QuestInfoMixin:GetRewardId()
 	return reward and reward.id or 0;
 end
 
-function QuestInfoMixin:GetRewardAmount()
-	local reward = #self.rewardList > 0 and self.rewardList[1];
-	return reward and reward.amount or 0;
+function QuestInfoMixin:GetRewardAmount(warmode)
+	local reward = self:GetReward(1);
+	local amount = reward and reward.amount or 0;
+	if (warmode and amount > 0) then
+		amount = WQT_Utils:CalculateWarmodeAmount(reward);
+	end
+
+	return amount;
 end
 
 function QuestInfoMixin:GetRewardTexture()

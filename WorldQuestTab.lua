@@ -29,32 +29,6 @@ local utilitiesStatus = select(5, C_AddOns.GetAddOnInfo("WorldQuestTabUtilities"
 
 WQT_PanelID = EnumUtil.MakeEnum("Quests", "Settings");
 
--- Custom number abbreviation to fit inside reward icons in the list.
-local function GetLocalizedAbbreviatedNumber(number)
-	if type(number) ~= "number" then return "NaN" end;
-
-	local intervals = _L["IS_AZIAN_CLIENT"] and _V["NUMBER_ABBREVIATIONS_ASIAN"] or _V["NUMBER_ABBREVIATIONS"];
-	
-	for i = 1, #intervals do
-		local interval = intervals[i];
-		local value = interval.value;
-		local valueDivTen = value / 10;
-		if (number >= value) then
-			if (interval.decimal) then
-				local rest = number - floor(number/value)*value;
-				if (rest < valueDivTen) then
-					return interval.format:format(floor(number/value));
-				else
-					return interval.format:format(floor(number/valueDivTen)/10);
-				end
-			end
-			return interval.format:format(floor(number/valueDivTen));
-		end
-	end
-	
-	return number;
-end
-
 local function slashcmd(msg)
 	if (msg == "debug") then
 		addon.debug = not addon.debug;
@@ -330,6 +304,11 @@ local function ConvertOldSettings()
 		-- It's a new user, their settings are perfect
 		-- Unless I change my mind again
 		return;
+
+	elseif (settingVersion < 110206) then
+		-- Changed time label to label dropdown
+		WQT.db.global.pin.label = WQT.db.global.pin.timeLabel and _V["ENUM_PIN_LABEL"].time or _V["ENUM_PIN_LABEL"].none;
+		WQT.db.global.pin.timeLabel = nil;
 	end
 
 	-- changes from when version was saved as a string (pre 11.2.01)
@@ -821,63 +800,6 @@ function WQT_RewardDisplayMixin:SetDesaturated(desaturate)
 	self.desaturate = desaturate;
 end
 
-function WQT_RewardDisplayMixin:UpdateVisuals()
-	for i = 1, self.numDisplayed do
-		local rewardFrame = self.rewardFrames[i];
-
-		rewardFrame:Show();
-		rewardFrame.Icon:SetTexture(rewardFrame.texture);
-		rewardFrame.Icon:SetDesaturated(self.desaturate);
-
-		
-		if (rewardFrame.quality > 1) then
-			rewardFrame.QualityColor:Show()
-
-			local r, g, b = C_Item.GetItemQualityColor(rewardFrame.quality);
-			if (self.desaturate) then
-				rewardFrame.QualityColor:SetVertexColor(1, 1, 1);
-			else
-				rewardFrame.QualityColor:SetVertexColor(r, g, b);
-			end
-		else
-			rewardFrame.QualityColor:Hide()
-		end
-
-		
-		local showAmount = not rewardFrame.hideAmount and rewardFrame.amount > 1;
-		rewardFrame.Amount:SetShown(showAmount);
-		rewardFrame.AmountBG:SetShown(showAmount);
-
-		if (showAmount) then
-			local amount = rewardFrame.amount;
-			rewardFrame.Amount:Show();
-			rewardFrame.AmountBG:Show();
-
-			if (rewardFrame.rewardType == WQT_REWARDTYPE.gold) then
-				amount = floor(amount / 10000);
-			end
-
-			local amountDisplay = GetLocalizedAbbreviatedNumber(amount);
-
-			if (rewardFrame.rewardType == WQT_REWARDTYPE.relic) then
-				amountDisplay = "+" .. amountDisplay;
-			elseif (rewardFrame.canUpgrade) then
-				amountDisplay = amountDisplay .. "+";
-			end
-
-			rewardFrame.Amount:SetText(amountDisplay);
-
-			-- Color reward amount for certain types
-			local r, g, b = 1, 1, 1
-			if (not self.desaturate and WQT.settings.list.amountColors) then
-				r, g, b = rewardFrame.typeColor:GetRGB();
-			end
-
-			rewardFrame.Amount:SetVertexColor(r, g, b);
-		end
-	end
-end
-
 function WQT_RewardDisplayMixin:AddReward(rewardInfo, warmodeBonus)
 	-- Limit the amount of rewards shown
 	if (self.numDisplayed >= WQT.settings.list.rewardNumDisplay
@@ -885,32 +807,45 @@ function WQT_RewardDisplayMixin:AddReward(rewardInfo, warmodeBonus)
 			return;
 	end
 
-	
-	local rewardType = rewardInfo.type;
-	local texture = rewardInfo.texture;
-	local quality = rewardInfo.quality;
-	local amount = rewardInfo.amount;
-	local canUpgrade = rewardInfo.canUpgrade;
-
 	self.numDisplayed = self.numDisplayed + 1;
 	local num = self.numDisplayed;
+	local rewardFrame = self.rewardFrames[num];
 
-	amount = amount or 1;
-	-- Calculate warmode bonus
-	if (warmodeBonus) then
-		amount = WQT_Utils:CalculateWarmodeAmount(rewardInfo);
+	rewardFrame:Show();
+	rewardFrame.Icon:SetTexture(rewardInfo.texture);
+	rewardFrame.Icon:SetDesaturated(self.desaturate);
+
+	if (rewardInfo.quality > 1) then
+		rewardFrame.QualityColor:Show()
+
+		local r, g, b = 1, 1, 1;
+		if (not self.desaturate) then
+			r, g, b = C_Item.GetItemQualityColor(rewardInfo.quality);
+		end
+		rewardFrame.QualityColor:SetVertexColor(r, g, b);
+	else
+		rewardFrame.QualityColor:Hide()
 	end
 
-	local rewardFrame = self.rewardFrames[num];
-	rewardFrame.rewardType = rewardType;
-	rewardFrame.texture = texture;
-	rewardFrame.quality = quality;
-	rewardFrame.amount = amount;
-	local _, textColor = WQT_Utils:GetRewardTypeColorIDs(rewardType);
-	rewardFrame.typeColor = textColor;
-	rewardFrame.canUpgrade = canUpgrade;
+	local displayAmount, rawAmount = WQT_Utils:GetDisplayRewardAmount(rewardInfo, warmodeBonus)
+	local showAmount = not rewardFrame.hideAmount and rawAmount > 1;
+	rewardFrame.Amount:SetShown(showAmount);
+	rewardFrame.AmountBG:SetShown(showAmount);
 
-	self:UpdateVisuals();
+	if (showAmount) then
+		rewardFrame.Amount:Show();
+		rewardFrame.AmountBG:Show();
+
+		rewardFrame.Amount:SetText(displayAmount);
+
+		-- Color reward amount for certain types
+		local amountColor = _V["WQT_WHITE_FONT_COLOR"];
+		if (not self.desaturate and WQT.settings.list.amountColors) then
+			amountColor = select(2, WQT_Utils:GetRewardTypeColorIDs(rewardInfo.type));
+		end
+
+		rewardFrame.Amount:SetVertexColor(amountColor:GetRGB());
+	end
 end
 
 ------------------------------------------
