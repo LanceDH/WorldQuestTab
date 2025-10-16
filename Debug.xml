@@ -240,7 +240,7 @@
 		</Scripts>
 	</Frame>
 
-	<Frame name="WQT_DevFrame" parent="UIParent" mixin="WQT_DevMixin" movable="true" enableMouse="true" toplevel="true" frameStrata="MEDIUM" hidden="false">
+	<Frame name="WQT_DevFrame" parent="UIParent" mixin="WQT_DevMixin" movable="true" enableMouse="true" toplevel="true" frameStrata="MEDIUM" hidden="true">
 		<Size x="200" y="100"/>
 		<Anchors>
 			<Anchor point="CENTER" x="300" />

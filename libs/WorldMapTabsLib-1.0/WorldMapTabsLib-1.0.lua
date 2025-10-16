@@ -227,8 +227,8 @@ function lib:CreateContentFrameForTab(tab, template, name)
 	end
 
 	name = name or ("WMTL_ContentFrame" .. tab.displayMode);
-	local contentFrame = CreateFrame("Frame", name, QuestMapFrame, template);
-	contentFrame:SetAllPoints(QuestMapFrame);
+	local contentFrame = CreateFrame("Frame", name, QuestMapFrame.ContentsAnchor, template);
+	contentFrame:SetAllPoints(QuestMapFrame.ContentsAnchor);
 	lib:LinkTabToContentFrame(tab, contentFrame)
 	return contentFrame;
 end
@@ -240,7 +240,7 @@ function lib:LinkTabToContentFrame(tab, contentFrame)
 	end
 	
 	if (not contentFrame) then 
-		error("Second parameter should be a content frame."); 
+		error("Second parameter should be a content frame.");
 	end
 	
 	contentFrame.displayMode = tab.displayMode;

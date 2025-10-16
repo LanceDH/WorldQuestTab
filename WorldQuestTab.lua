@@ -647,8 +647,6 @@ function WQT:OnInitialize()
 	local tabLib = LibStub("WorldMapTabsLib-1.0");
 	tabLib:AddCustomTab(WQT_QuestMapTab);
 	self.contentFrame = tabLib:CreateContentFrameForTab(WQT_QuestMapTab);
-
-	
 end
 
 function WQT:OnEnable()
@@ -1611,12 +1609,6 @@ function WQT_CoreMixin:OnLoad()
 			WQT_ListContainer:UpdateQuestList(true);
 			self.notTracked = nil;
 		end)
-
-	QuestMapFrame.QuestSessionManagement:HookScript("OnShow", function() 
-			if(self:IsShown()) then
-				QuestMapFrame.QuestSessionManagement:Hide();
-			end
-		end);
 end
 
 function WQT_CoreMixin:RegisterEventsForExternal(external)
@@ -1885,7 +1877,7 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 		WQT_WorldQuestFrame:ClearAllPoints();
 		WQT_WorldQuestFrame:SetParent(WQT.contentFrame);
 		WQT_WorldQuestFrame:SetPoint("TOPLEFT", WQT.contentFrame, 0, -29);
-		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", WQT.contentFrame, -22, 9);
+		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", WQT.contentFrame, -22, 0);
 	elseif (anchor == _V["LIST_ANCHOR_TYPE"].full) then
 		WQT_WorldQuestFrame:ClearAllPoints(); 
 		WQT_WorldQuestFrame:SetParent(WQT_WorldMapContainer);
