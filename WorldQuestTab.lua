@@ -869,12 +869,16 @@ function WQT_ListButtonMixin:GetTimeFontString()
 	return self.CenterContent.BottomRow.Time;
 end
 
+function WQT_ListButtonMixin:GetBottomRow()
+	return self.CenterContent.BottomRow;
+end
+
 function WQT_ListButtonMixin:GetZoneFontString()
-	return self.CenterContent.BottomRow.Extra;
+	return self:GetBottomRow().Extra;
 end
 
 function WQT_ListButtonMixin:GetZoneSeparator()
-	return self.CenterContent.BottomRow.ZoneSeparator;
+	return self:GetBottomRow().ZoneSeparator;
 end
 
 function WQT_ListButtonMixin:GetWarbandIcon()
@@ -895,6 +899,7 @@ function WQT_ListButtonMixin:OnLoad()
 	self:EnableKeyboard(false);
 	self.UpdateTooltip = function() self:ShowTooltip() end;
 	self.timer = 0;
+	self.updateInterval = 1;
 end
 
 function WQT_ListButtonMixin:OnClick(button)
@@ -910,12 +915,16 @@ function WQT_ListButtonMixin:SetEnabledMixin(value)
 	factionFrame:EnableMouse(value);
 end
 
-function WQT_ListButtonMixin:OnUpdate(elapsed)
+function WQT_ListButtonMixin:OnUpdateMethod(elapsed)
+	if (self.updateInterval <= 0) then return; end
+
 	self.timer = self.timer + elapsed;
 	
-	if (self.timer >= 1) then 
-		self:UpdateTime();
+	if (self.timer >= self.updateInterval) then
 		self.timer = 0;
+		local timeLeft = self:UpdateTime();
+		local showingSecondary = WQT_Utils:GetSetting("list", "fullTime");
+		self.updateInterval = WQT_Utils:TimeLeftToUpdateTime(timeLeft, showingSecondary);
 	end;
 end
 
@@ -926,21 +935,24 @@ function WQT_ListButtonMixin:UpdateTime()
 
 	local timeFrame = self:GetTimeFontString();
 	local seconds, timeString, color, _, _, category = WQT_Utils:GetQuestTimeString(self.questInfo, WQT.settings.list.fullTime);
-
+	
 	if(seconds == 0) then
 		timeFrame:SetText("");
 		timeFrame:Hide();
-		return false;
+	else
+		timeFrame:Show();
+
+		if (self.questInfo:IsDisliked() or (not WQT.settings.list.colorTime and category ~= _V["TIME_REMAINING_CATEGORY"].critical)) then
+			color = _V["WQT_WHITE_FONT_COLOR"];
+		end
+		timeFrame:SetTextColor(color.r, color.g, color.b, 1);
+		timeFrame:SetText(timeString);
 	end
 
-	timeFrame:Show();
+	-- Updating time changes its size so we need to make sure everything on the bottom row shifts with it
+	self:GetBottomRow():Layout();
 
-	if (self.questInfo:IsDisliked() or (not WQT.settings.list.colorTime and category ~= _V["TIME_REMAINING_CATEGORY"].critical)) then
-		color = _V["WQT_WHITE_FONT_COLOR"];
-	end
-	timeFrame:SetTextColor(color.r, color.g, color.b, 1);
-	timeFrame:SetText(timeString);
-	return true;
+	return seconds;
 end
 
 function WQT_ListButtonMixin:OnLeave()
@@ -1016,6 +1028,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	end
 	
 	self:Show();
+	self.updateInterval = 1;
 	self.questInfo = questInfo;
 	self.questID = questInfo.questID;
 	local isDisliked = questInfo:IsDisliked();
@@ -1034,7 +1047,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	local titleFS = self:GetTitleFontString();
 	titleFS:SetText(title);
 	
-	local showingTime = self:UpdateTime();
+	self:UpdateTime();
 	
 	local showingZone = false;
 	local zoneName = "";
@@ -1050,7 +1063,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	extraFrame:SetShown(showingZone);
 	extraFrame:SetText(zoneName);
 	local zoneSeparator = self:GetZoneSeparator();
-	zoneSeparator:SetShown(showingZone and showingTime);
+	zoneSeparator:SetShown(showingZone and self:GetTimeFontString():IsShown());
 	
 	local tagQuality = questInfo:GetTagInfoQuality();
 
@@ -1301,7 +1314,6 @@ function WQT_ConstrainedChildMixin:OnDragStop()
 end
 
 function WQT_ConstrainedChildMixin:OnUpdate()
-	--
 	if (self.isBeingDragged) then
 		self:ConstrainPosition();
 	end

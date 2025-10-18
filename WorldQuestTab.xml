@@ -382,8 +382,9 @@
 
 		<Scripts>
 			<OnClick method="OnClick" />
-			<OnLoad method="OnLoad"/>
-			<OnUpdate method="OnUpdate" />
+			<OnLoad method="OnLoad" />
+			<!-- view:SetElementInitializer overwrites "OnUpdate" function name -->
+			<OnUpdate method="OnUpdateMethod" />
 			<OnEnter method="OnEnter" />
 			<OnLeave method="OnLeave" />
 		</Scripts>

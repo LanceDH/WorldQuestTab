@@ -1527,6 +1527,7 @@ local patchNotes = {
 			};
 			["fixes"] = {
 				"Fixed an issue with the Party Sync feature";
+				"Fixed times in the quest list not properly updating below 1 hour with Expand Times enabled";
 			};
 		};
 		{["version"] = "11.2.05";

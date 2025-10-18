@@ -652,7 +652,7 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 	
 	timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(questInfo.questID) or 0;
 	timeLeftSeconds = C_TaskQuest.GetQuestTimeLeftSeconds(questInfo.questID) or 0;
-	if ( timeLeftSeconds  and timeLeftSeconds > 0) then
+	if ( timeLeftSeconds and timeLeftSeconds > 0) then
 		local displayTime = timeLeftSeconds
 		if (displayTime < SECONDS_PER_HOUR  and displayTime >= SECONDS_PER_MIN ) then
 			displayTime = displayTime + SECONDS_PER_MIN ;
@@ -660,10 +660,10 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 	
 		if ( timeLeftSeconds < WORLD_QUESTS_TIME_CRITICAL_MINUTES * SECONDS_PER_MIN  ) then
 			color = WQT_Utils:GetColor(_V["COLOR_IDS"].timeCritical);--RED_FONT_COLOR;
-			timeString = SecondsToTime(displayTime, displayTime > SECONDS_PER_MIN  and true or false, unabreviated);
+			timeString = SecondsToTime(displayTime, displayTime > SECONDS_PER_MIN and (not fullString) or false, unabreviated);
 			category = _V["TIME_REMAINING_CATEGORY"].critical;
 		elseif displayTime < SECONDS_PER_HOUR   then
-			timeString = SecondsToTime(displayTime, true);
+			timeString = SecondsToTime(displayTime, not fullString, unabreviated);
 			color = WQT_Utils:GetColor(_V["COLOR_IDS"].timeShort);--_V["WQT_ORANGE_FONT_COLOR"];
 			category = _V["TIME_REMAINING_CATEGORY"].short
 		elseif displayTime < SECONDS_PER_DAY   then
@@ -732,6 +732,15 @@ function WQT_Utils:GetPinTime(questInfo)
 		timeLeft = (timeLeft + offset);
 	end
 	return start, total, timeLeft, seconds, color, timeStringShort, category;
+end
+
+function WQT_Utils:TimeLeftToUpdateTime(timeLeft, showingSecondary)
+	if (timeLeft and timeLeft > 0) then
+		local minutesForUpdatePerSecond = showingSecondary and 60 or 2;
+		return timeLeft > SECONDS_PER_MIN * minutesForUpdatePerSecond and SECONDS_PER_MIN or 1;
+	end
+
+	return 0;
 end
 
 function WQT_Utils:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset)

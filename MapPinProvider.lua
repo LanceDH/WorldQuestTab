@@ -44,7 +44,7 @@ local function SortPinsByMapPos(a, b)
 
 	return a.questID < b.questID;
 end
-	
+
 local function OnPinRelease(pool, pin)
 	pin:ClearFocus();
 	pin.questID = nil;
@@ -57,9 +57,7 @@ local function OnPinRelease(pool, pin)
 	pin.timeIcon = nil;
 	pin:Hide();
 	pin:ClearAllPoints();
-	
 end
-
 
 local function ShouldShowPin(questInfo, mapType, settingsZoneVisible, settingsPinContinent, settingsFilterPins, isFlightMap)
 	-- Don't show if not valid
@@ -550,6 +548,7 @@ end
 WQT_PinButtonMixin = {};
 
 function WQT_PinButtonMixin:OnLoad()
+	self.UpdateTooltip = function() WQT_Utils:ShowQuestTooltip(self, self.questInfo) end;
 	self.iconPool =  CreateFramePool("FRAME", self, "WQT_MiniIconTemplate", function(pool, iconFrame) iconFrame:Reset() end);
 	self.icons = {};
 end
@@ -676,6 +675,7 @@ end
 function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 	if (not questInfo) then return; end
 
+	self.questInfo = questInfo;
 	local questQuality = questInfo:GetTagInfoQuality();
 	local isDisliked = questInfo:IsDisliked();
 	local tagInfo = questInfo:GetTagInfo();
@@ -886,7 +886,6 @@ end
 WQT_PinMixin = {};
 
 function WQT_PinMixin:OnLoad()
-	self.UpdateTooltip = function() WQT_Utils:ShowQuestTooltip(self:GetButton(), self.questInfo) end;
 	self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 	self.updateTime = 0;
 end
@@ -941,7 +940,7 @@ end
 function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	local isWatched = QuestUtils_IsQuestWatched(questInfo.questID);
 	self:SetupCanvasType(pinType, parentMapFrame, isWatched);
-	
+
 	self.index = index;
 	self.questInfo = questInfo;
 	self.questID = questInfo.questID;
@@ -988,13 +987,14 @@ function WQT_PinMixin:UpdateVisuals()
 end
 
 function WQT_PinMixin:OnUpdate(elapsed)
+	if (self.updateInterval <= 0) then return; end
+
 	self.updateTime = self.updateTime + elapsed;
 	if (self.isExpired or self.updateTime < self.updateInterval) then return; end
-	self.updateTime = self.updateTime - self.updateInterval;
+	self.updateTime = 0;
 
 	local timeLeft = self:UpdatePinTime();
-	-- For the last minute we want to update every second for the time label
-	self.updateInterval = timeLeft > SECONDS_PER_MIN * 16 and 60 or 1;
+	self.updateInterval = WQT_Utils:TimeLeftToUpdateTime(timeLeft);
 end
 
 function WQT_PinMixin:UpdatePinTime()
@@ -1010,7 +1010,7 @@ function WQT_PinMixin:UpdatePinTime()
 
 	if (timeCategory == _V["TIME_REMAINING_CATEGORY"].expired) then
 		self.isExpired = true;
-		return SECONDS_PER_HOUR;
+		timeLeft = 0;
 	end
 	
 	return timeLeft;
