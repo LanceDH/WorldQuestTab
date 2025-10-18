@@ -1515,12 +1515,14 @@ end
 local patchNotes = {
 		{["version"] = "11.2.06";
 			["new"] = {
-				"Added map pin option to change the center icon to the quest's faction icon";
+				"Added an option to Map Pins - Main Icon Type to show the quest's faction icon";
 				"Added an option for the pin label to show the amount of the main quest reward";
 				"Added an option to toggle the text colors of the map pin label";
 			};
 			["changes"] = {
 				"Moved the map pin Time Label setting into a dropdown together with the new reward amount setting";
+				"Slightly increased the interaction area of map pins";
+				"Some visual changes to pin labels which seems to have also fixes shittery pin visuals";
 				"Reworked how quests info structured. Easier to maintain and seems to have fixed glitchy quest title positioning";
 			};
 			["fixes"] = {

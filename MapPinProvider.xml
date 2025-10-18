@@ -1,144 +1,177 @@
- <Ui xmlns="http://www.blizzard.com/wow/ui/"
-     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ../../FrameXML/UI.xsd">
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ../../FrameXML/UI.xsd">
 
-	<Script file="MapPinProvider.lua"/>
+	<Script file="MapPinProvider.lua" />
 
-	<Button name="WQT_PinTemplate" mixin="WQT_PinMixin" flattenRenderLayers="true" virtual="true" frameStrata="MEDIUM">
-		<Size x="25" y="25" />
-		<HitRectInsets left="3" right="3" top="3" bottom="3"/>
-
-		<Layers>
-			<Layer level="BACKGROUND" textureSubLevel="3">
-				<Texture parentKey="CustomUnderlay" atlas="worldquest-questmarker-dragon" hidden="true">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="-8" y="8"/>
-						<Anchor point="BOTTOMRIGHT" x="8" y="-8"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="Icon">
-					<Size x="21" y="21" />
-					<Anchors>
-						<Anchor point="CENTER"/>
-					</Anchors>
-				</Texture>
-				
-				<MaskTexture parentKey="CircleMask" file="Interface\CharacterFrame\TempPortraitAlphaMask" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE">
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.Icon"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Icon"/>
-					</Anchors>
-					<MaskedTextures>
-						<MaskedTexture childKey="Icon"/>
-					</MaskedTextures>
-				</MaskTexture>
-			</Layer>
-			
-			<Layer level="BACKGROUND" textureSubLevel="5">
-				<Texture parentKey="CustomTypeIcon">
-					<Anchors>
-						<Anchor point="CENTER"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="CustomBountyRing" atlas="worldquest-emissary-ring" hidden="true">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="1" y="-2"/>
-						<Anchor point="BOTTOMRIGHT" x="-1" y="0"/>
-					</Anchors>
-				</Texture>
-				
-			</Layer>
-			
-			<Layer level="BACKGROUND" textureSubLevel="6">
-				<Texture parentKey="CustomSelectedGlow" alphaMode="ADD" hidden="true">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="2" y="-2"/>
-						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="InnerGlow" file="Interface\Addons\WorldQuestTab\Images\PoIRingBar" alphaMode="ADD" hidden="false">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="3" y="-3"/>
-						<Anchor point="BOTTOMRIGHT" x="-3" y="3"/>
-					</Anchors>
-					<Color r="0" g=".5" b="1"/>
-				</Texture>
-			</Layer>
-			
-			
-			<Layer level="ARTWORK" textureSubLevel="-1">
-				<!-- This serves as a background for the timer -->
-				<Texture parentKey="RingBG" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingBG" />
-			</Layer>
-			<Layer level="ARTWORK" textureSubLevel="2" >
-				<!-- Edge highlight of the timer. Custom so it can be colored -->
-				<Texture parentKey="Pointer" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingPointer"/>
-			</Layer>
-			<Layer level="ARTWORK" textureSubLevel="5">
-				 <FontString parentKey="Time" inherits="Game11Font_Shadow" maxLines="1" justifyV="MIDDLE" hidden="true">
-					<size y="18"/>
-					<Anchors>
-						<Anchor point="TOP" relativePoint="BOTTOM" x="2" y="2"/>
-					</Anchors>
-				</FontString>
-			</Layer>
-			<Layer level="ARTWORK" textureSubLevel="4">
-				<Texture parentKey="TimeBG" atlas="AftLevelup-ToastBG" hidden="true" alpha="0.9">
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.Time" y="-3" x="-2"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Time" x="2" y="3"/>
-					</Anchors>
-					<Color r="0" g="0" b="0"/>
-				</Texture>
-			</Layer>
-		</Layers>
-		
-		<Layers>
-			<Layer level="BACKGROUND" textureSubLevel="4">
-				<Texture parentKey="PingStatic" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="0" hidden="true" alphaMode="BLEND">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="-3" y="3"/>
-						<Anchor point="BOTTOMRIGHT" x="3" y="-3"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="Ping" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="0" hidden="true" alphaMode="BLEND">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="-3" y="3"/>
-						<Anchor point="BOTTOMRIGHT" x="3" y="-3"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-		</Layers>
-		
+	<Frame name="WQT_PinTemplate" mixin="WQT_PinMixin" virtual="true" frameStrata="MEDIUM">
+		<Size x="2" y="2" />
 		<Frames>
-			<Cooldown parentKey="Ring" useParentLevel="true" setAllPoints="true" hideCountdownNumbers="true">
-				<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRingBar"/>
-			</Cooldown>
+			<Button parentKey="Button" mixin="WQT_PinButtonMixin" flattenRenderLayers="true" frameStrata="MEDIUM">
+				<Size x="25" y="25" />
+				<HitRectInsets left="1" right="1" top="1" bottom="1" />
+				<Anchors>
+					<Anchor point="Center" />
+				</Anchors>
+
+				<Layers>
+					<Layer level="BACKGROUND" textureSubLevel="3">
+						<Texture parentKey="CustomUnderlay" atlas="worldquest-questmarker-dragon" hidden="true">
+							<Anchors>
+								<Anchor point="TOPLEFT" x="-8" y="8" />
+								<Anchor point="BOTTOMRIGHT" x="8" y="-8" />
+							</Anchors>
+						</Texture>
+						<Texture parentKey="Icon">
+							<Size x="21" y="21" />
+							<Anchors>
+								<Anchor point="CENTER" />
+							</Anchors>
+						</Texture>
+
+						<MaskTexture parentKey="CircleMask" file="Interface\CharacterFrame\TempPortraitAlphaMask" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE">
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent.Icon" />
+								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Icon" />
+							</Anchors>
+							<MaskedTextures>
+								<MaskedTexture childKey="Icon" />
+							</MaskedTextures>
+						</MaskTexture>
+					</Layer>
+
+					<Layer level="BACKGROUND" textureSubLevel="5">
+						<Texture parentKey="CustomTypeIcon">
+							<Anchors>
+								<Anchor point="CENTER" />
+							</Anchors>
+						</Texture>
+						<Texture parentKey="CustomBountyRing" atlas="worldquest-emissary-ring" hidden="true">
+							<Anchors>
+								<Anchor point="TOPLEFT" x="1" y="-2" />
+								<Anchor point="BOTTOMRIGHT" x="-1" y="0" />
+							</Anchors>
+						</Texture>
+
+					</Layer>
+
+					<Layer level="BACKGROUND" textureSubLevel="6">
+						<Texture parentKey="CustomSelectedGlow" alphaMode="ADD" hidden="true">
+							<Anchors>
+								<Anchor point="TOPLEFT" x="2" y="-2" />
+								<Anchor point="BOTTOMRIGHT" x="-2" y="2" />
+							</Anchors>
+						</Texture>
+					</Layer>
+
+
+					<Layer level="ARTWORK" textureSubLevel="-1">
+						<!-- This serves as a background for the timer -->
+						<Texture parentKey="RingBG" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingBG" />
+					</Layer>
+					<Layer level="ARTWORK" textureSubLevel="2">
+						<!-- Edge highlight of the timer. Custom so it can be colored -->
+						<Texture parentKey="Pointer" alpha="1" file="Interface\Addons\WorldQuestTab\Images\PoIRingPointer" />
+					</Layer>
+					<Layer level="ARTWORK" textureSubLevel="5">
+						<FontString parentKey="LabelText" inherits="SystemFont_NamePlate" maxLines="1" justifyV="MIDDLE" hidden="true">
+
+							<Anchors>
+								<Anchor point="TOP" relativePoint="BOTTOM" />
+							</Anchors>
+						</FontString>
+					</Layer>
+					<Layer level="ARTWORK" textureSubLevel="4">
+						<Texture parentKey="TimeBG" atlas="AftLevelup-ToastBG" hidden="true" alpha="0.7">
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent.LabelText" x="-3" y="1" />
+								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.LabelText" x="4" y="-1" />
+							</Anchors>
+							<Color r="0" g="0" b="0" />
+						</Texture>
+					</Layer>
+				</Layers>
+
+				<Layers>
+					<Layer level="BACKGROUND" textureSubLevel="4">
+						<Texture parentKey="PingStatic" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="0" hidden="true" alphaMode="BLEND">
+							<Anchors>
+								<Anchor point="TOPLEFT" x="-3" y="3" />
+								<Anchor point="BOTTOMRIGHT" x="3" y="-3" />
+							</Anchors>
+						</Texture>
+						<Texture parentKey="Ping" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="0" hidden="true" alphaMode="BLEND">
+							<Anchors>
+								<Anchor point="TOPLEFT" x="-3" y="3" />
+								<Anchor point="BOTTOMRIGHT" x="3" y="-3" />
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+
+				<Frames>
+					<Cooldown parentKey="Ring" useParentLevel="true" setAllPoints="true" hideCountdownNumbers="true">
+						<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRingBar" />
+					</Cooldown>
+
+
+				</Frames>
+
+				<Animations>
+					<AnimationGroup parentKey="ringAnim" looPing="REPEAT">
+						<Alpha parentKey="Ping" childKey="Ping" fromAlpha="0.9" toAlpha="0" smoothing="IN" Duration="1.2" order="1" startDelay=".6" endDelay="0" />
+						<Scale parentKey="Ping" childKey="Ping" fromScaleX="1" toScaleX="1.7" smoothing="OUT" fromScaleY="1" toScaleY="1.7" Duration="1" startDelay=".6" order="1" endDelay=".2" />
+					</AnimationGroup>
+					<AnimationGroup parentKey="ringAnim2" looPing="NONE" setToFinalAlpha="true">
+						<Scale parentKey="PingStatic" childKey="PingStatic" fromScaleX="1.2" toScaleX="1" smoothing="IN" fromScaleY="1.2" toScaleY="1" Duration=".4" order="0" />
+						<Alpha parentKey="PingStatic" childKey="PingStatic" fromAlpha="0.5" toAlpha="1" Duration="0.2" order="0" />
+					</AnimationGroup>
+				</Animations>
+
+				<Scripts>
+					<OnLoad method="OnLoad" />
+					<OnEnter method="OnEnter" />
+					<OnLeave method="OnLeave" />
+					<OnClick method="OnClick" />
+				</Scripts>
+			</Button>
+
+			<Frame parentKey="Label" mixin="WQT_PinLabelMixin" hidden="true">
+				<Size x="1" y="1" />
+				<Anchors>
+					<Anchor point="TOP" relativePoint="BOTTOM" />
+				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<FontString parentKey="LabelText" inherits="SystemFont_NamePlate" maxLines="1" justifyV="MIDDLE">
+							<Anchors>
+								<Anchor point="TOP" />
+							</Anchors>
+						</FontString>
+					</Layer>
+					<Layer level="BACKGROUND">
+						<Texture parentKey="TimeBG" atlas="AftLevelup-ToastBG" alpha="0.7">
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent.LabelText" x="-3" y="1" />
+								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.LabelText" x="4" y="-1" />
+							</Anchors>
+							<Color r="0" g="0" b="0" />
+						</Texture>
+					</Layer>
+				</Layers>
+			</Frame>
 		</Frames>
-		
+
 		<Animations>
-			<AnimationGroup parentKey="ringAnim" looPing="REPEAT">
-				<Alpha parentKey="Ping" childKey="Ping" fromAlpha="0.9" toAlpha="0" smoothing="IN" Duration="1.2" order="1"  startDelay=".6" endDelay="0"/>
-				<Scale parentKey="Ping" childKey="Ping" fromScaleX="1" toScaleX="1.7" smoothing="OUT" fromScaleY="1" toScaleY="1.7" Duration="1" startDelay=".6" order="1" endDelay=".2"/>
-			</AnimationGroup>
-			<AnimationGroup parentKey="ringAnim2" looPing="NONE" setToFinalAlpha="true">
-				<Scale parentKey="PingStatic" childKey="PingStatic" fromScaleX="1.2" toScaleX="1" smoothing="IN" fromScaleY="1.2" toScaleY="1" Duration=".4" order="0"/>
-				<Alpha parentKey="PingStatic" childKey="PingStatic" fromAlpha="0.5" toAlpha="1"  Duration="0.2" order="0"/>
-			</AnimationGroup>
 			<AnimationGroup parentKey="fadeOutAnim" looPing="NONE" setToFinalAlpha="true">
-				<Alpha parentKey="Alpha" Duration="0.1" toAlpha="0.5"/>
+				<Alpha parentKey="Alpha" Duration="0.1" toAlpha="0.5" />
 			</AnimationGroup>
 			<AnimationGroup parentKey="fadeInAnim" looPing="NONE" setToFinalAlpha="true">
-				<Alpha parentKey="Alpha" Duration="0.1"/>
+				<Alpha parentKey="Alpha" Duration="0.1" />
 			</AnimationGroup>
 		</Animations>
-		
+
 		<Scripts>
-			<OnLoad method="OnLoad"/>
-			<OnUpdate method="OnUpdate"/>
-			<OnEnter method="OnEnter"/>
-			<OnLeave method="OnLeave"/>
-			<OnClick method="OnClick"/>
+			<OnLoad method="OnLoad" />
+			<OnUpdate method="OnUpdate" />
 		</Scripts>
-	</Button>
- </Ui>
+	</Frame>
+</Ui>
