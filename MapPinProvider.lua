@@ -514,12 +514,16 @@ function WQT_PinLabelMixin:UpdateVisuals(questInfo)
 	-- Only setting up for reward amount. Time label is done in UpdateTime()
 	if (settingPinTimeLabel == _V["ENUM_PIN_LABEL"].amount) then
 		local questCanWarmode = C_QuestLog.QuestCanHaveWarModeBonus(questInfo.questID);
-		local amountString, rawAmount = WQT_Utils:GetDisplayRewardAmount(questInfo:GetReward(1), questCanWarmode);
-		showLabel = rawAmount > 1;
-		labelFontString:SetText(amountString);
-		if (WQT_Utils:GetSetting("pin", "labelColors")) then
-			local _, textColor = WQT_Utils:GetRewardTypeColorIDs(questInfo:GetRewardType());
-			labelColor = textColor;
+		local mainReward = questInfo:GetReward(1);
+		showLabel = mainReward and true or false;
+		if (mainReward) then
+			local amountString, rawAmount = WQT_Utils:GetDisplayRewardAmount(mainReward, questCanWarmode);
+			showLabel = rawAmount > 1;
+			labelFontString:SetText(amountString);
+			if (WQT_Utils:GetSetting("pin", "labelColors")) then
+				local _, textColor = WQT_Utils:GetRewardTypeColorIDs(mainReward.type);
+				labelColor = textColor;
+			end
 		end
 	end
 
@@ -645,7 +649,6 @@ function WQT_PinButtonMixin:UpdateTime(start, timeLeft, total, color, timeCatego
 	local now = time();
 
 	pointerTexture:SetShown(total > 0);
-
 	if (total > 0) then
 		pointerTexture:SetRotation((timeLeft) / (total) * 6.2831);
 		pointerTexture:SetVertexColor(r * 1.1, g * 1.1, b * 1.1);
@@ -994,7 +997,7 @@ function WQT_PinMixin:OnUpdate(elapsed)
 	self.updateTime = 0;
 
 	local timeLeft = self:UpdatePinTime();
-	self.updateInterval = WQT_Utils:TimeLeftToUpdateTime(timeLeft);
+	self.updateInterval = WQT_Utils:TimeLeftToUpdateTime(timeLeft, true);
 end
 
 function WQT_PinMixin:UpdatePinTime()

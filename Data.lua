@@ -102,9 +102,9 @@ _V["WQT_COLOR_MISSING"] = CreateColor(0.7, 0.1, 0.1);
 _V["WQT_COLOR_RELIC"] = CreateColor(0.3, 0.7, 1);
 _V["WQT_WHITE_FONT_COLOR"] = CreateColor(0.9, 0.9, 0.9);
 _V["WQT_ORANGE_FONT_COLOR"] = CreateColor(1, 0.5, 0);
-_V["WQT_GREEN_FONT_COLOR"] = CreateColor(0, 0.75, 0);
+_V["WQT_GREEN_FONT_COLOR"] = CreateColor(0, 0.8, 0);
 _V["WQT_BLUE_FONT_COLOR"] = CreateColor(0.2, 0.60, 1);
-_V["WQT_PURPLE_FONT_COLOR"] = CreateColor(0.73, 0.33, 0.82);
+_V["WQT_PURPLE_FONT_COLOR"] = CreateColor(0.84, 0.38, 0.94);
 
 _V["DEBUG_OUTPUT_TYPE"] = {
 	["invalid"] = 0

@@ -35,10 +35,6 @@ local function slashcmd(msg)
 		WQT_ListContainer:UpdateQuestList();
 		print("WQT: debug", addon.debug and "enabled" or "disabled");
 		return;
-	elseif (msg:find("^dump")) then
-		local addition = msg:sub(6)
-		WQT_DebugFrame:DumpDebug(addition);
-		return;
 	end
 end
 
@@ -841,7 +837,7 @@ function WQT_RewardDisplayMixin:AddReward(rewardInfo, warmodeBonus)
 		if (not self.desaturate and WQT.settings.list.amountColors) then
 			amountColor = select(2, WQT_Utils:GetRewardTypeColorIDs(rewardInfo.type));
 		end
-
+		
 		rewardFrame.Amount:SetVertexColor(amountColor:GetRGB());
 	end
 end
