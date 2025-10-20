@@ -1522,7 +1522,7 @@ local patchNotes = {
 			["changes"] = {
 				"Moved the map pin Time Label setting into a dropdown together with the new reward amount setting";
 				"Slightly increased the interaction area of map pins";
-				"Some visual changes to pin labels which seems to have also fixes shittery pin visuals";
+				"Some visual changes to pin labels which seems to have also fixes jittery pin visuals";
 				"Reworked how quests info structured. Easier to maintain and seems to have fixed glitchy quest title positioning";
 			};
 			["fixes"] = {
