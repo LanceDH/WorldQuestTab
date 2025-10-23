@@ -1513,6 +1513,11 @@ end
 -- fixes			List of bugfixes
 
 local patchNotes = {
+		{["version"] = "11.2.07";
+			["fixes"] = {
+				"Fixed the right click menu on map pins not showing";
+			};
+		};
 		{["version"] = "11.2.06";
 			["new"] = {
 				"Added an option to Map Pins - Main Icon Type to show the quest's faction icon";
@@ -1522,7 +1527,7 @@ local patchNotes = {
 			["changes"] = {
 				"Moved the map pin Time Label setting into a dropdown together with the new reward amount setting";
 				"Slightly increased the interaction area of map pins";
-				"Some visual changes to pin labels which seems to have also fixes jittery pin visuals";
+				"Some visual changes to pin labels which seems to have also fixed jittery pin visuals";
 				"Reworked how quests info structured. Easier to maintain and seems to have fixed glitchy quest title positioning";
 			};
 			["fixes"] = {
