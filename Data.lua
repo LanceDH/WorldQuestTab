@@ -1514,6 +1514,9 @@ end
 
 local patchNotes = {
 		{["version"] = "11.2.07";
+			["changes"] = {
+				"Made the reward quality in the quest list more clear";
+			};
 			["fixes"] = {
 				"Fixed the right click menu on map pins not showing";
 			};

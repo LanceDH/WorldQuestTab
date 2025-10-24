@@ -66,14 +66,6 @@
 		<Size x="32" y="32" />
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="QualityColor" file="Interface\Addons\WorldQuestTab\Images\QualityCornerMask">
-					<Anchors>
-						<Anchor point="TOPRIGHT" x="1" y="1"/>
-						<Anchor point="BOTTOMLEFT"/>
-					</Anchors>
-					<TexCoords left="1.0" right="0.0" top="1.0" bottom="0.0"/>
-				</Texture>
-
 				<Texture parentKey="Icon" file="Interface\ICONS\INV_Misc_QuestionMark" alpha="0.95">
 					<Anchors>
 						<Anchor point="TOPLEFT"/>
@@ -94,6 +86,13 @@
 			</Layer>
 
 			<Layer level="BACKGROUND" textureSubLevel="1">
+				<Texture parentKey="QualityColor" file="Interface\Addons\WorldQuestTab\Images\QualityCornerMask">
+					<Anchors>
+						<Anchor point="TOPLEFT" />
+						<Anchor point="BOTTOMRIGHT"/>
+					</Anchors>
+				</Texture>
+
 				<Texture parentKey="AmountBG" atlas="MapCornerShadow-Left" alpha="1">
 					<Anchors>
 						<Anchor point="LEFT"/>

@@ -552,7 +552,6 @@ end
 WQT_PinButtonMixin = {};
 
 function WQT_PinButtonMixin:OnLoad()
-	self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 	self.UpdateTooltip = function() WQT_Utils:ShowQuestTooltip(self, self.questInfo) end;
 	self.iconPool =  CreateFramePool("FRAME", self, "WQT_MiniIconTemplate", function(pool, iconFrame) iconFrame:Reset() end);
 	self.icons = {};

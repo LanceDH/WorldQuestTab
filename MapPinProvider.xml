@@ -5,7 +5,7 @@
 	<Frame name="WQT_PinTemplate" mixin="WQT_PinMixin" virtual="true" frameStrata="MEDIUM">
 		<Size x="2" y="2" />
 		<Frames>
-			<Button parentKey="Button" mixin="WQT_PinButtonMixin" flattenRenderLayers="true" frameStrata="MEDIUM">
+			<Button parentKey="Button" mixin="WQT_PinButtonMixin" flattenRenderLayers="true" frameStrata="MEDIUM" registerForClicks="LeftButtonUp, RightButtonUp">
 				<Size x="25" y="25" />
 				<HitRectInsets left="1" right="1" top="1" bottom="1" />
 				<Anchors>
