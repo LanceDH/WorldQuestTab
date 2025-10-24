@@ -92,13 +92,13 @@
 
 				<Layers>
 					<Layer level="BACKGROUND" textureSubLevel="4">
-						<Texture parentKey="PingStatic" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="0" hidden="true" alphaMode="BLEND">
+						<Texture parentKey="PingStatic" atlas="dragonflight-landingbutton-circleglow" alpha="0" hidden="true" alphaMode="BLEND">
 							<Anchors>
 								<Anchor point="TOPLEFT" x="-3" y="3" />
 								<Anchor point="BOTTOMRIGHT" x="3" y="-3" />
 							</Anchors>
 						</Texture>
-						<Texture parentKey="Ping" file="Interface\Addons\WorldQuestTab\Images\PoIPing" alpha="0" hidden="true" alphaMode="BLEND">
+						<Texture parentKey="Ping" atlas="dragonflight-landingbutton-circleglow" alpha="0" hidden="true" alphaMode="BLEND">
 							<Anchors>
 								<Anchor point="TOPLEFT" x="-3" y="3" />
 								<Anchor point="BOTTOMRIGHT" x="3" y="-3" />
@@ -111,17 +111,15 @@
 					<Cooldown parentKey="Ring" useParentLevel="true" setAllPoints="true" hideCountdownNumbers="true">
 						<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRingBar" />
 					</Cooldown>
-
-
 				</Frames>
 
 				<Animations>
 					<AnimationGroup parentKey="ringAnim" looPing="REPEAT">
-						<Alpha parentKey="Ping" childKey="Ping" fromAlpha="0.9" toAlpha="0" smoothing="IN" Duration="1.2" order="1" startDelay=".6" endDelay="0" />
-						<Scale parentKey="Ping" childKey="Ping" fromScaleX="1" toScaleX="1.7" smoothing="OUT" fromScaleY="1" toScaleY="1.7" Duration="1" startDelay=".6" order="1" endDelay=".2" />
+						<Alpha parentKey="Ping" childKey="Ping" fromAlpha="0.9" toAlpha="0" smoothing="IN" Duration="1.2" order="1" startDelay=".5" endDelay="0" />
+						<Scale parentKey="Ping" childKey="Ping" fromScaleX="1" toScaleX="1.7" smoothing="OUT" fromScaleY="1" toScaleY="1.7" Duration="1.1" startDelay=".5" order="1" endDelay=".2" />
 					</AnimationGroup>
 					<AnimationGroup parentKey="ringAnim2" looPing="NONE" setToFinalAlpha="true">
-						<Scale parentKey="PingStatic" childKey="PingStatic" fromScaleX="1.2" toScaleX="1" smoothing="IN" fromScaleY="1.2" toScaleY="1" Duration=".4" order="0" />
+						<Scale parentKey="PingStatic" childKey="PingStatic" fromScaleX="1.3" toScaleX="1" smoothing="IN" fromScaleY="1.3" toScaleY="1" Duration=".4" order="0" />
 						<Alpha parentKey="PingStatic" childKey="PingStatic" fromAlpha="0.5" toAlpha="1" Duration="0.2" order="0" />
 					</AnimationGroup>
 				</Animations>

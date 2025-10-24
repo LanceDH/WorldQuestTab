@@ -1400,7 +1400,6 @@ end
 -- UpdateBountyCounters()
 -- RepositionBountyTabs()
 -- AddBountyCountersToTab(tab)
--- ShowHighlightOnMapFilters()
 -- FilterClearButtonOnClick()
 -- SetCvarValue(flagKey, value)
 -- ChangeAnchorLocation(anchor)		Show list on a different container using _V["LIST_ANCHOR_TYPE"] variable
@@ -1722,18 +1721,6 @@ function WQT_CoreMixin:AddBountyCountersToTab(tab)
 		end
 	end
 	
-end
-
-function WQT_CoreMixin:ShowHighlightOnMapFilters()
-	if (not self.worldMapFilter) then return; end
-	WQT_PoISelectIndicator:SetParent(self.worldMapFilter);
-	WQT_PoISelectIndicator:ClearAllPoints();
-	WQT_PoISelectIndicator:SetPoint("CENTER", self.worldMapFilter, 0, 1);
-	WQT_PoISelectIndicator:SetFrameLevel(self.worldMapFilter:GetFrameLevel()+1);
-	WQT_PoISelectIndicator:Show();
-	local size = WQT.settings.pin.bigPoI and 50 or 40;
-	WQT_PoISelectIndicator:SetSize(size, size);
-	WQT_PoISelectIndicator:SetScale(0.40);
 end
 
 function WQT_CoreMixin:FilterClearButtonOnClick()
