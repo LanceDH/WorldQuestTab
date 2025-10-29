@@ -5,8 +5,6 @@ local L = addon.L
 
 L["IS_AZIAN_CLIENT"]	= false
 
-L["ALWAYS_ALL"] = "Always All Quests"
-L["ALWAYS_ALL_TT"] = "Always show all quests for the expansion related to the current zone"
 L["AMOUNT_COLORS"] = "Amount Colors"
 L["AMOUNT_COLORS_TT"] = "Color reward amounts in the quest list based on reward type."
 L["AUTO_EMISARRY"] = "Auto Emissary Only"
@@ -176,3 +174,11 @@ L["WHATS_NEW"] = "Changelog"
 L["WQT_FULLSCREEN_BUTTON_TT"] = "Left click to toggle the world quest list. Right click and drag to change position."
 L["IGNORES_FILTERS"] = "Ignores Filters"
 L["SUGGEST_RELOAD"] = "UI reload advised after changing"
+L["ZONE_QUESTS"] = "Zone Quests"
+L["ZONE_QUESTS_TT"] = "Determines which quests will be displayed in individual zones."
+L["ZONE_QUESTS_ZONE"] = "Zone Only"
+L["ZONE_QUESTS_ZONE_TT"] = "Only quests from the current zone.|nNote: Which zone a quest belongs to is determined by Blizzard's API"
+L["ZONE_QUESTS_VISIBLE"] = "Visible Neighbors"
+L["ZONE_QUESTS_VISIBLE_TT"] = "Include quests from neighbouring zones if they would be visible on the current map."
+L["ZONE_QUESTS_EXPANSION"] = "All From Expansion"
+L["ZONE_QUESTS_EXPANSION_TT"] = "Include quests from the whole expansion related to the current zone."

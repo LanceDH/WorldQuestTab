@@ -44,11 +44,11 @@ function WQT_SettingsBaseMixin:Init(data)
 	self.valueChangedFunc = data.valueChangedFunc;
 	self.isDisabled = data.isDisabled;
 	if (self.Label) then
-		local labelText = data.label;
-		if (data.isNew) then
-			labelText = labelText .. " |TInterface\\OPTIONSFRAME\\UI-OptionsFrame-NewFeatureIcon:12|t";
-		end
-		self.Label:SetText(labelText);
+		self.Label:SetText(data.label);
+	end
+	
+	if (self.NewFeature) then
+		self.NewFeature:SetShown(data.isNew);
 	end
 	
 	if (self.DisabledOverlay) then

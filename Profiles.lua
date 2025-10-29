@@ -105,6 +105,19 @@ local function ApplyVersionChanges(profile, version)
 		profile.pin.numRewardIcons = profile.pin.rewardTypeIcon and 1 or 0;
 		profile.pin.rewardTypeIcon = nil;
 	end
+
+	if (version < 110206) then
+		-- Changed time label to label dropdown
+		profile.pin.label = profile.pin.timeLabel and _V["ENUM_PIN_LABEL"].time or _V["ENUM_PIN_LABEL"].none;
+		profile.pin.timeLabel = nil;
+	end
+
+	if (version < 110208) then
+		profile.general.zoneQuests = profile.list.alwaysAllQuests and _V["ENUM_ZONE_QUESTS"].expansion or _V["ENUM_ZONE_QUESTS"].zone;
+		-- Cleanup
+		profile.general.questCounter = nil;
+		profile.list.alwaysAllQuests = nil;
+	end
 end
 
 function WQT_Profiles:OnLoad()

@@ -182,6 +182,18 @@ _V["PIN_LABEL_LABELS"] = {
 	,[_V["ENUM_PIN_LABEL"].amount] = {["label"] = _L["PIN_LABEL_REWARD"], ["tooltip"] = _L["PIN_LABEL_REWARD_TT"]}
 }
 
+_V["ENUM_ZONE_QUESTS"] = {
+	["zone"] = 1
+	,["neighbor"] = 2
+	,["expansion"] = 3
+}
+
+_V["ZONE_QUESTS_LABELS"] = {
+	[_V["ENUM_ZONE_QUESTS"].zone] = {["label"] = _L["ZONE_QUESTS_ZONE"], ["tooltip"] = _L["ZONE_QUESTS_ZONE_TT"]}
+	,[_V["ENUM_ZONE_QUESTS"].neighbor] = {["label"] = _L["ZONE_QUESTS_VISIBLE"], ["tooltip"] = _L["ZONE_QUESTS_VISIBLE_TT"]}
+	,[_V["ENUM_ZONE_QUESTS"].expansion] = {["label"] = _L["ZONE_QUESTS_EXPANSION"], ["tooltip"] = _L["ZONE_QUESTS_EXPANSION_TT"]}
+}
+
 _V["SETTING_TYPES"] = {
 	["category"] = 1
 	,["subTitle"] = 2
@@ -202,6 +214,7 @@ MakeIndexArg1(_V["RING_TYPES_LABELS"]);
 MakeIndexArg1(_V["PIN_LABEL_LABELS"]);
 MakeIndexArg1(_V["PIN_VISIBILITY_CONTINENT"]);
 MakeIndexArg1(_V["PIN_VISIBILITY_ZONE"]);
+MakeIndexArg1(_V["ZONE_QUESTS_LABELS"]);
 
 -- Not where they should be. Count them as invalid. Thanks Blizzard
 _V["BUGGED_POI"] =  {
@@ -452,21 +465,20 @@ _V["SETTING_LIST"] = {
 				WQT_ListContainer:DisplayQuestList();
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.preciseFilters end
-			}	
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["ALWAYS_ALL"], ["tooltip"] = _L["ALWAYS_ALL_TT"]
-			, ["valueChangedFunc"] = function(value) 
-				WQT.settings.list.alwaysAllQuests = value;
-				local mapAreaID = WorldMapFrame.mapID;
-				WQT_WorldQuestFrame.dataProvider:LoadQuestsInZone(mapAreaID);
-				WQT_ListContainer:UpdateQuestList();
-			end
-			,["getValueFunc"] = function() return WQT.settings.list.alwaysAllQuests end
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["AUTO_EMISARRY"], ["tooltip"] = _L["AUTO_EMISARRY_TT"]
 			, ["valueChangedFunc"] = function(value) 
 				WQT.settings.general.autoEmisarry = value;
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.autoEmisarry end
+			}
+	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["ZONE_QUESTS"], ["tooltip"] = _L["ZONE_QUESTS_TT"], ["options"] = _V["ZONE_QUESTS_LABELS"]
+			, ["valueChangedFunc"] = function(value)
+				WQT.settings.general.zoneQuests = value;
+				EventRegistry:TriggerEvent("WQT.RequestUpdate");
+			end
+			,["getValueFunc"] = function() return WQT.settings.general.zoneQuests end
+			,["isNew"] = true -- 11.2.5
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "GENERAL_OLDCONTENT", ["label"] = _L["CALLINGS_BOARD"], ["tooltip"] = _L["CALLINGS_BOARD_TT"]
 			, ["valueChangedFunc"] = function(value) 
@@ -625,6 +637,7 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.label end
 			,["isDisabled"] = function() return WQT.settings.pin.disablePoI end
+			,["isNew"] = true -- 11.2.5
 			}
 	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_LABEL_COLORS"], ["tooltip"] = _L["PIN_LABEL_COLORS_TT"]
 			, ["valueChangedFunc"] = function(value)
@@ -633,6 +646,7 @@ _V["SETTING_LIST"] = {
 			end
 			,["getValueFunc"] = function() return WQT.settings.pin.labelColors end
 			,["isDisabled"] = function() return WQT.settings.pin.label == _V["ENUM_PIN_LABEL"].none; end
+			,["isNew"] = true -- 11.2.5
 			}
 	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "MAPPINS", ["label"] = _L["PIN_VISIBILITY_ZONE"], ["tooltip"] = _L["PIN_VISIBILITY_ZONE_TT"], ["options"] = _V["PIN_VISIBILITY_ZONE"]
 			, ["valueChangedFunc"] = function(value)
@@ -903,8 +917,8 @@ _V["SORT_FUNCTIONS"] = {
 			end
 
 			if (mapInfoA and mapInfoA.name and mapInfoB and mapInfoB.name and mapInfoA.mapID ~= mapInfoB.mapID) then
-				if (WQT.settings.list.alwaysAllQuests and (mapInfoA.mapID == WorldMapFrame.mapID or mapInfoB.mapID == WorldMapFrame.mapID)) then
-					return mapInfoA.mapID == WorldMapFrame.mapID and mapInfoB.mapID ~= WorldMapFrame.mapID;
+				if (mapInfoA.mapID == WorldMapFrame.mapID or mapInfoB.mapID == WorldMapFrame.mapID) then
+					return mapInfoA.mapID == WorldMapFrame.mapID;
 				end
 				return mapInfoA.name < mapInfoB.name;
 			elseif (mapInfoA.mapID == mapInfoB.mapID) then
@@ -1403,11 +1417,11 @@ _V["WQT_DEFAULTS"] = {
 			preciseFilters = false;
 			emissaryOnly = false;
 			autoEmisarry = true;
-			questCounter = true;
 			bountyCounter = true;
 			bountyReward = false;
 			bountySelectedOnly = true;
 			showDisliked = true;
+			zoneQuests = _V["ENUM_ZONE_QUESTS"].zone;
 			
 			sl_callingsBoard = true;
 			sl_genericAnimaIcons = false;
@@ -1427,7 +1441,6 @@ _V["WQT_DEFAULTS"] = {
 			showZone = true;
 			warbandIcon = false;
 			amountColors = true;
-			alwaysAllQuests = false;
 			colorTime = true;
 			fullTime = false;
 			rewardNumDisplay = 1;
@@ -1513,6 +1526,15 @@ end
 -- fixes			List of bugfixes
 
 local patchNotes = {
+		{["version"] = "11.2.08";
+			["new"] = {
+				"Added new setting General - Zone Quests: Choose for zones to only show quests for that zone, include neighbouring zones, or all quests for the related expansion";
+			};
+			["changes"] = {
+				"Combined the Always All Quests setting into the new Zone Quests setting";
+				"Re-added an icon to make it easier to spot new or changed settings";
+			};
+		};
 		{["version"] = "11.2.07";
 			["changes"] = {
 				"Made the reward quality in the quest list more clear";

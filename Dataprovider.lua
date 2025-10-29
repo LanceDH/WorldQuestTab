@@ -519,8 +519,9 @@ function WQT_DataProvider:Init()
 		questsActive = {},
 	};
 	
-	EventRegistry:RegisterCallback("WQT.FiltersUpdated" ,function() self.shouldUpdateFiltedList = true;  end, self);
-	EventRegistry:RegisterCallback("WQT.SortUpdated" ,function() self.shouldUpdateFiltedList = true;  end, self);
+	EventRegistry:RegisterCallback("WQT.FiltersUpdated" ,function() self.shouldUpdateFiltedList = true; end, self);
+	EventRegistry:RegisterCallback("WQT.SortUpdated" ,function() self.shouldUpdateFiltedList = true; end, self);
+	EventRegistry:RegisterCallback("WQT.RequestUpdate" ,function() self.zoneLoading.needsUpdate = true; end, self);
 
 	-- Needed to trigger update in full screen map
 	EventRegistry:RegisterCallback(
@@ -575,6 +576,7 @@ function WQT_DataProvider:OnUpdate(elapsed)
 
 		-- Get quests from all the zones in our list
 		-- Only spend a max amount of time on it each frame to prevent extreme stutters when we have a lot of zones
+		local matchQuestZone = WQT_Utils:GetSetting("general", "zoneQuests") == _V["ENUM_ZONE_QUESTS"].zone;
 		for zoneID in pairs(self.zoneLoading.remainingZones) do
 			self.zoneLoading.remainingZones[zoneID] = nil;
 			self.zoneLoading.numRemaining = self.zoneLoading.numRemaining - 1;
@@ -584,7 +586,9 @@ function WQT_DataProvider:OnUpdate(elapsed)
 			local numPoIs = taskPOIs and #taskPOIs or 0;
 			if (numPoIs > 0) then
 				for k, apiInfo in ipairs(taskPOIs) do
-					self.zoneLoading.questsFound[apiInfo.questID] = apiInfo;
+					if (not matchQuestZone or apiInfo.mapID == zoneID) then
+						self.zoneLoading.questsFound[apiInfo.questID] = apiInfo;
+					end
 				end
 			end
 
@@ -785,11 +789,13 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 	self.latestZoneId = zoneID
 	
 	local currentMapInfo = WQT_Utils:GetCachedMapInfo(zoneID);
-	if not currentMapInfo then return end;
+	if (not currentMapInfo) then return end;
+
+	local zoneQuests = WQT_Utils:GetSetting("general", "zoneQuests");
 	if (currentMapInfo.mapType == Enum.UIMapType.World) then
 		self:AddWorldMapQuests();
 		
-	elseif (WQT.settings.list.alwaysAllQuests or currentMapInfo.mapType == Enum.UIMapType.Continent) then
+	elseif (currentMapInfo.mapType == Enum.UIMapType.Continent or zoneQuests == _V["ENUM_ZONE_QUESTS"].expansion) then
 		local continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneID];
 
 		while (not continentZones and currentMapInfo.mapType > Enum.UIMapType.Continent and currentMapInfo.parentMapID and zoneID ~= currentMapInfo.parentMapID) do
@@ -811,7 +817,11 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 		end
 
 	else
-		self:AddContinentMapQuests(zoneID);
+		if (zoneQuests == _V["ENUM_ZONE_QUESTS"].zone) then
+			self:AddZoneToBuffer(zoneID);
+		else
+			self:AddContinentMapQuests(zoneID);
+		end
 	end
 end
 

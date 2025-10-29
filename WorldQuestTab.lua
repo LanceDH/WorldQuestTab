@@ -300,11 +300,6 @@ local function ConvertOldSettings()
 		-- It's a new user, their settings are perfect
 		-- Unless I change my mind again
 		return;
-
-	elseif (settingVersion < 110206) then
-		-- Changed time label to label dropdown
-		WQT.db.global.pin.label = WQT.db.global.pin.timeLabel and _V["ENUM_PIN_LABEL"].time or _V["ENUM_PIN_LABEL"].none;
-		WQT.db.global.pin.timeLabel = nil;
 	end
 
 	-- changes from when version was saved as a string (pre 11.2.01)

@@ -4,6 +4,25 @@
 
 	<Script file="Settings.lua"/>
 
+	<Frame name="WQT_NewIconTemplate" virtual="true">
+		<Size x="20" y="20" />
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture parentKey="Icon" atlas="wowlabs_spellbucketicon-sword" setAllPoints="true" />
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnEnter>
+				GameTooltip:SetOwner(self, "ANCHOR_RIGHT", -4, -4);
+				GameTooltip:SetText(NEW);
+				GameTooltip:Show();
+			</OnEnter>
+			<OnLeave>
+				GameTooltip:Hide();
+			</OnLeave>
+		</Scripts>
+	</Frame>
+
 	<Button name="WQT_SettingCategoryTemplate" mixin="WQT_SettingsCategoryMixin" virtual="true">
 		<Size y="34"/>	
 		<Layers>
@@ -169,6 +188,12 @@
 					</OnLeave>
 				</Scripts>
 			</Frame>
+
+			<Frame parentKey="NewFeature" inherits="WQT_NewIconTemplate" hidden="true">
+				<Anchors>
+					<Anchor point="RIGHT" x="-6" y="0" relativeKey="$parent.CheckBox" relativePoint="LEFT"/>
+				</Anchors>
+			</Frame>
 		</Frames>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -226,6 +251,12 @@
 					</OnEditFocusLost>
 				</Scripts>
 			</EditBox>
+
+			<Frame parentKey="NewFeature" inherits="WQT_NewIconTemplate" hidden="true">
+				<Anchors>
+					<Anchor point="RIGHT" x="-6" y="0" relativeKey="$parent.SliderWithSteppers" relativePoint="LEFT"/>
+				</Anchors>
+			</Frame>
 		</Frames>
 		
 	</Frame>
@@ -447,6 +478,12 @@
 					<Anchor point="RIGHT" x="-42" y="0"/>
 				</Anchors>
 			</DropdownButton>
+
+			<Frame parentKey="NewFeature" inherits="WQT_NewIconTemplate" hidden="true">
+				<Anchors>
+					<Anchor point="RIGHT" x="-8" y="0" relativeKey="$parent.Dropdown" relativePoint="LEFT"/>
+				</Anchors>
+			</Frame>
 		</Frames>
 		<Scripts>
 			<OnLoad method="OnLoad"/>
