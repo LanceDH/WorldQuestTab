@@ -494,13 +494,14 @@ WQT_DataProvider = {};
 
 function WQT_DataProvider:Init()
 	self.frame = CreateFrame("FRAME");
-	self.frame:SetScript("OnUpdate", function(frame, ...) self:OnUpdate(...); end);
 	self.frame:SetScript("OnEvent", function(frame, ...) self:OnEvent(...); end);
 	self.frame:SetScript("OnLoad", function(frame, ...) self:OnEvent(...); end);
 	self.frame:RegisterEvent("QUEST_LOG_UPDATE");
 	self.frame:RegisterEvent("QUEST_DATA_LOAD_RESULT");
 	self.frame:RegisterEvent("TAXIMAP_OPENED");
 	self.frame:RegisterEvent("CVAR_UPDATE");
+
+	self.updateScriptSet = false;
 	
 	self.pool = CreateObjectPool(WQT_Utils.QuestCreationFunc, QuestResetFunc);
 	self.iterativeList = {};
@@ -519,35 +520,52 @@ function WQT_DataProvider:Init()
 		questsActive = {},
 	};
 	
-	EventRegistry:RegisterCallback("WQT.FiltersUpdated" ,function() self.shouldUpdateFiltedList = true; end, self);
-	EventRegistry:RegisterCallback("WQT.SortUpdated" ,function() self.shouldUpdateFiltedList = true; end, self);
-	EventRegistry:RegisterCallback("WQT.RequestUpdate" ,function() self.zoneLoading.needsUpdate = true; end, self);
+	EventRegistry:RegisterCallback("WQT.FiltersUpdated" ,function() self:RequestFilterUpdate(); end, self);
+	EventRegistry:RegisterCallback("WQT.SortUpdated" ,function() self:RequestFilterUpdate(); end, self);
+	EventRegistry:RegisterCallback("WQT.RequestDataUpdate" ,function() self:RequestDataUpdate(); end, self);
 
 	-- Needed to trigger update in full screen map
 	EventRegistry:RegisterCallback(
 		"MapCanvas.MapSet"
 		,function()
-				self.zoneLoading.needsUpdate = true;
+				self:RequestDataUpdate();
 			end
 		, self);
 end
 
 function WQT_DataProvider:OnEvent(event, ...)
 	if (event == "QUEST_LOG_UPDATE") then
-		self.zoneLoading.needsUpdate = true;
+		self:RequestDataUpdate();
 	elseif (event == "QUEST_DATA_LOAD_RESULT") then
-		self.zoneLoading.needsUpdate = true;
+		self:RequestDataUpdate();
 	elseif (event == "TAXIMAP_OPENED") then
-		self.zoneLoading.needsUpdate = true;
+		self:RequestDataUpdate();
 	elseif (event =="CVAR_UPDATE") then
 		local cvar = ...;
 		for _, officalFilters in pairs(_V["WQT_FILTER_TO_OFFICIAL"]) do
 			for _, officialFilter in ipairs(officalFilters) do
 				if(cvar == officialFilter) then
-					self.shouldUpdateFiltedList = true;
+					self:RequestFilterUpdate();
 				end
 			end
 		end
+	end
+end
+
+function WQT_DataProvider:RequestDataUpdate()
+	self.zoneLoading.needsUpdate = true;
+	self:SetUpdateScript();
+end
+
+function WQT_DataProvider:RequestFilterUpdate()
+	self.shouldUpdateFiltedList = true;
+	self:SetUpdateScript();
+end
+
+function WQT_DataProvider:SetUpdateScript()
+	if (not self.updateScriptSet) then
+		self.frame:SetScript("OnUpdate", function(...) self:OnUpdate(...); end);
+		self.updateScriptSet = true;
 	end
 end
 
@@ -678,6 +696,11 @@ function WQT_DataProvider:OnUpdate(elapsed)
 	if (self.shouldUpdateFiltedList) then
 		self.shouldUpdateFiltedList = false;
 		self:FilterAndSortQuestList();
+	end
+
+	if (not self.zoneLoading.needsUpdate and self.zoneLoading.numRemaining == 0 and not self.shouldUpdateFiltedList) then
+		self.frame:SetScript("OnUpdate", nil);
+		self.updateScriptSet = false;
 	end
 end
 

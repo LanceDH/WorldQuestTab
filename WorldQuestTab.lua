@@ -852,6 +852,13 @@ end
 
 WQT_ListButtonMixin = {}
 
+function WQT_ListButtonMixin:ClearTimer()
+	if (self.timer) then
+		self.timer:Cancel();
+		self.timer = nil;
+	end
+end
+
 function WQT_ListButtonMixin:GetTitleFontString()
 	return self.CenterContent.Title;
 end
@@ -889,8 +896,6 @@ function WQT_ListButtonMixin:OnLoad()
 	self.Highlight:SetFrameLevel(self:GetFrameLevel() + 2);
 	self:EnableKeyboard(false);
 	self.UpdateTooltip = function() self:ShowTooltip() end;
-	self.timer = 0;
-	self.updateInterval = 1;
 end
 
 function WQT_ListButtonMixin:OnClick(button)
@@ -904,19 +909,6 @@ function WQT_ListButtonMixin:SetEnabledMixin(value)
 	self:EnableMouse(value);
 	local factionFrame = self:GetFactionFrame();
 	factionFrame:EnableMouse(value);
-end
-
-function WQT_ListButtonMixin:OnUpdateMethod(elapsed)
-	if (self.updateInterval <= 0) then return; end
-
-	self.timer = self.timer + elapsed;
-	
-	if (self.timer >= self.updateInterval) then
-		self.timer = 0;
-		local timeLeft = self:UpdateTime();
-		local showingSecondary = WQT_Utils:GetSetting("list", "fullTime");
-		self.updateInterval = WQT_Utils:TimeLeftToUpdateTime(timeLeft, showingSecondary);
-	end;
 end
 
 function WQT_ListButtonMixin:UpdateTime()
@@ -942,6 +934,13 @@ function WQT_ListButtonMixin:UpdateTime()
 
 	-- Updating time changes its size so we need to make sure everything on the bottom row shifts with it
 	self:GetBottomRow():Layout();
+
+	self:ClearTimer();
+	local showingSecondary = WQT_Utils:GetSetting("list", "fullTime");
+	local timerInterval = WQT_Utils:TimeLeftToUpdateTime(seconds, showingSecondary);
+	if (timerInterval > 0) then
+		self.timer = C_Timer.NewTimer(timerInterval, function() self:UpdateTime() end);
+	end
 
 	return seconds;
 end
@@ -1019,7 +1018,6 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	end
 	
 	self:Show();
-	self.updateInterval = 1;
 	self.questInfo = questInfo;
 	self.questID = questInfo.questID;
 	local isDisliked = questInfo:IsDisliked();

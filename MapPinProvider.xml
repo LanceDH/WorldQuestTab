@@ -166,10 +166,5 @@
 				<Alpha parentKey="Alpha" Duration="0.1" />
 			</AnimationGroup>
 		</Animations>
-
-		<Scripts>
-			<OnLoad method="OnLoad" />
-			<OnUpdate method="OnUpdate" />
-		</Scripts>
 	</Frame>
 </Ui>

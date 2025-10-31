@@ -475,7 +475,7 @@ _V["SETTING_LIST"] = {
 	,{["template"] = "WQT_SettingDropDownTemplate", ["categoryID"] = "GENERAL", ["label"] = _L["ZONE_QUESTS"], ["tooltip"] = _L["ZONE_QUESTS_TT"], ["options"] = _V["ZONE_QUESTS_LABELS"]
 			, ["valueChangedFunc"] = function(value)
 				WQT.settings.general.zoneQuests = value;
-				EventRegistry:TriggerEvent("WQT.RequestUpdate");
+				EventRegistry:TriggerEvent("WQT.RequestDataUpdate");
 			end
 			,["getValueFunc"] = function() return WQT.settings.general.zoneQuests end
 			,["isNew"] = true -- 11.2.5
@@ -1533,6 +1533,7 @@ local patchNotes = {
 			["changes"] = {
 				"Combined the Always All Quests setting into the new Zone Quests setting";
 				"Re-added an icon to make it easier to spot new or changed settings";
+				"Lowered CPU usage when nothing is going on. Not that it was needed, but might as well.";
 			};
 		};
 		{["version"] = "11.2.07";
