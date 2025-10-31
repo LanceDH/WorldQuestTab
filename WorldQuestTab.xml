@@ -534,13 +534,13 @@
 				<Texture parentKey="Icon" atlas="Worldquest-icon" parentArray="Icons">
 					<Size x="20" y="20"/> 
 					<Anchors>
-						<Anchor point="RIGHT" x="-9" y="0"/>
+						<Anchor point="LEFT" x="9" y="0"/>
 					</Anchors>
 				</Texture>
 				<Texture parentKey="Arrow" atlas="common-icon-forwardarrow" parentArray="Icons">
 					<Size x="10" y="14"/> 
 					<Anchors>
-						<Anchor point="LEFT" x="9" y="0"/>
+						<Anchor point="RIGHT" x="-9" y="0"/>
 					</Anchors>
 				</Texture>
 			</Layer>

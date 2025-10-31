@@ -190,7 +190,7 @@ end
 
 function WQT_ContainerButtonMixin:OnEnter()
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip:SetText(WQT_WORLD_QUEST_TAB, 1, 1, 1, true);
+	GameTooltip:SetText(WQT_WORLD_QUEST_TAB);
 	GameTooltip:Show();
 end
 
