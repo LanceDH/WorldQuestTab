@@ -69,6 +69,14 @@ function WQT_CallingsBoardMixin:OnLoad()
 			self:OnMapChanged(WorldMapFrame:GetMapID());
 		end)
 		
+	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
+		function(_, categoryID, tag)
+			if (tag == "CALLINGS_BOARD") then
+				self:UpdateVisibility();
+			end
+		end,
+		self);
+	
 	self:RequestUpdate();
 end
 

@@ -53,7 +53,7 @@ end
 
 local function FilterTypesGeneralOnClick(data)
 	WQT:SetAllFilterTo(data.type, data.value, data.maskFunc);
-	EventRegistry:TriggerEvent("WQT.FiltersUpdated");
+	WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
 	return MenuResponse.Refresh;
 end
 
@@ -77,7 +77,7 @@ local function GenericFilterOnSelect(data)
 	if (refreshPins) then
 		WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
 	end
-	EventRegistry:TriggerEvent("WQT.FiltersUpdated");
+	WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
 end
 
 local function ShowDisabledFilterTooltip(self)
@@ -162,7 +162,7 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 		end
 		local function OtherFactionsOnSelect()
 			factionFilters.misc.other = not factionFilters.misc.other;
-			EventRegistry:TriggerEvent("WQT.FiltersUpdated");
+			WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
 		end
 		local cb = factionsSubmenu:CreateCheckbox(OTHER, OtherFactionsChecked, OtherFactionsOnSelect);
 
@@ -172,7 +172,7 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 		end
 		local function NoFactionOnSelect()
 			factionFilters.misc.none = not factionFilters.misc.none;
-			EventRegistry:TriggerEvent("WQT.FiltersUpdated");
+			WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
 		end
 		factionsSubmenu:CreateCheckbox(_L["NO_FACTION"], NoFactionChecked, NoFactionOnSelect);
 
@@ -210,7 +210,7 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 
 	local function DDUninterededOnSelect()
 		WQT.settings.general.showDisliked = not WQT.settings.general.showDisliked;
-		EventRegistry:TriggerEvent("WQT.FiltersUpdated");
+		WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
 	end
 	local uninterestedCB = rootDescription:CreateCheckbox(_L["UNINTERESTED"], DDUninterededChecked, DDUninterededOnSelect);
 	AddBasicTooltipFunctionsToDropdownItem(uninterestedCB, _L["UNINTERESTED"], _L["UNINTERESTED_TT"]);
@@ -224,7 +224,7 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 		local value = not WQT.settings.general.emissaryOnly;
 		WQT_WorldQuestFrame.autoEmisarryId = nil;
 		WQT.settings.general.emissaryOnly = value;
-		EventRegistry:TriggerEvent("WQT.FiltersUpdated");
+		WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
 
 		-- If we turn it off, remove the auto set as well
 		if not value then
@@ -457,7 +457,7 @@ end
 function WQT:Sort_OnClick(self, category)
 	if ( category and WQT.settings.general.sortBy ~= category ) then
 		WQT.settings.general.sortBy = category;
-		EventRegistry:TriggerEvent("WQT.SortUpdated");
+		WQT_CallbackRegistry:TriggerEvent("WQT.SortUpdated");
 	end
 end
 
@@ -1137,7 +1137,7 @@ end
 WQT_ScrollListMixin = {};
 
 function WQT_ScrollListMixin:OnLoad()
-	EventRegistry:RegisterCallback(
+	WQT_CallbackRegistry:RegisterCallback(
 		"WQT.DataProvider.ProgressUpdated"
 		,function(_, progress)
 				CooldownFrame_SetDisplayAsPercentage(self.ProgressBar, progress);
@@ -1146,6 +1146,23 @@ function WQT_ScrollListMixin:OnLoad()
 				end
 			end
 		, self);
+
+	WQT_CallbackRegistry:RegisterCallback(
+		"WQT.DataProvider.FilteredListUpdated"
+		,function()
+				self:UpdateQuestList();
+			end
+		, self);
+
+	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
+		function(_, categoryID, tag)
+			if (categoryID == "QUESTLIST" 
+				or tag == "BOUNTY_SELECTED_ONLY"
+				or tag == "PRECISE_FILTERS") then
+				self:DisplayQuestList();
+			end
+		end,
+		self);
 end
 
 function WQT_ScrollListMixin:UpdateFilterDisplay()
@@ -1238,7 +1255,7 @@ function WQT_ScrollListMixin:UpdateBackground()
 		WQT_ListContainer.Background:SetAtlas("QuestLog-main-background", true);
 	end
 
-	EventRegistry:TriggerEvent("WQT.ScrollList.BackgroundUpdated");
+	WQT_CallbackRegistry:TriggerEvent("WQT.ScrollList.BackgroundUpdated");
 end
 
 function WQT_ScrollListMixin:ScrollFrameSetEnabled(enabled)
@@ -1482,13 +1499,6 @@ function WQT_CoreMixin:OnLoad()
 	-- Hide the little detail at the top of the frame, it blocks our view. Thanks for making that a separate texture
 	WQT_ListContainer.BorderFrame.TopDetail:Hide();
 
-	EventRegistry:RegisterCallback(
-		"WQT.DataProvider.FilteredListUpdated"
-		,function()
-				self.ScrollFrame:UpdateQuestList(); 
-			end
-		, self);
-
 	self.ExternalEvents = {};
 	-- Events
 	self:RegisterEvent("PLAYER_REGEN_DISABLED");
@@ -1506,13 +1516,27 @@ function WQT_CoreMixin:OnLoad()
 				WQT:debugPrint("WQT missing function for:",event);
 			end 
 
-			EventRegistry:TriggerEvent("WQT.RegisterdEventTriggered", event, ...);
+			WQT_CallbackRegistry:TriggerEvent("WQT.RegisterdEventTriggered", event, ...);
 		end)
 
 	-- Slashcommands
 	SLASH_WQTSLASH1 = '/wqt';
 	SLASH_WQTSLASH2 = '/worldquesttab';
 	SlashCmdList["WQTSLASH"] = slashcmd
+
+
+	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
+		function(_, categoryID, tag)
+			if (categoryID == "PROFILES") then
+				self:ApplyAllSettings();
+			elseif (tag == "BOUNTY_COUNTER") then
+				self:UpdateBountyCounters();
+				self:RepositionBountyTabs();
+			elseif (tag == "BOUNTY_REWARD") then
+				self:UpdateBountyCounters();
+			end
+		end,
+		self);
 	
 	--
 	-- Function hooks
@@ -1742,7 +1766,7 @@ function WQT_CoreMixin:FilterClearButtonOnClick()
 	
 	WQT.settings.general.showDisliked = true;
 	
-	EventRegistry:TriggerEvent("WQT.FiltersUpdated");
+	WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
 end
 
 function WQT_CoreMixin:UnhookEvent(event, func)
@@ -1877,7 +1901,7 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 
 	WQT_WorldMapContainer:SetShown(showMapContainer);
 
-	EventRegistry:TriggerEvent("WQT.CoreFrame.AnchorUpdated", anchor);
+	WQT_CallbackRegistry:TriggerEvent("WQT.CoreFrame.AnchorUpdated", anchor);
 end
 
 function WQT_CoreMixin:LoadExternal(external)

@@ -160,8 +160,8 @@ function TomTomExternal:Init(utils)
 	_activeSettings = WQT_Utils:RegisterExternalSettings("TomTom", _defaultSettings);
 	WQT_Utils:AddExternalSettingsOptions(_settings);
 
-	EventRegistry:RegisterCallback("WQT.QuestContextSetup", AddTomTomToQuestContext, self);
-	EventRegistry:RegisterCallback("WQT.RegisterdEventTriggered", EventTriggered, self);
+	WQT_CallbackRegistry:RegisterCallback("WQT.QuestContextSetup", AddTomTomToQuestContext, self);
+	WQT_CallbackRegistry:RegisterCallback("WQT.RegisterdEventTriggered", EventTriggered, self);
 end
 
 WQT_WorldQuestFrame:LoadExternal(TomTomExternal);

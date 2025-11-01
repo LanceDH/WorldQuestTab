@@ -43,6 +43,9 @@ function WQT_SettingsBaseMixin:Init(data)
 	self.suggestReload = data.suggestReload;
 	self.valueChangedFunc = data.valueChangedFunc;
 	self.isDisabled = data.isDisabled;
+	self.categoryID = data.categoryID;
+	self.tag = data.tag;
+
 	if (self.Label) then
 		self.Label:SetText(data.label);
 	end
@@ -78,6 +81,8 @@ function WQT_SettingsBaseMixin:OnValueChanged(value, userInput, ...)
 			self.valueChangedFunc(value, ...);
 		end
 		self.parentFrame:UpdateList();
+
+		WQT_CallbackRegistry:TriggerEvent("WQT.SettingChanged", self.categoryID, self.tag);
 	end
 end
 

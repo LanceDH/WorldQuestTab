@@ -520,9 +520,17 @@ function WQT_DataProvider:Init()
 		questsActive = {},
 	};
 	
-	EventRegistry:RegisterCallback("WQT.FiltersUpdated" ,function() self:RequestFilterUpdate(); end, self);
-	EventRegistry:RegisterCallback("WQT.SortUpdated" ,function() self:RequestFilterUpdate(); end, self);
-	EventRegistry:RegisterCallback("WQT.RequestDataUpdate" ,function() self:RequestDataUpdate(); end, self);
+	WQT_CallbackRegistry:RegisterCallback("WQT.FiltersUpdated", function() self:RequestFilterUpdate(); end, self);
+	WQT_CallbackRegistry:RegisterCallback("WQT.SortUpdated", function() self:RequestFilterUpdate(); end, self);
+	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
+		function(_, _, tag)
+			if (tag == "GENERAL_ZONE_QUESTS") then
+				self:RequestDataUpdate();
+			elseif (tag == "GENERAL_GENERIC_ANIMA") then
+				self:ReloadQuestRewards();
+			end
+		end,
+		self);
 
 	-- Needed to trigger update in full screen map
 	EventRegistry:RegisterCallback(
@@ -686,11 +694,11 @@ function WQT_DataProvider:OnUpdate(elapsed)
 
 			self.zoneLoading.startTimestamp = 0;
 			progress = 0;
-			EventRegistry:TriggerEvent("WQT.DataProvider.QuestsLoaded");
+			WQT_CallbackRegistry:TriggerEvent("WQT.DataProvider.QuestsLoaded");
 			self.shouldUpdateFiltedList = true;
 		end
 
-		EventRegistry:TriggerEvent("WQT.DataProvider.ProgressUpdated", progress);
+		WQT_CallbackRegistry:TriggerEvent("WQT.DataProvider.ProgressUpdated", progress);
 	end
 
 	if (self.shouldUpdateFiltedList) then
@@ -727,7 +735,7 @@ function WQT_DataProvider:FilterAndSortQuestList()
 	local sortOption =  WQT.settings.general.sortBy;
 	table.sort(list, function (a, b) return SortQuestList(a, b, sortOption); end);
 
-	EventRegistry:TriggerEvent("WQT.DataProvider.FilteredListUpdated");
+	WQT_CallbackRegistry:TriggerEvent("WQT.DataProvider.FilteredListUpdated");
 end
 
 function WQT_DataProvider:ClearData()

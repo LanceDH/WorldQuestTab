@@ -135,9 +135,64 @@ end
 -- Debug Panel
 ------------------------
 
+local function GetPayloadString(payload)
+	if (payload == nil or not type(payload) == "table" or #payload == 0) then
+		return "";
+	end
+	local args = {};
+
+	for k, v in ipairs(payload) do
+		table.insert(args, tostring(v));
+	end
+
+	return table.concat(args, ", ");
+end
+
+local function FormatTimeStamp(timestamp)
+	local units = ConvertSecondsToUnits(timestamp);
+	local seconds = units.seconds + units.milliseconds;
+	if units.hours > 0 then
+		return string.format("%.2d:%.2d:%06.3fs", units.hours, units.minutes, seconds);
+	else
+		return string.format("%.2d:%06.3fs", units.minutes, seconds);
+	end
+end
+
+local function InitCallbackEntry(frame, data)
+	frame.Timestamp:SetText(FormatTimeStamp(data.timestamp));
+	frame.EventName:SetText(data.eventName);
+	frame.Arguments:SetText(GetPayloadString(data.eventPayload));
+end
+
+local function ApplyAlternateState(frame, alternate)
+	frame.BG:SetAlpha(alternate and 0.0 or 0.05);
+end
+
 WQT_DevMixin = {};
 
-function WQT_DevMixin:OnLoad()
+function WQT_DevMixin:TAXIMAP_OPENED()
+	self.flightMapID:SetText(string.format("FlightMap: %s", FlightMapFrame.mapID or 0));
+end
+
+function WQT_DevMixin:OnShow()
+	self:Layout();
+
+	if (self.initialized) then return; end
+	self.initialized = true;
+
+	local view = CreateScrollBoxListLinearView();
+	view:SetElementInitializer("WQT_CallbackEntryTemplate", function(frame, data)
+		InitCallbackEntry(frame, data);
+	end);
+	ScrollUtil.InitScrollBoxListWithScrollBar(self.ScrollBox, self.ScrollBar, view);
+
+	self.callbackDataProvider = CreateDataProvider();
+	self.ScrollBox:SetDataProvider(self.callbackDataProvider, ScrollBoxConstants);
+
+	ScrollUtil.RegisterAlternateRowBehavior(self.ScrollBox, ApplyAlternateState);
+
+	self:SetScript("OnUpdate", function() self:OnUpdate(); end);
+
 	self:RegisterEvent("TAXIMAP_OPENED");
 
 	self:SetScript("OnEvent", function(self, event, ...)
@@ -151,10 +206,21 @@ function WQT_DevMixin:OnLoad()
 			self.worldMapID:SetText(string.format("WorldMap: %s", WorldMapFrame.mapID or 0));
 		end, 
 		self);
-end
 
-function WQT_DevMixin:TAXIMAP_OPENED()
-	self.flightMapID:SetText(string.format("FlightMap: %s", FlightMapFrame.mapID or 0));
+	hooksecurefunc(WQT_CallbackRegistry, "TriggerEvent", function(registry, event, ...)
+		local wasAtEnd = self.ScrollBox:IsAtEnd();
+		local hadScroll = self.ScrollBox:HasScrollableExtent();
+
+		local data = {};
+		data.timestamp = GetTime();
+		data.eventName = event;
+		data.eventPayload = {...};
+		self.callbackDataProvider:Insert(data);
+
+		if (wasAtEnd or (not hadScroll and self.ScrollBox:HasScrollableExtent())) then
+			self.ScrollBox:ScrollToEnd();
+		end
+	end);
 end
 
 function WQT_DevMixin:OnUpdate()

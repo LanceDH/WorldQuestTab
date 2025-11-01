@@ -6,18 +6,70 @@
 	
 	<GameTooltip name="WQT_DebugTooltip" frameStrata="TOOLTIP" hidden="true" parent="UIParent" inherits="GameTooltipTemplate"/>
 
-	<Frame name="WQT_DevFrame" parent="UIParent" mixin="WQT_DevMixin" movable="true" enableMouse="true" toplevel="true" frameStrata="MEDIUM" hidden="true">
+ 	<Frame name="WQT_CallbackEntryTemplate" virtual="true">
+		<Size y="16"/>
+		<Anchors>
+			<Anchor point="LEFT" x="0" y="0" />
+			<Anchor point="RIGHT" x="0" y="0" />
+		</Anchors>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="BG" alpha="0.3" alphaMode="ADD">
+					<Color r="1" g="1" b="1"/>
+				</Texture>
+			</Layer>
+
+			<Layer level="ARTWORK">
+				<FontString parentKey="Timestamp" inherits="SystemFont_NamePlate" justifyH="LEFT" text="Text" hidden="true">
+					<Size y="10" />
+					<Anchors>
+						<Anchor point="LEFT" x="4" y="0"/>
+					</Anchors>
+				</FontString>
+
+				<FontString parentKey="EventName" inherits="SystemFont_NamePlate" justifyH="LEFT" text="Text">
+					<Size y="10" />
+					<Anchors>
+						<Anchor point="LEFT" x="4" y="0"/>
+					</Anchors>
+				</FontString>
+
+				<FontString parentKey="Arguments" inherits="SystemFont_NamePlate" justifyH="LEFT" text="Text">
+					<Size y="10" />
+					<Anchors>
+						<Anchor point="LEFT" relativeKey="$parent.EventName" relativePoint="RIGHT" x="6" y="0"/>
+					</Anchors>
+					<Color r="1.0" g="0.82" b="0"/>
+				</FontString>
+			</Layer>
+		</Layers>
+	</Frame>
+
+	<Frame name="WQT_DevFrame" parent="UIParent" inherits="VerticalLayoutFrame" mixin="WQT_DevMixin" 
+		movable="true" enableMouse="true" toplevel="true" frameStrata="MEDIUM" hidden="true">
 		<Size x="200" y="100"/>
 		<Anchors>
 			<Anchor point="CENTER" x="300" />
 		</Anchors>
+		<KeyValues>
+			<KeyValue key="fixedWidth" type="number" value="200"/>
+			<KeyValue key="topPadding" type="number" value="10"/>
+			<KeyValue key="bottomPadding" type="number" value="10"/>
+			<KeyValue key="leftPadding" type="number" value="10"/>
+			<KeyValue key="rightPadding" type="number" value="10"/>
+		</KeyValues>
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture atlas="auctionhouse-background-sell-right" alpha="0.5" />
+				<Texture alpha="0.5">
+					<Color r="0" g="0" b="0"/>
+				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
 				<FontString parentKey="worldMapID" inherits="GameFontHighlight" justifyH="LEFT" text="WorldMap:">
 					<Size y="12" />
+					<KeyValues>
+						<KeyValue key="layoutIndex"  type="number" value="1"/>
+					</KeyValues>
 					<Anchors>
 						<Anchor point="TOPLEFT" x="4" y="-4"/>
 						<Anchor point="RIGHT" x="-4"/>
@@ -25,6 +77,9 @@
 				</FontString>
 				<FontString parentKey="worldMapMousePos" inherits="GameFontHighlight" justifyH="LEFT" text="WorldMapMouse:">
 					<Size y="12" />
+					<KeyValues>
+						<KeyValue key="layoutIndex"  type="number" value="2"/>
+					</KeyValues>
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.worldMapID" relativePoint="BOTTOMLEFT" y="-4"/>
 						<Anchor point="RIGHT" relativeKey="$parent.worldMapID" />
@@ -32,6 +87,9 @@
 				</FontString>
 				<FontString parentKey="flightMapID" inherits="GameFontHighlight" justifyH="LEFT" text="FlightMap:">
 					<Size y="12" />
+					<KeyValues>
+						<KeyValue key="layoutIndex"  type="number" value="3"/>
+					</KeyValues>
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.worldMapMousePos" relativePoint="BOTTOMLEFT" y="-4"/>
 						<Anchor point="RIGHT" relativeKey="$parent.worldMapMousePos" />
@@ -58,11 +116,30 @@
 					</OnClick>
 				</Scripts>
 			</Button>
+
+			<Frame parentKey="ScrollBox" inherits="WowScrollBoxList" frameStrata="HIGH">
+				<Size x="400" y="300"/>
+				<Anchors> 
+					<Anchor point="TOPLEFT" relativePoint="BOTTOMLEFT" y="-4"/>
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture alpha="0.7">
+							<Color r="0" g="0" b="0"/>
+						</Texture>
+					</Layer>
+				</Layers>
+			</Frame>
+			<EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.ScrollBox" relativePoint="TOPRIGHT" x="4" />
+					<Anchor point="BOTTOMLEFT" relativeKey="$parent.ScrollBox" relativePoint="BOTTOMRIGHT" x="4" />
+				</Anchors>
+			</EventFrame>
 		</Frames>
 
 		<Scripts>
-			<OnLoad method="OnLoad" /> 
-			<OnUpdate method="OnUpdate" /> 
+			<OnShow method="OnShow" /> 
 		</Scripts>
 	</Frame>
  </Ui>

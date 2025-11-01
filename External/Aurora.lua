@@ -14,7 +14,7 @@ function AuroraExternal:GetName()
 end
 
 function AuroraExternal:Init(utils)
-	EventRegistry:RegisterCallback("WQT.ScrollList.BackgroundUpdated", BackgroundUpdated, self);
+	WQT_CallbackRegistry:RegisterCallback("WQT.ScrollList.BackgroundUpdated", BackgroundUpdated, self);
 
 	WQT_FlightMapContainerBg:SetColorTexture(0,0,0,0.75);
 end

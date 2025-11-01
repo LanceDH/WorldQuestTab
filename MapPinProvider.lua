@@ -154,11 +154,19 @@ function WQT_PinDataProvider:Init()
 	self.pingedQuests = {};
 	self.hookedCanvasChanges = {};
 
-	EventRegistry:RegisterCallback(
+	WQT_CallbackRegistry:RegisterCallback(
 		"WQT.DataProvider.FilteredListUpdated",
 		function()
 				self:RefreshAllData();
 			end,
+		self);
+
+	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
+		function(_, categoryID)
+			if (categoryID == "MAPPINS") then
+				self:RefreshAllData();
+			end
+		end,
 		self);
 
 	-- Remove pins on changing map. Quest info being processed will trigger showing them if they are needed.
@@ -170,7 +178,7 @@ function WQT_PinDataProvider:Init()
 			end,
 		self);
 
-	EventRegistry:RegisterCallback(
+	WQT_CallbackRegistry:RegisterCallback(
 		"WQT.MapButton.HidePins",
 		function(callback, hidePins)
 				if (self.hidePinsByMapButton == hidePins) then return; end
@@ -978,7 +986,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self:UpdateVisuals();
 	self:UpdatePinTime();
 
-	EventRegistry:TriggerEvent("WQT.MapPinProvider.PinInitialized", self);
+	WQT_CallbackRegistry:TriggerEvent("WQT.MapPinProvider.PinInitialized", self);
 end
 
 function WQT_PinMixin:UpdateVisuals()
