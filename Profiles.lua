@@ -6,6 +6,7 @@ local WQT_Utils = addon.WQT_Utils;
 local WQT_Profiles = addon.WQT_Profiles;
 
 local _profileReferenceList = {};
+local OLD_VERSION_SETTINGS_CUTOFF = 110000;
 
 local function ReferenceListSort(a, b)
 	-- Default always on top, and in case of duplicate labels
@@ -101,9 +102,11 @@ local function AddProfileToReferenceList(id, name)
 end
 
 local function ApplyVersionChanges(profile, version)
-	if (version < 80304) then
-		profile.pin.numRewardIcons = profile.pin.rewardTypeIcon and 1 or 0;
-		profile.pin.rewardTypeIcon = nil;
+	if (version < 110101) then
+		-- Reworded or removed features
+		WQT.db.global.fullScreenButtonPos = nil;
+		WQT.db.global.general.useLFGButtons = nil;
+		WQT.db.global.general.filterPasses = nil;
 	end
 
 	if (version < 110206) then
@@ -148,7 +151,11 @@ function WQT_Profiles:InitSettings()
 
 	local settingVersion = WQT_Utils:GetSettingsVersion();
 	for id, profile in pairs(WQT.db.global.profiles) do
-		ApplyVersionChanges(profile, settingVersion);
+		if (settingVersion < OLD_VERSION_SETTINGS_CUTOFF) then
+			self:ResetProfile(profile);
+		else
+			ApplyVersionChanges(profile, settingVersion);
+		end
 		AddProfileToReferenceList(id, profile.name);
 	end
 
@@ -372,27 +379,31 @@ function WQT_Profiles:ClearDefaultsFromActive()
 end
 
 function WQT_Profiles:ResetActive()
+	self:ResetProfile(WQT.settings);
+end
+
+function WQT_Profiles:ResetProfile(profile)
 	local category = "general";
-	wipe(WQT.settings[category]);
-	WQT.settings[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
+	wipe(profile[category]);
+	profile[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
 	category = "list";
-	wipe(WQT.settings[category]);
-	WQT.settings[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
+	wipe(profile[category]);
+	profile[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
 	category = "pin";
-	wipe(WQT.settings[category]);
-	WQT.settings[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
+	wipe(profile[category]);
+	profile[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
 	category = "filters";
-	wipe(WQT.settings[category]);
-	WQT.settings[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
+	wipe(profile[category]);
+	profile[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
 	category = "colors";
-	wipe(WQT.settings[category]);
-	WQT.settings[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
+	wipe(profile[category]);
+	profile[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
 	
 	-- Make sure our colors are up to date
 	WQT_Utils:LoadColors();
 	
 	--External
-	local externals = WQT.settings.external;
+	local externals = profile.external;
 	for external, settings in pairs(self.externalDefaults) do
 		if (externals[external]) then
 			wipe(externals[external]);

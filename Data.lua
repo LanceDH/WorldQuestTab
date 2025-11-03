@@ -1331,7 +1331,7 @@ _V["WQT_FILTER_TO_OFFICIAL"] = {
 
 _V["WQT_DEFAULTS"] = {
 	global = {
-		versionCheck = "";
+		versionCheck = 1;
 		updateSeen = false;
 		
 		["colors"] = {
