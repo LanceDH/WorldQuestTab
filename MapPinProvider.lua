@@ -163,7 +163,8 @@ function WQT_PinDataProvider:Init()
 
 	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
 		function(_, categoryID)
-			if (categoryID == "MAPPINS") then
+			if (categoryID == "MAPPINS"
+				or categoryID == "MAPPINS_MINIICONS") then
 				self:RefreshAllData();
 			end
 		end,
@@ -419,6 +420,7 @@ end
 function WQT_PinDataProvider:UpdateAllVisuals()
 	for pin in self.pinPool:EnumerateActive() do
 		pin:UpdateVisuals();
+		pin:UpdatePinTime();
 	end
 end
 
