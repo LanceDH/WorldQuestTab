@@ -45,6 +45,53 @@
 		</Layers>
 	</Frame>
 
+	<Frame name="DebugTest1" virtual="true">
+		<Size y="16"/>
+		<Anchors>
+			<Anchor point="LEFT" x="0" y="0" />
+			<Anchor point="RIGHT" x="0" y="0" />
+		</Anchors>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="BG" alpha="0.3" alphaMode="ADD">
+					<Color r="0" g="1" b="0"/>
+				</Texture>
+			</Layer>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Timestamp" inherits="SystemFont_NamePlate" justifyH="LEFT" text="Test 1">
+					<Size y="10" />
+					<Anchors>
+						<Anchor point="LEFT" x="4" y="0"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+	</Frame>
+
+	<Frame name="DebugTest2" virtual="true">
+		<Size y="30"/>
+		<Anchors>
+			<Anchor point="LEFT" x="0" y="0" />
+			<Anchor point="RIGHT" x="0" y="0" />
+		</Anchors>
+		<Layers>
+			<Layer level="BACKGROUND">
+			<Texture parentKey="BG" alpha="0.3" alphaMode="ADD">
+				<Color r="1" g="0" b="0"/>
+			</Texture>
+			
+			</Layer>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Timestamp" inherits="SystemFont_NamePlate" justifyH="LEFT" text="Test 2">
+					<Size y="10" />
+					<Anchors>
+						<Anchor point="LEFT" x="4" y="0"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+	</Frame>
+
 	<Frame name="WQT_DevFrame" parent="UIParent" inherits="VerticalLayoutFrame" mixin="WQT_DevMixin" 
 		movable="true" enableMouse="true" toplevel="true" frameStrata="MEDIUM" hidden="true">
 		<Size x="200" y="100"/>
@@ -134,6 +181,26 @@
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeKey="$parent.ScrollBox" relativePoint="TOPRIGHT" x="4" />
 					<Anchor point="BOTTOMLEFT" relativeKey="$parent.ScrollBox" relativePoint="BOTTOMRIGHT" x="4" />
+				</Anchors>
+			</EventFrame>
+
+			<Frame parentKey="ScrollBox2" inherits="WowScrollBoxList" frameStrata="HIGH">
+				<Size x="300" y="600"/>
+				<Anchors> 
+					<Anchor point="TOPRIGHT" relativePoint="TOPLEFT" x="-16"/>
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture alpha="0.7">
+							<Color r="0" g="0" b="0"/>
+						</Texture>
+					</Layer>
+				</Layers>
+			</Frame>
+			<EventFrame parentKey="ScrollBar2" inherits="MinimalScrollBar" frameStrata="HIGH">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.ScrollBox2" relativePoint="TOPRIGHT" x="4" />
+					<Anchor point="BOTTOMLEFT" relativeKey="$parent.ScrollBox2" relativePoint="BOTTOMRIGHT" x="4" />
 				</Anchors>
 			</EventFrame>
 		</Frames>

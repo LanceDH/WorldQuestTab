@@ -545,14 +545,14 @@ function WQT:OnEnable()
 	WQT_WorldQuestFrame.tabBeforeAnchor = WQT_WorldQuestFrame.selectedTab;
 	
 	-- Quest list scroll
-	local view = CreateScrollBoxListLinearView();
+	local view = CreateScrollBoxListLinearView(2, 4, 2, 2);
 	view:SetElementInitializer("WQT_QuestTemplate", function(button, elementData)
 		InitQuestButton(button, elementData);
 	end);
 	ScrollUtil.InitScrollBoxListWithScrollBar(WQT_ListContainer.QuestScrollBox, WQT_ListContainer.ScrollBar, view);
 
 	-- Load settings
-	WQT_SettingsFrame:Init(_V["SETTING_CATEGORIES"], _V["SETTING_LIST"]);
+	WQT_SettingsFrame:Init();
 	
 	WQT_Utils:LoadColors();
 	
@@ -571,8 +571,6 @@ function WQT:OnEnable()
 		end
 	end
 
-	wipe(_V["SETTING_LIST"]);
-	
 	-- Dropdowns
 	-- We need to do this after settings are available now
 

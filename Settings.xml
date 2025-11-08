@@ -25,16 +25,19 @@
 
 	<Button name="WQT_SettingCategoryTemplate" mixin="WQT_SettingsCategoryMixin" virtual="true">
 		<Size y="34"/>	
+		<KeyValues>
+			<KeyValue key="staticLabelFont" value="true" type="boolean"/>
+		</KeyValues>
 		<Layers>
 			<Layer level="BACKGROUND">
 				<Texture parentKey="BGLeft" atlas="Options_ListExpand_Left" useAtlasSize="true">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="10" y="-2"/>
+						<Anchor point="LEFT" x="10" y="0"/>
 					</Anchors>
 				</Texture>
 				<Texture parentKey="BGRight" atlas="Options_ListExpand_Right" useAtlasSize="true">
 					<Anchors>
-						<Anchor point="TOPRIGHT" x="-10" y="-2"/>
+						<Anchor point="RIGHT" x="-10" y="0"/>
 					</Anchors>
 				</Texture>
 				<Texture parentKey="BGMiddle" atlas="_Options_ListExpand_Middle" horizTile="true">
@@ -46,26 +49,26 @@
 			</Layer>
 			
 			<Layer level="ARTWORK">
-				<FontString parentKey="Title" inherits="GameFontHighlight" maxLines="1" justifyH="CENTER" text="testing">
+				<FontString parentKey="Label" inherits="GameFontNormalMed1" maxLines="1" justifyH="CENTER">
 					<Anchors>
-						<Anchor point="LEFT" x="30" y="2"/>
-						<Anchor point="RIGHT" x="-30" y="2"/>
+						<Anchor point="LEFT" x="30" y="0"/>
+						<Anchor point="RIGHT" x="-30" y="0"/>
 					</Anchors>
 				</FontString>
 			</Layer>
 			
 			<Layer level="HIGHLIGHT">
-				<Texture parentKey="HighlightLeft" atlas="Section_Expand_glowing_Left" useAtlasSize="true">
+				<Texture parentKey="HighlightLeft" atlas="Section_Expand_glowing_Left" useAtlasSize="true" alpha="0.7">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="10" y="-3"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.BGLeft" y="-1"/>
 					</Anchors>
 				</Texture>
-				<Texture parentKey="HighlightRight" atlas="Section_Expand_glowing_right" useAtlasSize="true">
+				<Texture parentKey="HighlightRight" atlas="Section_Expand_glowing_right" useAtlasSize="true" alpha="0.7">
 					<Anchors>
-						<Anchor point="TOPRIGHT" x="-10" y="-3"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.BGRight" y="-1"/>
 					</Anchors>
 				</Texture>
-				<Texture parentKey="HighlightMiddle" atlas="Section_Expand_glowing_middle" horizTile="true">
+				<Texture parentKey="HighlightMiddle" atlas="Section_Expand_glowing_middle" horizTile="true" alpha="0.7">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.HighlightLeft" relativePoint="TOPRIGHT"/>
 						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.HighlightRight" relativePoint="BOTTOMLEFT"/>
@@ -82,13 +85,13 @@
 	</Button>
 	
 	<Button name="WQT_SettingSubCategoryTemplate" mixin="WQT_SettingsCategoryMixin" virtual="true">
-		<Size y="34"/>	
+		<Size y="36"/>	
 		<KeyValues>
 			<KeyValue key="staticLabelFont" value="true" type="boolean"/>
 		</KeyValues>
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="Background" atlas="UI-Frame-Mechagon-DisableSubtitle" useAtlasSize="true" alpha="0.5">
+				<Texture parentKey="Background" atlas="UI-Frame-Dragonflight-Subtitle" useAtlasSize="true" alpha="0.5">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="15" y="-6"/>
 						<Anchor point="BOTTOMRIGHT" x="-15" y="6"/>
@@ -96,7 +99,7 @@
 				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
-				<FontString parentKey="Title" inherits="GameFontHighlight" maxLines="1" justifyH="CENTER">
+				<FontString parentKey="Label" inherits="GameFontHighlight" maxLines="1" justifyH="CENTER">
 					<Anchors>
 						<Anchor point="LEFT" x="15" y="1"/>
 						<Anchor point="RIGHT" x="-15" y="1"/>
@@ -109,10 +112,10 @@
 				</Texture>
 			</Layer>
 			<Layer level="HIGHLIGHT">
-				<Texture parentKey="Highlight" atlas="UI-Frame-Mechagon-Subtitle" alphaMode="ADD" alpha="0.5">
+				<Texture parentKey="Highlight" atlas="UI-Frame-Dragonflight-Subtitle" alphaMode="ADD" alpha="0.3">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="15" y="-6"/>
-						<Anchor point="BOTTOMRIGHT" x="-15" y="6"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.Background"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Background"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -124,8 +127,8 @@
 			</OnClick>
 		</Scripts>
 	</Button>
-	
-	<Frame name="WQT_SettingsQuestListPreview" mixin="WQT_SettingsQuestListMixin" hidden="true">
+
+	<Frame name="WQT_SettingsQuestListPreviewTemplate" mixin="WQT_SettingsQuestListMixin" virtual="true">
 		<Size y="36"/>	
 		<Frames>
 			<Button parentKey="Preview" inherits="WQT_QuestTemplate" enableMouse="false" hidden="false">
@@ -147,12 +150,53 @@
 		</Scripts>
 	</Frame>
 	
-	<Frame name="WQT_SettingCheckboxTemplate" mixin="WQT_SettingsCheckboxMixin" virtual="true">
+	<Frame name="WQT_SettingsBaseTemplate" mixin="WQT_SettingsBaseMixin" virtual="true">
+		<KeyValues>
+			<KeyValue key="tooltipOffsetX" type="number" value="4"/>
+			<KeyValue key="tooltipOffsetY" type="number" value="-20"/>
+		</KeyValues>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="BgHighlight" atlas="socialqueuing-row-select" alphaMode="ADD" alpha="0.1" hidden="true"/>
+			</Layer>
+		</Layers>
+
+		<Frames>
+			<Frame parentKey="DisabledOverlay" inherits="WQT_SettingsChildTemplate" setAllPoints="true" hidden="true"/>
+			<Frame parentKey="NewFeature" inherits="WQT_NewIconTemplate" hidden="true">
+				<Anchors>
+					<Anchor point="LEFT" x="16" y="-1"/>
+				</Anchors>
+			</Frame>
+		</Frames>
+
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+			<OnEnter>
+				self:OnEnter(self);
+			</OnEnter>
+			<OnLeave>
+				self:OnLeave();
+			</OnLeave>
+		</Scripts>
+	</Frame>
+
+	<Frame name="WQT_SettingsChildTemplate" virtual="true">
+		<Scripts>
+			<OnEnter>
+					self.parent:OnEnter(self.parent);
+			</OnEnter>
+			<OnLeave>
+					self.parent:OnLeave();
+			</OnLeave>
+		</Scripts>
+	</Frame>
+
+	<Button name="WQT_SettingCheckboxTemplate" inherits="WQT_SettingsBaseTemplate" mixin="WQT_SettingsCheckboxMixin" virtual="true">
 		<Size y="32"/>	
 		<Frames>
-			<CheckButton parentKey="CheckBox">
+			<CheckButton parentKey="CheckBox" inherits="WQT_SettingsChildTemplate" enableMouse="false">
 				<Size x="25" y="25"/>
-				<HitRectInsets right="-150"/>
 				<Anchors>
 					<Anchor point="LEFT" x="40"/>
 				</Anchors>
@@ -161,39 +205,14 @@
 				<CheckedTexture atlas="checkmark-minimal" useAtlasSize="true" />
 				<DisabledCheckedTexture atlas="checkmark-minimal-disabled" useAtlasSize="true" />
 				<Scripts>
-					<OnEnter>
-						self:GetParent():OnEnter(self);
-					</OnEnter>
-					<OnLeave>
-						self:GetParent():OnLeave();
-					</OnLeave>
 					<OnClick>
 						self:GetParent():OnValueChanged(self:GetChecked(), true);
 						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 					</OnClick>
 				</Scripts>
 			</CheckButton>
-			<Frame parentKey="DisabledOverlay">
-				<HitRectInsets right="-150"/>
-				<Anchors>
-					<Anchor point="TOPLEFT" relativeKey="$parent.CheckBox"/>
-					<Anchor point="BOTTOMRIGHT" relativeKey="$parent.CheckBox"/>
-				</Anchors>
-				<Scripts>
-					<OnEnter>
-						self:GetParent():OnEnter(self);
-					</OnEnter>
-					<OnLeave>
-						self:GetParent():OnLeave();
-					</OnLeave>
-				</Scripts>
-			</Frame>
 
-			<Frame parentKey="NewFeature" inherits="WQT_NewIconTemplate" hidden="true">
-				<Anchors>
-					<Anchor point="RIGHT" x="-6" y="0" relativeKey="$parent.CheckBox" relativePoint="LEFT"/>
-				</Anchors>
-			</Frame>
+			
 		</Frames>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -205,10 +224,18 @@
 				</FontString>
 			</Layer>
 		</Layers>
-	</Frame>
+
+		<Scripts>
+			<OnClick>
+				self.CheckBox:SetChecked(not self.CheckBox:GetChecked());
+				self:OnValueChanged(self.CheckBox:GetChecked(), true);
+				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+			</OnClick>
+		</Scripts>
+	</Button>
 	
-	<Frame name="WQT_SettingSliderTemplate" mixin="WQT_SettingsSliderMixin" virtual="true">
-		<Size y="49"/>	
+	<Frame name="WQT_SettingSliderTemplate" inherits="WQT_SettingsBaseTemplate" mixin="WQT_SettingsSliderMixin" virtual="true">
+		<Size y="49"/>
 		<Layers>
 			<Layer level="ARTWORK">
 				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="LEFT">
@@ -228,7 +255,7 @@
 					<Anchor point="RIGHT" x="-80"/>
 				</Anchors>
 			</Frame>
-			<EditBox parentKey="TextBox" inherits="InputBoxTemplate" autoFocus="false">
+			<EditBox parentKey="TextBox" inherits="InputBoxTemplate, WQT_SettingsChildTemplate" autoFocus="false">
 				<Size x="30" y="20"/>
 				<HitRectInsets left="-10"/>
 				<Anchors>
@@ -237,12 +264,6 @@
 				</Anchors>
 				<FontString inherits="NumberFont_Shadow_Small"/>
 				<Scripts>
-					<OnEnter>
-						self:GetParent():OnEnter(self:GetParent().Slider);
-					</OnEnter>
-					<OnLeave>
-						self:GetParent():OnLeave();
-					</OnLeave>
 					<OnEnterPressed>
 						self:ClearFocus();
 					</OnEnterPressed>
@@ -251,42 +272,13 @@
 					</OnEditFocusLost>
 				</Scripts>
 			</EditBox>
-
-			<Frame parentKey="NewFeature" inherits="WQT_NewIconTemplate" hidden="true">
-				<Anchors>
-					<Anchor point="RIGHT" x="-6" y="0" relativeKey="$parent.SliderWithSteppers" relativePoint="LEFT"/>
-				</Anchors>
-			</Frame>
 		</Frames>
 		
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+		</Scripts>
 	</Frame>
 	
-	<Frame name="WQT_SettingSubTitleTemplate" mixin="WQT_SettingsBaseMixin" virtual="true">
-		<Size y="30"/>	
-		<KeyValues>
-			<KeyValue key="staticLabelFont" value="true" type="boolean"/>
-		</KeyValues>
-		<Layers>
-			<Layer level="BACKGROUND">
-				<Texture parentKey="Background" file="Interface\ACHIEVEMENTFRAME\UI-Achievement-RecentHeader" desaturated="true" alpha="0.75">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="15" y="-5"/>
-						<Anchor point="BOTTOMRIGHT" x="-20" y="5"/>
-					</Anchors>
-					<TexCoords bottom="0.75"/>
-				</Texture>
-			</Layer>
-			<Layer level="ARTWORK">
-				<FontString parentKey="Label" inherits="GameFontHighlight" maxLines="1" justifyH="CENTER">
-					<Anchors>
-						<Anchor point="LEFT" x="15" y="2"/>
-						<Anchor point="RIGHT" x="-15" y="2"/>
-					</Anchors>
-				</FontString>
-			</Layer>
-		</Layers>
-	</Frame>
-
 	<Frame name="WQT_SettingTextTemplate" mixin="WQT_SettingsTextMixin" virtual="true">
 		<Size y="30"/>	
 		<KeyValues>
@@ -308,12 +300,10 @@
 	</Frame>
 	
 	
-	<Frame name="WQT_SettingColorTemplate" mixin="WQT_SettingsColorMixin" virtual="true">
+	<Button name="WQT_SettingColorTemplate" inherits="WQT_SettingsBaseTemplate" mixin="WQT_SettingsColorMixin" virtual="true">
 		<Size y="32"/>
-		<HitRectInsets top="3" right="75" bottom="3" left="75"/>
-	
 		<Frames>
-			<Button parentKey="Picker" inherits="UIMenuButtonStretchTemplate">
+			<Button parentKey="Picker" inherits="UIMenuButtonStretchTemplate, WQT_SettingsChildTemplate">
 				<Size x="26" y="26"/>
 				<Anchors>
 					<Anchor point="LEFT" x="42" y="0"/>
@@ -330,12 +320,6 @@
 					</Layer>
 				</Layers>
 				<Scripts>
-					<OnEnter>
-						self:GetParent():OnEnter(self);
-					</OnEnter>
-					<OnLeave>
-						self:GetParent():OnLeave(self);
-					</OnLeave>
 					<OnClick> 
 						self:GetParent():StartPicking();
 						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
@@ -359,7 +343,7 @@
 				</HighlightTexture>
 			</Button>
 			
-			<Button parentKey="ResetButton" inherits="UIMenuButtonStretchTemplate">
+			<Button parentKey="ResetButton" inherits="UIMenuButtonStretchTemplate" motionScriptsWhileDisabled="true">
 				<Size x="26" y="26"/>
 				
 				<Anchors>
@@ -378,11 +362,15 @@
 				</Layers>
 				<Scripts>
 					<OnEnter>
-						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-						GameTooltip_SetTitle(GameTooltip, RESET_TO_DEFAULT);
-						GameTooltip:Show();
+						self:GetParent():OnEnter(self:GetParent());
+						if (self:IsEnabled()) then
+							GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+							GameTooltip_SetTitle(GameTooltip, RESET_TO_DEFAULT);
+							GameTooltip:Show();
+						end
 					</OnEnter>
 					<OnLeave>
+						self:GetParent():OnLeave();
 						GameTooltip:Hide();
 					</OnLeave>
 					<OnClick> 
@@ -449,17 +437,14 @@
 		</Frames>
 		
 		<Scripts>
-			<OnLoad method="OnLoad"/>
-			<OnEnter>
-				self:OnEnter(self.Label);
-			</OnEnter>
-			<OnLeave>
-				self:OnLeave(self.Label);
-			</OnLeave>
+			<OnClick>
+				self:StartPicking();
+				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+			</OnClick>	
 		</Scripts>
-	</Frame>
+	</Button>
 	
-	<Frame name="WQT_SettingDropDownTemplate" mixin="WQT_SettingsDropDownMixin" virtual="true">
+	<Frame name="WQT_SettingDropDownTemplate" inherits="WQT_SettingsBaseTemplate" mixin="WQT_SettingsDropDownMixin" virtual="true">
 		<Size y="55"/>	
 		<Layers>
 			<Layer level="ARTWORK">
@@ -472,17 +457,141 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<DropdownButton parentKey="Dropdown" inherits="WowStyle1DropdownTemplate">
+			<DropdownButton parentKey="Dropdown" inherits="WowStyle1DropdownTemplate, WQT_SettingsChildTemplate">
 				<Anchors>
 					<Anchor point="BOTTOMLEFT" x="42" y="6"/>
 					<Anchor point="RIGHT" x="-42" y="0"/>
 				</Anchors>
 			</DropdownButton>
+		</Frames>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+		</Scripts>
+	</Frame>
 
-			<Frame parentKey="NewFeature" inherits="WQT_NewIconTemplate" hidden="true">
+	<Button name="WQT_SettingFunctionButtonTemplate" inherits="UIMenuButtonStretchTemplate" mixin="WQT_SettingFunctionalButtonMixin" virtual="true">
+		<Size y="26" />
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="CENTER">
+					<Size y="24"/>
+					<Anchors>
+						<Anchor point="LEFT" x="10"/>
+						<Anchor point="RIGHT" x="-10"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<HighlightTexture atlas="socialqueuing-row-select" alphaMode="ADD" alpha="0.2">
+			<Anchors>
+				<Anchor point="TOPLEFT" x="2" y="-3"/>
+				<Anchor point="BOTTOMRIGHT" x="-2" y="3"/>
+			</Anchors>
+		</HighlightTexture>
+
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+			<OnEnter method="OnEnter"/>
+			<OnLeave method="OnLeave"/>
+			<OnMouseDown method="OnMouseDown"/>
+			<OnMouseUp method="OnMouseUp"/>
+		</Scripts>
+	</Button>
+
+	<Frame name="WQT_SettingButtonTemplate" inherits="WQT_SettingsBaseTemplate" mixin="WQT_SettingsButtonMixin" virtual="true">
+		<Size y="32"/>
+		<Frames>
+			<Button parentKey="Button" inherits="WQT_SettingFunctionButtonTemplate">
 				<Anchors>
-					<Anchor point="RIGHT" x="-8" y="0" relativeKey="$parent.Dropdown" relativePoint="LEFT"/>
+					<Anchor point="LEFT" x="40" y="0"/>
+					<Anchor point="RIGHT" x="-40" y="0"/>
 				</Anchors>
+				<Scripts>
+					<OnClick> 
+						if (self.parent) then
+							self.parent:OnValueChanged(nil, true);
+							PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+						end
+					</OnClick>	
+				</Scripts>		
+			</Button>
+		</Frames>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+		</Scripts>
+	</Frame>
+	
+	<Frame name="WQT_SettingConfirmButtonTemplate" inherits="WQT_SettingsBaseTemplate" mixin="WQT_SettingsConfirmButtonMixin" virtual="true">
+		<Size y="32"/>
+		<Frames>
+			<Frame parentKey="ButtonContainer" inherits="BaseLayoutFrameTemplate" mixin="WQT_HorizontalFlexLayoutMixin">
+				<Size  y="26"/>
+				<Anchors>
+					<Anchor point="LEFT" x="40" y="0"/>
+					<Anchor point="RIGHT" x="-40" y="0"/>
+				</Anchors>
+
+				<KeyValues>
+					<KeyValue key="spacing" value="4" type="number"/>
+				</KeyValues>
+
+				<Frames>
+					<Button parentKey="Button" inherits="WQT_SettingFunctionButtonTemplate">
+						<KeyValues>
+							<KeyValue key="layoutIndex" value="1" type="number"/>
+							<KeyValue key="align" value="center" type="string"/>
+							<KeyValue key="flexSize" value="1" type="number"/>
+						</KeyValues>
+						<Scripts>
+							<OnClick>
+								if (self.parent) then
+									self.parent:SetPickingState(true);
+									PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+								end
+							</OnClick>	
+						</Scripts>		
+					</Button>
+
+					<Button parentKey="ButtonConfirm" inherits="WQT_SettingFunctionButtonTemplate" hidden="true">
+						<KeyValues>
+							<KeyValue key="layoutIndex" value="2" type="number"/>
+							<KeyValue key="align" value="center" type="string"/>
+							<KeyValue key="flexSize" value="1" type="number"/>
+							<KeyValue key="label" value="YES" type="global"/>
+						</KeyValues>
+						<Scripts>
+							<OnClick>
+								if (self.parent) then
+									self.parent:OnValueChanged(true, true);
+									PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+								end
+							</OnClick>	
+						</Scripts>		
+					</Button>
+
+					<Button parentKey="ButtonDecline" inherits="WQT_SettingFunctionButtonTemplate" hidden="true">
+						<KeyValues>
+							<KeyValue key="layoutIndex" value="3" type="number"/>
+							<KeyValue key="align" value="center" type="string"/>
+							<KeyValue key="flexSize" value="1" type="number"/>
+							<KeyValue key="label" value="NO" type="global"/>
+						</KeyValues>
+						<Scripts>
+							<OnClick> 
+								if (self.parent) then
+									self.parent:SetPickingState(false);
+									PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+								end
+							</OnClick>	
+						</Scripts>		
+					</Button>
+				</Frames>
+
+				<Scripts>
+					<OnSizeChanged>
+						self:Layout();
+					</OnSizeChanged>
+				</Scripts>
 			</Frame>
 		</Frames>
 		<Scripts>
@@ -490,199 +599,7 @@
 		</Scripts>
 	</Frame>
 	
-	<Frame name="WQT_SettingButtonTemplate" mixin="WQT_SettingsButtonMixin" virtual="true">
-		<Size y="32"/>
-		<Frames>
-			<Button parentKey="Button" inherits="UIMenuButtonStretchTemplate">
-				<Size  y="26"/>
-				<Anchors>
-					<Anchor point="LEFT" x="40" y="0"/>
-					<Anchor point="RIGHT" x="-40" y="0"/>
-				</Anchors>
-				
-				<Layers>
-					<Layer level="ARTWORK">
-						<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="CENTER">
-							<Size x="120" y="25"/>
-							<Anchors>
-								<Anchor point="CENTER" y="0"/>
-							</Anchors>
-						</FontString>
-					</Layer>
-				</Layers>
-				<Scripts>
-					<OnEnter>
-						self:GetParent():OnEnter(self);
-					</OnEnter>
-					<OnLeave>
-						self:GetParent():OnLeave(self);
-					</OnLeave>
-					<OnMouseDown inherit="prepend">
-						if (not self:GetParent():IsDisabled()) then
-							self.Label:SetPoint("CENTER", self, 2, -1);
-						end
-					</OnMouseDown>
-					<OnMouseUp inherit="prepend">
-						if (not self:GetParent():IsDisabled()) then
-							self.Label:SetPoint("CENTER", self, 0, 0);
-						end
-					</OnMouseUp>
-					<OnClick> 
-						self:GetParent():OnValueChanged(nil, true);
-						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-					</OnClick>	
-				</Scripts>		
-				<HighlightTexture file="Interface\Buttons\UI-Silver-Button-Highlight" alphaMode="ADD" alpha="0.5">
-					<TexCoords left="0" right="1.0" top="0.03" bottom="0.7175"/>
-				</HighlightTexture>
-			</Button>
-		</Frames>
-		<Scripts>
-			<OnLoad method="OnLoad"/>
-		</Scripts>
-	</Frame>
-	
-	<Frame name="WQT_SettingConfirmButtonTemplate" mixin="WQT_SettingsConfirmButtonMixin" virtual="true">
-		<Size y="32"/>
-		<Frames>
-			<Button parentKey="Button" inherits="UIMenuButtonStretchTemplate">
-				<Size  y="26"/>
-				<Anchors>
-					<Anchor point="LEFT" x="40" y="0"/>
-					<Anchor point="RIGHT" x="-40" y="0"/>
-				</Anchors>
-				
-				<Layers>
-					<Layer level="ARTWORK">
-						<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="CENTER">
-							<Size x="120" y="25"/>
-							<Anchors>
-								<Anchor point="CENTER" y="0"/>
-							</Anchors>
-						</FontString>
-					</Layer>
-				</Layers>
-				<Scripts>
-					<OnEnter>
-						self:GetParent():OnEnter(self);
-					</OnEnter>
-					<OnLeave>
-						self:GetParent():OnLeave(self);
-					</OnLeave>
-					<OnMouseDown inherit="prepend">
-						if (not self:GetParent():IsDisabled()) then
-							self.Label:SetPoint("CENTER", self, 2, -1);
-						end
-					</OnMouseDown>
-					<OnMouseUp inherit="prepend">
-						if (not self:GetParent():IsDisabled()) then
-							self.Label:SetPoint("CENTER", self, 0, 0);
-						end
-					</OnMouseUp>
-					<OnClick> 
-						self:GetParent():SetPickingState(true);
-						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-					</OnClick>	
-				</Scripts>		
-				<HighlightTexture file="Interface\Buttons\UI-Silver-Button-Highlight" alphaMode="ADD" alpha="0.5">
-					<TexCoords left="0" right="1.0" top="0.03" bottom="0.7175"/>
-				</HighlightTexture>
-			</Button>
-			
-			<Button parentKey="ButtonConfirm" inherits="UIMenuButtonStretchTemplate" hidden="true">
-				<Size x="50" y="26"/>
-				<Anchors>
-					<Anchor point="LEFT" x="27" y="0"/>
-				</Anchors>
-				
-				<Layers>
-					<Layer level="ARTWORK">
-						<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="CENTER" text="YES">
-							<Size x="120" y="25"/>
-							<Anchors>
-								<Anchor point="CENTER" y="0"/>
-							</Anchors>
-						</FontString>
-					</Layer>
-				</Layers>
-				<Scripts>
-					<OnEnter>
-						self:GetParent():OnEnter(self);
-					</OnEnter>
-					<OnLeave>
-						self:GetParent():OnLeave(self);
-					</OnLeave>
-					<OnMouseDown inherit="prepend">
-						if (not self:GetParent():IsDisabled()) then
-							self.Label:SetPoint("CENTER", self, 2, -1);
-						end
-					</OnMouseDown>
-					<OnMouseUp inherit="prepend">
-						if (not self:GetParent():IsDisabled()) then
-							self.Label:SetPoint("CENTER", self, 0, 0);
-						end
-					</OnMouseUp>
-					<OnClick> 
-						self:GetParent():OnValueChanged(true, true);
-						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-					</OnClick>	
-				</Scripts>		
-				<HighlightTexture file="Interface\Buttons\UI-Silver-Button-Highlight" alphaMode="ADD" alpha="0.5">
-					<TexCoords left="0" right="1.0" top="0.03" bottom="0.7175"/>
-				</HighlightTexture>
-			</Button>
-			
-			<Button parentKey="ButtonDecline" inherits="UIMenuButtonStretchTemplate" hidden="true">
-				<Size x="50" y="26"/>
-				<Anchors>
-					<Anchor point="LEFT" relativeKey="$parent.ButtonConfirm" relativePoint="RIGHT" x="5" y="0"/>
-					<Anchor point="RIGHT" x="-35" y="0"/>
-				</Anchors>
-				
-				<Layers>
-					<Layer level="ARTWORK">
-						<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="CENTER" text="NO">
-							<Size x="120" y="25"/>
-							<Anchors>
-								<Anchor point="CENTER" y="0"/>
-							</Anchors>
-						</FontString>
-					</Layer>
-				</Layers>
-				<Scripts>
-					<OnEnter>
-						self:GetParent():OnEnter(self);
-					</OnEnter>
-					<OnLeave>
-						self:GetParent():OnLeave(self);
-					</OnLeave>
-					<OnMouseDown inherit="prepend">
-						if (not self:GetParent():IsDisabled()) then
-							self.Label:SetPoint("CENTER", self, 2, -1);
-						end
-					</OnMouseDown>
-					<OnMouseUp inherit="prepend">
-						if (not self:GetParent():IsDisabled()) then
-							self.Label:SetPoint("CENTER", self, 0, 0);
-						end
-					</OnMouseUp>
-					<OnClick> 
-						self:GetParent():SetPickingState(false);
-						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-					</OnClick>	
-				</Scripts>		
-				<HighlightTexture file="Interface\Buttons\UI-Silver-Button-Highlight" alphaMode="ADD" alpha="0.5">
-					<TexCoords left="0" right="1.0" top="0.03" bottom="0.7175"/>
-				</HighlightTexture>
-			</Button>
-			
-		</Frames>
-		<Scripts>
-			<OnLoad method="OnLoad"/>
-		</Scripts>
-	</Frame>
-	
-	<Frame name="WQT_SettingTextInputTemplate" mixin="WQT_SettingsTextInputMixin" virtual="true">
+	<Frame name="WQT_SettingTextInputTemplate" inherits="WQT_SettingsBaseTemplate" mixin="WQT_SettingsTextInputMixin" virtual="true">
 		<Size y="50"/>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -695,21 +612,38 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<EditBox parentKey="TextBox" inherits="InputBoxTemplate" autoFocus="false">
+			<EditBox parentKey="TextBox" inherits="InputBoxScriptTemplate, WQT_SettingsChildTemplate" autoFocus="false">
 				<Size y="25"/>
-				<HitRectInsets left="-10"/>
 				<Anchors>
-					<Anchor point="BOTTOMLEFT" x="47" y="5"/>
+					<Anchor point="BOTTOMLEFT" x="50" y="3"/>
 					<Anchor point="RIGHT" x="-41" />
 				</Anchors>
-				<FontString inherits="NumberFont_Shadow_Small"/>
+				<FontString inherits="GameFontHighlight"/>
+
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture parentKey="Left" atlas="common-search-border-left" useAtlasSize="false">
+							<Size x="10" y="24" />
+							<Anchors>
+								<Anchor point="LEFT" x="-8" y="1" />
+							</Anchors>
+						</Texture>
+						<Texture parentKey="Right" atlas="common-search-border-right">
+							<Size x="10" y="24" />
+							<Anchors>
+								<Anchor point="RIGHT" x="0" y="1" />
+							</Anchors>
+						</Texture>
+						<Texture parentKey="Middle" atlas="common-search-border-middle">
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent.Left" relativePoint="TOPRIGHT" />
+								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Right" relativePoint="BOTTOMLEFT" />
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+
 				<Scripts>
-					<OnEnter>
-						self:GetParent():OnEnter();
-					</OnEnter>
-					<OnLeave>
-						self:GetParent():OnLeave();
-					</OnLeave>
 					<OnEnterPressed>
 						self:ClearFocus();
 					</OnEnterPressed>
@@ -748,29 +682,8 @@
 			<Frame parentKey="BorderFrame" inherits="QuestLogBorderFrameTemplate" />
 
 			<Button parentKey="CloseButton" inherits="WQT_PanelCloseButtonTemplate"/>
-			<Frame parentKey="ScrollBox" inherits="WowScrollBox" frameStrata="HIGH">
-				<Anchors>
-					<Anchor point="TOPLEFT" />
-					<Anchor point="BOTTOMRIGHT" />
-				</Anchors>
-				<KeyValues>
-					<KeyValue key="wheelPanScalar" type="number" value="0.1" />
-				</KeyValues>
-				<Frames>
-					<Frame parentKey="ScrollContent">
-						<Size x="268" y="400" />
-						<KeyValues>
-							<KeyValue key="scrollable" value="true" type="boolean" />
-						</KeyValues>
-						<Scripts>
-							<OnLoad>
-								self:SetWidth(WQT_SettingsFrame:GetWidth());
-							</OnLoad>
-						</Scripts>
-					</Frame>
 
-				</Frames>
-			</Frame>
+			<Frame parentKey="ScrollBox" inherits="WowScrollBoxList" frameStrata="HIGH" setAllPoints="true" />
 			<EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">
 				<Anchors>
 					<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="8" y="2" />
@@ -789,7 +702,7 @@
 		</Layers>
 		<Scripts>
 			<OnLoad method="OnLoad" />
-			<OnShow method="Refresh" />
+			<OnShow method="Reconstruct" />
 		</Scripts>
 	</Frame>
  </Ui>
