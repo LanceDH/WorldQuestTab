@@ -299,15 +299,20 @@
 		</Layers>
 	</Frame>
 	
-	
-	<Button name="WQT_SettingColorTemplate" inherits="WQT_SettingsBaseTemplate" mixin="WQT_SettingsColorMixin" virtual="true">
+	<Button name="WQT_SettingColorTemplate" inherits="WQT_SettingsBaseTemplate, BaseLayoutFrameTemplate" mixin="WQT_SettingsColorMixin, WQT_HorizontalFlexLayoutMixin" virtual="true">
 		<Size y="32"/>
+		<KeyValues>
+			<KeyValue key="rightPadding" value="42" type="number" />
+			<KeyValue key="leftPadding" value="42" type="number" />
+			<KeyValue key="spacing" value="6" type="number"/>
+		</KeyValues>
 		<Frames>
 			<Button parentKey="Picker" inherits="UIMenuButtonStretchTemplate, WQT_SettingsChildTemplate">
 				<Size x="26" y="26"/>
-				<Anchors>
-					<Anchor point="LEFT" x="42" y="0"/>
-				</Anchors>
+				<KeyValues>
+					<KeyValue key="layoutIndex" value="1" type="number"/>
+					<KeyValue key="align" value="center" type="string"/>
+				</KeyValues>
 				
 				<Layers>
 					<Layer level="ARTWORK">
@@ -343,12 +348,12 @@
 				</HighlightTexture>
 			</Button>
 			
-			<Button parentKey="ResetButton" inherits="UIMenuButtonStretchTemplate" motionScriptsWhileDisabled="true">
+			<Button parentKey="ResetButton" inherits="UIMenuButtonStretchTemplate" motionScriptsWhileDisabled="true" hidden="true">
 				<Size x="26" y="26"/>
-				
-				<Anchors>
-					<Anchor point="LEFT" relativeKey="$parent.Picker" relativePoint="RIGHT" x="5" y="0"/>
-				</Anchors>
+				<KeyValues>
+					<KeyValue key="layoutIndex" value="4" type="number"/>
+					<KeyValue key="align" value="center" type="string"/>
+				</KeyValues>
 				
 				<Layers>
 					<Layer level="ARTWORK">
@@ -400,14 +405,18 @@
 		<Layers>
 			<Layer level="ARTWORK">
 				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="LEFT">
-					<Anchors>
-						<Anchor point="LEFT" relativeKey="$parent.ResetButton" relativePoint="RIGHT" x="10" y="0"/>
-					</Anchors>
+					<KeyValues>
+						<KeyValue key="layoutIndex" type="number" value="2"/>
+						<KeyValue key="align" type="string" value="center"/>
+						<KeyValue key="flexSize" type="number" value="1"/>
+					</KeyValues>
 				</FontString>
 				<FontString parentKey="ExampleText" inherits="GameFontWhite" maxLines="1" justifyH="LEFT" text="PREVIEW" hidden="true">
-					<Anchors>
-						<Anchor point="LEFT" relativeKey="$parent.ResetButton" relativePoint="RIGHT" x="10" y="0"/>
-					</Anchors>
+					<KeyValues>
+						<KeyValue key="layoutIndex" value="3" type="number"/>
+						<KeyValue key="align" value="center" type="string"/>
+						<KeyValue key="flexSize" type="number" value="1"/>
+					</KeyValues>
 				</FontString>	
 			</Layer>
 		</Layers>
@@ -415,9 +424,10 @@
 		<Frames>
 			<Button parentKey="ExampleRing" hidden="true">
 				<Size x="25" y="25" />
-				<Anchors>
-					<Anchor point="LEFT" relativeKey="$parent.ExampleText" relativePoint="RIGHT" x="10" y="0"/>
-				</Anchors>
+				<KeyValues>
+					<KeyValue key="layoutIndex" value="2" type="number"/>
+					<KeyValue key="align" value="center" type="string"/>
+				</KeyValues>
 				<Layers>
 					<Layer level="ARTWORK" textureSubLevel="-1">
 						<!-- This serves as a background for the timer -->
@@ -470,7 +480,7 @@
 	</Frame>
 
 	<Button name="WQT_SettingFunctionButtonTemplate" inherits="UIMenuButtonStretchTemplate" mixin="WQT_SettingFunctionalButtonMixin" virtual="true">
-		<Size y="26" />
+		<Size y="28" />
 		<Layers>
 			<Layer level="ARTWORK">
 				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="CENTER">
@@ -499,7 +509,7 @@
 	</Button>
 
 	<Frame name="WQT_SettingButtonTemplate" inherits="WQT_SettingsBaseTemplate" mixin="WQT_SettingsButtonMixin" virtual="true">
-		<Size y="32"/>
+		<Size y="34"/>
 		<Frames>
 			<Button parentKey="Button" inherits="WQT_SettingFunctionButtonTemplate">
 				<Anchors>
@@ -521,78 +531,63 @@
 		</Scripts>
 	</Frame>
 	
-	<Frame name="WQT_SettingConfirmButtonTemplate" inherits="WQT_SettingsBaseTemplate" mixin="WQT_SettingsConfirmButtonMixin" virtual="true">
-		<Size y="32"/>
+	<Frame name="WQT_SettingConfirmButtonTemplate" inherits="WQT_SettingsBaseTemplate, BaseLayoutFrameTemplate" mixin="WQT_SettingsConfirmButtonMixin, WQT_HorizontalFlexLayoutMixin" virtual="true">
+		<Size y="34"/>
+		<KeyValues>
+			<KeyValue key="rightPadding" value="40" type="number" />
+			<KeyValue key="leftPadding" value="40" type="number" />
+			<KeyValue key="spacing" value="6" type="number"/>
+		</KeyValues>
 		<Frames>
-			<Frame parentKey="ButtonContainer" inherits="BaseLayoutFrameTemplate" mixin="WQT_HorizontalFlexLayoutMixin">
-				<Size  y="26"/>
-				<Anchors>
-					<Anchor point="LEFT" x="40" y="0"/>
-					<Anchor point="RIGHT" x="-40" y="0"/>
-				</Anchors>
-
+			<Button parentKey="Button" inherits="WQT_SettingFunctionButtonTemplate">
 				<KeyValues>
-					<KeyValue key="spacing" value="4" type="number"/>
+					<KeyValue key="layoutIndex" value="1" type="number" />
+					<KeyValue key="align" value="center" type="string" />
+					<KeyValue key="flexSize" value="1" type="number" />
 				</KeyValues>
-
-				<Frames>
-					<Button parentKey="Button" inherits="WQT_SettingFunctionButtonTemplate">
-						<KeyValues>
-							<KeyValue key="layoutIndex" value="1" type="number"/>
-							<KeyValue key="align" value="center" type="string"/>
-							<KeyValue key="flexSize" value="1" type="number"/>
-						</KeyValues>
-						<Scripts>
-							<OnClick>
-								if (self.parent) then
-									self.parent:SetPickingState(true);
-									PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-								end
-							</OnClick>	
-						</Scripts>		
-					</Button>
-
-					<Button parentKey="ButtonConfirm" inherits="WQT_SettingFunctionButtonTemplate" hidden="true">
-						<KeyValues>
-							<KeyValue key="layoutIndex" value="2" type="number"/>
-							<KeyValue key="align" value="center" type="string"/>
-							<KeyValue key="flexSize" value="1" type="number"/>
-							<KeyValue key="label" value="YES" type="global"/>
-						</KeyValues>
-						<Scripts>
-							<OnClick>
-								if (self.parent) then
-									self.parent:OnValueChanged(true, true);
-									PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-								end
-							</OnClick>	
-						</Scripts>		
-					</Button>
-
-					<Button parentKey="ButtonDecline" inherits="WQT_SettingFunctionButtonTemplate" hidden="true">
-						<KeyValues>
-							<KeyValue key="layoutIndex" value="3" type="number"/>
-							<KeyValue key="align" value="center" type="string"/>
-							<KeyValue key="flexSize" value="1" type="number"/>
-							<KeyValue key="label" value="NO" type="global"/>
-						</KeyValues>
-						<Scripts>
-							<OnClick> 
-								if (self.parent) then
-									self.parent:SetPickingState(false);
-									PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-								end
-							</OnClick>	
-						</Scripts>		
-					</Button>
-				</Frames>
-
 				<Scripts>
-					<OnSizeChanged>
-						self:Layout();
-					</OnSizeChanged>
+					<OnClick>
+						if (self.parent) then
+							self.parent:SetPickingState(true);
+							PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+						end
+					</OnClick>
 				</Scripts>
-			</Frame>
+			</Button>
+
+			<Button parentKey="ButtonConfirm" inherits="WQT_SettingFunctionButtonTemplate" hidden="true">
+				<KeyValues>
+					<KeyValue key="layoutIndex" value="2" type="number" />
+					<KeyValue key="align" value="center" type="string" />
+					<KeyValue key="flexSize" value="1" type="number" />
+					<KeyValue key="label" value="YES" type="global" />
+				</KeyValues>
+				<Scripts>
+					<OnClick>
+						if (self.parent) then
+							self.parent:OnValueChanged(true, true);
+							PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+						end
+					</OnClick>
+				</Scripts>
+			</Button>
+
+			<Button parentKey="ButtonDecline" inherits="WQT_SettingFunctionButtonTemplate" hidden="true">
+				<KeyValues>
+					<KeyValue key="layoutIndex" value="3" type="number" />
+					<KeyValue key="align" value="center" type="string" />
+					<KeyValue key="flexSize" value="1" type="number" />
+					<KeyValue key="label" value="NO" type="global" />
+				</KeyValues>
+				<Scripts>
+					<OnClick>
+						if (self.parent) then
+							self.parent:SetPickingState(false);
+							PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+						end
+					</OnClick>
+				</Scripts>
+			</Button>
 		</Frames>
 		<Scripts>
 			<OnLoad method="OnLoad"/>

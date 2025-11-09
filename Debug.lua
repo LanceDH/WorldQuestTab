@@ -169,249 +169,6 @@ local function ApplyAlternateState(frame, alternate)
 end
 
 
---[[
-
-WQT_SettingElementDataMixin = {};
-
-function WQT_SettingElementDataMixin:Init(template, label, tooltip, categoryID, tag)
-	self.elementData = {};
-	self.elementData.template = template;
-	self.elementData.data = {
-		label = label;
-		tooltip = tooltip;
-		categoryID = categoryID;
-		tag = tag;
-	}
-end
-
-function WQT_SettingElementDataMixin:AddToDataprovider(dataprovider)
-	if (self.elementData.data.isVisibleFunc and not self.elementData.data:isVisibleFunc()) then return; end
-	dataprovider:Insert(self.elementData);
-end
-
-function WQT_SettingElementDataMixin:SetValueToKey(key, value)
-	self.elementData.data[key] = value;
-end
-
-function WQT_SettingElementDataMixin:SetValueChangedFunction(func)
-	if (type(func) ~= "function") then error("'func' must be a function value"); end;
-	self.elementData.data.valueChangedFunc = func;
-end
-
-function WQT_SettingElementDataMixin:SetGetValueFunction(func)
-	if (type(func) ~= "function") then error("'func' must be a function value"); end;
-	self.elementData.data.getValueFunc = func;
-end
-
-function WQT_SettingElementDataMixin:SetIsDisabledFunction(func)
-	if (type(func) ~= "function") then error("'func' must be a function value"); end;
-	self.elementData.data.isDisabled = func;
-end
-
-function WQT_SettingElementDataMixin:SetIsVisibleFunction(func)
-	if (type(func) ~= "function") then error("'func' must be a function value"); end;
-	
-	self.elementData.data.isVisibleFunc = func;
-end
-
-function WQT_SettingElementDataMixin:MarkAsNew(isNew)
-	self.elementData.data.isNew = isNew;
-end
-
-
-WQT_SettingsCategoryDataMixin = {};
-
-function WQT_SettingsCategoryDataMixin:Init(categoryID, label, initialExpanded, isSubCategory)
-	self.categoryID = categoryID;
-	self.elementData = {
-		template = isSubCategory and "WQT_SettingSubCategoryTemplate" or "WQT_SettingCategoryTemplate",
-		data = {
-			label = label;
-			id = categoryID;
-			tag = categoryID;
-			categoryID = categoryID;
-			expanded = initialExpanded;
-		}
-	}
-
-	self.children = {};
-end
-
-function WQT_SettingsCategoryDataMixin:AddToDataprovider(dataprovider)
-	dataprovider:Insert(self.elementData);
-
-	if (self.elementData.data.expanded) then
-		for k, child in ipairs(self.children) do
-			child:AddToDataprovider(dataprovider);
-		end
-	end
-end
-
-function WQT_SettingsCategoryDataMixin:AddSubCategory(categoryID, label, expanded)
-	if (type(categoryID) ~= "string") then error("'categoryID' must be a string value"); return; end
-	local category = CreateAndInitFromMixin(WQT_SettingsCategoryDataMixin, categoryID, label, expanded, true);
-	table.insert(self.children, category);
-	return category;
-end
-
-function WQT_SettingsCategoryDataMixin:AddCheckbox(tag, label, tooltip)
-	if (type(tag) ~= "string") then error("'tag' must be a string value"); return; end
-	local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, "WQT_SettingCheckboxTemplate", label, tooltip, self.categoryID, tag);
-
-	table.insert(self.children, settingMixin);
-	return settingMixin;
-end
-
-function WQT_SettingsCategoryDataMixin:AddSlider(tag, label, tooltip, min, max, step)
-	if (type(tag) ~= "string") then error("'tag' must be a string value"); return; end
-	if (type(min) ~= "number") then error("'min' must be a number value"); return; end
-	if (type(max) ~= "number") then error("'max' must be a number value"); return; end
-	if (type(step) ~= "number") then error("'step' must be a number value"); return; end
-	local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, "WQT_SettingSliderTemplate", label, tooltip, self.categoryID, tag);
-	settingMixin:SetValueToKey("min", min);
-	settingMixin:SetValueToKey("max", max);
-	settingMixin:SetValueToKey("valueStep", step);
-
-	table.insert(self.children, settingMixin);
-	return settingMixin;
-end
-
-function WQT_SettingsCategoryDataMixin:AddDropdown(tag, label, tooltip, options)
-	if (type(tag) ~= "string") then error("'tag' must be a string value"); return; end
-	if (type(options) ~= "table" and type(options) ~= "function") then error("'options' must be either a table or function value"); return; end
-	local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, "WQT_SettingDropDownTemplate", label, tooltip, self.categoryID, tag);
-	settingMixin:SetValueToKey("options", options);
-
-	table.insert(self.children, settingMixin);
-	return settingMixin;
-end
-
-function WQT_SettingsCategoryDataMixin:CreateText(tag, label, font, color, bottomPadding)
-	if (type(tag) ~= "string") then error("'tag' must be a string value"); return; end
-	local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, "WQT_SettingTextTemplate", label, nil, self.categoryID, tag);
-	settingMixin:SetValueToKey("font", font or "GameFontHighlight");
-	settingMixin:SetValueToKey("color", color or NORMAL_FONT_COLOR);
-	settingMixin:SetValueToKey("bottomPadding", bottomPadding);
-
-	table.insert(self.children, settingMixin);
-	return settingMixin;
-end
-
-local function UpdateColorID(id, r, g, b)
-	local color = WQT_Utils:UpdateColor(_V["COLOR_IDS"][id], r, g, b);
-	if (color) then
-		WQT.settings.colors[id] = color:GenerateHexColor();
-		WQT_ListContainer:DisplayQuestList();
-		WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
-	end
-end
-
-local function GetColorByID(id)
-	return WQT_Utils:GetColor(_V["COLOR_IDS"][id]);
-end
-
-function WQT_SettingsCategoryDataMixin:AddColorPicker(tag, label, tooltip, colorID, defaultColor)
-	if (type(tag) ~= "string") then error("'tag' must be a string value"); return; end
-	if (type(colorID) ~= "string") then error("'colorID' must be a string value"); return; end
-	if (type(defaultColor) ~= "table" or not defaultColor.GetRGB) then error("'defaultColor' must be a ColorMixin value"); return; end
-	local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, "WQT_SettingColorTemplate", label, tooltip, self.categoryID, tag);
-	settingMixin:SetValueToKey("colorID", colorID);
-	settingMixin:SetValueToKey("defaultColor", defaultColor);
-	settingMixin:SetValueChangedFunction(UpdateColorID);
-	settingMixin:SetGetValueFunction(GetColorByID);
-
-	table.insert(self.children, settingMixin);
-	return settingMixin;
-end
-
-function WQT_SettingsCategoryDataMixin:AddTextInput(tag, label, tooltip)
-	if (type(tag) ~= "string") then WQT:debugPrint("AddTextInput has invalid tag", tag); return; end
-	local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, "WQT_SettingTextInputTemplate", label, tooltip, self.categoryID, tag);
-
-	table.insert(self.children, settingMixin);
-	return settingMixin;
-end
-
-function WQT_SettingsCategoryDataMixin:AddButton(tag, label, tooltip)
-	if (type(tag) ~= "string") then WQT:debugPrint("AddButton has invalid tag", tag); return; end
-	local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, "WQT_SettingButtonTemplate", label, tooltip, self.categoryID, tag);
-
-	table.insert(self.children, settingMixin);
-	return settingMixin;
-end
-
-function WQT_SettingsCategoryDataMixin:AddConfirmButton(tag, label, tooltip)
-	if (type(tag) ~= "string") then WQT:debugPrint("AddConfirmButton has invalid tag", tag); return; end
-	local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, "WQT_SettingConfirmButtonTemplate", label, tooltip, self.categoryID, tag);
-
-	table.insert(self.children, settingMixin);
-	return settingMixin;
-end
-
-function WQT_SettingsCategoryDataMixin:AddCustomTemplate(template, tag)
-	local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, template, nil, nil, self.categoryID, tag);
-
-	table.insert(self.children, settingMixin);
-	return settingMixin;
-end
-
-function WQT_SettingsCategoryDataMixin:GetCategoryByID(categoryID)
-	local foundCategory = nil;
-	for k, child in ipairs(self.children) do
-		if (child.categoryID == categoryID) then
-			foundCategory = child;
-			break;
-		end
-	end
-
-	return foundCategory;
-end
-
-function WQT_SettingsCategoryDataMixin:ToggleExpanded()
-	self.elementData.data.expanded = not self.elementData.data.expanded;
-end
-
-
-
-
-WQT_SettingsDataMixin = {};
-
-function WQT_SettingsDataMixin:Init()
-	self.categories = {};
-end
-
-function WQT_SettingsDataMixin:AddCategory(categoryID, label, expanded)
-	local category = CreateAndInitFromMixin(WQT_SettingsCategoryDataMixin, categoryID, label, expanded, false);
-	table.insert(self.categories, category);
-	return category;
-end
-
-function WQT_SettingsDataMixin:AddToDataprovider(dataprovider)
-	for k, category in ipairs(self.categories) do
-		category:AddToDataprovider(dataprovider);
-	end
-end
-
-function WQT_SettingsDataMixin:GetCategoryByID(categoryID)
-	local foundCategory = nil;
-	for k, category in ipairs(self.categories) do
-		if (category.categoryID == categoryID) then
-			foundCategory = category;
-			break;
-		end
-		local subCategory = category:GetCategoryByID(categoryID);
-		if (subCategory) then
-			foundCategory = subCategory;
-			break;
-		end
-	end
-
-	return foundCategory;
-end
-]]
-
-local CATEGORY_DEFAULT_EXPANDED = true;
-
 WQT_DevMixin = {};
 
 function WQT_DevMixin:TAXIMAP_OPENED()
@@ -428,12 +185,12 @@ function WQT_DevMixin:OnShow()
 	view:SetElementInitializer("WQT_CallbackEntryTemplate", function(frame, data)
 		InitCallbackEntry(frame, data);
 	end);
-	ScrollUtil.InitScrollBoxListWithScrollBar(self.ScrollBox, self.ScrollBar, view);
+	ScrollUtil.InitScrollBoxListWithScrollBar(self.CallbackScrollBox, self.CallbackScrollBar, view);
 
 	self.callbackDataProvider = CreateDataProvider();
-	self.ScrollBox:SetDataProvider(self.callbackDataProvider, ScrollBoxConstants);
+	self.CallbackScrollBox:SetDataProvider(self.callbackDataProvider, ScrollBoxConstants);
 
-	ScrollUtil.RegisterAlternateRowBehavior(self.ScrollBox, ApplyAlternateState);
+	ScrollUtil.RegisterAlternateRowBehavior(self.CallbackScrollBox, ApplyAlternateState);
 
 	self:SetScript("OnUpdate", function() self:OnUpdate(); end);
 
@@ -451,9 +208,11 @@ function WQT_DevMixin:OnShow()
 		end, 
 		self);
 
+
 	hooksecurefunc(WQT_CallbackRegistry, "TriggerEvent", function(registry, event, ...)
-		local wasAtEnd = self.ScrollBox:IsAtEnd();
-		local hadScroll = self.ScrollBox:HasScrollableExtent();
+		if (not WQT_DevFrame.CallbackScrollBox:IsShown()) then return; end
+		local wasAtEnd = self.CallbackScrollBox:IsAtEnd();
+		local hadScroll = self.CallbackScrollBox:HasScrollableExtent();
 
 		local data = {};
 		data.timestamp = GetTime();
@@ -461,60 +220,11 @@ function WQT_DevMixin:OnShow()
 		data.eventPayload = {...};
 		self.callbackDataProvider:Insert(data);
 
-		if (wasAtEnd or (not hadScroll and self.ScrollBox:HasScrollableExtent())) then
-			self.ScrollBox:ScrollToEnd();
+		if (wasAtEnd or (not hadScroll and self.CallbackScrollBox:HasScrollableExtent())) then
+			self.CallbackScrollBox:ScrollToEnd();
 		end
 	end);
 
-if true then return end
-
-	local testView = CreateScrollBoxListLinearView(4, 4);
-	self.view = testView;
-	testView:SetVirtualized(false);
-	testView:SetElementExtentCalculator(function (index, elementData)
-		local frames = testView:GetFrames();
-		local frame = frames[index];
-		if (frame) then 
-			return frame:GetHeight();
-		end
-		return 0;
-	end);
-	testView:SetElementFactory(function(factory, elementData)
-		factory(elementData.template, function(frame, data)
-			frame:Init(data.data);
-		end);
-	end);
-	ScrollUtil.InitScrollBoxListWithScrollBar(self.ScrollBox2, self.ScrollBar2, testView);
-
-	self.dataProvider = CreateDataProvider();
-
-
-	self.settingsData = CreateAndInitFromMixin(WQT_SettingsDataMixin);
-
-	
-
-	WQT_CallbackRegistry:RegisterCallback("WQT.Settings.CategoryToggled",
-		function(_, categoryID)
-			local foundCategory = self.settingsData:GetCategoryByID(categoryID);
-			if (foundCategory) then
-				foundCategory:ToggleExpanded();
-				self:DoDebugThing();
-			end
-		end,
-		self);
-
-	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
-		function(_, categoryID)
-			if (categoryID == "PROFILES") then
-				-- Delaying a frame because it causes issues if it's triggered by a dropdown change
-				C_Timer.After(0, function() self:DoDebugThing(); end);
-			else
-				for k, frame in self.ScrollBox2:EnumerateFrames() do
-					frame:UpdateState();
-				end
-			end
-		end,
-		self);
 end
 
 function WQT_DevMixin:OnUpdate()
@@ -527,14 +237,5 @@ end
 
 
 function WQT_DevMixin:DoDebugThing()
-	self.dataProvider = CreateDataProvider();
-		
-	self.settingsData:AddToDataprovider(self.dataProvider);
 
-
-	self.ScrollBox2:SetDataProvider(self.dataProvider , ScrollBoxConstants.RetainScrollPosition);
-
-	-- Required to correct placement of text frames
-	self.ScrollBox2:FullUpdateInternal();
-	--self.ScrollBox2:Update(true);
 end

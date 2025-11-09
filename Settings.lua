@@ -140,11 +140,12 @@ function WQT_SettingsQuestListMixin:Init(data)
 	self:UpdateState();
 end
 
--- 74160s == 20h 36m
-local SETTINGS_QUEST_TIME = 74160;
-
 function WQT_SettingsQuestListMixin:OnLoad()
 	self.Preview:SetEnabledMixin(false);
+
+	-- 74160s == 20h 36m
+	local SETTINGS_QUEST_TIME = 74160;
+
 	self.Preview.UpdateTime = function(rewardFrame) 
 		local timeFrame = rewardFrame:GetTimeFontString();
 
@@ -291,10 +292,27 @@ function WQT_SettingsSliderMixin:OnLoad()
 	self.SliderWithSteppers.Forward:HookScript("OnLeave", leaveFunc);
 	self.SliderWithSteppers:HookScript("OnEnter", enterFunc);
 	self.SliderWithSteppers:HookScript("OnLeave", leaveFunc);
+
+	self.SliderWithSteppers:RegisterCallback("OnValueChanged",
+		function(_, value)
+			self:OnValueChanged(value, self.userInteracting);
+		end, self);
+
+	self.SliderWithSteppers:RegisterCallback("OnInteractStart",
+		function()
+			self.userInteracting = true;
+		end, self);
+
+	self.SliderWithSteppers:RegisterCallback("OnInteractEnd",
+		function()
+			self.userInteracting = false;
+		end, self);
 end
 
 function WQT_SettingsSliderMixin:Init(data)
 	WQT_SettingsBaseMixin.Init(self, data);
+	self.userInteracting = false;
+
 	self.getValueFunc = data.getValueFunc;
 	self.min = data.min or 0;
 	self.max = data.max or 1;
@@ -302,10 +320,6 @@ function WQT_SettingsSliderMixin:Init(data)
 	local currentValue = self:GetValue();
 	self.current = currentValue;
 	self.SliderWithSteppers:Init(currentValue, self.min, self.max, steps);
-	self.SliderWithSteppers:RegisterCallback("OnValueChanged",
-		function(_, value)
-			self:OnValueChanged(value, true);
-		end, self);
 
 	self:UpdateState();
 end
@@ -361,7 +375,6 @@ function WQT_SettingsSliderMixin:OnValueChanged(value, userInput)
 	if (userInput and value ~= self.current) then
 		WQT_SettingsBaseMixin.OnValueChanged(self, value, userInput);
 	end
-	self:UpdateState();
 end
 
 --------------------------------
@@ -376,9 +389,7 @@ function WQT_SettingsColorMixin:OnLoad()
 	self.Picker.parent = self;
 
 	ColorPickerFrame:HookScript("OnHide", function()
-		self.Label:Show();
-		self.ExampleText:Hide();
-		self.ExampleRing:Hide();
+		self:StopPicking();
 	end);
 
 	CooldownFrame_SetDisplayAsPercentage(self.ExampleRing.Ring, 0.35);
@@ -404,16 +415,13 @@ function WQT_SettingsColorMixin:UpdateState()
 		local canReset = color:GenerateHexColor() ~= self.defaultColor:GenerateHexColor();
 		self:SetResetEnabled(canReset);
 	end
+
+	self:Layout();
 end
 
 function WQT_SettingsColorMixin:SetResetEnabled(enable)
-	self.ResetButton:SetEnabled(enable);
-	self.ResetButton.Icon:SetDesaturated(not enable);
-	if (enable) then
-		self.ResetButton.Icon:SetVertexColor(1, 1, 1);
-	else
-		self.ResetButton.Icon:SetVertexColor(.7, .7, .7);
-	end
+	self.ResetButton:SetShown(enable);
+	self:Layout();
 end
 
 function WQT_SettingsColorMixin:ResetColor(userInput)
@@ -430,7 +438,7 @@ function WQT_SettingsColorMixin:SetWidgetRGB(r, g, b)
 	self.Picker.Color:SetVertexColor(r, g, b);
 end
 
-function WQT_SettingsColorMixin:UpdateFromPicker(isConfirmed)
+function WQT_SettingsColorMixin:UpdateFromPicker()
 	local r, g, b = ColorPickerFrame:GetColorRGB();
 	self:SetWidgetRGB(r, g, b);
 	self:OnValueChanged(self.colorID, true, r, g, b);
@@ -444,7 +452,6 @@ function WQT_SettingsColorMixin:StartPicking()
 	
 	local colorInfo = {
 		["swatchFunc"] = function () self:UpdateFromPicker() end,
-		["opacityFunc"] = function () self:UpdateFromPicker(true) end,
 		["cancelFunc"] = function () self:ResetColor(); self:StopPicking(); end,
 		["r"] = r,
 		["g"] = g,
@@ -455,6 +462,7 @@ function WQT_SettingsColorMixin:StartPicking()
 	self.Label:Hide();
 	self.ExampleText:Show();
 	self.ExampleRing:Show();
+	self:Layout();
 
 	ColorPickerFrame:SetupColorPickerAndShow(colorInfo);
 end
@@ -493,11 +501,11 @@ function WQT_SettingsDropDownMixin:SetDisabled(value)
 end
 
 function WQT_SettingsDropDownMixin:DropdownSetup(dropdown, rootDescription)
-	local tag = string.format("WQT_SETTINGS_DROPDOWN_%s", dropdown.data.label);
+	local tag = string.format("WQT_SETTINGS_DROPDOWN_%s", dropdown.data.tag);
 	rootDescription:SetTag(tag);
 
 	local options = dropdown.data.options;
-	if (type(options) ==  "function") then
+	if (type(options) == "function") then
 		options = options();
 	end
 
@@ -603,30 +611,37 @@ WQT_SettingsConfirmButtonMixin = CreateFromMixins(WQT_SettingsBaseMixin);
 
 function WQT_SettingsConfirmButtonMixin:OnLoad()
 	WQT_SettingsBaseMixin.OnLoad(self);
-	self.Label = self.ButtonContainer.Button.Label;
+	self.Label = self.Button.Label;
 
-	self.ButtonContainer.Button.parent = self;
-	self.ButtonContainer.ButtonConfirm.parent = self;
-	self.ButtonContainer.ButtonDecline.parent = self;
+	self.Button.parent = self;
+	self.ButtonConfirm.parent = self;
+	self.ButtonDecline.parent = self;
+
+	WQT_CallbackRegistry:RegisterCallback("WQT.Settings.CategoryToggled",
+		function()
+			self:SetPickingState(false);
+		end, self);
+
+	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
+		function()
+			self:SetPickingState(false);
+		end, self);
+
+	self:Layout();
 end
 
 function WQT_SettingsConfirmButtonMixin:SetDisabled(value)
 	WQT_SettingsBaseMixin.SetDisabled(self, value);
 	if (value) then
-		self.ButtonContainer.Button:Disable();
+		self.Button:Disable();
 	else
-		self.ButtonContainer.Button:Enable();
+		self.Button:Enable();
 	end
 end
 
 function WQT_SettingsConfirmButtonMixin:Init(data)
 	WQT_SettingsBaseMixin.Init(self, data);
 	self:SetPickingState(false);
-end
-
-function WQT_SettingsConfirmButtonMixin:UpdateState()
-	WQT_SettingsBaseMixin.UpdateState(self);
-	self.ButtonContainer:Layout();
 end
 
 function WQT_SettingsConfirmButtonMixin:OnValueChanged(value, userInput)
@@ -637,10 +652,10 @@ end
 function WQT_SettingsConfirmButtonMixin:SetPickingState(isPicking)
 	self.isPicking = isPicking;
 
-	self.ButtonContainer.Button:SetShown(not self.isPicking);
-	self.ButtonContainer.ButtonConfirm:SetShown(self.isPicking);
-	self.ButtonContainer.ButtonDecline:SetShown(self.isPicking);
-	self.ButtonContainer:Layout();
+	self.Button:SetShown(not self.isPicking);
+	self.ButtonConfirm:SetShown(self.isPicking);
+	self.ButtonDecline:SetShown(self.isPicking);
+	self:Layout();
 end
 
 --------------------------------
@@ -722,10 +737,6 @@ function WQT_SettingsTextMixin:Init(data)
 	self.Label:SetHeight(stringHeight);
 end
 
--- function WQT_SettingsTextMixin:UpdateState()
--- 	WQT_SettingsBaseMixin.UpdateState(self);
--- end
-
 --------------------------------
 -- WQT_SettingsCategoryMixin
 --------------------------------
@@ -758,13 +769,9 @@ end
 
 
 
-
-
-
-
-
-
-
+--------------------------------
+-- Data Mixins
+--------------------------------
 
 WQT_SettingElementDataMixin = {};
 
@@ -924,7 +931,7 @@ function WQT_SettingsCategoryDataMixin:AddColorPicker(tag, label, tooltip, color
 end
 
 function WQT_SettingsCategoryDataMixin:AddTextInput(tag, label, tooltip)
-	if (type(tag) ~= "string") then WQT:debugPrint("AddTextInput has invalid tag", tag); return; end
+	if (type(tag) ~= "string") then error("AddTextInput has invalid tag", tag); return; end
 	local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, "WQT_SettingTextInputTemplate", label, tooltip, self.categoryID, tag);
 
 	table.insert(self.children, settingMixin);
@@ -932,7 +939,7 @@ function WQT_SettingsCategoryDataMixin:AddTextInput(tag, label, tooltip)
 end
 
 function WQT_SettingsCategoryDataMixin:AddButton(tag, label, tooltip)
-	if (type(tag) ~= "string") then WQT:debugPrint("AddButton has invalid tag", tag); return; end
+	if (type(tag) ~= "string") then error("AddButton has invalid tag", tag); return; end
 	local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, "WQT_SettingButtonTemplate", label, tooltip, self.categoryID, tag);
 
 	table.insert(self.children, settingMixin);
@@ -940,7 +947,7 @@ function WQT_SettingsCategoryDataMixin:AddButton(tag, label, tooltip)
 end
 
 function WQT_SettingsCategoryDataMixin:AddConfirmButton(tag, label, tooltip)
-	if (type(tag) ~= "string") then WQT:debugPrint("AddConfirmButton has invalid tag", tag); return; end
+	if (type(tag) ~= "string") then error("AddConfirmButton has invalid tag", tag); return; end
 	local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, "WQT_SettingConfirmButtonTemplate", label, tooltip, self.categoryID, tag);
 
 	table.insert(self.children, settingMixin);
@@ -971,27 +978,25 @@ function WQT_SettingsCategoryDataMixin:ToggleExpanded()
 end
 
 
+WQT_SettingsDataContainerMixin = {};
 
-
-WQT_SettingsDataMixin = {};
-
-function WQT_SettingsDataMixin:Init()
+function WQT_SettingsDataContainerMixin:Init()
 	self.categories = {};
 end
 
-function WQT_SettingsDataMixin:AddCategory(categoryID, label, expanded)
+function WQT_SettingsDataContainerMixin:AddCategory(categoryID, label, expanded)
 	local category = CreateAndInitFromMixin(WQT_SettingsCategoryDataMixin, categoryID, label, expanded, false);
 	table.insert(self.categories, category);
 	return category;
 end
 
-function WQT_SettingsDataMixin:AddToDataprovider(dataprovider)
+function WQT_SettingsDataContainerMixin:AddToDataprovider(dataprovider)
 	for k, category in ipairs(self.categories) do
 		category:AddToDataprovider(dataprovider);
 	end
 end
 
-function WQT_SettingsDataMixin:GetCategoryByID(categoryID)
+function WQT_SettingsDataContainerMixin:GetCategoryByID(categoryID)
 	local foundCategory = nil;
 	for k, category in ipairs(self.categories) do
 		if (category.categoryID == categoryID) then
@@ -1019,7 +1024,7 @@ WQT_SettingsFrameMixin = {};
 function WQT_SettingsFrameMixin:OnLoad()
 	self.TitleText:SetText(SETTINGS);
 
-	self.dataContainer = CreateAndInitFromMixin(WQT_SettingsDataMixin);
+	self.dataContainer = CreateAndInitFromMixin(WQT_SettingsDataContainerMixin);
 
 	local paddingTop = 5;
 	local paddingBottom = 14;
@@ -1035,6 +1040,7 @@ function WQT_SettingsFrameMixin:OnLoad()
 		end
 		return 0;
 	end);
+
 	view:SetElementFactory(function(factory, elementData)
 		factory(elementData.template, function(frame, data)
 			frame:Init(data.data);
@@ -1102,7 +1108,7 @@ function WQT_SettingsFrameMixin:Init(categories, settings)
 		do -- 11.2.09
 			StartVersionCategory("11.2.09");
 			AddSection(ChangelogSections.Changes, {
-				"Behind the scenes rework of the settings menu. Let me know if I broke anything";
+				"Reworked the settings menu. Let me know if I broke anything";
 				"Checkbox and color picker settings can now be clicked across their entire size";
 			});
 		end
@@ -1242,6 +1248,13 @@ function WQT_SettingsFrameMixin:Init(categories, settings)
 			end);
 		end
 
+		do -- Profile Name
+			local data = category:AddTextInput("PROFILE_NAME", _L["PROFILE_NAME"], _L["PROFILE_NAME_TT"]);
+			data:SetGetValueFunction(function() return WQT_Profiles:GetActiveProfileName(); end);
+			data:SetValueChangedFunction(function(value) return WQT_Profiles:ChangeActiveProfileName(value); end);
+			data:SetIsVisibleFunction(function() return not WQT_Profiles:DefaultIsActive() end);
+		end
+
 		do -- Create Profile
 			local data = category:AddButton("CREATE_PROFILE", _L["NEW_PROFILE"], _L["NEW_PROFILE_TT"]);
 			data:SetValueChangedFunction(function() return WQT_Profiles:CreateNew(); end);
@@ -1250,13 +1263,6 @@ function WQT_SettingsFrameMixin:Init(categories, settings)
 		do -- Reset Profile
 			local data = category:AddConfirmButton("RESET_PROFILE", _L["RESET_PROFILE"], _L["RESET_PROFILE_TT"]);
 			data:SetValueChangedFunction(function() return WQT_Profiles:ResetActive(); end);
-		end
-
-		do -- Profile Name
-			local data = category:AddTextInput("PROFILE_NAME", _L["PROFILE_NAME"], _L["PROFILE_NAME_TT"]);
-			data:SetGetValueFunction(function() return WQT_Profiles:GetActiveProfileName(); end);
-			data:SetValueChangedFunction(function(value) return WQT_Profiles:ChangeActiveProfileName(value); end);
-			data:SetIsVisibleFunction(function() return not WQT_Profiles:DefaultIsActive() end);
 		end
 
 		do -- Remove Profile
@@ -1487,7 +1493,7 @@ function WQT_SettingsFrameMixin:Init(categories, settings)
 		end
 
 		do -- Mini Icons
-			local subCategory = category:AddSubCategory("MAPPINS_MINIICONS", _L["MINI_ICONS"], CATEGORY_DEFAULT_EXPANDED);
+			local subCategory = category:AddSubCategory("MAPPINS_MINIICONS", _L["MINI_ICONS"], not CATEGORY_DEFAULT_EXPANDED);
 
 			do -- Pin Type
 				local data = subCategory:AddCheckbox("MINI_ICON_PIN_TYPE", _L["PIN_TYPE"], _L["PIN_TYPE_TT"]);
@@ -1521,7 +1527,7 @@ function WQT_SettingsFrameMixin:Init(categories, settings)
 				local minValue = 0;
 				local maxValue = 3;
 				local valueStep = 1;
-				local data = category:AddSlider("MINI_ICON_NUM_REWARDS", _L["REWARD_NUM_DISPLAY_PIN"], _L["REWARD_NUM_DISPLAY_PIN_TT"], minValue, maxValue, valueStep);
+				local data = subCategory:AddSlider("MINI_ICON_NUM_REWARDS", _L["REWARD_NUM_DISPLAY_PIN"], _L["REWARD_NUM_DISPLAY_PIN_TT"], minValue, maxValue, valueStep);
 				data:SetGetValueFunction(function() return WQT.settings.pin.numRewardIcons; end);
 				data:SetValueChangedFunction(function(value) WQT.settings.pin.numRewardIcons = value; end);
 				data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
@@ -1613,5 +1619,5 @@ function WQT_SettingsFrameMixin:Reconstruct()
 	self.dataContainer:AddToDataprovider(dataProvider);
 	self.ScrollBox:SetDataProvider(dataProvider , ScrollBoxConstants.RetainScrollPosition);
 	-- Required to correct placement of text frames
-	self.ScrollBox:FullUpdateInternal();
+	self.ScrollBox:FullUpdate();
 end
