@@ -1,12 +1,11 @@
 ﻿local addonName, addon = ...
 
-local WQT = addon.WQT;
 local _L = addon.L;
 local WQT_Utils;
 
 local _activeSettings;
 
-local _defaultSettings = {	
+local _defaultSettings = {
 		useTomTom = true;
 		TomTomAutoArrow = true;
 		TomTomArrowOnClick = false;
@@ -40,32 +39,35 @@ local function RemoveTomTomArrowbyQuestId(questId)
 	end
 end
 
-local _settings = {
-	{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "TOMTOM", ["label"] = _L["USE_TOMTOM"], ["tooltip"] = _L["USE_TOMTOM_TT"]
-			, ["valueChangedFunc"] = function(value) 
-				_activeSettings.useTomTom = value;
+local function AddSettings()
+	local expanded = false;
+	local category = WQT_SettingsFrame.dataContainer:AddCategory("TOMTOM", "TomTom", expanded);
+
+	do -- Enable
+		local data = category:AddCheckbox("TOMTOM_ENABLE", _L["USE_TOMTOM"], _L["USE_TOMTOM_TT"]);
+		data:SetGetValueFunction(function() return _activeSettings.useTomTom; end);
+		data:SetValueChangedFunction(function(value) _activeSettings.useTomTom = value; end);
+	end
+
+	do -- Auto Arrow
+		local data = category:AddCheckbox("TOMTOM_AUTO_ARROW", _L["TOMTOM_AUTO_ARROW"], _L["TOMTOM_AUTO_ARROW_TT"]);
+		data:SetGetValueFunction(function() return _activeSettings.TomTomAutoArrow; end);
+		data:SetValueChangedFunction(function(value) _activeSettings.TomTomAutoArrow = value; end);
+		data:SetIsDisabledFunction(function() return not _activeSettings.useTomTom; end);
+	end
+
+	do -- Click Arrow
+		local data = category:AddCheckbox("TOMTOM_CLICK_ ARROW", _L["TOMTOM_CLICK_ARROW"], _L["TOMTOM_CLICK_ARROW_TT"]);
+		data:SetGetValueFunction(function() return _activeSettings.TomTomArrowOnClick; end);
+		data:SetValueChangedFunction(function(value)
+			_activeSettings.TomTomArrowOnClick = value;
+			if (not value and WQT_WorldQuestFrame.softTomTomArrow and not WQT_Utils:QuestIsWatchedManual(WQT_WorldQuestFrame.softTomTomArrow)) then
+				WQT_Utils:RemoveTomTomArrowbyQuestId(WQT_WorldQuestFrame.softTomTomArrow);
 			end
-			,["getValueFunc"] = function() return _activeSettings.useTomTom; end
-			}
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "TOMTOM", ["label"] = _L["TOMTOM_AUTO_ARROW"], ["tooltip"] = _L["TOMTOM_AUTO_ARROW_TT"]
-			, ["valueChangedFunc"] = function(value) 
-				_activeSettings.TomTomAutoArrow = value;
-			end
-			,["getValueFunc"] = function() return _activeSettings.TomTomAutoArrow; end
-			,["isDisabled"] = function() return not _activeSettings.useTomTom; end
-			}
-	,{["template"] = "WQT_SettingCheckboxTemplate", ["categoryID"] = "TOMTOM", ["label"] = _L["TOMTOM_CLICK_ARROW"], ["tooltip"] = _L["TOMTOM_CLICK_ARROW_TT"]
-			, ["valueChangedFunc"] = function(value) 
-				_activeSettings.TomTomArrowOnClick = value;
-					
-				if (not value and WQT_WorldQuestFrame.softTomTomArrow and not WQT_Utils:QuestIsWatchedManual(WQT_WorldQuestFrame.softTomTomArrow)) then
-					WQT_Utils:RemoveTomTomArrowbyQuestId(WQT_WorldQuestFrame.softTomTomArrow);
-				end
-			end
-			,["getValueFunc"] = function() return _activeSettings.TomTomArrowOnClick; end
-			,["isDisabled"] = function() return not _activeSettings.useTomTom; end
-			}
-}
+		end);
+		data:SetIsDisabledFunction(function() return not _activeSettings.useTomTom; end);
+	end
+end
 
 local function QuestListChangedHook(questId, added)
 	-- We don't have settings (yet?)
@@ -158,7 +160,7 @@ function TomTomExternal:Init(utils)
 	WQT_Utils = utils;
 	
 	_activeSettings = WQT_Utils:RegisterExternalSettings("TomTom", _defaultSettings);
-	WQT_Utils:AddExternalSettingsOptions(_settings);
+	AddSettings();
 
 	WQT_CallbackRegistry:RegisterCallback("WQT.QuestContextSetup", AddTomTomToQuestContext, self);
 	WQT_CallbackRegistry:RegisterCallback("WQT.RegisterdEventTriggered", EventTriggered, self);

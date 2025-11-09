@@ -524,9 +524,9 @@ function WQT_DataProvider:Init()
 	WQT_CallbackRegistry:RegisterCallback("WQT.SortUpdated", function() self:RequestFilterUpdate(); end, self);
 	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
 		function(_, _, tag)
-			if (tag == "GENERAL_ZONE_QUESTS") then
+			if (tag == "ZONE_QUESTS") then
 				self:RequestDataUpdate();
-			elseif (tag == "GENERAL_GENERIC_ANIMA") then
+			elseif (tag == "GENERIC_ANIMA") then
 				self:ReloadQuestRewards();
 			end
 		end,

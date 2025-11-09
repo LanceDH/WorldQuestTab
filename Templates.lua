@@ -989,10 +989,6 @@ function WQT_Utils:RegisterExternalSettings(key, defaults)
 	return WQT_Profiles:RegisterExternalSettings(key, defaults);
 end
 
-function WQT_Utils:AddExternalSettingsOptions(settings)
-	WQT_SettingsFrame:AddSettingList(settings);
-end
-
 function WQT_Utils:FilterIsOldContent(typeID, flagID)
 	local typeList = _V["FILTER_TYPE_OLD_CONTENT"][typeID];
 	if (typeList) then
