@@ -1,4 +1,8 @@
-﻿local addonName, addon = ...
+﻿local name = "WorldFlightMap";
+if (not WQT_Utils:ExternalMightLoad(name)) then return; end
+
+local addonName, addon = ...
+local WQT = addon.WQT;
 
 local _V = addon.variables;
 
@@ -18,7 +22,7 @@ end
 local WorldFlightMapExternal = CreateFromMixins(WQT_ExternalMixin);
 
 function WorldFlightMapExternal:GetName()
-	return "WorldFlightMap";
+	return name;
 end
 
 function WorldFlightMapExternal:Init()
@@ -26,4 +30,4 @@ function WorldFlightMapExternal:Init()
 	WQT_CallbackRegistry:RegisterCallback("WQT.MapPinProvider.PinInitialized", ReApplyPinAlphas, self);
 end
 
-WQT_WorldQuestFrame:LoadExternal(WorldFlightMapExternal);
+WQT:AddExternal(WorldFlightMapExternal);

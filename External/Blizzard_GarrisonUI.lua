@@ -3,7 +3,11 @@
 -- If a calling is available or active, it will instead show the default WQT tooltip, providing more information.
 -------------------------------------------------------------------------------------------------------------------
 
-local WQT_Utils;
+local name = "Blizzard_GarrisonUI";
+if (not WQT_Utils:ExternalMightLoad(name)) then return; end
+
+local addonName, addon = ...
+local WQT = addon.WQT;
 
 local _hookedCallingsUpdate = false;
 local _hookedDisplays = {};
@@ -53,16 +57,14 @@ end
 local ExampleExternal = CreateFromMixins(WQT_ExternalMixin);
 
 function ExampleExternal:GetName()
-	-- Return Add-on name
-	return "Blizzard_GarrisonUI";
+	return name;
 end
 
-function ExampleExternal:Init(utils)
-	WQT_Utils = utils;
+function ExampleExternal:Init()
 	hooksecurefunc(GarrisonLandingPage, "SetupCovenantCallings", HookCallingsUpdate);
 end
 
-WQT_WorldQuestFrame:LoadExternal(ExampleExternal);
+WQT:AddExternal(ExampleExternal);
 
 
 

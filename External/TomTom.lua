@@ -1,7 +1,10 @@
-﻿local addonName, addon = ...
+﻿local name = "TomTom";
+if (not WQT_Utils:ExternalMightLoad(name)) then return; end
+
+local addonName, addon = ...
+local WQT = addon.WQT;
 
 local _L = addon.L;
-local WQT_Utils;
 
 local _activeSettings;
 
@@ -36,36 +39,6 @@ local function RemoveTomTomArrowbyQuestId(questId)
 				TomTom:RemoveWaypoint(wp);
 			end
 		end
-	end
-end
-
-local function AddSettings()
-	local expanded = false;
-	local category = WQT_SettingsFrame.dataContainer:AddCategory("TOMTOM", "TomTom", expanded);
-
-	do -- Enable
-		local data = category:AddCheckbox("TOMTOM_ENABLE", _L["USE_TOMTOM"], _L["USE_TOMTOM_TT"]);
-		data:SetGetValueFunction(function() return _activeSettings.useTomTom; end);
-		data:SetValueChangedFunction(function(value) _activeSettings.useTomTom = value; end);
-	end
-
-	do -- Auto Arrow
-		local data = category:AddCheckbox("TOMTOM_AUTO_ARROW", _L["TOMTOM_AUTO_ARROW"], _L["TOMTOM_AUTO_ARROW_TT"]);
-		data:SetGetValueFunction(function() return _activeSettings.TomTomAutoArrow; end);
-		data:SetValueChangedFunction(function(value) _activeSettings.TomTomAutoArrow = value; end);
-		data:SetIsDisabledFunction(function() return not _activeSettings.useTomTom; end);
-	end
-
-	do -- Click Arrow
-		local data = category:AddCheckbox("TOMTOM_CLICK_ ARROW", _L["TOMTOM_CLICK_ARROW"], _L["TOMTOM_CLICK_ARROW_TT"]);
-		data:SetGetValueFunction(function() return _activeSettings.TomTomArrowOnClick; end);
-		data:SetValueChangedFunction(function(value)
-			_activeSettings.TomTomArrowOnClick = value;
-			if (not value and WQT_WorldQuestFrame.softTomTomArrow and not WQT_Utils:QuestIsWatchedManual(WQT_WorldQuestFrame.softTomTomArrow)) then
-				WQT_Utils:RemoveTomTomArrowbyQuestId(WQT_WorldQuestFrame.softTomTomArrow);
-			end
-		end);
-		data:SetIsDisabledFunction(function() return not _activeSettings.useTomTom; end);
 	end
 end
 
@@ -149,21 +122,48 @@ end
 local TomTomExternal = CreateFromMixins(WQT_ExternalMixin);
 
 function TomTomExternal:GetName()
-	return "TomTom";
+	return name;
 end
 
 function TomTomExternal:GetRequiredEvents()
 	return { "QUEST_WATCH_LIST_CHANGED",  "QUEST_TURNED_IN"};
 end
 
-function TomTomExternal:Init(utils)
-	WQT_Utils = utils;
-	
+function TomTomExternal:Init()
 	_activeSettings = WQT_Utils:RegisterExternalSettings("TomTom", _defaultSettings);
-	AddSettings();
+
+	do
+		local expanded = false;
+		local category = WQT_SettingsFrame.dataContainer:AddCategory("TOMTOM", "TomTom", expanded);
+
+		do -- Enable
+			local data = category:AddCheckbox("TOMTOM_ENABLE", _L["USE_TOMTOM"], _L["USE_TOMTOM_TT"]);
+			data:SetGetValueFunction(function() return _activeSettings.useTomTom; end);
+			data:SetValueChangedFunction(function(value) _activeSettings.useTomTom = value; end);
+		end
+
+		do -- Auto Arrow
+			local data = category:AddCheckbox("TOMTOM_AUTO_ARROW", _L["TOMTOM_AUTO_ARROW"], _L["TOMTOM_AUTO_ARROW_TT"]);
+			data:SetGetValueFunction(function() return _activeSettings.TomTomAutoArrow; end);
+			data:SetValueChangedFunction(function(value) _activeSettings.TomTomAutoArrow = value; end);
+			data:SetIsDisabledFunction(function() return not _activeSettings.useTomTom; end);
+		end
+
+		do -- Click Arrow
+			local data = category:AddCheckbox("TOMTOM_CLICK_ ARROW", _L["TOMTOM_CLICK_ARROW"], _L["TOMTOM_CLICK_ARROW_TT"]);
+			data:SetGetValueFunction(function() return _activeSettings.TomTomArrowOnClick; end);
+			data:SetValueChangedFunction(function(value)
+				_activeSettings.TomTomArrowOnClick = value;
+				if (not value and WQT_WorldQuestFrame.softTomTomArrow and not WQT_Utils:QuestIsWatchedManual(WQT_WorldQuestFrame.softTomTomArrow)) then
+					WQT_Utils:RemoveTomTomArrowbyQuestId(WQT_WorldQuestFrame.softTomTomArrow);
+				end
+			end);
+			data:SetIsDisabledFunction(function() return not _activeSettings.useTomTom; end);
+		end
+	end
 
 	WQT_CallbackRegistry:RegisterCallback("WQT.QuestContextSetup", AddTomTomToQuestContext, self);
 	WQT_CallbackRegistry:RegisterCallback("WQT.RegisterdEventTriggered", EventTriggered, self);
 end
 
-WQT_WorldQuestFrame:LoadExternal(TomTomExternal);
+WQT:AddExternal(TomTomExternal);

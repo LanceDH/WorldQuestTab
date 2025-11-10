@@ -17,15 +17,12 @@ local WQT = addon.WQT;
 
 local _L = addon.L
 local _V = addon.variables;
-local WQT_Utils = addon.WQT_Utils;
 local WQT_Profiles = addon.WQT_Profiles;
 
 local _; -- local trash 
 
 local _playerFaction = GetPlayerFactionGroup();
 local _playerName = UnitName("player");
-
-local utilitiesStatus = select(5, C_AddOns.GetAddOnInfo("WorldQuestTabUtilities"));
 
 WQT_PanelID = EnumUtil.MakeEnum("Quests", "Settings");
 
@@ -498,7 +495,6 @@ function WQT:OnInitialize()
 	
 	WQT.combatLockWarned = false;
 
-	-- Hightlight 'what's new'
 	local settingsVersion = WQT_Utils:GetSettingsVersion();
 	local currentVersion = WQT_Utils:GetAddonVersion();
 	if (settingsVersion < currentVersion) then
@@ -517,11 +513,6 @@ function WQT:OnInitialize()
 end
 
 function WQT:OnEnable()
-	-- load WorldQuestTabUtilities
-	if (WQT.settings.general.loadUtilities and C_AddOns.GetAddOnEnableState(_playerName, "WorldQuestTabUtilities") > 0 and not C_AddOns.IsAddOnLoaded("WorldQuestTabUtilities")) then
-		--C_AddOns.LoadAddOn("WorldQuestTabUtilities");
-	end
-	
 	-- Place fullscreen button in saved location
 	WQT_WorldMapContainer:LinkSettings(WQT.settings.general.fullScreenContainerPos);
 	
@@ -555,25 +546,23 @@ function WQT:OnEnable()
 	WQT_SettingsFrame:Init();
 	
 	WQT_Utils:LoadColors();
-	
-	-- Load externals
-	self.loadableExternals = {};
-	for k, external in ipairs(addon.externals) do
-		if (external:IsLoaded()) then
-			external:Init(WQT_Utils);
-			WQT_WorldQuestFrame:RegisterEventsForExternal(external);
-			WQT:debugPrint("External", external:GetName(), "loaded on first try.");
-		elseif (external:IsLoadable()) then
-			self.loadableExternals[external:GetName()] = external;
-			WQT:debugPrint("External", external:GetName(), "waiting for load.");
-		else
-			WQT:debugPrint("External", external:GetName(), "not installed.");
+
+	if (self.externals) then
+		for k, external in ipairs(self.externals) do
+			local name = external:GetName();
+			WQT:debugPrint("Setting up external load:", name);
+			EventUtil.ContinueOnAddOnLoaded(name, function()
+				WQT:debugPrint("Initializing external:", name);
+				external:Init(WQT_Utils);
+				WQT_WorldQuestFrame:RegisterEventsForExternal(external);
+			end);
 		end
 	end
 
+	self.externals = nil;
+
 	-- Dropdowns
 	-- We need to do this after settings are available now
-
 	-- Sorting
 	WQT_ListContainer.SortDropdown:SetWidth(150);
 	WQT_ListContainer.SortDropdown:SetupMenu(SortDropdownSetup);
@@ -584,6 +573,15 @@ function WQT:OnEnable()
 	WQT_ListContainer.FilterDropdown:SetupMenu(FilterDropdownSetup);
 
 	self.isEnabled = true;
+end
+
+
+function WQT:AddExternal(external)
+	if (not self.externals) then
+		self.externals = {};
+	end
+
+	tinsert(self.externals, external);
 end
 
 -----------------------------------------
@@ -1662,19 +1660,6 @@ function WQT_CoreMixin:ADDON_LOADED(loaded)
 		WQT_FlightMapContainerButton:SetAlpha(1);
 		WQT_FlightMapContainerButton:SetPoint("BOTTOMRIGHT", FlightMapFrame, "BOTTOMRIGHT", -8, 8);
 		WQT_FlightMapContainerButton:SetFrameLevel(FlightMapFrame:GetFrameLevel()+2);
-	elseif (loaded == "WorldQuestTabUtilities") then
-		WQT.settings.general.loadUtilities = true;
-	end
-	
-	-- Load waiting externals
-	if (WQT.loadableExternals) then
-		local external = WQT.loadableExternals[loaded];
-		if (external) then
-			external:Init(WQT_Utils);
-			self:RegisterEventsForExternal(external);
-			WQT:debugPrint("External", external:GetName(), "delayed load.");
-			WQT.loadableExternals[loaded] = nil;
-		end
 	end
 end
 
@@ -1777,13 +1762,3 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 
 	WQT_CallbackRegistry:TriggerEvent("WQT.CoreFrame.AnchorUpdated", anchor);
 end
-
-function WQT_CoreMixin:LoadExternal(external)
-	if (self.isEnabled and external:IsLoaded()) then
-		external:Init(WQT_Utils);
-	else
-		tinsert(addon.externals, external);
-	end
-end
-
-

@@ -7,15 +7,13 @@ addon.debug = false;
 addon.debugPrint = false;
 
 addon.WQT_Utils = {};
-local WQT_Utils = addon.WQT_Utils;
+WQT_Utils = addon.WQT_Utils;
 
 addon.variables = {};
 local _V = addon.variables;
 
 addon.WQT_Profiles =  {};
 local WQT_Profiles = addon.WQT_Profiles;
-
-addon.externals = {};
 
 local _L = addon.L;
 local _playerFaction = UnitFactionGroup("Player");
@@ -81,7 +79,6 @@ _V["COLOR_IDS"] = {
 }
 
 
-
 _V["WQT_COLOR_NONE"] =  CreateColor(0.45, 0.45, .45) ;
 _V["WQT_COLOR_ARMOR"] =  CreateColor(0.95, 0.65, 1) ;
 _V["WQT_COLOR_WEAPON"] =  CreateColor(1, 0.45, 1) ;
@@ -97,8 +94,6 @@ _V["WQT_ORANGE_FONT_COLOR"] = CreateColor(1, 0.5, 0);
 _V["WQT_GREEN_FONT_COLOR"] = CreateColor(0, 0.8, 0);
 _V["WQT_BLUE_FONT_COLOR"] = CreateColor(0.2, 0.60, 1);
 _V["WQT_PURPLE_FONT_COLOR"] = CreateColor(0.84, 0.38, 0.94);
-
-WQT_TESTING = _V["WQT_COLOR_NONE"]
 
 _V["DEBUG_OUTPUT_TYPE"] = {
 	["invalid"] = 0

@@ -2,7 +2,6 @@
 local WQT = addon.WQT;
 local _L = addon.L
 local _V = addon.variables;
-local WQT_Utils = addon.WQT_Utils;
 local WQT_Profiles = addon.WQT_Profiles;
 
 --------------------------------
@@ -542,6 +541,10 @@ function WQT_Utils:GetSettingsVersion()
 	return version;
 end
 
+function WQT_Utils:ExternalMightLoad(addonName)
+	return C_AddOns.IsAddOnLoaded(addonName) or C_AddOns.IsAddOnLoadOnDemand(addonName);
+end
+
 function WQT_Utils:GetSetting(...)
 	local settings =  WQT.settings;
 	local index = 1;
@@ -561,22 +564,6 @@ function WQT_Utils:GetSetting(...)
 	end;
 	
 	return settings;
-end
-
-function WQT_Utils:GetLocal(key)
-	return _L[key or ""];
-end
-
-function WQT_Utils:GetVariable(key)
-	local val = _V[key or ""];
-	
-	if (not val) then return; end
-	
-	if (type(val) == "table") then
-		return CopyTable(val);
-	end
-	
-	return val;
 end
 
 function WQT_Utils:GetCachedMapInfo(zoneId)
