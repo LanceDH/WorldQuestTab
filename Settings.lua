@@ -508,14 +508,13 @@ function WQT_SettingsDropDownMixin:DropdownSetup(dropdown, rootDescription)
 		options = options();
 	end
 
-	for index, displayInfo in pairs(options) do
+	local function IsSelectedFunc(id) return id == dropdown.data.getValueFunc() end
+	local function OnValueSetFunc(id) self:OnValueChanged(id, true); end
+
+	for _, displayInfo in ipairs(options) do
 		local label = displayInfo.label or "Invalid label";
-		local id = displayInfo.arg1;
-		local radio = rootDescription:CreateRadio(
-			label,
-			function() return index == dropdown.data.getValueFunc() end,
-			function() self:OnValueChanged(id, true); end,
-			id);
+		local id = displayInfo.id;
+		local radio = rootDescription:CreateRadio(label, IsSelectedFunc, OnValueSetFunc, id);
 
 		radio:SetOnEnter(function(button)
 			GameTooltip:SetOwner(button, "ANCHOR_RIGHT");
@@ -772,6 +771,10 @@ end
 -- Data Mixins
 --------------------------------
 
+--------------------------------
+-- WQT_SettingElementDataMixin
+--------------------------------
+
 WQT_SettingElementDataMixin = {};
 
 function WQT_SettingElementDataMixin:Init(template, label, tooltip, categoryID, tag)
@@ -823,6 +826,9 @@ function WQT_SettingElementDataMixin:MarkAsSuggestReload()
 	self.elementData.data.suggestReload = true;
 end
 
+--------------------------------
+-- WQT_SettingsCategoryDataMixin
+--------------------------------
 
 WQT_SettingsCategoryDataMixin = {};
 
@@ -976,6 +982,9 @@ function WQT_SettingsCategoryDataMixin:ToggleExpanded()
 	self.elementData.data.expanded = not self.elementData.data.expanded;
 end
 
+--------------------------------
+-- WQT_SettingsDataContainerMixin
+--------------------------------
 
 WQT_SettingsDataContainerMixin = {};
 
@@ -1012,8 +1021,6 @@ function WQT_SettingsDataContainerMixin:GetCategoryByID(categoryID)
 	return foundCategory;
 end
 
-
-
 --------------------------------
 -- WQT_SettingsFrameMixin
 --------------------------------
@@ -1048,6 +1055,10 @@ function WQT_SettingsFrameMixin:OnLoad()
 
 
 	ScrollUtil.InitScrollBoxWithScrollBar(self.ScrollBox, self.ScrollBar, view);
+end
+
+local function CreateDropdownOption(id, label, tooltip)
+	return { id = id, label = label, tooltip = tooltip};
 end
 
 function WQT_SettingsFrameMixin:Init(categories, settings)
@@ -1240,7 +1251,7 @@ function WQT_SettingsFrameMixin:Init(categories, settings)
 
 		do -- Active Profile
 			local data = category:AddDropdown("CURRENT_PROFILE", _L["CURRENT_PROFILE"], _L["CURRENT_PROFILE_TT"], function() return WQT_Profiles:GetProfiles() end);
-			data:SetGetValueFunction(function() return WQT_Profiles:GetIndexById(WQT.db.char.activeProfile); end);
+			data:SetGetValueFunction(function() return WQT.db.char.activeProfile; end);
 			data:SetValueChangedFunction(function(value)
 				if (value == WQT_Profiles:GetActiveProfileId()) then return; end
 				WQT_Profiles:Load(value);
@@ -1306,7 +1317,13 @@ function WQT_SettingsFrameMixin:Init(categories, settings)
 		end
 
 		do -- Zone Quests
-			local data = category:AddDropdown("ZONE_QUESTS", _L["ZONE_QUESTS"], _L["ZONE_QUESTS_TT"], _V["ZONE_QUESTS_LABELS"]);
+			local options = {
+				CreateDropdownOption(_V["ENUM_ZONE_QUESTS"].zone, _L["ZONE_QUESTS_ZONE"], _L["ZONE_QUESTS_ZONE_TT"]);
+				CreateDropdownOption(_V["ENUM_ZONE_QUESTS"].neighbor, _L["ZONE_QUESTS_VISIBLE"], _L["ZONE_QUESTS_VISIBLE_TT"]);
+				CreateDropdownOption(_V["ENUM_ZONE_QUESTS"].expansion, _L["ZONE_QUESTS_EXPANSION"], _L["ZONE_QUESTS_EXPANSION_TT"]);
+			};
+		
+			local data = category:AddDropdown("ZONE_QUESTS", _L["ZONE_QUESTS"], _L["ZONE_QUESTS_TT"], options);
 			data:SetGetValueFunction(function() return WQT.settings.general.zoneQuests; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.general.zoneQuests = value; end);
 			data:MarkAsNew(); -- 11.2.5
@@ -1448,21 +1465,40 @@ function WQT_SettingsFrameMixin:Init(categories, settings)
 		end
 
 		do -- Center Type
-			local data = category:AddDropdown("PIN_CENTER_TYPE", _L["PIN_CENTER"], _L["PIN_CENTER_TT"], _V["PIN_CENTER_LABELS"]);
+			local options = {
+				CreateDropdownOption(_V["PIN_CENTER_TYPES"].blizzard, _L["BLIZZARD"], _L["PIN_BLIZZARD_TT"]);
+				CreateDropdownOption(_V["PIN_CENTER_TYPES"].reward, REWARD, _L["PIN_REWARD_TT"]);
+				CreateDropdownOption(_V["PIN_CENTER_TYPES"].faction, FACTION, _L["PIN_FACTION_TT"]);
+			};
+			
+			local data = category:AddDropdown("PIN_CENTER_TYPE", _L["PIN_CENTER"], _L["PIN_CENTER_TT"], options);
 			data:SetGetValueFunction(function() return WQT.settings.pin.centerType; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.centerType = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
 		end
 
 		do -- Ring Type
-			local data = category:AddDropdown("PIN_RING_TYPE", _L["PIN_RING_TITLE"], _L["PIN_RING_TT"], _V["RING_TYPES_LABELS"]);
+			local options = {
+				CreateDropdownOption(_V["RING_TYPES"].default, _L["PIN_RING_DEFAULT"], _L["PIN_RING_DEFAULT_TT"]);
+				CreateDropdownOption(_V["RING_TYPES"].reward, _L["PIN_RING_COLOR"], _L["PIN_RING_COLOR_TT"]);
+				CreateDropdownOption(_V["RING_TYPES"].time, _L["PIN_RING_TIME"], _L["PIN_RIMG_TIME_TT"]);
+				CreateDropdownOption(_V["RING_TYPES"].rarity, RARITY, _L["PIN_RING_QUALITY_TT"]);
+			};
+		
+			local data = category:AddDropdown("PIN_RING_TYPE", _L["PIN_RING_TITLE"], _L["PIN_RING_TT"], options);
 			data:SetGetValueFunction(function() return WQT.settings.pin.ringType; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.ringType = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
 		end
 
 		do -- Label
-			local data = category:AddDropdown("PIN_LABEL", _L["PIN_LABEL"], _L["PIN_LABEL_TT"], _V["PIN_LABEL_LABELS"]);
+			local options = {
+				CreateDropdownOption(_V["ENUM_PIN_LABEL"].none, NONE, _L["PIN_LABEL_NONE_TT"]);
+				CreateDropdownOption(_V["ENUM_PIN_LABEL"].time, _L["PIN_TIME"], _L["PIN_TIME_TT"]);
+				CreateDropdownOption(_V["ENUM_PIN_LABEL"].amount, _L["PIN_LABEL_REWARD"], _L["PIN_LABEL_REWARD_TT"]);
+			};
+		
+			local data = category:AddDropdown("PIN_LABEL", _L["PIN_LABEL"], _L["PIN_LABEL_TT"], options);
 			data:SetGetValueFunction(function() return WQT.settings.pin.label; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.label = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
@@ -1478,14 +1514,26 @@ function WQT_SettingsFrameMixin:Init(categories, settings)
 		end
 
 		do -- Zone Visibility
-			local data = category:AddDropdown("PIN_ZONE_VISIBILITY", _L["PIN_VISIBILITY_ZONE"], _L["PIN_VISIBILITY_ZONE_TT"], _V["PIN_VISIBILITY_ZONE"]);
+			local options = {
+				CreateDropdownOption(_V["ENUM_PIN_ZONE"].none, NONE, _L["PIN_VISIBILITY_NONE_TT"]);
+				CreateDropdownOption(_V["ENUM_PIN_ZONE"].tracked, _L["PIN_VISIBILITY_TRACKED"], _L["PIN_VISIBILITY_TRACKED_TT"]);
+				CreateDropdownOption(_V["ENUM_PIN_ZONE"].all, ALL, _L["PIN_VISIBILITY_ALL_TT"]);
+			};
+
+			local data = category:AddDropdown("PIN_ZONE_VISIBILITY", _L["PIN_VISIBILITY_ZONE"], _L["PIN_VISIBILITY_ZONE_TT"], options);
 			data:SetGetValueFunction(function() return WQT.settings.pin.zoneVisible; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.zoneVisible = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
 		end
 
 		do -- Continent Visibility
-			local data = category:AddDropdown("PIN_CONTINENT_VISIBILITY", _L["PIN_VISIBILITY_CONTINENT"], _L["PIN_VISIBILITY_CONTINENT_TT"], _V["PIN_VISIBILITY_CONTINENT"]);
+			local options = {
+				CreateDropdownOption(_V["ENUM_PIN_CONTINENT"].none, NONE, _L["PIN_VISIBILITY_NONE_TT"]);
+				CreateDropdownOption(_V["ENUM_PIN_CONTINENT"].tracked, _L["PIN_VISIBILITY_TRACKED"], _L["PIN_VISIBILITY_TRACKED_TT"]);
+				CreateDropdownOption(_V["ENUM_PIN_CONTINENT"].all, ALL, _L["PIN_VISIBILITY_ALL_TT"]);
+			};
+		
+			local data = category:AddDropdown("PIN_CONTINENT_VISIBILITY", _L["PIN_VISIBILITY_CONTINENT"], _L["PIN_VISIBILITY_CONTINENT_TT"], options);
 			data:SetGetValueFunction(function() return WQT.settings.pin.continentVisible; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.continentVisible = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);

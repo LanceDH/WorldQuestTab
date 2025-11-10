@@ -9,14 +9,14 @@ local OLD_VERSION_SETTINGS_CUTOFF = 110000;
 
 local function ReferenceListSort(a, b)
 	-- Default always on top, and in case of duplicate labels
-	if (a.arg1 == 0 or b.arg1 == 0) then
-		return a.arg1 < b.arg1;
+	if (a.id == 0 or b.id == 0) then
+		return a.id < b.id;
 	end
 	
 	if(a.label:lower() == b.label:lower()) then
 		if(a.label == b.label) then
 			-- Juuuust incase
-			return a.arg1 < b.arg1;
+			return a.id < b.id;
 		end
 		return a.label < b.label;
 	end
@@ -88,7 +88,7 @@ end
 
 local function GetProfileById(id)
 	for index, profile in ipairs(_profileReferenceList) do
-		if (profile.arg1 == id) then
+		if (profile.id == id) then
 			return profile, index
 		end
 	end
@@ -96,7 +96,7 @@ end
 
 local function AddProfileToReferenceList(id, name)
 	if (not GetProfileById(id)) then
-		tinsert(_profileReferenceList, {["label"] = name, ["arg1"] = id});
+		tinsert(_profileReferenceList, {["label"] = name, ["id"] = id});
 	end
 end
 
@@ -164,7 +164,7 @@ end
 function WQT_Profiles:GetProfiles()
 	-- Make sure names are up to date
 	for index, refProfile in ipairs(_profileReferenceList) do
-		local profile = WQT.db.global.profiles[refProfile.arg1];
+		local profile = WQT.db.global.profiles[refProfile.id];
 		if (profile) then
 			refProfile.label = profile.name;
 		end
@@ -338,11 +338,6 @@ end
 
 function WQT_Profiles:GetActiveProfileId()
 	return WQT.db.char.activeProfile;
-end
-
-function WQT_Profiles:GetIndexById(id)
-	local profile, index = GetProfileById(id);
-	return index or 0;
 end
 
 function WQT_Profiles:GetActiveProfileName()

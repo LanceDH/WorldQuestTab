@@ -13,7 +13,6 @@ addon.variables = {};
 local _V = addon.variables;
 
 addon.WQT_Profiles =  {};
-local WQT_Profiles = addon.WQT_Profiles;
 
 local _L = addon.L;
 local _playerFaction = UnitFactionGroup("Player");
@@ -42,15 +41,14 @@ WQT_REWARDTYPE = FlagsUtil.MakeFlags(
 	"missing"		--8192
 );
 WQT_REWARDTYPE.none = 0;
+-- Combos
+WQT_REWARDTYPE.gear = bit.bor(WQT_REWARDTYPE.weapon, WQT_REWARDTYPE.equipment);
 
 _V["CONDUIT_SUBTYPE"] = {
 	["endurance"] = 1,
 	["finesse"] = 2,
 	["potency"] = 3,
 }
-
--- Combos
-WQT_REWARDTYPE.gear = bit.bor(WQT_REWARDTYPE.weapon, WQT_REWARDTYPE.equipment);
 
 WQT_GROUP_INFO = _L["GROUP_SEARCH_INFO"];
 WQT_CONTAINER_DRAG = _L["CONTAINER_DRAG"];
@@ -115,24 +113,11 @@ _V["PIN_CENTER_TYPES"] =	{
 	,["faction"] = 3
 }
 
-_V["PIN_CENTER_LABELS"] ={
-	[_V["PIN_CENTER_TYPES"].blizzard] = {["label"] = _L["BLIZZARD"], ["tooltip"] = _L["PIN_BLIZZARD_TT"]} 
-	,[_V["PIN_CENTER_TYPES"].reward] = {["label"] = REWARD, ["tooltip"] = _L["PIN_REWARD_TT"]}
-	,[_V["PIN_CENTER_TYPES"].faction] = {["label"] = FACTION, ["tooltip"] = _L["PIN_FACTION_TT"]}
-}
-
 _V["RING_TYPES"] = {
 	["default"] = 1
 	,["reward"] = 2
 	,["time"] = 3
 	,["rarity"] = 4
-}
-
-_V["RING_TYPES_LABELS"] ={
-	[_V["RING_TYPES"].default] = {["label"] = _L["PIN_RING_DEFAULT"], ["tooltip"] = _L["PIN_RING_DEFAULT_TT"]} 
-	,[_V["RING_TYPES"].reward] = {["label"] = _L["PIN_RING_COLOR"], ["tooltip"] = _L["PIN_RING_COLOR_TT"]}
-	,[_V["RING_TYPES"].time] = {["label"] = _L["PIN_RING_TIME"], ["tooltip"] = _L["PIN_RIMG_TIME_TT"]}
-	,[_V["RING_TYPES"].rarity] = {["label"] = RARITY, ["tooltip"] = _L["PIN_RING_QUALITY_TT"]}
 }
 
 _V["ENUM_PIN_CONTINENT"] = {
@@ -141,22 +126,11 @@ _V["ENUM_PIN_CONTINENT"] = {
 	,["all"] = 3
 }
 
-_V["PIN_VISIBILITY_CONTINENT"] = {
-	[_V["ENUM_PIN_CONTINENT"].none] = {["label"] = NONE, ["tooltip"] = _L["PIN_VISIBILITY_NONE_TT"]} 
-	,[_V["ENUM_PIN_CONTINENT"].tracked] = {["label"] = _L["PIN_VISIBILITY_TRACKED"], ["tooltip"] = _L["PIN_VISIBILITY_TRACKED_TT"]} 
-	,[_V["ENUM_PIN_CONTINENT"].all] = {["label"] = ALL, ["tooltip"] = _L["PIN_VISIBILITY_ALL_TT"]} 
-}
 
 _V["ENUM_PIN_ZONE"] = {
 	["none"] = 1
 	,["tracked"] = 2
 	,["all"] = 3
-}
-
-_V["PIN_VISIBILITY_ZONE"] = {
-	[_V["ENUM_PIN_ZONE"].none] = {["label"] = NONE, ["tooltip"] = _L["PIN_VISIBILITY_NONE_TT"]} 
-	,[_V["ENUM_PIN_ZONE"].tracked] = {["label"] = _L["PIN_VISIBILITY_TRACKED"], ["tooltip"] = _L["PIN_VISIBILITY_TRACKED_TT"]} 
-	,[_V["ENUM_PIN_ZONE"].all] = {["label"] = ALL, ["tooltip"] = _L["PIN_VISIBILITY_ALL_TT"]} 
 }
 
 _V["ENUM_PIN_LABEL"] = {
@@ -165,22 +139,10 @@ _V["ENUM_PIN_LABEL"] = {
 	,["amount"] = 3
 }
 
-_V["PIN_LABEL_LABELS"] = {
-	[_V["ENUM_PIN_LABEL"].none] = {["label"] = NONE, ["tooltip"] = _L["PIN_LABEL_NONE_TT"]}
-	,[_V["ENUM_PIN_LABEL"].time] = {["label"] = _L["PIN_TIME"], ["tooltip"] = _L["PIN_TIME_TT"]}
-	,[_V["ENUM_PIN_LABEL"].amount] = {["label"] = _L["PIN_LABEL_REWARD"], ["tooltip"] = _L["PIN_LABEL_REWARD_TT"]}
-}
-
 _V["ENUM_ZONE_QUESTS"] = {
 	["zone"] = 1
 	,["neighbor"] = 2
 	,["expansion"] = 3
-}
-
-_V["ZONE_QUESTS_LABELS"] = {
-	[_V["ENUM_ZONE_QUESTS"].zone] = {["label"] = _L["ZONE_QUESTS_ZONE"], ["tooltip"] = _L["ZONE_QUESTS_ZONE_TT"]}
-	,[_V["ENUM_ZONE_QUESTS"].neighbor] = {["label"] = _L["ZONE_QUESTS_VISIBLE"], ["tooltip"] = _L["ZONE_QUESTS_VISIBLE_TT"]}
-	,[_V["ENUM_ZONE_QUESTS"].expansion] = {["label"] = _L["ZONE_QUESTS_EXPANSION"], ["tooltip"] = _L["ZONE_QUESTS_EXPANSION_TT"]}
 }
 
 _V["SETTING_TYPES"] = {
@@ -191,19 +153,6 @@ _V["SETTING_TYPES"] = {
 	,["dropDown"] = 5
 	,["button"] = 6
 }
-
-local function MakeIndexArg1(list)
-	for k, v in pairs(list) do
-		v.arg1 = k;
-	end
-end
-
-MakeIndexArg1(_V["PIN_CENTER_LABELS"]);
-MakeIndexArg1(_V["RING_TYPES_LABELS"]);
-MakeIndexArg1(_V["PIN_LABEL_LABELS"]);
-MakeIndexArg1(_V["PIN_VISIBILITY_CONTINENT"]);
-MakeIndexArg1(_V["PIN_VISIBILITY_ZONE"]);
-MakeIndexArg1(_V["ZONE_QUESTS_LABELS"]);
 
 -- Not where they should be. Count them as invalid. Thanks Blizzard
 _V["BUGGED_POI"] =  {
@@ -494,10 +443,6 @@ _V["FILTER_FUNCTIONS"] = {
 			,["None"]		= function(questInfo, tagInfo) return questInfo.reward.typeBits == WQT_REWARDTYPE.none; end
 			}
 	};
-
--- /run print(string.format("%.2f %.2f", WorldMapFrame:GetNormalizedCursorPosition()))
--- /run print(WorldMapFrame.mapID)
--- /run print(FlightMapFrame.mapID)
 
 local kareshMapCoords = {
 	[2371]	= {["x"] = 0.00, ["y"] = 0.00}, -- K'aresh
