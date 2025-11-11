@@ -1008,7 +1008,7 @@ local function AddInstructionTooltipToDropdownItem(item, text)
 end
 
 local function QuestContextSetup(frame, rootDescription, questInfo)
-	rootDescription:SetTag("WQT_QUEST_CONTEXTMENU");
+	rootDescription:SetTag("WQT_QUEST_CONTEXTMENU", questInfo);
 
 	-- Title
 	rootDescription:CreateTitle(questInfo.title);
@@ -1062,9 +1062,6 @@ local function QuestContextSetup(frame, rootDescription, questInfo)
 	);
 	AddInstructionTooltipToDropdownItem(checkbox, _L["SHORTCUT_DISLIKE"]);
 
-	-- Trigger event for externals to add more
-	WQT_CallbackRegistry:TriggerEvent("WQT.QuestContextSetup", rootDescription, questInfo);
-
 	-- Cancel. apparently a function is required for it to close the menu on click
 	rootDescription:CreateButton(CANCEL, function() end);
 end
@@ -1074,7 +1071,6 @@ function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 	
 	local questID =  questInfo.questID;
 	local isBonus = QuestUtils_IsQuestBonusObjective(questID);
-	local reward = questInfo:GetReward(1);
 	local tagInfo = questInfo:GetTagInfo();
 	local isWorldQuest = not isBonus and tagInfo and tagInfo.worldQuestType;
 	local playSound = true;

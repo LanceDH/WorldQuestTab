@@ -510,22 +510,17 @@ function WQT_SettingsDropDownMixin:DropdownSetup(dropdown, rootDescription)
 
 	local function IsSelectedFunc(id) return id == dropdown.data.getValueFunc() end
 	local function OnValueSetFunc(id) self:OnValueChanged(id, true); end
+	local function OnTooltipFunc(tooltip, radio)
+		GameTooltip_SetTitle(tooltip, radio.displayInfo.label);
+		GameTooltip_AddNormalLine(tooltip, radio.displayInfo.tooltip);
+	end
 
 	for _, displayInfo in ipairs(options) do
 		local label = displayInfo.label or "Invalid label";
 		local id = displayInfo.id;
 		local radio = rootDescription:CreateRadio(label, IsSelectedFunc, OnValueSetFunc, id);
-
-		radio:SetOnEnter(function(button)
-			GameTooltip:SetOwner(button, "ANCHOR_RIGHT");
-			GameTooltip_SetTitle(GameTooltip, label);
-			GameTooltip_AddNormalLine(GameTooltip, displayInfo.tooltip);
-			GameTooltip:Show();
-		end);
-	
-		radio:SetOnLeave(function(button)
-			GameTooltip:Hide();
-		end);
+		radio.displayInfo = displayInfo;
+		radio:SetTooltip(OnTooltipFunc);
 	end
 end
 

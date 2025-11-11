@@ -104,11 +104,6 @@ local function TomTomOnPressed(questInfo)
 	end
 end
 
-local function AddTomTomToQuestContext(source, rootDescription, questInfo)
-	if(not _activeSettings or not _activeSettings.useTomTom) then return; end
-	rootDescription:CreateCheckbox(_L["TOMTOM_PIN"], TomTomIsChecked, TomTomOnPressed, questInfo);
-end
-
 local function EventTriggered(source, event, ...)
 	if(event == "QUEST_WATCH_LIST_CHANGED") then
 		QuestListChangedHook(...);
@@ -132,6 +127,7 @@ end
 function TomTomExternal:Init()
 	_activeSettings = WQT_Utils:RegisterExternalSettings("TomTom", _defaultSettings);
 
+	-- Add options to settings menu
 	do
 		local expanded = false;
 		local category = WQT_SettingsFrame.dataContainer:AddCategory("TOMTOM", "TomTom", expanded);
@@ -162,7 +158,17 @@ function TomTomExternal:Init()
 		end
 	end
 
-	WQT_CallbackRegistry:RegisterCallback("WQT.QuestContextSetup", AddTomTomToQuestContext, self);
+	-- Add option to quest right click
+	Menu.ModifyMenu("WQT_QUEST_CONTEXTMENU", function(owner, rootDescription, questInfo)
+		if(not _activeSettings or not _activeSettings.useTomTom) then return; end
+		local count = 0;
+		for k, v in rootDescription:EnumerateElementDescriptions() do
+			count = count + 1;
+		end
+		local checkbox = MenuTemplates.CreateCheckbox(_L["TOMTOM_PIN"], TomTomIsChecked, TomTomOnPressed, questInfo);
+		rootDescription:Insert(checkbox, count);
+	end);
+
 	WQT_CallbackRegistry:RegisterCallback("WQT.RegisterdEventTriggered", EventTriggered, self);
 end
 
