@@ -526,7 +526,7 @@ function WQT_DataProvider:Init()
 			if (tag == "ZONE_QUESTS") then
 				self:RequestDataUpdate();
 			elseif (tag == "GENERIC_ANIMA") then
-				self:ReloadQuestRewards();
+				self:RequestRewardsUpdate();
 			end
 		end,
 		self);
@@ -569,6 +569,11 @@ function WQT_DataProvider:RequestFilterUpdate()
 	self:SetUpdateScript();
 end
 
+function WQT_DataProvider:RequestRewardsUpdate()
+	self.requestedRewardsUpdate = true;
+	self:SetUpdateScript();
+end
+
 function WQT_DataProvider:SetUpdateScript()
 	if (not self.updateScriptSet) then
 		self.frame:SetScript("OnUpdate", function(...) self:OnUpdate(...); end);
@@ -580,6 +585,7 @@ local MAX_PROCESSING_TIME = 0.005;
 function WQT_DataProvider:OnUpdate(elapsed)
 	if(self.zoneLoading.needsUpdate) then
 		self.zoneLoading.needsUpdate = false;
+		self.requestedRewardsUpdate = false;
 
 		local mapIDToLoad = nil;
 		if(WorldMapFrame:IsShown()) then
@@ -698,6 +704,12 @@ function WQT_DataProvider:OnUpdate(elapsed)
 		end
 
 		WQT_CallbackRegistry:TriggerEvent("WQT.DataProvider.ProgressUpdated", progress);
+	elseif(self.requestedRewardsUpdate) then
+		self.requestedRewardsUpdate = false;
+		for questInfo, v in self.pool:EnumerateActive() do
+			questInfo:LoadRewards(true);
+		end
+		self.shouldUpdateFiltedList = true;
 	end
 
 	if (self.shouldUpdateFiltedList) then
@@ -705,7 +717,10 @@ function WQT_DataProvider:OnUpdate(elapsed)
 		self:FilterAndSortQuestList();
 	end
 
-	if (not self.zoneLoading.needsUpdate and self.zoneLoading.numRemaining == 0 and not self.shouldUpdateFiltedList) then
+	if (not self.zoneLoading.needsUpdate
+		and self.zoneLoading.numRemaining == 0
+		and not self.shouldUpdateFiltedList
+		and not self.requestedRewardsUpdate) then
 		self.frame:SetScript("OnUpdate", nil);
 		self.updateScriptSet = false;
 	end
@@ -877,10 +892,4 @@ function WQT_DataProvider:ListContainsEmissary()
 		if (questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly)) then return true; end
 	end
 	return false
-end
-
-function WQT_DataProvider:ReloadQuestRewards()
-	for questInfo, v in self.pool:EnumerateActive() do
-		questInfo:LoadRewards(true);
-	end
 end

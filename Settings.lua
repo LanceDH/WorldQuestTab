@@ -451,7 +451,7 @@ function WQT_SettingsColorMixin:StartPicking()
 	
 	local colorInfo = {
 		["swatchFunc"] = function () self:UpdateFromPicker() end,
-		["cancelFunc"] = function () self:ResetColor(); self:StopPicking(); end,
+		["cancelFunc"] = function () self:ResetColor(true); self:StopPicking(); end,
 		["r"] = r,
 		["g"] = g,
 		["b"] = b,
@@ -1027,19 +1027,46 @@ function WQT_SettingsFrameMixin:OnLoad()
 
 	self.dataContainer = CreateAndInitFromMixin(WQT_SettingsDataContainerMixin);
 
+	self.cachedTemplateHeights = {};
+	self.dummyFrameFactory = CreateFrameFactory();
+
 	local paddingTop = 5;
 	local paddingBottom = 14;
 	local paddingLeft = 2;
 	local paddingRight = paddingLeft;
 	local view = CreateScrollBoxListLinearView(paddingTop, paddingBottom, paddingLeft, paddingRight, SETTING_SPACING);
-	view:SetVirtualized(false);
 	view:SetElementExtentCalculator(function (index, elementData)
-		local frames = view:GetFrames();
-		local frame = frames[index];
-		if (frame) then 
-			return frame:GetHeight();
+		local height = self.cachedTemplateHeights[elementData.template];
+		local isDynamic = height and height < 0;
+
+		if (not height) then
+			height = 0;
+			local info = C_XMLUtil.GetTemplateInfo(elementData.template);
+			for k, keyValue in ipairs(info.keyValues) do
+				if (keyValue.key == "dynamicHeight" and keyValue.value:lower() == "true") then
+					self.cachedTemplateHeights[elementData.template] = -1;
+					isDynamic = true;
+					break;
+				end
+			end
+
+			if (not isDynamic) then
+				height = info.height;
+				self.cachedTemplateHeights[elementData.template] = height;
+			end
 		end
-		return 0;
+
+		if (isDynamic) then
+			-- To "predict" the height of the frame, we set up a dummy frame and get it's height
+			local dummyFrame = self.dummyFrameFactory:Create(self, elementData.template);
+			dummyFrame:SetPoint("LEFT", self);
+			dummyFrame:SetPoint("RIGHT", self);
+			dummyFrame:Init(elementData.data);
+			height = dummyFrame:GetHeight();
+			self.dummyFrameFactory:Release(dummyFrame);
+		end
+
+		return height or 0;
 	end);
 
 	view:SetElementFactory(function(factory, elementData)
@@ -1048,7 +1075,6 @@ function WQT_SettingsFrameMixin:OnLoad()
 		end);
 	end);
 
-
 	ScrollUtil.InitScrollBoxWithScrollBar(self.ScrollBox, self.ScrollBar, view);
 end
 
@@ -1056,7 +1082,7 @@ local function CreateDropdownOption(id, label, tooltip)
 	return { id = id, label = label, tooltip = tooltip};
 end
 
-function WQT_SettingsFrameMixin:Init(categories, settings)
+function WQT_SettingsFrameMixin:Init()
 	local CATEGORY_DEFAULT_EXPANDED = true;
 
 	do -- Changelog
@@ -1650,8 +1676,6 @@ function WQT_SettingsFrameMixin:Init(categories, settings)
 			end
 		end,
 		self);
-
-	self:Reconstruct();
 end
 
 function WQT_SettingsFrameMixin:Reconstruct()
@@ -1660,6 +1684,8 @@ function WQT_SettingsFrameMixin:Reconstruct()
 	local dataProvider = CreateDataProvider();
 	self.dataContainer:AddToDataprovider(dataProvider);
 	self.ScrollBox:SetDataProvider(dataProvider , ScrollBoxConstants.RetainScrollPosition);
-	-- Required to correct placement of text frames
-	self.ScrollBox:FullUpdate();
+end
+
+function WQT_SettingsFrameMixin:OnShow()
+	self:Reconstruct();
 end
