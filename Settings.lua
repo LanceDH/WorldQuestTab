@@ -293,18 +293,8 @@ function WQT_SettingsSliderMixin:OnLoad()
 	self.SliderWithSteppers:HookScript("OnLeave", leaveFunc);
 
 	self.SliderWithSteppers:RegisterCallback("OnValueChanged",
-		function(_, value)
-			self:OnValueChanged(value, self.userInteracting);
-		end, self);
-
-	self.SliderWithSteppers:RegisterCallback("OnInteractStart",
-		function()
-			self.userInteracting = true;
-		end, self);
-
-	self.SliderWithSteppers:RegisterCallback("OnInteractEnd",
-		function()
-			self.userInteracting = false;
+		function(_, value, ...)
+			self:OnValueChanged(value, true);
 		end, self);
 end
 
@@ -353,7 +343,7 @@ end
 
 function WQT_SettingsSliderMixin:UpdateTextBoxText()
 	local currentValue = self:GetValue();
-	local text = Round(currentValue * 100) / 100;
+	local text = RoundToSignificantDigits(currentValue, 2);
 	if (not self.TextBox:IsEnabled()) then
 		text = GRAY_FONT_COLOR:WrapTextInColorCode(text);
 	end
@@ -369,8 +359,8 @@ function WQT_SettingsSliderMixin:OnValueChanged(value, userInput)
 		return;
 	end
 
-	value = Round(value*100)/100;
-	value = min(self.max, max(self.min, value));
+	value = RoundToSignificantDigits(value, 2);
+	value = Clamp(value, self.min, self.max);
 	if (userInput and value ~= self.current) then
 		WQT_SettingsBaseMixin.OnValueChanged(self, value, userInput);
 	end
