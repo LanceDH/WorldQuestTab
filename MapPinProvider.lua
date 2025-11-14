@@ -630,7 +630,10 @@ function WQT_PinButtonMixin:PlaceMiniIcons()
 		local numIcons = min(#self.icons, ICON_MAX_AMOUNT);
 		for i = 1, numIcons do
 			local iconFrame = self.icons[i];
-			iconFrame:SetPoint("CENTER", ICON_CENTER_DISTANCE * cos(angle), ICON_CENTER_DISTANCE * sin(angle));
+
+			local posX = ICON_CENTER_DISTANCE * cos(angle);
+			local posY = ICON_CENTER_DISTANCE * sin(angle);
+			PixelUtil.SetPoint(iconFrame, "CENTER", self, "CENTER", posX, posY);
 			iconFrame:Show();
 			angle = angle + ICON_ANGLE_DISTANCE;
 		end
@@ -831,7 +834,6 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 
 	-- Setup mini icons
 	local questType = tagInfo and tagInfo.worldQuestType;
-	local isWatched = QuestUtils_IsQuestWatched(questInfo.questID);
 
 	self.timeIcon = nil;
 	self.iconPool:ReleaseAll();
@@ -856,7 +858,7 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 		end
 	end
 
-	-- Quest tracked icon
+	-- Time Icon
 	if (WQT_Utils:GetSetting("pin", "timeIcon")) then
 		local _, _, color, _, _, timeCategory = WQT_Utils:GetQuestTimeString(questInfo);
 		if (timeCategory >= _V["TIME_REMAINING_CATEGORY"].critical) then
@@ -893,11 +895,12 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 		end
 	end
 	
-	-- Emissary tracked icon
-	if (isWatched) then
+	-- Quest Tracking
+	if (QuestUtils_IsQuestWatched(questInfo.questID)) then
+		local superTracked = questInfo.questID == C_SuperTrack.GetSuperTrackedQuestID();
 		local iconFrame = self:AddIcon();
-		iconFrame:SetupIcon("worldquest-emissary-tracker-checkmark");
-		iconFrame:SetIconScale(1.1);
+		iconFrame:SetupIcon(superTracked and  "Waypoint-MapPin-Minimap-Tracked" or "Waypoint-MapPin-Minimap-Untracked");
+		iconFrame:SetIconScale(1.7);
 	end
 	
 	self:PlaceMiniIcons();
@@ -1008,7 +1011,7 @@ function WQT_PinMixin:UpdateVisuals()
 		local bottomOffset = buttonFrame:GetIconBottomDifference()
 		RoundToNearestMultiple(bottomOffset, 0);
 		bottomOffset = bottomOffset - LABEL_OFFSET;
-		labelFrame:SetPoint("TOP", self.Button, "BOTTOM", 0, -bottomOffset);
+		PixelUtil.SetPoint(labelFrame, "TOP", self.Button, "BOTTOM", 0, -bottomOffset);
 	end
 end
 
@@ -1070,12 +1073,11 @@ function WQT_PinMixin:ApplyScaledPosition(manualScale)
 	posX = (canvas:GetWidth() * posX)/scale;
 	posY = -(canvas:GetHeight() * posY)/scale;
 	self:ClearAllPoints();
-	self:SetPoint("CENTER", canvas, "TOPLEFT", posX, posY);
+	PixelUtil.SetPoint(self, "CENTER", canvas, "TOPLEFT", posX, posY);
 end
 
 function WQT_PinMixin:Focus(playPing)
 	if (not self.questID) then return; end
-	local canvas = self:GetParent();
 	local parentScaleFactor = self.scale / self.parentMapFrame:GetCanvasScale();
 	
 	local fadeInAnim = self:GetFadeInAnim();

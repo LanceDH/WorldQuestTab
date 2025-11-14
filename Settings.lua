@@ -1141,6 +1141,7 @@ function WQT_SettingsFrameMixin:Init()
 			AddSection(ChangelogSections.Changes, {
 				"Reworked the settings menu. Let me know if I broke anything";
 				"Checkbox and color picker settings can now be clicked across their entire size";
+				"Changed the 'Tracking' checkmark on map pins with blizzard's waypoint icon, where a glowing one will indicate if it's your current waypoint";
 			});
 		end
 

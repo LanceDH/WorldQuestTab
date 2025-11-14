@@ -146,7 +146,7 @@
 						</FontString>
 					</Layer>
 					<Layer level="BACKGROUND">
-						<Texture parentKey="TimeBG" atlas="AftLevelup-ToastBG" alpha="0.7">
+						<Texture parentKey="TimeBG" atlas="AftLevelup-ToastBG" alpha="0.7" texelSnappingBias="0.0" snapToPixelGrid="false">
 							<Anchors>
 								<Anchor point="TOPLEFT" relativeKey="$parent.LabelText" x="-3" y="1" />
 								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.LabelText" x="4" y="-1" />
