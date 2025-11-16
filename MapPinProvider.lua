@@ -708,6 +708,8 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 	local isDisliked = questInfo:IsDisliked();
 	local tagInfo = questInfo:GetTagInfo();
 	local typeAtlas, typeAtlasWidth, typeAtlasHeight =  WQT_Utils:GetCachedTypeIconData(questInfo);
+	local isTracked = QuestUtils_IsQuestWatched(questInfo.questID);
+	local isSuperTracked = questInfo.questID == C_SuperTrack.GetSuperTrackedQuestID();
 
 	-- Ring coloration
 	local ringType = WQT_Utils:GetSetting("pin", "ringType");
@@ -784,8 +786,7 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 		hasIcon = questInfo:GetRewardType() ~= WQT_REWARDTYPE.none;
 	elseif(settingCenterType == _V["PIN_CENTER_TYPES"].blizzard) then
 		customTypeIconTexture:SetShown(true);
-		local selected = questInfo.questID == C_SuperTrack.GetSuperTrackedQuestID();
-		local showSlectedGlow = tagInfo and questQuality ~= Enum.WorldQuestQuality.Common and selected;
+		local showSlectedGlow = tagInfo and questQuality ~= Enum.WorldQuestQuality.Common and isSuperTracked;
 		local selectedBountyOnly = WQT_Utils:GetSetting("general", "bountySelectedOnly");
 		
 		customBountyRingTexture:SetShown(questInfo:IsCriteria(selectedBountyOnly));
@@ -799,7 +800,7 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 				customSelectedGlowTexture:SetAtlas("worldquest-questmarker-epic");
 			else
 				iconTexture:SetTexture("Interface/WorldMap/UI-QuestPoi-NumberIcons");
-				if (selected) then
+				if (isSuperTracked) then
 					iconTexture:SetTexCoord(0.52, 0.605, 0.395, 0.48);
 				else
 					iconTexture:SetTexCoord(0.895, 0.98, 0.395, 0.48);
@@ -896,10 +897,9 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 	end
 	
 	-- Quest Tracking
-	if (QuestUtils_IsQuestWatched(questInfo.questID)) then
-		local superTracked = questInfo.questID == C_SuperTrack.GetSuperTrackedQuestID();
+	if (isTracked) then
 		local iconFrame = self:AddIcon();
-		iconFrame:SetupIcon(superTracked and  "Waypoint-MapPin-Minimap-Tracked" or "Waypoint-MapPin-Minimap-Untracked");
+		iconFrame:SetupIcon(isSuperTracked and  "Waypoint-MapPin-Minimap-Tracked" or "Waypoint-MapPin-Minimap-Untracked");
 		iconFrame:SetIconScale(1.7);
 	end
 	

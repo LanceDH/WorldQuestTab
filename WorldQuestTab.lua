@@ -976,9 +976,11 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	end
 
 	-- Show border if quest is tracked
-	local isHardWatched = WQT_Utils:QuestIsWatchedManual(questInfo.questID);
-	if (isHardWatched) then
+	local isTracked = QuestUtils_IsQuestWatched(questInfo.questID);
+	if (isTracked) then
+		local isSuperTracked = questInfo.questID == C_SuperTrack.GetSuperTrackedQuestID();
 		self.TrackedBorder:Show();
+		self.TrackedBorder:SetAlpha(isSuperTracked and 0.9 or 0.5);
 	else
 		self.TrackedBorder:Hide();
 	end
@@ -1378,6 +1380,7 @@ function WQT_CoreMixin:OnLoad()
 	self:RegisterEvent("PVP_TIMER_UPDATE"); -- Warmode toggle because WAR_MODE_STATUS_UPDATE doesn't seems to fire when toggling warmode
 	self:RegisterEvent("ADDON_LOADED");
 	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
+	self:RegisterEvent("SUPER_TRACKING_CHANGED");
 	self:RegisterEvent("TAXIMAP_OPENED");
 	self:RegisterEvent("PLAYER_LOGOUT");
 
@@ -1684,6 +1687,10 @@ function WQT_CoreMixin:PLAYER_LOGOUT()
 end
 
 function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
+	self.ScrollFrame:DisplayQuestList();
+end
+
+function WQT_CoreMixin:SUPER_TRACKING_CHANGED(...)
 	self.ScrollFrame:DisplayQuestList();
 end
 
