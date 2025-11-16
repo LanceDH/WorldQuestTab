@@ -4,25 +4,6 @@
 
 	<Script file="Settings.lua"/>
 
-	<Frame name="WQT_NewIconTemplate" virtual="true">
-		<Size x="20" y="20" />
-		<Layers>
-			<Layer level="ARTWORK">
-				<Texture parentKey="Icon" atlas="wowlabs_spellbucketicon-sword" setAllPoints="true" />
-			</Layer>
-		</Layers>
-		<Scripts>
-			<OnEnter>
-				GameTooltip:SetOwner(self, "ANCHOR_RIGHT", -4, -4);
-				GameTooltip:SetText(NEW);
-				GameTooltip:Show();
-			</OnEnter>
-			<OnLeave>
-				GameTooltip:Hide();
-			</OnLeave>
-		</Scripts>
-	</Frame>
-
 	<Button name="WQT_SettingCategoryTemplate" mixin="WQT_SettingsCategoryMixin" virtual="true">
 		<Size y="34"/>	
 		<KeyValues>
@@ -49,7 +30,7 @@
 			</Layer>
 			
 			<Layer level="ARTWORK">
-				<FontString parentKey="Label" inherits="GameFontNormalMed1" maxLines="1" justifyH="CENTER">
+				<FontString parentKey="Label" inherits="GameFontHighlightMedium" maxLines="1" justifyH="CENTER">
 					<Anchors>
 						<Anchor point="LEFT" x="30" y="0"/>
 						<Anchor point="RIGHT" x="-30" y="0"/>
@@ -91,10 +72,10 @@
 		</KeyValues>
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="Background" atlas="UI-Frame-Dragonflight-Subtitle" useAtlasSize="true" alpha="0.5">
+				<Texture parentKey="Background" atlas="_Options_ListExpand_Middle" alpha="0.8">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="15" y="-6"/>
-						<Anchor point="BOTTOMRIGHT" x="-15" y="6"/>
+						<Anchor point="TOPLEFT" x="6" y="-5"/>
+						<Anchor point="BOTTOMRIGHT" x="-6" y="5"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -107,17 +88,27 @@
 				</FontString>
 				<Texture parentKey="ExpandIcon" atlas="friendslist-categorybutton-arrow-right" useAtlasSize="true" desaturated="true">
 					<Anchors>
-						<Anchor point="CENTER" relativePoint="RIGHT" x="-40" y="0"/>
+						<Anchor point="CENTER" relativePoint="RIGHT" x="-50" y="0"/>
 					</Anchors>
 				</Texture>
 			</Layer>
 			<Layer level="HIGHLIGHT">
-				<Texture parentKey="Highlight" atlas="UI-Frame-Dragonflight-Subtitle" alphaMode="ADD" alpha="0.3">
+				<Texture parentKey="Highlight" atlas="Soulbinds_Collection_Entry_Selected" alphaMode="ADD" alpha="0.4">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.Background"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Background"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.Background" x="20" y="-1"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Background" x="-20" y="1"/>
 					</Anchors>
 				</Texture>
+
+				<MaskTexture parentKey="Mask" file="Interface\Addons\WorldQuestTab\Images\RewardMask" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.Background" x="20" y="50"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Background" x="-20" y="-50"/>
+					</Anchors>
+					<MaskedTextures>
+						<MaskedTexture childKey="Background"/>
+					</MaskedTextures>
+				</MaskTexture>
 			</Layer>
 		</Layers>
 		<Scripts>
@@ -129,7 +120,23 @@
 	</Button>
 
 	<Frame name="WQT_SettingsQuestListPreviewTemplate" mixin="WQT_SettingsQuestListMixin" virtual="true">
-		<Size y="36"/>	
+		<Size y="44"/>	
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Background" atlas="QuestLog-main-background" setAllPoints="true">
+					<TexCoords left="0.0" right="1.0" top="0.35" bottom="0.40"/>
+				</Texture>
+				<MaskTexture parentKey="Mask" file="Interface\Addons\WorldQuestTab\Images\RewardMask" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.Background" x="-50" y="0"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Background" x="50" y="-0"/>
+					</Anchors>
+					<MaskedTextures>
+						<MaskedTexture childKey="Background"/>
+					</MaskedTextures>
+				</MaskTexture>
+			</Layer>
+		</Layers>
 		<Frames>
 			<Button parentKey="Preview" inherits="WQT_QuestTemplate" enableMouse="false" hidden="false">
 				<Anchors>
@@ -163,10 +170,26 @@
 
 		<Frames>
 			<Frame parentKey="DisabledOverlay" inherits="WQT_SettingsChildTemplate" setAllPoints="true" hidden="true"/>
-			<Frame parentKey="NewFeature" inherits="WQT_NewIconTemplate" hidden="true">
+			<Frame parentKey="NewFeature" hidden="true">
+				<Size x="24" y="24" />
 				<Anchors>
-					<Anchor point="LEFT" x="16" y="-1"/>
+					<Anchor point="LEFT" x="12" y="-1" />
 				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture parentKey="Icon" atlas="wowlabs_spellbucketicon-sword" setAllPoints="true" />
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnEnter>
+						GameTooltip:SetOwner(self, "ANCHOR_RIGHT", -4, -4);
+						GameTooltip:SetText(NEW);
+						GameTooltip:Show();
+					</OnEnter>
+					<OnLeave>
+						GameTooltip:Hide();
+					</OnLeave>
+				</Scripts>
 			</Frame>
 		</Frames>
 
@@ -461,7 +484,7 @@
 			<Layer level="ARTWORK">
 				<FontString parentKey="Label" inherits="GameFontNormal" maxLines="1" justifyH="LEFT">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="42" y="-7"/>
+						<Anchor point="TOPLEFT" x="42" y="-5"/>
 						<Anchor point="RIGHT" x="-15"/>
 					</Anchors>
 				</FontString>
@@ -470,7 +493,7 @@
 		<Frames>
 			<DropdownButton parentKey="Dropdown" inherits="WowStyle1DropdownTemplate, WQT_SettingsChildTemplate">
 				<Anchors>
-					<Anchor point="BOTTOMLEFT" x="42" y="6"/>
+					<Anchor point="BOTTOMLEFT" x="42" y="7"/>
 					<Anchor point="RIGHT" x="-42" y="0"/>
 				</Anchors>
 			</DropdownButton>
@@ -665,12 +688,13 @@
 		</KeyValues>
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="Background" file="interface\professions\professionsminimizedview">
-					<TexCoords top="0.0009765625" right="0.787109375" bottom="0.533" left="0.001953125" />
+				<Texture parentKey="Background" atlas="newplayerchat-signup-background">
 					<Anchors>
 						<Anchor point="TOPLEFT" />
 						<Anchor point="BOTTOMRIGHT" />
 					</Anchors>
+					<Color r="0.22" g="0.21" b="0.21"/>
+					<TexCoords left="0.1" right="0.85" top="0.2" bottom="0.5"/>
 				</Texture>
 			</Layer>
 		</Layers>
@@ -701,4 +725,4 @@
 			<OnShow method="OnShow" />
 		</Scripts>
 	</Frame>
- </Ui>
+</Ui>

@@ -831,6 +831,7 @@ function WQT_SettingsCategoryDataMixin:Init(categoryID, label, initialExpanded, 
 	}
 
 	self.children = {};
+	self.subCategories = {};
 end
 
 function WQT_SettingsCategoryDataMixin:AddToDataprovider(dataprovider)
@@ -840,13 +841,18 @@ function WQT_SettingsCategoryDataMixin:AddToDataprovider(dataprovider)
 		for k, child in ipairs(self.children) do
 			child:AddToDataprovider(dataprovider);
 		end
+		for k, child in ipairs(self.subCategories) do
+			child:AddToDataprovider(dataprovider);
+		end
 	end
 end
 
 function WQT_SettingsCategoryDataMixin:AddSubCategory(categoryID, label, expanded)
 	if (type(categoryID) ~= "string") then error("'categoryID' must be a string value"); return; end
 	local category = CreateAndInitFromMixin(WQT_SettingsCategoryDataMixin, categoryID, label, expanded, true);
-	table.insert(self.children, category);
+
+
+	table.insert(self.subCategories, category);
 	return category;
 end
 
@@ -953,7 +959,7 @@ end
 
 function WQT_SettingsCategoryDataMixin:GetCategoryByID(categoryID)
 	local foundCategory = nil;
-	for k, child in ipairs(self.children) do
+	for k, child in ipairs(self.subCategories) do
 		if (child.categoryID == categoryID) then
 			foundCategory = child;
 			break;
@@ -1073,8 +1079,30 @@ local function CreateDropdownOption(id, label, tooltip)
 end
 
 function WQT_SettingsFrameMixin:Init()
-	local CATEGORY_DEFAULT_EXPANDED = true;
+	WQT_CallbackRegistry:RegisterCallback("WQT.Settings.CategoryToggled",
+		function(_, categoryID)
+			local foundCategory = self.dataContainer:GetCategoryByID(categoryID);
+			if (foundCategory) then
+				foundCategory:ToggleExpanded();
+				self:Reconstruct();
+			end
+		end,
+		self);
 
+	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
+		function(_, categoryID)
+			if (categoryID == "PROFILES") then
+				-- Delaying a frame because it causes issues if it's triggered by a dropdown change
+				C_Timer.After(0, function() self:Reconstruct(); end);
+			else
+				for k, frame in self.ScrollBox:EnumerateFrames() do
+					frame:UpdateState();
+				end
+			end
+		end,
+		self);
+
+	local CATEGORY_DEFAULT_EXPANDED = true;
 	do -- Changelog
 		local changeLogCategory = self.dataContainer:AddCategory("CHANGELOG", _L["WHATS_NEW"], not CATEGORY_DEFAULT_EXPANDED);
 
@@ -1644,29 +1672,6 @@ function WQT_SettingsFrameMixin:Init()
 			subCategory:AddColorPicker("COLOR_REWARD_MISSING", ADDON_MISSING, nil, "rewardMissing", _V["WQT_COLOR_MISSING"]);
 		end
 	end -- Colors
-
-	WQT_CallbackRegistry:RegisterCallback("WQT.Settings.CategoryToggled",
-		function(_, categoryID)
-			local foundCategory = self.dataContainer:GetCategoryByID(categoryID);
-			if (foundCategory) then
-				foundCategory:ToggleExpanded();
-				self:Reconstruct();
-			end
-		end,
-		self);
-
-	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
-		function(_, categoryID)
-			if (categoryID == "PROFILES") then
-				-- Delaying a frame because it causes issues if it's triggered by a dropdown change
-				C_Timer.After(0, function() self:Reconstruct(); end);
-			else
-				for k, frame in self.ScrollBox:EnumerateFrames() do
-					frame:UpdateState();
-				end
-			end
-		end,
-		self);
 end
 
 function WQT_SettingsFrameMixin:Reconstruct()
