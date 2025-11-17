@@ -165,6 +165,11 @@ function WQT_SettingsQuestListMixin:OnLoad()
 		return true;
 	 end;
 
+	self.Preview.Update = function(frame, questInfo, shouldShowZone)
+		WQT_ListButtonMixin.Update(frame, questInfo, shouldShowZone);
+		frame.TrackedBorder:Hide();
+		frame.Highlight:Hide();
+	end;
 
 	self.dummyQuestInfo = {};
 	self.dummyQuestInfo.questID = 76586;
