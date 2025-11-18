@@ -14,7 +14,7 @@
 		<Scripts>
 			<OnEnter>
 				GameTooltip:SetOwner(self, "ANCHOR_RIGHT", -4, -4);
-				GameTooltip:SetText(NEW);
+				GameTooltip:SetText(NEW_CAPS);
 				GameTooltip:Show();
 			</OnEnter>
 			<OnLeave>
