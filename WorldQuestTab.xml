@@ -780,8 +780,8 @@
 					<Frame parentKey="QuestScrollBox" inherits="WowScrollBoxList" frameStrata="HIGH">
 						<Anchors>
 							<Anchor point="TOP" relativeKey="$parent.FilterBar" relativePoint="BOTTOM" />
-							<Anchor point="LEFT" x="2"/>
-							<Anchor point="BOTTOMRIGHT" x="-2"/>
+							<Anchor point="LEFT" />
+							<Anchor point="BOTTOMRIGHT" />
 						</Anchors>
 					</Frame>
 					<EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">

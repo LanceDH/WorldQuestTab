@@ -2,7 +2,6 @@
 local WQT = addon.WQT;
 local _L = addon.L
 local _V = addon.variables;
-local WQT_Utils = addon.WQT_Utils;
 
 local _pinType = {
 		["zone"] = 1
@@ -631,7 +630,10 @@ function WQT_PinButtonMixin:PlaceMiniIcons()
 		local numIcons = min(#self.icons, ICON_MAX_AMOUNT);
 		for i = 1, numIcons do
 			local iconFrame = self.icons[i];
-			iconFrame:SetPoint("CENTER", ICON_CENTER_DISTANCE * cos(angle), ICON_CENTER_DISTANCE * sin(angle));
+
+			local posX = ICON_CENTER_DISTANCE * cos(angle);
+			local posY = ICON_CENTER_DISTANCE * sin(angle);
+			PixelUtil.SetPoint(iconFrame, "CENTER", self, "CENTER", posX, posY);
 			iconFrame:Show();
 			angle = angle + ICON_ANGLE_DISTANCE;
 		end
@@ -706,6 +708,8 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 	local isDisliked = questInfo:IsDisliked();
 	local tagInfo = questInfo:GetTagInfo();
 	local typeAtlas, typeAtlasWidth, typeAtlasHeight =  WQT_Utils:GetCachedTypeIconData(questInfo);
+	local isTracked = QuestUtils_IsQuestWatched(questInfo.questID);
+	local isSuperTracked = questInfo.questID == C_SuperTrack.GetSuperTrackedQuestID();
 
 	-- Ring coloration
 	local ringType = WQT_Utils:GetSetting("pin", "ringType");
@@ -782,8 +786,7 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 		hasIcon = questInfo:GetRewardType() ~= WQT_REWARDTYPE.none;
 	elseif(settingCenterType == _V["PIN_CENTER_TYPES"].blizzard) then
 		customTypeIconTexture:SetShown(true);
-		local selected = questInfo.questID == C_SuperTrack.GetSuperTrackedQuestID();
-		local showSlectedGlow = tagInfo and questQuality ~= Enum.WorldQuestQuality.Common and selected;
+		local showSlectedGlow = tagInfo and questQuality ~= Enum.WorldQuestQuality.Common and isSuperTracked;
 		local selectedBountyOnly = WQT_Utils:GetSetting("general", "bountySelectedOnly");
 		
 		customBountyRingTexture:SetShown(questInfo:IsCriteria(selectedBountyOnly));
@@ -797,7 +800,7 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 				customSelectedGlowTexture:SetAtlas("worldquest-questmarker-epic");
 			else
 				iconTexture:SetTexture("Interface/WorldMap/UI-QuestPoi-NumberIcons");
-				if (selected) then
+				if (isSuperTracked) then
 					iconTexture:SetTexCoord(0.52, 0.605, 0.395, 0.48);
 				else
 					iconTexture:SetTexCoord(0.895, 0.98, 0.395, 0.48);
@@ -832,7 +835,6 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 
 	-- Setup mini icons
 	local questType = tagInfo and tagInfo.worldQuestType;
-	local isWatched = QuestUtils_IsQuestWatched(questInfo.questID);
 
 	self.timeIcon = nil;
 	self.iconPool:ReleaseAll();
@@ -857,7 +859,7 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 		end
 	end
 
-	-- Quest tracked icon
+	-- Time Icon
 	if (WQT_Utils:GetSetting("pin", "timeIcon")) then
 		local _, _, color, _, _, timeCategory = WQT_Utils:GetQuestTimeString(questInfo);
 		if (timeCategory >= _V["TIME_REMAINING_CATEGORY"].critical) then
@@ -894,11 +896,11 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 		end
 	end
 	
-	-- Emissary tracked icon
-	if (isWatched) then
+	-- Quest Tracking
+	if (isTracked) then
 		local iconFrame = self:AddIcon();
-		iconFrame:SetupIcon("worldquest-emissary-tracker-checkmark");
-		iconFrame:SetIconScale(1.1);
+		iconFrame:SetupIcon(isSuperTracked and  "Waypoint-MapPin-Minimap-Tracked" or "Waypoint-MapPin-Minimap-Untracked");
+		iconFrame:SetIconScale(1.7);
 	end
 	
 	self:PlaceMiniIcons();
@@ -1009,7 +1011,7 @@ function WQT_PinMixin:UpdateVisuals()
 		local bottomOffset = buttonFrame:GetIconBottomDifference()
 		RoundToNearestMultiple(bottomOffset, 0);
 		bottomOffset = bottomOffset - LABEL_OFFSET;
-		labelFrame:SetPoint("TOP", self.Button, "BOTTOM", 0, -bottomOffset);
+		PixelUtil.SetPoint(labelFrame, "TOP", self.Button, "BOTTOM", 0, -bottomOffset);
 	end
 end
 
@@ -1071,12 +1073,11 @@ function WQT_PinMixin:ApplyScaledPosition(manualScale)
 	posX = (canvas:GetWidth() * posX)/scale;
 	posY = -(canvas:GetHeight() * posY)/scale;
 	self:ClearAllPoints();
-	self:SetPoint("CENTER", canvas, "TOPLEFT", posX, posY);
+	PixelUtil.SetPoint(self, "CENTER", canvas, "TOPLEFT", posX, posY);
 end
 
 function WQT_PinMixin:Focus(playPing)
 	if (not self.questID) then return; end
-	local canvas = self:GetParent();
 	local parentScaleFactor = self.scale / self.parentMapFrame:GetCanvasScale();
 	
 	local fadeInAnim = self:GetFadeInAnim();

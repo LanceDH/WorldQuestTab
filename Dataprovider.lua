@@ -7,7 +7,6 @@
 local WQT = addon.WQT;
 local _L = addon.L;
 local _V = addon.variables;
-local WQT_Utils = addon.WQT_Utils;
 
 local _azuriteID = C_CurrencyInfo.GetAzeriteCurrencyID();
 
@@ -524,10 +523,10 @@ function WQT_DataProvider:Init()
 	WQT_CallbackRegistry:RegisterCallback("WQT.SortUpdated", function() self:RequestFilterUpdate(); end, self);
 	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
 		function(_, _, tag)
-			if (tag == "GENERAL_ZONE_QUESTS") then
+			if (tag == "ZONE_QUESTS") then
 				self:RequestDataUpdate();
-			elseif (tag == "GENERAL_GENERIC_ANIMA") then
-				self:ReloadQuestRewards();
+			elseif (tag == "GENERIC_ANIMA") then
+				self:RequestRewardsUpdate();
 			end
 		end,
 		self);
@@ -570,6 +569,11 @@ function WQT_DataProvider:RequestFilterUpdate()
 	self:SetUpdateScript();
 end
 
+function WQT_DataProvider:RequestRewardsUpdate()
+	self.requestedRewardsUpdate = true;
+	self:SetUpdateScript();
+end
+
 function WQT_DataProvider:SetUpdateScript()
 	if (not self.updateScriptSet) then
 		self.frame:SetScript("OnUpdate", function(...) self:OnUpdate(...); end);
@@ -581,6 +585,7 @@ local MAX_PROCESSING_TIME = 0.005;
 function WQT_DataProvider:OnUpdate(elapsed)
 	if(self.zoneLoading.needsUpdate) then
 		self.zoneLoading.needsUpdate = false;
+		self.requestedRewardsUpdate = false;
 
 		local mapIDToLoad = nil;
 		if(WorldMapFrame:IsShown()) then
@@ -699,6 +704,12 @@ function WQT_DataProvider:OnUpdate(elapsed)
 		end
 
 		WQT_CallbackRegistry:TriggerEvent("WQT.DataProvider.ProgressUpdated", progress);
+	elseif(self.requestedRewardsUpdate) then
+		self.requestedRewardsUpdate = false;
+		for questInfo, v in self.pool:EnumerateActive() do
+			questInfo:LoadRewards(true);
+		end
+		self.shouldUpdateFiltedList = true;
 	end
 
 	if (self.shouldUpdateFiltedList) then
@@ -706,7 +717,10 @@ function WQT_DataProvider:OnUpdate(elapsed)
 		self:FilterAndSortQuestList();
 	end
 
-	if (not self.zoneLoading.needsUpdate and self.zoneLoading.numRemaining == 0 and not self.shouldUpdateFiltedList) then
+	if (not self.zoneLoading.needsUpdate
+		and self.zoneLoading.numRemaining == 0
+		and not self.shouldUpdateFiltedList
+		and not self.requestedRewardsUpdate) then
 		self.frame:SetScript("OnUpdate", nil);
 		self.updateScriptSet = false;
 	end
@@ -878,10 +892,4 @@ function WQT_DataProvider:ListContainsEmissary()
 		if (questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly)) then return true; end
 	end
 	return false
-end
-
-function WQT_DataProvider:ReloadQuestRewards()
-	for questInfo, v in self.pool:EnumerateActive() do
-		questInfo:LoadRewards(true);
-	end
 end

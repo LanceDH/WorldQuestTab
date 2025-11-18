@@ -119,7 +119,7 @@
 		<Size x="16" y="16" />
 		<Layers>
 			<Layer level="ARTWORK" textureSubLevel="10">
-				<Texture parentKey="Icon" atlas="dungeon">
+				<Texture parentKey="Icon" atlas="dungeon" texelSnappingBias="0.0" snapToPixelGrid="false">
 					<Size x="10" y="10"/>
 					<Anchors>
 						<Anchor point="CENTER"/>
@@ -127,7 +127,7 @@
 				</Texture>
 			</Layer>
 			<Layer level="BACKGROUND" textureSubLevel="9">
-				<Texture parentKey="BG" alpha="0.75" file="Interface\GLUES\Models\UI_MainMenu_Legion\UI_Legion_Shadow" setAllPoints="true">
+				<Texture parentKey="BG" alpha="0.75" file="Interface\GLUES\Models\UI_MainMenu_Legion\UI_Legion_Shadow" setAllPoints="true" texelSnappingBias="0.0" snapToPixelGrid="false">
 					<Size x="16" y="16"/>
 					<Anchors>
 						<Anchor point="CENTER"/>

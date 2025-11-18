@@ -2,8 +2,7 @@
 local WQT = addon.WQT;
 local _L = addon.L
 local _V = addon.variables;
-local WQT_Utils = addon.WQT_Utils;
-
+local WQT_Profiles = addon.WQT_Profiles;
 
 ------------------------
 -- Debug Tooltip
@@ -168,6 +167,7 @@ local function ApplyAlternateState(frame, alternate)
 	frame.BG:SetAlpha(alternate and 0.0 or 0.05);
 end
 
+
 WQT_DevMixin = {};
 
 function WQT_DevMixin:TAXIMAP_OPENED()
@@ -184,12 +184,12 @@ function WQT_DevMixin:OnShow()
 	view:SetElementInitializer("WQT_CallbackEntryTemplate", function(frame, data)
 		InitCallbackEntry(frame, data);
 	end);
-	ScrollUtil.InitScrollBoxListWithScrollBar(self.ScrollBox, self.ScrollBar, view);
+	ScrollUtil.InitScrollBoxListWithScrollBar(self.CallbackScrollBox, self.CallbackScrollBar, view);
 
 	self.callbackDataProvider = CreateDataProvider();
-	self.ScrollBox:SetDataProvider(self.callbackDataProvider, ScrollBoxConstants);
+	self.CallbackScrollBox:SetDataProvider(self.callbackDataProvider, ScrollBoxConstants);
 
-	ScrollUtil.RegisterAlternateRowBehavior(self.ScrollBox, ApplyAlternateState);
+	ScrollUtil.RegisterAlternateRowBehavior(self.CallbackScrollBox, ApplyAlternateState);
 
 	self:SetScript("OnUpdate", function() self:OnUpdate(); end);
 
@@ -207,9 +207,11 @@ function WQT_DevMixin:OnShow()
 		end, 
 		self);
 
+
 	hooksecurefunc(WQT_CallbackRegistry, "TriggerEvent", function(registry, event, ...)
-		local wasAtEnd = self.ScrollBox:IsAtEnd();
-		local hadScroll = self.ScrollBox:HasScrollableExtent();
+		if (not WQT_DevFrame.CallbackScrollBox:IsShown()) then return; end
+		local wasAtEnd = self.CallbackScrollBox:IsAtEnd();
+		local hadScroll = self.CallbackScrollBox:HasScrollableExtent();
 
 		local data = {};
 		data.timestamp = GetTime();
@@ -217,10 +219,11 @@ function WQT_DevMixin:OnShow()
 		data.eventPayload = {...};
 		self.callbackDataProvider:Insert(data);
 
-		if (wasAtEnd or (not hadScroll and self.ScrollBox:HasScrollableExtent())) then
-			self.ScrollBox:ScrollToEnd();
+		if (wasAtEnd or (not hadScroll and self.CallbackScrollBox:HasScrollableExtent())) then
+			self.CallbackScrollBox:ScrollToEnd();
 		end
 	end);
+
 end
 
 function WQT_DevMixin:OnUpdate()
@@ -231,6 +234,7 @@ function WQT_DevMixin:OnUpdate()
 	end
 end
 
+
 function WQT_DevMixin:DoDebugThing()
-	
+
 end

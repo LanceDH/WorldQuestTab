@@ -45,6 +45,29 @@
 		</Layers>
 	</Frame>
 
+	<Frame name="DebugTest1" virtual="true">
+		<Size y="16"/>
+		<Anchors>
+			<Anchor point="LEFT" x="0" y="0" />
+			<Anchor point="RIGHT" x="0" y="0" />
+		</Anchors>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="BG" alpha="0.3" alphaMode="ADD">
+					<Color r="0" g="1" b="0"/>
+				</Texture>
+			</Layer>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Timestamp" inherits="SystemFont_NamePlate" justifyH="LEFT" text="Test 1">
+					<Size y="10" />
+					<Anchors>
+						<Anchor point="LEFT" x="4" y="0"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+	</Frame>
+
 	<Frame name="WQT_DevFrame" parent="UIParent" inherits="VerticalLayoutFrame" mixin="WQT_DevMixin" 
 		movable="true" enableMouse="true" toplevel="true" frameStrata="MEDIUM" hidden="true">
 		<Size x="200" y="100"/>
@@ -53,6 +76,7 @@
 		</Anchors>
 		<KeyValues>
 			<KeyValue key="fixedWidth" type="number" value="200"/>
+			<KeyValue key="spacing" type="number" value="2"/>
 			<KeyValue key="topPadding" type="number" value="10"/>
 			<KeyValue key="bottomPadding" type="number" value="10"/>
 			<KeyValue key="leftPadding" type="number" value="10"/>
@@ -99,25 +123,93 @@
 		</Layers>
 
 		<Frames>
+			<Frame parentKey="ButtonContainer" inherits="HorizontalLayoutFrame">
+				<KeyValues>
+					<KeyValue key="layoutIndex" value="99" type="number" />
+					<KeyValue key="align" value="left" type="string" />
+					<KeyValue key="spacing" value="2" type="number" />
+					<KeyValue key="topPadding" type="number" value="2"/>
+				</KeyValues>
+
+				<Frames>
+					<Button parentKey="ToggleCallback" inherits="UIMenuButtonStretchTemplate">
+						<Size x="26" y="26" />
+						<KeyValues>
+							<KeyValue key="layoutIndex" value="1" type="number" />
+							<KeyValue key="align" value="center" type="string" />
+						</KeyValues>
+						<HighlightTexture />
+						<Layers>
+							<Layer level="ARTWORK">
+								<Texture atlas="GM-icon-visible">
+									<Size x="26" y="26" />
+									<Anchors>
+										<Anchor point="CENTER" />
+									</Anchors>
+								</Texture>
+							</Layer>
+						</Layers>
+						<Scripts>
+							<OnClick>
+								local show = not WQT_DevFrame.CallbackScrollBox:IsShown();
+								WQT_DevFrame.CallbackScrollBox:SetShown(show);
+								WQT_DevFrame.CallbackScrollBar:SetShown(show);
+							</OnClick>
+							<OnEnter>
+								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+								GameTooltip_SetTitle(GameTooltip, "Callback Tracker");
+								GameTooltip:Show();
+							</OnEnter>
+							<OnLeave>
+								GameTooltip:Hide();
+							</OnLeave>
+						</Scripts>
+					</Button>
+
+					<Button parentKey="DebugButton" inherits="UIMenuButtonStretchTemplate">
+						<Size x="26" y="26" />
+						<KeyValues>
+							<KeyValue key="layoutIndex" value="2" type="number" />
+							<KeyValue key="align" value="center" type="string" />
+						</KeyValues>
+						<HighlightTexture />
+						<Layers>
+							<Layer level="ARTWORK">
+								<Texture atlas="GM-icon-settings">
+									<Size x="26" y="26" />
+									<Anchors>
+										<Anchor point="CENTER" />
+									</Anchors>
+								</Texture>
+							</Layer>
+						</Layers>
+						<Scripts>
+							<OnClick>
+								WQT_DevFrame:DoDebugThing();
+							</OnClick>
+							<OnEnter>
+								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+								GameTooltip_SetTitle(GameTooltip, "Debug Function");
+								GameTooltip:Show();
+							</OnEnter>
+							<OnLeave>
+								GameTooltip:Hide();
+							</OnLeave>
+						</Scripts>
+					</Button>
+				</Frames>
+			</Frame>
+
+			
+
 			<Frame parentKey="DragPanel" inherits="PanelDragBarTemplate">
 				<Anchors>
 					<Anchor point="TOPLEFT"/>
 					<Anchor point="BOTTOMRIGHT"/>
 				</Anchors>
 			</Frame>
-			<Button name="WQT_DebugButton" inherits="UIMenuButtonStretchTemplate" enableMouse="true" hidden="false">
-				<Size x="30" y="20" />
-				<Anchors>
-					<Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="0" y="0" />
-				</Anchors>
-				<Scripts>
-					<OnClick>
-						self:GetParent():DoDebugThing();
-					</OnClick>
-				</Scripts>
-			</Button>
 
-			<Frame parentKey="ScrollBox" inherits="WowScrollBoxList" frameStrata="HIGH">
+			<Frame parentKey="CallbackScrollBox" inherits="WowScrollBoxList" frameStrata="HIGH" hidden="true">
 				<Size x="400" y="300"/>
 				<Anchors> 
 					<Anchor point="TOPLEFT" relativePoint="BOTTOMLEFT" y="-4"/>
@@ -130,10 +222,10 @@
 					</Layer>
 				</Layers>
 			</Frame>
-			<EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">
+			<EventFrame parentKey="CallbackScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH" hidden="true">
 				<Anchors>
-					<Anchor point="TOPLEFT" relativeKey="$parent.ScrollBox" relativePoint="TOPRIGHT" x="4" />
-					<Anchor point="BOTTOMLEFT" relativeKey="$parent.ScrollBox" relativePoint="BOTTOMRIGHT" x="4" />
+					<Anchor point="TOPLEFT" relativeKey="$parent.CallbackScrollBox" relativePoint="TOPRIGHT" x="4" />
+					<Anchor point="BOTTOMLEFT" relativeKey="$parent.CallbackScrollBox" relativePoint="BOTTOMRIGHT" x="4" />
 				</Anchors>
 			</EventFrame>
 		</Frames>

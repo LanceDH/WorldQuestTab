@@ -2,7 +2,6 @@
 local WQT = addon.WQT;
 local _L = addon.L
 local _V = addon.variables;
-local WQT_Utils = addon.WQT_Utils;
 local WQT_Profiles = addon.WQT_Profiles;
 
 --------------------------------
@@ -542,6 +541,10 @@ function WQT_Utils:GetSettingsVersion()
 	return version;
 end
 
+function WQT_Utils:ExternalMightLoad(addonName)
+	return C_AddOns.IsAddOnLoaded(addonName) or C_AddOns.IsAddOnLoadOnDemand(addonName);
+end
+
 function WQT_Utils:GetSetting(...)
 	local settings =  WQT.settings;
 	local index = 1;
@@ -561,22 +564,6 @@ function WQT_Utils:GetSetting(...)
 	end;
 	
 	return settings;
-end
-
-function WQT_Utils:GetLocal(key)
-	return _L[key or ""];
-end
-
-function WQT_Utils:GetVariable(key)
-	local val = _V[key or ""];
-	
-	if (not val) then return; end
-	
-	if (type(val) == "table") then
-		return CopyTable(val);
-	end
-	
-	return val;
 end
 
 function WQT_Utils:GetCachedMapInfo(zoneId)
@@ -989,10 +976,6 @@ function WQT_Utils:RegisterExternalSettings(key, defaults)
 	return WQT_Profiles:RegisterExternalSettings(key, defaults);
 end
 
-function WQT_Utils:AddExternalSettingsOptions(settings)
-	WQT_SettingsFrame:AddSettingList(settings);
-end
-
 function WQT_Utils:FilterIsOldContent(typeID, flagID)
 	local typeList = _V["FILTER_TYPE_OLD_CONTENT"][typeID];
 	if (typeList) then
@@ -1025,7 +1008,7 @@ local function AddInstructionTooltipToDropdownItem(item, text)
 end
 
 local function QuestContextSetup(frame, rootDescription, questInfo)
-	rootDescription:SetTag("WQT_QUEST_CONTEXTMENU");
+	rootDescription:SetTag("WQT_QUEST_CONTEXTMENU", questInfo);
 
 	-- Title
 	rootDescription:CreateTitle(questInfo.title);
@@ -1079,9 +1062,6 @@ local function QuestContextSetup(frame, rootDescription, questInfo)
 	);
 	AddInstructionTooltipToDropdownItem(checkbox, _L["SHORTCUT_DISLIKE"]);
 
-	-- Trigger event for externals to add more
-	WQT_CallbackRegistry:TriggerEvent("WQT.QuestContextSetup", rootDescription, questInfo);
-
 	-- Cancel. apparently a function is required for it to close the menu on click
 	rootDescription:CreateButton(CANCEL, function() end);
 end
@@ -1091,7 +1071,6 @@ function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 	
 	local questID =  questInfo.questID;
 	local isBonus = QuestUtils_IsQuestBonusObjective(questID);
-	local reward = questInfo:GetReward(1);
 	local tagInfo = questInfo:GetTagInfo();
 	local isWorldQuest = not isBonus and tagInfo and tagInfo.worldQuestType;
 	local playSound = true;
