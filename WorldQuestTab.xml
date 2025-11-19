@@ -663,6 +663,7 @@
 					</Cooldown>
 
 					<DropdownButton parentKey="FilterDropdown" inherits="WowStyle1FilterDropdownTemplate">
+						<Size x="90" y="18"/>
 						<KeyValues>
 							<KeyValue key="menuRelativePoint" type="string" value="TOPRIGHT" />
 							<KeyValue key="menuPointX" type="number" value="-4" />
@@ -675,6 +676,7 @@
 					</DropdownButton>
 
 					<DropdownButton parentKey="SortDropdown" inherits="WowStyle1DropdownTemplate">
+						<Size x="150" y="25"/>
 						<Anchors>
 							<Anchor point="RIGHT" relativeKey="$parent.FilterDropdown" relativePoint="LEFT" x="-10" y="0" />
 						</Anchors>

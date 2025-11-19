@@ -1159,6 +1159,14 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	});
 		-- end
 
+		do -- 11.2.10
+			StartVersionCategory("11.2.10");
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed quests not showing on the Argus flight map";
+				"Fixed an issue with TomTom arrows now always working";
+			});
+		end
+
 		do -- 11.2.09
 			StartVersionCategory("11.2.09");
 			AddSection(ChangelogSections.Changes, {

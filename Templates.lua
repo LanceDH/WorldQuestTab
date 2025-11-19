@@ -590,7 +590,7 @@ function WQT_Utils:GetFactionDataInternal(id)
 		-- Add new faction in case it's not in our data yet
 		local data = C_Reputation.GetFactionDataByID(id);
 		factionData[id] = { ["expansion"] = 0,["faction"] = nil ,["texture"] = 1103069, ["unknown"] = true, ["name"] = data and data.name or "Unknown Faction" };
-		WQT:debugPrint("Added new faction", factionData[id].name);
+		WQT:DebugPrint("Added new faction", factionData[id].name);
 	end
 	
 	return factionData[id];

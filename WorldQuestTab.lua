@@ -62,7 +62,6 @@ local function GenericFilterFlagChecked(data)
 	end
 
 	local options = data[1];
-	local flagKey = flagKey;
 	return options[flagKey]
 end
 
@@ -232,26 +231,93 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 	AddBasicTooltipFunctionsToDropdownItem(emissaryCB, _L["TYPE_EMISSARY"], _L["TYPE_EMISSARY_TT"]);
 end
 
-local function IsSortSelected(sortID)
-	return WQT.settings.general.sortBy == sortID;
+-----------------------------------------
+-- WQT_SortingDataContainer
+-----------------------------------------
+
+WQT_SortingDataContainer = {};
+
+function WQT_SortingDataContainer:Init()
+	self.sortFunctions = {};
+	self.sortOptions = {};
 end
 
-local function SortOnSelect(sortID)
-	WQT:Sort_OnClick(nil, sortID);
-end
-
-local function SortDropdownSetup(dropdown, rootDescription)
-	rootDescription:SetTag("WQT_SETTINGS_DROPDOWN");
-
-	for sortID, sortName in pairs(_V["WQT_SORT_OPTIONS"]) do
-		rootDescription:CreateRadio(sortName, IsSortSelected, SortOnSelect, sortID);
+function WQT_SortingDataContainer:AddSortFunction(functionID, func)
+	if (self.sortFunctions[functionID]) then
+		error("Trying to add sort function to a ID that already exists: " .. functionID);
 	end
 
+	self.sortFunctions[functionID] = func;
 end
 
-local function InitQuestButton(button, data)
-	button:Update(data.questInfo, data.showZone);
+function WQT_SortingDataContainer:AddSortOption(sortID, label, functionIDs)
+	if (type(functionIDs) ~= "table") then
+		error("functionIDs must be a table of function IDs");
+	end
+	if (self:GetSortOptionByID(sortID)) then
+		error("Trying to add sort function to an ID that already exists: " .. sortID);
+	end
+
+	for k, functionID in ipairs(functionIDs) do
+		if (not self.sortFunctions[functionID]) then
+			error("List contains function tag that does not have a matching function registered: " .. functionID);
+		end
+	end
+
+	local data = {
+		sortID = sortID;
+		label = label;
+		functionIDs = functionIDs;
+	};
+
+	tinsert(self.sortOptions, data);
 end
+
+function WQT_SortingDataContainer:EnumerateOptions()
+	return ipairs(self.sortOptions);
+end
+
+function WQT_SortingDataContainer:GetSortOptionByID(sortID)
+	for k, data in self:EnumerateOptions() do
+		if (data.sortID == sortID) then
+			return data;
+		end
+	end
+
+	return nil;
+end
+
+function WQT_SortingDataContainer:GetSortLabel(sortID)
+	local sortData = self:GetSortOptionByID(sortID);
+	return sortData and sortData.label or "Invalid Label";
+end
+
+function WQT_SortingDataContainer:SortQuests(sortID, questInfoA, questInfoB)
+	local sortData = self:GetSortOptionByID(sortID);
+	if (not sortData) then
+		WQT:DebugPrint("SortQuests - SortID not found:", sortID);
+		return false;
+	end
+
+	for k, functionID in ipairs(sortData.functionIDs) do
+		local sortFunction = self.sortFunctions[functionID];
+		
+		if (sortFunction) then
+			local result = sortFunction(questInfoA, questInfoB);
+			if (result ~= nil) then
+				return result;
+			end
+		else
+			WQT:DebugPrint("SortQuests - functionID not found:", functionID);
+		end
+	end
+
+	return nil;
+end
+
+-----------------------------------------
+-- Filtering stuff
+-----------------------------------------
 
 -- Sort filters alphabetically regardless of localization
 local function GetSortedFilterOrder(filterId)
@@ -510,6 +576,301 @@ function WQT:OnInitialize()
 	local tabLib = LibStub("WorldMapTabsLib-1.0");
 	tabLib:AddCustomTab(WQT_QuestMapTab);
 	self.contentFrame = tabLib:CreateContentFrameForTab(WQT_QuestMapTab);
+
+
+	-- Sorting
+	self.sortDataContainer = CreateAndInitFromMixin(WQT_SortingDataContainer);
+	
+	local SortFunctionTags = {
+		rewardType = "rewardType",
+		rewardQuality = "rewardQuality",
+		canUpgrade = "canUpgrade",
+		seconds = "seconds",
+		rewardAmount = "rewardAmount",
+		rewardId = "rewardId",
+		faction = "faction",
+		questType = "questType",
+		questRarity = "questRarity",
+		title = "title",
+		elite = "elite",
+		criteria = "criteria",
+		zone = "zone",
+		numRewards = "numRewards",
+	}
+
+	-- Sorting functions
+	do -- rewardType
+		local func = function(a, b)
+			local aType, aSubType = a:GetRewardType();
+			local bType, bSubType = b:GetRewardType();
+			if (aType and bType and aType ~= bType) then
+				if (aType == WQT_REWARDTYPE.none or bType == WQT_REWARDTYPE.none) then
+					return aType > bType;
+				end
+				return aType < bType;
+			elseif (aType == bType and aSubType and bSubType) then
+				return aSubType < bSubType;
+			end
+		end;
+		self.sortDataContainer:AddSortFunction(SortFunctionTags.rewardType, func);
+	end
+	do -- rewardQuality
+		local func = function(a, b)
+			local aQuality = a:GetRewardQuality();
+			local bQuality = b:GetRewardQuality();
+			if (not aQuality or not bQuality) then
+				return aQuality and not bQuality;
+			end
+
+			if (aQuality and bQuality and aQuality ~= bQuality) then
+				return aQuality > bQuality;
+			end
+		end;
+		self.sortDataContainer:AddSortFunction(SortFunctionTags.rewardQuality, func);
+	end
+	do -- canUpgrade
+		local func = function(a, b)
+			local aCanUpgrade = a:GetRewardCanUpgrade();
+			local bCanUpgrade = b:GetRewardCanUpgrade();
+			if (aCanUpgrade and bCanUpgrade and aCanUpgrade ~= bCanUpgrade) then
+				return aCanUpgrade and not bCanUpgrade;
+			end
+		end
+		self.sortDataContainer:AddSortFunction(SortFunctionTags.canUpgrade, func);
+	end
+	do -- seconds
+		local func = function(a, b)
+			if (a.isBonusQuest ~= b.isBonusQuest) then
+				return b.isBonusQuest;
+			end
+
+			if (a.time.seconds ~= b.time.seconds) then
+				return a.time.seconds < b.time.seconds;
+			end
+		end
+		self.sortDataContainer:AddSortFunction(SortFunctionTags.seconds, func);
+	end
+	do -- rewardAmount
+		local func = function(a, b)
+			if (a.isBonusQuest ~= b.isBonusQuest) then
+				return b.isBonusQuest;
+			end
+
+			local amountA = a:GetRewardAmount(C_QuestLog.QuestCanHaveWarModeBonus(a.questID));
+			local amountB = b:GetRewardAmount(C_QuestLog.QuestCanHaveWarModeBonus(b.questID));
+
+			if (amountA ~= amountB) then
+				return amountA > amountB;
+			end
+		end
+		self.sortDataContainer:AddSortFunction(SortFunctionTags.rewardAmount, func);
+	end
+	do -- rewardId
+		local func = function(a, b)
+			local aId = a:GetRewardId();
+			local bId = b:GetRewardId();
+			if (aId and bId and aId ~= bId) then
+				return aId < bId;
+			end
+		end
+		self.sortDataContainer:AddSortFunction(SortFunctionTags.rewardId, func);
+	end
+	do -- faction
+		local func = function(a, b)
+			if (a.factionID ~= b.factionID) then
+				if (not a.factionID or not b.factionID) then
+					return b.factionID == nil;
+				end
+
+				local factionA = WQT_Utils:GetFactionDataInternal(a.factionID);
+				local factionB = WQT_Utils:GetFactionDataInternal(b.factionID);
+				return factionA.name < factionB.name;
+			end
+		end
+		self.sortDataContainer:AddSortFunction(SortFunctionTags.faction, func);
+	end
+	do -- questType
+		local func = function(a, b)
+			if (a.isBonusQuest ~= b.isBonusQuest) then
+				return b.isBonusQuest;
+			end
+
+			local tagInfoA = a:GetTagInfo();
+			local tagInfoB = b:GetTagInfo();
+			if (tagInfoA and tagInfoB and tagInfoA.worldQuestType and tagInfoB.worldQuestType and tagInfoA.worldQuestType ~= tagInfoB.worldQuestType) then
+				return tagInfoA.worldQuestType > tagInfoB.worldQuestType;
+			end
+		end
+		self.sortDataContainer:AddSortFunction(SortFunctionTags.questType, func);
+	end
+	do -- questRarity
+		local func = function(a, b)
+			local tagInfoA = a:GetTagInfo();
+			local tagInfoB = b:GetTagInfo();
+			if (tagInfoA and tagInfoB and tagInfoA.quality and tagInfoB.quality and tagInfoA.quality ~= tagInfoB.quality) then
+				return tagInfoA.quality > tagInfoB.quality;
+			end
+		end
+		self.sortDataContainer:AddSortFunction(SortFunctionTags.questRarity, func);
+	end
+	do -- title
+		local func = function(a, b)
+			if (a.title ~= b.title) then
+				return a.title < b.title;
+			end
+		end
+		self.sortDataContainer:AddSortFunction(SortFunctionTags.title, func);
+	end
+	do -- elite
+		local func = function(a, b)
+			local tagInfoA = a:GetTagInfo();
+			local tagInfoB = b:GetTagInfo();
+			local aIsElite = tagInfoA and tagInfoA.isElite;
+			local bIsElite = tagInfoB and tagInfoB.isElite;
+			if (aIsElite ~= bIsElite) then
+				return aIsElite and not bIsElite;
+			end
+		end
+		self.sortDataContainer:AddSortFunction(SortFunctionTags.elite, func);
+	end
+	do -- criteria
+		local func = function(a, b)
+			local aIsCriteria = a:IsCriteria(WQT.settings.general.bountySelectedOnly);
+			local bIsCriteria = b:IsCriteria(WQT.settings.general.bountySelectedOnly);
+			if (aIsCriteria ~= bIsCriteria) then return aIsCriteria and not bIsCriteria; end
+		end
+		self.sortDataContainer:AddSortFunction(SortFunctionTags.criteria, func);
+	end
+	do -- zone
+		local func = function(a, b)
+			local mapInfoA = WQT_Utils:GetCachedMapInfo(a.mapID);
+			local mapInfoB = WQT_Utils:GetCachedMapInfo(b.mapID);
+			if (not mapInfoA or not mapInfoB) then
+				return mapInfoA;
+			end
+
+			if (mapInfoA and mapInfoA.name and mapInfoB and mapInfoB.name and mapInfoA.mapID ~= mapInfoB.mapID) then
+				if (mapInfoA.mapID == WorldMapFrame.mapID or mapInfoB.mapID == WorldMapFrame.mapID) then
+					return mapInfoA.mapID == WorldMapFrame.mapID;
+				end
+				return mapInfoA.name < mapInfoB.name;
+			elseif (mapInfoA.mapID == mapInfoB.mapID) then
+				if (a.isBonusQuest ~= b.isBonusQuest) then
+					return b.isBonusQuest;
+				end
+			end
+		end
+		self.sortDataContainer:AddSortFunction(SortFunctionTags.zone, func);
+	end
+	do -- numRewards
+		local func = function(a, b)
+			local aNumRewards = #a.rewardList;
+			local bNumRewards = #b.rewardList;
+			if (aNumRewards ~= bNumRewards) then
+				return aNumRewards > bNumRewards;
+			end
+		end
+		self.sortDataContainer:AddSortFunction(SortFunctionTags.numRewards, func);
+	end
+
+	-- Sorting options
+	do -- reward
+		local functionTags = {
+			SortFunctionTags.rewardType,
+			SortFunctionTags.rewardQuality,
+			SortFunctionTags.rewardAmount,
+			SortFunctionTags.numRewards,
+			SortFunctionTags.canUpgrade,
+			SortFunctionTags.rewardId,
+			SortFunctionTags.seconds,
+			SortFunctionTags.title,
+		}
+		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].reward, REWARD, functionTags);
+	end
+	do -- time
+		local functionTags = {
+			SortFunctionTags.seconds,
+			SortFunctionTags.rewardType,
+			SortFunctionTags.rewardQuality,
+			SortFunctionTags.rewardAmount,
+			SortFunctionTags.numRewards,
+			SortFunctionTags.canUpgrade,
+			SortFunctionTags.rewardId,
+			SortFunctionTags.title,
+		}
+		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].time, _L["TIME"], functionTags);
+	end
+	do -- faction
+		local functionTags = {
+			SortFunctionTags.faction,
+			SortFunctionTags.rewardType,
+			SortFunctionTags.rewardQuality,
+			SortFunctionTags.rewardAmount,
+			SortFunctionTags.numRewards,
+			SortFunctionTags.canUpgrade,
+			SortFunctionTags.rewardId,
+			SortFunctionTags.seconds,
+			SortFunctionTags.title,
+		}
+		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].faction, FACTION, functionTags);
+	end
+	do -- zone
+		local functionTags = {
+			SortFunctionTags.zone,
+			SortFunctionTags.rewardType,
+			SortFunctionTags.rewardQuality,
+			SortFunctionTags.rewardAmount,
+			SortFunctionTags.numRewards,
+			SortFunctionTags.canUpgrade,
+			SortFunctionTags.rewardId,
+			SortFunctionTags.seconds,
+			SortFunctionTags.title,
+		}
+		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].zone, ZONE, functionTags);
+	end
+	do -- type
+		local functionTags = {
+			SortFunctionTags.criteria,
+			SortFunctionTags.questType,
+			SortFunctionTags.questRarity,
+			SortFunctionTags.elite,
+			SortFunctionTags.rewardType,
+			SortFunctionTags.rewardQuality,
+			SortFunctionTags.rewardAmount,
+			SortFunctionTags.numRewards,
+			SortFunctionTags.canUpgrade,
+			SortFunctionTags.rewardId,
+			SortFunctionTags.seconds,
+			SortFunctionTags.title,
+		}
+		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].type, TYPE, functionTags);
+	end
+	do -- name
+		local functionTags = {
+			SortFunctionTags.title,
+			SortFunctionTags.rewardType,
+			SortFunctionTags.rewardQuality,
+			SortFunctionTags.rewardAmount,
+			SortFunctionTags.numRewards,
+			SortFunctionTags.canUpgrade,
+			SortFunctionTags.rewardId,
+			SortFunctionTags.seconds,
+		}
+		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].name, NAME, functionTags);
+	end
+	do -- quality
+		local functionTags = {
+			SortFunctionTags.rewardQuality,
+			SortFunctionTags.rewardType,
+			SortFunctionTags.rewardAmount,
+			SortFunctionTags.numRewards,
+			SortFunctionTags.canUpgrade,
+			SortFunctionTags.rewardId,
+			SortFunctionTags.seconds,
+			SortFunctionTags.title,
+		}
+		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].quality, QUALITY, functionTags);
+	end
 end
 
 function WQT:OnEnable()
@@ -534,13 +895,6 @@ function WQT:OnEnable()
 		QuestMapFrame:SetDisplayMode(WQT_QuestMapTab.displayMode);
 	end
 	WQT_WorldQuestFrame.tabBeforeAnchor = WQT_WorldQuestFrame.selectedTab;
-	
-	-- Quest list scroll
-	local view = CreateScrollBoxListLinearView(2, 4, 2, 2);
-	view:SetElementInitializer("WQT_QuestTemplate", function(button, elementData)
-		InitQuestButton(button, elementData);
-	end);
-	ScrollUtil.InitScrollBoxListWithScrollBar(WQT_ListContainer.QuestScrollBox, WQT_ListContainer.ScrollBar, view);
 
 	-- Load settings
 	WQT_SettingsFrame:Init();
@@ -550,9 +904,9 @@ function WQT:OnEnable()
 	if (self.externals) then
 		for k, external in ipairs(self.externals) do
 			local name = external:GetName();
-			WQT:debugPrint("Setting up external load:", name);
+			WQT:DebugPrint("Setting up external load:", name);
 			EventUtil.ContinueOnAddOnLoaded(name, function()
-				WQT:debugPrint("Initializing external:", name);
+				WQT:DebugPrint("Initializing external:", name);
 				external:Init(WQT_Utils);
 				WQT_WorldQuestFrame:RegisterEventsForExternal(external);
 			end);
@@ -561,18 +915,25 @@ function WQT:OnEnable()
 
 	self.externals = nil;
 
-	-- Dropdowns
-	-- We need to do this after settings are available now
-	-- Sorting
-	WQT_ListContainer.SortDropdown:SetWidth(150);
-	WQT_ListContainer.SortDropdown:SetupMenu(SortDropdownSetup);
+	WQT_CallbackRegistry:TriggerEvent("WQT.Enabled");
+end
+ 
+do
+	local function IsSortSelected(sortID)
+		return WQT.settings.general.sortBy == sortID;
+	end
 
-	-- Filter
-	WQT_ListContainer.FilterDropdown:SetWidth(90);
-	WQT_ListContainer.FilterDropdown.Text:SetPoint("TOP", 0, 1);
-	WQT_ListContainer.FilterDropdown:SetupMenu(FilterDropdownSetup);
+	local function SortOnSelect(sortID)
+		WQT:Sort_OnClick(nil, sortID);
+	end
 
-	self.isEnabled = true;
+	function WQT:SortDropdownSetup(rootDescription)
+		rootDescription:SetTag("WQT_SETTINGS_DROPDOWN");
+
+		for k, data in WQT.sortDataContainer:EnumerateOptions() do
+			rootDescription:CreateRadio(data.label, IsSortSelected, SortOnSelect, data.sortID);
+		end
+	end
 end
 
 
@@ -1011,6 +1372,28 @@ end
 WQT_ScrollListMixin = {};
 
 function WQT_ScrollListMixin:OnLoad()
+	local paddingTop = 2;
+	local paddingBottom = 4;
+	local paddingLeft = 2;
+	local paddingRight = paddingLeft;
+	local view = CreateScrollBoxListLinearView(paddingTop, paddingBottom, paddingLeft, paddingRight);
+	view:SetElementInitializer("WQT_QuestTemplate", function(button, elementData)
+		button:Update(elementData.questInfo, elementData.showZone);
+	end);
+	ScrollUtil.InitScrollBoxListWithScrollBar(self.QuestScrollBox, self.ScrollBar, view);
+
+	self.SortDropdown:SetDefaultText(UNKNOWN);
+	self.FilterDropdown.Text:SetPoint("TOP", 0, 1);
+
+	WQT_CallbackRegistry:RegisterCallback(
+		"WQT.Enabled"
+		,function()
+				self.SortDropdown:SetupMenu(WQT.SortDropdownSetup);
+				self.FilterDropdown:SetupMenu(FilterDropdownSetup);
+				WQT_CallbackRegistry:UnregisterCallback("WQT.Enabled", self);
+			end
+		, self);
+
 	WQT_CallbackRegistry:RegisterCallback(
 		"WQT.DataProvider.ProgressUpdated"
 		,function(_, progress)
@@ -1388,7 +1771,7 @@ function WQT_CoreMixin:OnLoad()
 			if (self[event]) then 
 				self[event](self, ...);
 			elseif (not self.ExternalEvents[event]) then
-				WQT:debugPrint("WQT missing function for:",event);
+				WQT:DebugPrint("WQT missing function for:",event);
 			end 
 
 			WQT_CallbackRegistry:TriggerEvent("WQT.RegisterdEventTriggered", event, ...);
@@ -1516,7 +1899,7 @@ function WQT_CoreMixin:RegisterEventsForExternal(external)
 	for k, event in pairs(external:GetRequiredEvents()) do
 		if (self:RegisterEvent(event)) then
 			self.ExternalEvents[event] = true;
-			WQT:debugPrint("Registered new event", event, "for external", external:GetName());
+			WQT:DebugPrint("Registered new event", event, "for external", external:GetName());
 		end
 	end
 end

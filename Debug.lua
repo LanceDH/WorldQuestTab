@@ -7,7 +7,7 @@ local WQT_Profiles = addon.WQT_Profiles;
 ------------------------
 -- Debug Tooltip
 ------------------------
-function WQT:debugPrint(...)
+function WQT:DebugPrint(...)
 	if (addon.debugPrint) then 
 		print("WQT", ...);
 	end

@@ -96,25 +96,12 @@ local function SortQuestList(a, b, sortID)
 	local bDisliked = b:IsDisliked();
 	if (aDisliked ~= bDisliked) then 
 		return not aDisliked;
-	end 
-
-	-- Sort by a list of filters depending on the current filter choice
-	local order = _V["SORT_OPTION_ORDER"][sortID];
-	if (not order) then
-		order = {};
-		WQT:debugPrint("No sort order for", sortID);
-		return a.questID < b.questID;
 	end
-	
-	for k, criteria in ipairs(order) do
-		if(_V["SORT_FUNCTIONS"][criteria]) then
-			local result = _V["SORT_FUNCTIONS"][criteria](a, b);
-			if (result ~= nil) then 
-				return result 
-			end;
-		else
-			WQT:debugPrint("Invalid sort criteria", criteria);
-		end
+
+	-- Sorting based on the dropdown
+	local result = WQT.sortDataContainer:SortQuests(sortID, a, b);
+	if (result ~= nil) then
+		return result;
 	end
 	
 	-- Worst case fallback
@@ -670,7 +657,7 @@ function WQT_DataProvider:OnUpdate(elapsed)
 						if (addonInfo.alwaysHide and MapUtil.ShouldShowTask(apiInfo.mapID, apiInfo)) then
 							-- Have only encountered this once and not been able to replicate to test if this even works
 							addonInfo.alwaysHide = false;
-							WQT:debugPrint(string.format("Quest alwaysHide updated (%s)", questID));
+							WQT:DebugPrint(string.format("Quest alwaysHide updated (%s)", questID));
 							updateSuccess = addonInfo:UpdateValidity() or updateSuccess;
 						end
 						if (updateSuccess) then
@@ -695,7 +682,7 @@ function WQT_DataProvider:OnUpdate(elapsed)
 				questInfo:Init(apiInfo.questID, apiInfo);
 			end
 
-			WQT:debugPrint(string.format("Done: %s quests (-%s +%s ~%s)", acceptedCount, removed, added, updated));
+			WQT:DebugPrint(string.format("Done: %s quests (-%s +%s ~%s)", acceptedCount, removed, added, updated));
 
 			self.zoneLoading.startTimestamp = 0;
 			progress = 0;
@@ -821,7 +808,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 	end
 
 	if(self.zoneLoading.startTimestamp > 0) then 
-		WQT:debugPrint("Interrupt");
+		WQT:DebugPrint("Interrupt");
 	end
 
 	self.zoneLoading.startTimestamp = GetTimePreciseSec();
