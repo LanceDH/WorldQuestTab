@@ -227,6 +227,12 @@ function WQT_SettingsQuestListMixin:OnLoad()
 	self.dummyQuestInfo.GetTagInfo = function() return self.dummyQuestInfo.tagInfo; end
 	self.dummyQuestInfo.GetTagInfoQuality = function() return self.dummyQuestInfo.tagInfo.quality; end
 	self.dummyQuestInfo.IterateRewards = function() return ipairs(self.dummyQuestInfo.rewardList) end
+	self.dummyQuestInfo.GetReward = function(dummy, index)
+		if (index < 1 or index > #dummy.rewardList) then
+			return nil;
+		end
+		return dummy.rewardList[index];
+	end
 end
 
 function WQT_SettingsQuestListMixin:UpdateState()
@@ -1161,6 +1167,9 @@ function WQT_SettingsFrameMixin:Init()
 
 		do -- 11.2.10
 			StartVersionCategory("11.2.10");
+			AddSection(ChangelogSections.Changes, {
+				"Some optimizations to quest list updating";
+			});
 			AddSection(ChangelogSections.Fixes, {
 				"Fixed quests not showing on the Argus flight map";
 				"Fixed an issue with TomTom arrows now always working";

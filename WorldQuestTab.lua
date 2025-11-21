@@ -394,10 +394,10 @@ function WQT:FilterIsWorldMapDisabled(filter)
 	return false;
 end
 
-function WQT:Sort_OnClick(self, category)
-	if ( category and WQT.settings.general.sortBy ~= category ) then
-		WQT.settings.general.sortBy = category;
-		WQT_CallbackRegistry:TriggerEvent("WQT.SortUpdated");
+function WQT:Sort_OnClick(self, sortID)
+	if (sortID and WQT.settings.general.sortBy ~= sortID) then
+		WQT.settings.general.sortBy = sortID;
+		WQT_CallbackRegistry:TriggerEvent("WQT.SortUpdated", sortID);
 	end
 end
 
@@ -915,9 +915,33 @@ function WQT:OnEnable()
 
 	self.externals = nil;
 
-	WQT_CallbackRegistry:TriggerEvent("WQT.Enabled");
+	if (self.callbacksWhenReady) then
+		for k, data in ipairs(self.callbacksWhenReady) do
+			data.callback(data.owner);
+		end
+		self.callbacksWhenReady = nil;
+	end
+
+	self.isReady = true;
 end
- 
+
+function WQT:CallbackWhenReady(callback, owner)
+	if (self.isReady) then
+		callback();
+		return;
+	end
+
+	if (not self.callbacksWhenReady) then
+		self.callbacksWhenReady = {};
+	end
+
+	local data = {
+		callback = callback;
+		owner = owner;
+	}
+	table.insert(self.callbacksWhenReady, data);
+end
+
 do
 	local function IsSortSelected(sortID)
 		return WQT.settings.general.sortBy == sortID;
@@ -1005,69 +1029,72 @@ end
 
 WQT_RewardDisplayMixin = {};
 
-function WQT_RewardDisplayMixin:OnLoad()
-	self.numDisplayed = 0;
+function WQT_RewardDisplayMixin:GetRewardFrame(index)
+	if(index <= 0 or index > #self.rewardFrames) then return nil; end
+
+	return self.rewardFrames[index];
 end
 
-function WQT_RewardDisplayMixin:Reset()
-	self:SetDesaturated(false);
-	for k, reward in ipairs(self.rewardFrames) do
-		reward:Hide();
-	end
+function WQT_RewardDisplayMixin:UpdateRewards(questInfo, warmodeBonus)
+	local layoutChanged = false;
+	local isDisliked = questInfo:IsDisliked();
+	local maxRewardsToShow = min(WQT.settings.list.rewardNumDisplay, #self.rewardFrames);
+	local numDisplayed = 0;
 
-	self.numDisplayed = 0;
-end
+	for i = 1, #self.rewardFrames, 1 do
+		local rewardFrame = self:GetRewardFrame(i);
+		if (rewardFrame) then
+			local show = false;
+			if (i <= maxRewardsToShow) then
+				local rewardInfo = questInfo:GetReward(i);
+				if (rewardInfo) then
+					show = true;
+					rewardFrame.Icon:SetTexture(rewardInfo.texture);
+					rewardFrame.Icon:SetDesaturated(isDisliked);
 
-function WQT_RewardDisplayMixin:SetDesaturated(desaturate)
-	self.desaturate = desaturate;
-end
+					if (rewardInfo.quality > 1) then
+						rewardFrame.QualityColor:Show()
 
-function WQT_RewardDisplayMixin:AddReward(rewardInfo, warmodeBonus)
-	-- Limit the amount of rewards shown
-	if (self.numDisplayed >= WQT.settings.list.rewardNumDisplay
-		or self.numDisplayed >= #self.rewardFrames) then 
-			return;
-	end
+						local r, g, b = 1, 1, 1;
+						if (not isDisliked) then
+							r, g, b = C_Item.GetItemQualityColor(rewardInfo.quality);
+						end
+						rewardFrame.QualityColor:SetVertexColor(r, g, b);
+					else
+						rewardFrame.QualityColor:Hide()
+					end
 
-	self.numDisplayed = self.numDisplayed + 1;
-	local num = self.numDisplayed;
-	local rewardFrame = self.rewardFrames[num];
+					local displayAmount, rawAmount = WQT_Utils:GetDisplayRewardAmount(rewardInfo, warmodeBonus)
+					local showAmount = not rewardFrame.hideAmount and rawAmount > 1;
+					rewardFrame.Amount:SetShown(showAmount);
+					rewardFrame.AmountBG:SetShown(showAmount);
 
-	rewardFrame:Show();
-	rewardFrame.Icon:SetTexture(rewardInfo.texture);
-	rewardFrame.Icon:SetDesaturated(self.desaturate);
+					if (showAmount) then
+						rewardFrame.Amount:Show();
+						rewardFrame.AmountBG:Show();
 
-	if (rewardInfo.quality > 1) then
-		rewardFrame.QualityColor:Show()
+						rewardFrame.Amount:SetText(displayAmount);
 
-		local r, g, b = 1, 1, 1;
-		if (not self.desaturate) then
-			r, g, b = C_Item.GetItemQualityColor(rewardInfo.quality);
+						-- Color reward amount for certain types
+						local amountColor = _V["WQT_WHITE_FONT_COLOR"];
+						if (not isDisliked and WQT.settings.list.amountColors) then
+							amountColor = select(2, WQT_Utils:GetRewardTypeColorIDs(rewardInfo.type));
+						end
+						
+						rewardFrame.Amount:SetVertexColor(amountColor:GetRGB());
+					end
+
+					numDisplayed = numDisplayed + 1;
+				end
+			end
+			if (show ~= rewardFrame:IsShown()) then
+				layoutChanged = true;
+			end
+			rewardFrame:SetShown(show);
 		end
-		rewardFrame.QualityColor:SetVertexColor(r, g, b);
-	else
-		rewardFrame.QualityColor:Hide()
 	end
 
-	local displayAmount, rawAmount = WQT_Utils:GetDisplayRewardAmount(rewardInfo, warmodeBonus)
-	local showAmount = not rewardFrame.hideAmount and rawAmount > 1;
-	rewardFrame.Amount:SetShown(showAmount);
-	rewardFrame.AmountBG:SetShown(showAmount);
-
-	if (showAmount) then
-		rewardFrame.Amount:Show();
-		rewardFrame.AmountBG:Show();
-
-		rewardFrame.Amount:SetText(displayAmount);
-
-		-- Color reward amount for certain types
-		local amountColor = _V["WQT_WHITE_FONT_COLOR"];
-		if (not self.desaturate and WQT.settings.list.amountColors) then
-			amountColor = select(2, WQT_Utils:GetRewardTypeColorIDs(rewardInfo.type));
-		end
-		
-		rewardFrame.Amount:SetVertexColor(amountColor:GetRGB());
-	end
+	return layoutChanged;
 end
 
 ------------------------------------------
@@ -1218,29 +1245,42 @@ end
 
 function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 	local typeFrame = self.Type;
-	local isCriteria = questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly);
-	local tagInfo = questInfo:GetTagInfo();
-	local isElite = tagInfo and tagInfo.isElite;
-	
-	typeFrame:Show();
-	typeFrame.Texture:Show();
-	typeFrame.Elite:SetShown(isElite);
-	
-	-- Update Icon
-	local atlasTexture, sizeX, sizeY = WQT_Utils:GetCachedTypeIconData(questInfo);
-	typeFrame.Texture:SetAtlas(atlasTexture);
-	typeFrame.Texture:SetSize(sizeX, sizeY);
-	typeFrame.CriteriaGlow:SetShown(isCriteria);
+	local wasShown = typeFrame:IsShown();
+	local shouldShow = WQT.settings.list.typeIcon;
+	local needsLayout = wasShown ~= shouldShow;
 
-	if (isCriteria) then
-		if (isElite) then
-			typeFrame.CriteriaGlow:SetAtlas("worldquest-questmarker-dragon-glow", false);
-			typeFrame.CriteriaGlow:SetPoint("CENTER", 0, -1);
-		else
-			typeFrame.CriteriaGlow:SetAtlas("worldquest-questmarker-glow", false);
-			typeFrame.CriteriaGlow:SetPoint("CENTER", 0, 0);
+	typeFrame:SetShown(shouldShow);
+	if (shouldShow) then
+		local isDisliked = questInfo:IsDisliked();
+		typeFrame.Bg:SetDesaturated(isDisliked);
+		typeFrame.Texture:SetDesaturated(isDisliked);
+		typeFrame.Elite:SetDesaturated(isDisliked);
+
+		local isCriteria = questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly);
+		local tagInfo = questInfo:GetTagInfo();
+		local isElite = tagInfo and tagInfo.isElite;
+		
+		typeFrame.Texture:Show();
+		typeFrame.Elite:SetShown(isElite);
+		
+		-- Update Icon
+		local atlasTexture, sizeX, sizeY = WQT_Utils:GetCachedTypeIconData(questInfo);
+		typeFrame.Texture:SetAtlas(atlasTexture);
+		typeFrame.Texture:SetSize(sizeX, sizeY);
+		typeFrame.CriteriaGlow:SetShown(isCriteria);
+
+		if (isCriteria) then
+			if (isElite) then
+				typeFrame.CriteriaGlow:SetAtlas("worldquest-questmarker-dragon-glow", false);
+				typeFrame.CriteriaGlow:SetPoint("CENTER", 0, -1);
+			else
+				typeFrame.CriteriaGlow:SetAtlas("worldquest-questmarker-glow", false);
+				typeFrame.CriteriaGlow:SetPoint("CENTER", 0, 0);
+			end
 		end
 	end
+
+	return needsLayout;
 end
 
 function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
@@ -1250,6 +1290,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 		self:Hide();
 	end
 	
+	local needsLayoutUpdate = false;
 	self:Show();
 	self.questInfo = questInfo;
 	self.questID = questInfo.questID;
@@ -1297,10 +1338,15 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	end
 
 	-- Warband icon
-	local showWarBand = questInfo.hasWarbandBonus and WQT_Utils:GetSetting("list", "warbandIcon");
-	local warbandIcon = self:GetWarbandIcon();
-	warbandIcon:SetShown(showWarBand);
-	warbandIcon:SetDesaturated(isDisliked);
+	do
+		local showWarBand = questInfo.hasWarbandBonus and WQT_Utils:GetSetting("list", "warbandIcon");
+		local warbandIcon = self:GetWarbandIcon();
+		warbandIcon:SetDesaturated(isDisliked);
+		if (showWarBand ~= warbandIcon:IsShown()) then
+			warbandIcon:SetShown(showWarBand);
+			needsLayoutUpdate = true;
+		end
+	end
 	
 	local factionFrame = self:GetFactionFrame();
 	-- Highlight
@@ -1308,32 +1354,31 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	self.Highlight:SetShown(showHighLight);
 			
 	-- Faction icon
-	if (WQT.settings.list.factionIcon) then
-		factionFrame:Show();
-		local factionData = WQT_Utils:GetFactionDataInternal(questInfo.factionID);
-
-		factionFrame.Icon:SetTexture(factionData.texture);
-	else
-		factionFrame:Hide();
+	do
+		local shouldShow = WQT.settings.list.factionIcon;
+		if (shouldShow ~= factionFrame:IsShown()) then
+			needsLayoutUpdate = true;
+		end
+		factionFrame:SetShown(shouldShow);
+		if (shouldShow) then
+			local factionData = WQT_Utils:GetFactionDataInternal(questInfo.factionID);
+			factionFrame.Icon:SetTexture(factionData.texture);
+			factionFrame.Icon:SetDesaturated(isDisliked);
+		end
 	end
-	factionFrame.Icon:SetDesaturated(isDisliked);
 	
 	-- Type icon
-	if (WQT.settings.list.typeIcon) then
-		self:UpdateQuestType(questInfo)
-	else
-		self.Type:Hide()
+	if (self:UpdateQuestType(questInfo)) then
+		needsLayoutUpdate = true;
 	end
-	self.Type.Bg:SetDesaturated(isDisliked);
-	self.Type.Texture:SetDesaturated(isDisliked);
-	self.Type.Elite:SetDesaturated(isDisliked);
 
 	-- Rewards
-	local rewardsFrame = self:GetRewardsFrame();
-	rewardsFrame:Reset();
-	rewardsFrame:SetDesaturated(isDisliked);
-	for k, rewardInfo in questInfo:IterateRewards() do
-		rewardsFrame:AddReward(rewardInfo, C_QuestLog.QuestCanHaveWarModeBonus(self.questID));
+	do
+		local canWarmode = C_QuestLog.QuestCanHaveWarModeBonus(self.questID);
+		local rewardsFrame = self:GetRewardsFrame();
+		if(rewardsFrame:UpdateRewards(questInfo, canWarmode)) then
+			needsLayoutUpdate = true;
+		end
 	end
 
 	-- Show border if quest is tracked
@@ -1346,7 +1391,11 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 		self.TrackedBorder:Hide();
 	end
 
-	self:Layout();
+	-- With a full quest list calling Layout on a all vs on none is a difference of about 9ms (~10ms vs ~1ms)
+	-- So try and only call it when something changes that might require it (wardband icon, nr of rewards, etc)
+	if (needsLayoutUpdate) then
+		self:Layout();
+	end
 end
 
 function WQT_ListButtonMixin:FactionOnEnter(frame)
@@ -1385,14 +1434,10 @@ function WQT_ScrollListMixin:OnLoad()
 	self.SortDropdown:SetDefaultText(UNKNOWN);
 	self.FilterDropdown.Text:SetPoint("TOP", 0, 1);
 
-	WQT_CallbackRegistry:RegisterCallback(
-		"WQT.Enabled"
-		,function()
-				self.SortDropdown:SetupMenu(WQT.SortDropdownSetup);
-				self.FilterDropdown:SetupMenu(FilterDropdownSetup);
-				WQT_CallbackRegistry:UnregisterCallback("WQT.Enabled", self);
-			end
-		, self);
+	WQT:CallbackWhenReady(function()
+			self.SortDropdown:SetupMenu(WQT.SortDropdownSetup);
+			self.FilterDropdown:SetupMenu(FilterDropdownSetup);
+		end);
 
 	WQT_CallbackRegistry:RegisterCallback(
 		"WQT.DataProvider.ProgressUpdated"

@@ -62,7 +62,7 @@
 		</Scripts>
 	</Frame>
 
-	<Frame name="WQT_RewardTemplate" parentArray="rewardFrames" virtual="true">
+	<Frame name="WQT_RewardTemplate" parentArray="rewardFrames" hidden="true" virtual="true">
 		<Size x="32" y="32" />
 		<Layers>
 			<Layer level="BACKGROUND">
@@ -157,10 +157,6 @@
 				</KeyValues>
 			</Frame>
 		</Frames>
-		
-		<Scripts>
-			<OnLoad method="OnLoad"/>
-		</Scripts>
 	</Frame>
 	 
 	<Button name="WQT_QuestTemplate" mixin="WQT_ListButtonMixin, WQT_HorizontalFlexLayoutMixin" hidden="true" virtual="true" registerForClicks="LeftButtonUp, RightButtonUp" >
@@ -277,7 +273,7 @@
 				</KeyValues>
 				<Layers>
 					<Layer level="ARTWORK">
-						<Texture parentKey="WarbandIcon" atlas="warbands-icon" alpha="1" hidden="false">
+						<Texture parentKey="WarbandIcon" atlas="warbands-icon" alpha="1" hidden="true">
 							<Size x="16" y="16"/>
 							<Anchors>
 								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Rewards" relativePoint="BOTTOMLEFT" x="-1" y="0"/>
