@@ -1173,6 +1173,7 @@ function WQT_SettingsFrameMixin:Init()
 			AddSection(ChangelogSections.Fixes, {
 				"Fixed quests not showing on the Argus flight map";
 				"Fixed an issue with TomTom arrows now always working";
+				"Fixed some taint issues caused by the tab button";
 			});
 		end
 

@@ -577,7 +577,6 @@ function WQT:OnInitialize()
 	tabLib:AddCustomTab(WQT_QuestMapTab);
 	self.contentFrame = tabLib:CreateContentFrameForTab(WQT_QuestMapTab);
 
-
 	-- Sorting
 	self.sortDataContainer = CreateAndInitFromMixin(WQT_SortingDataContainer);
 	
@@ -892,7 +891,8 @@ function WQT:OnEnable()
 	
 	-- Show default tab depending on setting
 	if (self.settings.general.defaultTab) then
-		QuestMapFrame:SetDisplayMode(WQT_QuestMapTab.displayMode);
+		local tabLib = LibStub("WorldMapTabsLib-1.0");
+		tabLib:SetDisplayMode(WQT_QuestMapTab.displayMode);
 	end
 	WQT_WorldQuestFrame.tabBeforeAnchor = WQT_WorldQuestFrame.selectedTab;
 

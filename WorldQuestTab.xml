@@ -596,7 +596,7 @@
 		</Scripts>
 	</Button>
 	
-	<Frame name="WQT_QuestMapTab" parent="QuestMapFrame" inherits="QuestLogTabButtonTemplate" mixin="WQT_TabButtonMixin">
+	<Frame name="WQT_QuestMapTab" parent="QuestMapFrame" inherits="LargeSideTabButtonTemplate" mixin="WQT_TabButtonMixin">
 		<KeyValues>
 			<KeyValue key="activeAtlas" value="Worldquest-icon" type="string" />
 			<KeyValue key="inactiveAtlas" value="Worldquest-icon" type="string" />
