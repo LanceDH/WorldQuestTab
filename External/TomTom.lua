@@ -21,7 +21,7 @@ local function AddTomTomArrowByQuestId(questId)
 		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
 		local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
 		if (title and x and y) then
-			TomTom:AddWaypoint(zoneId, x, y, {["title"] = title, ["crazy"] = true});
+			TomTom:AddWaypoint(zoneId, x, y, {["title"] = title, ["crazy"] = true, ["from"] = addonName});
 		end
 	end
 end

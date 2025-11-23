@@ -1171,7 +1171,8 @@ function WQT_ListButtonMixin:SetEnabledMixin(value)
 	factionFrame:EnableMouse(value);
 end
 
-function WQT_ListButtonMixin:UpdateTime()
+function WQT_ListButtonMixin:UpdateTime(...)
+	self:ClearTimer();
 	if ( not self.questInfo or not self:IsShown() or self.questInfo.seconds == 0) then
 		return false;
 	end
@@ -1192,10 +1193,13 @@ function WQT_ListButtonMixin:UpdateTime()
 		timeFrame:SetText(timeString);
 	end
 
+	
+	local zoneSeparator = self:GetZoneSeparator();
+	zoneSeparator:SetShown(self:GetZoneFontString():IsShown() and timeFrame:IsShown());
+
 	-- Updating time changes its size so we need to make sure everything on the bottom row shifts with it
 	self:GetBottomRow():Layout();
 
-	self:ClearTimer();
 	local showingSecondary = WQT_Utils:GetSetting("list", "fullTime");
 	local timerInterval = WQT_Utils:TimeLeftToUpdateTime(seconds, showingSecondary);
 	if (timerInterval > 0) then
@@ -1310,8 +1314,6 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	local titleFS = self:GetTitleFontString();
 	titleFS:SetText(title);
 	
-	self:UpdateTime();
-	
 	local showingZone = false;
 	local zoneName = "";
 	if (shouldShowZone and WQT.settings.list.showZone) then
@@ -1390,6 +1392,8 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	else
 		self.TrackedBorder:Hide();
 	end
+		
+	self:UpdateTime();
 
 	-- With a full quest list calling Layout on a all vs on none is a difference of about 9ms (~10ms vs ~1ms)
 	-- So try and only call it when something changes that might require it (wardband icon, nr of rewards, etc)
@@ -1429,6 +1433,7 @@ function WQT_ScrollListMixin:OnLoad()
 	view:SetElementInitializer("WQT_QuestTemplate", function(button, elementData)
 		button:Update(elementData.questInfo, elementData.showZone);
 	end);
+	view:SetElementResetter(function(button) button:ClearTimer(); end);
 	ScrollUtil.InitScrollBoxListWithScrollBar(self.QuestScrollBox, self.ScrollBar, view);
 
 	self.SortDropdown:SetDefaultText(UNKNOWN);
@@ -2082,8 +2087,7 @@ end
 function WQT_CoreMixin:ADDON_LOADED(loaded)
 	WQT:UpdateFilterIndicator();
 	if (loaded == "Blizzard_FlightMap") then
-		-- Add dataprovider to hide official pins
-		FlightMapFrame:AddDataProvider(CreateFromMixins(WQT_OfficialPinSuppressorProviderMixin));
+		self.pinDataProvider:HookPinHidingToMapFrame(FlightMapFrame);
 
 		WQT_FlightMapContainer:SetParent(FlightMapFrame);
 		WQT_FlightMapContainer:SetPoint("BOTTOMLEFT", FlightMapFrame, "BOTTOMRIGHT", -7, 0);
