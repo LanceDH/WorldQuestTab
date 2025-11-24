@@ -21,7 +21,7 @@ local function AddTomTomArrowByQuestId(questId)
 		local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
 		local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
 		if (title and x and y) then
-			TomTom:AddWaypoint(zoneId, x, y, {["title"] = title, ["crazy"] = true});
+			TomTom:AddWaypoint(zoneId, x, y, {["title"] = title, ["crazy"] = true, ["from"] = addonName});
 		end
 	end
 end
@@ -54,7 +54,6 @@ local function QuestListChangedHook(questId, added)
 		if (added) then
 			local questHardWatched = WQT_Utils:QuestIsWatchedManual(questId);
 			if (clickArrow or questHardWatched) then
-				AddTomTomArrowByQuestId(questId);
 				--If click arrow is active, we want to clear the previous click arrow
 				if (clickArrow and WQT_WorldQuestFrame.softTomTomArrow and not WQT_Utils:QuestIsWatchedManual(WQT_WorldQuestFrame.softTomTomArrow)) then
 					RemoveTomTomArrowbyQuestId(WQT_WorldQuestFrame.softTomTomArrow);
@@ -63,21 +62,20 @@ local function QuestListChangedHook(questId, added)
 				if (clickArrow and not questHardWatched) then
 					WQT_WorldQuestFrame.softTomTomArrow = questId;
 				end
+
+				AddTomTomArrowByQuestId(questId);
 			end
 			
 		else
+			if (WQT_WorldQuestFrame.softTomTomArrow == questId) then
+				WQT_WorldQuestFrame.softTomTomArrow = nil;
+			end
 			RemoveTomTomArrowbyQuestId(questId)
 		end
 	end
 end
 
-local function TomTomIsOK()
-	return TomTom.WaypointExists and TomTom.AddWaypoint and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints;
-end
-
 local function TomTomIsChecked(questInfo)
-	if (not TomTomIsOK()) then return false; end
-	
 	local questId = questInfo.questID;
 	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
 	local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
@@ -87,21 +85,10 @@ local function TomTomIsChecked(questInfo)
 end
 
 local function TomTomOnPressed(questInfo)
-	if (not TomTomIsOK()) then 
-		print("Something is wrong with TomTom. Either it failed to load correctly, or an update changed its functionality."); 
-		return;
-	end
-
 	local questId = questInfo.questID;
-	local zoneId = C_TaskQuest.GetQuestZoneID(questId);
-	local x, y = C_TaskQuest.GetQuestLocation(questId, zoneId)
-	local title = C_TaskQuest.GetQuestInfoByQuestID(questId);
+	local hasArrow = TomTomIsChecked(questInfo);
 
-	if (TomTom:WaypointExists(zoneId, x, y, title)) then
-		RemoveTomTomArrowbyQuestId(questId);
-	else
-		AddTomTomArrowByQuestId(questId);
-	end
+	QuestListChangedHook(questId, not hasArrow);
 end
 
 local function EventTriggered(source, event, ...)
@@ -125,6 +112,12 @@ function TomTomExternal:GetRequiredEvents()
 end
 
 function TomTomExternal:Init()
+	local isOK = TomTom.WaypointExists and TomTom.AddWaypoint and TomTom.GetKeyArgs and TomTom.RemoveWaypoint and TomTom.waypoints;
+	if (not isOK) then
+		print("WQT - Something is wrong with TomTom. Either it failed to load correctly, or an update changed its functionality.");
+		return;
+	end
+
 	_activeSettings = WQT_Utils:RegisterExternalSettings("TomTom", _defaultSettings);
 
 	-- Add options to settings menu
@@ -151,7 +144,7 @@ function TomTomExternal:Init()
 			data:SetValueChangedFunction(function(value)
 				_activeSettings.TomTomArrowOnClick = value;
 				if (not value and WQT_WorldQuestFrame.softTomTomArrow and not WQT_Utils:QuestIsWatchedManual(WQT_WorldQuestFrame.softTomTomArrow)) then
-					WQT_Utils:RemoveTomTomArrowbyQuestId(WQT_WorldQuestFrame.softTomTomArrow);
+					RemoveTomTomArrowbyQuestId(WQT_WorldQuestFrame.softTomTomArrow);
 				end
 			end);
 			data:SetIsDisabledFunction(function() return not _activeSettings.useTomTom; end);

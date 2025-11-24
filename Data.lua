@@ -93,14 +93,6 @@ _V["WQT_GREEN_FONT_COLOR"] = CreateColor(0, 0.8, 0);
 _V["WQT_BLUE_FONT_COLOR"] = CreateColor(0.2, 0.60, 1);
 _V["WQT_PURPLE_FONT_COLOR"] = CreateColor(0.84, 0.38, 0.94);
 
-_V["DEBUG_OUTPUT_TYPE"] = {
-	["invalid"] = 0
-	,["setting"] = 1
-	,["quest"] = 2
-	,["worldQuest"] = 3
-	,["addon"] = 4
-}
-
 _V["FILTER_TYPES"] = {
 	["faction"] = 1
 	,["type"] = 2
@@ -145,13 +137,14 @@ _V["ENUM_ZONE_QUESTS"] = {
 	,["expansion"] = 3
 }
 
-_V["SETTING_TYPES"] = {
-	["category"] = 1
-	,["subTitle"] = 2
-	,["checkBox"] = 3
-	,["slider"] = 4
-	,["dropDown"] = 5
-	,["button"] = 6
+_V["SORT_IDS"] = {
+	time = "time";
+	faction = "faction";
+	type = "type";
+	zone = "zone";
+	name = "name";
+	reward = "reward";
+	quality = "quality";
 }
 
 -- Not where they should be. Count them as invalid. Thanks Blizzard
@@ -243,157 +236,12 @@ _V["WQT_TYPEFLAG_LABELS"] = {
 			["Reputation"] = REPUTATION
 		}
 	};
-	
+
 _V["FILTER_TYPE_OLD_CONTENT"] = {
 	[2] = {["Invasion"] = true, ["Assault"] = true}
 	,[3] = {["Artifact"] = true, ["Relic"] = true}
 }
 
-_V["WQT_SORT_OPTIONS"] = {[1] = _L["TIME"], [2] = FACTION, [3] = TYPE, [4] = ZONE, [5] = NAME, [6] = REWARD, [7] = QUALITY}
-_V["SORT_OPTION_ORDER"] = {
-	[1] = {"seconds", "rewardType", "rewardQuality", "rewardAmount", "numRewards", "canUpgrade", "rewardId", "title"},
-	[2] = {"faction", "rewardType", "rewardQuality", "rewardAmount", "numRewards", "canUpgrade", "rewardId", "seconds", "title"},
-	[3] = {"criteria", "questType", "questRarity", "elite", "rewardType", "rewardQuality", "rewardAmount", "numRewards", "canUpgrade", "rewardId", "seconds", "title"},
-	[4] = {"zone", "rewardType", "rewardQuality", "rewardAmount", "numRewards", "canUpgrade", "rewardId", "seconds", "title"},
-	[5] = {"title", "rewardType", "rewardQuality", "rewardAmount", "numRewards", "canUpgrade", "rewardId", "seconds"},
-	[6] = {"rewardType", "rewardQuality", "rewardAmount", "numRewards", "canUpgrade", "rewardId", "seconds", "title"},
-	[7] = {"rewardQuality", "rewardType", "rewardAmount", "numRewards", "canUpgrade", "rewardId", "seconds", "title"},
-}
-_V["SORT_FUNCTIONS"] = {
-	["rewardType"] = function(a, b)
-			local aType, aSubType = a:GetRewardType();
-			local bType, bSubType = b:GetRewardType();
-			if (aType and bType and aType ~= bType) then
-				if (aType == WQT_REWARDTYPE.none or bType == WQT_REWARDTYPE.none) then
-					return aType > bType;
-				end
-				return aType < bType;
-			elseif (aType == bType and aSubType and bSubType) then
-				return aSubType < bSubType;
-			end
-		end
-	,["rewardQuality"] = function(a, b)
-			local aQuality = a:GetRewardQuality();
-			local bQuality = b:GetRewardQuality();
-			if (not aQuality or not bQuality) then
-				return aQuality and not bQuality;
-			end
-
-			if (aQuality and bQuality and aQuality ~= bQuality) then
-				return aQuality > bQuality;
-			end
-		end
-	,["canUpgrade"] = function(a, b)
-			local aCanUpgrade = a:GetRewardCanUpgrade();
-			local bCanUpgrade = b:GetRewardCanUpgrade();
-			if (aCanUpgrade and bCanUpgrade and aCanUpgrade ~= bCanUpgrade) then
-				return aCanUpgrade and not bCanUpgrade;
-			end
-		end
-	,["seconds"] = function(a, b)
-			if (a.isBonusQuest ~= b.isBonusQuest) then
-				return b.isBonusQuest;
-			end
-
-			if (a.time.seconds ~= b.time.seconds) then
-				return a.time.seconds < b.time.seconds;
-			end
-		end
-	,["rewardAmount"] = function(a, b)
-			if (a.isBonusQuest ~= b.isBonusQuest) then
-				return b.isBonusQuest;
-			end
-
-			local amountA = a:GetRewardAmount(C_QuestLog.QuestCanHaveWarModeBonus(a.questID));
-			local amountB = b:GetRewardAmount(C_QuestLog.QuestCanHaveWarModeBonus(b.questID));
-
-			if (amountA ~= amountB) then
-				return amountA > amountB;
-			end
-		end
-	,["rewardId"] = function(a, b)
-			local aId = a:GetRewardId();
-			local bId = b:GetRewardId();
-			if (aId and bId and aId ~= bId) then
-				return aId < bId;
-			end
-		end
-	,["faction"] = function(a, b)
-			if (a.factionID ~= b.factionID) then 
-				if(not a.factionID or not b.factionID) then
-					return b.factionID == nil;
-				end
-
-				local factionA = WQT_Utils:GetFactionDataInternal(a.factionID);
-				local factionB = WQT_Utils:GetFactionDataInternal(b.factionID);
-				return factionA.name < factionB.name;
-			end
-		end
-
-	,["questType"] = function(a, b)
-			if (a.isBonusQuest ~= b.isBonusQuest) then
-				return b.isBonusQuest;
-			end
-			
-			local tagInfoA = a:GetTagInfo();
-			local tagInfoB = b:GetTagInfo();
-			if (tagInfoA and tagInfoB and tagInfoA.worldQuestType and tagInfoB.worldQuestType and tagInfoA.worldQuestType ~= tagInfoB.worldQuestType) then
-				return tagInfoA.worldQuestType > tagInfoB.worldQuestType;
-			end 
-		end
-	,["questRarity"] = function(a, b)
-			local tagInfoA = a:GetTagInfo();
-			local tagInfoB = b:GetTagInfo();
-			if (tagInfoA and tagInfoB and tagInfoA.quality and tagInfoB.quality and tagInfoA.quality ~= tagInfoB.quality) then
-				return tagInfoA.quality > tagInfoB.quality;
-			end
-		end
-	,["title"] = function(a, b)
-			if (a.title ~= b.title) then
-				return a.title < b.title;
-			end 
-		end
-	,["elite"] = function(a, b)
-			local tagInfoA = a:GetTagInfo();
-			local tagInfoB = b:GetTagInfo();
-			local aIsElite = tagInfoA and tagInfoA.isElite;
-			local bIsElite = tagInfoB and tagInfoB.isElite;
-			if (aIsElite ~= bIsElite) then
-				return aIsElite and not bIsElite;
-			end 
-		end
-	,["criteria"] = function(a, b)
-			local aIsCriteria = a:IsCriteria(WQT.settings.general.bountySelectedOnly);
-			local bIsCriteria = b:IsCriteria(WQT.settings.general.bountySelectedOnly);
-			if (aIsCriteria ~= bIsCriteria) then return aIsCriteria and not bIsCriteria; end
-		end
-	,["zone"] = function(a, b)
-			local mapInfoA = WQT_Utils:GetCachedMapInfo(a.mapID);
-			local mapInfoB = WQT_Utils:GetCachedMapInfo(b.mapID);
-			if (not mapInfoA or not mapInfoB) then
-				return mapInfoA;
-			end
-
-			if (mapInfoA and mapInfoA.name and mapInfoB and mapInfoB.name and mapInfoA.mapID ~= mapInfoB.mapID) then
-				if (mapInfoA.mapID == WorldMapFrame.mapID or mapInfoB.mapID == WorldMapFrame.mapID) then
-					return mapInfoA.mapID == WorldMapFrame.mapID;
-				end
-				return mapInfoA.name < mapInfoB.name;
-			elseif (mapInfoA.mapID == mapInfoB.mapID) then
-				if (a.isBonusQuest ~= b.isBonusQuest) then
-					return b.isBonusQuest;
-				end
-			end
-		end
-	,["numRewards"] = function(a, b)
-			local aNumRewards = #a.rewardList;
-			local bNumRewards = #b.rewardList;
-			if (aNumRewards ~= bNumRewards) then
-				return aNumRewards > bNumRewards;
-			end
-		end
-}
-	
 _V["REWARD_TYPE_ATLAS"] = {
 		[WQT_REWARDTYPE.weapon] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.211, ["r"] = 0.277, ["t"] = 0.246, ["b"] = 0.277} -- Weapon
 		,[WQT_REWARDTYPE.equipment] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.847, ["r"] = 0.91, ["t"] = 0.459, ["b"] = 0.49} -- Armor
@@ -678,6 +526,7 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 		[619] 	= legionMapCoords;
 		[993] 	= legionMapCoords; -- Flightmap	
 		[905] 	= argusMapCoords;
+		[994] 	= argusMapCoords; -- Flightmap
 
 		[875]	= zandalarMapCoords;
 		[1011]	= zandalarMapCoords; -- Flightmap
@@ -863,7 +712,7 @@ _V["WQT_DEFAULTS"] = {
 		};
 		
 		["general"] = {
-			sortBy = 1;
+			sortBy = _V["SORT_IDS"].reward;
 			fullScreenContainerPos = {["anchor"] = "TOPLEFT", ["x"] = 0, ["y"] = -25};
 		
 			defaultTab = false;

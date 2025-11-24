@@ -12,8 +12,8 @@ Registering a callback for "QuestLog.SetDisplayMode", you can compare your ID wi
 Alternatively, when using a custom Mixin you can react in your SetChecked function for true or false, and react accordingly.
 
 When creating a tab from a template or providing a completely custom tab it is **required** to have a SetChecked function, even if it contains no functionality.
-It is highly advised to inherit from "QuestLogTabButtonTemplate" for functionality and a similar appearance to the offical tabs.
-This library contains a Mixin called WMTL_DefaultTabMixin which can be used with "QuestLogTabButtonTemplate" to provide support for textures, as well as not requiring an inactive variant of the active texure or atlas.
+It is highly advised to inherit from "LargeSideTabButtonTemplate" for functionality and a similar appearance to the offical tabs.
+This library contains a Mixin called WMTL_DefaultTabMixin which can be used with "LargeSideTabButtonTemplate" to provide support for textures, as well as not requiring an inactive variant of the active texure or atlas.
 
 
 ## Example setups
@@ -40,7 +40,7 @@ tabLib:CreateContentFrameForTab(newTab, "XmlFrameTemplate");
 
 ```xml
 <Ui>
-	<Frame name="XmlTabTemplate" parent="QuestMapFrame" inherits="QuestLogTabButtonTemplate" virtual="true">
+	<Frame name="XmlTabTemplate" parent="QuestMapFrame" inherits="LargeSideTabButtonTemplate" virtual="true">
 		<KeyValues>
 			<KeyValue key="activeAtlas" value="GM-icon-difficulty-mythicSelected" type="string" />
 			<KeyValue key="inactiveAtlas" value="GM-icon-difficulty-mythicAssist" type="string" />
@@ -69,7 +69,7 @@ tabLib:LinkTabToContentFrame(XmlCreatedTab, XmlCreatedFrame);
 
 ```xml
 <Ui>
-	<Frame name="XmlCreatedTab" parent="QuestMapFrame" inherits="QuestLogTabButtonTemplate">
+	<Frame name="XmlCreatedTab" parent="QuestMapFrame" inherits="LargeSideTabButtonTemplate">
 		<KeyValues>
 			<KeyValue key="activeAtlas" value="GM-icon-difficulty-mythicSelected" type="string" />
 			<KeyValue key="inactiveAtlas" value="GM-icon-difficulty-mythicAssist" type="string" />
@@ -108,7 +108,7 @@ Creates a tab and integrates it with the others.
 	Your newly created tab with a displayMode attribute containing your tab's ID
 
 #### Notes:
-When providing a template it is highly advised it inherits from "QuestLogTabButtonTemplate". The template **requires** a SetChecked function.
+When providing a template it is highly advised it inherits from "LargeSideTabButtonTemplate". The template **requires** a SetChecked function.
 
 The data table can consist of the following fields. At a minimum the data should contain either activeAtlas or activeTexture.
 - tooltipText: Text to show when hovering over the tab
@@ -121,7 +121,7 @@ The data table can consist of the following fields. At a minimum the data should
 ### lib:AddCustomTab(tab)
 
 Integrates the provided tab with the others.
-When creating your own tab it is highly advised it inherits from "QuestLogTabButtonTemplate". The frame **requires** a SetChecked function.
+When creating your own tab it is highly advised it inherits from "LargeSideTabButtonTemplate". The frame **requires** a SetChecked function.
 
 #### Params:
 

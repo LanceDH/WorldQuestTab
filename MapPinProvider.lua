@@ -99,43 +99,6 @@ local function GetPinType(mapType)
 end
 
 ------------------------------------
--- Official pin suppressor
-------------------------------------
-WQT_OfficialPinSuppressorProviderMixin = CreateFromMixins(MapCanvasDataProviderMixin);
-
-local function HideOfficialPin(pin)
-	if (WQT.settings.pin.disablePoI) then return; end
-	pin:Hide();
-end
-
-function WQT_OfficialPinSuppressorProviderMixin:RefreshAllData()
-	if (WQT.settings.pin.disablePoI) then return end
-
-	-- Supressor pins error during combat, so we're doing it the potato way
-	for k, template in ipairs(self.templatedToSuppress) do
-		for pin in self:GetMap():EnumeratePinsByTemplate(template) do
-			if (not pin.WQTHooked) then
-				pin.WQTHooked = true;
-				pin:HookScript("OnShow", HideOfficialPin);
-				pin:Hide();
-			end
-		end
-	end
-end
-
-function WQT_OfficialPinSuppressorProviderMixin:OnAdded(mapCanvas)
-	MapCanvasDataProviderMixin.OnAdded(self, mapCanvas);
-	self.templatedToSuppress = {
-		"BonusObjectivePinTemplate",
-		WorldMap_WorldQuestDataProviderMixin:GetPinTemplate()
-	};
-
-	if(FlightMap_WorldQuestDataProviderMixin) then
-		tinsert(self.templatedToSuppress, FlightMap_WorldQuestDataProviderMixin:GetPinTemplate());
-	end
-end
-
-------------------------------------
 -- DataProvider
 ------------------------------------
 
@@ -193,7 +156,40 @@ function WQT_PinDataProvider:Init()
 	self.pinClusters = {};
 	self.pinClusterLookup = {};
 
-	WorldMapFrame:AddDataProvider(CreateFromMixins(WQT_OfficialPinSuppressorProviderMixin));
+	WQT_PinDataProvider:HookPinHidingToMapFrame(WorldMapFrame);
+end
+
+local function HideOfficialPin(pin)
+	if (WQT.settings.pin.disablePoI) then return; end
+	pin:Hide();
+end
+
+function WQT_PinDataProvider:HookPinHidingToMapFrame(mapFrame)
+	if (not self.hookedPins) then
+		self.hookedPins = {};
+	end
+
+	if (not mapFrame.RegisterPin) then return; end
+
+	local templatedToSuppress = {
+		["BonusObjectivePinTemplate"] = true;
+		[WorldMap_WorldQuestDataProviderMixin:GetPinTemplate()] = true;
+	};
+
+	if(FlightMap_WorldQuestDataProviderMixin) then
+		templatedToSuppress[FlightMap_WorldQuestDataProviderMixin:GetPinTemplate()] = true;
+	end
+
+	hooksecurefunc(mapFrame, "RegisterPin", function(_, pin)
+		if (templatedToSuppress[pin.pinTemplate]) then
+			local isHooked = self.hookedPins[pin];
+			if (not isHooked) then
+				self.hookedPins[pin] = true;
+				pin:HookScript("OnShow", HideOfficialPin);
+				pin:Hide();
+			end
+		end
+	end);
 end
 
 function WQT_PinDataProvider:OnEvent(event, ...)
@@ -240,8 +236,6 @@ function WQT_PinDataProvider:PlacePins()
 
 	if (not C_CVar.GetCVarBool("questPOIWQ")) then return; end
 
-	local wqp = WQT_Utils:GetMapWQProvider();
-	
 	if (WQT_Utils:GetSetting("pin", "disablePoI")) then 
 		self.isUpdating = false;
 		return; 

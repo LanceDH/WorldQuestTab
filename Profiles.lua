@@ -120,6 +120,21 @@ local function ApplyVersionChanges(profile, version)
 		profile.general.questCounter = nil;
 		profile.list.alwaysAllQuests = nil;
 	end
+
+	if (version < 110210) then
+		local sortConvert = {
+			[1] = _V["SORT_IDS"].time;
+			[2] = _V["SORT_IDS"].faction;
+			[3] = _V["SORT_IDS"].type;
+			[4] = _V["SORT_IDS"].zone;
+			[5] = _V["SORT_IDS"].name;
+			[6] = _V["SORT_IDS"].reward;
+			[7] = _V["SORT_IDS"].quality;
+		};
+
+		local sortBy = sortConvert[profile.general.sortBy] or _V["SORT_IDS"].reward;
+		profile.general.sortBy = sortBy
+	end
 end
 
 function WQT_Profiles:OnLoad()

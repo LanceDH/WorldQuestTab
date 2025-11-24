@@ -1,6 +1,9 @@
-local lib, oldminor = LibStub:NewLibrary('WorldMapTabsLib-1.0', 1);
+local lib, oldminor = LibStub:NewLibrary('WorldMapTabsLib-1.0', 2);
 
 if not lib then return; end
+
+lib.tabs = {};
+lib.contentFrames = {};
 
 ----------------------
 -- Default Mixin
@@ -64,43 +67,38 @@ end
 ----------------------
 -- Local Functions
 ----------------------
-
 local MAX_TABS_PER_COLUMN = 8;
-local NUMBER_OFFICIAL_TABS = 3;
 
 local function PlaceTabs()
-	local numShown = 0;
-	local anchorTab = QuestMapFrame.MapLegendTab;
+	if (#lib.tabs == 0) then return; end
 	local shownTabs = {};
 
 	for i = 1, #QuestMapFrame.TabButtons, 1 do
 		local tab = QuestMapFrame.TabButtons[i];
-
 		if (tab:IsShown()) then
-			if (i > NUMBER_OFFICIAL_TABS) then
-				tab:ClearAllPoints();
-				
-				local column = floor(numShown / MAX_TABS_PER_COLUMN);
-				local row = numShown % MAX_TABS_PER_COLUMN;
+			tinsert(shownTabs, tab);
+		end
+	end
 
-				if (row == 0) then
-					if (column == 1) then
-						anchorTab = QuestMapFrame.QuestsTab;
-					else
-						anchorTab = shownTabs[#shownTabs + 1 - MAX_TABS_PER_COLUMN];
-					end
+	for k, tab in ipairs(lib.tabs) do
+		if (tab:IsShown()) then
+			tab:ClearAllPoints();
+			local numShown = #shownTabs;
+			local column = floor(numShown / MAX_TABS_PER_COLUMN);
+			local row = numShown % MAX_TABS_PER_COLUMN;
+			local anchorTab = shownTabs[numShown];
 
-					tab:SetPoint("TOPLEFT", anchorTab, "TOPRIGHT", 0, 0);
+			if (row == 0) then
+				if (column == 1) then
+					anchorTab = QuestMapFrame.QuestsTab;
 				else
-					tab:SetPoint("TOPLEFT", anchorTab, "BOTTOMLEFT", 0, -3);
+					anchorTab = shownTabs[numShown - MAX_TABS_PER_COLUMN];
 				end
-		
-				anchorTab = tab;
-
-				tinsert(shownTabs, tab);
+				tab:SetPoint("TOPLEFT", anchorTab, "TOPRIGHT", 0, 0);
+			else
+				tab:SetPoint("TOPLEFT", anchorTab, "BOTTOMLEFT", 0, -3);
 			end
-
-			numShown = numShown + 1;
+			tinsert(shownTabs, tab);
 		end
 	end
 
@@ -109,7 +107,7 @@ end
 
 local function OnMouseUpInternal(tab, button, upInside)
 	if (button == "LeftButton" and upInside) then
-		QuestMapFrame:SetDisplayMode(tab.displayMode);
+		lib:SetDisplayMode(tab.displayMode);
 	end
 end
 
@@ -128,36 +126,6 @@ local function OnHideInternal(tab, ...)
 	PlaceTabs();
 end
 
-local BASE_TAB_ID = 100;
-
-local function RegisterTab(tab)
-	local id = BASE_TAB_ID + #lib.tabs;
-	tab.displayMode = id;
-	tinsert(lib.tabs, tab);
-
-	-- In case the provided tab doesn't have parentArray set, add it manually
-	local alreadyInArray = false;
-	for _, v in ipairs(QuestMapFrame.TabButtons) do
-		if (v == tab) then
-			alreadyInArray = true;
-			break;
-		end
-	end
-
-	if (not alreadyInArray) then
-		tinsert(QuestMapFrame.TabButtons, tab);
-	end
-
-	tab:Show();
-	tab:SetChecked(false);
-
-	tab:HookScript("OnMouseUp", OnMouseUpInternal);
-	tab:HookScript("OnShow", OnShowInternal);
-	tab:HookScript("OnHide", OnHideInternal);
-	
-	PlaceTabs();
-end
-
 -- If the tab for the currently active content is hidden, default back to official quests
 local function WorldMapOnShow(...)
 	if (not lib.tabs) then return end
@@ -172,8 +140,48 @@ local function WorldMapOnShow(...)
 	end
 end
 
-EventRegistry:RegisterCallback("WorldMapOnShow", WorldMapOnShow, lib);
+local function OnSetDisplayMode(source, displayMode)
+	if (displayMode) then
+		for k, contentFrame in ipairs(lib.contentFrames) do
+			contentFrame:Hide();
+		end
+		for k, tab in ipairs(lib.tabs) do
+			tab:SetChecked(false);
+		end
+	end
+end
 
+EventRegistry:RegisterCallback("WorldMapOnShow", WorldMapOnShow, lib);
+EventRegistry:RegisterCallback("QuestLog.SetDisplayMode", OnSetDisplayMode, lib);
+
+local BASE_TAB_ID = 100;
+
+local function RegisterTab(tab)
+	-- In case the provided tab doesn't have parentArray set, add it manually
+	for _, v in ipairs(QuestMapFrame.TabButtons) do
+		if (v == tab) then
+			error("The tab you are trying to register is in QuestMapFrame.TabButtons. This will cause taint.");
+		end
+	end
+	for _, v in ipairs(lib.tabs) do
+		if (v == tab) then
+			error("The tab you are trying to register is already registered");
+		end
+	end
+
+	local id = BASE_TAB_ID + #lib.tabs;
+	tab.displayMode = id;
+	tinsert(lib.tabs, tab);
+
+	tab:Show();
+	tab:SetChecked(false);
+
+	tab:HookScript("OnMouseUp", OnMouseUpInternal);
+	tab:HookScript("OnShow", OnShowInternal);
+	tab:HookScript("OnHide", OnHideInternal);
+	
+	PlaceTabs();
+end
 
 ----------------------
 -- Public functions
@@ -181,15 +189,11 @@ EventRegistry:RegisterCallback("WorldMapOnShow", WorldMapOnShow, lib);
 
 -- Create a basic tab using provided data, or from a provided template
 function lib:CreateTab(data, name)
-	if (not lib.tabs) then
-		lib.tabs = {};
-	end
-
 	name = name or ("WMTL_Tab_" .. #lib.tabs);
-	local usingTemplate = type(data) =="string";
-	local template = usingTemplate and data or "QuestLogTabButtonTemplate";
+	local usingTemplate = type(data) == "string";
+	local template = usingTemplate and data or "LargeSideTabButtonTemplate";
 	local newTab = CreateFrame("BUTTON", name, QuestMapFrame, template);
-	if(not usingTemplate) then
+	if (not usingTemplate) then
 		Mixin(newTab, WMTL_DefaultTabMixin);
 	end
 
@@ -209,10 +213,6 @@ end
 
 -- Add a custom made tab to the list
 function lib:AddCustomTab(tab)
-	if (not lib.tabs) then
-		lib.tabs = {};
-	end
-
 	tab:SetParent(QuestMapFrame);
 	RegisterTab(tab);
 
@@ -222,12 +222,13 @@ end
 -- Create a base content frame attached to the provided tab
 -- Attached to the QuestMapFrame and will show and hide if the tab is selected
 function lib:CreateContentFrameForTab(tab, template, name)
-	if (not tab or not tab.displayMode) then 
+	if (not tab or not tab.displayMode) then
 		error("First parameter should be a tab frame with the displayMode attribute.");
 	end
 
 	name = name or ("WMTL_ContentFrame" .. tab.displayMode);
 	local contentFrame = CreateFrame("Frame", name, QuestMapFrame.ContentsAnchor, template);
+	tinsert(lib.contentFrames, contentFrame);
 	contentFrame:SetAllPoints(QuestMapFrame.ContentsAnchor);
 	lib:LinkTabToContentFrame(tab, contentFrame)
 	return contentFrame;
@@ -238,27 +239,31 @@ function lib:LinkTabToContentFrame(tab, contentFrame)
 	if (not tab or not tab.displayMode) then
 		error("First parameter should be a tab frame with the displayMode attribute.");
 	end
-	
-	if (not contentFrame) then 
+
+	if (not contentFrame) then
 		error("Second parameter should be a content frame.");
 	end
-	
+
 	contentFrame.displayMode = tab.displayMode;
 	contentFrame:SetParent(QuestMapFrame);
 
-	-- In case the provided tab doesn't have parentArray set, add it manually
-	local alreadyInArray = false;
-	for _, v in ipairs(QuestMapFrame.ContentFrames) do
-		if (v == contentFrame) then
-			alreadyInArray = true;
-			break;
-		end
-	end
-
-	if (not alreadyInArray) then
-		tinsert(QuestMapFrame.ContentFrames, contentFrame);
-	end
+	tinsert(lib.contentFrames, contentFrame);
 
 	-- Hide the frame because we're probably starting on the official quest log
 	contentFrame:Hide();
+end
+
+-- Set the active tab to one registered in the lib
+function lib:SetDisplayMode(displayMode)
+	-- We can't call this with a value other than QuestLogDisplayMode or cause taint
+	-- So well call it with nil to cause the official tabs to hide and then show things ourselves
+	QuestMapFrame:SetDisplayMode();
+
+	for k, contentFrame in ipairs(lib.contentFrames) do
+		contentFrame:SetShown(contentFrame.displayMode == displayMode);
+	end
+
+	for k, tab in ipairs(lib.tabs) do
+		tab:SetChecked(tab.displayMode == displayMode);
+	end
 end
