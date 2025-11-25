@@ -575,14 +575,16 @@ function WQT_DataProvider:OnUpdate(elapsed)
 		self.requestedRewardsUpdate = false;
 
 		local mapIDToLoad = nil;
+		local isFlightMap = false;
 		if(WorldMapFrame:IsShown()) then
 			mapIDToLoad = WorldMapFrame.mapID;
 		elseif(FlightMapFrame and FlightMapFrame:IsShown()) then
 			mapIDToLoad = FlightMapFrame.mapID;
+			isFlightMap = true;
 		end
 
 		if (mapIDToLoad) then
-			self:LoadQuestsInZone(mapIDToLoad);
+			self:LoadQuestsInZone(mapIDToLoad, isFlightMap);
 		end
 	end
 
@@ -594,7 +596,7 @@ function WQT_DataProvider:OnUpdate(elapsed)
 
 		-- Get quests from all the zones in our list
 		-- Only spend a max amount of time on it each frame to prevent extreme stutters when we have a lot of zones
-		local matchQuestZone = WQT_Utils:GetSetting("general", "zoneQuests") == _V["ENUM_ZONE_QUESTS"].zone;
+		local matchQuestZone = not self.zoneLoading.isFlightMap and WQT_Utils:GetSetting("general", "zoneQuests") == _V["ENUM_ZONE_QUESTS"].zone;
 		for zoneID in pairs(self.zoneLoading.remainingZones) do
 			self.zoneLoading.remainingZones[zoneID] = nil;
 			self.zoneLoading.numRemaining = self.zoneLoading.numRemaining - 1;
@@ -794,7 +796,8 @@ function WQT_DataProvider:AddZoneToBuffer(zoneID)
 	end
 end
 
-function WQT_DataProvider:LoadQuestsInZone(zoneID)
+function WQT_DataProvider:LoadQuestsInZone(zoneID, isFlightMap)
+	
 	if (not zoneID) then return end
 	self:ClearData();
 	zoneID = zoneID or self.latestZoneId or C_Map.GetBestMapForUnit("player");
@@ -811,6 +814,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID)
 		WQT:DebugPrint("Interrupt");
 	end
 
+	self.zoneLoading.isFlightMap = isFlightMap;
 	self.zoneLoading.startTimestamp = GetTimePreciseSec();
 	self.zoneLoading.numRemaining = 0;
 	self.zoneLoading.numTotal = 0;

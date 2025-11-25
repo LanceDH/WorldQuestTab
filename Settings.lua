@@ -1171,6 +1171,7 @@ function WQT_SettingsFrameMixin:Init()
 				"Some optimizations to quest list updating";
 			});
 			AddSection(ChangelogSections.Fixes, {
+				"Fixed some flight maps not showing quests with the Zone Quests setting on Zone Only";
 				"Fixed quests not showing on the Argus flight map";
 				"Fixed an issue with TomTom arrows now always working";
 				"Fixed some taint issues caused by the tab button";
