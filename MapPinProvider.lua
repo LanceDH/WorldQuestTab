@@ -27,23 +27,6 @@ local LABEL_OFFSET = 2;
 -- Locals
 ------------------------------------
 
-local function SortPinsByMapPos(a, b)
-	local aX, aY = a:GetNudgedPosition();
-	local bX, bY = b:GetNudgedPosition();
-	if (aX and bX) then
-		-- If 2 pins are close with the left being slightly higher, we still want left to be in front
-		if (aY ~= bY) then
-			return aY < bY;
-		else
-			if (aX ~= bY) then
-				return aX > bX;
-			end
-		end 
-	end
-
-	return a.questID < b.questID;
-end
-
 local function OnPinRelease(pool, pin)
 	pin:ClearFocus();
 	pin:ClearTimer();
@@ -53,7 +36,10 @@ local function OnPinRelease(pool, pin)
 	pin.isExpired = false;
 	pin.isFaded = false;
 	pin.timeIcon = nil;
-	
+
+	pin:ReleaseMiniIcons();
+	pin:ResetInRangePins();
+	pin:ResetNudge();
 	pin:Hide();
 	pin:ClearAllPoints();
 end
@@ -111,7 +97,10 @@ function WQT_PinDataProvider:Init()
 	self.frame:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
 	self.frame:RegisterEvent("CVAR_UPDATE");
 
-	self.pinPool = CreateFramePool("BUTTON", nil, "WQT_PinTemplate", OnPinRelease);
+	self.miniIconPool =  CreateFramePool("FRAME", nil, "WQT_MiniIconTemplate", function(pool, iconFrame) iconFrame:Reset() end);
+	self.pinPool = CreateFramePool("FRAME", nil, "WQT_PinTemplate", OnPinRelease, nil, function(pin)
+		pin:Init(self);
+	end);
 	self.activePins = {};
 	self.pingedQuests = {};
 	self.hookedCanvasChanges = {};
@@ -134,9 +123,8 @@ function WQT_PinDataProvider:Init()
 
 	-- Remove pins on changing map. Quest info being processed will trigger showing them if they are needed.
 	EventRegistry:RegisterCallback(
-		"MapCanvas.MapSet", 
+		"MapCanvas.MapSet",
 		function()
-				wipe(self.pingedQuests);
 				self:RemoveAllData();
 			end,
 		self);
@@ -149,12 +137,6 @@ function WQT_PinDataProvider:Init()
 				self:RefreshAllData();
 			end,
 		self);
-		
-	self.clusterDistance = 0.5;
-	self.clusterSpread = 0.2;
-	self.enableNudging = true;
-	self.pinClusters = {};
-	self.pinClusterLookup = {};
 
 	WQT_PinDataProvider:HookPinHidingToMapFrame(WorldMapFrame);
 end
@@ -194,13 +176,7 @@ end
 
 function WQT_PinDataProvider:OnEvent(event, ...)
 	if (event == "SUPER_TRACKING_CHANGED") then
-		self.pinPool:ReleaseAll();
-		wipe(self.activePins);
-		wipe(self.pinClusters);
-		wipe(self.pinClusterLookup);
-	
-		self:PlacePins();
-		self:UpdateQuestPings()
+		self:RefreshAllData();
 	elseif (event == "QUEST_WATCH_LIST_CHANGED") then
 		self:UpdateAllVisuals();
 	elseif (event == "CVAR_UPDATE") then
@@ -215,8 +191,16 @@ function WQT_PinDataProvider:RemoveAllData()
 	self.pinPool:ReleaseAll();
 	wipe(self.activePins);
 	wipe(self.pingedQuests);
-	wipe(self.pinClusters);
-	wipe(self.pinClusterLookup);
+end
+
+function WQT_PinDataProvider:AcquireMiniIcon()
+	local icon = self.miniIconPool:Acquire();
+	return icon
+end
+
+function WQT_PinDataProvider:ReleaseMiniIcon(frame)
+	frame:SetParent(nil);
+	self.miniIconPool:Release(frame);
 end
 
 function WQT_PinDataProvider:RefreshAllData()
@@ -238,7 +222,7 @@ function WQT_PinDataProvider:PlacePins()
 
 	if (WQT_Utils:GetSetting("pin", "disablePoI")) then 
 		self.isUpdating = false;
-		return; 
+		return;
 	end
 	
 	local parentMapFrame;
@@ -250,9 +234,9 @@ function WQT_PinDataProvider:PlacePins()
 		parentMapFrame = FlightMapFrame;
 	end
 
-	if (not parentMapFrame) then 
+	if (not parentMapFrame) then
 		self.isUpdating = false;
-		return; 
+		return;
 	end
 	
 	local mapID = parentMapFrame:GetMapID();
@@ -265,7 +249,6 @@ function WQT_PinDataProvider:PlacePins()
 	local canvas = parentMapFrame:GetCanvas();
 	
 	wipe(self.activePins);
-	
 	if (mapInfo.mapType >= Enum.UIMapType.Continent) then
 		for k, questInfo in ipairs(WQT_WorldQuestFrame.dataProvider.fitleredQuestsList) do
 			if (ShouldShowPin(questInfo, mapInfo.mapType, settingsZoneVisible, settingsContinentVisible, settingsFilterPoI, isFlightMap)) then
@@ -280,10 +263,9 @@ function WQT_PinDataProvider:PlacePins()
 			end
 		end
 	end
-	
+
 	-- Slightly spread out overlapping pins
 	self:FixOverlaps(canvas);
-	
 	self:UpdateQuestPings();
 
 	if (not self.hookedCanvasChanges[parentMapFrame]) then
@@ -296,112 +278,151 @@ function WQT_PinDataProvider:PlacePins()
 	self.isUpdating = false;
 end
 
-function WQT_PinDataProvider:FixOverlaps(canvas)
-	if (not self.enableNudging or not canvas) then return; end
-	
-	local canvasScale = 1/canvas:GetParent():GetCanvasScale();
-	local scaling = 25/(canvas:GetWidth() * canvas:GetParent():GetCanvasScale());
-	local canvasRatio = canvas:GetWidth() /canvas:GetHeight();
-	local clusterDistance = self.clusterDistance * scaling;
-	local clusterSpread = self.clusterSpread * scaling 
-	local clusters = self.pinClusters;
-	local clusterdLookup = self.pinClusterLookup;
-	local cluster;
+local PIN_CLUSTER_RANGE = 0.5;
+local PIN_REPOSITION_DISTANCE = 0.42;
+local COS_45_DEG = 0.7071;
 
-	for k, pin in ipairs(self.activePins) do
-		pin:ResetNudge()
+local function SortPinsByXPos(pinA, pinB)
+	local ax = pinA:GetPosition();
+	local bx = pinB:GetPosition();
+	if (ax and bx and ax ~= bx) then
+		return ax < bx;
 	end
-	
-	-- Put close proximity quests in a cluster.
-	for k1, pinA in ipairs(self.activePins) do
-		if (not clusterdLookup[k1]) then
-			for k2, pinB in ipairs(self.activePins) do
-				if (pinA ~= pinB) then
-					local aX, aY = pinA:GetNudgedPosition();
-					local bX, bY = pinB:GetNudgedPosition();
-					local distanceSquared = SquaredDistanceBetweenPoints(aX, aY, bX, bY);
-					
-					if (distanceSquared < clusterDistance * clusterDistance) then
-						if (not cluster) then 
-							cluster = {pinA, pinB}
-						else 
-							tinsert(cluster, pinB);
+	return pinA.questID < pinB.questID;
+end
+
+local function SortPinsByNudgedPos(pinA, pinB)
+	local aX, aY = pinA:GetNudgedPosition();
+	local bX, bY = pinB:GetNudgedPosition();
+	if (aY and aY and aY ~= bY) then
+		return aY < bY;
+	end
+
+	return pinA.questID < pinB.questID;
+end
+
+local function SortPinNumInRange(pinA, pinB)
+	local numA = pinA:GetNumInRangePins();
+	local numB = pinB:GetNumInRangePins();
+	if (numA ~= numB) then
+		return numA > numB;
+	end
+	return SortPinsByXPos(pinA, pinB);
+end
+
+function WQT_PinDataProvider:FixOverlaps(canvas)
+	if (not canvas) then return; end
+
+	local pinSize = 0;
+	for k, pin in ipairs(self.activePins) do
+		pin:ResetNudge();
+		pin:ResetInRangePins();
+		if (pinSize == 0) then
+			pinSize = pin:GetButton():GetSize();
+		end
+	end
+	if (pinSize > 0) then
+		local pinScale = WQT_Utils:GetSetting("pin", "scale");
+		pinSize = pinSize * pinScale;
+		local canvasScale = canvas:GetParent():GetCanvasScale();
+		local pinLengthX = pinSize / (canvas:GetWidth() * canvasScale) ;
+		local pinLengthY = pinSize / (canvas:GetHeight() * canvasScale);
+		local pinLengthRatio = pinLengthX / pinLengthY;
+		local scaling = (canvas:GetWidth() * canvas:GetParent():GetCanvasScale()) / canvas:GetParent():GetWidth();
+		scaling = 1 / scaling;
+		local clusterDistance = pinLengthX * PIN_CLUSTER_RANGE;
+		local cluserDistanceSqd = clusterDistance * clusterDistance;
+
+		-- Link nearby pins
+		local hasLinkedPins = false;
+		table.sort(self.activePins, SortPinsByXPos);
+		for indexA = 1, #self.activePins, 1 do
+			local pinA = self.activePins[indexA];
+			local ax, ay = pinA:GetPosition();
+			ay = ay * pinLengthRatio;
+			for indexB = 1, #self.activePins, 1 do
+				if (indexA < indexB) then
+					local pinB = self.activePins[indexB];
+					local bx, by = pinB:GetPosition();
+					local xdiff = indexB > indexA and ax - bx or bx-ax;
+					if (xdiff > -clusterDistance) then
+						if (xdiff > clusterDistance) then
+							break;
 						end
-						clusterdLookup[k1] = true;
-						clusterdLookup[k2] = true;
-						
-						local centerX, centerY = 0, 0;
-						for k, pin in ipairs(cluster) do
-							local pinX, pinY = pin:GetPosition();
-							centerX = centerX + pinX;
-							centerY = centerY + pinY;
+
+						by = by * pinLengthRatio;
+						local distanceSquared = SquaredDistanceBetweenPoints(ax, ay, bx, by);
+						if(distanceSquared < cluserDistanceSqd) then
+							pinA:AddInRangePin(pinB);
+							pinB:AddInRangePin(pinA);
+							hasLinkedPins = true;
 						end
-						centerX = centerX / #cluster;
-						centerY = centerY / #cluster;
-						
-						for k, pin in ipairs(cluster) do
-							pin:SetNudge(centerX, centerY);
-						end
-						
 					end
 				end
 			end
-			if (cluster) then
-				tinsert(clusters, cluster);
-				cluster = nil;
+		end
+
+		if (hasLinkedPins) then
+			-- Cluster pins in their groups
+			table.sort(self.activePins, SortPinNumInRange);
+			local spreadx = pinLengthX * PIN_REPOSITION_DISTANCE;
+			local spreadY = pinLengthY * PIN_REPOSITION_DISTANCE;
+			local columnOffset = spreadx * COS_45_DEG;
+			local alreadyClusteredPins = {};
+			local validPins = {};
+			for _, sourcePin in ipairs(self.activePins) do
+				local numInRange = sourcePin:GetNumInRangePins();
+				if (numInRange == 0) then break; end
+
+				wipe(validPins);
+				if (not alreadyClusteredPins[sourcePin]) then
+					tinsert(validPins, sourcePin);
+					alreadyClusteredPins[sourcePin] = true;
+
+					local centerX, centerY = sourcePin:GetPosition();
+					for k2, inRangePin in sourcePin:IterateInRangePins() do
+						if (not alreadyClusteredPins[inRangePin]) then
+							local pinX, pinY = inRangePin:GetPosition();
+							centerX = centerX + pinX;
+							centerY = centerY + pinY;
+							tinsert(validPins, inRangePin);
+							alreadyClusteredPins[inRangePin] = true;
+						end
+					end
+
+					local numPassedPins = #validPins;
+					if (numPassedPins >= 2) then
+						local numColumns = ceil(sqrt(numPassedPins));
+						local numRows = ceil(numPassedPins / numColumns);
+						local xWidth = (numColumns-1) * columnOffset;
+						centerX = centerX / numPassedPins;
+						centerX = centerX - xWidth * 0.5;
+						centerY = centerY / numPassedPins;
+						centerY = centerY - (numRows-1) * spreadY * 0.5;
+						local placedCount = 0;
+						for k, pin in ipairs(validPins) do
+							local mathIndex = k-1;
+							local column = mathIndex % numColumns;
+							local x = centerX + column * columnOffset;
+							local row = floor(mathIndex / numColumns) ;
+							local y = centerY + row * spreadY;
+							-- Shift every other column down slightly
+							y = y + (column%2) * spreadY * 0.5 * COS_45_DEG;
+							pin:SetNudge(x, y);
+							placedCount = placedCount + 1;
+						end
+					end
+				end
 			end
 		end
 	end
-	
-	-- Spread out the quests in each cluster in a circle around the center point
-	-- Puts all quests in a circle around the center of the cluster. Works with small clusters.
-	local mapID = canvas:GetParent().mapID;
-	for kC, pins in ipairs(clusters) do
-		local centerX, centerY = pins[1]:GetNudgedPosition();
-		-- Keep pins in relatively the same localtion. This will make it so 2 pins don't switch positions once clustered
-		table.sort(pins, function(a, b) 
-				local aX, aY = a:GetPosition();
-				local bX, bY = b:GetPosition();
-				-- Don't calculate same position or missing position
-				if (not aX or not bX or (aX == bX and aY == bY)) then
-					return a.questID < b.questID;
-				end
-				
-				-- Keep in mind Y axis is inverse
-				local degA = math.deg(math.atan2((centerY - aY), (aX-centerX)));
-				local degB = math.deg(math.atan2((centerY - bY), (bX-centerX)));
-				degA = degA < 0 and degA+360 or degA;
-				degB = degB < 0 and degB+360 or degB;
-				return degA < degB;
-			end);
-		-- Get the rotation of the first pin. This is where we start placing them on the circle
-		local firstX, firstY = pins[1]:GetPosition();
-		local startAngle = math.deg(math.atan2((centerY - firstY), (firstX-centerX)));
-		local spread = clusterSpread;
-		
-		-- Slightly increase spread distance based on number of pins in the cluster
-		if (#pins > 2) then
-			spread = spread + (#pins * 0.0005);
-		end
-		
-		-- Place every pin at aqual distance
-		for kP, pin in ipairs(pins) do
-			local angle = -startAngle - (kP-1) * (360 / #pins);
-			local offsetX = cos(angle) * spread;
-			local offsetY = sin(angle) * spread * canvasRatio;
-			pin:SetNudge(centerX + offsetX, centerY + offsetY);
-		end
-	end
-	
-	-- Sort pins to place them like dragon scales (lower is more in front)
-	table.sort(self.activePins, SortPinsByMapPos);
+
+	-- Placement time
+	table.sort(self.activePins, SortPinsByNudgedPos);
 	for k, pin in ipairs(self.activePins) do
 		pin.index = k;
 		pin:UpdatePlacement();
 	end
-	
-	wipe(self.pinClusters);
-	wipe(self.pinClusterLookup);
 end
 
 function WQT_PinDataProvider:UpdateAllPlacements()
@@ -556,8 +577,6 @@ WQT_PinButtonMixin = {};
 
 function WQT_PinButtonMixin:OnLoad()
 	self.UpdateTooltip = function() WQT_Utils:ShowQuestTooltip(self, self.questInfo) end;
-	self.iconPool =  CreateFramePool("FRAME", self, "WQT_MiniIconTemplate", function(pool, iconFrame) iconFrame:Reset() end);
-	self.icons = {};
 end
 
 function WQT_PinButtonMixin:OnEnter()
@@ -617,13 +636,18 @@ function WQT_PinButtonMixin:GetCustomBountyRing()
 	return self.CustomBountyRing;
 end
 
+function WQT_PinButtonMixin:GetMiniPins()
+	return self.pinRoot.miniIcons;
+end
+
 function WQT_PinButtonMixin:PlaceMiniIcons()
-	local numIcons = #self.icons;
+	local icons = self:GetMiniPins();
+	local numIcons = #icons;
 	if (numIcons > 0) then
 		local angle = ICON_ANGLE_START - (ICON_ANGLE_DISTANCE*(numIcons-1))/2
-		local numIcons = min(#self.icons, ICON_MAX_AMOUNT);
+		local numIcons = min(#icons, ICON_MAX_AMOUNT);
 		for i = 1, numIcons do
-			local iconFrame = self.icons[i];
+			local iconFrame = icons[i];
 
 			local posX = ICON_CENTER_DISTANCE * cos(angle);
 			local posY = ICON_CENTER_DISTANCE * sin(angle);
@@ -634,14 +658,18 @@ function WQT_PinButtonMixin:PlaceMiniIcons()
 	end
 end
 
+function WQT_PinButtonMixin:IterateMiniIcons()
+	return ipairs(self:GetMiniPins());
+end
+
 function WQT_PinButtonMixin:AddIcon()
-	local iconFrame = self.iconPool:Acquire();
-	tinsert(self.icons, iconFrame);
-	return iconFrame;
+	local icon = self.pinRoot:AcquireMiniIcon();
+	icon:SetParent(self);
+	return icon;
 end
 
 function WQT_PinButtonMixin:SetIconsDesaturated(desaturate)
-	for k, icon in ipairs(self.icons) do
+	for k, icon in self:IterateMiniIcons() do
 		icon:SetDesaturated(desaturate);
 	end
 end
@@ -649,7 +677,7 @@ end
 function WQT_PinButtonMixin:GetIconBottomDifference()
 	local maxBottomDiff = 0;
 	local selfBottom = self:GetBottom();
-	for k, icon in pairs(self.icons) do
+	for k, icon in self:IterateMiniIcons() do
 		local diff = selfBottom - icon:GetBottom();
 		maxBottomDiff = max(maxBottomDiff, diff);
 	end
@@ -831,9 +859,6 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 	local questType = tagInfo and tagInfo.worldQuestType;
 
 	self.timeIcon = nil;
-	self.iconPool:ReleaseAll();
-	wipe(self.icons);
-	
 	-- Quest Type Icon
 	if (typeAtlas and typeAtlas ~= "Worldquest-icon" and WQT_Utils:GetSetting("pin", "typeIcon") ) then
 		local iconFrame = self:AddIcon();
@@ -946,6 +971,53 @@ function WQT_PinMixin:GetRingAnim2()
 	return self:GetButton().ringAnim2;
 end
 
+function WQT_PinMixin:Init(dataProvider)
+	self.dataProvider = dataProvider;
+	self.miniIcons = {};
+	local button = self:GetButton();
+	button.pinRoot = self;
+
+	self.inRangePins = {};
+	self.inRangePinsLookup = {};
+end
+
+function WQT_PinMixin:ResetInRangePins()
+	wipe(self.inRangePinsLookup);
+	wipe(self.inRangePins);
+end
+
+function WQT_PinMixin:AddInRangePin(pin)
+	if (self.inRangePinsLookup[pin]) then return; end
+
+	self.inRangePinsLookup[pin] = true;
+	tinsert(self.inRangePins, pin);
+end
+
+function WQT_PinMixin:GetNumInRangePins()
+	return #self.inRangePins;
+end
+
+function WQT_PinMixin:IterateInRangePins()
+	return ipairs(self.inRangePins);
+end
+
+function WQT_PinMixin:ReleaseMiniIcons()
+	if (self.miniIcons) then
+		for k, frame in ipairs(self.miniIcons) do
+			self.dataProvider:ReleaseMiniIcon(frame);
+		end
+
+		wipe(self.miniIcons);
+	end
+end
+
+function WQT_PinMixin:AcquireMiniIcon()
+	local icon = self.dataProvider:AcquireMiniIcon();
+	icon:SetParent(self);
+	tinsert(self.miniIcons, icon);
+	return icon;
+end
+
 function WQT_PinMixin:SetupCanvasType(pinType, parentMapFrame, isWatched)
 	self.parentMapFrame = parentMapFrame;
 	self.scaleFactor  = 1;
@@ -991,6 +1063,7 @@ function WQT_PinMixin:UpdateVisuals()
 	local questInfo = self.questInfo;
 	if (not questInfo:DataIsValid()) then return end;
 
+	self:ReleaseMiniIcons();
 	self:UpdatePlacement();
 
 	local buttonFrame = self:GetButton();

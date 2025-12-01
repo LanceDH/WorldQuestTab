@@ -308,6 +308,7 @@
 			<KeyValue key="staticLabelFont" value="true" type="boolean"/>
 			<KeyValue key="topPadding" value="2" type="number"/>
 			<KeyValue key="bottomPadding" value="10" type="number"/>
+			<KeyValue key="baseLeftPadding" value="40" type="number"/>
 			<KeyValue key="dynamicHeight" value="true" type="boolean" />
 		</KeyValues>
 		<Layers>
