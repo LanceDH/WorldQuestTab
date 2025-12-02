@@ -233,6 +233,7 @@
 							<KeyValue key="spacing" value="2" type="number" />
 							<KeyValue key="expand" value="true" type="boolean" />
 							<KeyValue key="flexSize" value="1" type="number" />
+							<KeyValue key="leftPadding" value="2" type="number" />
 						</KeyValues>
 						<Layers>
 							<Layer level="ARTWORK">
@@ -361,7 +362,7 @@
 		
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="Bg" alpha="0.12">
+				<Texture parentKey="Bg" alpha="0.14">
 					<Size y="2"/>
 					<Anchors>
 						<Anchor point="LEFT" relativePoint="BOTTOMLEFT"/>

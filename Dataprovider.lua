@@ -717,7 +717,7 @@ end
 
 function WQT_DataProvider:FilterAndSortQuestList()
 	wipe(self.fitleredQuestsList);
-	for k, questInfo in ipairs(self:GetIterativeList()) do
+	for questInfo in self:EnumarateQuests() do
 		questInfo.passedFilter = false;
 		if (questInfo.isValid and not questInfo.alwaysHide and questInfo.hasRewardData and not questInfo:IsExpired()) then
 			local passed = WQT:PassesAllFilters(questInfo);
@@ -883,4 +883,8 @@ function WQT_DataProvider:ListContainsEmissary()
 		if (questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly)) then return true; end
 	end
 	return false
+end
+
+function WQT_DataProvider:EnumarateQuests()
+	return self.pool:EnumerateActive()
 end

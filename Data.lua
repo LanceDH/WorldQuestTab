@@ -238,8 +238,16 @@ _V["WQT_TYPEFLAG_LABELS"] = {
 	};
 
 _V["FILTER_TYPE_OLD_CONTENT"] = {
-	[2] = {["Invasion"] = true, ["Assault"] = true}
-	,[3] = {["Artifact"] = true, ["Relic"] = true}
+	[2] = {
+		["Invasion"] = true;
+		["Assault"] = true;
+	};
+	[3] = {
+		["Artifact"] = true;
+		["Relic"] = true;
+		["Conduits"] = true;
+		["Anima"] = true;
+	}
 }
 
 _V["REWARD_TYPE_ATLAS"] = {
@@ -570,6 +578,9 @@ _V["ZONE_SUBZONES"] = {
 	[1533] = {1707, 1708}; -- Bastion Covenant
 	[1525] = {1699, 1700}; -- Revendreth Covenant
 	[1536] = {1698}; -- Maldraxxus Covenant
+
+	[224] = {50, 210}; -- Stranglethorn
+	[2371] = {2472}; -- K'aresh -> Tazavesh
 }
 
 _V["WQT_NO_FACTION_DATA"] = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L["NO_FACTION"] } -- No faction

@@ -1100,15 +1100,6 @@ end
 ------------------------------------------
 -- 			LISTBUTTON MIXIN			--
 ------------------------------------------
---
--- OnClick(button)
--- SetEnabledMixin(value)	Custom version of 'disable' for the sake of combat
--- OnUpdate()
--- OnLeave()
--- OnEnter()
--- UpdateQuestType(questInfo)
--- Update(questInfo, shouldShowZone)
--- FactionOnEnter(frame)
 
 WQT_ListButtonMixin = {}
 
@@ -1414,13 +1405,6 @@ end
 ------------------------------------------
 -- 			SCROLLLIST MIXIN			--
 ------------------------------------------
---
--- OnLoad()
--- ApplySort()
--- UpdateFilterDisplay()
--- UpdateQuestList()
--- DisplayQuestList(skipPins)
--- ScrollFrameSetEnabled(enabled)
 
 WQT_ScrollListMixin = {};
 
@@ -1578,14 +1562,6 @@ end
 ------------------------------------------
 -- 		CONSTRAINED CHILD MIXIN		--
 ------------------------------------------
--- 
--- OnLoad()
--- OnDragStart()	
--- OnDragStop()
--- OnUpdate()
--- SetStartPosition(anchor, x, y)
--- ConstrainPosition()
---
 
 WQT_ConstrainedChildMixin = {}
 
@@ -1708,19 +1684,6 @@ end
 ------------------------------------------
 -- 				CORE MIXIN				--
 ------------------------------------------
--- 
--- ShowWorldmapHighlight(questId)
--- HideWorldmapHighlight()
--- TriggerEvent(event, ...)
--- RegisterCallback(func)
--- OnLoad()
--- UpdateBountyCounters()
--- RepositionBountyTabs()
--- AddBountyCountersToTab(tab)
--- FilterClearButtonOnClick()
--- SetCvarValue(flagKey, value)
--- ChangeAnchorLocation(anchor)		Show list on a different container using _V["LIST_ANCHOR_TYPE"] variable
--- :<event> -> ADDON_LOADED, PLAYER_REGEN_DISABLED, PLAYER_REGEN_ENABLED, PVP_TIMER_UPDATE, WORLD_QUEST_COMPLETED_BY_SPELL, QUEST_LOG_UPDATE, QUEST_WATCH_LIST_CHANGED
 
 WQT_CoreMixin = {};
 

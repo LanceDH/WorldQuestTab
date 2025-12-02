@@ -722,10 +722,11 @@ function WQT_SettingsTextMixin:Init(data)
 
 	self.finalTopPadding = data.topPadding or self.topPadding;
 	self.finalBottomPadding = data.bottomPadding or self.bottomPadding;
+	self.finalLeftPadding = self.baseLeftPadding + (data.leftPadding or 0);
 
 	local topPadding = self.finalTopPadding or 0;
 	local bottomPadding = self.finalBottomPadding or 0;
-	self.Label:SetPoint("TOP", self, 0, -topPadding);
+	self.Label:SetPoint("TOPLEFT", self, self.finalLeftPadding, -topPadding);
 	local stringHeight = self.Label:GetStringHeight();
 	self:SetHeight(stringHeight + topPadding + bottomPadding);
 	self.Label:SetHeight(stringHeight);
@@ -1138,14 +1139,16 @@ function WQT_SettingsFrameMixin:Init()
 				return;
 			end
 
+			local noteColor  = section == ChangelogSections.Intro and GOLD_FONT_COLOR or NORMAL_FONT_COLOR;
 			if (section ~= ChangelogSections.Intro) then
 				local tag = string.format("%s_%s", currentVersion, section);
 				local bottomPadding = 2;
-				currentCategory:CreateText(tag, section, "Fancy14Font", WHITE_FONT_COLOR, bottomPadding);
+				local data = currentCategory:CreateText(tag, section, "Fancy14Font", WHITE_FONT_COLOR, bottomPadding);
+				data:SetValueToKey("leftPadding", -4);
 			end
 			for k, note in ipairs(notes) do
 				local tag = string.format("%s_%s_%s", currentVersion, section, k);
-				currentCategory:CreateText(tag, note, "GameFontNormal", NORMAL_FONT_COLOR);
+				currentCategory:CreateText(tag, note, "GameFontNormal", noteColor);
 			end
 		end
 
@@ -1167,12 +1170,19 @@ function WQT_SettingsFrameMixin:Init()
 
 		do -- 11.2.10
 			StartVersionCategory("11.2.10");
+			AddSection(ChangelogSections.Intro, {
+				"Update for patch 11.2.7";
+			});
 			AddSection(ChangelogSections.Changes, {
 				"Some optimizations to quest list updating";
+				"Some tweaks to dealing with overlapping pins";
+				"Moved the 'Anima' and 'Conduids' reward filters to the 'Other' category";
 			});
 			AddSection(ChangelogSections.Fixes, {
-				"Fixed some flight maps not showing quests with the Zone Quests setting on Zone Only";
-				"Fixed quests not showing on the Argus flight map";
+				"Fixed some flight maps not showing quests with 'Zone Quests' set to 'Zone Only'";
+				"Made quests in Tazavesh show up on the K'aresh map with 'Zone Quests' set to 'Zone Only'";
+				"Fixed quests not showing in Stranglethron Vale with 'Zone Quests' set to 'Zone Only'";
+				"Fixed quests not showing on the Argus flight map in general";
 				"Fixed an issue with TomTom arrows now always working";
 				"Fixed some taint issues caused by the tab button";
 			});
