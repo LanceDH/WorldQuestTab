@@ -68,6 +68,27 @@ end
 -- Local Functions
 ----------------------
 local MAX_TABS_PER_COLUMN = 8;
+local function SafeSetPoint(tab, anchor, point, relPoint, x, y)
+	if not tab or not tab.SetPoint then return end
+	-- Avoid self/loop anchors: if the target is the same tab or anchored to this tab, use a stable anchor
+	if anchor == tab or anchor == nil then
+		anchor = (QuestMapFrame and (QuestMapFrame.MapLegendTab or QuestMapFrame.QuestsTab)) or UIParent
+	end
+	if anchor and anchor.GetPoint then
+		for i = 1, anchor:GetNumPoints() do
+			local _, rel = anchor:GetPoint(i)
+			if rel == tab then
+				anchor = (QuestMapFrame and (QuestMapFrame.MapLegendTab or QuestMapFrame.QuestsTab)) or UIParent
+				break
+			end
+		end
+	end
+	if anchor == tab or anchor == nil then
+		anchor = (QuestMapFrame and (QuestMapFrame.MapLegendTab or QuestMapFrame.QuestsTab)) or UIParent
+	end
+	tab:ClearAllPoints()
+	tab:SetPoint(point or "TOPLEFT", anchor, relPoint or "TOPLEFT", x or 0, y or 0)
+end
 
 local function PlaceTabs()
 	if (#lib.tabs == 0) then return; end
@@ -94,9 +115,9 @@ local function PlaceTabs()
 				else
 					anchorTab = shownTabs[numShown - MAX_TABS_PER_COLUMN];
 				end
-				tab:SetPoint("TOPLEFT", anchorTab, "TOPRIGHT", 0, 0);
+				SafeSetPoint(tab, anchorTab, "TOPLEFT", "TOPRIGHT", 0, 0);
 			else
-				tab:SetPoint("TOPLEFT", anchorTab, "BOTTOMLEFT", 0, -3);
+				SafeSetPoint(tab, anchorTab, "TOPLEFT", "BOTTOMLEFT", 0, -3);
 			end
 			tinsert(shownTabs, tab);
 		end
