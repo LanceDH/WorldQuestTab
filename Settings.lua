@@ -1168,6 +1168,13 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	});
 		-- end
 
+		do -- 11.2.11
+			StartVersionCategory("11.2.11");
+			AddSection(ChangelogSections.Changes, {
+				"Improved map tab compatibility with other addons";
+			});
+		end
+
 		do -- 11.2.10
 			StartVersionCategory("11.2.10");
 			AddSection(ChangelogSections.Intro, {
