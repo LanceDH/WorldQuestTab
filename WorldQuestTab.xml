@@ -7,7 +7,7 @@
 	<Include file="libs\AceDB-3.0\AceDB-3.0.xml"/>
 	<Include file="libs\Krowi_WorldMapButtons-1.4.8\Krowi_WorldMapButtons-1.4.xml"/>
 
-	<Include file="libs\WorldMapTabsLib-1.0\WorldMapTabsLib-1.0.xml"/>
+	<Script file="libs\WorldMapTabsLib-1.0\WorldMapTabsLib-1.0.lua"/>
 	
 	<Include file="Loca/Loca.xml"/>
 	
