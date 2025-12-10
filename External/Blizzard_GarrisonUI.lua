@@ -4,8 +4,6 @@
 -------------------------------------------------------------------------------------------------------------------
 
 local name = "Blizzard_GarrisonUI";
-if (not WQT_Utils:ExternalMightLoad(name)) then return; end
-
 local addonName, addon = ...
 local WQT = addon.WQT;
 

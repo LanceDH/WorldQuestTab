@@ -1,6 +1,6 @@
 ---
 --- Author: LanceDH
---- Source: https://github.com/LanceDH/WorldMapTabsLib
+--- Source: https://github.com/LanceDH/LibWorldMapTabs
 ---
 --- Copyright (c) 2025 LanceDH
 --- 
@@ -17,7 +17,7 @@
 --- CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 --- 
 
-local lib, oldminor = LibStub:NewLibrary('WorldMapTabsLib-1.0', 3);
+local lib, oldminor = LibStub:NewLibrary('LibWorldMapTabs', 4);
 
 if not lib then return; end
 
@@ -29,34 +29,33 @@ lib.tabs = lib.tabs or {};
 lib.contentFrames = lib.contentFrames or {};
 lib.internal = lib.internal or {};
 
-local BASE_TAB_ID = 100;
 local MAX_TABS_PER_COLUMN = 8;
-local DISPLAYMODE_FORMAT = "WMTL_%d";
-local TAB_NAME_FORMAT = "WMTL_Tab_%d";
-local CONTENT_FRAME_NAME_FORMAT = "WMTL_Tab_%s";
+local DISPLAYMODE_FORMAT = "LWMT_%d";
+local TAB_NAME_FORMAT = "LWMT_Tab_%d";
+local CONTENT_FRAME_NAME_FORMAT = "LWMT_Content_%s";
 
 ----------------------
 -- Default Mixin
 ----------------------
-if (not WMTL_DefaultTabMixin) then
-	WMTL_DefaultTabMixin = CreateFromMixins(SidePanelTabButtonMixin);
+if (not LWMT_DefaultTabMixin) then
+	LWMT_DefaultTabMixin = CreateFromMixins(SidePanelTabButtonMixin);
 
-	function WMTL_DefaultTabMixin:OnMouseDown(button)
+	function LWMT_DefaultTabMixin:OnMouseDown(button)
 		if (not self.Icon) then return; end
 		SidePanelTabButtonMixin.OnMouseDown(self, button);
 	end
 
-	function WMTL_DefaultTabMixin:OnMouseUp(button, upInside)
+	function LWMT_DefaultTabMixin:OnMouseUp(button, upInside)
 		if (not self.Icon) then return; end
 		SidePanelTabButtonMixin.OnMouseUp(self, button, upInside);
 	end
 
-	function WMTL_DefaultTabMixin:OnEnter()
+	function LWMT_DefaultTabMixin:OnEnter()
 		if (not self.tooltipText) then return; end
 		SidePanelTabButtonMixin.OnEnter(self);
 	end
 
-	function WMTL_DefaultTabMixin:SetChecked(checked)
+	function LWMT_DefaultTabMixin:SetChecked(checked)
 		if (not self.Icon or not self.SelectedTexture) then return; end
 
 		local alpha = 1;
@@ -221,8 +220,7 @@ function lib.internal:RegisterTab(tab)
 		end
 	end
 
-	local id = BASE_TAB_ID + #lib.tabs;
-	tab.displayMode = string.format(DISPLAYMODE_FORMAT, id);
+	tab.displayMode = string.format(DISPLAYMODE_FORMAT, #lib.tabs);
 	tinsert(lib.tabs, tab);
 
 	tab:Show();
@@ -258,7 +256,7 @@ function lib:CreateTab(data, name)
 	local template = usingTemplate and data or "LargeSideTabButtonTemplate";
 	local newTab = CreateFrame("BUTTON", name, QuestMapFrame, template);
 	if (not usingTemplate) then
-		Mixin(newTab, WMTL_DefaultTabMixin);
+		Mixin(newTab, LWMT_DefaultTabMixin);
 	end
 
 	if (type(data) == "table") then

@@ -541,10 +541,6 @@ function WQT_Utils:GetSettingsVersion()
 	return version;
 end
 
-function WQT_Utils:ExternalMightLoad(addonName)
-	return C_AddOns.IsAddOnLoaded(addonName) or C_AddOns.IsAddOnLoadOnDemand(addonName);
-end
-
 function WQT_Utils:GetSetting(...)
 	local settings =  WQT.settings;
 	local index = 1;

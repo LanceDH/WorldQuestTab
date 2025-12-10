@@ -1,6 +1,4 @@
 ﻿local name = "WorldFlightMap";
-if (not WQT_Utils:ExternalMightLoad(name)) then return; end
-
 local addonName, addon = ...
 local WQT = addon.WQT;
 

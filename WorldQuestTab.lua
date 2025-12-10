@@ -573,7 +573,7 @@ function WQT:OnInitialize()
 	self.mapButton = WQT.mapButtonsLib:Add("WQT_WorldMapButtonTemplate", "BUTTON");
 
 	-- Map tab and content frame
-	local tabLib = LibStub("WorldMapTabsLib-1.0");
+	local tabLib = LibStub("LibWorldMapTabs");
 	tabLib:AddCustomTab(WQT_QuestMapTab);
 	self.contentFrame = tabLib:CreateContentFrameForTab(WQT_QuestMapTab);
 
