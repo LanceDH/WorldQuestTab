@@ -1168,6 +1168,14 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	});
 		-- end
 
+		do -- 11.2.12
+			StartVersionCategory("11.2.12");
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed the TomTom Pin option in the right click menu not working";
+				"Fixed TomTom integration not working at all with WindTools enabled";
+			});
+		end
+
 		do -- 11.2.11
 			StartVersionCategory("11.2.11");
 			AddSection(ChangelogSections.Changes, {

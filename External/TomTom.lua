@@ -1,6 +1,4 @@
 ﻿local name = "TomTom";
-if (not WQT_Utils:ExternalMightLoad(name)) then return; end
-
 local addonName, addon = ...
 local WQT = addon.WQT;
 
@@ -86,9 +84,12 @@ end
 
 local function TomTomOnPressed(questInfo)
 	local questId = questInfo.questID;
-	local hasArrow = TomTomIsChecked(questInfo);
-
-	QuestListChangedHook(questId, not hasArrow);
+	
+	if (TomTomIsChecked(questInfo)) then
+		RemoveTomTomArrowbyQuestId(questId);
+	else
+		AddTomTomArrowByQuestId(questId);
+	end
 end
 
 local function EventTriggered(source, event, ...)
