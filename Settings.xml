@@ -183,7 +183,7 @@
 				<Scripts>
 					<OnEnter>
 						GameTooltip:SetOwner(self, "ANCHOR_RIGHT", -4, -4);
-						GameTooltip:SetText(NEW_CAPS);
+						GameTooltip:SetText((NEW_CAPS:lower():gsub("^%l", string.upper)));
 						GameTooltip:Show();
 					</OnEnter>
 					<OnLeave>
