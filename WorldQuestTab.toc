@@ -3,7 +3,7 @@
 ## Notes: Creates a new quest tab to keep track of world quests.
 ## IconAtlas: Worldquest-icon
 ## Author: LanceDH
-## Version: 11.2.11
+## Version: 11.2.13
 ## SavedVariables: BWQDB
 
 WorldQuestTab.xml

@@ -573,9 +573,9 @@ function WQT:OnInitialize()
 	self.mapButton = WQT.mapButtonsLib:Add("WQT_WorldMapButtonTemplate", "BUTTON");
 
 	-- Map tab and content frame
-	local tabLib = LibStub("LibWorldMapTabs");
-	tabLib:AddCustomTab(WQT_QuestMapTab);
-	self.contentFrame = tabLib:CreateContentFrameForTab(WQT_QuestMapTab);
+	self.tabLib = LibStub("LibWorldMapTabs");
+	self.tabLib:AddCustomTab(WQT_QuestMapTab);
+	self.contentFrame = self.tabLib:CreateContentFrameForTab(WQT_QuestMapTab);
 
 	-- Sorting
 	self.sortDataContainer = CreateAndInitFromMixin(WQT_SortingDataContainer);
@@ -891,10 +891,10 @@ function WQT:OnEnable()
 	
 	-- Show default tab depending on setting
 	if (self.settings.general.defaultTab) then
-		local tabLib = LibStub("WorldMapTabsLib-1.0");
-		tabLib:SetDisplayMode(WQT_QuestMapTab.displayMode);
+		self.tabLib:SetDisplayMode(WQT_QuestMapTab.displayMode);
 	end
 	WQT_WorldQuestFrame.tabBeforeAnchor = WQT_WorldQuestFrame.selectedTab;
+	self.tabLib = nil;
 
 	-- Load settings
 	WQT_SettingsFrame:Init();

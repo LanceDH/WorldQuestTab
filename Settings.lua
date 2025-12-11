@@ -1168,6 +1168,16 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	});
 		-- end
 
+		do -- 11.2.13
+			StartVersionCategory("11.2.13");
+			AddSection(ChangelogSections.Changes, {
+				"Loca update for zhCN and zhTW";
+			});
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed an error on loging when using the 'Default Tab' setting";
+			});
+		end
+
 		do -- 11.2.12
 			StartVersionCategory("11.2.12");
 			AddSection(ChangelogSections.Fixes, {
