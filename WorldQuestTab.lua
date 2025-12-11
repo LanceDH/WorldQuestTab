@@ -891,7 +891,7 @@ function WQT:OnEnable()
 	
 	-- Show default tab depending on setting
 	if (self.settings.general.defaultTab) then
-		local tabLib = LibStub("WorldMapTabsLib-1.0");
+		local tabLib = LibStub("LibWorldMapTabs");
 		tabLib:SetDisplayMode(WQT_QuestMapTab.displayMode);
 	end
 	WQT_WorldQuestFrame.tabBeforeAnchor = WQT_WorldQuestFrame.selectedTab;
