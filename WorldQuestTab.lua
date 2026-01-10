@@ -172,24 +172,15 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 		end
 		factionsSubmenu:CreateCheckbox(_L["NO_FACTION"], NoFactionChecked, NoFactionOnSelect);
 
-		-- Dragonflight
-		local dragonflightSubmenu = factionsSubmenu:CreateButton(EXPANSION_NAME9);
-		
-		AddExpansionFactionsToMenu(dragonflightSubmenu, LE_EXPANSION_DRAGONFLIGHT);
-		
-		-- Shadowlands
-		local shadowlandsSubmenu = factionsSubmenu:CreateButton(EXPANSION_NAME8);
-		AddExpansionFactionsToMenu(shadowlandsSubmenu, LE_EXPANSION_SHADOWLANDS);
-
-		-- BfA
-		local bfaSubmenu = factionsSubmenu:CreateButton(EXPANSION_NAME7);
-		AddExpansionFactionsToMenu(bfaSubmenu, LE_EXPANSION_BATTLE_FOR_AZEROTH);
-
-		-- Legion
-		local legionSubmenu = factionsSubmenu:CreateButton(EXPANSION_NAME6);
-		AddExpansionFactionsToMenu(legionSubmenu, LE_EXPANSION_LEGION);
+		-- Submenus for older expansions (down to Legion)
+		local startExpansion = LE_EXPANSION_LEVEL_CURRENT - 1;
+		for i = startExpansion, LE_EXPANSION_LEGION, -1 do
+			local expansionName = _G["EXPANSION_NAME"..i] or UNKNOWN;
+			local warWithinSubMenu = factionsSubmenu:CreateButton(expansionName);
+			AddExpansionFactionsToMenu(warWithinSubMenu, i);
+		end
 	end
-	-- end Facation submenu
+	-- end Faction submenu
 
 	-- Type submenu
 	local typeSubmenu = rootDescription:CreateButton(TYPE);
@@ -349,15 +340,6 @@ local function GetSortedFilterOrder(filterId)
 				return tostring(a) < tostring(b);
 			end)
 	return tbl;
-end
-
--- Display an indicator on the filter if some official map filters might hide quest
-function WQT:UpdateFilterIndicator() 
-	if (C_CVar.GetCVarBool("showTamers") and C_CVar.GetCVarBool("worldQuestFilterArtifactPower") and C_CVar.GetCVarBool("worldQuestFilterResources") and C_CVar.GetCVarBool("worldQuestFilterGold") and C_CVar.GetCVarBool("worldQuestFilterEquipment")) then
-		--WQT_WorldQuestFrame.FilterButton.Indicator:Hide();
-	else
-		--WQT_WorldQuestFrame.FilterButton.Indicator:Show();
-	end
 end
 
 function WQT:SetAllFilterTo(id, value, maskFunc)
@@ -581,20 +563,20 @@ function WQT:OnInitialize()
 	self.sortDataContainer = CreateAndInitFromMixin(WQT_SortingDataContainer);
 	
 	local SortFunctionTags = {
-		rewardType = "rewardType",
-		rewardQuality = "rewardQuality",
-		canUpgrade = "canUpgrade",
-		seconds = "seconds",
-		rewardAmount = "rewardAmount",
-		rewardId = "rewardId",
-		faction = "faction",
-		questType = "questType",
-		questRarity = "questRarity",
-		title = "title",
-		elite = "elite",
-		criteria = "criteria",
-		zone = "zone",
-		numRewards = "numRewards",
+		rewardType = "rewardType";
+		rewardQuality = "rewardQuality";
+		seconds = "seconds";
+		rewardAmount = "rewardAmount";
+		rewardId = "rewardId";
+		faction = "faction";
+		questType = "questType";
+		questRarity = "questRarity";
+		title = "title";
+		elite = "elite";
+		criteria = "criteria";
+		zone = "zone";
+		numRewards = "numRewards";
+		searchMatch = "searchMatch";
 	}
 
 	-- Sorting functions
@@ -627,23 +609,12 @@ function WQT:OnInitialize()
 		end;
 		self.sortDataContainer:AddSortFunction(SortFunctionTags.rewardQuality, func);
 	end
-	do -- canUpgrade
-		local func = function(a, b)
-			local aCanUpgrade = a:GetRewardCanUpgrade();
-			local bCanUpgrade = b:GetRewardCanUpgrade();
-			if (aCanUpgrade and bCanUpgrade and aCanUpgrade ~= bCanUpgrade) then
-				return aCanUpgrade and not bCanUpgrade;
-			end
-		end
-		self.sortDataContainer:AddSortFunction(SortFunctionTags.canUpgrade, func);
-	end
 	do -- seconds
 		local func = function(a, b)
-			if (a.isBonusQuest ~= b.isBonusQuest) then
-				return b.isBonusQuest;
-			end
-
 			if (a.time.seconds ~= b.time.seconds) then
+				if (a.time.seconds == 0 or b.time.seconds == 0) then
+					return a.time.seconds > 0;
+				end
 				return a.time.seconds < b.time.seconds;
 			end
 		end
@@ -651,10 +622,6 @@ function WQT:OnInitialize()
 	end
 	do -- rewardAmount
 		local func = function(a, b)
-			if (a.isBonusQuest ~= b.isBonusQuest) then
-				return b.isBonusQuest;
-			end
-
 			local amountA = a:GetRewardAmount(C_QuestLog.QuestCanHaveWarModeBonus(a.questID));
 			local amountB = b:GetRewardAmount(C_QuestLog.QuestCanHaveWarModeBonus(b.questID));
 
@@ -677,10 +644,6 @@ function WQT:OnInitialize()
 	do -- faction
 		local func = function(a, b)
 			if (a.factionID ~= b.factionID) then
-				if (not a.factionID or not b.factionID) then
-					return b.factionID == nil;
-				end
-
 				local factionA = WQT_Utils:GetFactionDataInternal(a.factionID);
 				local factionB = WQT_Utils:GetFactionDataInternal(b.factionID);
 				return factionA.name < factionB.name;
@@ -691,7 +654,7 @@ function WQT:OnInitialize()
 	do -- questType
 		local func = function(a, b)
 			if (a.isBonusQuest ~= b.isBonusQuest) then
-				return b.isBonusQuest;
+				return not a.isBonusQuest;
 			end
 
 			local tagInfoA = a:GetTagInfo();
@@ -753,10 +716,6 @@ function WQT:OnInitialize()
 					return mapInfoA.mapID == WorldMapFrame.mapID;
 				end
 				return mapInfoA.name < mapInfoB.name;
-			elseif (mapInfoA.mapID == mapInfoB.mapID) then
-				if (a.isBonusQuest ~= b.isBonusQuest) then
-					return b.isBonusQuest;
-				end
 			end
 		end
 		self.sortDataContainer:AddSortFunction(SortFunctionTags.zone, func);
@@ -771,102 +730,139 @@ function WQT:OnInitialize()
 		end
 		self.sortDataContainer:AddSortFunction(SortFunctionTags.numRewards, func);
 	end
+	do -- searchMatch
+		local func = function(a, b)
+			do
+				local aMatch = a:GetSearchTitleMatch();
+				local bMatch = b:GetSearchTitleMatch();
+				if (aMatch ~= bMatch) then
+					if (not aMatch or not bMatch) then
+						return aMatch ~= nil;
+					end
+					return aMatch < bMatch;
+				end
+			end
+
+			do
+				local aMatch = a:GetSearchZoneMatch();
+				local bMatch = b:GetSearchZoneMatch();
+				if (aMatch ~= bMatch) then
+					if (not aMatch or not bMatch) then
+						return aMatch ~= nil;
+					end
+					return aMatch < bMatch;
+				end
+			end
+
+			do
+				local aMatch = a:GetSearchFactionMatch();
+				local bMatch = b:GetSearchFactionMatch();
+				if (aMatch ~= bMatch) then
+					if (not aMatch or not bMatch) then
+						return aMatch ~= nil;
+					end
+					return aMatch < bMatch;
+				end
+			end
+		end
+		self.sortDataContainer:AddSortFunction(SortFunctionTags.searchMatch, func);
+	end
 
 	-- Sorting options
 	do -- reward
 		local functionTags = {
-			SortFunctionTags.rewardType,
-			SortFunctionTags.rewardQuality,
-			SortFunctionTags.rewardAmount,
-			SortFunctionTags.numRewards,
-			SortFunctionTags.canUpgrade,
-			SortFunctionTags.rewardId,
-			SortFunctionTags.seconds,
-			SortFunctionTags.title,
+			SortFunctionTags.rewardType;
+			SortFunctionTags.rewardQuality;
+			SortFunctionTags.rewardAmount;
+			SortFunctionTags.searchMatch;
+			SortFunctionTags.numRewards;
+			SortFunctionTags.rewardId;
+			SortFunctionTags.seconds;
+			SortFunctionTags.title;
 		}
 		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].reward, REWARD, functionTags);
 	end
 	do -- time
 		local functionTags = {
-			SortFunctionTags.seconds,
-			SortFunctionTags.rewardType,
-			SortFunctionTags.rewardQuality,
-			SortFunctionTags.rewardAmount,
-			SortFunctionTags.numRewards,
-			SortFunctionTags.canUpgrade,
-			SortFunctionTags.rewardId,
-			SortFunctionTags.title,
+			SortFunctionTags.seconds;
+			SortFunctionTags.rewardType;
+			SortFunctionTags.rewardQuality;
+			SortFunctionTags.rewardAmount;
+			SortFunctionTags.searchMatch;
+			SortFunctionTags.numRewards;
+			SortFunctionTags.rewardId;
+			SortFunctionTags.title;
 		}
 		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].time, _L["TIME"], functionTags);
 	end
 	do -- faction
 		local functionTags = {
-			SortFunctionTags.faction,
-			SortFunctionTags.rewardType,
-			SortFunctionTags.rewardQuality,
-			SortFunctionTags.rewardAmount,
-			SortFunctionTags.numRewards,
-			SortFunctionTags.canUpgrade,
-			SortFunctionTags.rewardId,
-			SortFunctionTags.seconds,
-			SortFunctionTags.title,
+			SortFunctionTags.faction;
+			SortFunctionTags.rewardType;
+			SortFunctionTags.rewardQuality;
+			SortFunctionTags.rewardAmount;
+			SortFunctionTags.searchMatch;
+			SortFunctionTags.numRewards;
+			SortFunctionTags.rewardId;
+			SortFunctionTags.seconds;
+			SortFunctionTags.title;
 		}
 		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].faction, FACTION, functionTags);
 	end
 	do -- zone
 		local functionTags = {
-			SortFunctionTags.zone,
-			SortFunctionTags.rewardType,
-			SortFunctionTags.rewardQuality,
-			SortFunctionTags.rewardAmount,
-			SortFunctionTags.numRewards,
-			SortFunctionTags.canUpgrade,
-			SortFunctionTags.rewardId,
-			SortFunctionTags.seconds,
-			SortFunctionTags.title,
+			SortFunctionTags.zone;
+			SortFunctionTags.rewardType;
+			SortFunctionTags.rewardQuality;
+			SortFunctionTags.rewardAmount;
+			SortFunctionTags.searchMatch;
+			SortFunctionTags.numRewards;
+			SortFunctionTags.rewardId;
+			SortFunctionTags.seconds;
+			SortFunctionTags.title;
 		}
 		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].zone, ZONE, functionTags);
 	end
 	do -- type
 		local functionTags = {
-			SortFunctionTags.criteria,
-			SortFunctionTags.questType,
-			SortFunctionTags.questRarity,
-			SortFunctionTags.elite,
-			SortFunctionTags.rewardType,
-			SortFunctionTags.rewardQuality,
-			SortFunctionTags.rewardAmount,
-			SortFunctionTags.numRewards,
-			SortFunctionTags.canUpgrade,
-			SortFunctionTags.rewardId,
-			SortFunctionTags.seconds,
-			SortFunctionTags.title,
+			SortFunctionTags.criteria;
+			SortFunctionTags.questType;
+			SortFunctionTags.questRarity;
+			SortFunctionTags.elite;
+			SortFunctionTags.rewardType;
+			SortFunctionTags.rewardQuality;
+			SortFunctionTags.rewardAmount;
+			SortFunctionTags.searchMatch;
+			SortFunctionTags.numRewards;
+			SortFunctionTags.rewardId;
+			SortFunctionTags.seconds;
+			SortFunctionTags.title;
 		}
 		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].type, TYPE, functionTags);
 	end
 	do -- name
 		local functionTags = {
-			SortFunctionTags.title,
-			SortFunctionTags.rewardType,
-			SortFunctionTags.rewardQuality,
-			SortFunctionTags.rewardAmount,
-			SortFunctionTags.numRewards,
-			SortFunctionTags.canUpgrade,
-			SortFunctionTags.rewardId,
-			SortFunctionTags.seconds,
+			SortFunctionTags.title;
+			SortFunctionTags.rewardType;
+			SortFunctionTags.rewardQuality;
+			SortFunctionTags.rewardAmount;
+			SortFunctionTags.searchMatch;
+			SortFunctionTags.numRewards;
+			SortFunctionTags.rewardId;
+			SortFunctionTags.seconds;
 		}
 		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].name, NAME, functionTags);
 	end
 	do -- quality
 		local functionTags = {
-			SortFunctionTags.rewardQuality,
-			SortFunctionTags.rewardType,
-			SortFunctionTags.rewardAmount,
-			SortFunctionTags.numRewards,
-			SortFunctionTags.canUpgrade,
-			SortFunctionTags.rewardId,
-			SortFunctionTags.seconds,
-			SortFunctionTags.title,
+			SortFunctionTags.rewardQuality;
+			SortFunctionTags.rewardType;
+			SortFunctionTags.rewardAmount;
+			SortFunctionTags.searchMatch;
+			SortFunctionTags.numRewards;
+			SortFunctionTags.rewardId;
+			SortFunctionTags.seconds;
+			SortFunctionTags.title;
 		}
 		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].quality, QUALITY, functionTags);
 	end
@@ -969,6 +965,15 @@ function WQT:AddExternal(external)
 	tinsert(self.externals, external);
 end
 
+function WQT:GetSearchString()
+	return self.searchString or "";
+end
+
+function WQT:SetSearchString(string)
+	self.searchString = string;
+	WQT_CallbackRegistry:TriggerEvent("WQT.SearchUpdated");
+end
+
 -----------------------------------------
 --
 --------
@@ -995,6 +1000,17 @@ end
 function WQT_QuestLogSettingsButtonMixin:OnDisable()
 	self.disabled = true;
 	self.Icon:SetAlpha(0.45);
+end
+
+------------------------------------------
+-- Search Box Mixin
+------------------------------------------
+
+WQT_SearchBoxMixin = {};
+
+function WQT_SearchBoxMixin:OnTextChanged()
+	SearchBoxTemplate_OnTextChanged(self);
+	WQT:SetSearchString(self:GetText());
 end
 
 ------------------------------------------
@@ -1406,7 +1422,149 @@ end
 -- 			SCROLLLIST MIXIN			--
 ------------------------------------------
 
+local APII_TooltipMixin = {};
+
+function APII_TooltipMixin:SetTooltip(func)
+	self.tooltipFunc = func;
+end
+
+function APII_TooltipMixin:OnEnter()
+	if (self.tooltipFunc) then
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+		self.tooltipFunc(GameTooltip);
+		GameTooltip:Show();
+	end
+end
+
+function APII_TooltipMixin:OnLeave()
+	GameTooltip:Hide();
+end
+
+WQT_CheckButtonMixin = CreateFromMixins(WowStyle2IconButtonMixin, CallbackRegistryMixin, APII_TooltipMixin);
+
+WQT_CheckButtonMixin:GenerateCallbackEvents(
+	{
+		"OnClick";
+	}
+);
+
+function WQT_CheckButtonMixin:OnLoad()
+	WowStyle2IconButtonMixin.OnLoad(self);
+	CallbackRegistryMixin.OnLoad(self);
+
+	local x, y = 2, -1;
+	self:SetDisplacedRegions(x, y, self.Icon, self.Highlight);
+end
+
+function WQT_CheckButtonMixin:OnButtonStateChanged()
+	local icon = self.normalAtlas;
+	local useAtlasSize = (not self.iconWidth or not self.iconHeight) and TextureKitConstants.UseAtlasSize or TextureKitConstants.IgnoreAtlasSize;
+	local alpha = self:GetIconHighlighted() and 1 or 0.5;
+	alpha = 1;
+	local saturation = self:GetIconHighlighted() and 1 or 0.5;
+	if (self.disabledAtlas) then
+		icon = self:IsEnabled() and self.normalAtlas or self.disabledAtlas;
+	end
+	self.Icon:SetAtlas(icon, useAtlasSize);
+	self.Highlight:SetAtlas(icon, useAtlasSize);
+	self.Icon:SetVertexColor(saturation, saturation, saturation);
+	self.Icon:SetAlpha(alpha);
+	if (not useAtlasSize) then
+		self.Icon:SetSize(self.iconWidth, self.iconHeight);
+		self.Highlight:SetSize(self.iconWidth, self.iconHeight);
+	end
+end
+
+function WQT_CheckButtonMixin:GetIconHighlighted()
+	return self:GetChecked();
+end
+
+function WQT_CheckButtonMixin:OnClick()
+	if (self:GetChecked()) then
+		PlaySound(MenuVariants.GetDropdownOpenSoundKit());
+	else
+		PlaySound(MenuVariants.GetDropdownCloseSoundKit());
+	end
+	self:OnButtonStateChanged();
+	self:TriggerEvent(WQT_CheckButtonMixin.Event.OnClick);
+end
+
+function WQT_CheckButtonMixin:OnEnter()
+	WowStyle2IconButtonMixin.OnEnter(self);
+	APII_TooltipMixin.OnEnter(self);
+end
+
+function WQT_CheckButtonMixin:OnLeave()
+	WowStyle2IconButtonMixin.OnLeave(self);
+	APII_TooltipMixin.OnLeave(self);
+end
+
+------------------------------------------
+-- 			SCROLLLIST MIXIN			--
+------------------------------------------
+
 WQT_ScrollListMixin = {};
+
+function WQT_ScrollListMixin:GetQuestScrollBox()
+	local borderContainer = self:GetBorderContainer();
+	return borderContainer.QuestScrollBox;
+end
+
+function WQT_ScrollListMixin:GetScrollBar()
+	return self.ScrollBar;
+end
+
+function WQT_ScrollListMixin:GetBorderContainer()
+	return self.BorderContainer;
+end
+
+function WQT_ScrollListMixin:GetBorderFrame()
+	return self.BorderFrame;
+end
+
+function WQT_ScrollListMixin:GetFilterBar()
+	local borderContainer = self:GetBorderContainer();
+	return borderContainer.FilterBar;
+end
+
+function WQT_ScrollListMixin:GetTopBar()
+	return self.TopBar;
+end
+
+function WQT_ScrollListMixin:GetProgressBar()
+	local topBar = self:GetTopBar();
+	return topBar.ProgressBar;
+end
+
+function WQT_ScrollListMixin:GetFilterDropdown()
+	local topBar = self:GetTopBar();
+	return topBar.FilterDropdown;
+end
+
+function WQT_ScrollListMixin:GetSortDropdown()
+	local topBar = self:GetTopBar();
+	return topBar.SortDropdown;
+end
+
+function WQT_ScrollListMixin:GetSearchToggle()
+	local topBar = self:GetTopBar();
+	return topBar.SearchToggle;
+end
+
+function WQT_ScrollListMixin:GetSearchBox()
+	local topBar = self:GetTopBar();
+	return topBar.SearchBox;
+end
+
+function WQT_ScrollListMixin:UpdateTopBar()
+	local searchEnabled = self:GetSearchToggle():GetChecked();
+
+	self:GetSearchBox():SetShown(searchEnabled);
+	--self:GetSortDropdown():SetShown(not searchEnabled);
+	self:GetFilterDropdown():SetShown(not searchEnabled);
+
+	self:GetTopBar():Layout();
+end
 
 function WQT_ScrollListMixin:OnLoad()
 	local paddingTop = 2;
@@ -1418,23 +1576,45 @@ function WQT_ScrollListMixin:OnLoad()
 		button:Update(elementData.questInfo, elementData.showZone);
 	end);
 	view:SetElementResetter(function(button) button:ClearTimer(); end);
-	ScrollUtil.InitScrollBoxListWithScrollBar(self.QuestScrollBox, self.ScrollBar, view);
+	local questScrollBox = self:GetQuestScrollBox();
+	local scrollBar = self:GetScrollBar();
+	ScrollUtil.InitScrollBoxListWithScrollBar(questScrollBox, scrollBar, view);
 
-	self.SortDropdown:SetDefaultText(UNKNOWN);
-	self.FilterDropdown.Text:SetPoint("TOP", 0, 1);
+	local searchToggle = self:GetSearchToggle();
+	searchToggle:RegisterCallback(WQT_CheckButtonMixin.Event.OnClick, function()
+			self:UpdateTopBar();
+			local searchBox = self:GetSearchBox();
+			if (searchToggle:GetChecked()) then
+				searchBox:SetFocus();
+			else
+				SearchBoxTemplate_ClearText(searchBox);
+				WQT:SetSearchString("");
+			end
+		end);
+	self:UpdateTopBar();
+
+	local sortDropDown = self:GetSortDropdown()
+	sortDropDown:SetDefaultText(UNKNOWN);
+
+	local filterDropDown = self:GetFilterDropdown();
+	filterDropDown.Text:SetPoint("TOP", 0, 1);
+
+	-- Hide the little detail at the top of the frame, it blocks our view. Thanks for making that a separate texture
+	local borderFrame = self:GetBorderFrame();
+	borderFrame.TopDetail:Hide();
 
 	WQT:CallbackWhenReady(function()
-			self.SortDropdown:SetupMenu(WQT.SortDropdownSetup);
-			self.FilterDropdown:SetupMenu(FilterDropdownSetup);
+			sortDropDown:SetupMenu(WQT.SortDropdownSetup);
+			filterDropDown:SetupMenu(FilterDropdownSetup);
 		end);
 
 	WQT_CallbackRegistry:RegisterCallback(
 		"WQT.DataProvider.ProgressUpdated"
 		,function(_, progress)
-				CooldownFrame_SetDisplayAsPercentage(self.ProgressBar, progress);
-				if (progress == 0 or progress == 1) then
-					self.ProgressBar:Hide();
-				end
+				local progressBar = self:GetProgressBar();
+				CooldownFrame_SetDisplayAsPercentage(progressBar, progress);
+				local inProgress = progress > 0 and progress < 1;
+				progressBar:SetAlpha(inProgress and 1 or 0);
 			end
 		, self);
 
@@ -1458,17 +1638,20 @@ end
 
 function WQT_ScrollListMixin:UpdateFilterDisplay()
 	local isFiltering = WQT:IsFiltering();
-	WQT_ListContainer.FilterBar.ClearButton:SetShown(isFiltering);
+	local filterBar = self:GetFilterBar();
+	local borderContainer = self:GetBorderContainer();
+
+	filterBar:SetShown(isFiltering);
+	borderContainer:Layout();
+
+	filterBar.ClearButton:SetShown(isFiltering);
 	-- If we're not filtering, we 'hide' everything
-	if not isFiltering then
-		WQT_ListContainer.FilterBar.Text:SetText(""); 
-		WQT_ListContainer.FilterBar:SetHeight(0.1);
+	if (not isFiltering) then
+		filterBar.Text:SetText("");
 		return;
 	end
 
 	local filterList = "";
-	-- If we are filtering, 'show' things
-	WQT_ListContainer.FilterBar:SetHeight(20);
 	-- Emissary has priority
 	if (WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId) then
 		local text = _L["TYPE_EMISSARY"]
@@ -1502,35 +1685,35 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 	end
 	
 	local filterFormat = "(%d/%d) "..FILTERS..": %s"
-	WQT_ListContainer.FilterBar.Text:SetText(filterFormat:format(numHidden, totalValid, filterList)); 
+	filterBar.Text:SetText(filterFormat:format(numHidden, totalValid, filterList)); 
 end
 
 function WQT_ScrollListMixin:UpdateQuestList()
 	local flightShown = (FlightMapFrame and FlightMapFrame:IsShown() or TaxiRouteMap:IsShown() );
 	local worldShown = WorldMapFrame:IsShown();
 	
-	if (not (flightShown or worldShown)) then return end	
+	if (not (flightShown or worldShown)) then return end
 	self:DisplayQuestList();
 end
 
 function WQT_ScrollListMixin:DisplayQuestList()
-	local shouldShowZone = WQT.settings.list.showZone; 
-
-	self:UpdateFilterDisplay();
+	local shouldShowZone = WQT.settings.list.showZone;
 
 	-- New scroll frame
 	local newDataProvider = CreateDataProvider();
 	
 	local list = WQT_WorldQuestFrame.dataProvider.fitleredQuestsList;
+	
 	self.numDisplayed = #list;
 	for index, questInfo in ipairs(list) do
 		newDataProvider:Insert({index = index, questInfo = questInfo, showZone = shouldShowZone});
 	end
  
-	WQT_ListContainer.QuestScrollBox:SetDataProvider(newDataProvider, ScrollBoxConstants.RetainScrollPosition);
-	
-	-- Update background
+	local questScrollBox = self:GetQuestScrollBox();
+	questScrollBox:SetDataProvider(newDataProvider, ScrollBoxConstants.RetainScrollPosition);
+
 	self:UpdateBackground();
+	self:UpdateFilterDisplay();
 end
 
 function WQT_ScrollListMixin:UpdateBackground()
@@ -1766,9 +1949,6 @@ function WQT_CoreMixin:OnLoad()
 	
 	self:SetFrameLevel(self:GetParent():GetFrameLevel()+4);
 
-	-- Hide the little detail at the top of the frame, it blocks our view. Thanks for making that a separate texture
-	WQT_ListContainer.BorderFrame.TopDetail:Hide();
-
 	self.ExternalEvents = {};
 	-- Events
 	self:RegisterEvent("PLAYER_REGEN_DISABLED");
@@ -1863,7 +2043,6 @@ function WQT_CoreMixin:OnLoad()
 	if (worldMapFilter) then
 		hooksecurefunc(worldMapFilter, "OnSelection", function() 
 				self.ScrollFrame:UpdateQuestList();
-				WQT:UpdateFilterIndicator();
 			end);
 		self.worldMapFilter = worldMapFilter;
 	end
@@ -2048,7 +2227,6 @@ function WQT_CoreMixin:UnhookEvent(event, func)
 end
 
 function WQT_CoreMixin:ADDON_LOADED(loaded)
-	WQT:UpdateFilterIndicator();
 	if (loaded == "Blizzard_FlightMap") then
 		self.pinDataProvider:HookPinHidingToMapFrame(FlightMapFrame);
 
@@ -2106,7 +2284,6 @@ function WQT_CoreMixin:SetCvarValue(flagKey, value)
 	if _V["WQT_CVAR_LIST"][flagKey] then
 		SetCVar(_V["WQT_CVAR_LIST"][flagKey], value);
 		self.ScrollFrame:UpdateQuestList();
-		WQT:UpdateFilterIndicator();
 		return true;
 	end
 	return false;

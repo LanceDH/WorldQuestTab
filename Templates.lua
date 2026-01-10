@@ -1215,7 +1215,9 @@ function WQT_Utils:GetCharacterExpansionLevel()
 	local playerLevel = UnitLevel("player");
 	local expLevel = GetAccountExpansionLevel();
 
-	if (expLevel >= LE_EXPANSION_WAR_WITHIN and playerLevel >= 70) then
+	if (expLevel >= LE_EXPANSION_MIDNIGHT and playerLevel >= 80) then
+		return LE_EXPANSION_MIDNIGHT;
+	elseif (expLevel >= LE_EXPANSION_WAR_WITHIN and playerLevel >= 70) then
 		return LE_EXPANSION_WAR_WITHIN;
 	elseif (playerLevel >= 10) then
 		return LE_EXPANSION_DRAGONFLIGHT;
@@ -1277,12 +1279,6 @@ function WQT_Utils:GetDisplayRewardAmount(rewardInfo, warmode)
 		end
 
 		display = WQT_Utils:GetLocalizedAbbreviatedNumber(displayAmount);
-
-		if (reward.type == WQT_REWARDTYPE.relic) then
-			display = string.format("+%s", display);
-		elseif (reward.canUpgrade) then
-			display = string.format("%s+", display);
-		end
 	end
 
 	return display, amount;

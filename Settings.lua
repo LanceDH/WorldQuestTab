@@ -1168,6 +1168,20 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	});
 		-- end
 
+		do -- 12.0.01
+			StartVersionCategory("12.0.01");
+			AddSection(ChangelogSections.Intro, {
+				"Update for patch 12.0";
+			});
+			AddSection(ChangelogSections.New, {
+				"Added a search option for the quest list";
+			});
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed itemlevel on relic rewards";
+				"Fixed item amounts not always showing correct the first time";
+			});
+		end
+
 		do -- 11.2.13
 			StartVersionCategory("11.2.13");
 			AddSection(ChangelogSections.Changes, {
@@ -1327,21 +1341,6 @@ function WQT_SettingsFrameMixin:Init()
 			});
 			AddSection(ChangelogSections.Fixes, {
 				"Fixed a possible error with the custom Shadowlands bounty board";
-			});
-		end
-
-		do -- 11.1.01
-			StartVersionCategory("11.1.01");
-			AddSection(ChangelogSections.Intro, {
-				"Shoutout to the people who tried their best to keep things running for the past 4 years. I'd name you all but I only now realize how many of you there are.";
-				"If you created a fork, helped those forks, or even guided other people to said forks; Thank you.";
-				"Please note that maintaining this add-on is low priority. Which means updates might be slow and unreliable.";
-			});
-			AddSection(ChangelogSections.Changes, {
-				"Compatibility with patch 11.1.7";
-				"Visual update to match the new UI";
-				"A bunch of refactoring of which you hopefully only notice positive things";
-				"Things that didn't survive:|n- Quest counter on the normal quest tab|n- Anything LFG related|n- Support for WQT Utilities|n- Daily quest things such as old Nzoth quests";
 			});
 		end
 	end -- Changelog
