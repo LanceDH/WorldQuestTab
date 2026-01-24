@@ -2,7 +2,7 @@
 --
 -- "WQT.DataProvider.QuestsLoaded"			() After InitFilter finishes
 -- "WQT.DataProvider.ProgressUpdated"		(progress) Progress in gethering quests from zones (% from 0-1)
--- "WQT.DataProvider.FilteredListUpdated"	() Quest list have been filtered and sorted (get though fitleredQuestsList)
+-- "WQT.DataProvider.FilteredListUpdated"	() Quest list have been filtered and sorted (get though EnumerateProcessedQuestList)
 -- "WQT.CoreFrame.AnchorUpdated"			(anchor) Anchor for the core frame has been changed
 -- "WQT.ScrollList.BackgroundUpdated"		() Updated the background of the quest list
 -- "WQT.MapPinProvider.PinInitialized"		(pin) A pin has been set up 
@@ -422,6 +422,7 @@ function WQT:IsUsingFilterNr(id)
 end
 
 function WQT:IsFiltering()
+	if (WQT:HasSearchStringSet()) then return true; end
 	if (WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId) then return true; end
 	if (not WQT.settings.general.showDisliked) then return true; end
 	
@@ -965,11 +966,16 @@ function WQT:AddExternal(external)
 	tinsert(self.externals, external);
 end
 
+function WQT:HasSearchStringSet()
+	return #WQT:GetSearchString() ~= 0;
+end
+
 function WQT:GetSearchString()
 	return self.searchString or "";
 end
 
 function WQT:SetSearchString(string)
+	if (self.searchString == string) then return; end
 	self.searchString = string;
 	WQT_CallbackRegistry:TriggerEvent("WQT.SearchUpdated");
 end
@@ -1055,7 +1061,6 @@ function WQT_RewardDisplayMixin:UpdateRewards(questInfo, warmodeBonus)
 	local layoutChanged = false;
 	local isDisliked = questInfo:IsDisliked();
 	local maxRewardsToShow = min(WQT.settings.list.rewardNumDisplay, #self.rewardFrames);
-	local numDisplayed = 0;
 
 	for i = 1, #self.rewardFrames, 1 do
 		local rewardFrame = self:GetRewardFrame(i);
@@ -1099,8 +1104,6 @@ function WQT_RewardDisplayMixin:UpdateRewards(questInfo, warmodeBonus)
 						
 						rewardFrame.Amount:SetVertexColor(amountColor:GetRGB());
 					end
-
-					numDisplayed = numDisplayed + 1;
 				end
 			end
 			if (show ~= rewardFrame:IsShown()) then
@@ -1651,41 +1654,46 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 		return;
 	end
 
-	local filterList = "";
+	local filterLabels = {};
+
 	-- Emissary has priority
 	if (WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId) then
 		local text = _L["TYPE_EMISSARY"]
 		if WQT_WorldQuestFrame.autoEmisarryId then
 			text = GARRISON_TEMPORARY_CATEGORY_FORMAT:format(text);
 		end
-		
-		filterList = text;	
+
+		tinsert(filterLabels, text);
 	else
+		if (WQT:HasSearchStringSet()) then
+			tinsert(filterLabels, SEARCH);
+		end
+
 		if (not WQT.settings.general.showDisliked) then
-			filterList = _L["UNINTERESTED"];
+			tinsert(filterLabels, _L["UNINTERESTED"]);
 		end
 	
 		for k, option in pairs(WQT.settings.filters) do
 			local counts = WQT:IsUsingFilterNr(k);
 			if (counts) then
-				filterList = filterList == "" and option.name or string.format("%s, %s", filterList, option.name);
+				tinsert(filterLabels, option.name);
 			end
 		end
 	end
-	
+
 	local numHidden = 0;
 	local totalValid = 0;
-	for k, questInfo in ipairs(WQT_WorldQuestFrame.dataProvider:GetIterativeList()) do
+	for k, questInfo in WQT_WorldQuestFrame.dataProvider:EnumerateProcessedQuestList() do
 		if (questInfo.isValid and questInfo.hasRewardData) then
 			if (questInfo.passedFilter) then
 				numHidden = numHidden + 1;
-			end	
+			end
 			totalValid = totalValid + 1;
 		end
 	end
 	
 	local filterFormat = "(%d/%d) "..FILTERS..": %s"
-	filterBar.Text:SetText(filterFormat:format(numHidden, totalValid, filterList)); 
+	filterBar.Text:SetText(filterFormat:format(numHidden, totalValid, table.concat(filterLabels, ", ")));
 end
 
 function WQT_ScrollListMixin:UpdateQuestList()
@@ -1701,14 +1709,13 @@ function WQT_ScrollListMixin:DisplayQuestList()
 
 	-- New scroll frame
 	local newDataProvider = CreateDataProvider();
-	
-	local list = WQT_WorldQuestFrame.dataProvider.fitleredQuestsList;
-	
-	self.numDisplayed = #list;
-	for index, questInfo in ipairs(list) do
-		newDataProvider:Insert({index = index, questInfo = questInfo, showZone = shouldShowZone});
+
+	for index, questInfo in WQT_WorldQuestFrame.dataProvider:EnumerateProcessedQuestList() do
+		if (questInfo.passedFilter or addon.debug) then
+			newDataProvider:Insert({index = index, questInfo = questInfo, showZone = shouldShowZone});
+		end
 	end
- 
+
 	local questScrollBox = self:GetQuestScrollBox();
 	questScrollBox:SetDataProvider(newDataProvider, ScrollBoxConstants.RetainScrollPosition);
 
@@ -1723,7 +1730,8 @@ function WQT_ScrollListMixin:UpdateBackground()
 	end
 	WQT_ListContainer.Background:SetAlpha(backgroundAlpha);
 	WQT_SettingsFrame.Background:SetAlpha(backgroundAlpha);
-	if (#WQT_WorldQuestFrame.dataProvider.fitleredQuestsList == 0) then
+	local scrollBoxDataProvider = self:GetQuestScrollBox():GetDataProvider();
+	if (not scrollBoxDataProvider or scrollBoxDataProvider:IsEmpty()) then
 		WQT_ListContainer.Background:SetAtlas("QuestLog-empty-quest-background", true);
 	else
 		WQT_ListContainer.Background:SetAtlas("QuestLog-main-background", true);
@@ -1869,6 +1877,11 @@ end
 ------------------------------------------
 
 WQT_CoreMixin = {};
+
+
+function WQT_CoreMixin:GetQuestListFrame()
+	return self.ScrollFrame;
+end
 
 -- Mimics hovering over a zone or continent, based on the zone the map is in
 function WQT_CoreMixin:ShowWorldmapHighlight(questInfo)
@@ -2041,8 +2054,9 @@ function WQT_CoreMixin:OnLoad()
 		end
 	end
 	if (worldMapFilter) then
-		hooksecurefunc(worldMapFilter, "OnSelection", function() 
-				self.ScrollFrame:UpdateQuestList();
+		hooksecurefunc(worldMapFilter, "OnSelection", function()
+				local questListFrame = self:GetQuestListFrame();
+				questListFrame:UpdateQuestList();
 			end);
 		self.worldMapFilter = worldMapFilter;
 	end
@@ -2212,6 +2226,8 @@ function WQT_CoreMixin:FilterClearButtonOnClick()
 			filterButton:RefreshFilterCounter();
 			filterButton:ValidateResetState();
 		end
+
+		self:GetQuestListFrame():GetSearchBox():SetText("");
 	end
 	
 	WQT.settings.general.showDisliked = true;
@@ -2252,7 +2268,8 @@ end
 
  -- Warmode toggle because WAR_MODE_STATUS_UPDATE doesn't seems to fire when toggling warmode
 function WQT_CoreMixin:PVP_TIMER_UPDATE()
-	self.ScrollFrame:UpdateQuestList();
+	local questListFrame = self:GetQuestListFrame();
+	questListFrame:UpdateQuestList();
 end
 
 function WQT_CoreMixin:PLAYER_LOGOUT()
@@ -2260,11 +2277,13 @@ function WQT_CoreMixin:PLAYER_LOGOUT()
 end
 
 function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
-	self.ScrollFrame:DisplayQuestList();
+	local questListFrame = self:GetQuestListFrame();
+	questListFrame:DisplayQuestList();
 end
 
 function WQT_CoreMixin:SUPER_TRACKING_CHANGED(...)
-	self.ScrollFrame:DisplayQuestList();
+	local questListFrame = self:GetQuestListFrame();
+	questListFrame:DisplayQuestList();
 end
 
 function WQT_CoreMixin:TAXIMAP_OPENED(system)
@@ -2283,7 +2302,8 @@ function WQT_CoreMixin:SetCvarValue(flagKey, value)
 
 	if _V["WQT_CVAR_LIST"][flagKey] then
 		SetCVar(_V["WQT_CVAR_LIST"][flagKey], value);
-		self.ScrollFrame:UpdateQuestList();
+		local questListFrame = self:GetQuestListFrame();
+		questListFrame:UpdateQuestList();
 		return true;
 	end
 	return false;

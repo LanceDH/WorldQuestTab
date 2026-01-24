@@ -1168,6 +1168,16 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	});
 		-- end
 
+		do -- 12.0.02
+			StartVersionCategory("12.0.02");
+			AddSection(ChangelogSections.Changes, {
+				"Searching will now also show the filter banner";
+			});
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed \"Filter Map Pins\" still filtering map pins when disabled";
+			});
+		end
+
 		do -- 12.0.01
 			StartVersionCategory("12.0.01");
 			AddSection(ChangelogSections.Intro, {

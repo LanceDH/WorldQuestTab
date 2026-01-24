@@ -36,16 +36,16 @@ local function RewardSortFunc(a, b)
 		end
 		return a.searchMatch < b.searchMatch;
 	end
-	
-	
+
+
 	local aPassed = WQT_Utils:RewardTypePassesFilter(a.type);
 	local bPassed = WQT_Utils:RewardTypePassesFilter(b.type);
-	
+
 	-- Rewards that pass the filters get priority
 	if (aPassed ~= bPassed) then
 		return aPassed and not bPassed;
 	end
-	
+
 	if (a.type == b.type) then
 		if (a.quality == b.quality) then
 			if (a.id and b.id and a.id ~= b.id) then
@@ -69,7 +69,7 @@ local function SortQuestList(a, b, sortID)
 		end;
 		return a.isValid and not b.isValid;
 	end
-	
+
 	-- Filtered out quests go to the back (for debug view mainly)
 	if (not a.passedFilter or not b.passedFilter) then
 		if (a.passedFilter == b.passedFilter) then
@@ -102,7 +102,7 @@ local function SortQuestList(a, b, sortID)
 	if (result ~= nil) then
 		return result;
 	end
-	
+
 	-- Worst case fallback
 	return a.questID < b.questID;
 end
@@ -126,7 +126,7 @@ end
 function QuestInfoMixin:Reset()
 	wipe(self.rewardList);
 	wipe(self.searchResults);
-	
+
 	WipeQuestInfoRecursive(self);
 	-- Reset defaults
 	self.reward.typeBits = WQT_REWARDTYPE.missing;
@@ -141,12 +141,12 @@ function QuestInfoMixin:Init(questID, qInfo)
 	self:UpdateTitleAndFaction();
 
 	self.tagInfo = C_QuestLog.GetQuestTagInfo(questID);
-	
+
 	self.classification = C_QuestInfoSystem.GetQuestClassification(questID);
 	self.isBonusQuest = self.classification == Enum.QuestClassification.BonusObjective;
 	self.isBanned = qInfo and _V["BUGGED_POI"][questID] == qInfo.mapID;
 	self.alwaysHide = self.isBonusQuest and not MapUtil.ShouldShowTask(qInfo.mapID, qInfo);
-	
+
 	self.passedFilter = true;
 	self:UpdateValidity();
 	self:UpdateTimeRemaining();
@@ -154,7 +154,7 @@ function QuestInfoMixin:Init(questID, qInfo)
 
 	-- rewards
 	self:LoadRewards();
-	
+
 	return self.hasRewardData;
 end
 
@@ -217,7 +217,7 @@ do
 	function QuestInfoMixin:LoadRewards(force)
 		-- If we already have our data, don't try again;
 		if (not force and self.hasRewardData) then return; end
-		
+
 		wipe(self.rewardList);
 		local haveData = HaveQuestRewardData(self.questID);
 		if (haveData) then
@@ -227,7 +227,7 @@ do
 			if (numItemAwards> 0) then
 				for rewardIndex = 1, numItemAwards, 1 do
 					local itemName, texture, numItems, quality, _, rewardId, ilvl = GetQuestLogRewardInfo(rewardIndex, self.questID);
-					
+
 					if (rewardId) then
 						local rewardType = WQT_REWARDTYPE.none;
 						local subType, typeName;
@@ -298,7 +298,7 @@ do
 							local rewardInfo = self:AddReward(rewardType, itemName, numItems, texture, quality, rewardId, subType);
 							rewardInfo.typeName = typeName;
 							rewardInfo.dataInstanceID = tooltipData and tooltipData.dataInstanceID;
-							
+
 							local flavorLine, flavorText = GetTooltipLineOfType(tooltipData, Enum.TooltipDataLineType.None, "^\".*\"$");
 							if(flavorLine) then
 								rewardInfo.flavorText = flavorText;
@@ -342,7 +342,7 @@ do
 				local numItems = GetQuestLogRewardXP(self.questID);
 				self:AddReward(WQT_REWARDTYPE.xp, POWER_TYPE_EXPERIENCE, numItems, 894556, 1);
 			end
-			
+
 			self:ParseRewards();
 		end
 
@@ -363,9 +363,9 @@ function QuestInfoMixin:AddReward(rewardType, name, amount, texture, quality, id
 	rewardInfo.quality = quality;
 	rewardInfo.color, rewardInfo.textColor = WQT_Utils:GetRewardTypeColorIDs(rewardType);
 	rewardInfo.subType = subType;
-	
+
 	self.rewardList[index] = rewardInfo;
-	
+
 	-- Raise type flag
 	self.reward.typeBits = bit.bor(self.reward.typeBits, rewardType);
 
@@ -431,7 +431,7 @@ function QuestInfoMixin:GetRewardType()
 		return WQT_REWARDTYPE.none;
 	end
 	local reward = self.rewardList[1];
-	
+
 	local rewardType = reward and reward.type or WQT_REWARDTYPE.missing;
 	local rewardSubType = reward and reward.subType;
 	return rewardType, rewardSubType;
@@ -480,7 +480,7 @@ function QuestInfoMixin:IsCriteria(forceSingle)
 	local bountyBoard = WQT_Utils:GetOldBountyBoard();
 	local activityBoard = WQT_Utils:GetNewBountyBoard();
 	if (not bountyBoard or not activityBoard) then return false; end
-	
+
 	-- Try only selected
 	if (forceSingle) then
 		if (bountyBoard:IsWorldQuestCriteriaForSelectedBounty(self.questID)) then
@@ -492,7 +492,7 @@ function QuestInfoMixin:IsCriteria(forceSingle)
 
 		return false;
 	end
-	
+
 	-- Try any of them
 	if (bountyBoard.bounties) then
 		for k, bounty in ipairs(bountyBoard.bounties) do
@@ -607,14 +607,14 @@ function WQT_DataProvider:Init()
 	self.frame:RegisterEvent("TOOLTIP_DATA_UPDATE");
 
 	self.updateScriptSet = false;
-	
+
 	self.pool = CreateObjectPool(WQT_Utils.QuestCreationFunc, QuestResetFunc);
 	self.iterativeList = {};
 	self.ignoreNextLogUpdate = false;
 
-	self.fitleredQuestsList = {};
+	self.processedQuestList = {};
 	self.shouldUpdateFiltedList = false;
-	
+
 	self.zoneLoading = {
 		needsUpdate = false,
 		startTimestamp = 0,
@@ -624,7 +624,7 @@ function WQT_DataProvider:Init()
 		questsFound = {},
 		questsActive = {},
 	};
-	
+
 	WQT_CallbackRegistry:RegisterCallback("WQT.SearchUpdated", function() self:RequestFilterUpdate(); end, self);
 	WQT_CallbackRegistry:RegisterCallback("WQT.FiltersUpdated", function() self:RequestFilterUpdate(); end, self);
 	WQT_CallbackRegistry:RegisterCallback("WQT.SortUpdated", function() self:RequestFilterUpdate(); end, self);
@@ -720,7 +720,7 @@ function WQT_DataProvider:OnUpdate(elapsed)
 	end
 
 	if(self.zoneLoading.numRemaining > 0) then
-		
+
 		local processedCount = 0;
 		local updateStart = GetTimePreciseSec();
 		local timeSpent = 0;
@@ -847,10 +847,10 @@ function WQT_DataProvider:OnUpdate(elapsed)
 end
 
 function WQT_DataProvider:FilterAndSortQuestList()
-	wipe(self.fitleredQuestsList);
+	wipe(self.processedQuestList);
 	local searchText = WQT:GetSearchString():lower();
 
-	for questInfo in self:EnumarateQuests() do
+	for questInfo in self.pool:EnumerateActive() do
 		questInfo:UpdateSearchResults(searchText);
 
 		questInfo.passedFilter = false;
@@ -859,20 +859,16 @@ function WQT_DataProvider:FilterAndSortQuestList()
 			local passed = WQT:PassesAllFilters(questInfo);
 			questInfo.passedFilter = passed;
 		end
-		
-		-- In debug, still filter, but show everything.
-		if (questInfo.passedFilter or addon.debug) then
-				table.insert(self.fitleredQuestsList, questInfo);
-		end
 
 		-- Update reward orders in case the filtering for one of the changed
 		questInfo:ParseRewards();
+
+		table.insert(self.processedQuestList, questInfo);
 	end
 
 	-- Apply sorting
-	local list = self.fitleredQuestsList;
 	local sortOption =  WQT.settings.general.sortBy;
-	table.sort(list, function (a, b) return SortQuestList(a, b, sortOption); end);
+	table.sort(self.processedQuestList, function (a, b) return SortQuestList(a, b, sortOption); end);
 
 	WQT_CallbackRegistry:TriggerEvent("WQT.DataProvider.FilteredListUpdated");
 end
@@ -922,7 +918,7 @@ end
 
 function WQT_DataProvider:AddZoneToBuffer(zoneID)
 	self:AddZoneToRemainingUnique(zoneID);
-	
+
 	-- Check for subzones and add those as well
 	local subZones = _V["ZONE_SUBZONES"][zoneID];
 	if (subZones) then
@@ -933,11 +929,11 @@ function WQT_DataProvider:AddZoneToBuffer(zoneID)
 end
 
 function WQT_DataProvider:LoadQuestsInZone(zoneID, isFlightMap)
-	
+
 	if (not zoneID) then return end
 	self:ClearData();
 	zoneID = zoneID or self.latestZoneId or C_Map.GetBestMapForUnit("player");
-	
+
 	if (not zoneID) then return end;
 
 	-- No update while invisible
@@ -946,7 +942,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID, isFlightMap)
 		return;
 	end
 
-	if(self.zoneLoading.startTimestamp > 0) then 
+	if(self.zoneLoading.startTimestamp > 0) then
 		WQT:DebugPrint("Interrupt");
 	end
 
@@ -959,14 +955,14 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID, isFlightMap)
 	wipe(self.zoneLoading.questsFound);
 
 	self.latestZoneId = zoneID
-	
+
 	local currentMapInfo = WQT_Utils:GetCachedMapInfo(zoneID);
 	if (not currentMapInfo) then return end;
 
 	local zoneQuests = WQT_Utils:GetSetting("general", "zoneQuests");
 	if (currentMapInfo.mapType == Enum.UIMapType.World) then
 		self:AddWorldMapQuests();
-		
+
 	elseif (currentMapInfo.mapType == Enum.UIMapType.Continent or zoneQuests == _V["ENUM_ZONE_QUESTS"].expansion) then
 		local continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneID];
 
@@ -999,11 +995,11 @@ end
 
 function WQT_DataProvider:GetIterativeList()
 	wipe(self.iterativeList);
-	
+
 	for questInfo in self.pool:EnumerateActive() do
 		table.insert(self.iterativeList, questInfo);
 	end
-	
+
 	return self.iterativeList;
 end
 
@@ -1014,13 +1010,6 @@ function WQT_DataProvider:GetQuestById(id)
 	return nil;
 end
 
-function WQT_DataProvider:ListContainsEmissary()
-	for questInfo, v in self.pool:EnumerateActive() do
-		if (questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly)) then return true; end
-	end
-	return false
-end
-
-function WQT_DataProvider:EnumarateQuests()
-	return self.pool:EnumerateActive()
+function WQT_DataProvider:EnumerateProcessedQuestList()
+	return ipairs(self.processedQuestList);
 end

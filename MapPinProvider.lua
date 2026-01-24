@@ -250,7 +250,7 @@ function WQT_PinDataProvider:PlacePins()
 	
 	wipe(self.activePins);
 	if (mapInfo.mapType >= Enum.UIMapType.Continent) then
-		for k, questInfo in ipairs(WQT_WorldQuestFrame.dataProvider.fitleredQuestsList) do
+		for k, questInfo in WQT_WorldQuestFrame.dataProvider:EnumerateProcessedQuestList() do
 			if (ShouldShowPin(questInfo, mapInfo.mapType, settingsZoneVisible, settingsContinentVisible, settingsFilterPoI, isFlightMap)) then
 				local pinType = GetPinType(mapInfo.mapType);
 				local posX, posY = WQT_Utils:GetQuestMapLocation(questInfo.questID, mapID);
