@@ -13,13 +13,23 @@
 				</Anchors>
 
 				<Layers>
-					<Layer level="BACKGROUND" textureSubLevel="3">
+					<Layer level="BACKGROUND" textureSubLevel="2">
 						<Texture parentKey="CustomUnderlay" atlas="worldquest-questmarker-dragon" hidden="true">
 							<Anchors>
 								<Anchor point="TOPLEFT" x="-8" y="8" />
 								<Anchor point="BOTTOMRIGHT" x="8" y="-8" />
 							</Anchors>
 						</Texture>
+					</Layer>
+
+					<Layer level="BACKGROUND" textureSubLevel="3">
+						<Texture parentKey="TrackingGlow" atlas="Waypoint-MapPin-ButtonToggle" hidden="true" >
+							<Size x="40" y="40" />
+							<Anchors>
+								<Anchor point="CENTER"/>
+							</Anchors>
+						</Texture>
+
 						<Texture parentKey="Icon">
 							<Size x="21" y="21" />
 							<Anchors>

@@ -785,6 +785,8 @@ _V["WQT_DEFAULTS"] = {
 			rarityIcon = false;
 			timeIcon = false;
 			warbandIcon = false;
+			trackingIcon = true;
+
 			continentVisible = _V["ENUM_PIN_CONTINENT"].none;
 			zoneVisible = _V["ENUM_PIN_ZONE"].all;
 			
@@ -794,6 +796,7 @@ _V["WQT_DEFAULTS"] = {
 			fadeOnPing = true;
 			eliteRing = false;
 			labelColors = true;
+			trackingGlow = false;
 			ringType = _V["RING_TYPES"].time;
 			centerType = _V["PIN_CENTER_TYPES"].reward;
 			label = _V["ENUM_PIN_LABEL"].none;

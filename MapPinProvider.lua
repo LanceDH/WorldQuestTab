@@ -604,6 +604,10 @@ function WQT_PinButtonMixin:OnClick(button)
 	WQT_Utils:HandleQuestClick(self, self.questInfo, button);
 end
 
+function WQT_PinButtonMixin:GetTrackingGlow()
+	return self.TrackingGlow;
+end
+
 function WQT_PinButtonMixin:GetIcon()
 	return self.Icon;
 end
@@ -732,6 +736,10 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 	local typeAtlas, typeAtlasWidth, typeAtlasHeight =  WQT_Utils:GetCachedTypeIconData(questInfo);
 	local isTracked = QuestUtils_IsQuestWatched(questInfo.questID);
 	local isSuperTracked = questInfo.questID == C_SuperTrack.GetSuperTrackedQuestID();
+
+	local showTrackingGlow = isTracked and WQT_Utils:GetSetting("pin", "trackingGlow");
+	local trackingGlow = self:GetTrackingGlow();
+	trackingGlow:SetShown(showTrackingGlow);
 
 	-- Ring coloration
 	local ringType = WQT_Utils:GetSetting("pin", "ringType");
@@ -914,9 +922,10 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 			iconFrame:SetupRewardIcon(rewardInfo.type, rewardInfo.subType);
 		end
 	end
-	
+
 	-- Quest Tracking
-	if (isTracked) then
+	local showTrackIcon = isTracked and WQT_Utils:GetSetting("pin", "trackingIcon");
+	if (showTrackIcon) then
 		local iconFrame = self:AddIcon();
 		iconFrame:SetupIcon(isSuperTracked and  "Waypoint-MapPin-Minimap-Tracked" or "Waypoint-MapPin-Minimap-Untracked");
 		iconFrame:SetIconScale(1.7);

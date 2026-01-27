@@ -1170,6 +1170,10 @@ function WQT_SettingsFrameMixin:Init()
 
 		do -- 12.0.02
 			StartVersionCategory("12.0.02");
+			AddSection(ChangelogSections.New, {
+				"Add \"Tracking Glow\" pin setting, adding a glow to the pin if the quest is tracked.";
+				"Add \"Tracking Icon\" pin mini icon setting, allowing you to turn off the tracking icon if you wish";
+			});
 			AddSection(ChangelogSections.Changes, {
 				"Searching will now also show the filter banner";
 			});
@@ -1563,6 +1567,14 @@ function WQT_SettingsFrameMixin:Init()
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
 		end
 
+		do -- Tracking Glow
+			local data = category:AddCheckbox("MINI_TRACKING_GLOW", _L["PIN_TRACKING_GLOW"], _L["PIN_TRACKING_GLOW_TT"]);
+			data:SetGetValueFunction(function() return WQT.settings.pin.trackingGlow; end);
+			data:SetValueChangedFunction(function(value) WQT.settings.pin.trackingGlow = value; end);
+			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
+			data:MarkAsNew(); -- 12.0.0
+		end
+
 		do -- Pin Scale
 			local minValue = 0.8;
 			local maxValue = 1.5;
@@ -1650,6 +1662,14 @@ function WQT_SettingsFrameMixin:Init()
 
 		do -- Mini Icons
 			local subCategory = category:AddSubCategory("MAPPINS_MINIICONS", _L["MINI_ICONS"], not CATEGORY_DEFAULT_EXPANDED);
+
+			do -- Tracking
+				local data = subCategory:AddCheckbox("MINI_ICON_PIN_TRACKING", _L["PIN_TRACKING_ICON"], _L["PIN_TRACKING_ICON_TT"]);
+				data:SetGetValueFunction(function() return WQT.settings.pin.trackingIcon; end);
+				data:SetValueChangedFunction(function(value) WQT.settings.pin.trackingIcon = value; end);
+				data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
+				data:MarkAsNew(); -- 12.0.0
+			end
 
 			do -- Pin Type
 				local data = subCategory:AddCheckbox("MINI_ICON_PIN_TYPE", _L["PIN_TYPE"], _L["PIN_TYPE_TT"]);
