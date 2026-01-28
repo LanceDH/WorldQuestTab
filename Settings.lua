@@ -35,7 +35,7 @@ end
 function WQT_SettingsBaseMixin:AnchorTooltip(anchorFrame, anchorType)
 	local offsetX = self.tooltipOffsetX or 0;
 	local offsetY = self.tooltipOffsetY or 0;
-	GameTooltip:SetOwner(anchorFrame or self, anchorType or "ANCHOR_RIGHT", offsetX, offsetY);
+	WQT_ActiveGameTooltip:SetOwner(anchorFrame or self, anchorType or "ANCHOR_RIGHT", offsetX, offsetY);
 end
 
 function WQT_SettingsBaseMixin:OnEnter(anchorFrame, anchorType)
@@ -43,13 +43,13 @@ function WQT_SettingsBaseMixin:OnEnter(anchorFrame, anchorType)
 	if (tooltipText) then
 		self:AnchorTooltip(anchorFrame, anchorType);
 		if (self.label) then
-			GameTooltip_SetTitle(GameTooltip, self.label);
+			GameTooltip_SetTitle(WQT_ActiveGameTooltip, self.label);
 		end
-		GameTooltip_AddNormalLine(GameTooltip, tooltipText, true);
+		GameTooltip_AddNormalLine(WQT_ActiveGameTooltip, tooltipText, true);
 		if (self.suggestReload) then
-			GameTooltip_AddHighlightLine(GameTooltip, _L["SUGGEST_RELOAD"], true);
+			GameTooltip_AddHighlightLine(WQT_ActiveGameTooltip, _L["SUGGEST_RELOAD"], true);
 		end
-		GameTooltip:Show();
+		WQT_ActiveGameTooltip:Show();
 	end
 
 	if (self.BgHighlight) then
@@ -58,7 +58,7 @@ function WQT_SettingsBaseMixin:OnEnter(anchorFrame, anchorType)
 end
 
 function WQT_SettingsBaseMixin:OnLeave()
-	GameTooltip:Hide();
+	WQT_ActiveGameTooltip:Hide();
 
 	if (self.BgHighlight) then
 		self.BgHighlight:Hide();
@@ -537,11 +537,11 @@ function WQT_SettingsDropDownMixin:OnEnter(anchorFrame, anchorType)
 		for k, option in ipairs(options) do
 			if (option.label and option.tooltip) then
 				local text = WHITE_FONT_COLOR:WrapTextInColorCode(option.label .. ": ") .. option.tooltip;
-				GameTooltip_AddBlankLineToTooltip(GameTooltip);
-				GameTooltip_AddNormalLine(GameTooltip, text, true);
+				GameTooltip_AddBlankLineToTooltip(WQT_ActiveGameTooltip);
+				GameTooltip_AddNormalLine(WQT_ActiveGameTooltip, text, true);
 			end
 		end
-		GameTooltip:Show();
+		WQT_ActiveGameTooltip:Show();
 	end
 end
 
@@ -1171,8 +1171,9 @@ function WQT_SettingsFrameMixin:Init()
 		do -- 12.0.02
 			StartVersionCategory("12.0.02");
 			AddSection(ChangelogSections.New, {
-				"Add \"Tracking Glow\" pin setting, adding a glow to the pin if the quest is tracked.";
-				"Add \"Tracking Icon\" pin mini icon setting, allowing you to turn off the tracking icon if you wish";
+				"Added \"Tracking Glow\" pin setting, adding a glow to the pin if the quest is tracked.";
+				"Added \"Tracking Icon\" pin mini icon setting, allowing you to turn off the tracking icon if you wish";
+				"Added \"Custom Tooltip\" setting (hopefully temporary). Uses a custom tooltip to avoid Blizzard's secret issues, but at the cost of other add-ons not being able to add info to the tooltip."
 			});
 			AddSection(ChangelogSections.Changes, {
 				"Searching will now also show the filter banner";
@@ -1427,6 +1428,18 @@ function WQT_SettingsFrameMixin:Init()
 			local data = category:AddCheckbox("AUTO_EMISARRY", _L["AUTO_EMISARRY"], _L["AUTO_EMISARRY_TT"]);
 			data:SetGetValueFunction(function() return WQT.settings.general.autoEmisarry; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.general.autoEmisarry = value; end);
+		end
+
+		do -- Custom Tooltip
+			local label = "Custom Tooltip";
+			local tooltip = "Use a custom tooltip to avoid Blizzard's secret issues, at the cost of compatibility with other add-ons.|nHopefully only a temporary setting until Blizzard fixes their buggy mess.";
+			local data = category:AddCheckbox("CUSTOM_TOOLTIP", label, tooltip);
+			data:SetGetValueFunction(function() return WQT.settings.general.useCustomTooltip; end);
+			data:SetValueChangedFunction(function(value)
+				WQT.settings.general.useCustomTooltip = value;
+				WQT:UpdateActiveGameTooltip();
+			end);
+			data:MarkAsNew(); -- 12.0.0
 		end
 
 		do -- Zone Quests

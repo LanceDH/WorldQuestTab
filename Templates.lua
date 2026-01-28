@@ -188,13 +188,13 @@ function WQT_ContainerButtonMixin:OnMouseUp()
 end
 
 function WQT_ContainerButtonMixin:OnEnter()
-	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip:SetText(WQT_WORLD_QUEST_TAB);
-	GameTooltip:Show();
+	WQT_ActiveGameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+	WQT_ActiveGameTooltip:SetText(WQT_WORLD_QUEST_TAB);
+	WQT_ActiveGameTooltip:Show();
 end
 
 function WQT_ContainerButtonMixin:OnLeave()
-	GameTooltip:Hide();
+	WQT_ActiveGameTooltip:Hide();
 end
 
 WQT_WorldMapContainerButtonMixin = CreateFromMixins(WQT_ContainerButtonMixin);
@@ -730,12 +730,12 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset)
 	style = style or _V["TOOLTIP_STYLES"].default;
 	WQT:ShowDebugTooltipForQuest(questInfo, button);
 
-	GameTooltip:SetOwner(button, "ANCHOR_RIGHT", xOffset or 0, yOffset or 0);
+	WQT_ActiveGameTooltip:SetOwner(button, "ANCHOR_RIGHT", xOffset or 0, yOffset or 0);
 	-- In case we somehow don't have data on this quest, even through that makes no sense at this point
 	if (not questInfo.questID or not HaveQuestData(questInfo.questID)) then
-		GameTooltip_SetTitle(GameTooltip, RETRIEVING_DATA, RED_FONT_COLOR);
-		GameTooltip_SetTooltipWaitingForData(GameTooltip, true);
-		GameTooltip:Show();
+		GameTooltip_SetTitle(WQT_ActiveGameTooltip, RETRIEVING_DATA, RED_FONT_COLOR);
+		GameTooltip_SetTooltipWaitingForData(WQT_ActiveGameTooltip, true);
+		WQT_ActiveGameTooltip:Show();
 		return;
 	end
 	
@@ -744,12 +744,12 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset)
 	local qualityColor = WORLD_QUEST_QUALITY_COLORS[tagInfo and tagInfo.quality or Enum.WorldQuestQuality.Common];
 
 	-- title
-	GameTooltip_SetTitle(GameTooltip, title, qualityColor.color, true);
+	GameTooltip_SetTitle(WQT_ActiveGameTooltip, title, qualityColor.color, true);
 	
 	-- type
 	if (not style.hideType) then
 		if (tagInfo and tagInfo.worldQuestType) then
-			QuestUtils_AddQuestTypeToTooltip(GameTooltip, questInfo.questID, NORMAL_FONT_COLOR);
+			QuestUtils_AddQuestTypeToTooltip(WQT_ActiveGameTooltip, questInfo.questID, NORMAL_FONT_COLOR);
 		end
 	end
 	
@@ -759,9 +759,9 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset)
 		local factionName = factionData and factionData.name;
 		if ( factionName ) then
 			if (capped) then
-				GameTooltip:AddLine(factionName, GRAY_FONT_COLOR:GetRGB());
+				WQT_ActiveGameTooltip:AddLine(factionName, GRAY_FONT_COLOR:GetRGB());
 			else
-				GameTooltip:AddLine(factionName);
+				WQT_ActiveGameTooltip:AddLine(factionName);
 			end
 		end
 	end
@@ -771,7 +771,7 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset)
 	if (seconds > 0 or category == _V["TIME_REMAINING_CATEGORY"].expired) then
 		timeColor = seconds <= SECONDS_PER_HOUR and timeColor or HIGHLIGHT_FONT_COLOR;
 		timeString = timeColor:WrapTextInColorCode(timeString);
-		GameTooltip_AddNormalLine(GameTooltip, MAP_TOOLTIP_TIME_LEFT:format(timeString));
+		GameTooltip_AddNormalLine(WQT_ActiveGameTooltip, MAP_TOOLTIP_TIME_LEFT:format(timeString));
 	end
 
 	if (not style.hideObjectives) then
@@ -781,28 +781,28 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset)
 	
 			if ( objectiveText and #objectiveText > 0 ) then
 				local objectiveColor = finished and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
-				GameTooltip:AddLine(QUEST_DASH .. objectiveText, objectiveColor.r, objectiveColor.g, objectiveColor.b, true);
+				WQT_ActiveGameTooltip:AddLine(QUEST_DASH .. objectiveText, objectiveColor.r, objectiveColor.g, objectiveColor.b, true);
 			end
 			-- Add a progress bar if that's the type
 			if(objectiveType == "progressbar") then
 				local percent = GetQuestProgressBarPercent(questInfo.questID);
-				GameTooltip_ShowProgressBar(GameTooltip, 0, 100, percent, PERCENTAGE_STRING:format(percent));
+				GameTooltip_ShowProgressBar(WQT_ActiveGameTooltip, 0, 100, percent, PERCENTAGE_STRING:format(percent));
 			end
 		end
 	end
 	
 	if (questInfo.reward.type == WQT_REWARDTYPE.missing) then
-		GameTooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
+		WQT_ActiveGameTooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
 	elseif (questInfo:GetReward(1)) then
-		GameTooltip_AddBlankLinesToTooltip(GameTooltip, style.prefixBlankLineCount);
+		GameTooltip_AddBlankLinesToTooltip(WQT_ActiveGameTooltip, style.prefixBlankLineCount);
 		if style.headerText and style.headerColor then
-			GameTooltip_AddColoredLine(GameTooltip, style.headerText, style.headerColor, style.wrapHeaderText);
+			GameTooltip_AddColoredLine(WQT_ActiveGameTooltip, style.headerText, style.headerColor, style.wrapHeaderText);
 		end
-		GameTooltip_AddBlankLinesToTooltip(GameTooltip, style.postHeaderBlankLineCount);
-		QuestUtils_AddQuestRewardsToTooltip(GameTooltip, questInfo.questID, style);
+		GameTooltip_AddBlankLinesToTooltip(WQT_ActiveGameTooltip, style.postHeaderBlankLineCount);
+		QuestUtils_AddQuestRewardsToTooltip(WQT_ActiveGameTooltip, questInfo.questID, style);
 	end
 
-	GameTooltip:Show();
+	WQT_ActiveGameTooltip:Show();
 end
 
 -- Climb map parents until the first continent type map it can find.
@@ -993,13 +993,13 @@ end
 
 local function AddInstructionTooltipToDropdownItem(item, text)
 	item:SetOnEnter(function(button)
-			GameTooltip:SetOwner(button, "ANCHOR_RIGHT");
-			GameTooltip_AddInstructionLine(GameTooltip, text);
-			GameTooltip:Show();
+			WQT_ActiveGameTooltip:SetOwner(button, "ANCHOR_RIGHT");
+			GameTooltip_AddInstructionLine(WQT_ActiveGameTooltip, text);
+			WQT_ActiveGameTooltip:Show();
 		end);
 	
 	item:SetOnLeave(function(button)
-			GameTooltip:Hide();
+			WQT_ActiveGameTooltip:Hide();
 		end);
 end
 

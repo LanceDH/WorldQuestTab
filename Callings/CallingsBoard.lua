@@ -393,9 +393,9 @@ function WQT_CallingsBoardDisplayMixin:OnEnter()
 		local days = MAX_CALLINGS - self.calling.index + 1;
 		local daysUntilString = _G["BOUNTY_BOARD_NO_CALLINGS_DAYS_" .. days] or BOUNTY_BOARD_NO_CALLINGS_DAYS_1;
 		
-		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-		GameTooltip:SetText(daysUntilString, HIGHLIGHT_FONT_COLOR:GetRGB());
-		GameTooltip:Show();
+		WQT_ActiveGameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+		WQT_ActiveGameTooltip:SetText(daysUntilString, HIGHLIGHT_FONT_COLOR:GetRGB());
+		WQT_ActiveGameTooltip:Show();
 	else
 		self.Highlight:Show();
 		if (self.calling:IsActive()) then
@@ -408,7 +408,7 @@ end
 
 function WQT_CallingsBoardDisplayMixin:OnLeave()
 	self.Highlight:Hide();
-	GameTooltip:Hide();
+	WQT_ActiveGameTooltip:Hide();
 end
 
 function WQT_CallingsBoardDisplayMixin:OnClick()

@@ -156,12 +156,12 @@
 								WQT_DevFrame.CallbackScrollBar:SetShown(show);
 							</OnClick>
 							<OnEnter>
-								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-								GameTooltip_SetTitle(GameTooltip, "Callback Tracker");
-								GameTooltip:Show();
+								WQT_ActiveGameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+								GameTooltip_SetTitle(WQT_ActiveGameTooltip, "Callback Tracker");
+								WQT_ActiveGameTooltip:Show();
 							</OnEnter>
 							<OnLeave>
-								GameTooltip:Hide();
+								WQT_ActiveGameTooltip:Hide();
 							</OnLeave>
 						</Scripts>
 					</Button>
@@ -188,12 +188,12 @@
 								WQT_DevFrame:DoDebugThing();
 							</OnClick>
 							<OnEnter>
-								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-								GameTooltip_SetTitle(GameTooltip, "Debug Function");
-								GameTooltip:Show();
+								WQT_ActiveGameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+								GameTooltip_SetTitle(WQT_ActiveGameTooltip, "Debug Function");
+								WQT_ActiveGameTooltip:Show();
 							</OnEnter>
 							<OnLeave>
-								GameTooltip:Hide();
+								WQT_ActiveGameTooltip:Hide();
 							</OnLeave>
 						</Scripts>
 					</Button>

@@ -23,6 +23,7 @@ local _; -- local trash
 
 local _playerFaction = GetPlayerFactionGroup();
 local _playerName = UnitName("player");
+WQT_ActiveGameTooltip = GameTooltip;
 
 WQT_PanelID = EnumUtil.MakeEnum("Quests", "Settings");
 
@@ -37,14 +38,14 @@ end
 
 local function AddBasicTooltipFunctionsToDropdownItem(item, title, body)
 	item:SetOnEnter(function(button)
-			GameTooltip:SetOwner(button, "ANCHOR_RIGHT");
-			GameTooltip_SetTitle(GameTooltip, title);
-			GameTooltip_AddNormalLine(GameTooltip, body);
-			GameTooltip:Show();
+			WQT_ActiveGameTooltip:SetOwner(button, "ANCHOR_RIGHT");
+			GameTooltip_SetTitle(WQT_ActiveGameTooltip, title);
+			GameTooltip_AddNormalLine(WQT_ActiveGameTooltip, body);
+			WQT_ActiveGameTooltip:Show();
 		end);
 	
 	item:SetOnLeave(function(button)
-			GameTooltip:Hide();
+			WQT_ActiveGameTooltip:Hide();
 		end);
 end
 
@@ -77,10 +78,10 @@ local function GenericFilterOnSelect(data)
 end
 
 local function ShowDisabledFilterTooltip(self)
-	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip_SetTitle(GameTooltip, _L["MAP_FILTER_DISABLED"]);
-	GameTooltip_AddNormalLine(GameTooltip, _L["MAP_FILTER_DISABLED_INFO"]);
-	GameTooltip:Show();
+	WQT_ActiveGameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+	GameTooltip_SetTitle(WQT_ActiveGameTooltip, _L["MAP_FILTER_DISABLED"]);
+	GameTooltip_AddNormalLine(WQT_ActiveGameTooltip, _L["MAP_FILTER_DISABLED_INFO"]);
+	WQT_ActiveGameTooltip:Show();
 end
 
 local function AddFilterSubmenu(rootDescription, filterType)
@@ -100,7 +101,7 @@ local function AddFilterSubmenu(rootDescription, filterType)
 			if (WQT_Utils:IsFilterDisabledByOfficial(flagKey)) then
 				checkbox:SetEnabled(false);
 				checkbox:SetOnEnter(ShowDisabledFilterTooltip);
-				checkbox:SetOnLeave(function() GameTooltip:Hide(); end);
+				checkbox:SetOnLeave(function() WQT_ActiveGameTooltip:Hide(); end);
 			end
 			
 		else
@@ -910,6 +911,8 @@ function WQT:OnEnable()
 		end
 	end
 
+	WQT:UpdateActiveGameTooltip();
+
 	self.externals = nil;
 
 	if (self.callbacksWhenReady) then
@@ -978,6 +981,12 @@ function WQT:SetSearchString(string)
 	if (self.searchString == string) then return; end
 	self.searchString = string;
 	WQT_CallbackRegistry:TriggerEvent("WQT.SearchUpdated");
+end
+
+function WQT:UpdateActiveGameTooltip()
+	WQT_ActiveGameTooltip:Hide();
+	WQT_ActiveGameTooltip = WQT_Utils:GetSetting("general", "useCustomTooltip") and WQT_GameTooltip or GameTooltip;
+	print(WQT_ActiveGameTooltip, WQT_GameTooltip, GameTooltip);
 end
 
 -----------------------------------------
@@ -1223,8 +1232,8 @@ function WQT_ListButtonMixin:OnLeave()
 	self.Highlight:Hide();
 	WQT_WorldQuestFrame.pinDataProvider:SetQuestIDPinged(self.questInfo.questID, false);
 	WQT_WorldQuestFrame:HideWorldmapHighlight();
-	GameTooltip:Hide();
-	GameTooltip.ItemTooltip:Hide();
+	WQT_ActiveGameTooltip:Hide();
+	WQT_ActiveGameTooltip.ItemTooltip:Hide();
 	
 	local isDisliked = self.questInfo:IsDisliked();
 	self:SetAlpha(isDisliked and 0.75 or 1);
@@ -1416,8 +1425,8 @@ function WQT_ListButtonMixin:FactionOnEnter(frame)
 	self.Highlight:Show();
 	if (self.questInfo.factionID) then
 		local factionInfo = WQT_Utils:GetFactionDataInternal(self.questInfo.factionID);
-		GameTooltip:SetOwner(frame, "ANCHOR_RIGHT", -5, -10);
-		GameTooltip:SetText(factionInfo.name, nil, nil, nil, nil, true);
+		WQT_ActiveGameTooltip:SetOwner(frame, "ANCHOR_RIGHT", -5, -10);
+		WQT_ActiveGameTooltip:SetText(factionInfo.name, nil, nil, nil, nil, true);
 	end
 end
 
@@ -1433,14 +1442,14 @@ end
 
 function APII_TooltipMixin:OnEnter()
 	if (self.tooltipFunc) then
-		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-		self.tooltipFunc(GameTooltip);
-		GameTooltip:Show();
+		WQT_ActiveGameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+		self.tooltipFunc(WQT_ActiveGameTooltip);
+		WQT_ActiveGameTooltip:Show();
 	end
 end
 
 function APII_TooltipMixin:OnLeave()
-	GameTooltip:Hide();
+	WQT_ActiveGameTooltip:Hide();
 end
 
 WQT_CheckButtonMixin = CreateFromMixins(WowStyle2IconButtonMixin, CallbackRegistryMixin, APII_TooltipMixin);

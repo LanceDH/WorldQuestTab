@@ -593,7 +593,7 @@ end
 
 function WQT_PinButtonMixin:OnLeave()
 	self:GetParent():ClearFocus();
-	GameTooltip:Hide();
+	WQT_ActiveGameTooltip:Hide();
 	WQT:HideDebugTooltip()
 	-- Stop highlight quest in list
 	WQT_ListContainer.PoIHoverId = nil;

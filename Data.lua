@@ -765,6 +765,8 @@ _V["WQT_DEFAULTS"] = {
 			useTomTom = true;
 			TomTomAutoArrow = true;
 			TomTomArrowOnClick = false;
+
+			useCustomTooltip = false;
 		};
 		
 		["list"] = {

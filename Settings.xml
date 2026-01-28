@@ -182,12 +182,12 @@
 				</Layers>
 				<Scripts>
 					<OnEnter>
-						GameTooltip:SetOwner(self, "ANCHOR_RIGHT", -4, -4);
-						GameTooltip:SetText((NEW_CAPS:lower():gsub("^%l", string.upper)));
-						GameTooltip:Show();
+						WQT_ActiveGameTooltip:SetOwner(self, "ANCHOR_RIGHT", -4, -4);
+						WQT_ActiveGameTooltip:SetText((NEW_CAPS:lower():gsub("^%l", string.upper)));
+						WQT_ActiveGameTooltip:Show();
 					</OnEnter>
 					<OnLeave>
-						GameTooltip:Hide();
+						WQT_ActiveGameTooltip:Hide();
 					</OnLeave>
 				</Scripts>
 			</Frame>
@@ -394,14 +394,14 @@
 					<OnEnter>
 						self:GetParent():OnEnter(self:GetParent());
 						if (self:IsEnabled()) then
-							GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-							GameTooltip_SetTitle(GameTooltip, RESET_TO_DEFAULT);
-							GameTooltip:Show();
+							WQT_ActiveGameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+							GameTooltip_SetTitle(WQT_ActiveGameTooltip, RESET_TO_DEFAULT);
+							WQT_ActiveGameTooltip:Show();
 						end
 					</OnEnter>
 					<OnLeave>
 						self:GetParent():OnLeave();
-						GameTooltip:Hide();
+						WQT_ActiveGameTooltip:Hide();
 					</OnLeave>
 					<OnClick> 
 						self:GetParent():ResetColor(true);

@@ -22,7 +22,7 @@ local function ShowCustomTooltip(display)
 	local questInfo, calling = WQT_CallingsBoard:GetQuestData(display.questID);
 	-- If we got the info, replace the tooltip
 	if (questInfo and calling) then
-		GameTooltip:Hide();
+		WQT_ActiveGameTooltip:Hide();
 		if (calling:IsActive()) then
 			WQT_Utils:ShowQuestTooltip(display, questInfo, TOOLTIP_STYLE_NO_TYPE);
 		else
