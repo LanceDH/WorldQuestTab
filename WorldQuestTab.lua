@@ -986,7 +986,6 @@ end
 function WQT:UpdateActiveGameTooltip()
 	WQT_ActiveGameTooltip:Hide();
 	WQT_ActiveGameTooltip = WQT_Utils:GetSetting("general", "useCustomTooltip") and WQT_GameTooltip or GameTooltip;
-	print(WQT_ActiveGameTooltip, WQT_GameTooltip, GameTooltip);
 end
 
 -----------------------------------------

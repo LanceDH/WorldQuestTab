@@ -1177,6 +1177,7 @@ function WQT_SettingsFrameMixin:Init()
 			});
 			AddSection(ChangelogSections.Changes, {
 				"Searching will now also show the filter banner";
+				"Finally put the addon in the Quests category";
 			});
 			AddSection(ChangelogSections.Fixes, {
 				"Fixed \"Filter Map Pins\" still filtering map pins when disabled";

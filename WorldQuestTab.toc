@@ -6,6 +6,18 @@
 ## Version: 12.0.02
 ## SavedVariables: BWQDB
 
+## Category: Quests
+## Category-deDE: Quests
+## Category-esES: Misiones
+## Category-esMX: Misiones
+## Category-frFR: Quêtes
+## Category-itIT: Missioni
+## Category-koKR: 퀘스트
+## Category-ptBR: Missões
+## Category-ruRU: Задания
+## Category-zhCN: 任务
+## Category-zhTW: 任務
+
 WorldQuestTab.xml
 External\External.xml
 Settings.xml
