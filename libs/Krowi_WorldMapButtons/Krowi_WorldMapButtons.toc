@@ -1,0 +1,27 @@
+#
+#    Copyright (c) 2020 Krowi
+#
+#    All Rights Reserved unless otherwise explicitly stated.
+#
+#    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#    SOFTWARE.
+#
+
+## Interface: 110207, 50502, 40402, 11508
+## Title: Krowi's |cFF1D92C2World Map Buttons|r
+## Version: 1.4.9
+## Author: Krowi
+## Notes: A library for World of Warcraft addon development that simplifies adding custom buttons to the world map interface with automatic positioning and dynamic layout management
+## X-Discord-Invite-Link: https://discord.gg/mdBFQJYeQZ
+## X-Discord-Server-Name: Krowi's Addons
+## X-CurseForge: https://www.curseforge.com/wow/addons/krowi-world-map-buttons
+## X-Curse-Project-ID: 498471
+## X-Wago: https://addons.wago.io/addons/krowi-world-map-buttons
+## X-Wago-ID: vNAeVQNo
+
+Krowi_Util-1.0.xml

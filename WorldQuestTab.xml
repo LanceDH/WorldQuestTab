@@ -5,8 +5,8 @@
 	<Script file="Libs\LibStub\LibStub.lua"/>
 	<Include file="libs\AceAddon-3.0\AceAddon-3.0.xml"/>
 	<Include file="libs\AceDB-3.0\AceDB-3.0.xml"/>
-	<Include file="libs\Krowi_WorldMapButtons-1.4.8\Krowi_WorldMapButtons-1.4.xml"/>
-	<Script file="libs\LibWorldMapTabs-1.4\LibWorldMapTabs-1.4.lua"/>
+	<Include file="libs\Krowi_WorldMapButtons\Krowi_WorldMapButtons-1.4.xml"/>
+	<Script file="libs\LibWorldMapTabs-1.5\LibWorldMapTabs-1.5.lua"/>
 	
 	<Include file="Loca/Loca.xml"/>
 	

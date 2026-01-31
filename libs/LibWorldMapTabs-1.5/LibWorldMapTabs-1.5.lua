@@ -17,7 +17,7 @@
 --- CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 --- 
 
-local lib, oldminor = LibStub:NewLibrary('LibWorldMapTabs', 4);
+local lib, oldminor = LibStub:NewLibrary('LibWorldMapTabs', 5);
 
 if not lib then return; end
 
@@ -174,11 +174,11 @@ function lib.internal:OnHideInternal(tab, ...)
 	lib.internal:PlaceTabs();
 end
 
-
 function lib.internal:WorldMapOnShow(...)
-	-- Delay to next frame because addons not using this library might be anchoring their tab on WorldMapOnShow
+	-- Place instantly, and again with a delay in case because some addons might place their button on WorldMapOnShow
+	lib.internal:PlaceTabs();
 	C_Timer.After(0, function() lib.internal:PlaceTabs(); end);
-	
+
 	if (not lib.tabs) then return end
 	-- If the tab for the currently active content is hidden, default back to official quests
 	for _, tab in ipairs(lib.tabs) do
@@ -223,7 +223,10 @@ function lib.internal:RegisterTab(tab)
 	tab.displayMode = string.format(DISPLAYMODE_FORMAT, #lib.tabs);
 	tinsert(lib.tabs, tab);
 
-	tab:Show();
+	tab:SetParent(QuestMapFrame);
+	-- Guarantee an anchor or rendering gets funky
+	tab:ClearAllPoints();
+	tab:SetPoint("LEFT", QuestMapFrame, "RIGHT");
 	tab:SetChecked(false);
 
 	local originalSetShown = tab.SetShown;
@@ -275,7 +278,6 @@ end
 
 -- Add a custom made tab to the list
 function lib:AddCustomTab(tab)
-	tab:SetParent(QuestMapFrame);
 	lib.internal:RegisterTab(tab);
 
 	return tab;
