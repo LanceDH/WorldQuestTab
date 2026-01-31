@@ -1231,8 +1231,7 @@ function WQT_ListButtonMixin:OnLeave()
 	self.Highlight:Hide();
 	WQT_WorldQuestFrame.pinDataProvider:SetQuestIDPinged(self.questInfo.questID, false);
 	WQT_WorldQuestFrame:HideWorldmapHighlight();
-	WQT_ActiveGameTooltip:Hide();
-	WQT_ActiveGameTooltip.ItemTooltip:Hide();
+	WQT_Utils:HideQuestTooltip();
 	
 	local isDisliked = self.questInfo:IsDisliked();
 	self:SetAlpha(isDisliked and 0.75 or 1);
@@ -1240,8 +1239,6 @@ function WQT_ListButtonMixin:OnLeave()
 	local difficultyColor = GetDifficultyColor(Enum.RelativeContentDifficulty.Fair);
 	local titleFS = self:GetTitleFontString();
 	titleFS:SetTextColor(difficultyColor.r, difficultyColor.g, difficultyColor.b);
-
-	WQT:HideDebugTooltip()
 end
 
 function WQT_ListButtonMixin:OnEnter()

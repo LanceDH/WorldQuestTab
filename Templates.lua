@@ -745,6 +745,12 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset)
 
 	-- title
 	GameTooltip_SetTitle(WQT_ActiveGameTooltip, title, qualityColor.color, true);
+
+	-- fml
+	if (WQT_ActiveGameTooltip == WQT_GameTooltip) then
+		local text = "WQT anti-error tooltip|nCan be turned off in the settings";
+		GameTooltip_AddColoredLine(WQT_ActiveGameTooltip, text, GRAY_FONT_COLOR);
+	end
 	
 	-- type
 	if (not style.hideType) then
@@ -803,6 +809,12 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset)
 	end
 
 	WQT_ActiveGameTooltip:Show();
+end
+
+function WQT_Utils:HideQuestTooltip()
+	WQT_ActiveGameTooltip:Hide();
+	WQT_ActiveGameTooltip.ItemTooltip:Hide();
+	WQT:HideDebugTooltip();
 end
 
 -- Climb map parents until the first continent type map it can find.

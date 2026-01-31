@@ -1440,6 +1440,7 @@ function WQT_SettingsFrameMixin:Init()
 				WQT.settings.general.useCustomTooltip = value;
 				WQT:UpdateActiveGameTooltip();
 			end);
+			data:MarkAsSuggestReload();
 			data:MarkAsNew(); -- 12.0.0
 		end
 
