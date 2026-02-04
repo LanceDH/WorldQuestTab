@@ -1171,6 +1171,7 @@ function WQT_SettingsFrameMixin:Init()
 		do -- 12.0.03
 			StartVersionCategory("12.0.03");
 			AddSection(ChangelogSections.Fixes, {
+				"Fixed a possible error when using the \"Matching Anima Textures\" setting";
 				"Fixed an error with the full screen quest container";
 			});
 		end

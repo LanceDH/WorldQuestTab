@@ -268,10 +268,7 @@ do
 								numItems = numItems * value;
 							end
 							if (WQT.settings.general.sl_genericAnimaIcons) then
-								texture = 3528288;
-								if (value >= 250) then
-									texture = 3528287;
-								end
+								texture = numItems >= 250 and 3528287 or 3528288;
 							end
 
 							typeName = WORLD_QUEST_REWARD_FILTERS_ANIMA;
