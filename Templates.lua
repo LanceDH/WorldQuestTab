@@ -5,6 +5,28 @@ local _V = addon.variables;
 local WQT_Profiles = addon.WQT_Profiles;
 
 --------------------------------
+-- WQT_TooltipMixin
+--------------------------------
+
+WQT_TooltipMixin = {};
+
+function WQT_TooltipMixin:SetTooltip(func)
+	self.tooltipFunc = func;
+end
+
+function WQT_TooltipMixin:OnEnter()
+	if (self.tooltipFunc) then
+		WQT_ActiveGameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+		self.tooltipFunc(WQT_ActiveGameTooltip);
+		WQT_ActiveGameTooltip:Show();
+	end
+end
+
+function WQT_TooltipMixin:OnLeave()
+	WQT_ActiveGameTooltip:Hide();
+end
+
+--------------------------------
 -- WQT_MiniIconMixin
 --------------------------------
 

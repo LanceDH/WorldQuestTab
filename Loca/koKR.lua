@@ -20,7 +20,6 @@ L["EMISSARY_COUNTER_TT"] = "각 사절의 진행 상황을 나타내는 사절 �
 L["FILTER_PINS"] = "지도 표시 필터"
 L["FILTER_PINS_TT"] = [=[지도 상의 표시에
 필터를 적용합니다.]=]
-L["GROUP_SEARCH_INFO"] = "블리자드는 부가 기능이 전역 퀘스트의 대부분의 퀘스트를 위한 그룹을 자동으로 찾지 못하게합니다. 이 때문에 플레이어는 검색 창을 수동으로 채원야합니다."
 L["LIST_FULL_TIME"] = "시간 확장"
 L["LIST_FULL_TIME_TT"] = "시간에 일, 분, 시간을 추가하여 시간에 보조 비율을 포함시킵니다."
 L["LIST_SETTINGS"] = "목록 설정"
@@ -80,6 +79,5 @@ L["TYPE_EMISSARY_TT"] = "현재 선택된 사절에 대한 퀘스트만 표시�
 L["TYPE_INVASION"] = "침공"
 L["USE_TOMTOM"] = "TomTom 허용"
 L["USE_TOMTOM_TT"] = "애드온에 TomTom 기능을 추가합니다."
-L["WQT_FULLSCREEN_BUTTON_TT"] = "좌-클릭으로 전역 퀘스트 목록을 전환합니다. 우-클릭 드래그로 위치를 변경합니다"
 L["PRECISE_FILTER"] = "정밀 필터"
 L["PRECISE_FILTER_TT"] = "하나의 범주가 아닌 모든 필터 범주와 일치하는 퀘스트만 표시하도록 필터링합니다."

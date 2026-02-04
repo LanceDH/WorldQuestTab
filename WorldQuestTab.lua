@@ -1430,25 +1430,7 @@ end
 -- 			SCROLLLIST MIXIN			--
 ------------------------------------------
 
-local APII_TooltipMixin = {};
-
-function APII_TooltipMixin:SetTooltip(func)
-	self.tooltipFunc = func;
-end
-
-function APII_TooltipMixin:OnEnter()
-	if (self.tooltipFunc) then
-		WQT_ActiveGameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-		self.tooltipFunc(WQT_ActiveGameTooltip);
-		WQT_ActiveGameTooltip:Show();
-	end
-end
-
-function APII_TooltipMixin:OnLeave()
-	WQT_ActiveGameTooltip:Hide();
-end
-
-WQT_CheckButtonMixin = CreateFromMixins(WowStyle2IconButtonMixin, CallbackRegistryMixin, APII_TooltipMixin);
+WQT_CheckButtonMixin = CreateFromMixins(WowStyle2IconButtonMixin, CallbackRegistryMixin, WQT_TooltipMixin);
 
 WQT_CheckButtonMixin:GenerateCallbackEvents(
 	{
@@ -1499,12 +1481,12 @@ end
 
 function WQT_CheckButtonMixin:OnEnter()
 	WowStyle2IconButtonMixin.OnEnter(self);
-	APII_TooltipMixin.OnEnter(self);
+	WQT_TooltipMixin.OnEnter(self);
 end
 
 function WQT_CheckButtonMixin:OnLeave()
 	WowStyle2IconButtonMixin.OnLeave(self);
-	APII_TooltipMixin.OnLeave(self);
+	WQT_TooltipMixin.OnLeave(self);
 end
 
 ------------------------------------------
@@ -1568,7 +1550,6 @@ function WQT_ScrollListMixin:UpdateTopBar()
 	local searchEnabled = self:GetSearchToggle():GetChecked();
 
 	self:GetSearchBox():SetShown(searchEnabled);
-	--self:GetSortDropdown():SetShown(not searchEnabled);
 	self:GetFilterDropdown():SetShown(not searchEnabled);
 
 	self:GetTopBar():Layout();
@@ -2365,4 +2346,28 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 	WQT_WorldMapContainer:SetShown(showMapContainer);
 
 	WQT_CallbackRegistry:TriggerEvent("WQT.CoreFrame.AnchorUpdated", anchor);
+end
+
+------------------------------------------
+-- 		   Full screen container		--
+------------------------------------------
+
+WQT_FullscreenMapContainer = CreateFromMixins(WQT_ConstrainedChildMixin);
+
+function WQT_FullscreenMapContainer:OnLoad()
+	self:SetParent(WorldMapFrame.ScrollContainer);
+	self:SetPoint("BOTTOMLEFT", WorldMapFrame.ScrollContainer, 0, 0);
+	WQT_ConstrainedChildMixin.OnLoad(self);
+	self.Bg:SetAlpha(0.65);
+
+	local function TooltipFunc(tooltip)
+		tooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
+		GameTooltip_SetTitle(tooltip, _L["CONTAINER_DRAG"]);
+		GameTooltip_AddNormalLine(tooltip, _L["CONTAINER_DRAG_TT"], true);
+	end
+	self.DragFrame:SetTooltip(TooltipFunc);
+end
+
+function WQT_FullscreenMapContainer:OnShow()
+	WQT_ListContainer:DisplayQuestList();
 end

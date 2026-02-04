@@ -31,7 +31,6 @@ L["FILTER_PINS"] = "Kartenpins filtern"
 L["FILTER_PINS_TT"] = "Wende Filter auf die Kartenpins an."
 L["GENERIC_ANIMA"] = "Ähnliche Animatexturen"
 L["GENERIC_ANIMA_TT"] = "Ersetzt die verschiedenen Animaitemtexturen durch eine, ähnlich wie bei Azerit. Dies betrifft nur Kartenicons und die Questliste."
-L["GROUP_SEARCH_INFO"] = "Blizzard verhindert, dass Addons für die meisten Weltquests automatisch nach einer Gruppe suchen. Aus diesem Grund müssen die Spieler das Suchfeld manuell ausfüllen."
 L["INCLUDE_DAILIES"] = "Tägliche Quests mit einbeziehen"
 L["INCLUDE_DAILIES_TT"] = "Behandle bestimmte Tägliche Quests als Weltquests. Betrifft nur Tägliche Quests, die Blizzard selbst als Weltquests behandelt."
 L["LIST_COLOR_TIME"] = "Farben für die Zeit"
@@ -157,5 +156,3 @@ L["UNINTERESTED"] = "Uninteressant"
 L["UNINTERESTED_TT"] = "Zeige Quests, die als 'Uninteressant' markiert sind weiterhin in der Liste an."
 L["USE_TOMTOM"] = "Erlaube TomTom"
 L["USE_TOMTOM_TT"] = "Füge Funktionen von TomTom zu diesem Addon hinzu."
-L["WQT_FULLSCREEN_BUTTON_TT"] = [=[Zeige und Blende die Weltquestliste mit einem Linksklick ein oder aus.
-Mit einem Rechtsklick kann die Position verschoben werden.]=]

@@ -1168,6 +1168,13 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	});
 		-- end
 
+		do -- 12.0.03
+			StartVersionCategory("12.0.03");
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed an error with the full screen quest container";
+			});
+		end
+
 		do -- 12.0.02
 			StartVersionCategory("12.0.02");
 			AddSection(ChangelogSections.New, {

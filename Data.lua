@@ -50,12 +50,6 @@ _V["CONDUIT_SUBTYPE"] = {
 	["potency"] = 3,
 }
 
-WQT_GROUP_INFO = _L["GROUP_SEARCH_INFO"];
-WQT_CONTAINER_DRAG = _L["CONTAINER_DRAG"];
-WQT_CONTAINER_DRAG_TT = _L["CONTAINER_DRAG_TT"];
-WQT_FULLSCREEN_BUTTON_TT = _L["WQT_FULLSCREEN_BUTTON_TT"];
-
-
 WQT_CallbackRegistry = CreateFromMixins(CallbackRegistryMixin);
 WQT_CallbackRegistry:SetUndefinedEventsAllowed(true);
 WQT_CallbackRegistry:OnLoad();

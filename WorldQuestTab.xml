@@ -453,9 +453,9 @@
 	
 	<Frame name="WQT_FlightMapContainer" inherits="WQT_ContainerTemplate" hidden="true" />
 	
-	<Frame name="WQT_WorldMapContainer" inherits="WQT_ContainerTemplate" mixin="WQT_ConstrainedChildMixin" parent="WorldMapFrame" hidden="false" enableMouse="true" movable="true">
+	<Frame name="WQT_WorldMapContainer" inherits="WQT_ContainerTemplate" mixin="WQT_FullscreenMapContainer" parent="WorldMapFrame" hidden="false" enableMouse="true" movable="true">
 		<Frames>
-			<Frame parentKey="DragFrame" enableMouse="true" movable="true">
+			<Frame parentKey="DragFrame" mixin="WQT_TooltipMixin" enableMouse="true" movable="true">
 				<HitRectInsets bottom="0" />
 				<Anchors>
 					<Anchor point="TOPLEFT" x="5" y="-3"/>
@@ -467,7 +467,7 @@
 					</OnLoad>
 					<OnDragStart>
 						self:GetParent():OnDragStart();
-						WQT_ActiveGameTooltip:Hide();
+						WQT_TooltipMixin.OnLeave(self);
 					</OnDragStart>
 					<OnDragStop>
 						self:GetParent():OnDragStop();
@@ -475,30 +475,16 @@
 					<OnUpdate>
 						self:GetParent():OnUpdate();
 					</OnUpdate>
-					<OnEnter>
-						WQT_ActiveGameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
-						WQT_ActiveGameTooltip:SetText(WQT_CONTAINER_DRAG, 1, 1, 1, true);
-						WQT_ActiveGameTooltip:AddLine(WQT_CONTAINER_DRAG_TT, nil, nil, nil, true);
-						WQT_ActiveGameTooltip:Show();
-					</OnEnter>	
-					<OnLeave>
-						WQT_ActiveGameTooltip:Hide();
-					</OnLeave>
+					<OnEnter method="OnEnter"/>
+					<OnLeave method="OnLeave"/>
 				</Scripts>
 				
 			</Frame>
 		</Frames>
 		
 		<Scripts>
-			<OnLoad>
-				self:SetParent(WorldMapFrame.ScrollContainer);
-				self:SetPoint("BOTTOMLEFT", WorldMapFrame.ScrollContainer, 0, 0);
-				self:OnLoad();
-				self.Bg:SetAlpha(0.65);
-			</OnLoad>
-			<OnShow>
-				WQT_ListContainer:DisplayQuestList(UpdateBackground);
-			</OnShow>
+			<OnLoad method="OnLoad"/>
+			<OnShow method="OnShow"/>
 		</Scripts>
 	</Frame>
 	

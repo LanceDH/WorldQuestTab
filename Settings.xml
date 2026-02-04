@@ -171,9 +171,9 @@
 		<Frames>
 			<Frame parentKey="DisabledOverlay" inherits="WQT_SettingsChildTemplate" setAllPoints="true" hidden="true"/>
 			<Frame parentKey="NewFeature" hidden="true">
-				<Size x="24" y="24" />
+				<Size x="20" y="20" />
 				<Anchors>
-					<Anchor point="LEFT" x="12" y="-1" />
+					<Anchor point="LEFT" x="14" y="-1" />
 				</Anchors>
 				<Layers>
 					<Layer level="ARTWORK">
