@@ -204,7 +204,7 @@ do
 		for k, line in ipairs(data.lines) do
 			if (line.type == type) then
 				if (not pattern or not line.leftText) then
-					return line;
+					return line, line.leftText;
 				end
 				local result = line.leftText:match(pattern);
 				if (result) then
@@ -244,13 +244,8 @@ do
 						if (C_Soulbinds.IsItemConduitByItemInfo(rewardId)) then
 							-- Conduits
 							rewardType = WQT_REWARDTYPE.conduit;
-							local line, result = GetTooltipLineOfType(tooltipData, Enum.TooltipDataLineType.None);
-							subType = _V["CONDUIT_SUBTYPE"].endurance;
-							if(result == CONDUIT_TYPE_FINESSE) then
-								subType = _V["CONDUIT_SUBTYPE"].finesse;
-							elseif(result == CONDUIT_TYPE_POTENCY) then
-								subType = _V["CONDUIT_SUBTYPE"].potency;
-							end
+							local lineData, result = GetTooltipLineOfType(tooltipData, Enum.TooltipDataLineType.None);
+							subType = result or CONDUIT_TYPE_ENDURANCE;
 							numItems = ilvl;
 						elseif (typeID == Enum.ItemClass.Armor or typeID == Enum.ItemClass.Weapon) then
 							if (typeID == Enum.ItemClass.Armor) then

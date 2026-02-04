@@ -21,9 +21,6 @@ local _playerFaction = UnitFactionGroup("Player");
 ------------------------
 -- PUBLIC
 ------------------------
-
-WQT_WORLD_QUEST_TAB = "World Quest Tab";
-
 WQT_REWARDTYPE = FlagsUtil.MakeFlags(
 	"weapon",		--1
 	"equipment",	--2
@@ -43,12 +40,6 @@ WQT_REWARDTYPE = FlagsUtil.MakeFlags(
 WQT_REWARDTYPE.none = 0;
 -- Combos
 WQT_REWARDTYPE.gear = bit.bor(WQT_REWARDTYPE.weapon, WQT_REWARDTYPE.equipment);
-
-_V["CONDUIT_SUBTYPE"] = {
-	["endurance"] = 1,
-	["finesse"] = 2,
-	["potency"] = 3,
-}
 
 WQT_CallbackRegistry = CreateFromMixins(CallbackRegistryMixin);
 WQT_CallbackRegistry:SetUndefinedEventsAllowed(true);
@@ -258,9 +249,9 @@ _V["REWARD_TYPE_ATLAS"] = {
 		,[WQT_REWARDTYPE.spell] = {["texture"] = "Banker", ["scale"] = 1.1}  -- spell acts like item
 		,[WQT_REWARDTYPE.anima] = {["texture"] =  "AncientMana", ["scale"] = 1.5} -- Anima
 		,[WQT_REWARDTYPE.conduit] = {
-			[_V["CONDUIT_SUBTYPE"].potency] = {["texture"] =  "soulbinds_tree_conduit_icon_attack", ["scale"] = 1.15};
-			[_V["CONDUIT_SUBTYPE"].endurance] = {["texture"] =  "soulbinds_tree_conduit_icon_protect", ["scale"] = 1.15};
-			[_V["CONDUIT_SUBTYPE"].finesse] = {["texture"] =  "soulbinds_tree_conduit_icon_utility", ["scale"] = 1.15};
+			[CONDUIT_TYPE_POTENCY] = {["texture"] =  "soulbinds_tree_conduit_icon_attack", ["scale"] = 1.15};
+			[CONDUIT_TYPE_ENDURANCE] = {["texture"] =  "soulbinds_tree_conduit_icon_protect", ["scale"] = 1.15};
+			[CONDUIT_TYPE_FINESSE] = {["texture"] =  "soulbinds_tree_conduit_icon_utility", ["scale"] = 1.15};
 		}-- Anima
 	}	
 

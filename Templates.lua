@@ -209,9 +209,11 @@ function WQT_ContainerButtonMixin:OnMouseUp()
 	end
 end
 
+local _, addonTitle = C_AddOns.GetAddOnInfo(addonName);
+
 function WQT_ContainerButtonMixin:OnEnter()
 	WQT_ActiveGameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	WQT_ActiveGameTooltip:SetText(WQT_WORLD_QUEST_TAB);
+	WQT_ActiveGameTooltip:SetText(addonTitle);
 	WQT_ActiveGameTooltip:Show();
 end
 
