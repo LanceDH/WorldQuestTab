@@ -156,10 +156,10 @@ function WQT_SettingsQuestListMixin:OnLoad()
 		end
 		timeFrame:SetText(timeString);
 		if (WQT.settings.list.colorTime) then
-			local color = WQT_Utils:GetColor(_V["COLOR_IDS"].timeMedium)
+			local color = WQT_Utils:GetColor("timeMedium")
 			timeFrame:SetVertexColor(color:GetRGB());
 		else
-			timeFrame:SetVertexColor(_V["WQT_WHITE_FONT_COLOR"]:GetRGB());
+			timeFrame:SetVertexColor(addon.variables:GetDefaultColor("fontWhite"):GetRGB());
 		end
 
 		return true;
@@ -912,7 +912,7 @@ function WQT_SettingsCategoryDataMixin:CreateText(tag, label, font, color, botto
 end
 
 local function UpdateColorID(id, r, g, b)
-	local color = WQT_Utils:UpdateColor(_V["COLOR_IDS"][id], r, g, b);
+	local color = WQT_Utils:UpdateColor(id, r, g, b);
 	if (color) then
 		WQT.settings.colors[id] = color:GenerateHexColor();
 		WQT_ListContainer:DisplayQuestList();
@@ -921,7 +921,7 @@ local function UpdateColorID(id, r, g, b)
 end
 
 local function GetColorByID(id)
-	return WQT_Utils:GetColor(_V["COLOR_IDS"][id]);
+	return WQT_Utils:GetColor(id);
 end
 
 function WQT_SettingsCategoryDataMixin:AddColorPicker(tag, label, tooltip, colorID, defaultColor)
@@ -1173,6 +1173,7 @@ function WQT_SettingsFrameMixin:Init()
 			AddSection(ChangelogSections.Fixes, {
 				"Fixed a possible error when using the \"Matching Anima Textures\" setting";
 				"Fixed an error with the full screen quest container";
+				"Fixed the map pin time remaining mini icon";
 			});
 		end
 
@@ -1453,10 +1454,11 @@ function WQT_SettingsFrameMixin:Init()
 		end
 
 		do -- Zone Quests
+			local enumZoneQuests = addon.variables:GetZoneQuestsEnum();
 			local options = {
-				CreateDropdownOption(_V["ENUM_ZONE_QUESTS"].zone, _L["ZONE_QUESTS_ZONE"], _L["ZONE_QUESTS_ZONE_TT"]);
-				CreateDropdownOption(_V["ENUM_ZONE_QUESTS"].neighbor, _L["ZONE_QUESTS_VISIBLE"], _L["ZONE_QUESTS_VISIBLE_TT"]);
-				CreateDropdownOption(_V["ENUM_ZONE_QUESTS"].expansion, _L["ZONE_QUESTS_EXPANSION"], _L["ZONE_QUESTS_EXPANSION_TT"]);
+				CreateDropdownOption(enumZoneQuests.zone, _L["ZONE_QUESTS_ZONE"], _L["ZONE_QUESTS_ZONE_TT"]);
+				CreateDropdownOption(enumZoneQuests.neighbor, _L["ZONE_QUESTS_VISIBLE"], _L["ZONE_QUESTS_VISIBLE_TT"]);
+				CreateDropdownOption(enumZoneQuests.expansion, _L["ZONE_QUESTS_EXPANSION"], _L["ZONE_QUESTS_EXPANSION_TT"]);
 			};
 		
 			local data = category:AddDropdown("ZONE_QUESTS", _L["ZONE_QUESTS"], _L["ZONE_QUESTS_TT"], options);
@@ -1609,10 +1611,11 @@ function WQT_SettingsFrameMixin:Init()
 		end
 
 		do -- Center Type
+			local enumPinCenterType = addon.variables:GetPinCenterTypeEnum();
 			local options = {
-				CreateDropdownOption(_V["PIN_CENTER_TYPES"].blizzard, _L["BLIZZARD"], _L["PIN_BLIZZARD_TT"]);
-				CreateDropdownOption(_V["PIN_CENTER_TYPES"].reward, REWARD, _L["PIN_REWARD_TT"]);
-				CreateDropdownOption(_V["PIN_CENTER_TYPES"].faction, FACTION, _L["PIN_FACTION_TT"]);
+				CreateDropdownOption(enumPinCenterType.blizzard, _L["BLIZZARD"], _L["PIN_BLIZZARD_TT"]);
+				CreateDropdownOption(enumPinCenterType.reward, REWARD, _L["PIN_REWARD_TT"]);
+				CreateDropdownOption(enumPinCenterType.faction, FACTION, _L["PIN_FACTION_TT"]);
 			};
 			
 			local data = category:AddDropdown("PIN_CENTER_TYPE", _L["PIN_CENTER"], _L["PIN_CENTER_TT"], options);
@@ -1622,11 +1625,12 @@ function WQT_SettingsFrameMixin:Init()
 		end
 
 		do -- Ring Type
+			local enumRingType = addon.variables:GetRingTypeEnum();
 			local options = {
-				CreateDropdownOption(_V["RING_TYPES"].default, _L["PIN_RING_DEFAULT"], _L["PIN_RING_DEFAULT_TT"]);
-				CreateDropdownOption(_V["RING_TYPES"].reward, _L["PIN_RING_COLOR"], _L["PIN_RING_COLOR_TT"]);
-				CreateDropdownOption(_V["RING_TYPES"].time, _L["PIN_RING_TIME"], _L["PIN_RIMG_TIME_TT"]);
-				CreateDropdownOption(_V["RING_TYPES"].rarity, RARITY, _L["PIN_RING_QUALITY_TT"]);
+				CreateDropdownOption(enumRingType.default, _L["PIN_RING_DEFAULT"], _L["PIN_RING_DEFAULT_TT"]);
+				CreateDropdownOption(enumRingType.reward, _L["PIN_RING_COLOR"], _L["PIN_RING_COLOR_TT"]);
+				CreateDropdownOption(enumRingType.time, _L["PIN_RING_TIME"], _L["PIN_RIMG_TIME_TT"]);
+				CreateDropdownOption(enumRingType.rarity, RARITY, _L["PIN_RING_QUALITY_TT"]);
 			};
 		
 			local data = category:AddDropdown("PIN_RING_TYPE", _L["PIN_RING_TITLE"], _L["PIN_RING_TT"], options);
@@ -1635,11 +1639,12 @@ function WQT_SettingsFrameMixin:Init()
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
 		end
 
+		local enumPinLabel = addon.variables:GetPinLabelEnum();
 		do -- Label
 			local options = {
-				CreateDropdownOption(_V["ENUM_PIN_LABEL"].none, NONE, _L["PIN_LABEL_NONE_TT"]);
-				CreateDropdownOption(_V["ENUM_PIN_LABEL"].time, _L["PIN_TIME"], _L["PIN_TIME_TT"]);
-				CreateDropdownOption(_V["ENUM_PIN_LABEL"].amount, _L["PIN_LABEL_REWARD"], _L["PIN_LABEL_REWARD_TT"]);
+				CreateDropdownOption(enumPinLabel.none, NONE, _L["PIN_LABEL_NONE_TT"]);
+				CreateDropdownOption(enumPinLabel.time, _L["PIN_TIME"], _L["PIN_TIME_TT"]);
+				CreateDropdownOption(enumPinLabel.amount, _L["PIN_LABEL_REWARD"], _L["PIN_LABEL_REWARD_TT"]);
 			};
 		
 			local data = category:AddDropdown("PIN_LABEL", _L["PIN_LABEL"], _L["PIN_LABEL_TT"], options);
@@ -1653,15 +1658,16 @@ function WQT_SettingsFrameMixin:Init()
 			local data = category:AddCheckbox("PIN_LABEL_COLORS", _L["PIN_LABEL_COLORS"], _L["PIN_LABEL_COLORS_TT"]);
 			data:SetGetValueFunction(function() return WQT.settings.pin.labelColors; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.labelColors = value; end);
-			data:SetIsDisabledFunction(function() return WQT.settings.pin.label == _V["ENUM_PIN_LABEL"].none; end);
+			data:SetIsDisabledFunction(function() return WQT.settings.pin.label == enumPinLabel.none; end);
 			data:MarkAsNew(); -- 11.2.5
 		end
 
 		do -- Zone Visibility
+			local enumPinZone = addon.variables:GetPinZoneEnum();
 			local options = {
-				CreateDropdownOption(_V["ENUM_PIN_ZONE"].none, NONE, _L["PIN_VISIBILITY_NONE_TT"]);
-				CreateDropdownOption(_V["ENUM_PIN_ZONE"].tracked, _L["PIN_VISIBILITY_TRACKED"], _L["PIN_VISIBILITY_TRACKED_TT"]);
-				CreateDropdownOption(_V["ENUM_PIN_ZONE"].all, ALL, _L["PIN_VISIBILITY_ALL_TT"]);
+				CreateDropdownOption(enumPinZone.none, NONE, _L["PIN_VISIBILITY_NONE_TT"]);
+				CreateDropdownOption(enumPinZone.tracked, _L["PIN_VISIBILITY_TRACKED"], _L["PIN_VISIBILITY_TRACKED_TT"]);
+				CreateDropdownOption(enumPinZone.all, ALL, _L["PIN_VISIBILITY_ALL_TT"]);
 			};
 
 			local data = category:AddDropdown("PIN_ZONE_VISIBILITY", _L["PIN_VISIBILITY_ZONE"], _L["PIN_VISIBILITY_ZONE_TT"], options);
@@ -1671,10 +1677,11 @@ function WQT_SettingsFrameMixin:Init()
 		end
 
 		do -- Continent Visibility
+			local enumPinContinent = addon.variables:GetPinContinentEnum();
 			local options = {
-				CreateDropdownOption(_V["ENUM_PIN_CONTINENT"].none, NONE, _L["PIN_VISIBILITY_NONE_TT"]);
-				CreateDropdownOption(_V["ENUM_PIN_CONTINENT"].tracked, _L["PIN_VISIBILITY_TRACKED"], _L["PIN_VISIBILITY_TRACKED_TT"]);
-				CreateDropdownOption(_V["ENUM_PIN_CONTINENT"].all, ALL, _L["PIN_VISIBILITY_ALL_TT"]);
+				CreateDropdownOption(enumPinContinent.none, NONE, _L["PIN_VISIBILITY_NONE_TT"]);
+				CreateDropdownOption(enumPinContinent.tracked, _L["PIN_VISIBILITY_TRACKED"], _L["PIN_VISIBILITY_TRACKED_TT"]);
+				CreateDropdownOption(enumPinContinent.all, ALL, _L["PIN_VISIBILITY_ALL_TT"]);
 			};
 		
 			local data = category:AddDropdown("PIN_CONTINENT_VISIBILITY", _L["PIN_VISIBILITY_CONTINENT"], _L["PIN_VISIBILITY_CONTINENT_TT"], options);
@@ -1741,47 +1748,49 @@ function WQT_SettingsFrameMixin:Init()
 			local subCategory = category:AddSubCategory("CUSTOM_COLORS_TIME", _L["TIME_COLORS"], CATEGORY_DEFAULT_EXPANDED);
 
 			subCategory:AddColorPicker("COLOR_TIME_CRITICAL", _L["TIME_CRITICAL"], _L["TIME_CRITICAL_TT"], "timeCritical", RED_FONT_COLOR);
-			subCategory:AddColorPicker("COLOR_TIME_SHORT", _L["TIME_SHORT"], _L["TIME_SHORT_TT"], "timeShort", _V["WQT_ORANGE_FONT_COLOR"]);
-			subCategory:AddColorPicker("COLOR_TIME_MEDIUM", _L["TIME_MEDIUM"], _L["TIME_MEDIUM_TT"], "timeMedium", _V["WQT_GREEN_FONT_COLOR"]);
-			subCategory:AddColorPicker("COLOR_TIME_LONG", _L["TIME_LONG"], _L["TIME_LONG_TT"], "timeLong", _V["WQT_BLUE_FONT_COLOR"]);
-			subCategory:AddColorPicker("COLOR_TIME_VERY_LONG", _L["TIME_VERYLONG"], _L["TIME_VERYLONG_TT"], "timeVeryLong", _V["WQT_PURPLE_FONT_COLOR"]);
-			subCategory:AddColorPicker("COLOR_TIME_NONE", NONE, _L["TIME_NONE_TT"], "timeNone", _V["WQT_COLOR_CURRENCY"]);
+			subCategory:AddColorPicker("COLOR_TIME_SHORT", _L["TIME_SHORT"], _L["TIME_SHORT_TT"], "timeShort", addon.variables:GetDefaultColor("fontOrange"));
+			subCategory:AddColorPicker("COLOR_TIME_MEDIUM", _L["TIME_MEDIUM"], _L["TIME_MEDIUM_TT"], "timeMedium", addon.variables:GetDefaultColor("fontGreen"));
+			subCategory:AddColorPicker("COLOR_TIME_LONG", _L["TIME_LONG"], _L["TIME_LONG_TT"], "timeLong", addon.variables:GetDefaultColor("fontBlue"));
+			subCategory:AddColorPicker("COLOR_TIME_VERY_LONG", _L["TIME_VERYLONG"], _L["TIME_VERYLONG_TT"], "timeVeryLong", addon.variables:GetDefaultColor("fontPurple"));
+			subCategory:AddColorPicker("COLOR_TIME_NONE", NONE, _L["TIME_NONE_TT"], "timeNone", addon.variables:GetDefaultColor("rewardCurrency"));
 		end
 
 		do -- Reward Amount Colors
 			local subCategory = category:AddSubCategory("CUSTOM_COLORS_AMOUNT", _L["REWARD_COLORS_AMOUNT"], not CATEGORY_DEFAULT_EXPANDED);
 
-			subCategory:AddColorPicker("COLOR_AMOUNT_WEAPON", WEAPON, nil, "rewardTextWeapon", _V["WQT_COLOR_WEAPON"]);
-			subCategory:AddColorPicker("COLOR_AMOUNT_ARMOR", ARMOR, nil, "rewardTextArmor", _V["WQT_COLOR_ARMOR"]);
-			subCategory:AddColorPicker("COLOR_AMOUNT_ITEM", ITEMS, nil, "rewardTextItem", _V["WQT_WHITE_FONT_COLOR"]);
-			subCategory:AddColorPicker("COLOR_AMOUNT_XP", POWER_TYPE_EXPERIENCE, nil, "rewardTextXp", _V["WQT_WHITE_FONT_COLOR"]);
-			subCategory:AddColorPicker("COLOR_AMOUNT_GOLD", WORLD_QUEST_REWARD_FILTERS_GOLD, nil, "rewardTextGold", _V["WQT_WHITE_FONT_COLOR"]);
-			subCategory:AddColorPicker("COLOR_AMOUNT_CURRENCY", CURRENCY, nil, "rewardTextCurrency", _V["WQT_WHITE_FONT_COLOR"]);
-			subCategory:AddColorPicker("COLOR_AMOUNT_REPUTATION", REPUTATION, nil, "rewardTextReputation", _V["WQT_WHITE_FONT_COLOR"]);
-			subCategory:AddColorPicker("COLOR_AMOUNT_HONOR", HONOR, nil, "rewardTextHonor", _V["WQT_WHITE_FONT_COLOR"]);
+			local defaultFontWhiteColor = addon.variables:GetDefaultColor("fontWhite");
+
+			subCategory:AddColorPicker("COLOR_AMOUNT_WEAPON", WEAPON, nil, "rewardTextWeapon", addon.variables:GetDefaultColor("rewardWeapon"));
+			subCategory:AddColorPicker("COLOR_AMOUNT_ARMOR", ARMOR, nil, "rewardTextArmor", addon.variables:GetDefaultColor("rewardArmor"));
+			subCategory:AddColorPicker("COLOR_AMOUNT_ITEM", ITEMS, nil, "rewardTextItem", defaultFontWhiteColor);
+			subCategory:AddColorPicker("COLOR_AMOUNT_XP", POWER_TYPE_EXPERIENCE, nil, "rewardTextXp", defaultFontWhiteColor);
+			subCategory:AddColorPicker("COLOR_AMOUNT_GOLD", WORLD_QUEST_REWARD_FILTERS_GOLD, nil, "rewardTextGold", defaultFontWhiteColor);
+			subCategory:AddColorPicker("COLOR_AMOUNT_CURRENCY", CURRENCY, nil, "rewardTextCurrency", defaultFontWhiteColor);
+			subCategory:AddColorPicker("COLOR_AMOUNT_REPUTATION", REPUTATION, nil, "rewardTextReputation", defaultFontWhiteColor);
+			subCategory:AddColorPicker("COLOR_AMOUNT_HONOR", HONOR, nil, "rewardTextHonor", defaultFontWhiteColor);
 			subCategory:AddColorPicker("COLOR_AMOUNT_ANIMA", WORLD_QUEST_REWARD_FILTERS_ANIMA, nil, "rewardTextAnima", GREEN_FONT_COLOR);
 			subCategory:AddColorPicker("COLOR_AMOUNT_ARTIFACT", ITEM_QUALITY6_DESC, nil, "rewardTextArtifact", GREEN_FONT_COLOR);
-			subCategory:AddColorPicker("COLOR_AMOUNT_CONDUIT", _L["REWARD_CONDUITS"], nil, "rewardTextConduit", _V["WQT_WHITE_FONT_COLOR"]);
-			subCategory:AddColorPicker("COLOR_AMOUNT_RELIC", RELICSLOT, nil, "rewardTextRelic", _V["WQT_WHITE_FONT_COLOR"]);
+			subCategory:AddColorPicker("COLOR_AMOUNT_CONDUIT", _L["REWARD_CONDUITS"], nil, "rewardTextConduit", defaultFontWhiteColor);
+			subCategory:AddColorPicker("COLOR_AMOUNT_RELIC", RELICSLOT, nil, "rewardTextRelic", defaultFontWhiteColor);
 		end
 
 		do -- Reward Ring Colors
 			local subCategory = category:AddSubCategory("CUSTOM_COLORS_RING", _L["REWARD_COLORS_RING"], not CATEGORY_DEFAULT_EXPANDED);
-
-			subCategory:AddColorPicker("COLOR_REWARD_NONE", NONE, nil, "rewardNone", _V["WQT_COLOR_NONE"]);
-			subCategory:AddColorPicker("COLOR_REWARD_WEAPON", WEAPON, nil, "rewardWeapon", _V["WQT_COLOR_WEAPON"]);
-			subCategory:AddColorPicker("COLOR_REWARD_ARMOR", ARMOR, nil, "rewardArmor", _V["WQT_COLOR_ARMOR"]);
-			subCategory:AddColorPicker("COLOR_REWARD_ITEM", ITEMS, nil, "rewardItem", _V["WQT_COLOR_ITEM"]);
-			subCategory:AddColorPicker("COLOR_REWARD_XP", POWER_TYPE_EXPERIENCE, nil, "rewardXp", _V["WQT_COLOR_ITEM"]);
-			subCategory:AddColorPicker("COLOR_REWARD_GOLD", WORLD_QUEST_REWARD_FILTERS_GOLD, nil, "rewardGold", _V["WQT_COLOR_GOLD"]);
-			subCategory:AddColorPicker("COLOR_REWARD_CURRENCY", CURRENCY, nil, "rewardCurrency", _V["WQT_COLOR_CURRENCY"]);
-			subCategory:AddColorPicker("COLOR_REWARD_REPUTATION", REPUTATION, nil, "rewardReputation", _V["WQT_COLOR_CURRENCY"]);
-			subCategory:AddColorPicker("COLOR_REWARD_HONOR", HONOR, nil, "rewardHonor", _V["WQT_COLOR_HONOR"]);
-			subCategory:AddColorPicker("COLOR_REWARD_ANIMA", WORLD_QUEST_REWARD_FILTERS_ANIMA, nil, "rewardAnima", _V["WQT_COLOR_ARTIFACT"]);
-			subCategory:AddColorPicker("COLOR_REWARD_ARTIFACT", ITEM_QUALITY6_DESC, nil, "rewardArtifact", _V["WQT_COLOR_ARTIFACT"]);
-			subCategory:AddColorPicker("COLOR_REWARD_CONDUIT", _L["REWARD_CONDUITS"], nil, "rewardConduit", _V["WQT_COLOR_RELIC"]);
-			subCategory:AddColorPicker("COLOR_REWARD_RELIC", RELICSLOT, nil, "rewardRelic", _V["WQT_COLOR_RELIC"]);
-			subCategory:AddColorPicker("COLOR_REWARD_MISSING", ADDON_MISSING, nil, "rewardMissing", _V["WQT_COLOR_MISSING"]);
+			
+			subCategory:AddColorPicker("COLOR_REWARD_NONE", NONE, nil, "rewardNone", addon.variables:GetDefaultColor("rewardNone"));
+			subCategory:AddColorPicker("COLOR_REWARD_WEAPON", WEAPON, nil, "rewardWeapon", addon.variables:GetDefaultColor("rewardWeapon"));
+			subCategory:AddColorPicker("COLOR_REWARD_ARMOR", ARMOR, nil, "rewardArmor", addon.variables:GetDefaultColor("rewardArmor"));
+			subCategory:AddColorPicker("COLOR_REWARD_ITEM", ITEMS, nil, "rewardItem", addon.variables:GetDefaultColor("rewardItem"));
+			subCategory:AddColorPicker("COLOR_REWARD_XP", POWER_TYPE_EXPERIENCE, nil, "rewardXp", addon.variables:GetDefaultColor("rewardItem"));
+			subCategory:AddColorPicker("COLOR_REWARD_GOLD", WORLD_QUEST_REWARD_FILTERS_GOLD, nil, "rewardGold", addon.variables:GetDefaultColor("rewardGold"));
+			subCategory:AddColorPicker("COLOR_REWARD_CURRENCY", CURRENCY, nil, "rewardCurrency", addon.variables:GetDefaultColor("rewardCurrency"));
+			subCategory:AddColorPicker("COLOR_REWARD_REPUTATION", REPUTATION, nil, "rewardReputation", addon.variables:GetDefaultColor("rewardCurrency"));
+			subCategory:AddColorPicker("COLOR_REWARD_HONOR", HONOR, nil, "rewardHonor", addon.variables:GetDefaultColor("rewardHonor"));
+			subCategory:AddColorPicker("COLOR_REWARD_ANIMA", WORLD_QUEST_REWARD_FILTERS_ANIMA, nil, "rewardAnima", addon.variables:GetDefaultColor("rewardArtifact"));
+			subCategory:AddColorPicker("COLOR_REWARD_ARTIFACT", ITEM_QUALITY6_DESC, nil, "rewardArtifact", addon.variables:GetDefaultColor("rewardArtifact"));
+			subCategory:AddColorPicker("COLOR_REWARD_CONDUIT", _L["REWARD_CONDUITS"], nil, "rewardConduit", addon.variables:GetDefaultColor("rewardRelic"));
+			subCategory:AddColorPicker("COLOR_REWARD_RELIC", RELICSLOT, nil, "rewardRelic", addon.variables:GetDefaultColor("rewardRelic"));
+			subCategory:AddColorPicker("COLOR_REWARD_MISSING", ADDON_MISSING, nil, "rewardMissing", addon.variables:GetDefaultColor("rewardMissing"));
 		end
 	end -- Colors
 end

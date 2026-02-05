@@ -398,11 +398,8 @@ function WQT_CallingsBoardDisplayMixin:OnEnter()
 		WQT_ActiveGameTooltip:Show();
 	else
 		self.Highlight:Show();
-		if (self.calling:IsActive()) then
-			WQT_Utils:ShowQuestTooltip(self, self.questInfo, _V["TOOLTIP_STYLES"].callingActive);
-		else
-			WQT_Utils:ShowQuestTooltip(self, self.questInfo, _V["TOOLTIP_STYLES"].callingAvailable);
-		end
+		local tooltipStyle = self.calling:IsActive() and "callingActive" or "callingAvailable";
+		WQT_Utils:ShowQuestTooltip(self, self.questInfo, _V:GetTooltipStyle(tooltipStyle));
 	end
 end
 

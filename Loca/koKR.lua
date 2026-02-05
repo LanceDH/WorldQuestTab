@@ -3,7 +3,6 @@
 if GetLocale() ~= "koKR" then return end;
 
 local L = addon.L;
-L["IS_AZIAN_CLIENT"]	= true
 
 L["ALWAYS_ALL"] = "항상 모든 퀘스트"
 L["ALWAYS_ALL_TT"] = "현재 지역과 관련된 확장팩에 대한 모든 퀘스트를 항상 표시합니다"

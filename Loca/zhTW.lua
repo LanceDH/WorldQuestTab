@@ -3,7 +3,6 @@
 if GetLocale() ~= "zhTW" then return end;
 
 local L = addon.L;
-L["IS_AZIAN_CLIENT"]	= true
 
 L["AMOUNT_COLORS"] = "數值著色"
 L["AMOUNT_COLORS_TT"] = "在任務列表中根據獎勵類型在數值上著色"

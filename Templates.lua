@@ -80,10 +80,10 @@ function WQT_MiniIconMixin:SetDesaturated(desaturate)
 end
 
 function WQT_MiniIconMixin:SetIconCoords(left, right, top, bottom)
-	self.l = left;
-	self.r = right;
-	self.t = top;
-	self.b = bottom;
+	self.left = left;
+	self.right = right;
+	self.top = top;
+	self.bottom = bottom;
 	self:Update();
 end
 
@@ -122,8 +122,8 @@ end
 function WQT_MiniIconMixin:SetupRewardIcon(rewardType, subType)
 	self:Reset();
 	
-	local rewardTypeAtlas = WQT_Utils:GetRewardIconInfo(rewardType, subType);
-	
+	local rewardTypeAtlas = _V:GetRewardIconAtlas(rewardType, subType);
+
 	if not (rewardTypeAtlas) then
 		return;
 	end
@@ -599,23 +599,6 @@ function WQT_Utils:GetCachedMapInfo(zoneId)
 	return zoneInfo;
 end
 
-function WQT_Utils:GetFactionDataInternal(id)
-	if (not id) then  
-		-- No faction
-		return _V["WQT_NO_FACTION_DATA"];
-	end;
-	local factionData = _V["WQT_FACTION_DATA"];
-
-	if (not factionData[id]) then
-		-- Add new faction in case it's not in our data yet
-		local data = C_Reputation.GetFactionDataByID(id);
-		factionData[id] = { ["expansion"] = 0,["faction"] = nil ,["texture"] = 1103069, ["unknown"] = true, ["name"] = data and data.name or "Unknown Faction" };
-		WQT:DebugPrint("Added new faction", factionData[id].name);
-	end
-	
-	return factionData[id];
-end
-
 function WQT_Utils:GetCachedTypeIconData(questInfo)
 	local tagInfo = questInfo:GetTagInfo();
 	-- If there is no tag info, it's a bonus objective
@@ -644,8 +627,9 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 	local timeLeftSeconds = 0
 	local timeString = "";
 	local timeStringShort = "";
-	local color = WQT_Utils:GetColor(_V["COLOR_IDS"].timeNone);
-	local category = _V["TIME_REMAINING_CATEGORY"].none;
+	local color = WQT_Utils:GetColor("timeNone");
+	local enumTimeRemaining = _V:GetTimeRemainingEnum();
+	local category = enumTimeRemaining.none;
 	
 	if (not questInfo or not questInfo.questID) then return timeLeftSeconds, timeString, color ,timeStringShort, timeLeftMinutes, category end
 	
@@ -654,7 +638,7 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 		timeString = RAID_INSTANCE_EXPIRES_EXPIRED;
 		timeStringShort = "Exp."
 		color = GRAY_FONT_COLOR;
-		return 0, timeString, color,timeStringShort , 0, _V["TIME_REMAINING_CATEGORY"].expired;
+		return 0, timeString, color,timeStringShort , 0, enumTimeRemaining.expired;
 	end
 	
 	timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(questInfo.questID) or 0;
@@ -666,21 +650,21 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 		end
 	
 		if ( timeLeftSeconds < WORLD_QUESTS_TIME_CRITICAL_MINUTES * SECONDS_PER_MIN  ) then
-			color = WQT_Utils:GetColor(_V["COLOR_IDS"].timeCritical);--RED_FONT_COLOR;
+			color = WQT_Utils:GetColor("timeCritical");
 			timeString = SecondsToTime(displayTime, displayTime > SECONDS_PER_MIN and (not fullString) or false, unabreviated);
-			category = _V["TIME_REMAINING_CATEGORY"].critical;
+			category = enumTimeRemaining.critical;
 		elseif displayTime < SECONDS_PER_HOUR   then
 			timeString = SecondsToTime(displayTime, not fullString, unabreviated);
-			color = WQT_Utils:GetColor(_V["COLOR_IDS"].timeShort);--_V["WQT_ORANGE_FONT_COLOR"];
-			category = _V["TIME_REMAINING_CATEGORY"].short
+			color = WQT_Utils:GetColor("timeShort");
+			category = enumTimeRemaining.short
 		elseif displayTime < SECONDS_PER_DAY   then
 			if (fullString) then
 				timeString = SecondsToTime(displayTime, true, unabreviated);
 			else
 				timeString = D_HOURS:format(displayTime / SECONDS_PER_HOUR);
 			end
-			color = WQT_Utils:GetColor(_V["COLOR_IDS"].timeMedium);--_V["WQT_GREEN_FONT_COLOR"];
-			category = _V["TIME_REMAINING_CATEGORY"].medium;
+			color = WQT_Utils:GetColor("timeMedium");
+			category = enumTimeRemaining.medium;
 		else
 			if (fullString) then
 				timeString = SecondsToTime(displayTime, true, unabreviated);
@@ -690,11 +674,11 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 			local tagInfo = questInfo:GetTagInfo();
 			local isWeek = tagInfo and tagInfo.isElite and tagInfo.quality == Enum.WorldQuestQuality.Epic
 			if (isWeek) then
-				color = WQT_Utils:GetColor(_V["COLOR_IDS"].timeVeryLong);
-				category = _V["TIME_REMAINING_CATEGORY"].veryLong;
+				color = WQT_Utils:GetColor("timeVeryLong");
+				category = enumTimeRemaining.veryLong;
 			else
-				color = WQT_Utils:GetColor(_V["COLOR_IDS"].timeLong);
-				category = _V["TIME_REMAINING_CATEGORY"].long;
+				color = WQT_Utils:GetColor("timeLong");
+				category = enumTimeRemaining.long;
 			end
 		end
 	end
@@ -751,7 +735,7 @@ function WQT_Utils:TimeLeftToUpdateTime(timeLeft, showingSecondary)
 end
 
 function WQT_Utils:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset)
-	style = style or _V["TOOLTIP_STYLES"].default;
+	style = style or _V:GetTooltipStyle("default");
 	WQT:ShowDebugTooltipForQuest(questInfo, button);
 
 	WQT_ActiveGameTooltip:SetOwner(button, "ANCHOR_RIGHT", xOffset or 0, yOffset or 0);
@@ -797,8 +781,9 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset)
 	end
 	
 	-- Add time
-	local seconds, timeString, timeColor, _, _, category = WQT_Utils:GetQuestTimeString(questInfo, true, true)
-	if (seconds > 0 or category == _V["TIME_REMAINING_CATEGORY"].expired) then
+	local seconds, timeString, timeColor, _, _, category = WQT_Utils:GetQuestTimeString(questInfo, true, true);
+	local enumTimeRemaining = _V:GetTimeRemainingEnum();
+	if (seconds > 0 or category == enumTimeRemaining.expired) then
 		timeColor = seconds <= SECONDS_PER_HOUR and timeColor or HIGHLIGHT_FONT_COLOR;
 		timeString = timeColor:WrapTextInColorCode(timeString);
 		GameTooltip_AddNormalLine(WQT_ActiveGameTooltip, MAP_TOOLTIP_TIME_LEFT:format(timeString));
@@ -895,30 +880,6 @@ function WQT_Utils:QuestIncorrectlyCounts(questLogIndex)
 	
 end
 
--- Count quests counting to the quest log cap and collect the ones that shouldn't count
-function WQT_Utils:GetQuestLogInfo(list)
-	local numEntries, questCount = C_QuestLog.GetNumQuestLogEntries();
-	local maxQuests = C_QuestLog.GetMaxNumQuestsCanAccept();
-	
-	if (list) then
-		wipe(list);
-	end
-
-	for questLogIndex = 1, numEntries do
-		-- Remove the ones that shouldn't be counted
-		if (WQT_Utils:QuestIncorrectlyCounts(questLogIndex)) then
-			questCount = questCount - 1;
-			if (list) then
-				tinsert(list, questLogIndex);
-			end
-		end
-	end
-	
-	local color = questCount >= maxQuests and RED_FONT_COLOR or (questCount >= maxQuests-2 and _V["WQT_ORANGE_FONT_COLOR"] or _V["WQT_WHITE_FONT_COLOR"]);
-	
-	return questCount, maxQuests, color;
-end
-
 function WQT_Utils:QuestIsWatchedManual(questId)
 	return questId and C_QuestLog.GetQuestWatchType(questId) == Enum.QuestWatchType.Manual;
 end
@@ -936,8 +897,9 @@ function WQT_Utils:GetQuestMapLocation(questId, mapId)
 	return 0, 0;
 end
 
-function WQT_Utils:RewardTypePassesFilter(rewardType) 
-	local rewardFilters = WQT.settings.filters[_V["FILTER_TYPES"].reward].flags;
+function WQT_Utils:RewardTypePassesFilter(rewardType)
+	local enumFilterType = _V:GetFilterTypeEnum();
+	local rewardFilters = WQT.settings.filters[enumFilterType.reward].flags;
 	if(rewardType == WQT_REWARDTYPE.equipment or rewardType == WQT_REWARDTYPE.weapon) then
 		return rewardFilters.Armor;
 	end
@@ -1006,25 +968,6 @@ end
 
 function WQT_Utils:RegisterExternalSettings(key, defaults)
 	return WQT_Profiles:RegisterExternalSettings(key, defaults);
-end
-
-function WQT_Utils:FilterIsOldContent(typeID, flagID)
-	local typeList = _V["FILTER_TYPE_OLD_CONTENT"][typeID];
-	if (typeList) then
-		return typeList[flagID];
-	end
-	return false;
-end
-
-function WQT_Utils:GetRewardIconInfo(rewardType, subType)
-	if (not rewardType) then return; end
-
-	local rewardTypeAtlas = _V["REWARD_TYPE_ATLAS"][rewardType];
-	if (rewardTypeAtlas and not rewardTypeAtlas.texture) then
-		rewardTypeAtlas = rewardTypeAtlas[subType];
-	end
-	
-	return rewardTypeAtlas;
 end
 
 local function AddInstructionTooltipToDropdownItem(item, text)
@@ -1262,24 +1205,11 @@ function WQT_Utils:GetCharacterExpansionLevel()
 	return 0;
 end
 
-function WQT_Utils:IsFilterDisabledByOfficial(key)
-	local officialFilters = _V["WQT_FILTER_TO_OFFICIAL"][key];
-	if (officialFilters) then
-		for k, filter in ipairs(officialFilters) do
-			if (not C_CVar.GetCVarBool(filter)) then
-				return true;
-			end
-		end
-	end
-
-	return false
-end
-
 function WQT_Utils:GetLocalizedAbbreviatedNumber(number)
 	if type(number) ~= "number" then return "NaN" end;
 
-	local intervals = _L["IS_AZIAN_CLIENT"] and _V["NUMBER_ABBREVIATIONS_ASIAN"] or _V["NUMBER_ABBREVIATIONS"];
-	
+	local intervals = _V:GetAbriviationNumbers();
+
 	for i = 1, #intervals do
 		local interval = intervals[i];
 		local value = interval.value;
@@ -1331,14 +1261,8 @@ local function ExtractColorValueFromHex(str, index)
 end
 
 function WQT_Utils:LoadColors()
-	local count = 1;
 	for colorID, hex in pairs(WQT.settings.colors) do
-		-- Create enum index
-		_V["COLOR_IDS"][colorID] = count;
-		-- assign color to index
-		_Colors[count] =  CreateColorFromHexString(hex);
-		
-		count = count + 1 ;
+		_Colors[colorID] =  CreateColorFromHexString(hex);
 	end
 end
 
@@ -1361,53 +1285,52 @@ function WQT_Utils:GetColor(colorID)
 end
 
 function WQT_Utils:GetRewardTypeColorIDs(rewardType)
-	local colorIDs = _V["COLOR_IDS"];
-	local ring = colorIDs.rewardItem;
-	local text = colorIDs.rewardItem;
+	local ring = "rewardItem";
+	local text = "rewardItem";
 	
 	if (rewardType == WQT_REWARDTYPE.none) then
-		ring = colorIDs.rewardNone;
+		ring = "rewardNone";
 	elseif (rewardType == WQT_REWARDTYPE.weapon) then
-		ring = colorIDs.rewardWeapon;
-		text = colorIDs.rewardTextWeapon;
+		ring = "rewardWeapon";
+		text = "rewardTextWeapon";
 	elseif (rewardType == WQT_REWARDTYPE.equipment) then
-		ring = colorIDs.rewardArmor;
-		text = colorIDs.rewardTextArmor;
+		ring = "rewardArmor";
+		text = "rewardTextArmor";
 	elseif (rewardType == WQT_REWARDTYPE.conduit) then
-		ring = colorIDs.rewardConduit;
-		text = colorIDs.rewardTextConduit;
+		ring = "rewardConduit";
+		text = "rewardTextConduit";
 	elseif (rewardType == WQT_REWARDTYPE.relic) then
-		ring = colorIDs.rewardRelic;
-		text = colorIDs.rewardTextRelic;
+		ring = "rewardRelic";
+		text = "rewardTextRelic";
 	elseif (rewardType == WQT_REWARDTYPE.anima) then
-		ring = colorIDs.rewardAnima;
-		text = colorIDs.rewardTextAnima;
+		ring = "rewardAnima";
+		text = "rewardTextAnima";
 	elseif (rewardType == WQT_REWARDTYPE.artifact) then
-		ring = colorIDs.rewardArtifact;
-		text = colorIDs.rewardTextArtifact;
+		ring = "rewardArtifact";
+		text = "rewardTextArtifact";
 	elseif (rewardType == WQT_REWARDTYPE.spell) then
-		ring = colorIDs.rewardSpell;
-		text = colorIDs.rewardTextSpell;
+		ring = "rewardSpell";
+		text = "rewardTextSpell";
 	elseif (rewardType == WQT_REWARDTYPE.item) then
-		ring = colorIDs.rewardItem;
-		text = colorIDs.rewardTextItem;
+		ring = "rewardItem";
+		text = "rewardTextItem";
 	elseif (rewardType == WQT_REWARDTYPE.gold) then
-		ring = colorIDs.rewardGold;
-		text = colorIDs.rewardTextGold;
+		ring = "rewardGold";
+		text = "rewardTextGold";
 	elseif (rewardType == WQT_REWARDTYPE.currency) then
-		ring = colorIDs.rewardCurrency;
-		text = colorIDs.rewardTextCurrency;
+		ring = "rewardCurrency";
+		text = "rewardTextCurrency";
 	elseif (rewardType == WQT_REWARDTYPE.honor) then
-		ring = colorIDs.rewardHonor;
-		text = colorIDs.rewardTextHonor;
+		ring = "rewardHonor";
+		text = "rewardTextHonor";
 	elseif (rewardType == WQT_REWARDTYPE.reputation) then
-		ring = colorIDs.rewardReputation;
-		text = colorIDs.rewardTextReputation;
+		ring = "rewardReputation";
+		text = "rewardTextReputation";
 	elseif (rewardType == WQT_REWARDTYPE.xp) then
-		ring = colorIDs.Xp;
-		text = colorIDs.rewardTextXp;
+		ring = "Xp";
+		text = "rewardTextXp";
 	elseif (rewardType == WQT_REWARDTYPE.missing) then
-		ring = colorIDs.rewardMissing;
+		ring = "rewardMissing";
 	end
 	
 	return self:GetColor(ring), self:GetColor(text);

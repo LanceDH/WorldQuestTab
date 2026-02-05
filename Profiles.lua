@@ -75,7 +75,8 @@ local function CopyIfNil(a, b)
 end
 
 local function AddCategoryDefaults(category)
-	if (not _V["WQT_DEFAULTS"].global[category]) then
+	local settingsCategory = _V:GetDefaultSettingsCategory(category);
+	if (not settingsCategory) then
 		return;
 	end
 	-- In case a setting doesn't have a newer category yet
@@ -83,7 +84,7 @@ local function AddCategoryDefaults(category)
 		WQT.settings[category] = {};
 	end
 	
-	CopyIfNil(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
+	CopyIfNil(WQT.settings[category], settingsCategory);
 end
 
 local function GetProfileById(id)
@@ -110,12 +111,14 @@ local function ApplyVersionChanges(profile, version)
 
 	if (version < 110206) then
 		-- Changed time label to label dropdown
-		profile.pin.label = profile.pin.timeLabel and _V["ENUM_PIN_LABEL"].time or _V["ENUM_PIN_LABEL"].none;
+		local enumPinLabel = _V:GetPinLabelEnum();
+		profile.pin.label = profile.pin.timeLabel and enumPinLabel.time or enumPinLabel.none;
 		profile.pin.timeLabel = nil;
 	end
 
 	if (version < 110208) then
-		profile.general.zoneQuests = profile.list.alwaysAllQuests and _V["ENUM_ZONE_QUESTS"].expansion or _V["ENUM_ZONE_QUESTS"].zone;
+		local enumZoneQuests = _V:GetZoneQuestsEnum();
+		profile.general.zoneQuests = profile.list.alwaysAllQuests and enumZoneQuests.expansion or enumZoneQuests.zone;
 		-- Cleanup
 		profile.general.questCounter = nil;
 		profile.list.alwaysAllQuests = nil;
@@ -123,16 +126,16 @@ local function ApplyVersionChanges(profile, version)
 
 	if (version < 110210) then
 		local sortConvert = {
-			[1] = _V["SORT_IDS"].time;
-			[2] = _V["SORT_IDS"].faction;
-			[3] = _V["SORT_IDS"].type;
-			[4] = _V["SORT_IDS"].zone;
-			[5] = _V["SORT_IDS"].name;
-			[6] = _V["SORT_IDS"].reward;
-			[7] = _V["SORT_IDS"].quality;
+			[1] = "time";
+			[2] = "faction";
+			[3] = "type";
+			[4] = "zone";
+			[5] = "name";
+			[6] = "reward";
+			[7] = "quality";
 		};
 
-		local sortBy = sortConvert[profile.general.sortBy] or _V["SORT_IDS"].reward;
+		local sortBy = sortConvert[profile.general.sortBy] or "reward";
 		profile.general.sortBy = sortBy
 	end
 end
@@ -366,58 +369,49 @@ function WQT_Profiles:GetActiveProfileName()
 	return profile and profile.name or "Invalid Profile";
 end
 
-function WQT_Profiles:ClearDefaultsFromActive()
-	local category = "general";
-	
-	ClearDefaults(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
-	category = "list";
-	ClearDefaults(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
-	category = "pin";
-	ClearDefaults(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
-	category = "filters";
-	ClearDefaults(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
-	category = "colors";
-	ClearDefaults(WQT.settings[category], _V["WQT_DEFAULTS"].global[category]);
-	
-	--External
-	local externals = WQT.settings.external;
-	for external, settings in pairs(self.externalDefaults) do
-		ClearDefaults(externals[external], settings);
+do
+	local settingCategories = {
+		"general";
+		"list";
+		"pin";
+		"filters";
+		"colors";
+	};
+
+	function WQT_Profiles:ClearDefaultsFromActive()
+		for k, category in pairs(settingCategories) do
+			ClearDefaults(WQT.settings[category], _V:GetDefaultSettingsCategory(category));
+		end
+
+		--External
+		local externals = WQT.settings.external;
+		for external, settings in pairs(self.externalDefaults) do
+			ClearDefaults(externals[external], settings);
+		end
+		
 	end
-	
-end
 
-function WQT_Profiles:ResetActive()
-	self:ResetProfile(WQT.settings);
-end
+	function WQT_Profiles:ResetActive()
+		self:ResetProfile(WQT.settings);
+	end
 
-function WQT_Profiles:ResetProfile(profile)
-	local category = "general";
-	wipe(profile[category]);
-	profile[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
-	category = "list";
-	wipe(profile[category]);
-	profile[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
-	category = "pin";
-	wipe(profile[category]);
-	profile[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
-	category = "filters";
-	wipe(profile[category]);
-	profile[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
-	category = "colors";
-	wipe(profile[category]);
-	profile[category]= CopyTable(_V["WQT_DEFAULTS"].global[category]);
-	
-	-- Make sure our colors are up to date
-	WQT_Utils:LoadColors();
-	
-	--External
-	local externals = profile.external;
-	for external, settings in pairs(self.externalDefaults) do
-		if (externals[external]) then
-			wipe(externals[external]);
-			-- The external has a direct reference to this table, so don't replace it
-			CopyIfNil(externals[external], settings);
+	function WQT_Profiles:ResetProfile(profile)
+		for k, category in pairs(settingCategories) do
+			wipe(profile[category]);
+			profile[category]= CopyTable(_V:GetDefaultSettingsCategory(category));
+		end
+		
+		-- Make sure our colors are up to date
+		WQT_Utils:LoadColors();
+		
+		--External
+		local externals = profile.external;
+		for external, settings in pairs(self.externalDefaults) do
+			if (externals[external]) then
+				wipe(externals[external]);
+				-- The external has a direct reference to this table, so don't replace it
+				CopyIfNil(externals[external], settings);
+			end
 		end
 	end
 end

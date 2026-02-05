@@ -49,91 +49,114 @@ WQT_CallbackRegistry:OnLoad();
 -- SHARED
 ------------------------
 
-_V["PATH_CUSTOM_ICONS"] = "Interface/Addons/WorldQuestTab/Images/CustomIcons";
-_V["LIST_ANCHOR_TYPE"] = {["flight"] = 1, ["world"] = 2, ["full"] = 3, ["taxi"] = 4};
+local enumListAnchorType = {
+	flight	= 1;
+	world	= 2;
+	full	= 3;
+	taxi	= 4;
+}
+function _V:GetListAnchorTypeEnum()
+	return enumListAnchorType;
+end
 
-_V["TOOLTIP_STYLES"] = { 
-	["default"] = TOOLTIP_QUEST_REWARDS_STYLE_WORLD_QUEST,
-	["callingAvailable"] = { ["hideObjectives"] = true; },
-	["callingActive"] = TOOLTIP_QUEST_REWARDS_STYLE_CALLING_REWARD,
+local tooltipStyles = {
+	default				= TOOLTIP_QUEST_REWARDS_STYLE_WORLD_QUEST;
+	callingAvailable	= { ["hideObjectives"] = true; };
+	callingActive		= TOOLTIP_QUEST_REWARDS_STYLE_CALLING_REWARD;
+}
+function _V:GetTooltipStyle(name)
+	return tooltipStyles[name];
+end
+
+local defaultColors = {
+	rewardNone		= CreateColor(0.45, 0.45, .45);
+	rewardWeapon	= CreateColor(1, 0.45, 1);
+	rewardArmor		= CreateColor(0.95, 0.65, 1);
+	rewardArtifact	= CreateColor(0, 0.75, 0);
+	rewardCurrency	= CreateColor(0.6, 0.4, 0.1);
+	rewardGold		= CreateColor(0.95, 0.8, 0);
+	rewardHonor		= CreateColor(0.8, 0.26, 0);
+	rewardItem		= CreateColor(0.85, 0.85, 0.85);
+	rewardRelic		= CreateColor(0.3, 0.7, 1);
+	rewardMissing	= CreateColor(0.7, 0.1, 0.1);
+
+	fontWhite		= CreateColor(0.9, 0.9, 0.9);
+	fontOrange		= CreateColor(1, 0.5, 0);
+	fontGreen		= CreateColor(0, 0.8, 0);
+	fontBlue		= CreateColor(0.2, 0.60, 1);
+	fontPurple		= CreateColor(0.84, 0.38, 0.94);
 }
 
-_V["COLOR_IDS"] = {
+function _V:GetDefaultColor(name)
+	return defaultColors[name];
+end
+
+local enumFilterType = {
+	faction = 1,
+	type    = 2,
+	reward  = 3,
 }
+function _V:GetFilterTypeEnum()
+	return enumFilterType;
+end
 
-
-_V["WQT_COLOR_NONE"] =  CreateColor(0.45, 0.45, .45) ;
-_V["WQT_COLOR_ARMOR"] =  CreateColor(0.95, 0.65, 1) ;
-_V["WQT_COLOR_WEAPON"] =  CreateColor(1, 0.45, 1) ;
-_V["WQT_COLOR_ARTIFACT"] = CreateColor(0, 0.75, 0);
-_V["WQT_COLOR_CURRENCY"] = CreateColor(0.6, 0.4, 0.1) ;
-_V["WQT_COLOR_GOLD"] = CreateColor(0.95, 0.8, 0) ;
-_V["WQT_COLOR_HONOR"] = CreateColor(0.8, 0.26, 0);
-_V["WQT_COLOR_ITEM"] = CreateColor(0.85, 0.85, 0.85) ;
-_V["WQT_COLOR_MISSING"] = CreateColor(0.7, 0.1, 0.1);
-_V["WQT_COLOR_RELIC"] = CreateColor(0.3, 0.7, 1);
-_V["WQT_WHITE_FONT_COLOR"] = CreateColor(0.9, 0.9, 0.9);
-_V["WQT_ORANGE_FONT_COLOR"] = CreateColor(1, 0.5, 0);
-_V["WQT_GREEN_FONT_COLOR"] = CreateColor(0, 0.8, 0);
-_V["WQT_BLUE_FONT_COLOR"] = CreateColor(0.2, 0.60, 1);
-_V["WQT_PURPLE_FONT_COLOR"] = CreateColor(0.84, 0.38, 0.94);
-
-_V["FILTER_TYPES"] = {
-	["faction"] = 1
-	,["type"] = 2
-	,["reward"] = 3
+local enumPinCenterType = {
+	blizzard	= 1;
+	reward		= 2;
+	faction		= 3;
 }
+function _V:GetPinCenterTypeEnum()
+	return enumPinCenterType;
+end
 
-_V["PIN_CENTER_TYPES"] =	{
-	["blizzard"] = 1
-	,["reward"] = 2
-	,["faction"] = 3
+local enumRingType = {
+	default	= 1;
+	reward	= 2;
+	time	= 3;
+	rarity	= 4;
 }
+function _V:GetRingTypeEnum()
+	return enumRingType;
+end
 
-_V["RING_TYPES"] = {
-	["default"] = 1
-	,["reward"] = 2
-	,["time"] = 3
-	,["rarity"] = 4
+local enumPinContinent = {
+	none	= 1;
+	tracked	= 2;
+	all		= 3;
 }
+function _V:GetPinContinentEnum()
+	return enumPinContinent;
+end
 
-_V["ENUM_PIN_CONTINENT"] = {
-	["none"] = 1
-	,["tracked"] = 2
-	,["all"] = 3
+local enumPinZone = {
+	none	= 1;
+	tracked	= 2;
+	all		= 3;
 }
+function _V:GetPinZoneEnum()
+	return enumPinZone;
+end
 
-
-_V["ENUM_PIN_ZONE"] = {
-	["none"] = 1
-	,["tracked"] = 2
-	,["all"] = 3
+local enumPinLabel = {
+	none	= 1;
+	time	= 2;
+	amount	= 3;
 }
+function _V:GetPinLabelEnum()
+	return enumPinLabel;
+end
 
-_V["ENUM_PIN_LABEL"] = {
-	["none"] = 1
-	,["time"] = 2
-	,["amount"] = 3
+local enumZoneQuests = {
+	zone		= 1;
+	neighbor	= 2;
+	expansion	= 3;
 }
-
-_V["ENUM_ZONE_QUESTS"] = {
-	["zone"] = 1
-	,["neighbor"] = 2
-	,["expansion"] = 3
-}
-
-_V["SORT_IDS"] = {
-	time = "time";
-	faction = "faction";
-	type = "type";
-	zone = "zone";
-	name = "name";
-	reward = "reward";
-	quality = "quality";
-}
+function _V:GetZoneQuestsEnum()
+	return enumZoneQuests;
+end
 
 -- Not where they should be. Count them as invalid. Thanks Blizzard
-_V["BUGGED_POI"] =  {
+local buggedQuestIDs =  {
 	[66004] = 2022	-- Galgresh
 	,[66356] = 2023	-- Irontree
 	,[69849] = 2022	-- Enraged Steamburst Elemental
@@ -157,133 +180,156 @@ _V["BUGGED_POI"] =  {
 	,[72128] = 2022	-- Enkine the Voracious
 	,[74441] = 2023	-- Eaglemaster Niraak
 }
+function _V:GetBuggedQuestMapID(questID)
+	return buggedQuestIDs[questID];
+end
 
-_V["TIME_REMAINING_CATEGORY"] = {
-	["none"] = 0
-	,["expired"] = 1
-	,["critical"] = 2 -- <15m
-	,["short"] = 3 -- 1h
-	,["medium"] = 4 -- 24h
-	,["long"] = 5 -- 3d
-	,["veryLong"] = 6 -- >3d
+local enumTimeRemaining = {
+	none		= 0;
+	expired		= 1;
+	critical	= 2; -- <15m
+	short		= 3; -- 1h
+	medium		= 4; -- 24h
+	long		= 5; -- 3d
+	veryLong	= 6; -- >3d
+}
+function _V:GetTimeRemainingEnum()
+	return enumTimeRemaining;
+end
+
+local abriviationNumbers = {
+	{["value"] = 10000000000, ["format"] = _L["NUMBERS_THIRD"]};
+	{["value"] = 1000000000, ["format"] = _L["NUMBERS_THIRD"], ["decimal"] = true};
+	{["value"] = 10000000, ["format"] = _L["NUMBERS_SECOND"]};
+	{["value"] = 1000000, ["format"] = _L["NUMBERS_SECOND"], ["decimal"] = true};
+	{["value"] = 10000, ["format"] = _L["NUMBERS_FIRST"]};
+	{["value"] = 1000, ["format"] = _L["NUMBERS_FIRST"], ["decimal"] = true};
 }
 
-_V["NUMBER_ABBREVIATIONS_ASIAN"] = {
-		{["value"] = 1000000000, ["format"] = _L["NUMBERS_THIRD"]}
-		,{["value"] = 100000000, ["format"] = _L["NUMBERS_SECOND"], ["decimal"] = true}
-		,{["value"] = 100000, ["format"] = _L["NUMBERS_FIRST"]}
-		,{["value"] = 10000, ["format"] = _L["NUMBERS_FIRST"], ["decimal"] = true}
+local locale = GetLocale();
+if (locale == "koKR" or locale == "zhCN" or locale == "zhTW") then
+	abriviationNumbers = {
+		{["value"] = 1000000000, ["format"] = _L["NUMBERS_THIRD"]};
+		{["value"] = 100000000, ["format"] = _L["NUMBERS_SECOND"], ["decimal"] = true};
+		{["value"] = 100000, ["format"] = _L["NUMBERS_FIRST"]};
+		{["value"] = 10000, ["format"] = _L["NUMBERS_FIRST"], ["decimal"] = true};
 	}
+end
+function _V:GetAbriviationNumbers()
+	return abriviationNumbers;
+end
 
-_V["NUMBER_ABBREVIATIONS"] = {
-		{["value"] = 10000000000, ["format"] = _L["NUMBERS_THIRD"]}
-		,{["value"] = 1000000000, ["format"] = _L["NUMBERS_THIRD"], ["decimal"] = true}
-		,{["value"] = 10000000, ["format"] = _L["NUMBERS_SECOND"]}
-		,{["value"] = 1000000, ["format"] = _L["NUMBERS_SECOND"], ["decimal"] = true}
-		,{["value"] = 10000, ["format"] = _L["NUMBERS_FIRST"]}
-		,{["value"] = 1000, ["format"] = _L["NUMBERS_FIRST"], ["decimal"] = true}
-	}
-
-_V["WQT_CVAR_LIST"] = {
-		["Petbattle"] = "showTamers"
-		,["Artifact"] = "worldQuestFilterArtifactPower"
-		,["Armor"] = "worldQuestFilterEquipment"
-		,["Gold"] = "worldQuestFilterGold"
-		,["Currency"] = "worldQuestFilterResources"
-	}
-	
-_V["WQT_TYPEFLAG_LABELS"] = {
-		[2] = {
-			["Default"] = DEFAULT,
-			["Elite"] = ELITE,
-			["PvP"] = PVP,
-			["Petbattle"] = PET_BATTLE_PVP_QUEUE,
-			["Dungeon"] = TRACKER_HEADER_DUNGEON,
-			["Raid"] = RAID,
-			["Profession"] = BATTLE_PET_SOURCE_4,
-			["Invasion"] = _L["TYPE_INVASION"],
-			["Assault"] = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE,
-			["Bonus"] = SCENARIO_BONUS_LABEL,
-			["Dragonrider"] = DRAGONRIDING_RACES_MAP_TOGGLE
-		}
-		,[3] = {
-			["Item"] = ITEMS,
-			["Armor"] = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT,
-			["Gold"] = WORLD_QUEST_REWARD_FILTERS_GOLD,
-			["Currency"] = CURRENCY,
-			["Artifact"] = ITEM_QUALITY6_DESC,
-			["Anima"] = WORLD_QUEST_REWARD_FILTERS_ANIMA,
-			["Conduits"] = _L["REWARD_CONDUITS"],
-			["Relic"] = RELICSLOT,
-			["None"] = NONE,
-			["Experience"] = POWER_TYPE_EXPERIENCE,
-			["Honor"] = HONOR,
-			["Reputation"] = REPUTATION
-		}
+local typeFlagLabels = {
+	[enumFilterType.type] = {
+		Default		= DEFAULT;
+		Elite		= ELITE;
+		PvP			= PVP;
+		Petbattle	= PET_BATTLE_PVP_QUEUE;
+		Dungeon		= TRACKER_HEADER_DUNGEON;
+		Raid		= RAID;
+		Profession	= BATTLE_PET_SOURCE_4;
+		Invasion	= _L["TYPE_INVASION"];
+		Assault		= SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE;
+		Bonus		= SCENARIO_BONUS_LABEL;
+		Dragonrider	= DRAGONRIDING_RACES_MAP_TOGGLE;
 	};
-
-_V["FILTER_TYPE_OLD_CONTENT"] = {
-	[2] = {
-		["Invasion"] = true;
-		["Assault"] = true;
+	[enumFilterType.reward] = {
+		Item		= ITEMS;
+		Armor		= WORLD_QUEST_REWARD_FILTERS_EQUIPMENT;
+		Gold		= WORLD_QUEST_REWARD_FILTERS_GOLD;
+		Currency	= CURRENCY;
+		Artifact	= ITEM_QUALITY6_DESC;
+		Anima		= WORLD_QUEST_REWARD_FILTERS_ANIMA;
+		Conduits	= _L["REWARD_CONDUITS"];
+		Relic		= RELICSLOT;
+		None		= NONE;
+		Experience	= POWER_TYPE_EXPERIENCE;
+		Honor		= HONOR;
+		Reputation	= REPUTATION;
 	};
-	[3] = {
-		["Artifact"] = true;
-		["Relic"] = true;
-		["Conduits"] = true;
-		["Anima"] = true;
-	}
+};
+function _V:GetTypeFlagLabel(filterType, key)
+	local t = typeFlagLabels[filterType];
+	return t and t[key];
+end
+
+local oldContentFilters = {
+	[enumFilterType.type] = {
+		Invasion	= true;
+		Assault		= true;
+	};
+	[enumFilterType.reward] = {
+		Artifact	= true;
+		Relic		= true;
+		Conduits	= true;
+		Anima		= true;
+	};
 }
+function _V:FilterIsOldContent(filterType, key)
+	local t = oldContentFilters[filterType];
+	return t and t[key];
+end
 
-_V["REWARD_TYPE_ATLAS"] = {
-		[WQT_REWARDTYPE.weapon] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.211, ["r"] = 0.277, ["t"] = 0.246, ["b"] = 0.277} -- Weapon
-		,[WQT_REWARDTYPE.equipment] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.847, ["r"] = 0.91, ["t"] = 0.459, ["b"] = 0.49} -- Armor
-		,[WQT_REWARDTYPE.relic] = {["texture"] = "poi-scrapper", ["scale"] = 1} -- Relic
-		,[WQT_REWARDTYPE.artifact] = {["texture"] = "AzeriteReady", ["scale"] = 1.3} -- Azerite
-		,[WQT_REWARDTYPE.item] = {["texture"] = "Banker", ["scale"] = 1.1} -- Item
-		,[WQT_REWARDTYPE.gold] = {["texture"] = "Auctioneer", ["scale"] = 1} -- Gold
-		,[WQT_REWARDTYPE.currency] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.4921875, ["r"] = 0.55859375, ["t"] = 0.0390625, ["b"] = 0.068359375, ["color"] = CreateColor(0.7, 0.52, 0.43)} -- Resources
-		,[WQT_REWARDTYPE.honor] = {["texture"] = _playerFaction == "Alliance" and "poi-alliance" or "poi-horde", ["scale"] = 1} -- Honor
-		,[WQT_REWARDTYPE.reputation] = {["texture"] = "QuestRepeatableTurnin", ["scale"] = 1.2} -- Rep
-		,[WQT_REWARDTYPE.xp] = {["texture"] = "poi-door-arrow-up", ["scale"] = .9} -- xp
-		,[WQT_REWARDTYPE.spell] = {["texture"] = "Banker", ["scale"] = 1.1}  -- spell acts like item
-		,[WQT_REWARDTYPE.anima] = {["texture"] =  "AncientMana", ["scale"] = 1.5} -- Anima
-		,[WQT_REWARDTYPE.conduit] = {
-			[CONDUIT_TYPE_POTENCY] = {["texture"] =  "soulbinds_tree_conduit_icon_attack", ["scale"] = 1.15};
-			[CONDUIT_TYPE_ENDURANCE] = {["texture"] =  "soulbinds_tree_conduit_icon_protect", ["scale"] = 1.15};
-			[CONDUIT_TYPE_FINESSE] = {["texture"] =  "soulbinds_tree_conduit_icon_utility", ["scale"] = 1.15};
-		}-- Anima
-	}	
-
-_V["FILTER_FUNCTIONS"] = {
-		[2] = { -- Types
-			["PvP"] 			= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PvP; end 
-			,["Petbattle"] 		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PetBattle; end 
-			,["Dungeon"] 		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Dungeon; end 
-			,["Raid"] 			= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Raid; end 
-			,["Profession"]		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Profession; end 
-			,["Invasion"] 		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Invasion; end 
-			,["Assault"]		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.FactionAssault; end 
-			,["Elite"]			= function(questInfo, tagInfo) return tagInfo and tagInfo.isElite and tagInfo.worldQuestType ~= Enum.QuestTagType.Dungeon; end
-			,["Default"]		= function(questInfo, tagInfo) return tagInfo and not tagInfo.isElite and tagInfo.worldQuestType == Enum.QuestTagType.Normal; end 
-			,["Bonus"]			= function(questInfo, tagInfo) return not tagInfo; end
-			,["Dragonrider"]	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.DragonRiderRacing; end 
-			}
-		,[3] = { -- Reward filters
-			["Armor"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.equipment + WQT_REWARDTYPE.weapon) > 0; end
-			,["Relic"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.relic) > 0; end
-			,["Item"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.spell + WQT_REWARDTYPE.item) > 0; end
-			,["Anima"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.anima) > 0; end
-			,["Conduits"]	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.conduit) > 0; end
-			,["Artifact"]	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.artifact) > 0; end
-			,["Honor"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.honor) > 0; end
-			,["Gold"]		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.gold) > 0; end
-			,["Currency"]	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.currency) > 0; end
-			,["Experience"]	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.xp) > 0; end
-			,["Reputation"]	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.reputation) > 0; end
-			,["None"]		= function(questInfo, tagInfo) return questInfo.reward.typeBits == WQT_REWARDTYPE.none; end
-			}
+local filterFunctions = {
+	[enumFilterType.type] = {
+		PvP			= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PvP; end;
+		Petbattle	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PetBattle; end;
+		Dungeon 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Dungeon; end;
+		Raid 		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Raid; end;
+		Profession	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Profession; end;
+		Invasion 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Invasion; end;
+		Assault		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.FactionAssault; end;
+		Elite		= function(questInfo, tagInfo) return tagInfo and tagInfo.isElite and tagInfo.worldQuestType ~= Enum.QuestTagType.Dungeon; end;
+		Default		= function(questInfo, tagInfo) return tagInfo and not tagInfo.isElite and tagInfo.worldQuestType == Enum.QuestTagType.Normal; end;
+		Bonus		= function(questInfo, tagInfo) return not tagInfo; end;
+		Dragonrider	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.DragonRiderRacing; end;
 	};
+	[enumFilterType.reward] = {
+		Armor		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.equipment + WQT_REWARDTYPE.weapon) > 0; end;
+		Relic		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.relic) > 0; end;
+		Item		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.spell + WQT_REWARDTYPE.item) > 0; end;
+		Anima		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.anima) > 0; end;
+		Conduits	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.conduit) > 0; end;
+		Artifact	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.artifact) > 0; end;
+		Honor		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.honor) > 0; end;
+		Gold		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.gold) > 0; end;
+		Currency	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.currency) > 0; end;
+		Experience	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.xp) > 0; end;
+		Reputation	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.reputation) > 0; end;
+		None		= function(questInfo, tagInfo) return questInfo.reward.typeBits == WQT_REWARDTYPE.none; end;
+	};
+};
+function _V:GetFilterFunction(filterType, key)
+	local t = filterFunctions[filterType];
+	return t and t[key];
+end
+
+local rewardTypeAtlases = {
+	[WQT_REWARDTYPE.weapon] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.211, ["r"] = 0.277, ["t"] = 0.246, ["b"] = 0.277}; -- Weapon
+	[WQT_REWARDTYPE.equipment] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.847, ["r"] = 0.91, ["t"] = 0.459, ["b"] = 0.49}; -- Armor
+	[WQT_REWARDTYPE.relic] = {["texture"] = "poi-scrapper", ["scale"] = 1}; -- Relic
+	[WQT_REWARDTYPE.artifact] = {["texture"] = "AzeriteReady", ["scale"] = 1.3}; -- Azerite
+	[WQT_REWARDTYPE.item] = {["texture"] = "Banker", ["scale"] = 1.1}; -- Item
+	[WQT_REWARDTYPE.gold] = {["texture"] = "Auctioneer", ["scale"] = 1}; -- Gold
+	[WQT_REWARDTYPE.currency] = {["texture"] =  "Interface/MINIMAP/POIIcons", ["scale"] = 1, ["l"] = 0.4921875, ["r"] = 0.55859375, ["t"] = 0.0390625, ["b"] = 0.068359375, ["color"] = CreateColor(0.7, 0.52, 0.43)}; -- Resources
+	[WQT_REWARDTYPE.honor] = {["texture"] = _playerFaction == "Alliance" and "poi-alliance" or "poi-horde", ["scale"] = 1}; -- Honor
+	[WQT_REWARDTYPE.reputation] = {["texture"] = "QuestRepeatableTurnin", ["scale"] = 1.2}; -- Rep
+	[WQT_REWARDTYPE.xp] = {["texture"] = "poi-door-arrow-up", ["scale"] = .9}; -- xp
+	[WQT_REWARDTYPE.spell] = {["texture"] = "Banker", ["scale"] = 1.1};  -- spell acts like item
+	[WQT_REWARDTYPE.anima] = {["texture"] =  "AncientMana", ["scale"] = 1.5}; -- Anima
+	[WQT_REWARDTYPE.conduit] = {
+		[CONDUIT_TYPE_POTENCY] = {["texture"] =  "soulbinds_tree_conduit_icon_attack", ["scale"] = 1.15};
+		[CONDUIT_TYPE_ENDURANCE] = {["texture"] =  "soulbinds_tree_conduit_icon_protect", ["scale"] = 1.15};
+		[CONDUIT_TYPE_FINESSE] = {["texture"] =  "soulbinds_tree_conduit_icon_utility", ["scale"] = 1.15};
+	}; -- conduits
+}
+function _V:GetRewardIconAtlas(rewardType, subType)
+	local t = rewardTypeAtlases[rewardType];
+	if (t and not t.texture) then
+		t = t[subType];
+	end
+	return t;
+end
 
 local quelThalasMapCoords = {
 	[2424]	= {["x"] = 0.26, ["y"] = 0.14}, -- Isle of Quel'Danas
@@ -505,7 +551,7 @@ local azerothMapCoords = {
 	[2537]	= {["x"] = 0.89, ["y"] = 0.55, ["expansion"] = LE_EXPANSION_MIDNIGHT}; -- Quel'Thalas - Highjack EK
 }
 
-_V["WQT_ZONE_MAPCOORDS"] = {
+local continentMapZones = {
 		[947]	= azerothMapCoords; -- All of Azeroth.
 		[13]	= easternKingdomsMapCoords;
 		[1208]	= easternKingdomsMapCoords; -- Flightmap
@@ -554,6 +600,15 @@ _V["WQT_ZONE_MAPCOORDS"] = {
 		[2561]	= quelThalasMapCoords; -- Flightmap
 	}
 
+function _V:GetZonesForContinentMap(mapID)
+	return continentMapZones[mapID];
+end
+
+function _V:GetZoneCoordinates(mapID, zoneId)
+	local continent = _V:GetZonesForContinentMap(mapID);
+	return continent and continent[zoneId];
+end
+
 -- Expansions that span multiple continents (maps containing multiple zones)
 local linkedContinents = {
 	{2274, 2276, 2248, 2371}, -- War Within
@@ -562,15 +617,19 @@ local linkedContinents = {
 	{619, 993, 905}, -- Legion
 }
 
-_V["WQT_CONTINENT_LINKS"] = {};
+local linkedZones = {};
 for _, group in ipairs(linkedContinents) do
 	for _, mapID in ipairs(group) do
-		_V["WQT_CONTINENT_LINKS"][mapID] = group;
+		linkedZones[mapID] = group;
 	end
 end
 wipe(linkedContinents);
 
-_V["ZONE_SUBZONES"] = {
+function _V:GetLinkedZones(mapID)
+	return linkedZones[mapID];
+end
+
+local subZones = {
 	[1565] = {1701, 1702, 1703}; -- Ardenweald covenant
 	[1533] = {1707, 1708}; -- Bastion Covenant
 	[1525] = {1699, 1700}; -- Revendreth Covenant
@@ -580,9 +639,13 @@ _V["ZONE_SUBZONES"] = {
 	[2371] = {2472}; -- K'aresh -> Tazavesh
 	[2395] = {2393}; -- Eversong Woods -> Silvermoon City
 }
+function _V:GetSubZones(mapID)
+	return subZones[mapID];
+end
 
-_V["WQT_NO_FACTION_DATA"] = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L["NO_FACTION"] } -- No faction
-_V["WQT_FACTION_DATA"] = {
+
+local factionFallbackData = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L["NO_FACTION"] } -- No faction
+local factionData = {
 	[67] = 		{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 2203914 }; -- Horde
 	[469] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 2203912 }; -- Alliance
 	[609] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 1396983 }; -- Cenarion Circle - Call of the Scarab
@@ -661,15 +724,30 @@ _V["WQT_FACTION_DATA"] = {
 	[2710] =	{ ["expansion"] = LE_EXPANSION_MIDNIGHT, ["texture"] = 7505700 }; -- Silvermoon Court
 }
 -- Add localized faction names
-for k, v in pairs(_V["WQT_FACTION_DATA"]) do
+for k, v in pairs(factionData) do
 	local info = C_Reputation.GetFactionDataByID(k);
 	if(info) then
 		v.name = info.name;
 	end
 end
 
+function _V:GetFactionData(factionID)
+	if (not factionID) then
+		-- No faction
+		return factionFallbackData;
+	end;
 
-_V["WQT_FILTER_TO_OFFICIAL"] = {
+	if (not factionData[factionID]) then
+		-- Add new faction in case it's not in our data yet
+		local data = C_Reputation.GetFactionDataByID(factionID);
+		factionData[factionID] = { ["expansion"] = 0,["faction"] = nil ,["texture"] = 1103069, ["unknown"] = true, ["name"] = data and data.name or "Unknown Faction" };
+		WQT:DebugPrint("Added new faction", factionData[factionID].name);
+	end
+
+	return factionData[factionID];
+end
+
+local filterToOfficialCvar = {
 	["Petbattle"]	= { "showTamersWQ" };
 	["Dragonrider"]	= { "dragonRidingRacesFilterWQ" };
 	["Profession"]	= { "primaryProfessionsFilter", "secondaryProfessionsFilter" };
@@ -682,51 +760,81 @@ _V["WQT_FILTER_TO_OFFICIAL"] = {
 	-- worldQuestFilterResources
 	-- worldQuestFilterProfessionMaterials
 }
+function _V:IsRelevantOfficialCvar(cvar)
+	for _, officalFilters in pairs(filterToOfficialCvar) do
+		for _, officialFilter in ipairs(officalFilters) do
+			if (officialFilter == cvar) then
+				return true;
+			end
+		end
+	end
+	return false;
+end
 
-_V["WQT_DEFAULTS"] = {
+function _V:EnableAllOfficialCvars()
+	for _, officalFilters in pairs(filterToOfficialCvar) do
+		for _, cvar in ipairs(officalFilters) do
+			C_CVar.SetCVar(cvar, 1);
+		end
+	end
+end
+
+function _V:IsFilterDisabledByCvar(filter)
+	local cvars = filterToOfficialCvar[filter];
+	if (cvars) then
+		for k, cvar in ipairs(cvars) do
+			if (not C_CVar.GetCVarBool(cvar)) then
+				return true;
+			end
+		end
+	end
+	return false
+end
+
+local defaultSettings = {
 	global = {
 		versionCheck = 1;
 		updateSeen = false;
 
 		["colors"] = {
-			["timeCritical"] = RED_FONT_COLOR:GenerateHexColor();
-			["timeShort"] = _V["WQT_ORANGE_FONT_COLOR"]:GenerateHexColor();
-			["timeMedium"] = _V["WQT_GREEN_FONT_COLOR"]:GenerateHexColor();
-			["timeLong"] = _V["WQT_BLUE_FONT_COLOR"]:GenerateHexColor();
-			["timeVeryLong"] = _V["WQT_PURPLE_FONT_COLOR"]:GenerateHexColor();
-			["timeNone"] = _V["WQT_COLOR_CURRENCY"]:GenerateHexColor();
+			["timeCritical"]		= RED_FONT_COLOR:GenerateHexColor();
+			["timeShort"]			= defaultColors.fontOrange:GenerateHexColor();
+			["timeMedium"]			= defaultColors.fontGreen:GenerateHexColor();
+			["timeLong"]			= defaultColors.fontBlue:GenerateHexColor();
+			["timeVeryLong"]		= defaultColors.fontPurple:GenerateHexColor();
+			["timeNone"]			= defaultColors.rewardCurrency:GenerateHexColor();
 			
-			["rewardNone"] = _V["WQT_COLOR_NONE"]:GenerateHexColor();
-			["rewardWeapon"] = _V["WQT_COLOR_WEAPON"]:GenerateHexColor();
-			["rewardArmor"] = _V["WQT_COLOR_ARMOR"]:GenerateHexColor();
-			["rewardConduit"] = _V["WQT_COLOR_RELIC"]:GenerateHexColor();
-			["rewardRelic"] = _V["WQT_COLOR_RELIC"]:GenerateHexColor();
-			["rewardAnima"] = _V["WQT_COLOR_ARTIFACT"]:GenerateHexColor();
-			["rewardArtifact"] = _V["WQT_COLOR_ARTIFACT"]:GenerateHexColor();
-			["rewardItem"] = _V["WQT_COLOR_ITEM"]:GenerateHexColor();
-			["rewardXp"] = _V["WQT_COLOR_ITEM"]:GenerateHexColor();
-			["rewardGold"] = _V["WQT_COLOR_GOLD"]:GenerateHexColor();
-			["rewardCurrency"] = _V["WQT_COLOR_CURRENCY"]:GenerateHexColor();
-			["rewardHonor"] = _V["WQT_COLOR_HONOR"]:GenerateHexColor();
-			["rewardReputation"] = _V["WQT_COLOR_CURRENCY"]:GenerateHexColor();
-			["rewardMissing"] = _V["WQT_COLOR_MISSING"]:GenerateHexColor();
+			["rewardNone"]			= defaultColors.rewardNone:GenerateHexColor();
+			["rewardWeapon"]		= defaultColors.rewardWeapon:GenerateHexColor();
+			["rewardArmor"]			= defaultColors.rewardArmor:GenerateHexColor();
+			["rewardConduit"]		= defaultColors.rewardRelic:GenerateHexColor();
+			["rewardRelic"]			= defaultColors.rewardRelic:GenerateHexColor();
+			["rewardAnima"]			= defaultColors.rewardArtifact:GenerateHexColor();
+			["rewardArtifact"]		= defaultColors.rewardArtifact:GenerateHexColor();
+			["rewardItem"]			= defaultColors.rewardItem:GenerateHexColor();
+			["rewardXp"]			= defaultColors.rewardItem:GenerateHexColor();
+			["rewardGold"]			= defaultColors.rewardGold:GenerateHexColor();
+			["rewardCurrency"]		= defaultColors.rewardCurrency:GenerateHexColor();
+			["rewardHonor"]			= defaultColors.rewardHonor:GenerateHexColor();
+			["rewardReputation"]	= defaultColors.rewardCurrency:GenerateHexColor();
+			["rewardMissing"]		= defaultColors.rewardMissing:GenerateHexColor();
 			
-			["rewardTextWeapon"] = _V["WQT_COLOR_WEAPON"]:GenerateHexColor();
-			["rewardTextArmor"] = _V["WQT_COLOR_ARMOR"]:GenerateHexColor();
-			["rewardTextConduit"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
-			["rewardTextRelic"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
-			["rewardTextAnima"] = GREEN_FONT_COLOR:GenerateHexColor();
-			["rewardTextArtifact"] = GREEN_FONT_COLOR:GenerateHexColor();
-			["rewardTextItem"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
-			["rewardTextXp"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
-			["rewardTextGold"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
-			["rewardTextCurrency"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
-			["rewardTextHonor"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
-			["rewardTextReputation"] = _V["WQT_WHITE_FONT_COLOR"]:GenerateHexColor();
+			["rewardTextWeapon"]	= defaultColors.rewardWeapon:GenerateHexColor();
+			["rewardTextArmor"]		= defaultColors.rewardArmor:GenerateHexColor();
+			["rewardTextConduit"]	= defaultColors.fontWhite:GenerateHexColor();
+			["rewardTextRelic"]		= defaultColors.fontWhite:GenerateHexColor();
+			["rewardTextAnima"]		= GREEN_FONT_COLOR:GenerateHexColor();
+			["rewardTextArtifact"]	= GREEN_FONT_COLOR:GenerateHexColor();
+			["rewardTextItem"]		= defaultColors.fontWhite:GenerateHexColor();
+			["rewardTextXp"]		= defaultColors.fontWhite:GenerateHexColor();
+			["rewardTextGold"]		= defaultColors.fontWhite:GenerateHexColor();
+			["rewardTextCurrency"]	= defaultColors.fontWhite:GenerateHexColor();
+			["rewardTextHonor"]		= defaultColors.fontWhite:GenerateHexColor();
+			["rewardTextReputation"] = defaultColors.fontWhite:GenerateHexColor();
 		};
 		
 		["general"] = {
-			sortBy = _V["SORT_IDS"].reward;
+			sortBy = "reward";
 			fullScreenContainerPos = {["anchor"] = "TOPLEFT", ["x"] = 0, ["y"] = -25};
 		
 			defaultTab = false;
@@ -738,7 +846,7 @@ _V["WQT_DEFAULTS"] = {
 			bountyReward = false;
 			bountySelectedOnly = true;
 			showDisliked = true;
-			zoneQuests = _V["ENUM_ZONE_QUESTS"].zone;
+			zoneQuests = enumZoneQuests.zone;
 			
 			sl_callingsBoard = true;
 			sl_genericAnimaIcons = false;
@@ -774,8 +882,8 @@ _V["WQT_DEFAULTS"] = {
 			warbandIcon = false;
 			trackingIcon = true;
 
-			continentVisible = _V["ENUM_PIN_CONTINENT"].none;
-			zoneVisible = _V["ENUM_PIN_ZONE"].all;
+			continentVisible = enumPinContinent.none;
+			zoneVisible = enumPinZone.all;
 			
 			filterPoI = true;
 			scale = 1;
@@ -784,19 +892,19 @@ _V["WQT_DEFAULTS"] = {
 			eliteRing = false;
 			labelColors = true;
 			trackingGlow = true;
-			ringType = _V["RING_TYPES"].time;
-			centerType = _V["PIN_CENTER_TYPES"].reward;
-			label = _V["ENUM_PIN_LABEL"].none;
+			ringType = enumRingType.time;
+			centerType = enumPinCenterType.reward;
+			label = enumPinLabel.none;
 		};
 
 		["filters"] = {
-				[_V["FILTER_TYPES"].faction] = {["name"] = FACTION
+				[enumFilterType.faction] = {["name"] = FACTION
 						,["misc"] = {
 							["none"] = true,
 							["other"] = true},
 							["flags"] = {} -- Faction filters are assigned later
 						}
-				,[_V["FILTER_TYPES"].type] = {["name"] = TYPE
+				,[enumFilterType.type] = {["name"] = TYPE
 						, ["flags"] = {
 							["Default"] = true,
 							["Elite"] = true,
@@ -810,7 +918,7 @@ _V["WQT_DEFAULTS"] = {
 							["Bonus"] = true,
 							["Dragonrider"] = true
 						}}
-				,[_V["FILTER_TYPES"].reward] = {["name"] = REWARD
+				,[enumFilterType.reward] = {["name"] = REWARD
 						, ["flags"] = {
 							["Item"] = true,
 							["Armor"] = true,
@@ -833,8 +941,17 @@ _V["WQT_DEFAULTS"] = {
 	}
 }
 
-for k, v in pairs(_V["WQT_FACTION_DATA"]) do
-	if v.expansion >= LE_EXPANSION_LEGION then
-		_V["WQT_DEFAULTS"].global.filters[1].flags[k] = true;
+function _V:GetDefaultSettings()
+	return defaultSettings;
+end
+
+function _V:GetDefaultSettingsCategory(category)
+	return defaultSettings.global[category];
+end
+
+local filterFactionSettings = _V:GetDefaultSettingsCategory("filters")[enumFilterType.faction];
+for k, v in pairs(factionData) do
+	if (v.expansion >= LE_EXPANSION_LEGION) then
+		filterFactionSettings.flags[k] = true;
 	end
 end

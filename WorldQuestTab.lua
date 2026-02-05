@@ -58,7 +58,7 @@ end
 local function GenericFilterFlagChecked(data)
 	local flagKey = data[2];
 
-	if (WQT_Utils:IsFilterDisabledByOfficial(flagKey)) then
+	if (_V:IsFilterDisabledByCvar(flagKey)) then
 		return false;
 	end
 
@@ -90,15 +90,14 @@ local function AddFilterSubmenu(rootDescription, filterType)
 
 	local options = WQT.settings.filters[filterType].flags;
 	local order = WQT.filterOrders[filterType]
-	local haveLabels = (_V["WQT_TYPEFLAG_LABELS"][filterType] ~= nil);
 	local oldContentFlags = {};
 	
 	for k, flagKey in pairs(order) do
-		if (not WQT_Utils:FilterIsOldContent(filterType, flagKey)) then
-			local text = haveLabels and _V["WQT_TYPEFLAG_LABELS"][filterType][flagKey] or flagKey;
+		if (not _V:FilterIsOldContent(filterType, flagKey)) then
+			local text = _V:GetTypeFlagLabel(filterType, flagKey) or flagKey;
 			local checkbox = rootDescription:CreateCheckbox(text, GenericFilterFlagChecked, GenericFilterOnSelect, { options, flagKey });
 
-			if (WQT_Utils:IsFilterDisabledByOfficial(flagKey)) then
+			if (_V:IsFilterDisabledByCvar(flagKey)) then
 				checkbox:SetEnabled(false);
 				checkbox:SetOnEnter(ShowDisabledFilterTooltip);
 				checkbox:SetOnLeave(function() WQT_ActiveGameTooltip:Hide(); end);
@@ -112,20 +111,21 @@ local function AddFilterSubmenu(rootDescription, filterType)
 	if (#oldContentFlags > 0) then
 		local otherSubmenu = rootDescription:CreateButton(OTHER);
 		for k, flagKey in pairs(oldContentFlags) do
-			local text = haveLabels and _V["WQT_TYPEFLAG_LABELS"][filterType][flagKey] or flagKey;
+			local text = _V:GetTypeFlagLabel(filterType, flagKey) or flagKey;
 			otherSubmenu:CreateCheckbox(text, GenericFilterFlagChecked, GenericFilterOnSelect, { options, flagKey });
 		end
 	end
 end
 
 local function AddExpansionFactionsToMenu(rootDescription, expansionLevel)
-	local filterType = _V["FILTER_TYPES"].faction;
+	local enumFilterType = _V:GetFilterTypeEnum();
+	local filterType = enumFilterType.faction;
 	local options = WQT.settings.filters[filterType].flags;
 	local order = WQT.filterOrders[filterType];
  
 	local function maskFunc(flagKey) 
 		if (type(flagKey) == "number") then
-			local factionInfo = WQT_Utils:GetFactionDataInternal(flagKey);
+			local factionInfo = _V:GetFactionData(flagKey);
 			return factionInfo and factionInfo.expansion == expansionLevel;
 		else
 			return expansionLevel == LE_EXPANSION_LEVEL_CURRENT;
@@ -136,7 +136,7 @@ local function AddExpansionFactionsToMenu(rootDescription, expansionLevel)
 	rootDescription:CreateButton(UNCHECK_ALL, FilterTypesGeneralOnClick, {["type"] = filterType, ["value"] = false, ["maskFunc"] = maskFunc});
 
 	for k, flagKey in pairs(order) do
-		local factionInfo = type(flagKey) == "number" and WQT_Utils:GetFactionDataInternal(flagKey) or nil;
+		local factionInfo = type(flagKey) == "number" and _V:GetFactionData(flagKey) or nil;
 		if (factionInfo and factionInfo.expansion == expansionLevel and (not factionInfo.playerFaction or factionInfo.playerFaction == _playerFaction)) then
 			local name = type(flagKey) == "number" and factionInfo.name or flagKey;
 			rootDescription:CreateCheckbox(name, GenericFilterFlagChecked, GenericFilterOnSelect, { options, flagKey, true });
@@ -146,13 +146,14 @@ end
 
 local function FilterDropdownSetup(dropdown, rootDescription)
 	rootDescription:SetTag("WQT_FILTERS_DROPDOWN");
+	local enumFilterType = _V:GetFilterTypeEnum();
 
 	-- Facation submenu
 	local factionsSubmenu = rootDescription:CreateButton(FACTION);
 	do
 		AddExpansionFactionsToMenu(factionsSubmenu, LE_EXPANSION_LEVEL_CURRENT);
 
-		local factionFilters = WQT.settings.filters[_V["FILTER_TYPES"].faction];
+		local factionFilters = WQT.settings.filters[enumFilterType.faction];
 		-- Other factions
 		local function OtherFactionsChecked()
 			return factionFilters.misc.other;
@@ -185,11 +186,11 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 
 	-- Type submenu
 	local typeSubmenu = rootDescription:CreateButton(TYPE);
-	AddFilterSubmenu(typeSubmenu, _V["FILTER_TYPES"].type);
+	AddFilterSubmenu(typeSubmenu, enumFilterType.type);
 	
 	-- Rewards submenu
 	local rewardsSubmenu = rootDescription:CreateButton(REWARD);
-	AddFilterSubmenu(rewardsSubmenu, _V["FILTER_TYPES"].reward);
+	AddFilterSubmenu(rewardsSubmenu, enumFilterType.reward);
 
 	-- Uninterested
 	local function DDUninterededChecked()
@@ -318,8 +319,9 @@ local function GetSortedFilterOrder(filterId)
 	for k, v in pairs(filter.flags) do
 		table.insert(tbl, k);
 	end
+	local enumFilterType = _V:GetFilterTypeEnum();
 	table.sort(tbl, function(a, b) 
-				if (filterId == _V["FILTER_TYPES"].faction) then
+				if (filterId == enumFilterType.faction) then
 					-- Compare 2 factions
 					if(type(a) == "number" and type(b) == "number")then
 						local infoA = C_Reputation.GetFactionDataByID(tonumber(a));
@@ -332,9 +334,14 @@ local function GetSortedFilterOrder(filterId)
 						return a and not b;
 					end
 				else
-					-- Compare localized labels for tpye and 
-					if (_V["WQT_TYPEFLAG_LABELS"][filterId]) then
-						return (_V["WQT_TYPEFLAG_LABELS"][filterId][a] or "") < (_V["WQT_TYPEFLAG_LABELS"][filterId][b] or "");
+					-- Compare localized labels
+					local labelA = _V:GetTypeFlagLabel(filterId, a);
+					local labelB = _V:GetTypeFlagLabel(filterId, b);
+					if (labelA ~= labelB) then
+						if (not labelA or not labelB) then
+							return labelA ~= nil;
+						end
+						return labelA < labelB;
 					end
 				end
 				-- Failsafe
@@ -384,15 +391,6 @@ function WQT:Sort_OnClick(self, sortID)
 	end
 end
 
-function WQT:IsWorldMapFiltering()
-	for k, cVar in pairs(_V["WQT_CVAR_LIST"]) do
-		if not C_CVar.GetCVarBool(cVar) then
-			return true;
-		end
-	end
-	return false;
-end
-
 function WQT:IsUsingFilterNr(id)
 	if not WQT.settings.filters[id] then return false end
 	
@@ -415,7 +413,7 @@ function WQT:IsUsingFilterNr(id)
 			return true;
 		end
 
-		if (WQT_Utils:IsFilterDisabledByOfficial(flagKey)) then
+		if (_V:IsFilterDisabledByCvar(flagKey)) then
 			return true;
 		end
 	end
@@ -437,7 +435,8 @@ function WQT:PassesAllFilters(questInfo)
 	if (WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId) then 
 		return questInfo:IsCriteria(WQT.settings.general.bountySelectedOnly or WQT_WorldQuestFrame.autoEmisarryId);
 	end
-	local filterTypes = _V["FILTER_TYPES"];
+
+	local enumFilterType = _V:GetFilterTypeEnum();
 
 	if (not WQT.settings.general.showDisliked and questInfo:IsDisliked()) then
 		return false;
@@ -450,27 +449,28 @@ function WQT:PassesAllFilters(questInfo)
 		end
 		local passesAll = true;
 		
-		if WQT:IsUsingFilterNr(filterTypes.faction) then passesAll = passesAll and WQT:PassesFactionFilter(questInfo, true) end
-		if WQT:IsUsingFilterNr(filterTypes.type) then passesAll = passesAll and WQT:PassesFlagId(filterTypes.type, questInfo, true) end
-		if WQT:IsUsingFilterNr(filterTypes.reward) then passesAll = passesAll and WQT:PassesFlagId(filterTypes.reward, questInfo, true) end
+		if WQT:IsUsingFilterNr(enumFilterType.faction) then passesAll = passesAll and WQT:PassesFactionFilter(questInfo, true) end
+		if WQT:IsUsingFilterNr(enumFilterType.type) then passesAll = passesAll and WQT:PassesFlagId(enumFilterType.type, questInfo, true) end
+		if WQT:IsUsingFilterNr(enumFilterType.reward) then passesAll = passesAll and WQT:PassesFlagId(enumFilterType.reward, questInfo, true) end
 		
 		return passesAll;
 	end
 
-	if WQT:IsUsingFilterNr(filterTypes.faction) and not WQT:PassesFactionFilter(questInfo) then return false; end
-	if WQT:IsUsingFilterNr(filterTypes.type) and not WQT:PassesFlagId(filterTypes.type, questInfo) then return false; end
-	if WQT:IsUsingFilterNr(filterTypes.reward) and not WQT:PassesFlagId(filterTypes.reward, questInfo) then return false; end
+	if WQT:IsUsingFilterNr(enumFilterType.faction) and not WQT:PassesFactionFilter(questInfo) then return false; end
+	if WQT:IsUsingFilterNr(enumFilterType.type) and not WQT:PassesFlagId(enumFilterType.type, questInfo) then return false; end
+	if WQT:IsUsingFilterNr(enumFilterType.reward) and not WQT:PassesFlagId(enumFilterType.reward, questInfo) then return false; end
 	
 	return  true;
 end
 
 function WQT:PassesFactionFilter(questInfo, checkPrecise)
 	-- Factions (1)
-	local filter = WQT.settings.filters[_V["FILTER_TYPES"].faction];
+	local enumFilterType = _V:GetFilterTypeEnum();
+	local filter = WQT.settings.filters[enumFilterType.faction];
 	local flags = filter.flags
 	local factionNone = filter.misc.none;
 	local factionOther = filter.misc.other;
-	local factionInfo = WQT_Utils:GetFactionDataInternal(questInfo.factionID);
+	local factionInfo = _V:GetFactionData(questInfo.factionID);
 
 	-- Specific filters (matches all)
 	if (checkPrecise) then
@@ -503,19 +503,19 @@ function WQT:PassesFactionFilter(questInfo, checkPrecise)
 end
 
 -- Generic quest and reward type filters
-function WQT:PassesFlagId(flagId ,questInfo, checkPrecise)
-	local flags = WQT.settings.filters[flagId].flags
+function WQT:PassesFlagId(filterType ,questInfo, checkPrecise)
+	local flags = WQT.settings.filters[filterType].flags
 	if not flags then return false; end
 	local tagInfo = questInfo:GetTagInfo();
 	
 	local passesPrecise = true;
 	
 	for flag, filterEnabled in pairs(flags) do
-		local func = _V["FILTER_FUNCTIONS"][flagId] and _V["FILTER_FUNCTIONS"][flagId][flag];
+		local func = _V:GetFilterFunction(filterType, flag)
 		if (func) then
 			local passed = func(questInfo, tagInfo)
 			if (passed) then
-				if (WQT_Utils:IsFilterDisabledByOfficial(flag)) then
+				if (_V:IsFilterDisabledByCvar(flag)) then
 					return false;
 				end
 			end
@@ -540,7 +540,8 @@ function WQT:PassesFlagId(flagId ,questInfo, checkPrecise)
 end
 
 function WQT:OnInitialize()
-	self.db = LibStub("AceDB-3.0"):New("BWQDB", _V["WQT_DEFAULTS"], true);
+	local defaultSettings = _V:GetDefaultSettings();
+	self.db = LibStub("AceDB-3.0"):New("BWQDB", defaultSettings, true);
 	WQT_Profiles:InitSettings();
 	
 	WQT.combatLockWarned = false;
@@ -646,8 +647,8 @@ function WQT:OnInitialize()
 	do -- faction
 		local func = function(a, b)
 			if (a.factionID ~= b.factionID) then
-				local factionA = WQT_Utils:GetFactionDataInternal(a.factionID);
-				local factionB = WQT_Utils:GetFactionDataInternal(b.factionID);
+				local factionA = _V:GetFactionData(a.factionID);
+				local factionB = _V:GetFactionData(b.factionID);
 				return factionA.name < factionB.name;
 			end
 		end
@@ -782,7 +783,7 @@ function WQT:OnInitialize()
 			SortFunctionTags.seconds;
 			SortFunctionTags.title;
 		}
-		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].reward, REWARD, functionTags);
+		self.sortDataContainer:AddSortOption("reward", REWARD, functionTags);
 	end
 	do -- time
 		local functionTags = {
@@ -795,7 +796,7 @@ function WQT:OnInitialize()
 			SortFunctionTags.rewardId;
 			SortFunctionTags.title;
 		}
-		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].time, _L["TIME"], functionTags);
+		self.sortDataContainer:AddSortOption("time", _L["TIME"], functionTags);
 	end
 	do -- faction
 		local functionTags = {
@@ -809,7 +810,7 @@ function WQT:OnInitialize()
 			SortFunctionTags.seconds;
 			SortFunctionTags.title;
 		}
-		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].faction, FACTION, functionTags);
+		self.sortDataContainer:AddSortOption("faction", FACTION, functionTags);
 	end
 	do -- zone
 		local functionTags = {
@@ -823,7 +824,7 @@ function WQT:OnInitialize()
 			SortFunctionTags.seconds;
 			SortFunctionTags.title;
 		}
-		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].zone, ZONE, functionTags);
+		self.sortDataContainer:AddSortOption("zone", ZONE, functionTags);
 	end
 	do -- type
 		local functionTags = {
@@ -840,7 +841,7 @@ function WQT:OnInitialize()
 			SortFunctionTags.seconds;
 			SortFunctionTags.title;
 		}
-		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].type, TYPE, functionTags);
+		self.sortDataContainer:AddSortOption("type", TYPE, functionTags);
 	end
 	do -- name
 		local functionTags = {
@@ -853,7 +854,7 @@ function WQT:OnInitialize()
 			SortFunctionTags.rewardId;
 			SortFunctionTags.seconds;
 		}
-		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].name, NAME, functionTags);
+		self.sortDataContainer:AddSortOption("name", NAME, functionTags);
 	end
 	do -- quality
 		local functionTags = {
@@ -866,7 +867,7 @@ function WQT:OnInitialize()
 			SortFunctionTags.seconds;
 			SortFunctionTags.title;
 		}
-		self.sortDataContainer:AddSortOption(_V["SORT_IDS"].quality, QUALITY, functionTags);
+		self.sortDataContainer:AddSortOption("quality", QUALITY, functionTags);
 	end
 end
 
@@ -1105,7 +1106,7 @@ function WQT_RewardDisplayMixin:UpdateRewards(questInfo, warmodeBonus)
 						rewardFrame.Amount:SetText(displayAmount);
 
 						-- Color reward amount for certain types
-						local amountColor = _V["WQT_WHITE_FONT_COLOR"];
+						local amountColor = _V:GetDefaultColor("fontWhite");
 						if (not isDisliked and WQT.settings.list.amountColors) then
 							amountColor = select(2, WQT_Utils:GetRewardTypeColorIDs(rewardInfo.type));
 						end
@@ -1204,8 +1205,9 @@ function WQT_ListButtonMixin:UpdateTime(...)
 	else
 		timeFrame:Show();
 
-		if (self.questInfo:IsDisliked() or (not WQT.settings.list.colorTime and category ~= _V["TIME_REMAINING_CATEGORY"].critical)) then
-			color = _V["WQT_WHITE_FONT_COLOR"];
+		local enumTimeRemaining = _V:GetTimeRemainingEnum();
+		if (self.questInfo:IsDisliked() or (not WQT.settings.list.colorTime and category ~= enumTimeRemaining.critical)) then
+			color = _V:GetDefaultColor("fontWhite");
 		end
 		timeFrame:SetTextColor(color.r, color.g, color.b, 1);
 		timeFrame:SetText(timeString);
@@ -1257,7 +1259,7 @@ end
 function WQT_ListButtonMixin:ShowTooltip()
 	local questInfo = self.questInfo;
 	if (not questInfo) then return; end
-	local style = _V["TOOLTIP_STYLES"].default;
+	local style = _V:GetTooltipStyle("default");
 
 	WQT_Utils:ShowQuestTooltip(self, questInfo, style, 4, -self:GetHeight());
 end
@@ -1378,7 +1380,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 		end
 		factionFrame:SetShown(shouldShow);
 		if (shouldShow) then
-			local factionData = WQT_Utils:GetFactionDataInternal(questInfo.factionID);
+			local factionData = _V:GetFactionData(questInfo.factionID);
 			factionFrame.Icon:SetTexture(factionData.texture);
 			factionFrame.Icon:SetDesaturated(isDisliked);
 		end
@@ -1420,7 +1422,7 @@ end
 function WQT_ListButtonMixin:FactionOnEnter(frame)
 	self.Highlight:Show();
 	if (self.questInfo.factionID) then
-		local factionInfo = WQT_Utils:GetFactionDataInternal(self.questInfo.factionID);
+		local factionInfo = _V:GetFactionData(self.questInfo.factionID);
 		WQT_ActiveGameTooltip:SetOwner(frame, "ANCHOR_RIGHT", -5, -10);
 		WQT_ActiveGameTooltip:SetText(factionInfo.name, nil, nil, nil, nil, true);
 	end
@@ -1874,7 +1876,7 @@ function WQT_CoreMixin:ShowWorldmapHighlight(questInfo)
 	local zoneId = questInfo.mapID;
 	local areaId = WorldMapFrame.mapID;
 	
-	local coords = _V["WQT_ZONE_MAPCOORDS"][areaId] and _V["WQT_ZONE_MAPCOORDS"][areaId][zoneId];
+	local coords = _V:GetZoneCoordinates(areaId, zoneId);
 	
 	local mapInfo = WQT_Utils:GetCachedMapInfo(zoneId);
 	-- We can't use parentMapID for cases like Cape of Stranglethorn
@@ -1882,7 +1884,7 @@ function WQT_CoreMixin:ShowWorldmapHighlight(questInfo)
 	-- Highlihght continents on world view
 	-- 947 == Azeroth world map
 	if (not coords and areaId == 947 and continentID) then
-		coords = _V["WQT_ZONE_MAPCOORDS"][947][continentID];
+		coords = _V:GetZoneCoordinates(947, continentID);
 		mapInfo = WQT_Utils:GetCachedMapInfo(continentID);
 	end
 	
@@ -2006,25 +2008,26 @@ function WQT_CoreMixin:OnLoad()
 			WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Quests);
 		end)
 		
+	local enumListAnchorType = _V:GetListAnchorTypeEnum();
 	-- Re-anchor list when maxi/minimizing world map
 	hooksecurefunc(WorldMapFrame, "HandleUserActionToggleSelf", function()
 			if not WorldMapFrame:IsShown() then return end
-			local anchor = WorldMapFramePortrait:IsShown() and _V["LIST_ANCHOR_TYPE"].world or _V["LIST_ANCHOR_TYPE"].full;
+			local anchor = WorldMapFramePortrait:IsShown() and enumListAnchorType.world or enumListAnchorType.full;
 			WQT_WorldQuestFrame:ChangeAnchorLocation(anchor);
 		end)
 
 	hooksecurefunc(WorldMapFrame, "HandleUserActionToggleQuestLog", function()
 			if not WorldMapFrame:IsShown() then return end
-			local anchor = _V["LIST_ANCHOR_TYPE"].world;
+			local anchor = enumListAnchorType.world;
 			WQT_WorldQuestFrame:ChangeAnchorLocation(anchor);
 		end)
 	
 	hooksecurefunc(WorldMapFrame, "HandleUserActionMinimizeSelf", function()
-			WQT_WorldQuestFrame:ChangeAnchorLocation(_V["LIST_ANCHOR_TYPE"].world);
+			WQT_WorldQuestFrame:ChangeAnchorLocation(enumListAnchorType.world);
 		end)
 		
 	hooksecurefunc(WorldMapFrame, "HandleUserActionMaximizeSelf", function()
-			WQT_WorldQuestFrame:ChangeAnchorLocation(_V["LIST_ANCHOR_TYPE"].full);
+			WQT_WorldQuestFrame:ChangeAnchorLocation(enumListAnchorType.full);
 		end)
 		
 	
@@ -2201,11 +2204,7 @@ function WQT_CoreMixin:FilterClearButtonOnClick()
 			WQT:SetAllFilterTo(k, default);
 		end
 
-		for _, cvars in pairs(_V["WQT_FILTER_TO_OFFICIAL"]) do
-			for _, cvar in ipairs(cvars) do
-				C_CVar.SetCVar(cvar, 1);
-			end
-		end
+		_V:EnableAllOfficialCvars();
 
 		local filterButton = WQT_Utils:GetWoldMapFilterButton();
 		if (filterButton) then
@@ -2273,26 +2272,9 @@ function WQT_CoreMixin:SUPER_TRACKING_CHANGED(...)
 end
 
 function WQT_CoreMixin:TAXIMAP_OPENED(system)
-	local anchor = _V["LIST_ANCHOR_TYPE"].taxi;
-	if (system == 2) then
-		-- It's the new flight map
-		anchor = _V["LIST_ANCHOR_TYPE"].flight;
-	end
-	
+	local enumListAnchorType = _V:GetListAnchorTypeEnum();
+	local anchor = system == 2 and enumListAnchorType.flight or enumListAnchorType.taxi;
 	WQT_WorldQuestFrame:ChangeAnchorLocation(anchor);
-end
-
--- Reset official map filters
-function WQT_CoreMixin:SetCvarValue(flagKey, value)
-	value = (value == nil) and true or value;
-
-	if _V["WQT_CVAR_LIST"][flagKey] then
-		SetCVar(_V["WQT_CVAR_LIST"][flagKey], value);
-		local questListFrame = self:GetQuestListFrame();
-		questListFrame:UpdateQuestList();
-		return true;
-	end
-	return false;
 end
 
 function WQT_CoreMixin:ChangePanel(panelID)
@@ -2302,13 +2284,14 @@ function WQT_CoreMixin:ChangePanel(panelID)
 end
 
 function WQT_CoreMixin:ChangeAnchorLocation(anchor)
+	local enumListAnchorType = _V:GetListAnchorTypeEnum();
 	-- Store the original tab for when we come back to the world anchor
-	if (self.anchor == _V["LIST_ANCHOR_TYPE"].world) then
+	if (self.anchor == enumListAnchorType.world) then
 		self.tabBeforeAnchor = self.selectedTab;
 	end
 	
 	-- Prevent showing up when the map is minimized
-	if (anchor ~= _V["LIST_ANCHOR_TYPE"].full) then
+	if (anchor ~= enumListAnchorType.full) then
 		WQT_WorldMapContainer:Hide();
 	end
 	
@@ -2318,23 +2301,23 @@ function WQT_CoreMixin:ChangeAnchorLocation(anchor)
 
 	WQT_WorldMapContainer:Hide();
 	local showMapContainer = false;
-	WQT.mapButton:SetShown(anchor == _V["LIST_ANCHOR_TYPE"].full);
+	WQT.mapButton:SetShown(anchor == enumListAnchorType.full);
 	-- Changing map to full screen doesn't call refresh on the buttons
 	WQT.mapButtonsLib:SetPoints();
 
-	if (anchor == _V["LIST_ANCHOR_TYPE"].flight) then
+	if (anchor == enumListAnchorType.flight) then
 		WQT_WorldQuestFrame:ClearAllPoints(); 
 		WQT_WorldQuestFrame:SetParent(WQT_FlightMapContainer);
 		WQT_WorldQuestFrame:SetPoint("TOPLEFT", WQT_FlightMapContainer, 10, -56);
 		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", WQT_FlightMapContainer, -28, 12);
-	elseif (anchor == _V["LIST_ANCHOR_TYPE"].taxi) then
+	elseif (anchor == enumListAnchorType.taxi) then
 		-- Exists in frame data but no longer used?
-	elseif (anchor == _V["LIST_ANCHOR_TYPE"].world) then
+	elseif (anchor == enumListAnchorType.world) then
 		WQT_WorldQuestFrame:ClearAllPoints();
 		WQT_WorldQuestFrame:SetParent(WQT.contentFrame);
 		WQT_WorldQuestFrame:SetPoint("TOPLEFT", WQT.contentFrame, 0, -29);
 		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", WQT.contentFrame, -22, 0);
-	elseif (anchor == _V["LIST_ANCHOR_TYPE"].full) then
+	elseif (anchor == enumListAnchorType.full) then
 		WQT_WorldQuestFrame:ClearAllPoints(); 
 		WQT_WorldQuestFrame:SetParent(WQT_WorldMapContainer);
 		WQT_WorldQuestFrame:SetPoint("TOPLEFT", WQT_WorldMapContainer, 14, -56);

@@ -107,7 +107,7 @@ function WQT:AddFunctionDebugToTooltip(tooltip, questInfo, level)
 	AddIndentedDoubleLine(tooltip, "timeStringShort", timeStringShort, 1, color);
 	AddIndentedDoubleLine(tooltip, "isExpired", questInfo:IsExpired(), 1, color);
 	-- Faction
-	local factionInfo = WQT_Utils:GetFactionDataInternal(questInfo.factionID);
+	local factionInfo = _V:GetFactionData(questInfo.factionID);
 	AddIndentedDoubleLine(tooltip, "faction", "", 0, color);
 	AddIndentedDoubleLine(tooltip, "name", factionInfo.name, 1, color);
 	AddIndentedDoubleLine(tooltip, "playerFaction", factionInfo.playerFaction, 1, color);

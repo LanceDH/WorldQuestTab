@@ -5,9 +5,9 @@ local WQT = addon.WQT;
 local _V = addon.variables;
 
 local function ReAnchor(source, anchor)
-	local anchorType = _V["LIST_ANCHOR_TYPE"];
-	if (anchor == anchorType.taxi or anchor == anchorType.flight) then
-		WQT_WorldQuestFrame:ChangeAnchorLocation(anchorType.world);
+	local enumListAnchorType = _V:GetListAnchorTypeEnum();
+	if (anchor == enumListAnchorType.taxi or anchor == enumListAnchorType.flight) then
+		WQT_WorldQuestFrame:ChangeAnchorLocation(enumListAnchorType.world);
 	end
 end
 

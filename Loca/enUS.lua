@@ -3,8 +3,6 @@
 addon.L = {};
 local L = addon.L
 
-L["IS_AZIAN_CLIENT"]	= false
-
 L["AMOUNT_COLORS"] = "Amount Colors"
 L["AMOUNT_COLORS_TT"] = "Color reward amounts in the quest list based on reward type."
 L["AUTO_EMISARRY"] = "Auto Emissary Only"

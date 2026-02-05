@@ -144,7 +144,7 @@ function QuestInfoMixin:Init(questID, qInfo)
 
 	self.classification = C_QuestInfoSystem.GetQuestClassification(questID);
 	self.isBonusQuest = self.classification == Enum.QuestClassification.BonusObjective;
-	self.isBanned = qInfo and _V["BUGGED_POI"][questID] == qInfo.mapID;
+	self.isBanned = qInfo and _V:GetBuggedQuestMapID(questID) == qInfo.mapID;
 	self.alwaysHide = self.isBonusQuest and not MapUtil.ShouldShowTask(qInfo.mapID, qInfo);
 
 	self.passedFilter = true;
@@ -315,7 +315,7 @@ do
 			end
 			-- Gold
 			if (GetQuestLogRewardMoney(self.questID) > 0) then
-				local numItems = floor(abs(GetQuestLogRewardMoney(self.questID)))
+				local numItems = floor(abs(GetQuestLogRewardMoney(self.questID)));
 				self:AddReward(WQT_REWARDTYPE.gold, WORLD_QUEST_REWARD_FILTERS_GOLD, numItems, 133784, 1);
 			end
 			-- Currency
@@ -462,10 +462,10 @@ end
 
 function QuestInfoMixin:GetRewardColor()
 	if (self.reward.typeBits == WQT_REWARDTYPE.none) then
-		return WQT_Utils:GetColor(_V["COLOR_IDS"].rewardNone);
+		return WQT_Utils:GetColor("rewardNone");
 	end
 	local reward = self.rewardList[1];
-	return reward and reward.color or WQT_Utils:GetColor(_V["COLOR_IDS"].rewardMissing);
+	return reward and reward.color or WQT_Utils:GetColor("rewardMissing");
 end
 
 function QuestInfoMixin:IsCriteria(forceSingle)
@@ -531,7 +531,7 @@ function QuestInfoMixin:UpdateSearchResults(searchString)
 		self.searchResults.zoneMatch = zoneMatch;
 	end
 
-	local factionInfo = WQT_Utils:GetFactionDataInternal(self.factionID);
+	local factionInfo = _V:GetFactionData(self.factionID);
 	if (factionInfo) then
 		local factionMatch = string.find(factionInfo.name:lower(), searchString);
 		self.searchResults.factionMatch = factionMatch;
@@ -659,12 +659,8 @@ function WQT_DataProvider:OnEvent(event, ...)
 		end
 	elseif (event =="CVAR_UPDATE") then
 		local cvar = ...;
-		for _, officalFilters in pairs(_V["WQT_FILTER_TO_OFFICIAL"]) do
-			for _, officialFilter in ipairs(officalFilters) do
-				if(cvar == officialFilter) then
-					self:RequestFilterUpdate();
-				end
-			end
+		if (_V:IsRelevantOfficialCvar(cvar)) then
+			self:RequestFilterUpdate();
 		end
 	end
 end
@@ -719,7 +715,8 @@ function WQT_DataProvider:OnUpdate(elapsed)
 
 		-- Get quests from all the zones in our list
 		-- Only spend a max amount of time on it each frame to prevent extreme stutters when we have a lot of zones
-		local matchQuestZone = not self.zoneLoading.isFlightMap and WQT_Utils:GetSetting("general", "zoneQuests") == _V["ENUM_ZONE_QUESTS"].zone;
+		local enumZoneQuests = _V:GetZoneQuestsEnum();
+		local matchQuestZone = not self.zoneLoading.isFlightMap and WQT_Utils:GetSetting("general", "zoneQuests") == enumZoneQuests.zone;
 		for zoneID in pairs(self.zoneLoading.remainingZones) do
 			self.zoneLoading.remainingZones[zoneID] = nil;
 			self.zoneLoading.numRemaining = self.zoneLoading.numRemaining - 1;
@@ -872,7 +869,7 @@ end
 function WQT_DataProvider:AddContinentMapQuests(mapID)
 	self:AddZoneToBuffer(mapID);
 
-	local continentZones = _V["WQT_ZONE_MAPCOORDS"][mapID];
+	local continentZones = _V:GetZonesForContinentMap(mapID);
 	if (not continentZones) then return end
 
 	for zoneID in pairs(continentZones) do
@@ -881,14 +878,14 @@ function WQT_DataProvider:AddContinentMapQuests(mapID)
 end
 
 function WQT_DataProvider:AddWorldMapQuests()
-	local worldContinents = _V["WQT_ZONE_MAPCOORDS"][947];
+	local worldContinents = _V:GetZonesForContinentMap(947);
 	if (not worldContinents) then return end
 
 	local expLevel = WQT_Utils:GetCharacterExpansionLevel();
 	self.zoneLoading.expansion = expLevel;
 	for contID, data in pairs(worldContinents) do
 		if (data.expansion == expLevel or data.expansion <= LE_EXPANSION_MISTS_OF_PANDARIA) then
-			local linkedZones = _V["WQT_CONTINENT_LINKS"][contID];
+			local linkedZones = _V:GetLinkedZones(contID);
 			if (linkedZones) then
 				for _, linkedMapID in pairs(linkedZones) do
 					self:AddContinentMapQuests(linkedMapID)
@@ -912,7 +909,7 @@ function WQT_DataProvider:AddZoneToBuffer(zoneID)
 	self:AddZoneToRemainingUnique(zoneID);
 
 	-- Check for subzones and add those as well
-	local subZones = _V["ZONE_SUBZONES"][zoneID];
+	local subZones = _V:GetSubZones(zoneID);
 	if (subZones) then
 		for k, subID in ipairs(subZones) do
 			self:AddZoneToRemainingUnique(subID);
@@ -952,11 +949,12 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID, isFlightMap)
 	if (not currentMapInfo) then return end;
 
 	local zoneQuests = WQT_Utils:GetSetting("general", "zoneQuests");
+	local enumZoneQuests = _V:GetZoneQuestsEnum();
 	if (currentMapInfo.mapType == Enum.UIMapType.World) then
 		self:AddWorldMapQuests();
 
-	elseif (currentMapInfo.mapType == Enum.UIMapType.Continent or zoneQuests == _V["ENUM_ZONE_QUESTS"].expansion) then
-		local continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneID];
+	elseif (currentMapInfo.mapType == Enum.UIMapType.Continent or zoneQuests == enumZoneQuests.expansion) then
+		local continentZones = _V:GetZonesForContinentMap(zoneID);
 
 		while (not continentZones and currentMapInfo.mapType > Enum.UIMapType.Continent and currentMapInfo.parentMapID and zoneID ~= currentMapInfo.parentMapID) do
 			local parentMapInfo =  WQT_Utils:GetCachedMapInfo(currentMapInfo.parentMapID);
@@ -965,11 +963,11 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID, isFlightMap)
 			end
 			zoneID = currentMapInfo.parentMapID;
 			currentMapInfo = parentMapInfo;
-			continentZones = _V["WQT_ZONE_MAPCOORDS"][zoneID];
+			continentZones = _V:GetZonesForContinentMap(zoneID);
 		end
 
 		self:AddContinentMapQuests(zoneID);
-		local linkedZones = _V["WQT_CONTINENT_LINKS"][zoneID];
+		local linkedZones = _V:GetLinkedZones(zoneID);
 		if (linkedZones) then
 			for _, continentID in ipairs(linkedZones) do
 				self:AddContinentMapQuests(continentID);
@@ -977,7 +975,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID, isFlightMap)
 		end
 
 	else
-		if (zoneQuests == _V["ENUM_ZONE_QUESTS"].zone) then
+		if (zoneQuests == enumZoneQuests.zone) then
 			self:AddZoneToBuffer(zoneID);
 		else
 			self:AddContinentMapQuests(zoneID);

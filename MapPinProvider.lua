@@ -54,21 +54,23 @@ local function ShouldShowPin(questInfo, mapType, settingsZoneVisible, settingsPi
 	if (isFlightMap) then return true; end
 
 	if (mapType == Enum.UIMapType.Continent) then
+		local enumPinContinent = _V:GetPinContinentEnum();
 		-- Never show on continent
-		if (settingsPinContinent == _V["ENUM_PIN_CONTINENT"].none) then
+		if (settingsPinContinent == enumPinContinent.none) then
 			return false;
 		end
 		-- Show only if tracked
-		if (settingsPinContinent == _V["ENUM_PIN_CONTINENT"].tracked and not C_QuestLog.GetQuestWatchType(questInfo.questID)) then
+		if (settingsPinContinent == enumPinContinent.tracked and not C_QuestLog.GetQuestWatchType(questInfo.questID)) then
 			return false;
 		end
 	elseif (mapType >= Enum.UIMapType.Zone) then
+		local enumPinZone = _V:GetPinZoneEnum();
 		-- Never show on continent
-		if (settingsZoneVisible == _V["ENUM_PIN_ZONE"].none) then
+		if (settingsZoneVisible == enumPinZone.none) then
 			return false;
 		end
 		-- Show only if tracked
-		if (settingsZoneVisible == _V["ENUM_PIN_ZONE"].tracked and not C_QuestLog.GetQuestWatchType(questInfo.questID)) then
+		if (settingsZoneVisible == enumPinZone.tracked and not C_QuestLog.GetQuestWatchType(questInfo.questID)) then
 			return false;
 		end
 	end
@@ -530,13 +532,14 @@ end
 function WQT_PinLabelMixin:UpdateVisuals(questInfo)
 	-- Label
 	local settingPinTimeLabel = WQT_Utils:GetSetting("pin", "label");
-	local labelColor = _V["WQT_WHITE_FONT_COLOR"];
+	local labelColor = _V:GetDefaultColor("fontWhite");
 	local labelFontString = self:GetLabelText();
 	local _, _, _, timeStringShort = WQT_Utils:GetQuestTimeString(questInfo);
 	
-	local showLabel = settingPinTimeLabel == _V["ENUM_PIN_LABEL"].time and timeStringShort ~= "";
+	local enumPinLabel = _V:GetPinLabelEnum();
+	local showLabel = settingPinTimeLabel == enumPinLabel.time and timeStringShort ~= "";
 	-- Only setting up for reward amount. Time label is done in UpdateTime()
-	if (settingPinTimeLabel == _V["ENUM_PIN_LABEL"].amount) then
+	if (settingPinTimeLabel == enumPinLabel.amount) then
 		local questCanWarmode = C_QuestLog.QuestCanHaveWarModeBonus(questInfo.questID);
 		local mainReward = questInfo:GetReward(1);
 		showLabel = mainReward and true or false;
@@ -556,12 +559,13 @@ function WQT_PinLabelMixin:UpdateVisuals(questInfo)
 end
 
 function WQT_PinLabelMixin:UpdateTime(timeString, color)
-	if (WQT_Utils:GetSetting("pin", "label") ~= _V["ENUM_PIN_LABEL"].time) then
+	local enumPinLabel = _V:GetPinLabelEnum();
+	if (WQT_Utils:GetSetting("pin", "label") ~= enumPinLabel.time) then
 		return;
 	end
 
 	if (not WQT_Utils:GetSetting("pin", "labelColors")) then
-		color = _V["WQT_WHITE_FONT_COLOR"];
+		color = _V:GetDefaultColor("fontWhite");
 	end
 
 	local labelFontString = self:GetLabelText();
@@ -688,7 +692,8 @@ function WQT_PinButtonMixin:GetIconBottomDifference()
 end
 
 function WQT_PinButtonMixin:UpdateTime(start, timeLeft, total, color, timeCategory)
-	if (WQT_Utils:GetSetting("pin", "ringType") ~= _V["RING_TYPES"].time) then
+	local enumRingType = _V:GetRingTypeEnum();
+	if (WQT_Utils:GetSetting("pin", "ringType") ~= enumRingType.time) then
 		return;
 	end
 
@@ -711,11 +716,12 @@ function WQT_PinButtonMixin:UpdateTime(start, timeLeft, total, color, timeCatego
 
 	-- Small icon indicating time category
 	if (self.timeIcon) then
-		if (timeCategory == _V["TIME_REMAINING_CATEGORY"].medium) then
+		local enumTimeRemaining = _V:GetTimeRemainingEnum();
+		if (timeCategory == enumTimeRemaining.medium) then
 			self.timeIcon.Icon:SetTexCoord(0.25, 0.5, 0.5, 1);
-		elseif (timeCategory == _V["TIME_REMAINING_CATEGORY"].short) then
+		elseif (timeCategory == enumTimeRemaining.short) then
 			self.timeIcon.Icon:SetTexCoord(0.5, 0.75, 0.5, 1);
-		elseif (timeCategory == _V["TIME_REMAINING_CATEGORY"].critical) then
+		elseif (timeCategory == enumTimeRemaining.critical) then
 			self.timeIcon.Icon:SetTexCoord(0.75, 1, 0.5, 1);
 		else
 			self.timeIcon.Icon:SetTexCoord(0, 0.25, 0.5, 1);
@@ -724,6 +730,8 @@ function WQT_PinButtonMixin:UpdateTime(start, timeLeft, total, color, timeCatego
 		self.timeIcon.Icon:SetVertexColor(color:GetRGB());
 	end
 end
+
+local CUSTOM_ICONS_PATH = "Interface/Addons/WorldQuestTab/Images/CustomIcons";
 
 function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 	if (not questInfo) then return; end
@@ -746,19 +754,20 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 	local ringBGTexture = self:GetRingBG();
 	local ringCooldown = self:GetRing();
 	local pointerTexture = self:GetPointer();
-	local r, g, b = _V["WQT_COLOR_CURRENCY"]:GetRGB();
-	ringBGTexture:SetShown(ringType == _V["RING_TYPES"].time and 1 or 0);
+	local r, g, b = _V:GetDefaultColor("rewardCurrency"):GetRGB();
+	local enumRingType = _V:GetRingTypeEnum();
+	ringBGTexture:SetShown(ringType == enumRingType.time and 1 or 0);
 	ringCooldown:SetCooldownUNIX(now, now);
 	pointerTexture:Hide();
 	ringCooldown:Show();
 	ringBGTexture:Show();
-	if (ringType == _V["RING_TYPES"].reward) then
+	if (ringType == enumRingType.reward) then
 		r, g, b = questInfo:GetRewardColor():GetRGB();
-	elseif (questQuality and ringType == _V["RING_TYPES"].rarity) then
+	elseif (questQuality and ringType == enumRingType.rarity) then
 		if (questQuality > Enum.WorldQuestQuality.Common and WORLD_QUEST_QUALITY_COLORS[questQuality]) then
 			r, g, b = WORLD_QUEST_QUALITY_COLORS[questQuality].color:GetRGB();
 		end
-	elseif (ringType == _V["RING_TYPES"].hide) then
+	elseif (ringType == enumRingType.hide) then
 		ringCooldown:Hide();
 		ringBGTexture:Hide();
 	end
@@ -774,7 +783,7 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 	local customUnderlayTexture = self:GetCustomUnderlay();
 	local isElite = tagInfo and tagInfo.isElite;
 	local settingEliteRing = WQT_Utils:GetSetting("pin", "eliteRing");
-	local useEliteRing = settingEliteRing and ringType ~= _V["RING_TYPES"].hide;
+	local useEliteRing = settingEliteRing and ringType ~= enumRingType.hide;
 	ringBGTexture:SetTexture("Interface/Addons/WorldQuestTab/Images/PoIRingBG");
 	ringCooldown:SetSwipeTexture("Interface/Addons/WorldQuestTab/Images/PoIRingBar");
 	if (useEliteRing) then
@@ -807,13 +816,15 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 
 	local hasIcon = true;
 
-	if(settingCenterType == _V["PIN_CENTER_TYPES"].reward) then
+	local enumPinCenterType = _V:GetPinCenterTypeEnum();
+
+	if(settingCenterType == enumPinCenterType.reward) then
 		local rewardTexture = questInfo:GetRewardTexture();
 		iconTexture:SetTexture(rewardTexture);
 		iconTexture:SetTexCoord(0, 1, 0, 1);
 
 		hasIcon = questInfo:GetRewardType() ~= WQT_REWARDTYPE.none;
-	elseif(settingCenterType == _V["PIN_CENTER_TYPES"].blizzard) then
+	elseif(settingCenterType == enumPinCenterType.blizzard) then
 		customTypeIconTexture:SetShown(true);
 		local showSlectedGlow = tagInfo and questQuality ~= Enum.WorldQuestQuality.Common and isSuperTracked;
 		local selectedBountyOnly = WQT_Utils:GetSetting("general", "bountySelectedOnly");
@@ -847,10 +858,10 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 		customTypeIconTexture:SetAtlas(typeAtlas);
 		customTypeIconTexture:SetSize(typeAtlasWidth, typeAtlasHeight);
 		customTypeIconTexture:SetScale(.8);
-	elseif(settingCenterType == _V["PIN_CENTER_TYPES"].faction) then
-		local factionData = WQT_Utils:GetFactionDataInternal(questInfo.factionID);
+	elseif(settingCenterType == enumPinCenterType.faction) then
+		local factionData = _V:GetFactionData(questInfo.factionID);
 		iconTexture:SetTexture(factionData.texture);
-	elseif(settingCenterType == _V["PIN_CENTER_TYPES"].none) then
+	elseif(settingCenterType == enumPinCenterType.none) then
 		iconTexture:Hide();
 	end
 	
@@ -878,7 +889,7 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 		local color = WORLD_QUEST_QUALITY_COLORS[questQuality];
 		if (color) then
 			local iconFrame = self:AddIcon();
-			iconFrame:SetupIcon(_V["PATH_CUSTOM_ICONS"], 0, 0.25, 0, 0.5);
+			iconFrame:SetupIcon(CUSTOM_ICONS_PATH, 0, 0.25, 0, 0.5);
 			iconFrame:SetIconColor(color.color);
 			iconFrame:SetIconScale(1.15);
 			iconFrame:SetBackgroundShown(false);
@@ -888,14 +899,15 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 	-- Time Icon
 	if (WQT_Utils:GetSetting("pin", "timeIcon")) then
 		local _, _, color, _, _, timeCategory = WQT_Utils:GetQuestTimeString(questInfo);
-		if (timeCategory >= _V["TIME_REMAINING_CATEGORY"].critical) then
+		local enumTimeRemaining = _V:GetTimeRemainingEnum();
+		if (timeCategory >= enumTimeRemaining.critical) then
 			local iconFrame = self:AddIcon();
-			iconFrame:SetupIcon(_V["PATH_CUSTOM_ICONS"], 0, 0.25, 0.5, 1);
-			if (timeCategory == _V["TIME_REMAINING_CATEGORY"].medium) then
+			iconFrame:SetupIcon(CUSTOM_ICONS_PATH, 0, 0.25, 0.5, 1);
+			if (timeCategory == enumTimeRemaining.medium) then
 				iconFrame:SetIconCoords(0.25, 0.5, 0.5, 1);
-			elseif (timeCategory == _V["TIME_REMAINING_CATEGORY"].short) then
+			elseif (timeCategory == enumTimeRemaining.short) then
 				iconFrame:SetIconCoords(0.5, 0.75, 0.5, 1);
-			elseif (timeCategory == _V["TIME_REMAINING_CATEGORY"].critical) then
+			elseif (timeCategory == enumTimeRemaining.critical) then
 				iconFrame:SetIconCoords(0.75, 1, 0.5, 1);
 			end
 			
@@ -1095,13 +1107,14 @@ function WQT_PinMixin:UpdatePinTime()
 	local isDisliked = self.questInfo:IsDisliked();
 
 	-- Ring
-	local ringColor = isDisliked and _V["WQT_WHITE_FONT_COLOR"] or color;
+	local ringColor = isDisliked and _V:GetDefaultColor("fontWhite") or color;
 	local buttonFrame = self:GetButton();
 	buttonFrame:UpdateTime(start, timeLeft, total, ringColor, timeCategory);
 	buttonFrame:SetIconsDesaturated(isDisliked);
 	self:GetLabel():UpdateTime(timeStringShort, ringColor);
 
-	if (timeCategory == _V["TIME_REMAINING_CATEGORY"].expired) then
+	local enumTimeRemaining = _V:GetTimeRemainingEnum();
+	if (timeCategory == enumTimeRemaining.expired) then
 		self.isExpired = true;
 		timeLeft = 0;
 	end
