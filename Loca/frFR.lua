@@ -1,8 +1,8 @@
 ﻿local _, addon = ...
 
-if GetLocale() ~= "frFR" then return end;
+if (GetLocale() ~= "frFR") then return end;
 
-local L = addon.L;
+local L = {};
 
 L["DEFAULT_TAB"] = "Onglet par défaut"
 L["DEFAULT_TAB_TT"] = [=[Définir WQT comme onglet par défaut quand vous vous connectez.
@@ -22,3 +22,5 @@ L["SHOW_TYPE_TT"] = "Montrer l'icône de type dans la liste des Expéditions."
 L["TIME"] = "Temps"
 L["TYPE_EMISSARY"] = "Émissaire"
 L["TYPE_INVASION"] = "Invasion"
+
+addon.loca:ApplyLocalization(L);

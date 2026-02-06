@@ -1,8 +1,6 @@
 ﻿local addonName, addon = ...
 local WQT = addon.WQT;
-local _L = addon.L
 local _V = addon.variables;
-local WQT_Profiles = addon.WQT_Profiles;
 
 ------------------------
 -- Debug Tooltip

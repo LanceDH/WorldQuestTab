@@ -1,6 +1,5 @@
 ﻿local addonName, addon = ...
 local WQT = addon.WQT;
-local _L = addon.L
 local _V = addon.variables;
 
 local _pinType = {

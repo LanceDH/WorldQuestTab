@@ -2,7 +2,7 @@
 local addonName, addon = ...
 local WQT = addon.WQT;
 
-local _L = addon.L;
+local _L = addon.loca;
 
 local _activeSettings;
 
@@ -127,20 +127,20 @@ function TomTomExternal:Init()
 		local category = WQT_SettingsFrame.dataContainer:AddCategory("TOMTOM", "TomTom", expanded);
 
 		do -- Enable
-			local data = category:AddCheckbox("TOMTOM_ENABLE", _L["USE_TOMTOM"], _L["USE_TOMTOM_TT"]);
+			local data = category:AddCheckbox("TOMTOM_ENABLE", _L:Get("USE_TOMTOM"), _L:Get("USE_TOMTOM_TT"));
 			data:SetGetValueFunction(function() return _activeSettings.useTomTom; end);
 			data:SetValueChangedFunction(function(value) _activeSettings.useTomTom = value; end);
 		end
 
 		do -- Auto Arrow
-			local data = category:AddCheckbox("TOMTOM_AUTO_ARROW", _L["TOMTOM_AUTO_ARROW"], _L["TOMTOM_AUTO_ARROW_TT"]);
+			local data = category:AddCheckbox("TOMTOM_AUTO_ARROW", _L:Get("TOMTOM_AUTO_ARROW"), _L:Get("TOMTOM_AUTO_ARROW_TT"));
 			data:SetGetValueFunction(function() return _activeSettings.TomTomAutoArrow; end);
 			data:SetValueChangedFunction(function(value) _activeSettings.TomTomAutoArrow = value; end);
 			data:SetIsDisabledFunction(function() return not _activeSettings.useTomTom; end);
 		end
 
 		do -- Click Arrow
-			local data = category:AddCheckbox("TOMTOM_CLICK_ ARROW", _L["TOMTOM_CLICK_ARROW"], _L["TOMTOM_CLICK_ARROW_TT"]);
+			local data = category:AddCheckbox("TOMTOM_CLICK_ ARROW", _L:Get("TOMTOM_CLICK_ARROW"), _L:Get("TOMTOM_CLICK_ARROW_TT"));
 			data:SetGetValueFunction(function() return _activeSettings.TomTomArrowOnClick; end);
 			data:SetValueChangedFunction(function(value)
 				_activeSettings.TomTomArrowOnClick = value;
@@ -159,7 +159,7 @@ function TomTomExternal:Init()
 		for k, v in rootDescription:EnumerateElementDescriptions() do
 			count = count + 1;
 		end
-		local checkbox = MenuTemplates.CreateCheckbox(_L["TOMTOM_PIN"], TomTomIsChecked, TomTomOnPressed, questInfo);
+		local checkbox = MenuTemplates.CreateCheckbox(_L:Get("TOMTOM_PIN"), TomTomIsChecked, TomTomOnPressed, questInfo);
 		rootDescription:Insert(checkbox, count);
 	end);
 

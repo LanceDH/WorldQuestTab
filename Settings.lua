@@ -1,6 +1,6 @@
 ﻿local addonName, addon = ...
 local WQT = addon.WQT;
-local _L = addon.L
+local _L = addon.loca;
 local _V = addon.variables;
 local WQT_Profiles = addon.WQT_Profiles;
 
@@ -47,7 +47,7 @@ function WQT_SettingsBaseMixin:OnEnter(anchorFrame, anchorType)
 		end
 		GameTooltip_AddNormalLine(WQT_ActiveGameTooltip, tooltipText, true);
 		if (self.suggestReload) then
-			GameTooltip_AddHighlightLine(WQT_ActiveGameTooltip, _L["SUGGEST_RELOAD"], true);
+			GameTooltip_AddHighlightLine(WQT_ActiveGameTooltip, _L:Get("SUGGEST_RELOAD"), true);
 		end
 		WQT_ActiveGameTooltip:Show();
 	end
@@ -1116,7 +1116,7 @@ function WQT_SettingsFrameMixin:Init()
 
 	local CATEGORY_DEFAULT_EXPANDED = true;
 	do -- Changelog
-		local changeLogCategory = self.dataContainer:AddCategory("CHANGELOG", _L["WHATS_NEW"], not CATEGORY_DEFAULT_EXPANDED);
+		local changeLogCategory = self.dataContainer:AddCategory("CHANGELOG", _L:Get("WHATS_NEW"), not CATEGORY_DEFAULT_EXPANDED);
 
 		local ChangelogSections = {
 			Intro = "Intro";
@@ -1170,6 +1170,9 @@ function WQT_SettingsFrameMixin:Init()
 
 		do -- 12.0.03
 			StartVersionCategory("12.0.03");
+			AddSection(ChangelogSections.Changes, {
+				"Updated Russian localization. I did not realize someone had updated them ages ago. My apologies.";
+			});
 			AddSection(ChangelogSections.Fixes, {
 				"Fixed a possible error when using the \"Matching Anima Textures\" setting";
 				"Fixed an error with the full screen quest container";
@@ -1371,10 +1374,10 @@ function WQT_SettingsFrameMixin:Init()
 	end -- Changelog
 
 	do -- Profiles
-		local category = self.dataContainer:AddCategory("PROFILES", _L["PROFILES"], not CATEGORY_DEFAULT_EXPANDED);
+		local category = self.dataContainer:AddCategory("PROFILES", _L:Get("PROFILES"), not CATEGORY_DEFAULT_EXPANDED);
 
 		do -- Active Profile
-			local data = category:AddDropdown("CURRENT_PROFILE", _L["CURRENT_PROFILE"], _L["CURRENT_PROFILE_TT"], function() return WQT_Profiles:GetProfiles() end);
+			local data = category:AddDropdown("CURRENT_PROFILE", _L:Get("CURRENT_PROFILE"), _L:Get("CURRENT_PROFILE_TT"), function() return WQT_Profiles:GetProfiles() end);
 			data:SetGetValueFunction(function() return WQT.db.char.activeProfile; end);
 			data:SetValueChangedFunction(function(value)
 				if (value == WQT_Profiles:GetActiveProfileId()) then return; end
@@ -1383,24 +1386,24 @@ function WQT_SettingsFrameMixin:Init()
 		end
 
 		do -- Profile Name
-			local data = category:AddTextInput("PROFILE_NAME", _L["PROFILE_NAME"], _L["PROFILE_NAME_TT"]);
+			local data = category:AddTextInput("PROFILE_NAME", _L:Get("PROFILE_NAME"), _L:Get("PROFILE_NAME_TT"));
 			data:SetGetValueFunction(function() return WQT_Profiles:GetActiveProfileName(); end);
 			data:SetValueChangedFunction(function(value) return WQT_Profiles:ChangeActiveProfileName(value); end);
 			data:SetIsVisibleFunction(function() return not WQT_Profiles:DefaultIsActive() end);
 		end
 
 		do -- Create Profile
-			local data = category:AddButton("CREATE_PROFILE", _L["NEW_PROFILE"], _L["NEW_PROFILE_TT"]);
+			local data = category:AddButton("CREATE_PROFILE", _L:Get("NEW_PROFILE"), _L:Get("NEW_PROFILE_TT"));
 			data:SetValueChangedFunction(function() return WQT_Profiles:CreateNew(); end);
 		end
 
 		do -- Reset Profile
-			local data = category:AddConfirmButton("RESET_PROFILE", _L["RESET_PROFILE"], _L["RESET_PROFILE_TT"]);
+			local data = category:AddConfirmButton("RESET_PROFILE", _L:Get("RESET_PROFILE"), _L:Get("RESET_PROFILE_TT"));
 			data:SetValueChangedFunction(function() return WQT_Profiles:ResetActive(); end);
 		end
 
 		do -- Remove Profile
-			local data = category:AddConfirmButton("REMOVE_PROFILE", _L["REMOVE_PROFILE"], _L["REMOVE_PROFILE_TT"]);
+			local data = category:AddConfirmButton("REMOVE_PROFILE", _L:Get("REMOVE_PROFILE"), _L:Get("REMOVE_PROFILE_TT"));
 			data:SetValueChangedFunction(function() return WQT_Profiles:Delete(WQT_Profiles:GetActiveProfileId()); end);
 			data:SetIsVisibleFunction(function() return not WQT_Profiles:DefaultIsActive() end);
 		end
@@ -1410,19 +1413,19 @@ function WQT_SettingsFrameMixin:Init()
 		local category = self.dataContainer:AddCategory("GENERAL", GENERAL, CATEGORY_DEFAULT_EXPANDED);
 
 		do -- Default Tab
-			local data = category:AddCheckbox("DEFAULT_TAB", _L["DEFAULT_TAB"], _L["DEFAULT_TAB_TT"]);
+			local data = category:AddCheckbox("DEFAULT_TAB", _L:Get("DEFAULT_TAB"), _L:Get("DEFAULT_TAB_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.general.defaultTab; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.general.defaultTab = value; end);
 		end
 
 		do -- Save Filters
-			local data = category:AddCheckbox("SAVE_FILTERS", _L["SAVE_SETTINGS"], _L["SAVE_SETTINGS_TT"]);
+			local data = category:AddCheckbox("SAVE_FILTERS", _L:Get("SAVE_SETTINGS"), _L:Get("SAVE_SETTINGS_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.general.saveFilters; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.general.saveFilters = value; end);
 		end
 
 		do -- Precise Filters
-			local data = category:AddCheckbox("PRECISE_FILTERS", _L["PRECISE_FILTER"], _L["PRECISE_FILTER_TT"]);
+			local data = category:AddCheckbox("PRECISE_FILTERS", _L:Get("PRECISE_FILTER"), _L:Get("PRECISE_FILTER_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.general.preciseFilters; end);
 			data:SetValueChangedFunction(function(value)
 				for i=1, 3 do
@@ -1435,7 +1438,7 @@ function WQT_SettingsFrameMixin:Init()
 		end
 
 		do -- Auto Emissary
-			local data = category:AddCheckbox("AUTO_EMISARRY", _L["AUTO_EMISARRY"], _L["AUTO_EMISARRY_TT"]);
+			local data = category:AddCheckbox("AUTO_EMISARRY", _L:Get("AUTO_EMISARRY"), _L:Get("AUTO_EMISARRY_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.general.autoEmisarry; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.general.autoEmisarry = value; end);
 		end
@@ -1456,46 +1459,46 @@ function WQT_SettingsFrameMixin:Init()
 		do -- Zone Quests
 			local enumZoneQuests = addon.variables:GetZoneQuestsEnum();
 			local options = {
-				CreateDropdownOption(enumZoneQuests.zone, _L["ZONE_QUESTS_ZONE"], _L["ZONE_QUESTS_ZONE_TT"]);
-				CreateDropdownOption(enumZoneQuests.neighbor, _L["ZONE_QUESTS_VISIBLE"], _L["ZONE_QUESTS_VISIBLE_TT"]);
-				CreateDropdownOption(enumZoneQuests.expansion, _L["ZONE_QUESTS_EXPANSION"], _L["ZONE_QUESTS_EXPANSION_TT"]);
+				CreateDropdownOption(enumZoneQuests.zone, _L:Get("ZONE_QUESTS_ZONE"), _L:Get("ZONE_QUESTS_ZONE_TT"));
+				CreateDropdownOption(enumZoneQuests.neighbor, _L:Get("ZONE_QUESTS_VISIBLE"), _L:Get("ZONE_QUESTS_VISIBLE_TT"));
+				CreateDropdownOption(enumZoneQuests.expansion, _L:Get("ZONE_QUESTS_EXPANSION"), _L:Get("ZONE_QUESTS_EXPANSION_TT"));
 			};
 		
-			local data = category:AddDropdown("ZONE_QUESTS", _L["ZONE_QUESTS"], _L["ZONE_QUESTS_TT"], options);
+			local data = category:AddDropdown("ZONE_QUESTS", _L:Get("ZONE_QUESTS"), _L:Get("ZONE_QUESTS_TT"), options);
 			data:SetGetValueFunction(function() return WQT.settings.general.zoneQuests; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.general.zoneQuests = value; end);
 			data:MarkAsNew(); -- 11.2.5
 		end
 
 		do -- Old Expanpansions
-			local subCategory = category:AddSubCategory("GENERAL_OLDCONTENT", _L["PREVIOUS_EXPANSIONS"], not CATEGORY_DEFAULT_EXPANDED);
+			local subCategory = category:AddSubCategory("GENERAL_OLDCONTENT", _L:Get("PREVIOUS_EXPANSIONS"), not CATEGORY_DEFAULT_EXPANDED);
 
 			do -- SL Calling Board
-				local data = subCategory:AddCheckbox("CALLINGS_BOARD", _L["CALLINGS_BOARD"], _L["CALLINGS_BOARD_TT"]);
+				local data = subCategory:AddCheckbox("CALLINGS_BOARD", _L:Get("CALLINGS_BOARD"), _L:Get("CALLINGS_BOARD_TT"));
 				data:SetGetValueFunction(function() return WQT.settings.general.sl_callingsBoard; end);
 				data:SetValueChangedFunction(function(value) WQT.settings.general.sl_callingsBoard = value; end);
 			end
 
 			do -- Generic Anima
-				local data = subCategory:AddCheckbox("GENERIC_ANIMA", _L["GENERIC_ANIMA"], _L["GENERIC_ANIMA_TT"]);
+				local data = subCategory:AddCheckbox("GENERIC_ANIMA", _L:Get("GENERIC_ANIMA"), _L:Get("GENERIC_ANIMA_TT"));
 				data:SetGetValueFunction(function() return WQT.settings.general.sl_genericAnimaIcons; end);
 				data:SetValueChangedFunction(function(value) WQT.settings.general.sl_genericAnimaIcons = value; end);
 			end
 			
 			do -- Bounty Counter
-				local data = subCategory:AddCheckbox("BOUNTY_COUNTER", _L["EMISSARY_COUNTER"], _L["EMISSARY_COUNTER_TT"]);
+				local data = subCategory:AddCheckbox("BOUNTY_COUNTER", _L:Get("EMISSARY_COUNTER"), _L:Get("EMISSARY_COUNTER_TT"));
 				data:SetGetValueFunction(function() return WQT.settings.general.bountyCounter; end);
 				data:SetValueChangedFunction(function(value) WQT.settings.general.bountyCounter = value; end);
 			end
 			
 			do -- Bounty Reward
-				local data = subCategory:AddCheckbox("BOUNTY_REWARD", _L["EMISSARY_REWARD"], _L["EMISSARY_REWARD_TT"]);
+				local data = subCategory:AddCheckbox("BOUNTY_REWARD", _L:Get("EMISSARY_REWARD"), _L:Get("EMISSARY_REWARD_TT"));
 				data:SetGetValueFunction(function() return WQT.settings.general.bountyReward; end);
 				data:SetValueChangedFunction(function(value) WQT.settings.general.bountyReward = value; end);
 			end
 			
 			do -- Bounty Only
-				local data = subCategory:AddCheckbox("BOUNTY_SELECTED_ONLY", _L["EMISSARY_SELECTED_ONLY"], _L["EMISSARY_SELECTED_ONLY_TT"]);
+				local data = subCategory:AddCheckbox("BOUNTY_SELECTED_ONLY", _L:Get("EMISSARY_SELECTED_ONLY"), _L:Get("EMISSARY_SELECTED_ONLY_TT"));
 				data:SetGetValueFunction(function() return WQT.settings.general.bountySelectedOnly; end);
 				data:SetValueChangedFunction(function(value) WQT.settings.general.bountySelectedOnly = value; end);
 			end
@@ -1503,32 +1506,32 @@ function WQT_SettingsFrameMixin:Init()
 	end -- General
 
 	do -- Quest List
-		local category = self.dataContainer:AddCategory("QUESTLIST", _L["QUEST_LIST"], not CATEGORY_DEFAULT_EXPANDED);
+		local category = self.dataContainer:AddCategory("QUESTLIST", _L:Get("QUEST_LIST"), not CATEGORY_DEFAULT_EXPANDED);
 
 		do -- Preview
 			category:AddCustomTemplate("WQT_SettingsQuestListPreviewTemplate", "QUEST_PREVIEW");
 		end
 
 		do -- Show Type
-			local data = category:AddCheckbox("QUEST_LIST_TYPE", _L["SHOW_TYPE"], _L["SHOW_TYPE_TT"]);
+			local data = category:AddCheckbox("QUEST_LIST_TYPE", _L:Get("SHOW_TYPE"), _L:Get("SHOW_TYPE_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.list.typeIcon; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.list.typeIcon = value; end);
 		end
 
 		do -- Faction Icon
-			local data = category:AddCheckbox("QUEST_LIST_FACTION", _L["SHOW_FACTION"], _L["SHOW_FACTION_TT"]);
+			local data = category:AddCheckbox("QUEST_LIST_FACTION", _L:Get("SHOW_FACTION"), _L:Get("SHOW_FACTION_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.list.factionIcon; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.list.factionIcon = value; end);
 		end
 
 		do -- Show Zone
-			local data = category:AddCheckbox("QUEST_ZONE", _L["SHOW_ZONE"], _L["SHOW_ZONE_TT"]);
+			local data = category:AddCheckbox("QUEST_ZONE", _L:Get("SHOW_ZONE"), _L:Get("SHOW_ZONE_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.list.showZone; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.list.showZone = value; end);
 		end
 
 		do -- Warband Icon
-			local data = category:AddCheckbox("QUEST_WARBAND", _L["SETTINGS_WARBAND_ICON"], _L["SETTINGS_WARBAND_ICON_TT"]);
+			local data = category:AddCheckbox("QUEST_WARBAND", _L:Get("SETTINGS_WARBAND_ICON"), _L:Get("SETTINGS_WARBAND_ICON_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.list.warbandIcon; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.list.warbandIcon = value; end);
 		end
@@ -1537,31 +1540,31 @@ function WQT_SettingsFrameMixin:Init()
 			local valueMin = 0;
 			local valueMax = 5;
 			local valueStep = 1;
-			local data = category:AddSlider("QUEST_NUM_REWARDS", _L["REWARD_NUM_DISPLAY"], _L["REWARD_NUM_DISPLAY_TT"], valueMin, valueMax, valueStep);
+			local data = category:AddSlider("QUEST_NUM_REWARDS", _L:Get("REWARD_NUM_DISPLAY"), _L:Get("REWARD_NUM_DISPLAY_TT"), valueMin, valueMax, valueStep);
 			data:SetGetValueFunction(function() return WQT.settings.list.rewardNumDisplay; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.list.rewardNumDisplay = value; end);
 		end
 
 		do -- Amount Colors
-			local data = category:AddCheckbox("QUEST_AMOUNT_COLORS", _L["AMOUNT_COLORS"], _L["AMOUNT_COLORS_TT"]);
+			local data = category:AddCheckbox("QUEST_AMOUNT_COLORS", _L:Get("AMOUNT_COLORS"), _L:Get("AMOUNT_COLORS_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.list.amountColors; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.list.amountColors = value; end);
 		end
 
 		do -- Time Colors
-			local data = category:AddCheckbox("QUEST_TIME_COLORS", _L["LIST_COLOR_TIME"], _L["LIST_COLOR_TIME_TT"]);
+			local data = category:AddCheckbox("QUEST_TIME_COLORS", _L:Get("LIST_COLOR_TIME"), _L:Get("LIST_COLOR_TIME_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.list.colorTime; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.list.colorTime = value; end);
 		end
 
 		do -- Expanded Time
-			local data = category:AddCheckbox("QUEST_FULL_TIME", _L["LIST_FULL_TIME"], _L["LIST_FULL_TIME_TT"]);
+			local data = category:AddCheckbox("QUEST_FULL_TIME", _L:Get("LIST_FULL_TIME"), _L:Get("LIST_FULL_TIME_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.list.fullTime; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.list.fullTime = value; end);
 		end
 
 		do -- Fade Pins
-			local data = category:AddCheckbox("QUEST_FADE_PINS", _L["PIN_FADE_ON_PING"], _L["PIN_FADE_ON_PING_TT"]);
+			local data = category:AddCheckbox("QUEST_FADE_PINS", _L:Get("PIN_FADE_ON_PING"), _L:Get("PIN_FADE_ON_PING_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.pin.fadeOnPing; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.fadeOnPing = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
@@ -1569,31 +1572,31 @@ function WQT_SettingsFrameMixin:Init()
 	end -- Quest List
 
 	do -- Map Pins
-		local category = self.dataContainer:AddCategory("MAPPINS", _L["MAP_PINS"], not CATEGORY_DEFAULT_EXPANDED);
+		local category = self.dataContainer:AddCategory("MAPPINS", _L:Get("MAP_PINS"), not CATEGORY_DEFAULT_EXPANDED);
 
 		do -- Disable Change
-			local data = category:AddCheckbox("PIN_DISABLE_CHANGES", _L["PIN_DISABLE"], _L["PIN_DISABLE_TT"]);
+			local data = category:AddCheckbox("PIN_DISABLE_CHANGES", _L:Get("PIN_DISABLE"), _L:Get("PIN_DISABLE_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.pin.disablePoI; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.disablePoI = value; end);
 			data:MarkAsSuggestReload();
 		end
 
 		do -- Filter Pins
-			local data = category:AddCheckbox("PIN_FILTER", _L["FILTER_PINS"], _L["FILTER_PINS_TT"]);
+			local data = category:AddCheckbox("PIN_FILTER", _L:Get("FILTER_PINS"), _L:Get("FILTER_PINS_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.pin.filterPoI; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.filterPoI = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
 		end
 
 		do -- Elite Ring
-			local data = category:AddCheckbox("PIN_ELITE_RING", _L["PIN_ELITE_RING"], _L["PIN_ELITE_RING_TT"]);
+			local data = category:AddCheckbox("PIN_ELITE_RING", _L:Get("PIN_ELITE_RING"), _L:Get("PIN_ELITE_RING_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.pin.eliteRing; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.eliteRing = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
 		end
 
 		do -- Tracking Glow
-			local data = category:AddCheckbox("MINI_TRACKING_GLOW", _L["PIN_TRACKING_GLOW"], _L["PIN_TRACKING_GLOW_TT"]);
+			local data = category:AddCheckbox("MINI_TRACKING_GLOW", _L:Get("PIN_TRACKING_GLOW"), _L:Get("PIN_TRACKING_GLOW_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.pin.trackingGlow; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.trackingGlow = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
@@ -1604,7 +1607,7 @@ function WQT_SettingsFrameMixin:Init()
 			local minValue = 0.8;
 			local maxValue = 1.5;
 			local valueStep = 0.01;
-			local data = category:AddSlider("PIN_SCALE", _L["PIN_SCALE"], _L["PIN_SCALE_TT"], minValue, maxValue, valueStep);
+			local data = category:AddSlider("PIN_SCALE", _L:Get("PIN_SCALE"), _L:Get("PIN_SCALE_TT"), minValue, maxValue, valueStep);
 			data:SetGetValueFunction(function() return WQT.settings.pin.scale; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.scale = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
@@ -1613,12 +1616,12 @@ function WQT_SettingsFrameMixin:Init()
 		do -- Center Type
 			local enumPinCenterType = addon.variables:GetPinCenterTypeEnum();
 			local options = {
-				CreateDropdownOption(enumPinCenterType.blizzard, _L["BLIZZARD"], _L["PIN_BLIZZARD_TT"]);
-				CreateDropdownOption(enumPinCenterType.reward, REWARD, _L["PIN_REWARD_TT"]);
-				CreateDropdownOption(enumPinCenterType.faction, FACTION, _L["PIN_FACTION_TT"]);
+				CreateDropdownOption(enumPinCenterType.blizzard, _L:Get("BLIZZARD"), _L:Get("PIN_BLIZZARD_TT"));
+				CreateDropdownOption(enumPinCenterType.reward, REWARD, _L:Get("PIN_REWARD_TT"));
+				CreateDropdownOption(enumPinCenterType.faction, FACTION, _L:Get("PIN_FACTION_TT"));
 			};
 			
-			local data = category:AddDropdown("PIN_CENTER_TYPE", _L["PIN_CENTER"], _L["PIN_CENTER_TT"], options);
+			local data = category:AddDropdown("PIN_CENTER_TYPE", _L:Get("PIN_CENTER"), _L:Get("PIN_CENTER_TT"), options);
 			data:SetGetValueFunction(function() return WQT.settings.pin.centerType; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.centerType = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
@@ -1627,13 +1630,13 @@ function WQT_SettingsFrameMixin:Init()
 		do -- Ring Type
 			local enumRingType = addon.variables:GetRingTypeEnum();
 			local options = {
-				CreateDropdownOption(enumRingType.default, _L["PIN_RING_DEFAULT"], _L["PIN_RING_DEFAULT_TT"]);
-				CreateDropdownOption(enumRingType.reward, _L["PIN_RING_COLOR"], _L["PIN_RING_COLOR_TT"]);
-				CreateDropdownOption(enumRingType.time, _L["PIN_RING_TIME"], _L["PIN_RIMG_TIME_TT"]);
-				CreateDropdownOption(enumRingType.rarity, RARITY, _L["PIN_RING_QUALITY_TT"]);
+				CreateDropdownOption(enumRingType.default, _L:Get("PIN_RING_DEFAULT"), _L:Get("PIN_RING_DEFAULT_TT"));
+				CreateDropdownOption(enumRingType.reward, _L:Get("PIN_RING_COLOR"), _L:Get("PIN_RING_COLOR_TT"));
+				CreateDropdownOption(enumRingType.time, _L:Get("PIN_RING_TIME"), _L:Get("PIN_RIMG_TIME_TT"));
+				CreateDropdownOption(enumRingType.rarity, RARITY, _L:Get("PIN_RING_QUALITY_TT"));
 			};
 		
-			local data = category:AddDropdown("PIN_RING_TYPE", _L["PIN_RING_TITLE"], _L["PIN_RING_TT"], options);
+			local data = category:AddDropdown("PIN_RING_TYPE", _L:Get("PIN_RING_TITLE"), _L:Get("PIN_RING_TT"), options);
 			data:SetGetValueFunction(function() return WQT.settings.pin.ringType; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.ringType = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
@@ -1642,12 +1645,12 @@ function WQT_SettingsFrameMixin:Init()
 		local enumPinLabel = addon.variables:GetPinLabelEnum();
 		do -- Label
 			local options = {
-				CreateDropdownOption(enumPinLabel.none, NONE, _L["PIN_LABEL_NONE_TT"]);
-				CreateDropdownOption(enumPinLabel.time, _L["PIN_TIME"], _L["PIN_TIME_TT"]);
-				CreateDropdownOption(enumPinLabel.amount, _L["PIN_LABEL_REWARD"], _L["PIN_LABEL_REWARD_TT"]);
+				CreateDropdownOption(enumPinLabel.none, NONE, _L:Get("PIN_LABEL_NONE_TT"));
+				CreateDropdownOption(enumPinLabel.time, _L:Get("PIN_TIME"), _L:Get("PIN_TIME_TT"));
+				CreateDropdownOption(enumPinLabel.amount, _L:Get("PIN_LABEL_REWARD"), _L:Get("PIN_LABEL_REWARD_TT"));
 			};
 		
-			local data = category:AddDropdown("PIN_LABEL", _L["PIN_LABEL"], _L["PIN_LABEL_TT"], options);
+			local data = category:AddDropdown("PIN_LABEL", _L:Get("PIN_LABEL"), _L:Get("PIN_LABEL_TT"), options);
 			data:SetGetValueFunction(function() return WQT.settings.pin.label; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.label = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
@@ -1655,7 +1658,7 @@ function WQT_SettingsFrameMixin:Init()
 		end
 
 		do -- Label Colors
-			local data = category:AddCheckbox("PIN_LABEL_COLORS", _L["PIN_LABEL_COLORS"], _L["PIN_LABEL_COLORS_TT"]);
+			local data = category:AddCheckbox("PIN_LABEL_COLORS", _L:Get("PIN_LABEL_COLORS"), _L:Get("PIN_LABEL_COLORS_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.pin.labelColors; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.labelColors = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.label == enumPinLabel.none; end);
@@ -1665,12 +1668,12 @@ function WQT_SettingsFrameMixin:Init()
 		do -- Zone Visibility
 			local enumPinZone = addon.variables:GetPinZoneEnum();
 			local options = {
-				CreateDropdownOption(enumPinZone.none, NONE, _L["PIN_VISIBILITY_NONE_TT"]);
-				CreateDropdownOption(enumPinZone.tracked, _L["PIN_VISIBILITY_TRACKED"], _L["PIN_VISIBILITY_TRACKED_TT"]);
-				CreateDropdownOption(enumPinZone.all, ALL, _L["PIN_VISIBILITY_ALL_TT"]);
+				CreateDropdownOption(enumPinZone.none, NONE, _L:Get("PIN_VISIBILITY_NONE_TT"));
+				CreateDropdownOption(enumPinZone.tracked, _L:Get("PIN_VISIBILITY_TRACKED"), _L:Get("PIN_VISIBILITY_TRACKED_TT"));
+				CreateDropdownOption(enumPinZone.all, ALL, _L:Get("PIN_VISIBILITY_ALL_TT"));
 			};
 
-			local data = category:AddDropdown("PIN_ZONE_VISIBILITY", _L["PIN_VISIBILITY_ZONE"], _L["PIN_VISIBILITY_ZONE_TT"], options);
+			local data = category:AddDropdown("PIN_ZONE_VISIBILITY", _L:Get("PIN_VISIBILITY_ZONE"), _L:Get("PIN_VISIBILITY_ZONE_TT"), options);
 			data:SetGetValueFunction(function() return WQT.settings.pin.zoneVisible; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.zoneVisible = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
@@ -1679,22 +1682,22 @@ function WQT_SettingsFrameMixin:Init()
 		do -- Continent Visibility
 			local enumPinContinent = addon.variables:GetPinContinentEnum();
 			local options = {
-				CreateDropdownOption(enumPinContinent.none, NONE, _L["PIN_VISIBILITY_NONE_TT"]);
-				CreateDropdownOption(enumPinContinent.tracked, _L["PIN_VISIBILITY_TRACKED"], _L["PIN_VISIBILITY_TRACKED_TT"]);
-				CreateDropdownOption(enumPinContinent.all, ALL, _L["PIN_VISIBILITY_ALL_TT"]);
+				CreateDropdownOption(enumPinContinent.none, NONE, _L:Get("PIN_VISIBILITY_NONE_TT"));
+				CreateDropdownOption(enumPinContinent.tracked, _L:Get("PIN_VISIBILITY_TRACKED"), _L:Get("PIN_VISIBILITY_TRACKED_TT"));
+				CreateDropdownOption(enumPinContinent.all, ALL, _L:Get("PIN_VISIBILITY_ALL_TT"));
 			};
 		
-			local data = category:AddDropdown("PIN_CONTINENT_VISIBILITY", _L["PIN_VISIBILITY_CONTINENT"], _L["PIN_VISIBILITY_CONTINENT_TT"], options);
+			local data = category:AddDropdown("PIN_CONTINENT_VISIBILITY", _L:Get("PIN_VISIBILITY_CONTINENT"), _L:Get("PIN_VISIBILITY_CONTINENT_TT"), options);
 			data:SetGetValueFunction(function() return WQT.settings.pin.continentVisible; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.continentVisible = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
 		end
 
 		do -- Mini Icons
-			local subCategory = category:AddSubCategory("MAPPINS_MINIICONS", _L["MINI_ICONS"], not CATEGORY_DEFAULT_EXPANDED);
+			local subCategory = category:AddSubCategory("MAPPINS_MINIICONS", _L:Get("MINI_ICONS"), not CATEGORY_DEFAULT_EXPANDED);
 
 			do -- Tracking
-				local data = subCategory:AddCheckbox("MINI_ICON_PIN_TRACKING", _L["PIN_TRACKING_ICON"], _L["PIN_TRACKING_ICON_TT"]);
+				local data = subCategory:AddCheckbox("MINI_ICON_PIN_TRACKING", _L:Get("PIN_TRACKING_ICON"), _L:Get("PIN_TRACKING_ICON_TT"));
 				data:SetGetValueFunction(function() return WQT.settings.pin.trackingIcon; end);
 				data:SetValueChangedFunction(function(value) WQT.settings.pin.trackingIcon = value; end);
 				data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
@@ -1702,28 +1705,28 @@ function WQT_SettingsFrameMixin:Init()
 			end
 
 			do -- Pin Type
-				local data = subCategory:AddCheckbox("MINI_ICON_PIN_TYPE", _L["PIN_TYPE"], _L["PIN_TYPE_TT"]);
+				local data = subCategory:AddCheckbox("MINI_ICON_PIN_TYPE", _L:Get("PIN_TYPE"), _L:Get("PIN_TYPE_TT"));
 				data:SetGetValueFunction(function() return WQT.settings.pin.typeIcon; end);
 				data:SetValueChangedFunction(function(value) WQT.settings.pin.typeIcon = value; end);
 				data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
 			end
 
 			do -- Rarity
-				local data = subCategory:AddCheckbox("MINI_ICON_RARITY", _L["PIN_RARITY_ICON"], _L["PIN_RARITY_ICON_TT"]);
+				local data = subCategory:AddCheckbox("MINI_ICON_RARITY", _L:Get("PIN_RARITY_ICON"), _L:Get("PIN_RARITY_ICON_TT"));
 				data:SetGetValueFunction(function() return WQT.settings.pin.rarityIcon; end);
 				data:SetValueChangedFunction(function(value) WQT.settings.pin.rarityIcon = value; end);
 				data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
 			end
 
 			do -- Time
-				local data = subCategory:AddCheckbox("MINI_ICON_TIME", _L["PIN_TIME_ICON"], _L["PIN_TIME_ICON_TT"]);
+				local data = subCategory:AddCheckbox("MINI_ICON_TIME", _L:Get("PIN_TIME_ICON"), _L:Get("PIN_TIME_ICON_TT"));
 				data:SetGetValueFunction(function() return WQT.settings.pin.timeIcon; end);
 				data:SetValueChangedFunction(function(value) WQT.settings.pin.timeIcon = value; end);
 				data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
 			end
 
 			do -- Warband
-				local data = subCategory:AddCheckbox("MINI_ICON_WARBAND", _L["SETTINGS_WARBAND_ICON"], _L["SETTINGS_WARBAND_ICON_TT"]);
+				local data = subCategory:AddCheckbox("MINI_ICON_WARBAND", _L:Get("SETTINGS_WARBAND_ICON"), _L:Get("SETTINGS_WARBAND_ICON_TT"));
 				data:SetGetValueFunction(function() return WQT.settings.pin.warbandIcon; end);
 				data:SetValueChangedFunction(function(value) WQT.settings.pin.warbandIcon = value; end);
 				data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
@@ -1733,7 +1736,7 @@ function WQT_SettingsFrameMixin:Init()
 				local minValue = 0;
 				local maxValue = 3;
 				local valueStep = 1;
-				local data = subCategory:AddSlider("MINI_ICON_NUM_REWARDS", _L["REWARD_NUM_DISPLAY_PIN"], _L["REWARD_NUM_DISPLAY_PIN_TT"], minValue, maxValue, valueStep);
+				local data = subCategory:AddSlider("MINI_ICON_NUM_REWARDS", _L:Get("REWARD_NUM_DISPLAY_PIN"), _L:Get("REWARD_NUM_DISPLAY_PIN_TT"), minValue, maxValue, valueStep);
 				data:SetGetValueFunction(function() return WQT.settings.pin.numRewardIcons; end);
 				data:SetValueChangedFunction(function(value) WQT.settings.pin.numRewardIcons = value; end);
 				data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
@@ -1742,21 +1745,21 @@ function WQT_SettingsFrameMixin:Init()
 	end -- Map Pins
 
 	do -- Colors
-		local category = self.dataContainer:AddCategory("CUSTOM_COLORS", _L["CUSTOM_COLORS"], not CATEGORY_DEFAULT_EXPANDED);
+		local category = self.dataContainer:AddCategory("CUSTOM_COLORS", _L:Get("CUSTOM_COLORS"), not CATEGORY_DEFAULT_EXPANDED);
 
 		do -- Time Colors
-			local subCategory = category:AddSubCategory("CUSTOM_COLORS_TIME", _L["TIME_COLORS"], CATEGORY_DEFAULT_EXPANDED);
+			local subCategory = category:AddSubCategory("CUSTOM_COLORS_TIME", _L:Get("TIME_COLORS"), CATEGORY_DEFAULT_EXPANDED);
 
-			subCategory:AddColorPicker("COLOR_TIME_CRITICAL", _L["TIME_CRITICAL"], _L["TIME_CRITICAL_TT"], "timeCritical", RED_FONT_COLOR);
-			subCategory:AddColorPicker("COLOR_TIME_SHORT", _L["TIME_SHORT"], _L["TIME_SHORT_TT"], "timeShort", addon.variables:GetDefaultColor("fontOrange"));
-			subCategory:AddColorPicker("COLOR_TIME_MEDIUM", _L["TIME_MEDIUM"], _L["TIME_MEDIUM_TT"], "timeMedium", addon.variables:GetDefaultColor("fontGreen"));
-			subCategory:AddColorPicker("COLOR_TIME_LONG", _L["TIME_LONG"], _L["TIME_LONG_TT"], "timeLong", addon.variables:GetDefaultColor("fontBlue"));
-			subCategory:AddColorPicker("COLOR_TIME_VERY_LONG", _L["TIME_VERYLONG"], _L["TIME_VERYLONG_TT"], "timeVeryLong", addon.variables:GetDefaultColor("fontPurple"));
-			subCategory:AddColorPicker("COLOR_TIME_NONE", NONE, _L["TIME_NONE_TT"], "timeNone", addon.variables:GetDefaultColor("rewardCurrency"));
+			subCategory:AddColorPicker("COLOR_TIME_CRITICAL", _L:Get("TIME_CRITICAL"), _L:Get("TIME_CRITICAL_TT"), "timeCritical", RED_FONT_COLOR);
+			subCategory:AddColorPicker("COLOR_TIME_SHORT", _L:Get("TIME_SHORT"), _L:Get("TIME_SHORT_TT"), "timeShort", addon.variables:GetDefaultColor("fontOrange"));
+			subCategory:AddColorPicker("COLOR_TIME_MEDIUM", _L:Get("TIME_MEDIUM"), _L:Get("TIME_MEDIUM_TT"), "timeMedium", addon.variables:GetDefaultColor("fontGreen"));
+			subCategory:AddColorPicker("COLOR_TIME_LONG", _L:Get("TIME_LONG"), _L:Get("TIME_LONG_TT"), "timeLong", addon.variables:GetDefaultColor("fontBlue"));
+			subCategory:AddColorPicker("COLOR_TIME_VERY_LONG", _L:Get("TIME_VERYLONG"), _L:Get("TIME_VERYLONG_TT"), "timeVeryLong", addon.variables:GetDefaultColor("fontPurple"));
+			subCategory:AddColorPicker("COLOR_TIME_NONE", NONE, _L:Get("TIME_NONE_TT"), "timeNone", addon.variables:GetDefaultColor("rewardCurrency"));
 		end
 
 		do -- Reward Amount Colors
-			local subCategory = category:AddSubCategory("CUSTOM_COLORS_AMOUNT", _L["REWARD_COLORS_AMOUNT"], not CATEGORY_DEFAULT_EXPANDED);
+			local subCategory = category:AddSubCategory("CUSTOM_COLORS_AMOUNT", _L:Get("REWARD_COLORS_AMOUNT"), not CATEGORY_DEFAULT_EXPANDED);
 
 			local defaultFontWhiteColor = addon.variables:GetDefaultColor("fontWhite");
 
@@ -1770,12 +1773,12 @@ function WQT_SettingsFrameMixin:Init()
 			subCategory:AddColorPicker("COLOR_AMOUNT_HONOR", HONOR, nil, "rewardTextHonor", defaultFontWhiteColor);
 			subCategory:AddColorPicker("COLOR_AMOUNT_ANIMA", WORLD_QUEST_REWARD_FILTERS_ANIMA, nil, "rewardTextAnima", GREEN_FONT_COLOR);
 			subCategory:AddColorPicker("COLOR_AMOUNT_ARTIFACT", ITEM_QUALITY6_DESC, nil, "rewardTextArtifact", GREEN_FONT_COLOR);
-			subCategory:AddColorPicker("COLOR_AMOUNT_CONDUIT", _L["REWARD_CONDUITS"], nil, "rewardTextConduit", defaultFontWhiteColor);
+			subCategory:AddColorPicker("COLOR_AMOUNT_CONDUIT", _L:Get("REWARD_CONDUITS"), nil, "rewardTextConduit", defaultFontWhiteColor);
 			subCategory:AddColorPicker("COLOR_AMOUNT_RELIC", RELICSLOT, nil, "rewardTextRelic", defaultFontWhiteColor);
 		end
 
 		do -- Reward Ring Colors
-			local subCategory = category:AddSubCategory("CUSTOM_COLORS_RING", _L["REWARD_COLORS_RING"], not CATEGORY_DEFAULT_EXPANDED);
+			local subCategory = category:AddSubCategory("CUSTOM_COLORS_RING", _L:Get("REWARD_COLORS_RING"), not CATEGORY_DEFAULT_EXPANDED);
 			
 			subCategory:AddColorPicker("COLOR_REWARD_NONE", NONE, nil, "rewardNone", addon.variables:GetDefaultColor("rewardNone"));
 			subCategory:AddColorPicker("COLOR_REWARD_WEAPON", WEAPON, nil, "rewardWeapon", addon.variables:GetDefaultColor("rewardWeapon"));
@@ -1788,7 +1791,7 @@ function WQT_SettingsFrameMixin:Init()
 			subCategory:AddColorPicker("COLOR_REWARD_HONOR", HONOR, nil, "rewardHonor", addon.variables:GetDefaultColor("rewardHonor"));
 			subCategory:AddColorPicker("COLOR_REWARD_ANIMA", WORLD_QUEST_REWARD_FILTERS_ANIMA, nil, "rewardAnima", addon.variables:GetDefaultColor("rewardArtifact"));
 			subCategory:AddColorPicker("COLOR_REWARD_ARTIFACT", ITEM_QUALITY6_DESC, nil, "rewardArtifact", addon.variables:GetDefaultColor("rewardArtifact"));
-			subCategory:AddColorPicker("COLOR_REWARD_CONDUIT", _L["REWARD_CONDUITS"], nil, "rewardConduit", addon.variables:GetDefaultColor("rewardRelic"));
+			subCategory:AddColorPicker("COLOR_REWARD_CONDUIT", _L:Get("REWARD_CONDUITS"), nil, "rewardConduit", addon.variables:GetDefaultColor("rewardRelic"));
 			subCategory:AddColorPicker("COLOR_REWARD_RELIC", RELICSLOT, nil, "rewardRelic", addon.variables:GetDefaultColor("rewardRelic"));
 			subCategory:AddColorPicker("COLOR_REWARD_MISSING", ADDON_MISSING, nil, "rewardMissing", addon.variables:GetDefaultColor("rewardMissing"));
 		end

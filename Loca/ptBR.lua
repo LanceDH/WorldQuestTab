@@ -1,8 +1,8 @@
 ﻿local _, addon = ...
 
-if GetLocale() ~= "ptBR" then return end;
+if (GetLocale() ~= "ptBR") then return end;
 
-local L = addon.L;
+local L = {};
 
 L["DEFAULT_TAB"] = "Aba Padrão"
 L["DEFAULT_TAB_TT"] = [=[Definir o WQT como aba padrão quando você logar.
@@ -16,8 +16,6 @@ L["NUMBERS_SECOND"] = "%gm"
 L["NUMBERS_THIRD"] = "%gb"
 L["PIN_DISABLE"] = "Desativa mudanças na marcação"
 L["PIN_DISABLE_TT"] = "Prevenir WQT fazer mudanças nas marcações do mapa."
-L["PIN_REWARDS"] = "Marcadores de recompensas"
-L["PIN_REWARDS_TT"] = "Exibe ícone de recompensas da missão nos marcadores."
 L["PIN_TIME"] = "Tempo do marcador"
 L["PIN_TIME_TT"] = "Adicionar tempo restante nos marcadores."
 L["SAVE_SETTINGS"] = "Salvar/Organizar Filtros"
@@ -32,3 +30,5 @@ na lista de missões.]=]
 L["TIME"] = "Tempo"
 L["TYPE_EMISSARY"] = "Emissário"
 L["TYPE_INVASION"] = "Invasão"
+
+addon.loca:ApplyLocalization(L);

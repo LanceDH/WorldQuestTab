@@ -1,8 +1,6 @@
 ﻿local addonName, addon = ...
 local WQT = addon.WQT;
-local _L = addon.L
 local _V = addon.variables;
-local WQT_Profiles = addon.WQT_Profiles;
 
 local MAX_CALLINGS = 3;
 
@@ -428,11 +426,3 @@ function WQT_CallingsBoardDisplayMixin:OnClick()
 		end
 	end
 end
-
-
-
-
-
-
-
-

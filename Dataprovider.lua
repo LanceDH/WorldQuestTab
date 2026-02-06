@@ -5,7 +5,6 @@
 ----------------------------
 
 local WQT = addon.WQT;
-local _L = addon.L;
 local _V = addon.variables;
 
 local _azuriteID = C_CurrencyInfo.GetAzeriteCurrencyID();

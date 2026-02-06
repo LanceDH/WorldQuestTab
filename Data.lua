@@ -14,7 +14,7 @@ local _V = addon.variables;
 
 addon.WQT_Profiles =  {};
 
-local _L = addon.L;
+local _L = addon.loca;
 local _playerFaction = UnitFactionGroup("Player");
 
 
@@ -198,21 +198,21 @@ function _V:GetTimeRemainingEnum()
 end
 
 local abriviationNumbers = {
-	{["value"] = 10000000000, ["format"] = _L["NUMBERS_THIRD"]};
-	{["value"] = 1000000000, ["format"] = _L["NUMBERS_THIRD"], ["decimal"] = true};
-	{["value"] = 10000000, ["format"] = _L["NUMBERS_SECOND"]};
-	{["value"] = 1000000, ["format"] = _L["NUMBERS_SECOND"], ["decimal"] = true};
-	{["value"] = 10000, ["format"] = _L["NUMBERS_FIRST"]};
-	{["value"] = 1000, ["format"] = _L["NUMBERS_FIRST"], ["decimal"] = true};
+	{["value"] = 10000000000, ["format"] = _L:Get("NUMBERS_THIRD")};
+	{["value"] = 1000000000, ["format"] = _L:Get("NUMBERS_THIRD"), ["decimal"] = true};
+	{["value"] = 10000000, ["format"] = _L:Get("NUMBERS_SECOND")};
+	{["value"] = 1000000, ["format"] = _L:Get("NUMBERS_SECOND"), ["decimal"] = true};
+	{["value"] = 10000, ["format"] = _L:Get("NUMBERS_FIRST")};
+	{["value"] = 1000, ["format"] = _L:Get("NUMBERS_FIRST"), ["decimal"] = true};
 }
 
 local locale = GetLocale();
 if (locale == "koKR" or locale == "zhCN" or locale == "zhTW") then
 	abriviationNumbers = {
-		{["value"] = 1000000000, ["format"] = _L["NUMBERS_THIRD"]};
-		{["value"] = 100000000, ["format"] = _L["NUMBERS_SECOND"], ["decimal"] = true};
-		{["value"] = 100000, ["format"] = _L["NUMBERS_FIRST"]};
-		{["value"] = 10000, ["format"] = _L["NUMBERS_FIRST"], ["decimal"] = true};
+		{["value"] = 1000000000, ["format"] = _L:Get("NUMBERS_THIRD")};
+		{["value"] = 100000000, ["format"] = _L:Get("NUMBERS_SECOND"), ["decimal"] = true};
+		{["value"] = 100000, ["format"] = _L:Get("NUMBERS_FIRST")};
+		{["value"] = 10000, ["format"] = _L:Get("NUMBERS_FIRST"), ["decimal"] = true};
 	}
 end
 function _V:GetAbriviationNumbers()
@@ -228,7 +228,7 @@ local typeFlagLabels = {
 		Dungeon		= TRACKER_HEADER_DUNGEON;
 		Raid		= RAID;
 		Profession	= BATTLE_PET_SOURCE_4;
-		Invasion	= _L["TYPE_INVASION"];
+		Invasion	= _L:Get("TYPE_INVASION");
 		Assault		= SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE;
 		Bonus		= SCENARIO_BONUS_LABEL;
 		Dragonrider	= DRAGONRIDING_RACES_MAP_TOGGLE;
@@ -240,7 +240,7 @@ local typeFlagLabels = {
 		Currency	= CURRENCY;
 		Artifact	= ITEM_QUALITY6_DESC;
 		Anima		= WORLD_QUEST_REWARD_FILTERS_ANIMA;
-		Conduits	= _L["REWARD_CONDUITS"];
+		Conduits	= _L:Get("REWARD_CONDUITS");
 		Relic		= RELICSLOT;
 		None		= NONE;
 		Experience	= POWER_TYPE_EXPERIENCE;
@@ -644,7 +644,7 @@ function _V:GetSubZones(mapID)
 end
 
 
-local factionFallbackData = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L["NO_FACTION"] } -- No faction
+local factionFallbackData = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L:Get("NO_FACTION") } -- No faction
 local factionData = {
 	[67] = 		{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 2203914 }; -- Horde
 	[469] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 2203912 }; -- Alliance

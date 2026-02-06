@@ -1,6 +1,6 @@
 ﻿local addonName, addon = ...
 local WQT = addon.WQT;
-local _L = addon.L
+local _L = addon.loca;
 local _V = addon.variables;
 local WQT_Profiles = addon.WQT_Profiles;
 
@@ -1012,21 +1012,21 @@ local function QuestContextSetup(frame, rootDescription, questInfo)
 					end
 		end	
 		local trackBtn = rootDescription:CreateButton(title, func);
-		AddInstructionTooltipToDropdownItem(trackBtn, _L["SHORTCUT_TRACK"]);
+		AddInstructionTooltipToDropdownItem(trackBtn, _L:Get("SHORTCUT_TRACK"));
 	end
 
 	-- 9.0 waypoint
 	local waypointBtn = rootDescription:CreateButton(
-		_L["PLACE_MAP_PIN"],
+		_L:Get("PLACE_MAP_PIN"),
 		function()
 			questInfo:SetAsWaypoint();
 			C_SuperTrack.SetSuperTrackedUserWaypoint(true);
 		end);
-	AddInstructionTooltipToDropdownItem(waypointBtn, _L["SHORTCUT_WAYPOINT"]);
+	AddInstructionTooltipToDropdownItem(waypointBtn, _L:Get("SHORTCUT_WAYPOINT"));
 
 	-- Uninterested
 	local checkbox = rootDescription:CreateCheckbox(
-		_L["UNINTERESTED"],
+		_L:Get("UNINTERESTED"),
 		function()
 			 return WQT_Utils:QuestIsDisliked(questInfo.questID);
 		end,
@@ -1035,7 +1035,7 @@ local function QuestContextSetup(frame, rootDescription, questInfo)
  			WQT_Utils:SetQuestDisliked(questInfo.questID, dislike);
 		end
 	);
-	AddInstructionTooltipToDropdownItem(checkbox, _L["SHORTCUT_DISLIKE"]);
+	AddInstructionTooltipToDropdownItem(checkbox, _L:Get("SHORTCUT_DISLIKE"));
 
 	-- Cancel. apparently a function is required for it to close the menu on click
 	rootDescription:CreateButton(CANCEL, function() end);
@@ -1093,7 +1093,7 @@ function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 					if(InCombatLockdown()) then
 						if(not WQT.combatLockWarned) then
 							WQT.combatLockWarned = true;
-							print(string.format("|cFFFF5555WQT: %s|r", _L["COMBATLOCK_MAP_CHANGE"]));
+							print(string.format("|cFFFF5555WQT: %s|r", _L:Get("COMBATLOCK_MAP_CHANGE")));
 						end
 					else
 						C_Map.OpenWorldMap(zoneID);

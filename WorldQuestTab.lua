@@ -15,7 +15,7 @@ local addonName, addon = ...
 
 local WQT = addon.WQT;
 
-local _L = addon.L
+local _L = addon.loca;
 local _V = addon.variables;
 local WQT_Profiles = addon.WQT_Profiles;
 
@@ -79,8 +79,8 @@ end
 
 local function ShowDisabledFilterTooltip(self)
 	WQT_ActiveGameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip_SetTitle(WQT_ActiveGameTooltip, _L["MAP_FILTER_DISABLED"]);
-	GameTooltip_AddNormalLine(WQT_ActiveGameTooltip, _L["MAP_FILTER_DISABLED_INFO"]);
+	GameTooltip_SetTitle(WQT_ActiveGameTooltip, _L:Get("MAP_FILTER_DISABLED"));
+	GameTooltip_AddNormalLine(WQT_ActiveGameTooltip, _L:Get("MAP_FILTER_DISABLED_INFO"));
 	WQT_ActiveGameTooltip:Show();
 end
 
@@ -172,7 +172,7 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 			factionFilters.misc.none = not factionFilters.misc.none;
 			WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
 		end
-		factionsSubmenu:CreateCheckbox(_L["NO_FACTION"], NoFactionChecked, NoFactionOnSelect);
+		factionsSubmenu:CreateCheckbox(_L:Get("NO_FACTION"), NoFactionChecked, NoFactionOnSelect);
 
 		-- Submenus for older expansions (down to Legion)
 		local startExpansion = LE_EXPANSION_LEVEL_CURRENT - 1;
@@ -201,8 +201,8 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 		WQT.settings.general.showDisliked = not WQT.settings.general.showDisliked;
 		WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
 	end
-	local uninterestedCB = rootDescription:CreateCheckbox(_L["UNINTERESTED"], DDUninterededChecked, DDUninterededOnSelect);
-	AddBasicTooltipFunctionsToDropdownItem(uninterestedCB, _L["UNINTERESTED"], _L["UNINTERESTED_TT"]);
+	local uninterestedCB = rootDescription:CreateCheckbox(_L:Get("UNINTERESTED"), DDUninterededChecked, DDUninterededOnSelect);
+	AddBasicTooltipFunctionsToDropdownItem(uninterestedCB, _L:Get("UNINTERESTED"), _L:Get("UNINTERESTED_TT"));
 
 	-- Emisarry only filter
 	local function DDEmissaryChecked()
@@ -220,8 +220,8 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 			WQT_WorldQuestFrame.autoEmisarryId = nil;
 		end
 	end
-	local emissaryCB = rootDescription:CreateCheckbox(_L["TYPE_EMISSARY"], DDEmissaryChecked, DDEmissaryOnSelect);
-	AddBasicTooltipFunctionsToDropdownItem(emissaryCB, _L["TYPE_EMISSARY"], _L["TYPE_EMISSARY_TT"]);
+	local emissaryCB = rootDescription:CreateCheckbox(_L:Get("TYPE_EMISSARY"), DDEmissaryChecked, DDEmissaryOnSelect);
+	AddBasicTooltipFunctionsToDropdownItem(emissaryCB, _L:Get("TYPE_EMISSARY"), _L:Get("TYPE_EMISSARY_TT"));
 end
 
 -----------------------------------------
@@ -796,7 +796,7 @@ function WQT:OnInitialize()
 			SortFunctionTags.rewardId;
 			SortFunctionTags.title;
 		}
-		self.sortDataContainer:AddSortOption("time", _L["TIME"], functionTags);
+		self.sortDataContainer:AddSortOption("time", _L:Get("TIME"), functionTags);
 	end
 	do -- faction
 		local functionTags = {
@@ -1646,7 +1646,7 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 
 	-- Emissary has priority
 	if (WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId) then
-		local text = _L["TYPE_EMISSARY"]
+		local text = _L:Get("TYPE_EMISSARY")
 		if WQT_WorldQuestFrame.autoEmisarryId then
 			text = GARRISON_TEMPORARY_CATEGORY_FORMAT:format(text);
 		end
@@ -1658,7 +1658,7 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 		end
 
 		if (not WQT.settings.general.showDisliked) then
-			tinsert(filterLabels, _L["UNINTERESTED"]);
+			tinsert(filterLabels, _L:Get("UNINTERESTED"));
 		end
 	
 		for k, option in pairs(WQT.settings.filters) do
@@ -2345,8 +2345,8 @@ function WQT_FullscreenMapContainer:OnLoad()
 
 	local function TooltipFunc(tooltip)
 		tooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT");
-		GameTooltip_SetTitle(tooltip, _L["CONTAINER_DRAG"]);
-		GameTooltip_AddNormalLine(tooltip, _L["CONTAINER_DRAG_TT"], true);
+		GameTooltip_SetTitle(tooltip, _L:Get("CONTAINER_DRAG"));
+		GameTooltip_AddNormalLine(tooltip, _L:Get("CONTAINER_DRAG_TT"), true);
 	end
 	self.DragFrame:SetTooltip(TooltipFunc);
 end
