@@ -1873,24 +1873,18 @@ end
 
 -- Mimics hovering over a zone or continent, based on the zone the map is in
 function WQT_CoreMixin:ShowWorldmapHighlight(questInfo)
-	local zoneId = questInfo.mapID;
+	local zoneID = questInfo.mapID;
 	local areaId = WorldMapFrame.mapID;
-	
-	local coords = _V:GetZoneCoordinates(areaId, zoneId);
-	
-	local mapInfo = WQT_Utils:GetCachedMapInfo(zoneId);
-	-- We can't use parentMapID for cases like Cape of Stranglethorn
-	local continentID = WQT_Utils:GetContinentForMap(zoneId);
-	-- Highlihght continents on world view
-	-- 947 == Azeroth world map
-	if (not coords and areaId == 947 and continentID) then
-		coords = _V:GetZoneCoordinates(947, continentID);
-		mapInfo = WQT_Utils:GetCachedMapInfo(continentID);
-	end
-	
-	if (not coords or not mapInfo) then return; end;
 
+	local mapInfo = WQT_Utils:GetCachedMapInfo(zoneID);
+	
+	if (not mapInfo) then return; end;
+	
 	WorldMapFrame.ScrollContainer:GetMap():TriggerEvent("SetAreaLabel", MAP_AREA_LABEL_TYPE.POI, mapInfo.name);
+	self.resetLabel = true;
+
+	local coords = _V:GetMostRelevantMapCoordinates(zoneID, areaId);
+	if (not coords) then return; end;
 
 	-- Now we cheat by acting like we moved our mouse over the relevant zone
 	WQT_MapZoneHightlight:SetParent(WorldMapFrame.ScrollContainer.Child);
@@ -1924,8 +1918,6 @@ function WQT_CoreMixin:ShowWorldmapHighlight(questInfo)
 			end
 		end
 	end
-	
-	self.resetLabel = true;
 end
 
 function WQT_CoreMixin:HideWorldmapHighlight()

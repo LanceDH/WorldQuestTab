@@ -865,64 +865,36 @@ function WQT_DataProvider:ClearData()
 	wipe(self.iterativeList);
 end
 
-function WQT_DataProvider:AddContinentMapQuests(mapID)
-	self:AddZoneToBuffer(mapID);
-
-	local continentZones = _V:GetZonesForContinentMap(mapID);
-	if (not continentZones) then return end
-
-	for zoneID in pairs(continentZones) do
-		self:AddZoneToBuffer(zoneID);
-	end
-end
-
-function WQT_DataProvider:AddWorldMapQuests()
-	local worldContinents = _V:GetZonesForContinentMap(947);
-	if (not worldContinents) then return end
-
-	local expLevel = WQT_Utils:GetCharacterExpansionLevel();
-	self.zoneLoading.expansion = expLevel;
-	for contID, data in pairs(worldContinents) do
-		if (data.expansion == expLevel or data.expansion <= LE_EXPANSION_MISTS_OF_PANDARIA) then
-			local linkedZones = _V:GetLinkedZones(contID);
-			if (linkedZones) then
-				for _, linkedMapID in pairs(linkedZones) do
-					self:AddContinentMapQuests(linkedMapID)
-				end
-			else
-				self:AddContinentMapQuests(contID)
-			end
-		end
-	end
-end
-
-function WQT_DataProvider:AddZoneToRemainingUnique(zoneID)
+function WQT_DataProvider:AddZoneToBuffer(zoneID, includeChildren)
 	if(self.zoneLoading.remainingZones[zoneID]) then return; end
 
 	self.zoneLoading.remainingZones[zoneID] = true;
 	self.zoneLoading.numRemaining = self.zoneLoading.numRemaining + 1;
 	self.zoneLoading.numTotal = self.zoneLoading.numTotal + 1;
+
+	local zoneData = _V:GetZoneData(zoneID);
+	if (not zoneData) then return; end
+
+	for childID, childData in pairs(zoneData.children) do
+		if (childData.isSubZone or includeChildren) then
+			self:AddZoneToBuffer(childID, includeChildren);
+		end
+	end
 end
 
-function WQT_DataProvider:AddZoneToBuffer(zoneID)
-	self:AddZoneToRemainingUnique(zoneID);
-
-	-- Check for subzones and add those as well
-	local subZones = _V:GetSubZones(zoneID);
-	if (subZones) then
-		for k, subID in ipairs(subZones) do
-			self:AddZoneToRemainingUnique(subID);
+function WQT_DataProvider:AddZoneListToBuffer(zoneList)
+	if (type(zoneList) ~= "table") then return; end
+	for zoneID in pairs(zoneList) do
+		local zoneData = _V:GetZoneData(zoneID);
+		if (zoneData and not zoneData.isFlightMap) then
+			self:AddZoneToBuffer(zoneID);
 		end
 	end
 end
 
 function WQT_DataProvider:LoadQuestsInZone(zoneID, isFlightMap)
-
 	if (not zoneID) then return end
 	self:ClearData();
-	zoneID = zoneID or self.latestZoneId or C_Map.GetBestMapForUnit("player");
-
-	if (not zoneID) then return end;
 
 	-- No update while invisible
 	if (not WorldMapFrame:IsShown()
@@ -942,43 +914,41 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID, isFlightMap)
 	wipe(self.zoneLoading.remainingZones);
 	wipe(self.zoneLoading.questsFound);
 
-	self.latestZoneId = zoneID
+	self.latestZoneId = zoneID;
 
 	local currentMapInfo = WQT_Utils:GetCachedMapInfo(zoneID);
 	if (not currentMapInfo) then return end;
 
 	local zoneQuests = WQT_Utils:GetSetting("general", "zoneQuests");
 	local enumZoneQuests = _V:GetZoneQuestsEnum();
+
 	if (currentMapInfo.mapType == Enum.UIMapType.World) then
-		self:AddWorldMapQuests();
-
-	elseif (currentMapInfo.mapType == Enum.UIMapType.Continent or zoneQuests == enumZoneQuests.expansion) then
-		local continentZones = _V:GetZonesForContinentMap(zoneID);
-
-		while (not continentZones and currentMapInfo.mapType > Enum.UIMapType.Continent and currentMapInfo.parentMapID and zoneID ~= currentMapInfo.parentMapID) do
-			local parentMapInfo =  WQT_Utils:GetCachedMapInfo(currentMapInfo.parentMapID);
-			if (not parentMapInfo) then
-				break;
-			end
-			zoneID = currentMapInfo.parentMapID;
-			currentMapInfo = parentMapInfo;
-			continentZones = _V:GetZonesForContinentMap(zoneID);
-		end
-
-		self:AddContinentMapQuests(zoneID);
-		local linkedZones = _V:GetLinkedZones(zoneID);
-		if (linkedZones) then
-			for _, continentID in ipairs(linkedZones) do
-				self:AddContinentMapQuests(continentID);
-			end
-		end
+		self:AddZoneListToBuffer(_V:GetZonesOfExpansion(0));
+		local expansionLevel = WQT_Utils:GetCharacterExpansionLevel();
+		self.zoneLoading.expansion = expansionLevel;
+		self:AddZoneListToBuffer(_V:GetZonesOfExpansion(expansionLevel));
 
 	else
-		if (zoneQuests == enumZoneQuests.zone) then
-			self:AddZoneToBuffer(zoneID);
-		else
-			self:AddContinentMapQuests(zoneID);
+		local addChildren = zoneQuests ~= enumZoneQuests.zone;
+		if (zoneQuests == enumZoneQuests.expansion) then
+			local zoneData = _V:GetZoneData(zoneID);
+			if (zoneData and zoneData.expansion > 0) then
+				self.zoneLoading.expansion = zoneData.expansion;
+				self:AddZoneListToBuffer(_V:GetZonesOfExpansion(zoneData.expansion));
+			end
+		elseif (currentMapInfo.mapType == Enum.UIMapType.Continent) then
+			while (currentMapInfo.mapType > Enum.UIMapType.Continent and currentMapInfo.parentMapID and zoneID ~= currentMapInfo.parentMapID) do
+				local parentMapInfo = WQT_Utils:GetCachedMapInfo(currentMapInfo.parentMapID);
+				if (not parentMapInfo) then
+					break;
+				end
+				zoneID = currentMapInfo.parentMapID;
+				currentMapInfo = parentMapInfo;
+			end
+			addChildren = true;
 		end
+
+		self:AddZoneToBuffer(zoneID, addChildren);
 	end
 end
 

@@ -331,318 +331,507 @@ function _V:GetRewardIconAtlas(rewardType, subType)
 	return t;
 end
 
-local quelThalasMapCoords = {
-	[2424]	= {["x"] = 0.26, ["y"] = 0.14}, -- Isle of Quel'Danas
-	[2395]	= {["x"] = 0.27, ["y"] = 0.53}, -- Eversong Woods
-	[2393]	= {["x"] = 0.27, ["y"] = 0.53}, -- Silvermoon City
-	[2437]	= {["x"] = 0.44, ["y"] = 0.71}, -- Zul'Aman
-	[2405]	= {["x"] = 0.53, ["y"] = 0.23}, -- Voidstorm
-	[2413]	= {["x"] = 0.82, ["y"] = 0.16}, -- Haradar
-}
-local kareshMapCoords = {
-	[2371]	= {["x"] = 0.00, ["y"] = 0.00}, -- K'aresh
-	[2472]	= {["x"] = 0.67, ["y"] = 0.80}, -- Tazavesh
-}
-local isleOfDornMapCoords = {
-	[2248]	= {["x"] = 0.00, ["y"] = 0.00}, -- Isle of Dorn
-	[2369]	= {["x"] = 0.18, ["y"] = 0.18},  -- Siren Isle
-}
-local khazalgarMapCoords = {
-	[2248]	= {["x"] = 0.73, ["y"] = 0.23}, -- Isle of Dorn
-	[2214]	= {["x"] = 0.57, ["y"] = 0.58}, -- Ringing Deeps
-	[2215]	= {["x"] = 0.35, ["y"] = 0.47}, -- Hallowfall
-	[2255]	= {["x"] = 0.46, ["y"] = 0.75}, -- Azj-Kahet
-	[2346]	= {["x"] = 0.82, ["y"] = 0.74}, -- Undermine
-	[2371]	= {["x"] = 0.17, ["y"] = 0.20}, -- K'aresh
-}
-local zaralekMapCoords = {
-	[2133]	= {["x"] = 0.00, ["y"] = 0.00}, -- Zaralek Cavern
-	[2022]	= {["x"] = 0.88, ["y"] = 0.84}, -- Waking Shores
-	[2023]	= {["x"] = 0.88, ["y"] = 0.84}, -- Ohn'ahran Plains
-	[2200]	= {["x"] = 0.88, ["y"] = 0.84}, -- Emerald Dream
-	[2239]	= {["x"] = 0.88, ["y"] = 0.84}, -- Amirdrassil
-	[2024]	= {["x"] = 0.88, ["y"] = 0.84}, -- Azure Span
-	[2025]	= {["x"] = 0.88, ["y"] = 0.84}, -- Thaldraszus
-	[2151]	= {["x"] = 0.88, ["y"] = 0.84}, -- Forbidden Reach
-	[2112]	= {["x"] = 0.88, ["y"] = 0.84}, -- Valdrakken
-}
-local dragonlandsMapCoords = {
-	[2022]	= {["x"] = 0.48, ["y"] = 0.35}, -- Waking Shores
-	[2023]	= {["x"] = 0.44, ["y"] = 0.56}, -- Ohn'ahran Plains
-	[2200]	= {["x"] = 0.31, ["y"] = 0.57}, -- Emerald Dream
-	[2239]	= {["x"] = 0.24, ["y"] = 0.58}, -- Amirdrassil
-	[2024]	= {["x"] = 0.55, ["y"] = 0.74}, -- Azure Span
-	[2025]	= {["x"] = 0.63, ["y"] = 0.51}, -- Thaldraszus
-	[2151]	= {["x"] = 0.65, ["y"] = 0.10}, -- Forbidden Reach
+local enumZoneIDs =
+{
+	Azeroth = 947;
 
-	[2133]	= {["x"] = 0.88, ["y"] = 0.84}, -- Zaralek Cavern
-}
-local shadowlandsMapCoords = {
-	[1543]	= {["x"] = 0.23, ["y"] = 0.13}, -- The Maw
-	[1536]	= {["x"] = 0.62, ["y"] = 0.21}, -- Maldraxxus
-	[1525]	= {["x"] = 0.24, ["y"] = 0.54}, -- Revendreth
-	[1670]	= {["x"] = 0.47, ["y"] = 0.51}, -- Oribos
-	[1533]	= {["x"] = 0.71, ["y"] = 0.57}, -- Bastion
-	[1565]	= {["x"] = 0.48, ["y"] = 0.80}, -- Ardenweald
-	[1970]	= {["x"] = 0.85, ["y"] = 0.81}, -- Zereth Mortis
-}
-local nazjatarMapCoords = {
-	[1355]	= {["x"] = 0.00, ["y"] = 0.00}, -- Nazjatar
+	Kalimdor = 12;
+	Silithus = 81;
+	ThousandNeedles = 64;
+	Uldum = 249;
+	Tanaris = 71;
+	UngoroCrater = 78;
+	Feralas = 69;
+	DustwallowMarsh = 70;
+	SouthernBarrens = 199;
+	Mulgore = 7;
+	Desolace = 66;
+	StonetalonMountain = 65;
+	NorthernBarrens = 10;
+	Durotar = 1;
+	Ashenvale = 63;
+	Darkshore = 62;
+	Azshara = 76;
+	Hyjal = 198;
+	Felwood = 77;
+	Moonglade = 80;
+	Winterspring = 83;
+	Teldrassil = 57;
+	AzuremystIsle = 97;
+	BloodmystIsle = 106;
 
-	[864]	= {["x"] = 0.11, ["y"] = 0.52}, -- Vol'dun
-	[863]	= {["x"] = 0.11, ["y"] = 0.52}, -- Nazmir
-	[862]	= {["x"] = 0.11, ["y"] = 0.52}, -- Zuldazar
-	[1165]	= {["x"] = 0.11, ["y"] = 0.52}, -- Dazar'alor
+	EasternKingdoms = 13;
+	StranglethronVale = 224;
+	StranglethronValeNorth = 50;
+	StranglethronValeCape = 210;
+	BlastedLands = 17;
+	SwampOfSorrows = 51;
+	DeadwindPass = 42;
+	Duskwood = 47;
+	Westfall = 52;
+	ElwynnForest = 37;
+	RedridgeMountains = 49;
+	BurningSteppes = 36;
+	SearingGorge = 32;
+	Badlands = 15;
+	DunMorogh = 27;
+	LochModan = 48;
+	TwilightHighlands = 241;
+	Wetlands = 56;
+	ArathiHighlands = 14;
+	Hinterlands = 26;
+	HillsbradFoothills = 25;
+	RuinsOfGilneas = 217;
+	SilverpineForest = 21;
+	TirisfallGlades = 18;
+	WesternPlaguelands = 22;
+	EasternPlaguelands = 23;
 
-	[942]	= {["x"] = 0.77, ["y"] = 0.77}, -- Stromsong Valley
-	[896]	= {["x"] = 0.77, ["y"] = 0.77}, -- Drustvar
-	[895]	= {["x"] = 0.77, ["y"] = 0.77}, -- Tiragarde Sound
-	[1161]	= {["x"] = 0.77, ["y"] = 0.77}, -- Boralus
-	[1169]	= {["x"] = 0.77, ["y"] = 0.77}, -- Tol Dagor
-	[1462]	= {["x"] = 0.77, ["y"] = 0.77}, -- Mechagon
-}
-local zandalarMapCoords = {
-	[864]	= {["x"] = 0.39, ["y"] = 0.32}, -- Vol'dun
-	[863]	= {["x"] = 0.57, ["y"] = 0.28}, -- Nazmir
-	[862]	= {["x"] = 0.55, ["y"] = 0.61}, -- Zuldazar
-	[1165]	= {["x"] = 0.55, ["y"] = 0.61}, -- Dazar'alor
+	Pandaria = 424;
+	PandariaFlightmap = 989;
+	JadeForest = 371;
+	KarasangWilds = 418;
+	ValleyOfTheFourWinds = 376;
+	DreadWastes = 422;
+	ValleyOfEternalBlossom = 390;
+	TownlongSteppes = 388;
+	KunlaiSummit = 379;
+	IsleOfGiants = 507;
+	IsleOfThunder = 504;
+	TimelessIsle = 554;
 
-	[1355]	= {["x"] = 0.86, ["y"] = 0.14}, -- Nazjatar
-}
-local kultirasMapCoords = {
-	[942]	= {["x"] = 0.55, ["y"] = 0.25}, -- Stromsong Valley
-	[896]	= {["x"] = 0.36, ["y"] = 0.67}, -- Drustvar
-	[895]	= {["x"] = 0.56, ["y"] = 0.54}, -- Tiragarde Sound
-	[1161]	= {["x"] = 0.56, ["y"] = 0.54}, -- Boralus
-	[1169]	= {["x"] = 0.78, ["y"] = 0.61}, -- Tol Dagor
-	[1462]	= {["x"] = 0.17, ["y"] = 0.28}, -- Mechagon
+	Draenor = 572;
+	DraenorFlightmap = 990;
+	NagrandWoD = 550;
+	FrostfireRidge = 525;
+	Gorgrond = 543;
+	Talador = 535;
+	SpiresOfArak = 542;
+	ShadowmoonValleyWoD = 539;
+	TanaanJungle = 534;
+	Ashran = 588;
 
-	[1355]	= {["x"] = 0.86, ["y"] = 0.14}, -- Nazjatar
-}
-local argusMapCoords = {
-	[830]	= {["x"] = 0.61, ["y"] = 0.68}, -- Krokuun
-	[885]	= {["x"] = 0.31, ["y"] = 0.51}, -- Antoran Wastes
-	[882]	= {["x"] = 0.62, ["y"] = 0.26}, -- Eredath
-}
-local legionMapCoords = {
-	[630]	= {["x"] = 0.33, ["y"] = 0.58}, -- Azsuna
-	[680]	= {["x"] = 0.46, ["y"] = 0.45}, -- Suramar
-	[634]	= {["x"] = 0.60, ["y"] = 0.33}, -- Stormheim
-	[650]	= {["x"] = 0.46, ["y"] = 0.23}, -- Highmountain
-	[641]	= {["x"] = 0.34, ["y"] = 0.33}, -- Val'sharah
-	[790]	= {["x"] = 0.46, ["y"] = 0.84}, -- Eye of Azshara
-	[646]	= {["x"] = 0.54, ["y"] = 0.68}, -- Broken Shore
-	[627]	= {["x"] = 0.45, ["y"] = 0.64}, -- Dalaran
-	[830]	= {["x"] = 0.86, ["y"] = 0.15}, -- Krokuun
-	[885]	= {["x"] = 0.86, ["y"] = 0.15}, -- Antoran Wastes
-	[882]	= {["x"] = 0.86, ["y"] = 0.15}, -- Eredath
-}
-local draenorMapCoords = {
-	[550]	= {["x"] = 0.24, ["y"] = 0.49}, -- Nagrand
-	[525]	= {["x"] = 0.34, ["y"] = 0.29}, -- Frostridge
-	[543]	= {["x"] = 0.49, ["y"] = 0.21}, -- Gorgrond
-	[535]	= {["x"] = 0.43, ["y"] = 0.56}, -- Talador
-	[542]	= {["x"] = 0.46, ["y"] = 0.73}, -- Spired of Arak
-	[539]	= {["x"] = 0.58, ["y"] = 0.67}, -- Shadowmoon
-	[534]	= {["x"] = 0.58, ["y"] = 0.47}, -- Tanaan Jungle
-	[588]	= {["x"] = 0.73, ["y"] = 0.43}, -- Ashran
-}
-local pandariaMapCoords = {
-	[554]	= {["x"] = 0.90, ["y"] = 0.68}, -- Timeless Isles
-	[371]	= {["x"] = 0.67, ["y"] = 0.52}, -- Jade Forest
-	[418]	= {["x"] = 0.53, ["y"] = 0.75}, -- Karasang
-	[376]	= {["x"] = 0.51, ["y"] = 0.65}, -- Four Winds
-	[422]	= {["x"] = 0.35, ["y"] = 0.62}, -- Dread Waste
-	[390]	= {["x"] = 0.50, ["y"] = 0.52}, -- Eternal Blossom
-	[379]	= {["x"] = 0.45, ["y"] = 0.35}, -- Kun-lai Summit
-	[507]	= {["x"] = 0.48, ["y"] = 0.05}, -- Isle of Giants
-	[388]	= {["x"] = 0.32, ["y"] = 0.45}, -- Townlong Steppes
-	[504]	= {["x"] = 0.20, ["y"] = 0.11}, -- Isle of Thunder
-	[1530]	= {["x"] = 0.51, ["y"] = 0.53}, -- Vale Of Eternal Blossom BfA
-}
-local northrendMapCoords = {
-	[114]	= {["x"] = 0.22, ["y"] = 0.59}, -- Borean Tundra
-	[119]	= {["x"] = 0.25, ["y"] = 0.41}, -- Sholazar Basin
-	[118]	= {["x"] = 0.41, ["y"] = 0.26}, -- Icecrown
-	[127]	= {["x"] = 0.47, ["y"] = 0.55}, -- Crystalsong
-	[120]	= {["x"] = 0.61, ["y"] = 0.21}, -- Stormpeaks
-	[121]	= {["x"] = 0.77, ["y"] = 0.32}, -- Zul'Drak
-	[116]	= {["x"] = 0.71, ["y"] = 0.53}, -- Grizzly Hillsbrad
-	[113]	= {["x"] = 0.78, ["y"] = 0.74}, -- Howling Fjord
-}
-local outlandMapCoords = {
-	[104]	= {["x"] = 0.74, ["y"] = 0.80}, -- Shadowmoon Valley
-	[108]	= {["x"] = 0.45, ["y"] = 0.77}, -- Terrokar
-	[107]	= {["x"] = 0.30, ["y"] = 0.65}, -- Nagrand
-	[100]	= {["x"] = 0.52, ["y"] = 0.51}, -- Hellfire
-	[102]	= {["x"] = 0.33, ["y"] = 0.47}, -- Zangarmarsh
-	[105]	= {["x"] = 0.36, ["y"] = 0.23}, -- Blade's Edge
-	[109]	= {["x"] = 0.57, ["y"] = 0.20}, -- Netherstorm
-}
-local stranglethornMapCoords = {
-	[210]	= {["x"] = 0.42, ["y"] = 0.62}, -- Cape
-	[50]	= {["x"] = 0.67, ["y"] = 0.40} -- North
-}
-local kalimdorMapCoords = {
-	[81] 	= {["x"] = 0.42, ["y"] = 0.82}, -- Silithus
-	[64]	= {["x"] = 0.50, ["y"] = 0.72}, -- Thousand Needles
-	[249]	= {["x"] = 0.47, ["y"] = 0.91}, -- Uldum
-	[1527]	= {["x"] = 0.47, ["y"] = 0.91}, -- Uldum BfA
-	[71]	= {["x"] = 0.55, ["y"] = 0.84}, -- Tanaris
-	[78]	= {["x"] = 0.50, ["y"] = 0.81}, -- Ungoro
-	[69]	= {["x"] = 0.43, ["y"] = 0.70}, -- Feralas
-	[70]	= {["x"] = 0.55, ["y"] = 0.67}, -- Dustwallow
-	[199]	= {["x"] = 0.51, ["y"] = 0.67}, -- S Barrens
-	[7]		= {["x"] = 0.47, ["y"] = 0.60}, -- Mulgore
-	[66]	= {["x"] = 0.41, ["y"] = 0.57}, -- Desolace
-	[65]	= {["x"] = 0.43, ["y"] = 0.46}, -- Stonetalon
-	[10]	= {["x"] = 0.52, ["y"] = 0.50}, -- N Barrens
-	[1]		= {["x"] = 0.58, ["y"] = 0.50}, -- Durotar
-	[63]	= {["x"] = 0.49, ["y"] = 0.41}, -- Ashenvale
-	[62]	= {["x"] = 0.46, ["y"] = 0.23}, -- Dakshore
-	[76]	= {["x"] = 0.59, ["y"] = 0.37}, -- Azshara
-	[198]	= {["x"] = 0.54, ["y"] = 0.32}, -- Hyjal
-	[77]	= {["x"] = 0.49, ["y"] = 0.25}, -- Felwood
-	[80]	= {["x"] = 0.53, ["y"] = 0.19}, -- Moonglade
-	[83]	= {["x"] = 0.58, ["y"] = 0.23}, -- Winterspring
-	[57]	= {["x"] = 0.42, ["y"] = 0.10}, -- Teldrassil
-	[97]	= {["x"] = 0.33, ["y"] = 0.27}, -- Azuremyst
-	[106]	= {["x"] = 0.30, ["y"] = 0.18}, -- Bloodmyst
-}
-local easternKingdomsMapCoords = {
-	[210]	= {["x"] = 0.47, ["y"] = 0.87}, -- Cape of STV
-	[50]	= {["x"] = 0.47, ["y"] = 0.87}, -- N STV
-	[17]	= {["x"] = 0.54, ["y"] = 0.89}, -- Blasted Lands
-	[51]	= {["x"] = 0.54, ["y"] = 0.78}, -- Swamp of Sorrow
-	[42]	= {["x"] = 0.49, ["y"] = 0.79}, -- Deadwind
-	[47]	= {["x"] = 0.45, ["y"] = 0.80}, -- Duskwood
-	[52]	= {["x"] = 0.40, ["y"] = 0.79}, -- Westfall
-	[37]	= {["x"] = 0.47, ["y"] = 0.75}, -- Elwynn
-	[49]	= {["x"] = 0.51, ["y"] = 0.75}, -- Redridge
-	[36]	= {["x"] = 0.49, ["y"] = 0.70}, -- Burning Steppes
-	[32]	= {["x"] = 0.47, ["y"] = 0.65}, -- Searing Gorge
-	[15]	= {["x"] = 0.52, ["y"] = 0.65}, -- Badlands
-	[27]	= {["x"] = 0.44, ["y"] = 0.61}, -- Dun Morogh
-	[48]	= {["x"] = 0.52, ["y"] = 0.60}, -- Loch Modan
-	[241]	= {["x"] = 0.56, ["y"] = 0.55}, -- Twilight Highlands
-	[56]	= {["x"] = 0.50, ["y"] = 0.53}, -- Wetlands
-	[14]	= {["x"] = 0.51, ["y"] = 0.46}, -- Arathi Highlands
-	[26]	= {["x"] = 0.57, ["y"] = 0.40}, -- Hinterlands
-	[25]	= {["x"] = 0.46, ["y"] = 0.40}, -- Hillsbrad
-	[217]	= {["x"] = 0.40, ["y"] = 0.48}, -- Ruins of Gilneas
-	[21]	= {["x"] = 0.41, ["y"] = 0.39}, -- Silverpine
-	[18]	= {["x"] = 0.39, ["y"] = 0.32}, -- Tirisfall
-	[22]	= {["x"] = 0.49, ["y"] = 0.31}, -- W Plaugelands
-	[23]	= {["x"] = 0.54, ["y"] = 0.32}, -- E Plaguelands
-	[95]	= {["x"] = 0.56, ["y"] = 0.23}, -- Ghostlands
-	[94]	= {["x"] = 0.54, ["y"] = 0.18}, -- Eversong
-	[122]	= {["x"] = 0.55, ["y"] = 0.05}, -- Quel'Danas
-}
-local azerothMapCoords = {
-	[12]	= {["x"] = 0.17, ["y"] = 0.55, ["expansion"] = 0}; -- Kalimdor
-	[13]	= {["x"] = 0.89, ["y"] = 0.55, ["expansion"] = 0}; -- Eastern Kingdoms
-	[113]	= {["x"] = 0.50, ["y"] = 0.13, ["expansion"] = LE_EXPANSION_WRATH_OF_THE_LICH_KING}; -- Northrend
-	[424]	= {["x"] = 0.50, ["y"] = 0.81, ["expansion"] = LE_EXPANSION_MISTS_OF_PANDARIA}; -- Pandaria
-	[619]	= {["x"] = 0.58, ["y"] = 0.40, ["expansion"] = LE_EXPANSION_LEGION}; -- Broken Isles
-	[875]	= {["x"] = 0.55, ["y"] = 0.63, ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH}; -- Zandalar
-	[876]	= {["x"] = 0.71, ["y"] = 0.49, ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH}; -- Kul Tiras
-	[1978]	= {["x"] = 0.76, ["y"] = 0.22, ["expansion"] = LE_EXPANSION_DRAGONFLIGHT}; -- Dragon Isle
-	[2274]	= {["x"] = 0.28, ["y"] = 0.83, ["expansion"] = LE_EXPANSION_WAR_WITHIN}; -- Khaz Algar
-	[2537]	= {["x"] = 0.89, ["y"] = 0.55, ["expansion"] = LE_EXPANSION_MIDNIGHT}; -- Quel'Thalas - Highjack EK
+	BrokenIsles = 619;
+	BrokenIslesFlightmap = 993;
+	Azsuna = 630;
+	Suramar = 680;
+	Stormheim = 634;
+	Highmountain = 650;
+	Valsharah = 641;
+	EyeOfAzshara = 790;
+	BrokenShore = 646;
+	DalaranLegion = 627;
+	Argus = 905;
+	ArgusFlightmap = 994;
+	Krokuun = 830;
+	AntoranWastes = 885;
+	Eredath = 882;
+
+	Zandalar = 875;
+	ZandalarFlightmap = 1011;
+	Voldun = 864;
+	Nazmir = 863;
+	Zuldazar = 862;
+	Dazaralor = 1165;
+	Kultiras = 876;
+	KultirasFlightmap = 1014;
+	StormsongValley = 942;
+	Drustvar = 896;
+	TiragardeSound = 895;
+	Boralus = 1161;
+	TolDagor = 1169;
+	Mechagon = 1462;
+	Nazjatar = 1355;
+	NazjatarFlightmap = 1504;
+	UldumBfA = 1527;
+	ValeOfEternalBlossomBfA = 1530;
+
+	Shadowlands = 1550;
+	ShadowlandsFlightmap = 1647;
+	TheMaw = 1543;
+	Maldraxxus = 1536;
+	Revendreth = 1525;
+	Oribos = 1670;
+	Bastion = 1533;
+	Ardenweald = 1565;
+	ZerethMortis = 1970;
+
+	DragonIsles = 1978;
+	DragonIslesFlightmap = 2057;
+	ZaralekCavern = 2133;
+	WakingShores = 2022;
+	OhnahranPlains = 2023;
+	EmeraldDream = 2200;
+	Amidrassil = 2239;
+	AzureSpan = 2024;
+	Thaldraszus = 2025;
+	ForgbiddenReach = 2151;
+	Valdrakken = 2112;
+
+	KhazAlgar = 2274;
+	KhazAlgarFlightmap = 2276;
+	IsleOfDorn = 2248;
+	Dornogal = 2339;
+	SirenIsle = 2369;
+	RingingDeeps = 2214;
+	Hallowfall = 2215;
+	AzjKahet = 2255;
+	Undermine = 2346;
+	Karesh = 2371;
+	KareshFlightmap = 2398;
+	Tazavesh = 2472;
+
+	QuelThalas = 2537;
+	QuelThalasFlightmap = 2481;
+	IlseOfQuelDanas = 2424;
+	EversongWoods = 2395;
+	SilvermoonCity = 2393;
+	ZulAman = 2437;
+	Voidstorm = 2405;
+	VoidstormFlightmap = 2479;
+	Haradar = 2413;
+	HaradarFlightmap = 2480;
 }
 
-local continentMapZones = {
-		[947]	= azerothMapCoords; -- All of Azeroth.
-		[13]	= easternKingdomsMapCoords;
-		[1208]	= easternKingdomsMapCoords; -- Flightmap
-		[12] 	= kalimdorMapCoords;
-		[1209] 	= kalimdorMapCoords; -- Flightmap
-		[224]	= stranglethornMapCoords; -- Stranglethorn Vale
+local zoneData = {};
+local zonesPerExpansion = {
+	[0] = {};
+};
 
-		[572]	= draenorMapCoords;
-		[990]	= draenorMapCoords; -- Flightmap
+local function AddZoneData(zoneID, name)
+	local data = {
+		name = name;
+		expansion = 0;
+		children = {};
+		mapInfo = C_Map.GetMapInfo(zoneID);
+	};
+	zoneData[zoneID] = data;
+	zonesPerExpansion[0][zoneID] = true;
+	return data;
+end
 
-		[424]	= pandariaMapCoords;
-		[989]	= pandariaMapCoords; -- Flightmap
+for k, v in pairs(enumZoneIDs) do
+	AddZoneData(v, k);
+end
 
-		[113]	= northrendMapCoords;
-		[1384]	= northrendMapCoords; -- Flightmap
+local function AddChildToZone(zoneID, childZoneID, coordX, coordY, isSubZone)
+	local data = zoneData[zoneID];
+	if (not data) then return; end;
 
-		[101]	= outlandMapCoords;
-		[1467]	= outlandMapCoords; -- Flightmap
-
-		[619] 	= legionMapCoords;
-		[993] 	= legionMapCoords; -- Flightmap	
-		[905] 	= argusMapCoords;
-		[994] 	= argusMapCoords; -- Flightmap
-
-		[875]	= zandalarMapCoords;
-		[1011]	= zandalarMapCoords; -- Flightmap
-		[876]	= kultirasMapCoords;
-		[1014]	= kultirasMapCoords; -- Flightmap
-		[1355]	= nazjatarMapCoords;
-		[1504]	= nazjatarMapCoords; -- Flightmap
-
-		[1550]	= shadowlandsMapCoords;
-		[1647]	= shadowlandsMapCoords; -- Flightmap
-
-		[1978]	= dragonlandsMapCoords;
-		[2057]	= dragonlandsMapCoords; -- Flightmap
-
-		[2133]	= zaralekMapCoords;
-		[2274]	= khazalgarMapCoords;
-		[2276]	= khazalgarMapCoords; -- Flightmap
-		[2248]	= isleOfDornMapCoords;
-		[2371]	= kareshMapCoords;
-		[2398]	= kareshMapCoords; -- Flightmap
-
-		[2537]	= quelThalasMapCoords;
-		[2561]	= quelThalasMapCoords; -- Flightmap
+	local childData = {
+		x = coordX;
+		y = coordY;
+		isSubZone = isSubZone;
 	}
 
-function _V:GetZonesForContinentMap(mapID)
-	return continentMapZones[mapID];
+	data.children[childZoneID] = childData;
 end
 
-function _V:GetZoneCoordinates(mapID, zoneId)
-	local continent = _V:GetZonesForContinentMap(mapID);
-	return continent and continent[zoneId];
-end
+local function MarkZoneForExampansion(expansion, zoneID, includeChildren)
+	local data = zoneData[zoneID];
+	if (not data) then return; end;
 
--- Expansions that span multiple continents (maps containing multiple zones)
-local linkedContinents = {
-	{2274, 2276, 2248, 2371}, -- War Within
-	{1978, 2057, 2133}, -- DragonFlight
-	{875, 1011, 876, 1014, 1355, 1504}, -- BfA
-	{619, 993, 905}, -- Legion
-}
+	if (not zonesPerExpansion[expansion]) then
+		zonesPerExpansion[expansion] = {};
+	end
 
-local linkedZones = {};
-for _, group in ipairs(linkedContinents) do
-	for _, mapID in ipairs(group) do
-		linkedZones[mapID] = group;
+	if (zonesPerExpansion[expansion][zoneID]) then return; end
+
+	zonesPerExpansion[data.expansion][zoneID] = nil;
+	data.expansion = expansion;
+
+	zonesPerExpansion[expansion][zoneID] = true;
+
+	if (includeChildren) then
+		for childID in pairs(data.children) do
+			MarkZoneForExampansion(expansion, childID, true);
+		end
 	end
 end
-wipe(linkedContinents);
 
-function _V:GetLinkedZones(mapID)
-	return linkedZones[mapID];
+local function MarkZoneAsFlightmap(zoneID)
+	local data = zoneData[zoneID];
+	if (not data) then return; end;
+	data.isFlightMap = true;
 end
 
-local subZones = {
-	[1565] = {1701, 1702, 1703}; -- Ardenweald covenant
-	[1533] = {1707, 1708}; -- Bastion Covenant
-	[1525] = {1699, 1700}; -- Revendreth Covenant
-	[1536] = {1698}; -- Maldraxxus Covenant
+local includeChildren = true;
+local isSubZone = true;
 
-	[224] = {50, 210}; -- Stranglethorn
-	[2371] = {2472}; -- K'aresh -> Tazavesh
-	[2395] = {2393}; -- Eversong Woods -> Silvermoon City
-}
-function _V:GetSubZones(mapID)
-	return subZones[mapID];
+do -- Old content
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Silithus,			0.42, 0.82);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.ThousandNeedles,	0.50, 0.72);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Uldum,				0.47, 0.91);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.UldumBfA,			0.47, 0.91);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Tanaris,			0.55, 0.84);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.UngoroCrater,		0.50, 0.81);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Feralas,			0.43, 0.70);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.DustwallowMarsh,	0.55, 0.67);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.SouthernBarrens,	0.51, 0.67);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Mulgore,			0.47, 0.60);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Desolace,			0.41, 0.57);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.StonetalonMountain,	0.43, 0.46);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.NorthernBarrens,	0.52, 0.50);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Durotar,			0.58, 0.50);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Ashenvale,			0.49, 0.41);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Darkshore,			0.46, 0.23);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Azshara,			0.59, 0.37);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Hyjal,				0.54, 0.32);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Felwood,			0.49, 0.25);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Moonglade,			0.53, 0.19);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Winterspring,		0.58, 0.23);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Teldrassil,			0.42, 0.10);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.AzuremystIsle,		0.33, 0.27);
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.BloodmystIsle,		0.30, 0.18);
+
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.BlastedLands,		0.54, 0.89);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.SwampOfSorrows,		0.54, 0.78);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.DeadwindPass,		0.49, 0.79);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.Duskwood,			0.45, 0.80);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.Westfall,			0.40, 0.79);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.ElwynnForest,		0.47, 0.75);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.RedridgeMountains,	0.51, 0.75);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.BurningSteppes,		0.49, 0.70);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.SearingGorge,		0.47, 0.65);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.Badlands,			0.52, 0.65);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.DunMorogh,			0.44, 0.61);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.LochModan,			0.52, 0.60);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.TwilightHighlands,	0.56, 0.55);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.Wetlands,			0.50, 0.53);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.ArathiHighlands,	0.51, 0.46);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.Hinterlands,		0.57, 0.40);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.HillsbradFoothills,	0.46, 0.40);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.RuinsOfGilneas,		0.40, 0.48);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.SilverpineForest,	0.41, 0.39);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.WesternPlaguelands,	0.49, 0.31);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.EasternPlaguelands,	0.54, 0.32);
+
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.StranglethronVale,	0.47, 0.87,	isSubZone);
+	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.QuelThalas,			0.58, 0.21,	isSubZone);
+
+	AddChildToZone(enumZoneIDs.StranglethronVale,	enumZoneIDs.StranglethronValeNorth,	0.67, 0.40,	isSubZone);
+	AddChildToZone(enumZoneIDs.StranglethronVale,	enumZoneIDs.StranglethronValeCape,	0.42, 0.62,	isSubZone);
+
+	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.Kalimdor,			0.18, 0.54);
+	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.EasternKingdoms,	0.89, 0.55);
+	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.Pandaria,			0.48, 0.80);
+	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.BrokenIsles,		0.58, 0.40);
+	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.Zandalar,			0.54, 0.62);
+	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.Kultiras,			0.71, 0.50);
+	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.DragonIsles,		0.76, 0.22);
+	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.KhazAlgar,			0.29, 0.82);
+
+	-- General case we just want to avoid scanning
+	MarkZoneForExampansion(-1, enumZoneIDs.Azeroth);
 end
 
+do -- Pandaria
+	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.TimelessIsle,			0.90, 0.68);
+	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.JadeForest,				0.67, 0.52);
+	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.KarasangWilds,			0.53, 0.75);
+	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.ValleyOfTheFourWinds,	0.51, 0.65);
+	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.DreadWastes,			0.35, 0.62);
+	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.ValleyOfEternalBlossom,	0.50, 0.52);
+	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.KunlaiSummit,			0.45, 0.35);
+	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.IsleOfGiants,			0.48, 0.05);
+	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.TownlongSteppes,		0.32, 0.45);
+	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.IsleOfThunder,			0.20, 0.11);
+
+	MarkZoneForExampansion(LE_EXPANSION_MISTS_OF_PANDARIA, enumZoneIDs.Pandaria, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_MISTS_OF_PANDARIA, enumZoneIDs.PandariaFlightmap, includeChildren);
+
+	MarkZoneAsFlightmap(enumZoneIDs.PandariaFlightmap);
+end
+
+do -- Warlord of Draenor
+	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.NagrandWoD,				0.24, 0.49);
+	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.FrostfireRidge,			0.34, 0.29);
+	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.Gorgrond,				0.49, 0.21);
+	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.Talador,				0.43, 0.56);
+	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.SpiresOfArak,			0.46, 0.73);
+	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.ShadowmoonValleyWoD,	0.58, 0.67);
+	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.TanaanJungle,			0.58, 0.47);
+	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.Ashran,					0.73, 0.43);
+
+	MarkZoneForExampansion(LE_EXPANSION_WARLORDS_OF_DRAENOR, enumZoneIDs.Draenor, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_WARLORDS_OF_DRAENOR, enumZoneIDs.DraenorFlightmap, includeChildren);
+
+	MarkZoneAsFlightmap(enumZoneIDs.DraenorFlightmap);
+end
+
+do -- Legion
+	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Azsuna,			0.33, 0.58);
+	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Suramar,		0.46, 0.45);
+	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Stormheim,		0.60, 0.33);
+	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Highmountain,	0.46, 0.23);
+	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Valsharah,		0.34, 0.33);
+	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.EyeOfAzshara,	0.46, 0.84);
+	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.BrokenShore,	0.54, 0.68);
+	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.DalaranLegion,	0.45, 0.64);
+	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Argus,			0.88, 0.14);
+
+	AddChildToZone(enumZoneIDs.Argus,	enumZoneIDs.Krokuun,		0.61, 0.68);
+	AddChildToZone(enumZoneIDs.Argus,	enumZoneIDs.AntoranWastes,	0.31, 0.51);
+	AddChildToZone(enumZoneIDs.Argus,	enumZoneIDs.Eredath,		0.62, 0.26);
+
+	MarkZoneForExampansion(LE_EXPANSION_LEGION, enumZoneIDs.BrokenIsles, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_LEGION, enumZoneIDs.BrokenIslesFlightmap, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_LEGION, enumZoneIDs.Argus, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_LEGION, enumZoneIDs.ArgusFlightmap, includeChildren);
+
+	MarkZoneAsFlightmap(enumZoneIDs.BrokenIslesFlightmap);
+	MarkZoneAsFlightmap(enumZoneIDs.ArgusFlightmap);
+end
+
+do -- Battle of Azertoh
+	AddChildToZone(enumZoneIDs.Zandalar,	enumZoneIDs.Voldun,		0.39, 0.32);
+	AddChildToZone(enumZoneIDs.Zandalar,	enumZoneIDs.Nazmir,		0.57, 0.28);
+	AddChildToZone(enumZoneIDs.Zandalar,	enumZoneIDs.Zuldazar,	0.55, 0.61);
+	AddChildToZone(enumZoneIDs.Zandalar,	enumZoneIDs.Nazjatar,	0.86, 0.14);
+
+	AddChildToZone(enumZoneIDs.Zuldazar,	enumZoneIDs.Dazaralor,	0.00, 0.00, isSubZone);
+
+	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.StormsongValley,	0.55, 0.25);
+	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.Drustvar,			0.36, 0.67);
+	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.TiragardeSound,		0.56, 0.54);
+	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.TolDagor,			0.78, 0.61);
+	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.Mechagon,			0.17, 0.28);
+	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.Nazjatar,			0.86, 0.14);
+
+	AddChildToZone(enumZoneIDs.TiragardeSound,	enumZoneIDs.Boralus,	0.56, 0.54, isSubZone);
+
+	AddChildToZone(enumZoneIDs.Nazjatar,	enumZoneIDs.Zandalar,	0.11, 0.49);
+	AddChildToZone(enumZoneIDs.Nazjatar,	enumZoneIDs.Kultiras,	0.77, 0.75);
+
+	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.UldumBfA,					0.49, 0.90);
+	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.ValeOfEternalBlossomBfA,	0.50, 0.52);
+
+	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.Zandalar, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.ZandalarFlightmap, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.Kultiras, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.KultirasFlightmap, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.Nazjatar, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.NazjatarFlightmap, includeChildren);
+
+	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.UldumBfA);
+	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.ValeOfEternalBlossomBfA);
+	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.ArathiHighlands);
+	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.Darkshore);
+
+	MarkZoneAsFlightmap(enumZoneIDs.ZandalarFlightmap);
+	MarkZoneAsFlightmap(enumZoneIDs.KultirasFlightmap);
+	MarkZoneAsFlightmap(enumZoneIDs.NazjatarFlightmap);
+end
+
+
+do -- Shadowlands
+	AddChildToZone(enumZoneIDs.Shadowlands,	enumZoneIDs.TheMaw,			0.23, 0.13);
+	AddChildToZone(enumZoneIDs.Shadowlands,	enumZoneIDs.Maldraxxus,		0.62, 0.21);
+	AddChildToZone(enumZoneIDs.Shadowlands,	enumZoneIDs.Revendreth,		0.24, 0.54);
+	AddChildToZone(enumZoneIDs.Shadowlands,	enumZoneIDs.Oribos,			0.47, 0.51);
+	AddChildToZone(enumZoneIDs.Shadowlands,	enumZoneIDs.Bastion,		0.71, 0.57);
+	AddChildToZone(enumZoneIDs.Shadowlands,	enumZoneIDs.Ardenweald,		0.48, 0.80);
+	AddChildToZone(enumZoneIDs.Shadowlands,	enumZoneIDs.ZerethMortis,	0.85, 0.81);
+
+	MarkZoneForExampansion(LE_EXPANSION_SHADOWLANDS, enumZoneIDs.Shadowlands, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_SHADOWLANDS, enumZoneIDs.ShadowlandsFlightmap, includeChildren);
+
+	MarkZoneAsFlightmap(enumZoneIDs.ShadowlandsFlightmap);
+end
+
+do -- Dragonflight
+	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.WakingShores,		0.48, 0.35);
+	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.OhnahranPlains,		0.44, 0.56);
+	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.EmeraldDream,		0.31, 0.57);
+	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.Amidrassil,			0.24, 0.58);
+	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.AzureSpan,			0.55, 0.74);
+	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.Thaldraszus,		0.63, 0.51);
+	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.ForgbiddenReach,	0.65, 0.10);
+	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.ZaralekCavern,		0.88, 0.84);
+
+	AddChildToZone(enumZoneIDs.Thaldraszus,	enumZoneIDs.Valdrakken,		0.00, 0.00,	isSubZone);
+
+	AddChildToZone(enumZoneIDs.ZaralekCavern,	enumZoneIDs.WakingShores,		0.88, 0.84);
+	AddChildToZone(enumZoneIDs.ZaralekCavern,	enumZoneIDs.OhnahranPlains,		0.88, 0.84);
+	AddChildToZone(enumZoneIDs.ZaralekCavern,	enumZoneIDs.EmeraldDream,		0.88, 0.84);
+	AddChildToZone(enumZoneIDs.ZaralekCavern,	enumZoneIDs.Amidrassil,			0.88, 0.84);
+	AddChildToZone(enumZoneIDs.ZaralekCavern,	enumZoneIDs.AzureSpan,			0.88, 0.84);
+	AddChildToZone(enumZoneIDs.ZaralekCavern,	enumZoneIDs.Thaldraszus,		0.88, 0.84);
+	AddChildToZone(enumZoneIDs.ZaralekCavern,	enumZoneIDs.ForgbiddenReach,	0.88, 0.84);
+
+	MarkZoneForExampansion(LE_EXPANSION_DRAGONFLIGHT, enumZoneIDs.DragonIsles, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_DRAGONFLIGHT, enumZoneIDs.DragonIslesFlightmap, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_DRAGONFLIGHT, enumZoneIDs.ZaralekCavern, includeChildren);
+
+	MarkZoneAsFlightmap(enumZoneIDs.DragonIslesFlightmap);
+end
+
+do -- War Within
+	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.IsleOfDorn,		0.73, 0.23);
+	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.RingingDeeps,	0.57, 0.58);
+	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.Hallowfall,		0.35, 0.47);
+	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.AzjKahet,		0.46, 0.75);
+	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.Undermine,		0.82, 0.74);
+	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.Karesh,			0.17, 0.20);
+	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.SirenIsle,		0.73, 0.23);
+
+	AddChildToZone(enumZoneIDs.IsleOfDorn,	enumZoneIDs.SirenIsle,	0.18, 0.18);
+	AddChildToZone(enumZoneIDs.IsleOfDorn,	enumZoneIDs.Dornogal,	0.00, 0.00, isSubZone);
+
+	AddChildToZone(enumZoneIDs.Karesh,	enumZoneIDs.Tazavesh,	0.00, 0.00, isSubZone);
+
+	MarkZoneForExampansion(LE_EXPANSION_WAR_WITHIN, enumZoneIDs.KhazAlgar, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_WAR_WITHIN, enumZoneIDs.KhazAlgarFlightmap, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_WAR_WITHIN, enumZoneIDs.KareshFlightmap, includeChildren);
+
+	MarkZoneAsFlightmap(enumZoneIDs.KhazAlgarFlightmap);
+	MarkZoneAsFlightmap(enumZoneIDs.KareshFlightmap);
+end
+
+do -- Midnight
+	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.IlseOfQuelDanas,	0.26, 0.14);
+	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.EversongWoods,		0.27, 0.53);
+	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.ZulAman,			0.44, 0.71);
+	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.Voidstorm,			0.53, 0.23);
+	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.Haradar,			0.82, 0.16);
+
+	AddChildToZone(enumZoneIDs.EversongWoods,	enumZoneIDs.SilvermoonCity,		0.00, 0.00, isSubZone);
+
+	MarkZoneForExampansion(LE_EXPANSION_MIDNIGHT, enumZoneIDs.QuelThalas, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_MIDNIGHT, enumZoneIDs.QuelThalasFlightmap, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_MIDNIGHT, enumZoneIDs.VoidstormFlightmap, includeChildren);
+	MarkZoneForExampansion(LE_EXPANSION_MIDNIGHT, enumZoneIDs.HaradarFlightmap, includeChildren);
+
+	MarkZoneAsFlightmap(enumZoneIDs.QuelThalasFlightmap);
+	MarkZoneAsFlightmap(enumZoneIDs.VoidstormFlightmap);
+	MarkZoneAsFlightmap(enumZoneIDs.HaradarFlightmap);
+end
+
+function _V:GetMostRelevantMapCoordinates(zoneID, inZoneID)
+	local childData = nil;
+	local coordZoneID = zoneID;
+	if (zoneID ~= inZoneID) then
+		local data = zoneData[inZoneID];
+		if (data) then
+			childData = data.children[zoneID];
+			if (not childData) then
+				local mapInfo = WQT_Utils:GetCachedMapInfo(zoneID);
+				if (mapInfo and mapInfo.parentMapID and mapInfo.mapType > Enum.UIMapType.Cosmic) then
+					childData, coordZoneID = self:GetMostRelevantMapCoordinates(mapInfo.parentMapID, inZoneID);
+				end
+			end
+		end
+	end
+	return childData, coordZoneID;
+end
+
+function _V:GetZoneData(zoneID)
+	return zoneData[zoneID];
+end
+
+function _V:GetZonesOfExpansion(expansion)
+	return zonesPerExpansion[expansion];
+end
 
 local factionFallbackData = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L:Get("NO_FACTION") } -- No faction
 local factionData = {

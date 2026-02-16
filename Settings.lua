@@ -1168,6 +1168,13 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	});
 		-- end
 
+		do -- 12.0.04
+			StartVersionCategory("12.0.04");
+			AddSection(ChangelogSections.Changes, {
+				"Refactored my zone database. Let me know if something is out of place.";
+			});
+		end
+
 		do -- 12.0.03
 			StartVersionCategory("12.0.03");
 			AddSection(ChangelogSections.Changes, {
