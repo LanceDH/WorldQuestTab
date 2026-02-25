@@ -142,8 +142,11 @@ local function ApplyVersionChanges(profile, version)
 		local enumFilterType = _V:GetFilterTypeEnum();
 		local filters = profile.filters[enumFilterType.faction];
 		if (filters) then
-			filters.Other = filters.misc.other;
-			filters.None = filters.misc.none;
+			if (not filters.flags) then
+				filters.flags  = {};
+			end
+			filters.flags.Other = filters.misc.other;
+			filters.flags.None = filters.misc.none;
 			filters.misc = nil;
 		end
 	end
