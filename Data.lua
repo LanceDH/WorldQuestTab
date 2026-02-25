@@ -439,13 +439,13 @@ do
 		do
 			local id = "Other";
 			local label = OTHER;
-			filterData:RegisterFilter(type, id, label, nil, nil, 98);
+			filterData:RegisterFilter(type, id, label, nil, FILTER_TAG_OLD_CONTENT, 98);
 		end
 		do
 			local id = "None";
 			local label = _L:Get("NO_FACTION");
 			local func = function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PvP; end;
-			filterData:RegisterFilter(type, id, label, func, nil, 99);
+			filterData:RegisterFilter(type, id, label, func, FILTER_TAG_OLD_CONTENT, 99);
 		end
 		-- Entry for every faction we care about
 		for id, data in pairs(factionData) do
