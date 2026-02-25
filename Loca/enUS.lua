@@ -154,6 +154,7 @@ l["TOMTOM_CLICK_ARROW_TT"] = "Create a TomTom waypoint and arrow for the last cl
 l["TYPE_EMISSARY"] = "Emissary Only"
 l["TYPE_EMISSARY_TT"] = "Show only quests for the currently selected emissary. This filter overwrites all other filters."
 l["TYPE_INVASION"] = "Invasion"
+l["TYPE_PREY"] = "Prey"
 l["UNINTERESTED"] = "Uninterested"
 l["UNINTERESTED_TT"] = "Keep quests marked as 'uninterested' in the list."
 l["USE_TOMTOM"] = "Allow TomTom"

@@ -56,22 +56,16 @@ local function FilterTypesGeneralOnClick(data)
 end
 
 local function GenericFilterFlagChecked(data)
-	local flagKey = data[2];
-
-	if (_V:IsFilterDisabledByCvar(flagKey)) then
+	if (_V:IsFilterDisabledByCvar(data.id)) then
 		return false;
 	end
 
-	local options = data[1];
-	return options[flagKey]
+	return WQT:FilterIsEnabled(data.type, data.id);
 end
 
 local function GenericFilterOnSelect(data)
-	local options = data[1];
-	local flagKey = data[2];
-	local refreshPins = #data > 2 and data[3] or false;
-	options[flagKey] = not options[flagKey];
-	if (refreshPins) then
+	WQT:ToggleFilter(data.type, data.id);
+	if (data.refreshPins) then
 		WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
 	end
 	WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
@@ -88,31 +82,30 @@ local function AddFilterSubmenu(rootDescription, filterType)
 	rootDescription:CreateButton(CHECK_ALL, FilterTypesGeneralOnClick, { ["type"] = filterType, ["value"] = true});
 	rootDescription:CreateButton(UNCHECK_ALL, FilterTypesGeneralOnClick, { ["type"] = filterType, ["value"] = false});
 
-	local options = WQT.settings.filters[filterType].flags;
 	local order = WQT.filterOrders[filterType]
-	local oldContentFlags = {};
-	
-	for k, flagKey in pairs(order) do
-		if (not _V:FilterIsOldContent(filterType, flagKey)) then
-			local text = _V:GetTypeFlagLabel(filterType, flagKey) or flagKey;
-			local checkbox = rootDescription:CreateCheckbox(text, GenericFilterFlagChecked, GenericFilterOnSelect, { options, flagKey });
 
-			if (_V:IsFilterDisabledByCvar(flagKey)) then
-				checkbox:SetEnabled(false);
-				checkbox:SetOnEnter(ShowDisabledFilterTooltip);
-				checkbox:SetOnLeave(function() WQT_ActiveGameTooltip:Hide(); end);
+	local oldContentFilters = {};
+	for k, id in ipairs(order) do
+		local filterData = _V:GetFilter(filterType, id);
+		if (filterData) then
+			if (_V:FilterIsOldContent(filterType, id)) then
+				tinsert(oldContentFilters, filterData);
+			else
+				local checkbox = rootDescription:CreateCheckbox(filterData.label, GenericFilterFlagChecked, GenericFilterOnSelect, { ["type"] = filterType, ["id"] = id });
+
+				if (_V:IsFilterDisabledByCvar(id)) then
+					checkbox:SetEnabled(false);
+					checkbox:SetOnEnter(ShowDisabledFilterTooltip);
+					checkbox:SetOnLeave(function() WQT_ActiveGameTooltip:Hide(); end);
+				end
 			end
-			
-		else
-			tinsert(oldContentFlags, flagKey);
 		end
 	end
 
-	if (#oldContentFlags > 0) then
+	if (#oldContentFilters > 0) then
 		local otherSubmenu = rootDescription:CreateButton(OTHER);
-		for k, flagKey in pairs(oldContentFlags) do
-			local text = _V:GetTypeFlagLabel(filterType, flagKey) or flagKey;
-			otherSubmenu:CreateCheckbox(text, GenericFilterFlagChecked, GenericFilterOnSelect, { options, flagKey });
+		for k, filterData in pairs(oldContentFilters) do
+			otherSubmenu:CreateCheckbox(filterData.label, GenericFilterFlagChecked, GenericFilterOnSelect, { ["type"] = filterType, ["id"] = filterData.id });
 		end
 	end
 end
@@ -120,27 +113,36 @@ end
 local function AddExpansionFactionsToMenu(rootDescription, expansionLevel)
 	local enumFilterType = _V:GetFilterTypeEnum();
 	local filterType = enumFilterType.faction;
-	local options = WQT.settings.filters[filterType].flags;
 	local order = WQT.filterOrders[filterType];
+	local isCurrentExpansion = expansionLevel == LE_EXPANSION_LEVEL_CURRENT;
  
-	local function maskFunc(flagKey) 
+	local function maskFunc(flagKey)
 		if (type(flagKey) == "number") then
 			local factionInfo = _V:GetFactionData(flagKey);
 			return factionInfo and factionInfo.expansion == expansionLevel;
 		else
-			return expansionLevel == LE_EXPANSION_LEVEL_CURRENT;
+			return isCurrentExpansion;
 		end
 	end
 
 	rootDescription:CreateButton(CHECK_ALL, FilterTypesGeneralOnClick, {["type"] = filterType, ["value"] = true, ["maskFunc"] = maskFunc});
 	rootDescription:CreateButton(UNCHECK_ALL, FilterTypesGeneralOnClick, {["type"] = filterType, ["value"] = false, ["maskFunc"] = maskFunc});
 
-	for k, flagKey in pairs(order) do
-		local factionInfo = type(flagKey) == "number" and _V:GetFactionData(flagKey) or nil;
-		if (factionInfo and factionInfo.expansion == expansionLevel and (not factionInfo.playerFaction or factionInfo.playerFaction == _playerFaction)) then
-			local name = type(flagKey) == "number" and factionInfo.name or flagKey;
-			rootDescription:CreateCheckbox(name, GenericFilterFlagChecked, GenericFilterOnSelect, { options, flagKey, true });
+	for k, id  in ipairs(order) do
+		local isMatch = false;
+		local filterData = _V:GetFilter(filterType, id);
+		local factionInfo = type(id) == "number" and _V:GetFactionData(id) or nil;
+		if (factionInfo) then
+			isMatch = factionInfo.expansion == expansionLevel and (not factionInfo.playerFaction or factionInfo.playerFaction == _playerFaction);
+		else
+			isMatch = isCurrentExpansion and _V:FilterIsOldContent(filterType, id);
 		end
+	
+		if (isMatch) then
+			local name = filterData.label;
+			rootDescription:CreateCheckbox(name, GenericFilterFlagChecked, GenericFilterOnSelect, { ["type"] = filterType, ["id"] = id, ["refreshPins"] = true });
+		end
+
 	end
 end
 
@@ -148,49 +150,23 @@ local function FilterDropdownSetup(dropdown, rootDescription)
 	rootDescription:SetTag("WQT_FILTERS_DROPDOWN");
 	local enumFilterType = _V:GetFilterTypeEnum();
 
-	-- Facation submenu
-	local factionsSubmenu = rootDescription:CreateButton(FACTION);
-	do
-		AddExpansionFactionsToMenu(factionsSubmenu, LE_EXPANSION_LEVEL_CURRENT);
+	for k, filterType in _V:EnumerateFilterTypes() do
+		local typeLabel = _V:GetFilterTypeLabel(filterType);
+		local subMenu = rootDescription:CreateButton(typeLabel);
 
-		local factionFilters = WQT.settings.filters[enumFilterType.faction];
-		-- Other factions
-		local function OtherFactionsChecked()
-			return factionFilters.misc.other;
-		end
-		local function OtherFactionsOnSelect()
-			factionFilters.misc.other = not factionFilters.misc.other;
-			WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
-		end
-		local cb = factionsSubmenu:CreateCheckbox(OTHER, OtherFactionsChecked, OtherFactionsOnSelect);
-
-		-- No faction
-		local function NoFactionChecked()
-			return factionFilters.misc.none;
-		end
-		local function NoFactionOnSelect()
-			factionFilters.misc.none = not factionFilters.misc.none;
-			WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
-		end
-		factionsSubmenu:CreateCheckbox(_L:Get("NO_FACTION"), NoFactionChecked, NoFactionOnSelect);
-
-		-- Submenus for older expansions (down to Legion)
-		local startExpansion = LE_EXPANSION_LEVEL_CURRENT - 1;
-		for i = startExpansion, LE_EXPANSION_LEGION, -1 do
-			local expansionName = _G["EXPANSION_NAME"..i] or UNKNOWN;
-			local warWithinSubMenu = factionsSubmenu:CreateButton(expansionName);
-			AddExpansionFactionsToMenu(warWithinSubMenu, i);
+		if (filterType == enumFilterType.faction) then
+			AddExpansionFactionsToMenu(subMenu, LE_EXPANSION_LEVEL_CURRENT);
+			-- Submenus for older expansions (down to Legion)
+			local startExpansion = LE_EXPANSION_LEVEL_CURRENT - 1;
+			for i = startExpansion, LE_EXPANSION_LEGION, -1 do
+				local expansionName = _G["EXPANSION_NAME"..i] or UNKNOWN;
+				local warWithinSubMenu = subMenu:CreateButton(expansionName);
+				AddExpansionFactionsToMenu(warWithinSubMenu, i);
+			end
+		else
+			AddFilterSubmenu(subMenu, filterType);
 		end
 	end
-	-- end Faction submenu
-
-	-- Type submenu
-	local typeSubmenu = rootDescription:CreateButton(TYPE);
-	AddFilterSubmenu(typeSubmenu, enumFilterType.type);
-	
-	-- Rewards submenu
-	local rewardsSubmenu = rootDescription:CreateButton(REWARD);
-	AddFilterSubmenu(rewardsSubmenu, enumFilterType.reward);
 
 	-- Uninterested
 	local function DDUninterededChecked()
@@ -312,56 +288,9 @@ end
 -- Filtering stuff
 -----------------------------------------
 
--- Sort filters alphabetically regardless of localization
-local function GetSortedFilterOrder(filterId)
-	local filter = WQT.settings.filters[filterId];
-	local tbl = {};
-	for k, v in pairs(filter.flags) do
-		table.insert(tbl, k);
-	end
-	local enumFilterType = _V:GetFilterTypeEnum();
-	table.sort(tbl, function(a, b) 
-				if (filterId == enumFilterType.faction) then
-					-- Compare 2 factions
-					if(type(a) == "number" and type(b) == "number")then
-						local infoA = C_Reputation.GetFactionDataByID(tonumber(a));
-						local infoB = C_Reputation.GetFactionDataByID(tonumber(b));
-						local nameA = infoA and infoA.name;
-						local nameB = infoB and infoB.name;
-						if nameA and nameB then
-							return nameA < nameB;
-						end
-						return a and not b;
-					end
-				else
-					-- Compare localized labels
-					local labelA = _V:GetTypeFlagLabel(filterId, a);
-					local labelB = _V:GetTypeFlagLabel(filterId, b);
-					if (labelA ~= labelB) then
-						if (not labelA or not labelB) then
-							return labelA ~= nil;
-						end
-						return labelA < labelB;
-					end
-				end
-				-- Failsafe
-				return tostring(a) < tostring(b);
-			end)
-	return tbl;
-end
-
 function WQT:SetAllFilterTo(id, value, maskFunc)
 	local filter = WQT.settings.filters[id];
 	if (not filter) then return end;
-	
-	local misc = filter.misc;
-	if (misc) then
-		for k, v in pairs(misc) do
-			if(not maskFunc or maskFunc(k)) then
-				misc[k] = value;
-			end
-		end
-	end
 	
 	local flags = filter.flags;
 	for k, v in pairs(flags) do
@@ -394,17 +323,6 @@ end
 function WQT:IsUsingFilterNr(id)
 	if not WQT.settings.filters[id] then return false end
 	
-	local misSettings = WQT.settings.filters[id].misc;
-	if (misSettings) then
-		for k, flag in pairs(misSettings) do
-			if (WQT.settings.general.preciseFilters and flag) then
-				return true;
-			elseif (not WQT.settings.general.preciseFilters and not flag) then
-				return true;
-			end
-		end
-	end
-	
 	local flags = WQT.settings.filters[id].flags;
 	for flagKey, flag in pairs(flags) do
 		if (WQT.settings.general.preciseFilters and flag) then
@@ -424,10 +342,11 @@ function WQT:IsFiltering()
 	if (WQT:HasSearchStringSet()) then return true; end
 	if (WQT.settings.general.emissaryOnly or WQT_WorldQuestFrame.autoEmisarryId) then return true; end
 	if (not WQT.settings.general.showDisliked) then return true; end
-	
-	for k, category in pairs(WQT.settings.filters)do
-		if (self:IsUsingFilterNr(k)) then return true; end
+
+	for k, filterType in _V:EnumerateFilterTypes() do
+		if (self:IsUsingFilterNr(filterType)) then return true; end
 	end
+
 	return false;
 end
 
@@ -463,13 +382,42 @@ function WQT:PassesAllFilters(questInfo)
 	return  true;
 end
 
+function WQT:RewardTypePassesFilter(rewardType)
+	local enumFilterType = _V:GetFilterTypeEnum();
+	local filterID = "";
+
+	if(rewardType == WQT_REWARDTYPE.equipment or rewardType == WQT_REWARDTYPE.weapon) then
+		filterID = "Armor";
+	elseif(rewardType == WQT_REWARDTYPE.spell or rewardType == WQT_REWARDTYPE.item) then
+		filterID = "Item";
+	elseif(rewardType == WQT_REWARDTYPE.gold) then
+		filterID = "Gold";
+	elseif(rewardType == WQT_REWARDTYPE.currency) then
+		filterID = "Currency";
+	elseif(rewardType == WQT_REWARDTYPE.artifact) then
+		filterID = "Artifact";
+	elseif(rewardType == WQT_REWARDTYPE.relic) then
+		filterID = "Relic";
+	elseif(rewardType == WQT_REWARDTYPE.xp) then
+		filterID = "Experience";
+	elseif(rewardType == WQT_REWARDTYPE.honor) then
+		filterID = "Honor";
+	elseif(rewardType == WQT_REWARDTYPE.reputation) then
+		filterID = "Reputation";
+	end
+
+	if (#filterID == 0) then return false; end
+
+	return WQT:FilterIsEnabled(enumFilterType.reward, filterID);
+end
+
 function WQT:PassesFactionFilter(questInfo, checkPrecise)
 	-- Factions (1)
 	local enumFilterType = _V:GetFilterTypeEnum();
 	local filter = WQT.settings.filters[enumFilterType.faction];
 	local flags = filter.flags
-	local factionNone = filter.misc.none;
-	local factionOther = filter.misc.other;
+	local factionNone = filter.None;
+	local factionOther = filter.Other;
 	local factionInfo = _V:GetFactionData(questInfo.factionID);
 
 	-- Specific filters (matches all)
@@ -479,7 +427,7 @@ function WQT:PassesFactionFilter(questInfo, checkPrecise)
 		end
 		if (factionOther and (not questInfo.factionID or not factionInfo.unknown)) then
 			return false;
-		end 
+		end
 		for flagKey, value in pairs(flags) do
 			if (value and type(flagKey) == "number" and flagKey ~= questInfo.factionID) then
 				return false;
@@ -491,15 +439,13 @@ function WQT:PassesFactionFilter(questInfo, checkPrecise)
 	-- General filters (matchs at least one)
 	if (not questInfo.factionID) then return factionNone; end
 	
-	if (not factionInfo.unknown) then 
+	if (not factionInfo.unknown) then
 		-- specific faction
 		return flags[questInfo.factionID];
-	else
-		-- other faction
-		return factionOther;
 	end
 
-	return false;
+	-- other faction
+	return factionOther;
 end
 
 -- Generic quest and reward type filters
@@ -537,6 +483,22 @@ function WQT:PassesFlagId(filterType ,questInfo, checkPrecise)
 	end
 	
 	return false;
+end
+
+function WQT:FilterIsEnabled(filterType, id)
+	local filters = WQT.settings.filters[filterType];
+	local result = false;
+	if (filters and filters.flags) then
+		result = filters.flags[id];
+	end
+	return result
+end
+
+function WQT:ToggleFilter(filterType, id)
+	local filters = WQT.settings.filters[filterType];
+	if (filters and filters.flags) then
+		filters.flags[id] = not filters.flags[id]
+	end
 end
 
 function WQT:OnInitialize()
@@ -884,8 +846,9 @@ function WQT:OnEnable()
 
 	-- Sort filters
 	self.filterOrders = {};
-	for k, v in pairs(WQT.settings.filters) do
-		self.filterOrders[k] = GetSortedFilterOrder(k);
+
+	for k, filterType in _V:EnumerateFilterTypes() do
+		self.filterOrders[filterType] = _V:GetSortedFilterIDs(filterType);
 	end
 	
 	-- Show default tab depending on setting
@@ -1660,11 +1623,11 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 		if (not WQT.settings.general.showDisliked) then
 			tinsert(filterLabels, _L:Get("UNINTERESTED"));
 		end
-	
-		for k, option in pairs(WQT.settings.filters) do
-			local counts = WQT:IsUsingFilterNr(k);
-			if (counts) then
-				tinsert(filterLabels, option.name);
+
+		for k, filterType in _V:EnumerateFilterTypes() do
+			if (WQT:IsUsingFilterNr(filterType)) then
+				local label = _V:GetFilterTypeLabel(filterType);
+				tinsert(filterLabels, label);
 			end
 		end
 	end
@@ -2191,9 +2154,9 @@ function WQT_CoreMixin:FilterClearButtonOnClick()
 	elseif WQT.settings.general.emissaryOnly then
 		WQT.settings.general.emissaryOnly = false;
 	else
-		for k, v in pairs(WQT.settings.filters) do
+		for k, filterType in _V:EnumerateFilterTypes() do
 			local default = not WQT.settings.general.preciseFilters;
-			WQT:SetAllFilterTo(k, default);
+			WQT:SetAllFilterTo(filterType, default);
 		end
 
 		_V:EnableAllOfficialCvars();

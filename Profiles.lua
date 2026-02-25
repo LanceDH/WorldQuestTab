@@ -135,7 +135,17 @@ local function ApplyVersionChanges(profile, version)
 		};
 
 		local sortBy = sortConvert[profile.general.sortBy] or "reward";
-		profile.general.sortBy = sortBy
+		profile.general.sortBy = sortBy;
+	end
+
+	if (version < 120004) then
+		local enumFilterType = _V:GetFilterTypeEnum();
+		local filters = profile.filters[enumFilterType.faction];
+		if (filters) then
+			filters.Other = filters.misc.other;
+			filters.None = filters.misc.none;
+			filters.misc = nil;
+		end
 	end
 end
 

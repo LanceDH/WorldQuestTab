@@ -17,7 +17,6 @@ addon.WQT_Profiles =  {};
 local _L = addon.loca;
 local _playerFaction = UnitFactionGroup("Player");
 
-
 ------------------------
 -- PUBLIC
 ------------------------
@@ -92,9 +91,9 @@ function _V:GetDefaultColor(name)
 end
 
 local enumFilterType = {
-	faction = 1,
-	type    = 2,
-	reward  = 3,
+	faction = 1;
+	type    = 2;
+	reward  = 3;
 }
 function _V:GetFilterTypeEnum()
 	return enumFilterType;
@@ -219,89 +218,431 @@ function _V:GetAbriviationNumbers()
 	return abriviationNumbers;
 end
 
-local typeFlagLabels = {
-	[enumFilterType.type] = {
-		Default		= DEFAULT;
-		Elite		= ELITE;
-		PvP			= PVP;
-		Petbattle	= PET_BATTLE_PVP_QUEUE;
-		Dungeon		= TRACKER_HEADER_DUNGEON;
-		Raid		= RAID;
-		Profession	= BATTLE_PET_SOURCE_4;
-		Invasion	= _L:Get("TYPE_INVASION");
-		Assault		= SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE;
-		Bonus		= SCENARIO_BONUS_LABEL;
-		Dragonrider	= DRAGONRIDING_RACES_MAP_TOGGLE;
-	};
-	[enumFilterType.reward] = {
-		Item		= ITEMS;
-		Armor		= WORLD_QUEST_REWARD_FILTERS_EQUIPMENT;
-		Gold		= WORLD_QUEST_REWARD_FILTERS_GOLD;
-		Currency	= CURRENCY;
-		Artifact	= ITEM_QUALITY6_DESC;
-		Anima		= WORLD_QUEST_REWARD_FILTERS_ANIMA;
-		Conduits	= _L:Get("REWARD_CONDUITS");
-		Relic		= RELICSLOT;
-		None		= NONE;
-		Experience	= POWER_TYPE_EXPERIENCE;
-		Honor		= HONOR;
-		Reputation	= REPUTATION;
-	};
-};
-function _V:GetTypeFlagLabel(filterType, key)
-	local t = typeFlagLabels[filterType];
-	return t and t[key];
-end
+local factionFallbackData = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L:Get("NO_FACTION") } -- No faction
+local factionData = {
+	[67] = 		{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 2203914, ["playerFaction"] = "Horde" }; -- Horde
+	[469] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 2203912, ["playerFaction"] = "Alliance" }; -- Alliance
+	[609] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 1396983 }; -- Cenarion Circle - Call of the Scarab
+	[910] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 236232 }; -- Brood of Nozdormu - Call of the Scarab
+	[1106] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 236690 }; -- Argent Crusade
 
-local oldContentFilters = {
-	[enumFilterType.type] = {
-		Invasion	= true;
-		Assault		= true;
-	};
-	[enumFilterType.reward] = {
-		Artifact	= true;
-		Relic		= true;
-		Conduits	= true;
-		Anima		= true;
-	};
+	[1445] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 133283 }; -- Draenor Frostwolf Orcs
+	[1515] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 1002596 }; -- Dreanor Arakkoa Outcasts
+	[1731] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 1048727 }; -- Dreanor Council of Exarchs
+	[1681] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 1042727 }; -- Dreanor Vol'jin's Spear
+	[1682] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 1042294 }; -- Dreanor Wrynn's Vanguard
+	-- Legion
+	[1090] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394955 }; -- Kirin Tor
+	[1828] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394954 }; -- Highmountain Tribes
+	[1859] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394956 }; -- Nightfallen
+	[1883] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394953 }; -- Dreamweavers
+	[1894] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394958 }; -- Wardens
+	[1900] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394952 }; -- Court of Farnodis
+
+	[1948] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394957 }; -- Valarjar
+	[2045] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1708498 }; -- Legionfall
+	[2165] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1708497 }; -- Army of the Light
+	[2170] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1708496 }; -- Argussian Reach
+	-- BFA
+	[2103] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2065579, ["playerFaction"] = "Horde" }; -- Zandalari Empire
+	[2156] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2065575, ["playerFaction"] = "Horde" }; -- Talanji's Expedition
+	[2157] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2065571, ["playerFaction"] = "Horde" }; -- The Honorbound
+	[2158] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2032599, ["playerFaction"] = "Horde" }; -- Voldunai
+	[2159] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2065569, ["playerFaction"] = "Alliance" }; -- 7th Legion
+	[2160] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2065573, ["playerFaction"] = "Alliance" }; -- Proudmoore Admirality
+	[2161] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2032594, ["playerFaction"] = "Alliance" }; -- Order of Embers
+	[2162] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2032596, ["playerFaction"] = "Alliance" }; -- Storm's Wake
+	[2163] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2032598 }; -- Tortollan Seekers
+	[2164] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2032592 }; -- Champions of Azeroth
+	[2391] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2909316 }; -- Rustbolt
+	[2373] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2821782, ["playerFaction"] = "Horde" }; -- Unshackled
+	[2400] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2909045, ["playerFaction"] = "Alliance" }; -- Waveblade Ankoan
+	[2417] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 3196264 }; -- Uldum Accord
+	[2415] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 3196265 }; -- Rajani
+	-- Shadowlands
+	[2407] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 3257748 }; -- The Ascended
+	[2410] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 3641396 }; -- The Undying Army
+	[2413] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 3257751 }; -- Court of Harvesters
+	[2465] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 3641394 }; -- The Wild Hunt
+	[2432] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 3729461 }; -- Ve'nari
+	[2470] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 4083292 }; -- Korthia
+	[2472] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 4067928 }; -- Korthia Codex
+	[2478] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 4226232 }; -- Zereth Mortis
+	-- LE_EXPANSION_DRAGONFLIGHT
+	[2523] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4528811 }; -- Dark Talons
+	[2507] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687628 }; -- Dragonscale Expedition
+	[2574] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 5244643 }; -- Dream Wardens
+	[2511] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687629 }; -- Iskaara Tuskarr
+	[2564] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 5140835 }; -- Loamm Niffen
+	[2503] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687627 }; -- Maruuk Centaur
+	[2510] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687630 }; -- Valdrakken Accord
+	[2524] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4528812 }; -- Obsidian Warders
+	[2517] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4640487 }; -- Wrathion
+	[2518] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4640488 }; -- Sabellian
+	-- LE_EXPANSION_WAR_WITHIN
+	[2570] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5891368 }; -- Hallowfall Arathi
+	[2594] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6029027 }; -- The Assembly of the Deeps
+	[2590] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6029029 }; -- Council of Dornogal
+	[2600] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5891370 }; -- The Severed Threads
+	[2653] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6351805 }; -- The Cartels of Undermine
+	[2673] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439627 }; -- Bilgewater
+	[2669] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439629 }; -- Darkfuse
+	[2675] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439628 }; -- Blackwater
+	[2677] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439630 }; -- Steamwheedle
+	[2671] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439631 }; -- Venture Co.
+	[2658] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6937966 }; -- K'aresh Trust
+	-- LE_EXPANSION_MIDNIGHT
+	[2696] =	{ ["expansion"] = LE_EXPANSION_MIDNIGHT, ["texture"] = 7505698 }; -- Amani Tribe
+	[2699] =	{ ["expansion"] = LE_EXPANSION_MIDNIGHT, ["texture"] = 7505702 }; -- The Singularity
+	[2704] =	{ ["expansion"] = LE_EXPANSION_MIDNIGHT, ["texture"] = 7505704 }; -- Hara'ti
+	[2710] =	{ ["expansion"] = LE_EXPANSION_MIDNIGHT, ["texture"] = 7505700 }; -- Silvermoon Court
 }
-function _V:FilterIsOldContent(filterType, key)
-	local t = oldContentFilters[filterType];
-	return t and t[key];
+
+-- Add localized faction names
+for k, v in pairs(factionData) do
+	local info = C_Reputation.GetFactionDataByID(k);
+	if(info) then
+		v.name = info.name;
+	end
 end
 
-local filterFunctions = {
-	[enumFilterType.type] = {
-		PvP			= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PvP; end;
-		Petbattle	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PetBattle; end;
-		Dungeon 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Dungeon; end;
-		Raid 		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Raid; end;
-		Profession	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Profession; end;
-		Invasion 	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Invasion; end;
-		Assault		= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.FactionAssault; end;
-		Elite		= function(questInfo, tagInfo) return tagInfo and tagInfo.isElite and tagInfo.worldQuestType ~= Enum.QuestTagType.Dungeon; end;
-		Default		= function(questInfo, tagInfo) return tagInfo and not tagInfo.isElite and tagInfo.worldQuestType == Enum.QuestTagType.Normal; end;
-		Bonus		= function(questInfo, tagInfo) return not tagInfo; end;
-		Dragonrider	= function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.DragonRiderRacing; end;
-	};
-	[enumFilterType.reward] = {
-		Armor		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.equipment + WQT_REWARDTYPE.weapon) > 0; end;
-		Relic		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.relic) > 0; end;
-		Item		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.spell + WQT_REWARDTYPE.item) > 0; end;
-		Anima		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.anima) > 0; end;
-		Conduits	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.conduit) > 0; end;
-		Artifact	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.artifact) > 0; end;
-		Honor		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.honor) > 0; end;
-		Gold		= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.gold) > 0; end;
-		Currency	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.currency) > 0; end;
-		Experience	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.xp) > 0; end;
-		Reputation	= function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.reputation) > 0; end;
-		None		= function(questInfo, tagInfo) return questInfo.reward.typeBits == WQT_REWARDTYPE.none; end;
-	};
-};
-function _V:GetFilterFunction(filterType, key)
-	local t = filterFunctions[filterType];
-	return t and t[key];
+function _V:GetFactionData(factionID)
+	if (not factionID) then
+		-- No faction
+		return factionFallbackData;
+	end;
+
+	if (not factionData[factionID]) then
+		-- Add new faction in case it's not in our data yet
+		local data = C_Reputation.GetFactionDataByID(factionID);
+		factionData[factionID] = { ["expansion"] = 0,["faction"] = nil ,["texture"] = 1103069, ["unknown"] = true, ["name"] = data and data.name or "Unknown Faction" };
+		WQT:DebugPrint("Added new faction", factionData[factionID].name);
+	end
+
+	return factionData[factionID];
+end
+
+do
+	local FilterDataMixin = {};
+
+	function FilterDataMixin:Init()
+		self.filtersTypes = {};
+		self.filterOrder = {};
+	end
+
+	function FilterDataMixin:RegisterFilterType(filterType, label)
+		if (not filterType or not label or self.filtersTypes[filterType]) then return; end
+
+		self.filtersTypes[filterType] = {
+			label = label;
+			filters = {};
+			sortedIDs = {};
+		};
+
+		tinsert(self.filterOrder, filterType);
+	end
+
+	function FilterDataMixin:RegisterFilter(filterType, id, label, func, tag, manualSortOrder)
+		if (not filterType or not id) then return; end
+	
+		local filter = self:GetFilterType(filterType);
+
+		if (not filter or not filter.filters) then return; end
+		local filterList = filter.filters;
+
+		if (filterList[id]) then return; end
+
+		manualSortOrder = manualSortOrder or 0;
+
+		filterList[id] = {
+			id = id;
+			label = label;
+			func = func;
+			tag = tag;
+			manualSortOrder = manualSortOrder;
+		};
+
+		tinsert(filter.sortedIDs, id);
+	end
+
+	function FilterDataMixin:SortFilterType(filterType)
+		local list = self:GetFiltersOfType(filterType);
+		local sortedIDs = self:GetSortedFilterIDs(filterType);
+		if (list and sortedIDs) then
+			table.sort(sortedIDs, function(a, b)
+				local orderA = list[a].manualSortOrder or 0;
+				local orderB = list[b].manualSortOrder or 0;
+				if (orderA ~= orderB) then
+					return orderA < orderB;
+				end
+
+				-- Compare localized labels
+				local labelA = list[a].label;
+				local labelB = list[b].label;
+				if (labelA ~= labelB) then
+					if (not labelA or not labelB) then
+						return labelA ~= nil;
+					end
+					return labelA < labelB;
+				end
+				-- Failsafe
+				return tostring(a) < tostring(b);
+			end)
+		end
+	end
+
+	function FilterDataMixin:GetFilterType(filterType)
+		return self.filtersTypes[filterType];
+	end
+
+	function FilterDataMixin:GetSortedFilterIDs(filterType)
+		local type = self:GetFilterType(filterType);
+		return type and type.sortedIDs;
+	end
+
+	function FilterDataMixin:GetFiltersOfType(filterType)
+		local type = self:GetFilterType(filterType);
+		return type and type.filters;
+	end
+
+	function FilterDataMixin:GetFilterTypeLabel(filterType)
+		local type = self:GetFilterType(filterType);
+		return type and type.label;
+	end
+
+	function FilterDataMixin:GetFilter(filterType, id)
+		local list = self:GetFiltersOfType(filterType);
+		return list and list[id];
+	end
+
+	function FilterDataMixin:GetFilterFunction(filterType, id)
+		local filter = self:GetFilter(filterType, id);
+		return filter and filter.func;
+	end
+
+	local FILTER_TAG_OLD_CONTENT = "OLD_CONTENT";
+
+	function FilterDataMixin:FilterIsOldContent(filterType, id)
+		local filter = self:GetFilter(filterType, id);
+		return filter and filter.tag == FILTER_TAG_OLD_CONTENT;
+	end
+
+	function FilterDataMixin:EnumerateFilterTypes()
+		return ipairs(self.filterOrder);
+	end
+
+	local filterData = CreateAndInitFromMixin(FilterDataMixin);
+
+	do
+		local type = enumFilterType.faction;
+		filterData:RegisterFilterType(type, FACTION);
+		do
+			local id = "Other";
+			local label = OTHER;
+			filterData:RegisterFilter(type, id, label, nil, nil, 98);
+		end
+		do
+			local id = "None";
+			local label = _L:Get("NO_FACTION");
+			local func = function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PvP; end;
+			filterData:RegisterFilter(type, id, label, func, nil, 99);
+		end
+		-- Entry for every faction we care about
+		for id, data in pairs(factionData) do
+			filterData:RegisterFilter(type, id, data.name, nil, data.expansion);
+		end
+	end
+
+	do
+		local type = enumFilterType.type;
+		filterData:RegisterFilterType(type, TYPE);
+		do
+			local id = "PvP";
+			local label = PVP;
+			local func = function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PvP; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "Petbattle";
+			local label = PET_BATTLE_PVP_QUEUE;
+			local func = function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.PetBattle; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "Dungeon";
+			local label = TRACKER_HEADER_DUNGEON;
+			local func = function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Dungeon; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "Raid";
+			local label = RAID;
+			local func = function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Raid; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "Profession";
+			local label = BATTLE_PET_SOURCE_4;
+			local func = function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Profession; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "Elite";
+			local label = ELITE;
+			local func = function(questInfo, tagInfo) return tagInfo and tagInfo.isElite and tagInfo.worldQuestType ~= Enum.QuestTagType.Dungeon; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "Default";
+			local label = DEFAULT;
+			local func = function(questInfo, tagInfo) return tagInfo and not tagInfo.isElite and tagInfo.worldQuestType == Enum.QuestTagType.Normal; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "Bonus";
+			local label = SCENARIO_BONUS_LABEL;
+			local func = function(questInfo, tagInfo) return not tagInfo; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "Dragonrider";
+			local label = DRAGONRIDING_RACES_MAP_TOGGLE;
+			local func = function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.DragonRiderRacing; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "Prey";
+			local label = _L:Get("TYPE_PREY");
+			local func = function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Prey; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		-- old content
+		do
+			local id = "Invasion";
+			local label = _L:Get("TYPE_INVASION");
+			local func = function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.Invasion; end;
+			filterData:RegisterFilter(type, id, label, func, FILTER_TAG_OLD_CONTENT);
+		end
+		do
+			local id = "Assault";
+			local label = SPLASH_BATTLEFORAZEROTH_8_1_FEATURE2_TITLE;
+			local func = function(questInfo, tagInfo) return tagInfo and tagInfo.worldQuestType == Enum.QuestTagType.FactionAssault; end;
+			filterData:RegisterFilter(type, id, label, func, FILTER_TAG_OLD_CONTENT);
+		end
+	end
+
+	do
+		local type = enumFilterType.reward;
+		filterData:RegisterFilterType(type, REWARD);
+		do
+			local id = "Armor";
+			local label = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT;
+			local func = function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.equipment + WQT_REWARDTYPE.weapon) > 0; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "Item";
+			local label = ITEMS;
+			local func = function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.spell + WQT_REWARDTYPE.item) > 0; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "Honor";
+			local label = HONOR;
+			local func = function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.honor) > 0; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "Gold";
+			local label = WORLD_QUEST_REWARD_FILTERS_GOLD;
+			local func = function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.gold) > 0; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "Currency";
+			local label = CURRENCY;
+			local func = function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.currency) > 0; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "Experience";
+			local label = POWER_TYPE_EXPERIENCE;
+			local func = function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.xp) > 0; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "Reputation";
+			local label = REPUTATION;
+			local func = function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.reputation) > 0; end;
+			filterData:RegisterFilter(type, id, label, func);
+		end
+		do
+			local id = "None";
+			local label = NONE;
+			local func = function(questInfo, tagInfo) return questInfo.reward.typeBits == WQT_REWARDTYPE.none; end;
+			local manualSortOrder = 99;
+			filterData:RegisterFilter(type, id, label, func, nil, manualSortOrder);
+		end
+		-- old content
+		do
+			local id = "Relic";
+			local label = RELICSLOT;
+			local func = function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.relic) > 0; end;
+			filterData:RegisterFilter(type, id, label, func, FILTER_TAG_OLD_CONTENT);
+		end
+		do
+			local id = "Anima";
+			local label = WORLD_QUEST_REWARD_FILTERS_ANIMA;
+			local func = function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.anima) > 0; end;
+			filterData:RegisterFilter(type, id, label, func, FILTER_TAG_OLD_CONTENT);
+		end
+		do
+			local id = "Conduits";
+			local label = _L:Get("REWARD_CONDUITS");
+			local func = function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.conduit) > 0; end;
+			filterData:RegisterFilter(type, id, label, func, FILTER_TAG_OLD_CONTENT);
+		end
+		do
+			local id = "Artifact";
+			local label = ITEM_QUALITY6_DESC;
+			local func = function(questInfo, tagInfo) return bit.band(questInfo.reward.typeBits, WQT_REWARDTYPE.artifact) > 0; end;
+			filterData:RegisterFilter(type, id, label, func, FILTER_TAG_OLD_CONTENT);
+		end
+	end
+
+	-- Alphabetical sort all filters
+	for k, filterType in filterData:EnumerateFilterTypes() do
+		filterData:SortFilterType(filterType);
+	end
+
+
+	function _V:GetFiltersOfType(filterType)
+		return filterData:GetFiltersOfType(filterType);
+	end
+
+	function _V:GetFilter(filterType, id)
+		return filterData:GetFilter(filterType, id);
+	end
+
+	function _V:GetFilterFunction(filterType, id)
+		return filterData:GetFilterFunction(filterType, id);
+	end
+
+	function _V:FilterIsOldContent(filterType, id)
+		return filterData:FilterIsOldContent(filterType, id);
+	end
+	
+	function _V:GetSortedFilterIDs(filterType)
+		return filterData:GetSortedFilterIDs(filterType);
+	end
+	
+	function _V:GetFilterTypeLabel(filterType)
+		return filterData:GetFilterTypeLabel(filterType);
+	end
+
+	function _V:EnumerateFilterTypes()
+		return filterData:EnumerateFilterTypes();
+	end
 end
 
 local rewardTypeAtlases = {
@@ -510,10 +851,6 @@ local function AddZoneData(zoneID, name)
 	return data;
 end
 
-for k, v in pairs(enumZoneIDs) do
-	AddZoneData(v, k);
-end
-
 local function AddChildToZone(zoneID, childZoneID, coordX, coordY, isSubZone)
 	local data = zoneData[zoneID];
 	if (not data) then return; end;
@@ -553,6 +890,10 @@ local function MarkZoneAsFlightmap(zoneID)
 	local data = zoneData[zoneID];
 	if (not data) then return; end;
 	data.isFlightMap = true;
+end
+
+for k, v in pairs(enumZoneIDs) do
+	AddZoneData(v, k);
 end
 
 local includeChildren = true;
@@ -833,109 +1174,6 @@ function _V:GetZonesOfExpansion(expansion)
 	return zonesPerExpansion[expansion];
 end
 
-local factionFallbackData = { ["expansion"] = 0 ,["playerFaction"] = nil ,["texture"] = 131071, ["name"]=_L:Get("NO_FACTION") } -- No faction
-local factionData = {
-	[67] = 		{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 2203914 }; -- Horde
-	[469] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 2203912 }; -- Alliance
-	[609] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 1396983 }; -- Cenarion Circle - Call of the Scarab
-	[910] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 236232 }; -- Brood of Nozdormu - Call of the Scarab
-	[1106] = 	{ ["expansion"] = LE_EXPANSION_CLASSIC, ["texture"] = 236690 }; -- Argent Crusade
-
-	[1445] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 133283 }; -- Draenor Frostwolf Orcs
-	[1515] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 1002596 }; -- Dreanor Arakkoa Outcasts
-	[1731] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 1048727 }; -- Dreanor Council of Exarchs
-	[1681] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 1042727 }; -- Dreanor Vol'jin's Spear
-	[1682] = 	{ ["expansion"] = LE_EXPANSION_WARLORDS_OF_DRAENOR, ["texture"] = 1042294 }; -- Dreanor Wrynn's Vanguard
-	-- Legion
-	[1090] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394955 }; -- Kirin Tor
-	[1828] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394954 }; -- Highmountain Tribes
-	[1859] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394956 }; -- Nightfallen
-	[1883] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394953 }; -- Dreamweavers
-	[1894] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394958 }; -- Wardens
-	[1900] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394952 }; -- Court of Farnodis
-
-	[1948] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1394957 }; -- Valarjar
-	[2045] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1708498 }; -- Legionfall
-	[2165] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1708497 }; -- Army of the Light
-	[2170] = 	{ ["expansion"] = LE_EXPANSION_LEGION, ["texture"] = 1708496 }; -- Argussian Reach
-	-- BFA
-	[2103] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2065579 ,["playerFaction"] = "Horde" }; -- Zandalari Empire
-	[2156] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2065575, ["playerFaction"] = "Horde" }; -- Talanji's Expedition
-	[2157] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2065571, ["playerFaction"] = "Horde" }; -- The Honorbound
-	[2158] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2032599, ["playerFaction"] = "Horde" }; -- Voldunai
-	[2159] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2065569, ["playerFaction"] = "Alliance" }; -- 7th Legion
-	[2160] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2065573, ["playerFaction"] = "Alliance" }; -- Proudmoore Admirality
-	[2161] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2032594, ["playerFaction"] = "Alliance" }; -- Order of Embers
-	[2162] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2032596, ["playerFaction"] = "Alliance" }; -- Storm's Wake
-	[2163] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2032598 }; -- Tortollan Seekers
-	[2164] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2032592 }; -- Champions of Azeroth
-	[2391] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2909316 }; -- Rustbolt
-	[2373] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2821782, ["playerFaction"] = "Horde" }; -- Unshackled
-	[2400] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 2909045, ["playerFaction"] = "Alliance" }; -- Waveblade Ankoan
-	[2417] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 3196264 }; -- Uldum Accord
-	[2415] = 	{ ["expansion"] = LE_EXPANSION_BATTLE_FOR_AZEROTH, ["texture"] = 3196265 }; -- Rajani
-	-- Shadowlands
-	[2407] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 3257748 }; -- The Ascended
-	[2410] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 3641396 }; -- The Undying Army
-	[2413] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 3257751 }; -- Court of Harvesters
-	[2465] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 3641394 }; -- The Wild Hunt
-	[2432] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 3729461 }; -- Ve'nari
-	[2470] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 4083292 }; -- Korthia
-	[2472] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 4067928 }; -- Korthia Codex
-	[2478] =	{ ["expansion"] = LE_EXPANSION_SHADOWLANDS, ["texture"] = 4226232 }; -- Zereth Mortis
-	-- LE_EXPANSION_DRAGONFLIGHT
-	[2523] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4528811 }; -- Dark Talons
-	[2507] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687628 }; -- Dragonscale Expedition
-	[2574] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 5244643 }; -- Dream Wardens
-	[2511] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687629 }; -- Iskaara Tuskarr
-	[2564] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 5140835 }; -- Loamm Niffen
-	[2503] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687627 }; -- Maruuk Centaur
-	[2510] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4687630 }; -- Valdrakken Accord
-	[2524] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4528812 }; -- Obsidian Warders
-	[2517] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4640487 }; -- Wrathion
-	[2518] =	{ ["expansion"] = LE_EXPANSION_DRAGONFLIGHT, ["texture"] = 4640488 }; -- Sabellian
-	-- LE_EXPANSION_WAR_WITHIN
-	[2570] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5891368 }; -- Hallowfall Arathi
-	[2594] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6029027 }; -- The Assembly of the Deeps
-	[2590] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6029029 }; -- Council of Dornogal
-	[2600] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 5891370 }; -- The Severed Threads
-	[2653] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6351805 }; -- The Cartels of Undermine
-	[2673] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439627 }; -- Bilgewater
-	[2669] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439629 }; -- Darkfuse
-	[2675] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439628 }; -- Blackwater
-	[2677] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439630 }; -- Steamwheedle
-	[2671] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6439631 }; -- Venture Co.
-	[2658] =	{ ["expansion"] = LE_EXPANSION_WAR_WITHIN, ["texture"] = 6937966 }; -- K'aresh Trust
-	-- LE_EXPANSION_MIDNIGHT
-	[2696] =	{ ["expansion"] = LE_EXPANSION_MIDNIGHT, ["texture"] = 7505698 }; -- Amani Tribe
-	[2699] =	{ ["expansion"] = LE_EXPANSION_MIDNIGHT, ["texture"] = 7505702 }; -- The Singularity
-	[2704] =	{ ["expansion"] = LE_EXPANSION_MIDNIGHT, ["texture"] = 7505704 }; -- Hara'ti
-	[2710] =	{ ["expansion"] = LE_EXPANSION_MIDNIGHT, ["texture"] = 7505700 }; -- Silvermoon Court
-}
--- Add localized faction names
-for k, v in pairs(factionData) do
-	local info = C_Reputation.GetFactionDataByID(k);
-	if(info) then
-		v.name = info.name;
-	end
-end
-
-function _V:GetFactionData(factionID)
-	if (not factionID) then
-		-- No faction
-		return factionFallbackData;
-	end;
-
-	if (not factionData[factionID]) then
-		-- Add new faction in case it's not in our data yet
-		local data = C_Reputation.GetFactionDataByID(factionID);
-		factionData[factionID] = { ["expansion"] = 0,["faction"] = nil ,["texture"] = 1103069, ["unknown"] = true, ["name"] = data and data.name or "Unknown Faction" };
-		WQT:DebugPrint("Added new faction", factionData[factionID].name);
-	end
-
-	return factionData[factionID];
-end
-
 local filterToOfficialCvar = {
 	["Petbattle"]	= { "showTamersWQ" };
 	["Dragonrider"]	= { "dragonRidingRacesFilterWQ" };
@@ -1086,47 +1324,9 @@ local defaultSettings = {
 			label = enumPinLabel.none;
 		};
 
-		["filters"] = {
-				[enumFilterType.faction] = {["name"] = FACTION
-						,["misc"] = {
-							["none"] = true,
-							["other"] = true},
-							["flags"] = {} -- Faction filters are assigned later
-						}
-				,[enumFilterType.type] = {["name"] = TYPE
-						, ["flags"] = {
-							["Default"] = true,
-							["Elite"] = true,
-							["PvP"] = true,
-							["Petbattle"] = true,
-							["Dungeon"] = true,
-							["Raid"] = true,
-							["Profession"] = true,
-							["Invasion"] = true,
-							["Assault"] = true,
-							["Bonus"] = true,
-							["Dragonrider"] = true
-						}}
-				,[enumFilterType.reward] = {["name"] = REWARD
-						, ["flags"] = {
-							["Item"] = true,
-							["Armor"] = true,
-							["Gold"] = true,
-							["Currency"] = true,
-							["Anima"] = true,
-							["Conduits"] = true,
-							["Artifact"] = true,
-							["Relic"] = true,
-							["None"] = true,
-							["Experience"] = true,
-							["Honor"] = true,
-							["Reputation"] = true
-						}}
-			};
-			
-		["profiles"] = {
-			
-		};
+		["filters"] = {};
+		
+		["profiles"] = {};
 	}
 }
 
@@ -1138,9 +1338,19 @@ function _V:GetDefaultSettingsCategory(category)
 	return defaultSettings.global[category];
 end
 
-local filterFactionSettings = _V:GetDefaultSettingsCategory("filters")[enumFilterType.faction];
-for k, v in pairs(factionData) do
-	if (v.expansion >= LE_EXPANSION_LEGION) then
-		filterFactionSettings.flags[k] = true;
+local filtersCategory = _V:GetDefaultSettingsCategory("filters");
+if (filtersCategory) then
+	for k, filterType in _V:EnumerateFilterTypes() do
+		if (not filtersCategory[filterType]) then
+			filtersCategory[filterType] = {
+				["flags"] = {}, -- Table in table because legacy
+			};
+		end
+
+		local flags = filtersCategory[filterType].flags;
+		local filters = _V:GetFiltersOfType(filterType);
+		for id in pairs(filters) do
+			flags[id] = true;
+		end
 	end
 end

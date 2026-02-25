@@ -37,8 +37,8 @@ local function RewardSortFunc(a, b)
 	end
 
 
-	local aPassed = WQT_Utils:RewardTypePassesFilter(a.type);
-	local bPassed = WQT_Utils:RewardTypePassesFilter(b.type);
+	local aPassed = WQT:RewardTypePassesFilter(a.type);
+	local bPassed = WQT:RewardTypePassesFilter(b.type);
 
 	-- Rewards that pass the filters get priority
 	if (aPassed ~= bPassed) then

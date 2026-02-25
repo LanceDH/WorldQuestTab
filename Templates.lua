@@ -897,40 +897,6 @@ function WQT_Utils:GetQuestMapLocation(questId, mapId)
 	return 0, 0;
 end
 
-function WQT_Utils:RewardTypePassesFilter(rewardType)
-	local enumFilterType = _V:GetFilterTypeEnum();
-	local rewardFilters = WQT.settings.filters[enumFilterType.reward].flags;
-	if(rewardType == WQT_REWARDTYPE.equipment or rewardType == WQT_REWARDTYPE.weapon) then
-		return rewardFilters.Armor;
-	end
-	if(rewardType == WQT_REWARDTYPE.spell or rewardType == WQT_REWARDTYPE.item) then
-		return rewardFilters.Item;
-	end
-	if(rewardType == WQT_REWARDTYPE.gold) then
-		return rewardFilters.Gold;
-	end
-	if(rewardType == WQT_REWARDTYPE.currency) then
-		return rewardFilters.Currency;
-	end
-	if(rewardType == WQT_REWARDTYPE.artifact) then
-		return rewardFilters.Artifact;
-	end
-	if(rewardType == WQT_REWARDTYPE.relic) then
-		return rewardFilters.Relic;
-	end
-	if(rewardType == WQT_REWARDTYPE.xp) then
-		return rewardFilters.Experience;
-	end
-	if(rewardType == WQT_REWARDTYPE.honor) then
-		return rewardFilters.Honor ;
-	end
-	if(rewardType == WQT_REWARDTYPE.reputation) then
-		return rewardFilters.Reputation;
-	end
-
-	return true;
-end
-
 function WQT_Utils:CalculateWarmodeAmount(rewardInfo)
 	if (not rewardInfo) then return 0; end
 

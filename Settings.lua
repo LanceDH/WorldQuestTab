@@ -1154,24 +1154,19 @@ function WQT_SettingsFrameMixin:Init()
 
 		-- do -- 
 		-- 	StartVersionCategory("");
-		-- 	AddSection(ChangelogSections.Intro, {
-				
-		-- 	});
-		-- 	AddSection(ChangelogSections.New, {
-				
-		-- 	});
-		-- 	AddSection(ChangelogSections.Changes, {
-				
-		-- 	});
-		-- 	AddSection(ChangelogSections.Fixes, {
-				
-		-- 	});
+		-- 	AddSection(ChangelogSections.Intro, { });
+		-- 	AddSection(ChangelogSections.New, { });
+		-- 	AddSection(ChangelogSections.Changes, { });
+		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
 
 		do -- 12.0.04
 			StartVersionCategory("12.0.04");
+			AddSection(ChangelogSections.New, {
+				"Added a filter for 'Prey' world quests.";
+			});
 			AddSection(ChangelogSections.Changes, {
-				"Refactored my zone database. Let me know if something is out of place.";
+				"Refactored filters and zone data. Let me know if I missed something.";
 			});
 		end
 
