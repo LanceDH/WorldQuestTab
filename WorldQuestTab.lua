@@ -1137,7 +1137,6 @@ function WQT_ListButtonMixin:OnLoad()
 	self.TrackedBorder:SetFrameLevel(self:GetFrameLevel() + 2);
 	self.Highlight:SetFrameLevel(self:GetFrameLevel() + 2);
 	self:EnableKeyboard(false);
-	self.UpdateTooltip = function() self:ShowTooltip() end;
 end
 
 function WQT_ListButtonMixin:OnClick(button)
@@ -1196,7 +1195,7 @@ function WQT_ListButtonMixin:OnLeave()
 	self.Highlight:Hide();
 	WQT_WorldQuestFrame.pinDataProvider:SetQuestIDPinged(self.questInfo.questID, false);
 	WQT_WorldQuestFrame:HideWorldmapHighlight();
-	WQT_Utils:HideQuestTooltip();
+	WQT_Utils:HideQuestTooltip(self);
 	
 	local isDisliked = self.questInfo:IsDisliked();
 	self:SetAlpha(isDisliked and 0.75 or 1);

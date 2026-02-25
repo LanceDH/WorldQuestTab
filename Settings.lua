@@ -1163,10 +1163,11 @@ function WQT_SettingsFrameMixin:Init()
 		do -- 12.0.04
 			StartVersionCategory("12.0.04");
 			AddSection(ChangelogSections.New, {
-				"Added a filter for 'Prey' world quests.";
+				"Added a filter for 'Prey' world quests";
 			});
 			AddSection(ChangelogSections.Changes, {
-				"Refactored filters and zone data. Let me know if I missed something.";
+				"Refactored filters and zone data. Let me know if I missed something";
+				"Reduced the amount of times tooltips get updated";
 			});
 		end
 

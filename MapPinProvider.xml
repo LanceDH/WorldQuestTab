@@ -135,7 +135,6 @@
 				</Animations>
 
 				<Scripts>
-					<OnLoad method="OnLoad" />
 					<OnEnter method="OnEnter" />
 					<OnLeave method="OnLeave" />
 					<OnClick method="OnClick" />

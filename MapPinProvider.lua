@@ -578,10 +578,6 @@ end
 
 WQT_PinButtonMixin = {};
 
-function WQT_PinButtonMixin:OnLoad()
-	self.UpdateTooltip = function() WQT_Utils:ShowQuestTooltip(self, self.questInfo) end;
-end
-
 function WQT_PinButtonMixin:OnEnter()
 	self:GetParent():Focus();
 	if (self.questInfo) then
@@ -596,7 +592,7 @@ end
 
 function WQT_PinButtonMixin:OnLeave()
 	self:GetParent():ClearFocus();
-	WQT_Utils:HideQuestTooltip();
+	WQT_Utils:HideQuestTooltip(self);
 	-- Stop highlight quest in list
 	WQT_ListContainer.PoIHoverId = nil;
 	WQT_ListContainer:DisplayQuestList();
