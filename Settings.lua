@@ -1160,6 +1160,13 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
 
+		do -- 12.0.05
+			StartVersionCategory("12.0.05");
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed a possible error on login depending on your saved filters";
+			});
+		end
+
 		do -- 12.0.04
 			StartVersionCategory("12.0.04");
 			AddSection(ChangelogSections.New, {

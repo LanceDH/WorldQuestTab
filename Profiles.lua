@@ -141,7 +141,7 @@ local function ApplyVersionChanges(profile, version)
 	if (version < 120004) then
 		local enumFilterType = _V:GetFilterTypeEnum();
 		local filters = profile.filters[enumFilterType.faction];
-		if (filters) then
+		if (filters and filters.misc) then
 			if (not filters.flags) then
 				filters.flags  = {};
 			end
