@@ -1277,7 +1277,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	self:Show();
 	self.questInfo = questInfo;
 	self.questID = questInfo.questID;
-	
+
 	local isDisliked = questInfo:IsDisliked();
 	self:SetAlpha(isDisliked and 0.75 or 1);
 	
@@ -2034,6 +2034,12 @@ function WQT_CoreMixin:OnLoad()
 	hooksecurefunc(activityBoard, "SetNextMapForSelectedBounty", function()
 		if (not WQT.settings.general.autoEmisarry or WQT.settings.general.emissaryOnly or not activityBoard.selectedBounty) then return; end
 		WQT_WorldQuestFrame.autoEmisarryId = activityBoard.selectedBounty.factionID;
+		WQT_ListContainer:UpdateQuestList();
+	end)
+
+	hooksecurefunc(activityBoard, "SetSelectedBounty", function(source, bountyInfo)
+		if (bountyInfo ~= nil or WQT_WorldQuestFrame.autoEmisarryId == nil) then return; end
+		WQT_WorldQuestFrame.autoEmisarryId = nil;
 		WQT_ListContainer:UpdateQuestList();
 	end)
 	

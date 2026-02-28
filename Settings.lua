@@ -1171,6 +1171,7 @@ function WQT_SettingsFrameMixin:Init()
 			AddSection(ChangelogSections.Changes, {
 				"Changed the shortcut to dislike quests from Shift-right click to Alt-right click";
 				"Moved the quest quality background to the right side";
+				"Clearing the activity board when the temporary emissary filter is enabled will now also remove the filter";
 			});
 		end
 
