@@ -1279,6 +1279,7 @@ local defaultSettings = {
 			sl_genericAnimaIcons = false;
 			
 			dislikedQuests = {};
+			favoriteQuests = {};
 			
 			loadUtilities = true;
 			
@@ -1297,12 +1298,14 @@ local defaultSettings = {
 			amountColors = true;
 			colorTime = true;
 			fullTime = false;
+			favoritesAtTop = true;
 			rewardNumDisplay = 1;
 		};
 
 		["pin"] = {
 			-- Mini icons
 			typeIcon = true;
+			favoriteIcon = true;
 			numRewardIcons = 0;
 			rarityIcon = false;
 			timeIcon = false;

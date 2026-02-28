@@ -103,7 +103,7 @@ L["REWARD_NUM_DISPLAY_TT"] = "Wie viele der Questbelohungen sollen angezeigt wer
 L["SAVE_SETTINGS"] = "Speichere Filter/Sortierung"
 L["SAVE_SETTINGS_TT"] = [=[Speichere Filter- und Sortierungseinstellungen
 sitzungs- und reloadübergreifend]=]
-L["SHORTCUT_DISLIKE"] = "<Shift + Rechtsklick zum markieren>"
+L["SHORTCUT_DISLIKE"] = "<Alt + Rechtsklick zum markieren>"
 L["SHORTCUT_TRACK"] = "<Shift + Klick zum verfolgen>"
 L["SHORTCUT_WAYPOINT"] = "<STRG + Klick um einen Wegpunkt zu setzen>"
 L["SHOW_FACTION"] = "Zeige Fraktion"

@@ -1277,6 +1277,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	self:Show();
 	self.questInfo = questInfo;
 	self.questID = questInfo.questID;
+	
 	local isDisliked = questInfo:IsDisliked();
 	self:SetAlpha(isDisliked and 0.75 or 1);
 	
@@ -1292,7 +1293,10 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 
 	local titleFS = self:GetTitleFontString();
 	titleFS:SetText(title);
-	
+
+	local isFavorite = questInfo:IsFavorite();
+	self.FavoriteBg:SetShown(isFavorite);
+
 	local showingZone = false;
 	local zoneName = "";
 	if (shouldShowZone and WQT.settings.list.showZone) then

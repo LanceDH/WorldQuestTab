@@ -748,7 +748,7 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset)
 		WQT_ActiveGameTooltip:Show();
 		return;
 	end
-	
+
 	local title, factionID, capped = C_TaskQuest.GetQuestInfoByQuestID(questInfo.questID);
 	local tagInfo = questInfo:GetTagInfo();
 	local qualityColor = WORLD_QUEST_QUALITY_COLORS[tagInfo and tagInfo.quality or Enum.WorldQuestQuality.Common];
@@ -994,23 +994,45 @@ local function QuestContextSetup(frame, rootDescription, questInfo)
 		end);
 	AddInstructionTooltipToDropdownItem(waypointBtn, _L:Get("SHORTCUT_WAYPOINT"));
 
-	-- Uninterested
-	local checkbox = rootDescription:CreateCheckbox(
-		_L:Get("UNINTERESTED"),
-		function()
-			 return WQT_Utils:QuestIsDisliked(questInfo.questID);
-		end,
-		function()
-			local dislike = not WQT_Utils:QuestIsDisliked(questInfo.questID);
- 			WQT_Utils:SetQuestDisliked(questInfo.questID, dislike);
-		end
-	);
-	AddInstructionTooltipToDropdownItem(checkbox, _L:Get("SHORTCUT_DISLIKE"));
+	do -- Favorite
+		local checkbox = rootDescription:CreateCheckbox(
+			PROFESSIONS_FAVORITE,
+			function()
+				return questInfo:IsFavorite();
+			end,
+			function()
+				WQT_Utils:SetQuestFavorite(questInfo.questID, not questInfo:IsFavorite());
+			end
+		);
+		AddInstructionTooltipToDropdownItem(checkbox, _L:Get("SHORTCUT_FAVORITE"));
+	end
+
+	do -- Uninterested
+		local checkbox = rootDescription:CreateCheckbox(
+			_L:Get("UNINTERESTED"),
+			function()
+				return WQT_Utils:QuestIsDisliked(questInfo.questID);
+			end,
+			function()
+				local disliked = WQT_Utils:QuestIsDisliked(questInfo.questID);
+				WQT_Utils:SetQuestDisliked(questInfo.questID, not disliked);
+			end
+		);
+		AddInstructionTooltipToDropdownItem(checkbox, _L:Get("SHORTCUT_DISLIKE"));
+	end
 
 	-- Cancel. apparently a function is required for it to close the menu on click
 	rootDescription:CreateButton(CANCEL, function() end);
 end
 
+-- Left click		Select / jump to zone
+-- Shift left		Track
+-- Ctrl left		Dressup
+-- Alt left			Favorite
+-- Right click		Context menu
+-- Shift right		- 
+-- Ctrl right		Map marker
+-- Alt right		Dislike
 function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 	if (not questInfo or not questInfo.questID) then return end
 	
@@ -1046,6 +1068,10 @@ function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 			-- Trying gear with Ctrl
 			questInfo:TryDressUpReward();
 			playSound = false;
+		elseif (IsAltKeyDown()) then
+			-- Favorite
+			WQT_Utils:SetQuestFavorite(questID, not questInfo:IsFavorite());
+			playSound = false;
 		else
 			-- 'Soft' tracking and jumping map to relevant zone
 			-- Don't track bonus objectives. The object tracker doesn't like it;
@@ -1079,7 +1105,7 @@ function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 			questInfo:SetAsWaypoint();
 			C_SuperTrack.SetSuperTrackedUserWaypoint(true);
 			soundID = SOUNDKIT.UI_MAP_WAYPOINT_CLICK_TO_PLACE;
-		elseif(IsModifiedClick("QUESTWATCHTOGGLE")) then
+		elseif(IsAltKeyDown()) then
 			local dislike = not WQT_Utils:QuestIsDisliked(questID);
 			WQT_Utils:SetQuestDisliked(questID, dislike);
 			
@@ -1105,6 +1131,7 @@ function WQT_Utils:SetQuestDisliked(questID, isDisliked)
 	end
 	
 	WQT.settings.general.dislikedQuests[questID] = isDisliked;
+	WQT.settings.general.favoriteQuests[questID] = nil;
 	
 	WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
 	
@@ -1115,7 +1142,30 @@ function WQT_Utils:SetQuestDisliked(questID, isDisliked)
 		soundID = SOUNDKIT.UI_70_ARTIFACT_FORGE_APPEARANCE_APPEARANCE_CHANGE;
 	end
 	PlaySound(soundID, nil, false);
-end 
+end
+
+function WQT_Utils:QuestIsFavorite(questID)
+	return WQT.settings.general.favoriteQuests[questID] and true or false;
+end
+
+function WQT_Utils:SetQuestFavorite(questID, favorite)
+	if (not favorite) then
+		favorite = nil;
+	end
+	
+	WQT.settings.general.favoriteQuests[questID] = favorite;
+	WQT.settings.general.dislikedQuests[questID] = nil;
+	
+	WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
+	
+	local soundID;
+	if (favorite) then
+		soundID = SOUNDKIT.UI_70_ARTIFACT_FORGE_APPEARANCE_APPEARANCE_CHANGE;
+	else
+		soundID = SOUNDKIT.UI_70_ARTIFACT_FORGE_APPEARANCE_LOCKED;
+	end
+	PlaySound(soundID, nil, false);
+end
 
 function WQT_Utils:EnsureBountyBoards()
 	if (not self.bountyBoards) then

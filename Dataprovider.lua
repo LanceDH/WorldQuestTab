@@ -77,6 +77,15 @@ local function SortQuestList(a, b, sortID)
 		return a.passedFilter and not b.passedFilter;
 	end
 
+	-- Favorite quests go to the top of the list
+	if (WQT_Utils:GetSetting("list", "favoritesAtTop")) then
+		local aFavorite = a:IsFavorite();
+		local bFavorite = b:IsFavorite();
+		if (aFavorite ~= bFavorite) then
+			return aFavorite;
+		end
+	end
+
 	-- Disliked quests go to the back of the list
 	local aDisliked = a:IsDisliked();
 	local bDisliked = b:IsDisliked();
@@ -508,6 +517,10 @@ function QuestInfoMixin:IsDisliked()
 	return WQT_Utils:QuestIsDisliked(self.questID);
 end
 
+function QuestInfoMixin:IsFavorite()
+	return WQT_Utils:QuestIsFavorite(self.questID);
+end
+
 function QuestInfoMixin:DataIsValid()
 	return self.questID ~= nil;
 end
@@ -625,6 +638,8 @@ function WQT_DataProvider:Init()
 				self:RequestDataUpdate();
 			elseif (tag == "GENERIC_ANIMA") then
 				self:RequestRewardsUpdate();
+			elseif (tag == "QUEST_FAVORITES_AT_TOP") then
+				self:RequestFilterUpdate();
 			end
 		end,
 		self);

@@ -222,6 +222,7 @@ function WQT_SettingsQuestListMixin:OnLoad()
 		["tagID"] = 111,
 	};
 	self.dummyQuestInfo.IsDisliked = function() return false; end
+	self.dummyQuestInfo.IsFavorite = function() return false; end
 	self.dummyQuestInfo.IsExpired = function() return false; end
 	self.dummyQuestInfo.IsCriteria = function() return false; end
 	self.dummyQuestInfo.GetTagInfo = function() return self.dummyQuestInfo.tagInfo; end
@@ -1160,6 +1161,19 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
 
+		do -- 12.0.06
+			StartVersionCategory("12.0.06");
+			AddSection(ChangelogSections.New, {
+				"Added the ability to favorite quests by either Alt-left clicking or through the right click menu";
+				"Added \"Favorites At Top\" list setting, which moves favorite quests to the top of the list";
+				"Added \"Favorite Icon\" pin mini icon setting, to add an icon to pins of favorite quests";
+			});
+			AddSection(ChangelogSections.Changes, {
+				"Changed the shortcut to dislike quests from Shift-right click to Alt-right click";
+				"Moved the quest quality background to the right side";
+			});
+		end
+
 		do -- 12.0.05
 			StartVersionCategory("12.0.05");
 			AddSection(ChangelogSections.Fixes, {
@@ -1573,6 +1587,13 @@ function WQT_SettingsFrameMixin:Init()
 			data:SetValueChangedFunction(function(value) WQT.settings.list.fullTime = value; end);
 		end
 
+		do -- Favorites At Top
+			local data = category:AddCheckbox("QUEST_FAVORITES_AT_TOP", _L:Get("LIST_FAVORITES_AT_TOP"), _L:Get("LIST_FAVORITES_AT_TOP_TT"));
+			data:SetGetValueFunction(function() return WQT.settings.list.favoritesAtTop; end);
+			data:SetValueChangedFunction(function(value) WQT.settings.list.favoritesAtTop = value; end);
+			data:MarkAsNew(); -- 12.0.1
+		end
+
 		do -- Fade Pins
 			local data = category:AddCheckbox("QUEST_FADE_PINS", _L:Get("PIN_FADE_ON_PING"), _L:Get("PIN_FADE_ON_PING_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.pin.fadeOnPing; end);
@@ -1712,6 +1733,14 @@ function WQT_SettingsFrameMixin:Init()
 				data:SetValueChangedFunction(function(value) WQT.settings.pin.trackingIcon = value; end);
 				data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
 				data:MarkAsNew(); -- 12.0.0
+			end
+
+			do -- Favorite
+				local data = subCategory:AddCheckbox("MINI_ICON_PIN_FAVORITE", _L:Get("PIN_FAVORITE_ICON"), _L:Get("PIN_FAVORITE_ICON_TT"));
+				data:SetGetValueFunction(function() return WQT.settings.pin.favoriteIcon; end);
+				data:SetValueChangedFunction(function(value) WQT.settings.pin.favoriteIcon = value; end);
+				data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
+				data:MarkAsNew(); -- 12.0.1
 			end
 
 			do -- Pin Type

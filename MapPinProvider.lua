@@ -936,6 +936,15 @@ function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 		iconFrame:SetupIcon(isSuperTracked and  "Waypoint-MapPin-Minimap-Tracked" or "Waypoint-MapPin-Minimap-Untracked");
 		iconFrame:SetIconScale(1.7);
 	end
+
+	-- Favorite
+	local showFavoriteIcon = questInfo:IsFavorite() and WQT_Utils:GetSetting("pin", "favoriteIcon");
+	if (showFavoriteIcon) then
+		local iconFrame = self:AddIcon();
+		iconFrame:SetupIcon("PetJournal-FavoritesIcon");
+		iconFrame:SetBackgroundShown(false);
+		iconFrame:SetIconScale(1.6);
+	end
 	
 	self:PlaceMiniIcons();
 	self:SetIconsDesaturated(isDisliked);
