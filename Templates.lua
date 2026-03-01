@@ -376,11 +376,13 @@ end
 WQT_HorizontalFlexLayoutMixin = CreateFromMixins(flexLayoutFrame);
 
 function WQT_HorizontalFlexLayoutMixin:LayoutChildren(children, expandToWidth, expandToHeight)
-	local leftOffset, rightOffset, frameTopPadding, frameBottomPadding = self:GetPadding();
+	local frameLeftPadding, frameRightOffset, frameTopPadding, frameBottomPadding = self:GetPadding();
+	local width = self:GetWidth() - frameLeftPadding - frameRightOffset;
+	local height = self:GetHeight() - frameTopPadding - frameBottomPadding;
 	local spacing = self.spacing or 0;
 	local hasExpandableChild = false;
 
-	local availableFlexSpace = self:GetWidth() - leftOffset - rightOffset;
+	local availableFlexSpace = width;
 	local totalflexSize = 0;
 
 	for i, child in ipairs(children) do
@@ -414,7 +416,6 @@ function WQT_HorizontalFlexLayoutMixin:LayoutChildren(children, expandToWidth, e
 			if expandToHeight then
 				childHeight = expandToHeight - topPadding - bottomPadding - frameTopPadding - frameBottomPadding;
 				child:SetHeight(childHeight);
-				
 
 				local ignoreRectYes = true;
 				childWidth = self:GetChildWidth(child, ignoreRectYes);
@@ -424,7 +425,7 @@ function WQT_HorizontalFlexLayoutMixin:LayoutChildren(children, expandToWidth, e
 		local flexSize = self:GetChildFlexSize(child);
 		if (flexSize > 0) then
 			childWidth = flexSize * flexSpaceChunk;
-			
+
 			child:SetWidth(childWidth);
 			if (IsLayoutFrame(child)) then
 				child:SetFixedWidth(childWidth);
@@ -436,21 +437,21 @@ function WQT_HorizontalFlexLayoutMixin:LayoutChildren(children, expandToWidth, e
 
 		child:ClearAllPoints();
 
-		leftOffset = leftOffset + leftPadding;
+		frameLeftPadding = frameLeftPadding + leftPadding;
 		if (child.align == "bottom") then
 			local bottomOffset = frameBottomPadding + bottomPadding;
-			child:SetPoint("BOTTOMLEFT", leftOffset, bottomOffset);
+			child:SetPoint("BOTTOMLEFT", frameLeftPadding, bottomOffset);
 		elseif (child.align == "center") then
 			local topOffset = (frameTopPadding - frameBottomPadding + topPadding - bottomPadding) / 2;
-			child:SetPoint("LEFT", leftOffset, -topOffset);
+			child:SetPoint("LEFT", frameLeftPadding, -topOffset);
 		else
 			local topOffset = frameTopPadding + topPadding;
-			child:SetPoint("TOPLEFT", leftOffset, -topOffset);
+			child:SetPoint("TOPLEFT", frameLeftPadding, -topOffset);
 		end
-		leftOffset = leftOffset + childWidth + rightPadding + spacing;
+		frameLeftPadding = frameLeftPadding + childWidth + rightPadding + spacing;
 	end
 
-	return self:GetWidth(), self:GetHeight(), hasExpandableChild;
+	return width, height, hasExpandableChild;
 end
 
 
@@ -459,9 +460,11 @@ WQT_VerticalFlexLayoutMixin = CreateFromMixins(flexLayoutFrame);
 
 function WQT_VerticalFlexLayoutMixin:LayoutChildren(children, expandToWidth, expandToHeight)
 	local frameLeftPadding, frameRightPadding, frameTopPadding, frameBottomPadding = self:GetPadding();
+	local width = self:GetWidth() - frameLeftPadding - frameRightPadding;
+	local height = self:GetHeight() - frameTopPadding - frameBottomPadding;
 	local spacing = self.spacing or 0;
 	local hasExpandableChild = false;
-	local availableFlexSpace = self:GetHeight() - frameTopPadding - frameBottomPadding;
+	local availableFlexSpace = height;
 	local totalflexSize = 0;
 
 	for i, child in ipairs(children) do
@@ -491,11 +494,10 @@ function WQT_VerticalFlexLayoutMixin:LayoutChildren(children, expandToWidth, exp
 
 		if (child.expand) then
 			hasExpandableChild = true;
-
+			
 			if (expandToWidth) then
 				childWidth = expandToWidth - leftPadding - rightPadding - frameLeftPadding - frameRightPadding;
 				child:SetWidth(childWidth);
-
 				local ignoreRectYes = true;
 				childHeight = self:GetChildHeight(child, ignoreRectYes);
 			end
@@ -532,7 +534,7 @@ function WQT_VerticalFlexLayoutMixin:LayoutChildren(children, expandToWidth, exp
 		frameTopPadding = frameTopPadding + childHeight + bottomPadding + spacing;
 	end
 
-	return self:GetWidth(), self:GetHeight(), hasExpandableChild;
+	return width, height, hasExpandableChild;
 end
 
 

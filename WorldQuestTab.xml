@@ -211,7 +211,7 @@
 				<KeyValues>
 					<KeyValue key="layoutIndex" value="2" type="number" />
 					<KeyValue key="flexSize" value="1" type="number" />
-					<KeyValue key="spacing" value="2" type="number"/>
+					<KeyValue key="spacing" value="3" type="number"/>
 					<KeyValue key="expand" value="true" type="boolean" />
 					<KeyValue key="leftPadding" value="2" type="number" />
 				</KeyValues>

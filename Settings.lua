@@ -145,8 +145,8 @@ function WQT_SettingsQuestListMixin:OnLoad()
 	-- 74160s == 20h 36m
 	local SETTINGS_QUEST_TIME = 74160;
 
-	self.Preview.UpdateTime = function(rewardFrame) 
-		local timeFrame = rewardFrame:GetTimeFontString();
+	self.Preview.UpdateTime = function(questFrame)
+		local timeFrame = questFrame:GetTimeFontString();
 
 		local timeString = "";
 		if (WQT.settings.list.fullTime) then
@@ -162,7 +162,7 @@ function WQT_SettingsQuestListMixin:OnLoad()
 			timeFrame:SetVertexColor(addon.variables:GetDefaultColor("fontWhite"):GetRGB());
 		end
 
-		return true;
+		questFrame:GetBottomRow():Layout();
 	 end;
 
 	self.Preview.Update = function(frame, questInfo, shouldShowZone)
@@ -1172,6 +1172,9 @@ function WQT_SettingsFrameMixin:Init()
 				"Changed the shortcut to dislike quests from Shift-right click to Alt-right click";
 				"Moved the quest quality background to the right side";
 				"Clearing the activity board when the temporary emissary filter is enabled will now also remove the filter";
+			});
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed an issue with text in the quest list not properly truncating";
 			});
 		end
 

@@ -1187,8 +1187,6 @@ function WQT_ListButtonMixin:UpdateTime(...)
 	if (timerInterval > 0) then
 		self.timer = C_Timer.NewTimer(timerInterval, function() self:UpdateTime() end);
 	end
-
-	return seconds;
 end
 
 function WQT_ListButtonMixin:OnLeave()
@@ -1272,7 +1270,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 		self.Highlight:Hide();
 		self:Hide();
 	end
-	
+
 	local needsLayoutUpdate = false;
 	self:Show();
 	self.questInfo = questInfo;
