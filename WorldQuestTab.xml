@@ -362,10 +362,10 @@
 		
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="QualityBg" file="interface/covenantrenown/covenantrenownscrollmask" alpha="0.14" alphaMode="BLEND" hidden="true">
+				<Texture parentKey="QualityBg" file="interface/covenantrenown/covenantrenownscrollmask" alpha="0.15" alphaMode="BLEND" hidden="true">
 					<TexCoords left="0.1" right="0.5" top="0.2" bottom="0.8"/>
 				</Texture>
-				<Texture parentKey="FavoriteBg" file="interface/covenantrenown/covenantrenownscrollmask" alpha="0.14" alphaMode="BLEND" hidden="true">
+				<Texture parentKey="FavoriteBg" file="interface/covenantrenown/covenantrenownscrollmask" alpha="0.15" alphaMode="BLEND" hidden="true">
 					<TexCoords left="0.53" right="0.85" top="0.2" bottom="0.8"/>
 					<Color r="0.949" g="0.902" b="0.2"/>
 				</Texture>
