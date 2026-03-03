@@ -1175,6 +1175,7 @@ function WQT_SettingsFrameMixin:Init()
 			});
 			AddSection(ChangelogSections.Fixes, {
 				"Fixed an issue with text in the quest list not properly truncating";
+				"Fixed Slayer's Rise not being properly included";
 			});
 		end
 
