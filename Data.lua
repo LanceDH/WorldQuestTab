@@ -852,7 +852,7 @@ local function AddZoneData(zoneID, name)
 	return data;
 end
 
-local function AddChildToZone(zoneID, childZoneID, coordX, coordY, isSubZone)
+local function AddChildToZone(zoneID, childZoneID, coordX, coordY, isSubZone, pinClusterData)
 	local data = zoneData[zoneID];
 	if (not data) then return; end;
 
@@ -860,6 +860,7 @@ local function AddChildToZone(zoneID, childZoneID, coordX, coordY, isSubZone)
 		x = coordX;
 		y = coordY;
 		isSubZone = isSubZone;
+		pinClusterData = pinClusterData;
 	}
 
 	data.children[childZoneID] = childData;
@@ -891,6 +892,24 @@ local function MarkZoneAsFlightmap(zoneID)
 	local data = zoneData[zoneID];
 	if (not data) then return; end;
 	data.isFlightMap = true;
+end
+
+local function CreatePinBoundry(xMin, xMax, yMin, yMax, clusterID)
+	return {
+		xMin = xMin;
+		xMax = xMax;
+		yMin = yMin;
+		yMax = yMax;
+		clusterID = clusterID;
+	}
+end
+
+local function CreatePinCircle(radius, startAngle, maxArc)
+	return {
+		radius = radius;
+		startAngle = startAngle;
+		maxArc = maxArc or 360;
+	}
 end
 
 for k, v in pairs(enumZoneIDs) do
@@ -1008,13 +1027,13 @@ do -- Legion
 	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Highmountain,	0.46, 0.23);
 	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Valsharah,		0.34, 0.33);
 	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.EyeOfAzshara,	0.46, 0.84);
-	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.BrokenShore,	0.54, 0.68);
-	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.DalaranLegion,	0.45, 0.64);
-	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Argus,			0.88, 0.14);
+	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Krokuun,		0.88, 0.14, not isSubZone, CreatePinBoundry(0.81, 0.95, 0.17, 0.36));
+	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.AntoranWastes,	0.88, 0.14, not isSubZone, CreatePinBoundry(0.70, 0.87, 0.13, 0.29));
+	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Eredath,		0.88, 0.14, not isSubZone, CreatePinBoundry(0.83, 0.97, 0.07, 0.19));
 
-	AddChildToZone(enumZoneIDs.Argus,	enumZoneIDs.Krokuun,		0.61, 0.68);
-	AddChildToZone(enumZoneIDs.Argus,	enumZoneIDs.AntoranWastes,	0.31, 0.51);
-	AddChildToZone(enumZoneIDs.Argus,	enumZoneIDs.Eredath,		0.62, 0.26);
+	AddChildToZone(enumZoneIDs.Argus,	enumZoneIDs.Krokuun,		0.61, 0.68, not isSubZone, CreatePinBoundry(0.48, 0.73, 0.55, 0.83));
+	AddChildToZone(enumZoneIDs.Argus,	enumZoneIDs.AntoranWastes,	0.31, 0.51, not isSubZone, CreatePinBoundry(0.19, 0.46, 0.40, 0.70));
+	AddChildToZone(enumZoneIDs.Argus,	enumZoneIDs.Eredath,		0.62, 0.26, not isSubZone, CreatePinBoundry(0.50, 0.75, 0.17, 0.40));
 
 	MarkZoneForExampansion(LE_EXPANSION_LEGION, enumZoneIDs.BrokenIsles, includeChildren);
 	MarkZoneForExampansion(LE_EXPANSION_LEGION, enumZoneIDs.BrokenIslesFlightmap, includeChildren);
@@ -1029,7 +1048,7 @@ do -- Battle of Azertoh
 	AddChildToZone(enumZoneIDs.Zandalar,	enumZoneIDs.Voldun,		0.39, 0.32);
 	AddChildToZone(enumZoneIDs.Zandalar,	enumZoneIDs.Nazmir,		0.57, 0.28);
 	AddChildToZone(enumZoneIDs.Zandalar,	enumZoneIDs.Zuldazar,	0.55, 0.61);
-	AddChildToZone(enumZoneIDs.Zandalar,	enumZoneIDs.Nazjatar,	0.86, 0.14);
+	AddChildToZone(enumZoneIDs.Zandalar,	enumZoneIDs.Nazjatar,	0.87, 0.15, not isSubZone, CreatePinCircle(0.08, -90, 250));
 
 	AddChildToZone(enumZoneIDs.Zuldazar,	enumZoneIDs.Dazaralor,	0.00, 0.00, isSubZone);
 
@@ -1038,7 +1057,7 @@ do -- Battle of Azertoh
 	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.TiragardeSound,		0.56, 0.54);
 	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.TolDagor,			0.78, 0.61);
 	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.Mechagon,			0.17, 0.28);
-	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.Nazjatar,			0.86, 0.14);
+	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.Nazjatar,			0.87, 0.15, not isSubZone, CreatePinCircle(0.08, -90, 250));
 
 	AddChildToZone(enumZoneIDs.TiragardeSound,	enumZoneIDs.Boralus,	0.56, 0.54, isSubZone);
 
@@ -1089,7 +1108,7 @@ do -- Dragonflight
 	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.AzureSpan,			0.55, 0.74);
 	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.Thaldraszus,		0.63, 0.51);
 	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.ForgbiddenReach,	0.65, 0.10);
-	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.ZaralekCavern,		0.88, 0.84);
+	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.ZaralekCavern,		0.88, 0.84, not isSubZone, CreatePinBoundry(0.78, 0.97, 0.71, 0.94));
 
 	AddChildToZone(enumZoneIDs.Thaldraszus,	enumZoneIDs.Valdrakken,		0.00, 0.00,	isSubZone);
 
@@ -1113,11 +1132,11 @@ do -- War Within
 	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.RingingDeeps,	0.57, 0.58);
 	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.Hallowfall,		0.35, 0.47);
 	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.AzjKahet,		0.46, 0.75);
-	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.Undermine,		0.82, 0.74);
-	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.Karesh,			0.17, 0.20);
+	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.Undermine,		0.82, 0.74, not isSubZone, CreatePinCircle(0.09, -80, 250));
+	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.Karesh,			0.18, 0.20, not isSubZone, CreatePinCircle(0.09, -90, 300));
 	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.SirenIsle,		0.73, 0.23);
 
-	AddChildToZone(enumZoneIDs.IsleOfDorn,	enumZoneIDs.SirenIsle,	0.18, 0.18);
+	AddChildToZone(enumZoneIDs.IsleOfDorn,	enumZoneIDs.SirenIsle,	0.18, 0.18, not isSubZone, CreatePinCircle(0.07, -90));
 	AddChildToZone(enumZoneIDs.IsleOfDorn,	enumZoneIDs.Dornogal,	0.00, 0.00, isSubZone);
 
 	AddChildToZone(enumZoneIDs.Karesh,	enumZoneIDs.Tazavesh,	0.00, 0.00, isSubZone);
@@ -1134,8 +1153,8 @@ do -- Midnight
 	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.IlseOfQuelDanas,	0.26, 0.14);
 	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.EversongWoods,		0.27, 0.53);
 	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.ZulAman,			0.44, 0.71);
-	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.Voidstorm,			0.53, 0.23);
-	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.Haradar,			0.82, 0.16);
+	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.Voidstorm,			0.53, 0.24, not isSubZone, CreatePinCircle(0.09, -140, 140));
+	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.Haradar,			0.82, 0.17, not isSubZone, CreatePinCircle(0.09, -140, 140));
 
 	AddChildToZone(enumZoneIDs.EversongWoods,	enumZoneIDs.SilvermoonCity,		0.00, 0.00, isSubZone);
 
@@ -1155,7 +1174,7 @@ function _V:GetMostRelevantMapCoordinates(zoneID, inZoneID)
 	local childData = nil;
 	local coordZoneID = zoneID;
 	if (zoneID ~= inZoneID) then
-		local data = zoneData[inZoneID];
+		local data = _V:GetZoneData(inZoneID);
 		if (data) then
 			childData = data.children[zoneID];
 			if (not childData) then

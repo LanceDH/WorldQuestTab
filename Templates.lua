@@ -894,11 +894,32 @@ function WQT_Utils:QuestIsWatchedAutomatic(questId)
 	return questId and C_QuestLog.GetQuestWatchType(questId) == Enum.QuestWatchType.Automatic;
 end
 
-function WQT_Utils:GetQuestMapLocation(questId, mapId)
-	local x, y = C_TaskQuest.GetQuestLocation(questId, mapId);
+function WQT_Utils:GetQuestMapLocation(questInfo, mapID)
+	local x, y = C_TaskQuest.GetQuestLocation(questInfo.questID, mapID);
 	if (x and y) then
 		return x, y;
 	end
+
+	local childData, boundryZoneID = _V:GetMostRelevantMapCoordinates(questInfo.mapID, mapID);
+	local clusterData = childData and childData.pinClusterData;
+	if (clusterData) then
+		if (clusterData.radius) then
+			-- Pin circles get sorted in pinProvider
+			return childData.x, childData.y, clusterData;
+		else
+			local selfx, selfy = C_TaskQuest.GetQuestLocation(questInfo.questID, boundryZoneID);
+			if (not selfx) then
+				-- We know there is a map link, but don't have coordinates on this map
+				-- Just put it in the center as any more precice checking is a waste here
+				selfx = 0.5;
+				selfy = 0.5;
+			end
+			x = clusterData.xMin + selfx * (clusterData.xMax - clusterData.xMin);
+			y = clusterData.yMin + selfy * (clusterData.yMax - clusterData.yMin);
+			return x, y;
+		end
+	end
+
 	-- Could not get a position
 	return 0, 0;
 end

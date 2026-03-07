@@ -254,9 +254,10 @@ function WQT_PinDataProvider:PlacePins()
 		for k, questInfo in WQT_WorldQuestFrame.dataProvider:EnumerateProcessedQuestList() do
 			if (ShouldShowPin(questInfo, mapInfo.mapType, settingsZoneVisible, settingsContinentVisible, settingsFilterPoI, isFlightMap)) then
 				local pinType = GetPinType(mapInfo.mapType);
-				local posX, posY = WQT_Utils:GetQuestMapLocation(questInfo.questID, mapID);
+				local posX, posY, clusterData = WQT_Utils:GetQuestMapLocation(questInfo, mapID);
 				if (posX and posX > 0 and posY > 0) then
 					local pin = self.pinPool:Acquire();
+					pin.clusterData = clusterData;
 					pin:SetParent(canvas);
 					tinsert(self.activePins, pin);
 					pin:Setup(questInfo, #self.activePins, posX, posY, pinType, parentMapFrame);
@@ -279,10 +280,6 @@ function WQT_PinDataProvider:PlacePins()
 	self.isUpdating = false;
 end
 
-local PIN_CLUSTER_RANGE = 0.5;
-local PIN_REPOSITION_DISTANCE = 0.42;
-local COS_45_DEG = 0.7071;
-
 local function SortPinsByXPos(pinA, pinB)
 	local ax = pinA:GetPosition();
 	local bx = pinB:GetPosition();
@@ -295,10 +292,9 @@ end
 local function SortPinsByNudgedPos(pinA, pinB)
 	local aX, aY = pinA:GetNudgedPosition();
 	local bX, bY = pinB:GetNudgedPosition();
-	if (aY and aY and aY ~= bY) then
+	if (aY and bY and aY ~= bY) then
 		return aY < bY;
 	end
-
 	return pinA.questID < pinB.questID;
 end
 
@@ -311,6 +307,11 @@ local function SortPinNumInRange(pinA, pinB)
 	return SortPinsByXPos(pinA, pinB);
 end
 
+local PIN_CLUSTER_RANGE = 0.5;
+local PIN_REPOSITION_DISTANCE = 0.42;
+local COS_45_DEG = 0.7071;
+local TWO_PI = PI * 2;
+
 function WQT_PinDataProvider:FixOverlaps(canvas)
 	if (not canvas) then return; end
 
@@ -322,15 +323,14 @@ function WQT_PinDataProvider:FixOverlaps(canvas)
 			pinSize = pin:GetButton():GetSize();
 		end
 	end
+
 	if (pinSize > 0) then
 		local pinScale = WQT_Utils:GetSetting("pin", "scale");
 		pinSize = pinSize * pinScale;
 		local canvasScale = canvas:GetParent():GetCanvasScale();
+		local ratio = canvas:GetHeight() / canvas:GetWidth();
 		local pinLengthX = pinSize / (canvas:GetWidth() * canvasScale) ;
 		local pinLengthY = pinSize / (canvas:GetHeight() * canvasScale);
-		local pinLengthRatio = pinLengthX / pinLengthY;
-		local scaling = (canvas:GetWidth() * canvas:GetParent():GetCanvasScale()) / canvas:GetParent():GetWidth();
-		scaling = 1 / scaling;
 		local clusterDistance = pinLengthX * PIN_CLUSTER_RANGE;
 		local cluserDistanceSqd = clusterDistance * clusterDistance;
 
@@ -339,8 +339,15 @@ function WQT_PinDataProvider:FixOverlaps(canvas)
 		table.sort(self.activePins, SortPinsByXPos);
 		for indexA = 1, #self.activePins, 1 do
 			local pinA = self.activePins[indexA];
+
+			-- Pins with cluster data should always go through nudging, even if there is only 1 in the group
+			if (pinA.clusterData) then
+				pinA:AddInRangePin(pinA);
+				hasLinkedPins = true;
+			end
+
 			local ax, ay = pinA:GetPosition();
-			ay = ay * pinLengthRatio;
+			ay = ay * ratio;
 			for indexB = 1, #self.activePins, 1 do
 				if (indexA < indexB) then
 					local pinB = self.activePins[indexB];
@@ -351,7 +358,7 @@ function WQT_PinDataProvider:FixOverlaps(canvas)
 							break;
 						end
 
-						by = by * pinLengthRatio;
+						by = by * ratio;
 						local distanceSquared = SquaredDistanceBetweenPoints(ax, ay, bx, by);
 						if(distanceSquared < cluserDistanceSqd) then
 							pinA:AddInRangePin(pinB);
@@ -366,6 +373,7 @@ function WQT_PinDataProvider:FixOverlaps(canvas)
 		if (hasLinkedPins) then
 			-- Cluster pins in their groups
 			table.sort(self.activePins, SortPinNumInRange);
+			local pinSizeToWindow = pinSize / canvas:GetParent():GetHeight();
 			local spreadx = pinLengthX * PIN_REPOSITION_DISTANCE;
 			local spreadY = pinLengthY * PIN_REPOSITION_DISTANCE;
 			local columnOffset = spreadx * COS_45_DEG;
@@ -380,27 +388,48 @@ function WQT_PinDataProvider:FixOverlaps(canvas)
 					tinsert(validPins, sourcePin);
 					alreadyClusteredPins[sourcePin] = true;
 
-					local centerX, centerY = sourcePin:GetPosition();
+					local centerX , centerY = sourcePin:GetPosition();
+					local totalX = centerX;
+					local totalY = centerY;
 					for k2, inRangePin in sourcePin:IterateInRangePins() do
-						if (not alreadyClusteredPins[inRangePin]) then
-							local pinX, pinY = inRangePin:GetPosition();
-							centerX = centerX + pinX;
-							centerY = centerY + pinY;
-							tinsert(validPins, inRangePin);
-							alreadyClusteredPins[inRangePin] = true;
+						if (sourcePin.clusterData == inRangePin.clusterData) then
+							if (not alreadyClusteredPins[inRangePin]) then
+								local pinX, pinY = inRangePin:GetPosition();
+								totalX = totalX + pinX;
+								totalY = totalY + pinY;
+								tinsert(validPins, inRangePin);
+								alreadyClusteredPins[inRangePin] = true;
+							end
 						end
 					end
 
 					local numPassedPins = #validPins;
-					if (numPassedPins >= 2) then
+					if (sourcePin.clusterData) then
+						local distance = sourcePin.clusterData.radius or 0.1;
+						local maxArc = sourcePin.clusterData.maxArc or 360;
+
+						local available = rad(maxArc) * distance;
+						local requested = numPassedPins * pinSizeToWindow;
+						local spacePerPin = (min(available, requested) / (TWO_PI * distance)) / numPassedPins;
+						local step = spacePerPin * 360;
+
+						local angle = sourcePin.clusterData.startAngle or 0;
+						angle = angle - (spacePerPin * 180 * (numPassedPins - 1));
+
+						for k, pin in ipairs(validPins) do
+							local offsetX = cos(angle) * distance * ratio;
+							local offsetY = sin(angle) * distance;
+							local x = centerX + offsetX;
+							local y = centerY + offsetY;
+							pin:SetNudge(x, y);
+							angle = angle + step;
+						end
+					elseif (numPassedPins >= 2) then
 						local numColumns = ceil(sqrt(numPassedPins));
 						local numRows = ceil(numPassedPins / numColumns);
 						local xWidth = (numColumns-1) * columnOffset;
-						centerX = centerX / numPassedPins;
-						centerX = centerX - xWidth * 0.5;
-						centerY = centerY / numPassedPins;
-						centerY = centerY - (numRows-1) * spreadY * 0.5;
-						local placedCount = 0;
+						centerX = (totalX / numPassedPins) - xWidth * 0.5;
+						centerY = (totalY / numPassedPins) - (numRows-1) * spreadY * 0.5;
 						for k, pin in ipairs(validPins) do
 							local mathIndex = k-1;
 							local column = mathIndex % numColumns;
@@ -410,7 +439,6 @@ function WQT_PinDataProvider:FixOverlaps(canvas)
 							-- Shift every other column down slightly
 							y = y + (column%2) * spreadY * 0.5 * COS_45_DEG;
 							pin:SetNudge(x, y);
-							placedCount = placedCount + 1;
 						end
 					end
 				end

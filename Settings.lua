@@ -1161,6 +1161,13 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
 
+		do -- 12.0.07
+			StartVersionCategory("12.0.07");
+			AddSection(ChangelogSections.New, {
+				"Added quest pins to map links such as Voidstorm and Harandar, as well as on old maps where space allows it";
+			});
+		end
+
 		do -- 12.0.06
 			StartVersionCategory("12.0.06");
 			AddSection(ChangelogSections.New, {
