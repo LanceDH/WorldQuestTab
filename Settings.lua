@@ -1161,6 +1161,13 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
 
+		do -- 12.0.08
+			StartVersionCategory("12.0.08");
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed the world quest icon still showing up on quest hub map pins";
+			});
+		end
+
 		do -- 12.0.07
 			StartVersionCategory("12.0.07");
 			AddSection(ChangelogSections.New, {

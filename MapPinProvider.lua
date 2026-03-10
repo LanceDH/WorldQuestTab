@@ -147,6 +147,13 @@ local function HideOfficialPin(pin)
 	pin:Hide();
 end
 
+local function TrackSuppressedPinHook(hubPin, otherPin)
+	if (WQT.settings.pin.disablePoI) then return; end
+	if (otherPin:MatchesAnyTag(MapPinTags.WorldQuest, MapPinTags.BonusObjective)) then
+		hubPin.suppressedPins[otherPin] = nil;
+	end
+end
+
 function WQT_PinDataProvider:HookPinHidingToMapFrame(mapFrame)
 	if (not self.hookedPins) then
 		self.hookedPins = {};
@@ -170,6 +177,13 @@ function WQT_PinDataProvider:HookPinHidingToMapFrame(mapFrame)
 				self.hookedPins[pin] = true;
 				pin:HookScript("OnShow", HideOfficialPin);
 				pin:Hide();
+			end
+		elseif (pin.pinTemplate == "QuestHubPinTemplate") then
+			local isHooked = self.hookedPins[pin];
+			if (not isHooked) then
+				self.hookedPins[pin] = true;
+				-- Hub pin suppresses world and bonus quests, but we wipe it from it's memory so it doesn't do anything with it's data
+				hooksecurefunc(pin, "TrackSuppressedPin", TrackSuppressedPinHook);
 			end
 		end
 	end);
