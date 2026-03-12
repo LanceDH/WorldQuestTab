@@ -903,8 +903,8 @@ function WQT_Utils:GetQuestMapLocation(questInfo, mapID)
 	local childData, boundryZoneID = _V:GetMostRelevantMapCoordinates(questInfo.mapID, mapID);
 	local clusterData = childData and childData.pinClusterData;
 	if (clusterData) then
-		if (clusterData.radius) then
-			-- Pin circles get sorted in pinProvider
+		if (clusterData.NudgeFunction) then
+			-- Cluster data with its own function gets handled in pin placement
 			return childData.x, childData.y, clusterData;
 		else
 			local selfx, selfy = C_TaskQuest.GetQuestLocation(questInfo.questID, boundryZoneID);

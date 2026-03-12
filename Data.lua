@@ -894,6 +894,7 @@ local function MarkZoneAsFlightmap(zoneID)
 	data.isFlightMap = true;
 end
 
+
 local function CreatePinBoundry(xMin, xMax, yMin, yMax, clusterID)
 	return {
 		xMin = xMin;
@@ -904,13 +905,58 @@ local function CreatePinBoundry(xMin, xMax, yMin, yMax, clusterID)
 	}
 end
 
-local function CreatePinCircle(radius, startAngle, maxArc)
-	return {
-		radius = radius;
-		startAngle = startAngle;
-		maxArc = maxArc or 360;
-	}
+local PinCircleMixin = {};
+
+function PinCircleMixin:Init(radius, startAngle, maxArc, offsetX, offsetY)
+	self.radius = radius;
+	self.startAngle = startAngle;
+	self.maxArc = maxArc or 360;
+	self.offsetX = offsetX or 0;
+	self.offsetY = offsetY or 0;
 end
+
+local TWO_PI = PI * 2;
+function PinCircleMixin:NudgeFunction(validPins, canvas)
+	if (#validPins) == 0 then return; end
+
+	local sourcePin = validPins[1];
+	local pinSize = sourcePin:GetButton():GetSize();
+	if (pinSize == 0) then return; end
+	pinSize = pinSize * WQT_Utils:GetSetting("pin", "scale");
+
+	local centerX, centerY = sourcePin:GetPosition();
+	centerX = centerX + self.offsetX;
+	centerY = centerY + self.offsetY;
+
+	local pinSizeToWindow = pinSize / canvas:GetParent():GetHeight();
+	local ratio = canvas:GetHeight() / canvas:GetWidth();
+
+	local numPassedPins = #validPins;
+	local distance = self.radius or 0.1;
+	local maxArc = self.maxArc or 360;
+
+	local available = rad(maxArc) * distance;
+	local requested = numPassedPins * pinSizeToWindow;
+	local spacePerPin = (min(available, requested) / (TWO_PI * distance)) / numPassedPins;
+	local step = spacePerPin * 360;
+
+	local angle = self.startAngle or 0;
+	angle = angle - (spacePerPin * 180 * (numPassedPins - 1));
+
+	for k, pin in ipairs(validPins) do
+		local offsetX = cos(angle) * distance * ratio;
+		local offsetY = sin(angle) * distance;
+		local x = centerX + offsetX;
+		local y = centerY + offsetY;
+		pin:SetNudge(x, y);
+		angle = angle + step;
+	end
+end
+
+local function CreatePinCircle(radius, startAngle, maxArc, offsetX, offsetY)
+	return CreateAndInitFromMixin(PinCircleMixin, radius, startAngle, maxArc, offsetX, offsetY);
+end
+
 
 for k, v in pairs(enumZoneIDs) do
 	AddZoneData(v, k);
@@ -1103,12 +1149,12 @@ end
 do -- Dragonflight
 	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.WakingShores,		0.48, 0.35);
 	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.OhnahranPlains,		0.44, 0.56);
-	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.EmeraldDream,		0.31, 0.57);
+	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.EmeraldDream,		0.31, 0.56);
 	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.Amidrassil,			0.24, 0.58);
 	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.AzureSpan,			0.55, 0.74);
 	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.Thaldraszus,		0.63, 0.51);
 	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.ForgbiddenReach,	0.65, 0.10);
-	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.ZaralekCavern,		0.88, 0.84, not isSubZone, CreatePinBoundry(0.78, 0.97, 0.71, 0.94));
+	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.ZaralekCavern,		0.89, 0.85, not isSubZone, CreatePinCircle(0.18, -135, 160));
 
 	AddChildToZone(enumZoneIDs.Thaldraszus,	enumZoneIDs.Valdrakken,		0.00, 0.00,	isSubZone);
 
@@ -1153,8 +1199,8 @@ do -- Midnight
 	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.IlseOfQuelDanas,	0.26, 0.14);
 	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.EversongWoods,		0.27, 0.53);
 	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.ZulAman,			0.44, 0.71);
-	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.Voidstorm,			0.53, 0.24, not isSubZone, CreatePinCircle(0.09, -140, 140));
-	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.Haradar,			0.82, 0.17, not isSubZone, CreatePinCircle(0.09, -140, 140));
+	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.Voidstorm,			0.53, 0.24, not isSubZone, CreatePinCircle(0.54, 90, 30, 0, -0.40));
+	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.Haradar,			0.82, 0.17, not isSubZone, CreatePinCircle(0.54, 90, 30, 0, -0.41));
 
 	AddChildToZone(enumZoneIDs.EversongWoods,	enumZoneIDs.SilvermoonCity,		0.00, 0.00, isSubZone);
 

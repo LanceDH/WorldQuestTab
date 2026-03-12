@@ -1163,6 +1163,9 @@ function WQT_SettingsFrameMixin:Init()
 
 		do -- 12.0.08
 			StartVersionCategory("12.0.08");
+			AddSection(ChangelogSections.Changes, {
+				"Moved the pins for Voidstorm and Harandar to what I hope remains an empty area this time";
+			});
 			AddSection(ChangelogSections.Fixes, {
 				"Fixed the world quest icon still showing up on quest hub map pins";
 			});

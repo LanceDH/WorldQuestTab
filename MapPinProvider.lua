@@ -324,7 +324,6 @@ end
 local PIN_CLUSTER_RANGE = 0.5;
 local PIN_REPOSITION_DISTANCE = 0.42;
 local COS_45_DEG = 0.7071;
-local TWO_PI = PI * 2;
 
 function WQT_PinDataProvider:FixOverlaps(canvas)
 	if (not canvas) then return; end
@@ -418,26 +417,9 @@ function WQT_PinDataProvider:FixOverlaps(canvas)
 					end
 
 					local numPassedPins = #validPins;
-					if (sourcePin.clusterData) then
-						local distance = sourcePin.clusterData.radius or 0.1;
-						local maxArc = sourcePin.clusterData.maxArc or 360;
-
-						local available = rad(maxArc) * distance;
-						local requested = numPassedPins * pinSizeToWindow;
-						local spacePerPin = (min(available, requested) / (TWO_PI * distance)) / numPassedPins;
-						local step = spacePerPin * 360;
-
-						local angle = sourcePin.clusterData.startAngle or 0;
-						angle = angle - (spacePerPin * 180 * (numPassedPins - 1));
-
-						for k, pin in ipairs(validPins) do
-							local offsetX = cos(angle) * distance * ratio;
-							local offsetY = sin(angle) * distance;
-							local x = centerX + offsetX;
-							local y = centerY + offsetY;
-							pin:SetNudge(x, y);
-							angle = angle + step;
-						end
+					local clusterData = sourcePin.clusterData;
+					if (clusterData and clusterData.NudgeFunction) then
+						clusterData:NudgeFunction(validPins, canvas);
 					elseif (numPassedPins >= 2) then
 						local numColumns = ceil(sqrt(numPassedPins));
 						local numRows = ceil(numPassedPins / numColumns);
