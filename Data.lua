@@ -1154,7 +1154,7 @@ do -- Dragonflight
 	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.AzureSpan,			0.55, 0.74);
 	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.Thaldraszus,		0.63, 0.51);
 	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.ForgbiddenReach,	0.65, 0.10);
-	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.ZaralekCavern,		0.89, 0.85, not isSubZone, CreatePinCircle(0.18, -135, 160));
+	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.ZaralekCavern,		0.89, 0.85, not isSubZone, CreatePinCircle(0.18, -110, 120));
 
 	AddChildToZone(enumZoneIDs.Thaldraszus,	enumZoneIDs.Valdrakken,		0.00, 0.00,	isSubZone);
 
