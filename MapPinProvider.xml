@@ -144,7 +144,7 @@
 			<Frame parentKey="Label" mixin="WQT_PinLabelMixin" hidden="true">
 				<Size x="1" y="1" />
 				<Anchors>
-					<Anchor point="TOP" relativePoint="BOTTOM" />
+					<Anchor point="TOP" relativeKey="$parent.Button" relativePoint="BOTTOM" />
 				</Anchors>
 				<Layers>
 					<Layer level="ARTWORK">

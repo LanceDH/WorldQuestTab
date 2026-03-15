@@ -150,6 +150,12 @@ local function ApplyVersionChanges(profile, version)
 			filters.misc = nil;
 		end
 	end
+
+	if (version < 120008) then
+		if (profile.pin.scale) then
+			profile.pin.labelScale = RoundToNearestMultiple(profile.pin.scale, 0.1);
+		end
+	end
 end
 
 function WQT_Profiles:OnLoad()

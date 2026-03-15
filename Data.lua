@@ -1385,6 +1385,7 @@ local defaultSettings = {
 			
 			filterPoI = true;
 			scale = 1;
+			labelScale = 1;
 			disablePoI = false;
 			fadeOnPing = true;
 			eliteRing = false;

@@ -553,6 +553,9 @@ function WQT_PinLabelMixin:GetLabelText()
 end
 
 function WQT_PinLabelMixin:UpdateVisuals(questInfo)
+	local scale = WQT_Utils:GetSetting("pin", "labelScale");
+	self:SetScale(scale);
+
 	-- Label
 	local settingPinTimeLabel = WQT_Utils:GetSetting("pin", "label");
 	local labelColor = _V:GetDefaultColor("fontWhite");
@@ -701,7 +704,7 @@ function WQT_PinButtonMixin:SetIconsDesaturated(desaturate)
 end
 
 function WQT_PinButtonMixin:GetIconBottomDifference()
-	local maxBottomDiff = 0;
+	local maxBottomDiff = 2;
 	local selfBottom = self:GetBottom();
 	for k, icon in self:IterateMiniIcons() do
 		local diff = selfBottom - icon:GetBottom();
@@ -754,6 +757,9 @@ local CUSTOM_ICONS_PATH = "Interface/Addons/WorldQuestTab/Images/CustomIcons";
 
 function WQT_PinButtonMixin:UpdateVisuals(questInfo)
 	if (not questInfo) then return; end
+
+	local scale = WQT_Utils:GetSetting("pin", "scale");
+	self:SetScale(scale);
 
 	self.questInfo = questInfo;
 	local questQuality = questInfo:GetTagInfoQuality();
@@ -1089,11 +1095,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.questInfo = questInfo;
 	self.questID = questInfo.questID;
 	
-	local scale = WQT_Utils:GetSetting("pin", "scale")
-
-	self.scale = scale
-	self:SetScale(scale);
-	self.currentScale = scale;
+	self.currentScale = 1;
 	self:SetAlpha(self.startAlpha);
 	self.currentAlpha = self.startAlpha;
 	self:ResetNudge();
@@ -1157,7 +1159,7 @@ end
 
 function WQT_PinMixin:UpdatePlacement(alpha)
 	local zoomPercent = self.parentMapFrame:GetCanvasZoomPercent();
-	local parentScaleFactor = self.scale / self.parentMapFrame:GetCanvasScale();
+	local parentScaleFactor = 1 / self.parentMapFrame:GetCanvasScale();
 	parentScaleFactor = parentScaleFactor * Lerp(self.startScale, self.endScale, Saturate(self.scaleFactor * zoomPercent));
 	self:SetScale(parentScaleFactor);
 	
@@ -1184,7 +1186,7 @@ end
 
 function WQT_PinMixin:ApplyScaledPosition(manualScale)
 	local canvas = self:GetParent();
-	local scale = manualScale or self.scale / self.parentMapFrame:GetCanvasScale();
+	local scale = manualScale or (1 / self.parentMapFrame:GetCanvasScale());
 	local posX, posY = self:GetNudgedPosition();
 	posX = (canvas:GetWidth() * posX)/scale;
 	posY = -(canvas:GetHeight() * posY)/scale;
@@ -1194,7 +1196,7 @@ end
 
 function WQT_PinMixin:Focus(playPing)
 	if (not self.questID) then return; end
-	local parentScaleFactor = self.scale / self.parentMapFrame:GetCanvasScale();
+	local parentScaleFactor = 1 / self.parentMapFrame:GetCanvasScale();
 	
 	local fadeInAnim = self:GetFadeInAnim();
 	local fadeOutAnim = self:GetFadeOutAnim();

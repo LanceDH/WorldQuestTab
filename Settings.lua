@@ -1163,6 +1163,9 @@ function WQT_SettingsFrameMixin:Init()
 
 		do -- 12.0.08
 			StartVersionCategory("12.0.08");
+			AddSection(ChangelogSections.New, {
+				"Added new label scale setting to scale just map pin labels. The existing scale setting will now only scale the icon";
+			});
 			AddSection(ChangelogSections.Changes, {
 				"Moved the pins for Voidstorm and Harandar to what I hope remains an empty area this time";
 			});
@@ -1513,7 +1516,6 @@ function WQT_SettingsFrameMixin:Init()
 			local data = category:AddDropdown("ZONE_QUESTS", _L:Get("ZONE_QUESTS"), _L:Get("ZONE_QUESTS_TT"), options);
 			data:SetGetValueFunction(function() return WQT.settings.general.zoneQuests; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.general.zoneQuests = value; end);
-			data:MarkAsNew(); -- 11.2.5
 		end
 
 		do -- Old Expanpansions
@@ -1707,7 +1709,6 @@ function WQT_SettingsFrameMixin:Init()
 			data:SetGetValueFunction(function() return WQT.settings.pin.label; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.label = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
-			data:MarkAsNew(); -- 11.2.5
 		end
 
 		do -- Label Colors
@@ -1715,7 +1716,17 @@ function WQT_SettingsFrameMixin:Init()
 			data:SetGetValueFunction(function() return WQT.settings.pin.labelColors; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.labelColors = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.label == enumPinLabel.none; end);
-			data:MarkAsNew(); -- 11.2.5
+		end
+
+		do -- Label Scale
+			local minValue = 0.8;
+			local maxValue = 1.5;
+			local valueStep = 0.1;
+			local data = category:AddSlider("PIN_LABEL_SCALE", _L:Get("PIN_LABEL_SCALE"), _L:Get("PIN_LABEL_SCALE_TT"), minValue, maxValue, valueStep);
+			data:SetGetValueFunction(function() return WQT.settings.pin.labelScale; end);
+			data:SetValueChangedFunction(function(value) WQT.settings.pin.labelScale = value; end);
+			data:SetIsDisabledFunction(function() return WQT.settings.pin.label == enumPinLabel.none; end);
+			data:MarkAsNew(); -- 12.0.1
 		end
 
 		do -- Zone Visibility
