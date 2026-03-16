@@ -148,14 +148,20 @@
 				</Anchors>
 				<Layers>
 					<Layer level="ARTWORK">
-						<FontString parentKey="LabelText" inherits="SystemFont_NamePlate" maxLines="1" justifyV="MIDDLE">
+						<FontString parentKey="LabelText" inherits="SystemFont_Tiny" maxLines="1" justifyV="MIDDLE">
 							<Anchors>
 								<Anchor point="TOP" />
 							</Anchors>
+							<Shadow>
+								<Offset>
+									<AbsDimension x="1" y="-1"/>
+								</Offset>
+								<Color r="0" g="0" b="0"/>
+							</Shadow>
 						</FontString>
 					</Layer>
 					<Layer level="BACKGROUND">
-						<Texture parentKey="TimeBG" atlas="AftLevelup-ToastBG" alpha="0.7" texelSnappingBias="0.0" snapToPixelGrid="false">
+						<Texture parentKey="TimeBG" atlas="AftLevelup-ToastBG" alpha="0.55" texelSnappingBias="0.0" snapToPixelGrid="false">
 							<Anchors>
 								<Anchor point="TOPLEFT" relativeKey="$parent.LabelText" x="-3" y="1" />
 								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.LabelText" x="4" y="-1" />

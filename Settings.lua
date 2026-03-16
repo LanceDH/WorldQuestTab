@@ -1178,6 +1178,7 @@ function WQT_SettingsFrameMixin:Init()
 			AddSection(ChangelogSections.Changes, {
 				"Changed the pin label colors setting to a dropdown with the same options as pin ring colors";
 				"Moved the pins for Voidstorm and Harandar to what I hope remains an empty area this time";
+				"Slightly tweaked pin label visuals";
 			});
 			AddSection(ChangelogSections.Fixes, {
 				"Fixed the world quest icon still showing up on quest hub map pins";
