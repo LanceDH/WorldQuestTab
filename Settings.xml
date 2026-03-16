@@ -679,15 +679,16 @@
 	</Frame>
 
 	<Frame name="WQT_SettingSeparatorTemplate" mixin="WQT_SettingsBaseMixin" virtual="true">
-		<Size y="10"/>
+		<Size y="12"/>
 		<Layers>
 			<Layer level="ARTWORK">
 				<Texture parentKey="Texture" atlas="ChallengeMode-ThinDivider" texelSnappingBias="0.0" snapToPixelGrid="false">
+					<Size y="2"/>
 					<Anchors>
-						<Anchor point="TOPLEFT" x="20" y="-4"/>
-						<Anchor point="BOTTOMRIGHT" x="-14" y="4"/>
+						<Anchor point="LEFT" x="20"/>
+						<Anchor point="RIGHT" x="-14"/>
 					</Anchors>
-					<Color r="0.60" g="0.50" b="0.50"/>
+					<Color r="0.6" g="0.5" b="0.5"/>
 				</Texture>
 			</Layer>
 		</Layers>
