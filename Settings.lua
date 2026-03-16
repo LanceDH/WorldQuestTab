@@ -963,6 +963,14 @@ function WQT_SettingsCategoryDataMixin:AddConfirmButton(tag, label, tooltip)
 	return settingMixin;
 end
 
+function WQT_SettingsCategoryDataMixin:AddSeparator(tag)
+	if (type(tag) ~= "string") then error("AddSeparator has invalid tag", tag); return; end
+	local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, "WQT_SettingSeparatorTemplate", nil, nil, self.categoryID, tag);
+
+	table.insert(self.children, settingMixin);
+	return settingMixin;
+end
+
 function WQT_SettingsCategoryDataMixin:AddCustomTemplate(template, tag)
 	local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, template, nil, nil, self.categoryID, tag);
 
@@ -1658,14 +1666,8 @@ function WQT_SettingsFrameMixin:Init()
 			data:MarkAsNew(); -- 12.0.0
 		end
 
-		do -- Pin Scale
-			local minValue = 0.8;
-			local maxValue = 1.5;
-			local valueStep = 0.01;
-			local data = category:AddSlider("PIN_SCALE", _L:Get("PIN_SCALE"), _L:Get("PIN_SCALE_TT"), minValue, maxValue, valueStep);
-			data:SetGetValueFunction(function() return WQT.settings.pin.scale; end);
-			data:SetValueChangedFunction(function(value) WQT.settings.pin.scale = value; end);
-			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
+		do
+			category:AddSeparator("PIN_ICON_SEPARATOR");
 		end
 
 		do -- Center Type
@@ -1695,6 +1697,20 @@ function WQT_SettingsFrameMixin:Init()
 			data:SetGetValueFunction(function() return WQT.settings.pin.ringType; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.ringType = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
+		end
+
+		do -- Pin Scale
+			local minValue = 0.8;
+			local maxValue = 1.5;
+			local valueStep = 0.01;
+			local data = category:AddSlider("PIN_SCALE", _L:Get("PIN_SCALE"), _L:Get("PIN_SCALE_TT"), minValue, maxValue, valueStep);
+			data:SetGetValueFunction(function() return WQT.settings.pin.scale; end);
+			data:SetValueChangedFunction(function(value) WQT.settings.pin.scale = value; end);
+			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
+		end
+
+		do
+			category:AddSeparator("PIN_LABEL_SEPARATOR");
 		end
 
 		local enumPinLabel = addon.variables:GetPinLabelEnum();
@@ -1727,6 +1743,10 @@ function WQT_SettingsFrameMixin:Init()
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.labelScale = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.label == enumPinLabel.none; end);
 			data:MarkAsNew(); -- 12.0.1
+		end
+
+		do
+			category:AddSeparator("PIN_VISIBILITY_SEPARATOR");
 		end
 
 		do -- Zone Visibility
