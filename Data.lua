@@ -108,14 +108,15 @@ function _V:GetPinCenterTypeEnum()
 	return enumPinCenterType;
 end
 
-local enumRingType = {
-	default	= 1;
-	reward	= 2;
-	time	= 3;
-	rarity	= 4;
+local enumPinColorType = {
+	default			= 1;
+	reward			= 2;
+	time			= 3;
+	rarity			= 4;
+	rewardQuality	= 5;
 }
-function _V:GetRingTypeEnum()
-	return enumRingType;
+function _V:GetPinColorType()
+	return enumPinColorType;
 end
 
 local enumPinContinent = {
@@ -1382,18 +1383,20 @@ local defaultSettings = {
 
 			continentVisible = enumPinContinent.none;
 			zoneVisible = enumPinZone.all;
-			
-			filterPoI = true;
-			scale = 1;
-			labelScale = 1;
+
 			disablePoI = false;
+			filterPoI = true;
 			fadeOnPing = true;
 			eliteRing = false;
-			labelColors = true;
 			trackingGlow = true;
-			ringType = enumRingType.time;
+
 			centerType = enumPinCenterType.reward;
+			ringType = enumPinColorType.time;
+			scale = 1;
+			
 			label = enumPinLabel.none;
+			labelColorType = enumPinColorType.default;
+			labelScale = 1;
 		};
 
 		["filters"] = {};

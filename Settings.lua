@@ -1173,8 +1173,10 @@ function WQT_SettingsFrameMixin:Init()
 			StartVersionCategory("12.0.08");
 			AddSection(ChangelogSections.New, {
 				"Added new label scale setting to scale just map pin labels. The existing scale setting will now only scale the icon";
+				"Added an option for pin ring colors to color by the quality of the main reward";
 			});
 			AddSection(ChangelogSections.Changes, {
+				"Changed the pin label colors setting to a dropdown with the same options as pin ring colors";
 				"Moved the pins for Voidstorm and Harandar to what I hope remains an empty area this time";
 			});
 			AddSection(ChangelogSections.Fixes, {
@@ -1636,6 +1638,15 @@ function WQT_SettingsFrameMixin:Init()
 
 	do -- Map Pins
 		local category = self.dataContainer:AddCategory("MAPPINS", _L:Get("MAP_PINS"), not CATEGORY_DEFAULT_EXPANDED);
+		local enumPinColorType = addon.variables:GetPinColorType();
+
+		local colorOptions = {
+				CreateDropdownOption(enumPinColorType.default, _L:Get("PIN_RING_DEFAULT"), _L:Get("PIN_RING_DEFAULT_TT"));
+				CreateDropdownOption(enumPinColorType.reward, _L:Get("PIN_RING_COLOR"), _L:Get("PIN_RING_COLOR_TT"));
+				CreateDropdownOption(enumPinColorType.rewardQuality, _L:Get("PIN_RING_REWARDQUALITY"), _L:Get("PIN_RING_REWARDQUALITY_TT"));
+				CreateDropdownOption(enumPinColorType.time, _L:Get("PIN_RING_TIME"), _L:Get("PIN_RING_TIME_TT"));
+				CreateDropdownOption(enumPinColorType.rarity, _L:Get("PIN_RING_QUALITY"), _L:Get("PIN_RING_QUALITY_TT"));
+			};
 
 		do -- Disable Change
 			local data = category:AddCheckbox("PIN_DISABLE_CHANGES", _L:Get("PIN_DISABLE"), _L:Get("PIN_DISABLE_TT"));
@@ -1684,16 +1695,8 @@ function WQT_SettingsFrameMixin:Init()
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
 		end
 
-		do -- Ring Type
-			local enumRingType = addon.variables:GetRingTypeEnum();
-			local options = {
-				CreateDropdownOption(enumRingType.default, _L:Get("PIN_RING_DEFAULT"), _L:Get("PIN_RING_DEFAULT_TT"));
-				CreateDropdownOption(enumRingType.reward, _L:Get("PIN_RING_COLOR"), _L:Get("PIN_RING_COLOR_TT"));
-				CreateDropdownOption(enumRingType.time, _L:Get("PIN_RING_TIME"), _L:Get("PIN_RIMG_TIME_TT"));
-				CreateDropdownOption(enumRingType.rarity, RARITY, _L:Get("PIN_RING_QUALITY_TT"));
-			};
-		
-			local data = category:AddDropdown("PIN_RING_TYPE", _L:Get("PIN_RING_TITLE"), _L:Get("PIN_RING_TT"), options);
+		do -- Ring Color
+			local data = category:AddDropdown("PIN_RING_TYPE", _L:Get("PIN_RING_TITLE"), _L:Get("PIN_RING_TT"), colorOptions);
 			data:SetGetValueFunction(function() return WQT.settings.pin.ringType; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.ringType = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
@@ -1728,9 +1731,9 @@ function WQT_SettingsFrameMixin:Init()
 		end
 
 		do -- Label Colors
-			local data = category:AddCheckbox("PIN_LABEL_COLORS", _L:Get("PIN_LABEL_COLORS"), _L:Get("PIN_LABEL_COLORS_TT"));
-			data:SetGetValueFunction(function() return WQT.settings.pin.labelColors; end);
-			data:SetValueChangedFunction(function(value) WQT.settings.pin.labelColors = value; end);
+			local data = category:AddDropdown("PIN_RING_TYPE", _L:Get("PIN_LABEL_COLOR"), _L:Get("PIN_LABEL_COLOR_TT"), colorOptions);
+			data:SetGetValueFunction(function() return WQT.settings.pin.labelColorType; end);
+			data:SetValueChangedFunction(function(value) WQT.settings.pin.labelColorType = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.label == enumPinLabel.none; end);
 		end
 

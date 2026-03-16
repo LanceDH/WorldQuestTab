@@ -155,6 +155,18 @@ local function ApplyVersionChanges(profile, version)
 		if (profile.pin.scale) then
 			profile.pin.labelScale = RoundToNearestMultiple(profile.pin.scale, 0.1);
 		end
+
+		if (profile.pin.labelColors) then
+			local enumPinColorType = _V:GetPinColorType();
+			local enumpinLabel = _V:GetPinLabelEnum();
+			local colorType = enumPinColorType.time;
+			if (profile.pin.label == enumpinLabel.amount) then
+				colorType = enumPinColorType.reward;
+			end
+			profile.pin.labelColorType = colorType;
+		end
+
+		profile.pin.labelColors = nil;
 	end
 end
 
