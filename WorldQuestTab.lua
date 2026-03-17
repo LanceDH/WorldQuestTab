@@ -65,9 +65,6 @@ end
 
 local function GenericFilterOnSelect(data)
 	WQT:ToggleFilter(data.type, data.id);
-	if (data.refreshPins) then
-		WQT_WorldQuestFrame.pinDataProvider:RefreshAllData()
-	end
 	WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
 end
 
@@ -140,9 +137,8 @@ local function AddExpansionFactionsToMenu(rootDescription, expansionLevel)
 	
 		if (isMatch) then
 			local name = filterData.label;
-			rootDescription:CreateCheckbox(name, GenericFilterFlagChecked, GenericFilterOnSelect, { ["type"] = filterType, ["id"] = id, ["refreshPins"] = true });
+			rootDescription:CreateCheckbox(name, GenericFilterFlagChecked, GenericFilterOnSelect, { ["type"] = filterType, ["id"] = id});
 		end
-
 	end
 end
 
@@ -523,6 +519,9 @@ function WQT:OnInitialize()
 	self.tabLib = LibStub("LibWorldMapTabs");
 	self.tabLib:AddCustomTab(WQT_QuestMapTab);
 	self.contentFrame = self.tabLib:CreateContentFrameForTab(WQT_QuestMapTab);
+
+	-- Map pins
+	self.pinDataProvider = CreateAndInitFromMixin(WQT_PinDataProvider);
 
 	-- Sorting
 	self.sortDataContainer = CreateAndInitFromMixin(WQT_SortingDataContainer);
@@ -1189,9 +1188,23 @@ function WQT_ListButtonMixin:UpdateTime(...)
 	end
 end
 
+function WQT_ListButtonMixin:OnEnter()
+	if (not self.questInfo) then return; end
+	self.Highlight:Show();
+	WQT_WorldQuestFrame:ShowWorldmapHighlight(self.questInfo);
+
+	local difficultyColor = select(2, GetDifficultyColor(Enum.RelativeContentDifficulty.Fair));
+	local titleFS = self:GetTitleFontString();
+	titleFS:SetTextColor(difficultyColor.r, difficultyColor.g, difficultyColor.b);
+
+	self:ShowTooltip();
+
+	local isEnter = true;
+	WQT_CallbackRegistry:TriggerEvent("WQT.QuestListButtonMouseEnter", self.questInfo.questID, isEnter);
+end
+
 function WQT_ListButtonMixin:OnLeave()
 	self.Highlight:Hide();
-	WQT_WorldQuestFrame.pinDataProvider:SetQuestIDPinged(self.questInfo.questID, false);
 	WQT_WorldQuestFrame:HideWorldmapHighlight();
 	WQT_Utils:HideQuestTooltip(self);
 	
@@ -1201,19 +1214,9 @@ function WQT_ListButtonMixin:OnLeave()
 	local difficultyColor = GetDifficultyColor(Enum.RelativeContentDifficulty.Fair);
 	local titleFS = self:GetTitleFontString();
 	titleFS:SetTextColor(difficultyColor.r, difficultyColor.g, difficultyColor.b);
-end
 
-function WQT_ListButtonMixin:OnEnter()
-	if (not self.questInfo) then return; end
-	self.Highlight:Show();
-	WQT_WorldQuestFrame.pinDataProvider:SetQuestIDPinged(self.questInfo.questID, true);
-	WQT_WorldQuestFrame:ShowWorldmapHighlight(self.questInfo);
-
-	local difficultyColor = select(2, GetDifficultyColor(Enum.RelativeContentDifficulty.Fair));
-	local titleFS = self:GetTitleFontString();
-	titleFS:SetTextColor(difficultyColor.r, difficultyColor.g, difficultyColor.b);
-
-	self:ShowTooltip();
+	local isEnter = true;
+	WQT_CallbackRegistry:TriggerEvent("WQT.QuestListButtonMouseEnter", self.questInfo.questID, not isEnter);
 end
 
 function WQT_ListButtonMixin:ShowTooltip()
@@ -1582,9 +1585,8 @@ function WQT_ScrollListMixin:OnLoad()
 
 	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
 		function(_, categoryID, tag)
-			if (categoryID == "QUESTLIST" 
-				or tag == "BOUNTY_SELECTED_ONLY"
-				or tag == "PRECISE_FILTERS") then
+			if (categoryID == "QUESTLIST" or categoryID == "CUSTOM_COLORS_TIME" or categoryID == "CUSTOM_COLORS_AMOUNT" or categoryID == "CUSTOM_COLORS_RING"
+				or tag == "BOUNTY_SELECTED_ONLY" or tag == "PRECISE_FILTERS") then
 				self:DisplayQuestList();
 			end
 		end,
@@ -1900,8 +1902,6 @@ function WQT_CoreMixin:OnLoad()
 	-- Quest Dataprovider
 	self.dataProvider = CreateAndInitFromMixin(WQT_DataProvider);
 
-	-- Pin Dataprovider
-	self.pinDataProvider = CreateAndInitFromMixin(WQT_PinDataProvider);
 	self.bountyCounterPool = CreateFramePool("FRAME", self, "WQT_BountyCounterTemplate");
 	
 	self:SetFrameLevel(self:GetParent():GetFrameLevel()+4);
@@ -2064,7 +2064,6 @@ end
 function WQT_CoreMixin:ApplyAllSettings()
 	self:UpdateBountyCounters();
 	self:RepositionBountyTabs();
-	self.pinDataProvider:RefreshAllData()
 	WQT_ListContainer:UpdateQuestList();
 	WQT:Sort_OnClick(nil, WQT.settings.general.sortBy);
 	WQT_WorldMapContainer:LinkSettings(WQT.settings.general.fullScreenContainerPos);
@@ -2191,8 +2190,6 @@ end
 
 function WQT_CoreMixin:ADDON_LOADED(loaded)
 	if (loaded == "Blizzard_FlightMap") then
-		self.pinDataProvider:HookPinHidingToMapFrame(FlightMapFrame);
-
 		WQT_FlightMapContainer:SetParent(FlightMapFrame);
 		WQT_FlightMapContainer:SetPoint("BOTTOMLEFT", FlightMapFrame, "BOTTOMRIGHT", -7, 0);
 		WQT_FlightMapContainerButton:SetParent(FlightMapFrame);

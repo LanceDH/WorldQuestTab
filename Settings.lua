@@ -912,31 +912,31 @@ function WQT_SettingsCategoryDataMixin:CreateText(tag, label, font, color, botto
 	return settingMixin;
 end
 
-local function UpdateColorID(id, r, g, b)
-	local color = WQT_Utils:UpdateColor(id, r, g, b);
-	if (color) then
-		WQT.settings.colors[id] = color:GenerateHexColor();
-		WQT_ListContainer:DisplayQuestList();
-		WQT_WorldQuestFrame.pinDataProvider:RefreshAllData();
+do
+	local function UpdateColorID(id, r, g, b)
+		local color = WQT_Utils:UpdateColor(id, r, g, b);
+		if (color) then
+			WQT.settings.colors[id] = color:GenerateHexColor();
+		end
 	end
-end
 
-local function GetColorByID(id)
-	return WQT_Utils:GetColor(id);
-end
+	local function GetColorByID(id)
+		return WQT_Utils:GetColor(id);
+	end
 
-function WQT_SettingsCategoryDataMixin:AddColorPicker(tag, label, tooltip, colorID, defaultColor)
-	if (type(tag) ~= "string") then error("'tag' must be a string value"); return; end
-	if (type(colorID) ~= "string") then error("'colorID' must be a string value"); return; end
-	if (type(defaultColor) ~= "table" or not defaultColor.GetRGB) then error("'defaultColor' must be a ColorMixin value"); return; end
-	local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, "WQT_SettingColorTemplate", label, tooltip, self.categoryID, tag);
-	settingMixin:SetValueToKey("colorID", colorID);
-	settingMixin:SetValueToKey("defaultColor", defaultColor);
-	settingMixin:SetValueChangedFunction(UpdateColorID);
-	settingMixin:SetGetValueFunction(GetColorByID);
+	function WQT_SettingsCategoryDataMixin:AddColorPicker(tag, label, tooltip, colorID, defaultColor)
+		if (type(tag) ~= "string") then error("'tag' must be a string value"); return; end
+		if (type(colorID) ~= "string") then error("'colorID' must be a string value"); return; end
+		if (type(defaultColor) ~= "table" or not defaultColor.GetRGB) then error("'defaultColor' must be a ColorMixin value"); return; end
+		local settingMixin = CreateAndInitFromMixin(WQT_SettingElementDataMixin, "WQT_SettingColorTemplate", label, tooltip, self.categoryID, tag);
+		settingMixin:SetValueToKey("colorID", colorID);
+		settingMixin:SetValueToKey("defaultColor", defaultColor);
+		settingMixin:SetValueChangedFunction(UpdateColorID);
+		settingMixin:SetGetValueFunction(GetColorByID);
 
-	table.insert(self.children, settingMixin);
-	return settingMixin;
+		table.insert(self.children, settingMixin);
+		return settingMixin;
+	end
 end
 
 function WQT_SettingsCategoryDataMixin:AddTextInput(tag, label, tooltip)
@@ -1182,6 +1182,7 @@ function WQT_SettingsFrameMixin:Init()
 			});
 			AddSection(ChangelogSections.Fixes, {
 				"Fixed the world quest icon still showing up on quest hub map pins";
+				"Fixed Blizzard pins not properly showing the first time with pin changes disabled";
 			});
 		end
 

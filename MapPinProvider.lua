@@ -146,13 +146,22 @@ function WQT_PinDataProvider:Init()
 			end,
 		self);
 
-	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
+	WQT_CallbackRegistry:RegisterCallback(
+	"WQT.SettingChanged",
 		function(_, categoryID)
-			if (categoryID == "MAPPINS"
-				or categoryID == "MAPPINS_MINIICONS") then
-				self:RefreshAllData();
-			end
-		end,
+				if (categoryID == "CUSTOM_COLORS_TIME" or categoryID == "CUSTOM_COLORS_AMOUNT" or categoryID == "CUSTOM_COLORS_RING") then
+					self:UpdateAllVisuals();
+				elseif (categoryID == "MAPPINS" or categoryID == "MAPPINS_MINIICONS" or categoryID == "PROFILES") then
+					self:RefreshAllData();
+				end
+			end,
+		self);
+
+	WQT_CallbackRegistry:RegisterCallback(
+		"WQT.QuestListButtonMouseEnter",
+		function(_, questID, isEnter)
+				self:SetQuestIDPinged(questID, isEnter);
+			end,
 		self);
 
 	-- Remove pins on changing map. Quest info being processed will trigger showing them if they are needed.
@@ -172,7 +181,11 @@ function WQT_PinDataProvider:Init()
 			end,
 		self);
 
-	WQT_PinDataProvider:HookPinHidingToMapFrame(WorldMapFrame);
+	self:HookPinHidingToMapFrame(WorldMapFrame);
+
+	EventUtil.ContinueOnAddOnLoaded("Blizzard_FlightMap", function()
+			self:HookPinHidingToMapFrame(FlightMapFrame);
+		end);
 end
 
 local function HideOfficialPin(pin)
@@ -193,6 +206,8 @@ function WQT_PinDataProvider:HookPinHidingToMapFrame(mapFrame)
 	end
 
 	if (not mapFrame.RegisterPin) then return; end
+
+	if (WQT.settings.pin.disablePoI) then return; end
 
 	local templatedToSuppress = {
 		["BonusObjectivePinTemplate"] = true;
