@@ -1175,6 +1175,7 @@ function WQT_SettingsFrameMixin:Init()
 				"Fixed a tooltip issue and possible error with callings in the Shadowlands covenant UI";
 				"Fixed the tooltips in the custom Shadowlands callings board not always showing their rewards";
 				"Fixed tooltips in general not updating their time remaining in real time";
+				"Fixed quests in Ata'Aman not being included under Zul'Aman";
 			});
 		end
 

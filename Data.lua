@@ -829,6 +829,7 @@ local enumZoneIDs =
 	EversongWoods = 2395;
 	SilvermoonCity = 2393;
 	ZulAman = 2437;
+	AtalAman = 2536;
 	Voidstorm = 2405;
 	VoidstormFlightmap = 2479;
 	SlayersRise = 2444;
@@ -1203,9 +1204,9 @@ do -- Midnight
 	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.Voidstorm,			0.53, 0.24, not isSubZone, CreatePinCircle(0.54, 90, 30, 0, -0.40));
 	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.Haradar,			0.82, 0.17, not isSubZone, CreatePinCircle(0.54, 90, 30, 0, -0.41));
 
-	AddChildToZone(enumZoneIDs.EversongWoods,	enumZoneIDs.SilvermoonCity,		0.00, 0.00, isSubZone);
-
-	AddChildToZone(enumZoneIDs.Voidstorm,	enumZoneIDs.SlayersRise,	0.00, 0.00, isSubZone);
+	AddChildToZone(enumZoneIDs.EversongWoods,	enumZoneIDs.SilvermoonCity,	0.00, 0.00, isSubZone);
+	AddChildToZone(enumZoneIDs.Voidstorm,		enumZoneIDs.SlayersRise,	0.00, 0.00, isSubZone);
+	AddChildToZone(enumZoneIDs.ZulAman,			enumZoneIDs.AtalAman,		0.00, 0.00, isSubZone);
 
 	MarkZoneForExampansion(LE_EXPANSION_MIDNIGHT, enumZoneIDs.QuelThalas, includeChildren);
 	MarkZoneForExampansion(LE_EXPANSION_MIDNIGHT, enumZoneIDs.QuelThalasFlightmap, includeChildren);
