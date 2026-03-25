@@ -4,7 +4,6 @@
 
 	<Script file="External.lua"/>
 	<Script file="Aurora.lua"/>
-	<Script file="Blizzard_GarrisonUI.lua"/>
 	<Script file="TomTom.lua"/>
 	<Script file="WorldFlightMap.lua"/>
 	

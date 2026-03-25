@@ -1169,6 +1169,15 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
 
+		do -- 12.0.09
+			StartVersionCategory("12.0.09");
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed a tooltip issue and possible error with callings in the Shadowlands covenant UI";
+				"Fixed the tooltips in the custom Shadowlands callings board not always showing their rewards";
+				"Fixed tooltips in general not updating their time remaining in real time";
+			});
+		end
+
 		do -- 12.0.08
 			StartVersionCategory("12.0.08");
 			AddSection(ChangelogSections.New, {

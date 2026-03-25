@@ -22,7 +22,6 @@ local WQT_Profiles = addon.WQT_Profiles;
 local _; -- local trash 
 
 local _playerFaction = GetPlayerFactionGroup();
-local _playerName = UnitName("player");
 WQT_ActiveGameTooltip = GameTooltip;
 
 WQT_PanelID = EnumUtil.MakeEnum("Quests", "Settings");

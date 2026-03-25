@@ -27,10 +27,11 @@ local MAP_ANCHORS = {
 }
 
 local CovenantCallingsEvents = {
-	"COVENANT_CALLINGS_UPDATED",
-	"QUEST_TURNED_IN",
-	"QUEST_ACCEPTED",
-	"TASK_PROGRESS_UPDATE",
+	"COVENANT_CALLINGS_UPDATED";
+	"QUEST_TURNED_IN";
+	"QUEST_ACCEPTED";
+	"TASK_PROGRESS_UPDATE";
+	"QUEST_LOG_UPDATE";
 }
 
 local function CompareCallings(a, b)
@@ -99,6 +100,12 @@ function WQT_CallingsBoardMixin:OnEvent(event, ...)
 		end
 	elseif (event == "TASK_PROGRESS_UPDATE") then
 		self:Update();
+	elseif (event == "QUEST_LOG_UPDATE") then
+		for k, display in ipairs(self.Displays) do
+			if (display.questInfo and not display.questInfo.hasRewardData) then
+				display.questInfo:LoadRewards(true);
+			end
+		end
 	end
 end
 
@@ -403,7 +410,7 @@ end
 
 function WQT_CallingsBoardDisplayMixin:OnLeave()
 	self.Highlight:Hide();
-	WQT_ActiveGameTooltip:Hide();
+	WQT_Utils:HideQuestTooltip(self);
 end
 
 function WQT_CallingsBoardDisplayMixin:OnClick()

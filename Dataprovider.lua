@@ -121,7 +121,7 @@ end
 
 local QuestInfoMixin = {};
 
-function WQT_Utils:QuestCreationFunc(questId)
+function WQT_Utils:QuestCreationFunc()
 	local questInfo = CreateFromMixins(QuestInfoMixin);
 	questInfo:OnCreate();
 	return questInfo;

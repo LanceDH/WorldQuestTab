@@ -60,8 +60,8 @@ end
 
 local tooltipStyles = {
 	default				= TOOLTIP_QUEST_REWARDS_STYLE_WORLD_QUEST;
-	callingAvailable	= { ["hideObjectives"] = true; };
-	callingActive		= TOOLTIP_QUEST_REWARDS_STYLE_CALLING_REWARD;
+	callingAvailable	= { ["hideObjectives"] = true, prefixBlankLineCount = 1, postHeaderBlankLineCount = 0, headerText = QUEST_REWARDS, headerColor = NORMAL_FONT_COLOR,};
+	callingActive		= { ["hideType"] = true, prefixBlankLineCount = 1, postHeaderBlankLineCount = 0, headerText = QUEST_REWARDS, headerColor = NORMAL_FONT_COLOR,};
 }
 function _V:GetTooltipStyle(name)
 	return tooltipStyles[name];

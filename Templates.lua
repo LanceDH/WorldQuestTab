@@ -740,11 +740,13 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset)
 	style = style or _V:GetTooltipStyle("default");
 	WQT:ShowDebugTooltipForQuest(questInfo, button);
 
-	button.UpdateTooltip = nil;
+	if (not button.UpdateTooltip) then
+		button.UpdateTooltip = function() self:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset) end;
+	end
+	
 	WQT_ActiveGameTooltip:SetOwner(button, "ANCHOR_RIGHT", xOffset or 0, yOffset or 0);
 	-- In case we somehow don't have data on this quest, even through that makes no sense at this point
 	if (not questInfo.questID or not HaveQuestData(questInfo.questID)) then
-		button.UpdateTooltip = function() self:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset) end;
 		GameTooltip_SetTitle(WQT_ActiveGameTooltip, RETRIEVING_DATA, RED_FONT_COLOR);
 		GameTooltip_SetTooltipWaitingForData(WQT_ActiveGameTooltip, true);
 		WQT_ActiveGameTooltip:Show();
@@ -812,7 +814,6 @@ function WQT_Utils:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset)
 	
 	if (questInfo.reward.type == WQT_REWARDTYPE.missing) then
 		WQT_ActiveGameTooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
-		button.UpdateTooltip = function() self:ShowQuestTooltip(button, questInfo, style, xOffset, yOffset) end;
 	elseif (questInfo:GetReward(1)) then
 		GameTooltip_AddBlankLinesToTooltip(WQT_ActiveGameTooltip, style.prefixBlankLineCount);
 		if style.headerText and style.headerColor then
