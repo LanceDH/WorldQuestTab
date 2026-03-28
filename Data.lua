@@ -673,228 +673,6 @@ function _V:GetRewardIconAtlas(rewardType, subType)
 	return t;
 end
 
-local enumZoneIDs =
-{
-	Azeroth = 947;
-
-	Kalimdor = 12;
-	Silithus = 81;
-	ThousandNeedles = 64;
-	Uldum = 249;
-	Tanaris = 71;
-	UngoroCrater = 78;
-	Feralas = 69;
-	DustwallowMarsh = 70;
-	SouthernBarrens = 199;
-	Mulgore = 7;
-	Desolace = 66;
-	StonetalonMountain = 65;
-	NorthernBarrens = 10;
-	Durotar = 1;
-	Ashenvale = 63;
-	Darkshore = 62;
-	Azshara = 76;
-	Hyjal = 198;
-	Felwood = 77;
-	Moonglade = 80;
-	Winterspring = 83;
-	Teldrassil = 57;
-	AzuremystIsle = 97;
-	BloodmystIsle = 106;
-
-	EasternKingdoms = 13;
-	StranglethronVale = 224;
-	StranglethronValeNorth = 50;
-	StranglethronValeCape = 210;
-	BlastedLands = 17;
-	SwampOfSorrows = 51;
-	DeadwindPass = 42;
-	Duskwood = 47;
-	Westfall = 52;
-	ElwynnForest = 37;
-	RedridgeMountains = 49;
-	BurningSteppes = 36;
-	SearingGorge = 32;
-	Badlands = 15;
-	DunMorogh = 27;
-	LochModan = 48;
-	TwilightHighlands = 241;
-	Wetlands = 56;
-	ArathiHighlands = 14;
-	Hinterlands = 26;
-	HillsbradFoothills = 25;
-	RuinsOfGilneas = 217;
-	SilverpineForest = 21;
-	TirisfallGlades = 18;
-	WesternPlaguelands = 22;
-	EasternPlaguelands = 23;
-
-	Pandaria = 424;
-	PandariaFlightmap = 989;
-	JadeForest = 371;
-	KarasangWilds = 418;
-	ValleyOfTheFourWinds = 376;
-	DreadWastes = 422;
-	ValleyOfEternalBlossom = 390;
-	TownlongSteppes = 388;
-	KunlaiSummit = 379;
-	IsleOfGiants = 507;
-	IsleOfThunder = 504;
-	TimelessIsle = 554;
-
-	Draenor = 572;
-	DraenorFlightmap = 990;
-	NagrandWoD = 550;
-	FrostfireRidge = 525;
-	Gorgrond = 543;
-	Talador = 535;
-	SpiresOfArak = 542;
-	ShadowmoonValleyWoD = 539;
-	TanaanJungle = 534;
-	Ashran = 588;
-
-	BrokenIsles = 619;
-	BrokenIslesFlightmap = 993;
-	Azsuna = 630;
-	Suramar = 680;
-	Stormheim = 634;
-	Highmountain = 650;
-	Valsharah = 641;
-	EyeOfAzshara = 790;
-	BrokenShore = 646;
-	DalaranLegion = 627;
-	Argus = 905;
-	ArgusFlightmap = 994;
-	Krokuun = 830;
-	AntoranWastes = 885;
-	Eredath = 882;
-
-	Zandalar = 875;
-	ZandalarFlightmap = 1011;
-	Voldun = 864;
-	Nazmir = 863;
-	Zuldazar = 862;
-	Dazaralor = 1165;
-	Kultiras = 876;
-	KultirasFlightmap = 1014;
-	StormsongValley = 942;
-	Drustvar = 896;
-	TiragardeSound = 895;
-	Boralus = 1161;
-	TolDagor = 1169;
-	Mechagon = 1462;
-	Nazjatar = 1355;
-	NazjatarFlightmap = 1504;
-	UldumBfA = 1527;
-	ValeOfEternalBlossomBfA = 1530;
-
-	Shadowlands = 1550;
-	ShadowlandsFlightmap = 1647;
-	TheMaw = 1543;
-	Maldraxxus = 1536;
-	Revendreth = 1525;
-	Oribos = 1670;
-	Bastion = 1533;
-	Ardenweald = 1565;
-	ZerethMortis = 1970;
-
-	DragonIsles = 1978;
-	DragonIslesFlightmap = 2057;
-	ZaralekCavern = 2133;
-	WakingShores = 2022;
-	OhnahranPlains = 2023;
-	EmeraldDream = 2200;
-	Amidrassil = 2239;
-	AzureSpan = 2024;
-	Thaldraszus = 2025;
-	ForgbiddenReach = 2151;
-	Valdrakken = 2112;
-
-	KhazAlgar = 2274;
-	KhazAlgarFlightmap = 2276;
-	IsleOfDorn = 2248;
-	Dornogal = 2339;
-	SirenIsle = 2369;
-	RingingDeeps = 2214;
-	Hallowfall = 2215;
-	AzjKahet = 2255;
-	Undermine = 2346;
-	Karesh = 2371;
-	KareshFlightmap = 2398;
-	Tazavesh = 2472;
-
-	QuelThalas = 2537;
-	QuelThalasFlightmap = 2481;
-	IlseOfQuelDanas = 2424;
-	EversongWoods = 2395;
-	SilvermoonCity = 2393;
-	ZulAman = 2437;
-	AtalAman = 2536;
-	Voidstorm = 2405;
-	VoidstormFlightmap = 2479;
-	SlayersRise = 2444;
-	Haradar = 2413;
-	HaradarFlightmap = 2480;
-}
-
-local zoneData = {};
-local zonesPerExpansion = {
-	[0] = {};
-};
-
-local function AddZoneData(zoneID, name)
-	local data = {
-		name = name;
-		expansion = 0;
-		children = {};
-		mapInfo = C_Map.GetMapInfo(zoneID);
-	};
-	zoneData[zoneID] = data;
-	zonesPerExpansion[0][zoneID] = true;
-	return data;
-end
-
-local function AddChildToZone(zoneID, childZoneID, coordX, coordY, isSubZone, pinClusterData)
-	local data = zoneData[zoneID];
-	if (not data) then return; end;
-
-	local childData = {
-		x = coordX;
-		y = coordY;
-		isSubZone = isSubZone;
-		pinClusterData = pinClusterData;
-	}
-
-	data.children[childZoneID] = childData;
-end
-
-local function MarkZoneForExampansion(expansion, zoneID, includeChildren)
-	local data = zoneData[zoneID];
-	if (not data) then return; end;
-
-	if (not zonesPerExpansion[expansion]) then
-		zonesPerExpansion[expansion] = {};
-	end
-
-	if (zonesPerExpansion[expansion][zoneID]) then return; end
-
-	zonesPerExpansion[data.expansion][zoneID] = nil;
-	data.expansion = expansion;
-
-	zonesPerExpansion[expansion][zoneID] = true;
-
-	if (includeChildren) then
-		for childID in pairs(data.children) do
-			MarkZoneForExampansion(expansion, childID, true);
-		end
-	end
-end
-
-local function MarkZoneAsFlightmap(zoneID)
-	local data = zoneData[zoneID];
-	if (not data) then return; end;
-	data.isFlightMap = true;
-end
 
 
 local function CreatePinBoundry(xMin, xMax, yMin, yMax, clusterID)
@@ -959,263 +737,300 @@ local function CreatePinCircle(radius, startAngle, maxArc, offsetX, offsetY)
 	return CreateAndInitFromMixin(PinCircleMixin, radius, startAngle, maxArc, offsetX, offsetY);
 end
 
+local mapDatabase = {
+	maps = {};
+	expansions = {};
+};
 
-for k, v in pairs(enumZoneIDs) do
-	AddZoneData(v, k);
+function mapDatabase:AddFlightMap(zoneID, expansionID)
+	self:AddMap(zoneID, expansionID, true);
 end
 
-local includeChildren = true;
-local isSubZone = true;
+function mapDatabase:AddMap(zoneID, expansionID, isFlightmap)
+	if (self.maps[zoneID]) then
+		print("Already have zoneID", zoneID)
+		return;
+	end
 
-do -- Old content
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Silithus,			0.42, 0.82);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.ThousandNeedles,	0.50, 0.72);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Uldum,				0.47, 0.91);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.UldumBfA,			0.47, 0.91);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Tanaris,			0.55, 0.84);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.UngoroCrater,		0.50, 0.81);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Feralas,			0.43, 0.70);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.DustwallowMarsh,	0.55, 0.67);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.SouthernBarrens,	0.51, 0.67);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Mulgore,			0.47, 0.60);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Desolace,			0.41, 0.57);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.StonetalonMountain,	0.43, 0.46);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.NorthernBarrens,	0.52, 0.50);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Durotar,			0.58, 0.50);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Ashenvale,			0.49, 0.41);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Darkshore,			0.46, 0.23);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Azshara,			0.59, 0.37);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Hyjal,				0.54, 0.32);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Felwood,			0.49, 0.25);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Moonglade,			0.53, 0.19);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Winterspring,		0.58, 0.23);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.Teldrassil,			0.42, 0.10);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.AzuremystIsle,		0.33, 0.27);
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.BloodmystIsle,		0.30, 0.18);
+	local mapInfo = C_Map.GetMapInfo(zoneID);
+	if (not mapInfo) then return; end
+	expansionID = expansionID or 0;
 
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.BlastedLands,		0.54, 0.89);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.SwampOfSorrows,		0.54, 0.78);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.DeadwindPass,		0.49, 0.79);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.Duskwood,			0.45, 0.80);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.Westfall,			0.40, 0.79);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.ElwynnForest,		0.47, 0.75);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.RedridgeMountains,	0.51, 0.75);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.BurningSteppes,		0.49, 0.70);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.SearingGorge,		0.47, 0.65);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.Badlands,			0.52, 0.65);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.DunMorogh,			0.44, 0.61);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.LochModan,			0.52, 0.60);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.TwilightHighlands,	0.56, 0.55);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.Wetlands,			0.50, 0.53);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.ArathiHighlands,	0.51, 0.46);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.Hinterlands,		0.57, 0.40);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.HillsbradFoothills,	0.46, 0.40);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.RuinsOfGilneas,		0.40, 0.48);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.SilverpineForest,	0.41, 0.39);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.WesternPlaguelands,	0.49, 0.31);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.EasternPlaguelands,	0.54, 0.32);
+	local name = mapInfo.name;
+	if (isFlightmap) then
+		name = string.format("%s - flightmap", name);
+	end
 
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.StranglethronVale,	0.47, 0.87,	isSubZone);
-	AddChildToZone(enumZoneIDs.EasternKingdoms,	enumZoneIDs.QuelThalas,			0.58, 0.21,	isSubZone);
+	local data = {
+		name = mapInfo.name;
+		expansion = expansionID;
+		children = {};
+		mapInfo = mapInfo;
+	};
 
-	AddChildToZone(enumZoneIDs.StranglethronVale,	enumZoneIDs.StranglethronValeNorth,	0.67, 0.40,	isSubZone);
-	AddChildToZone(enumZoneIDs.StranglethronVale,	enumZoneIDs.StranglethronValeCape,	0.42, 0.62,	isSubZone);
+	self.maps[zoneID] = data;
+	local epxansionTable = GetOrCreateTableEntry(self.expansions, expansionID);
+	epxansionTable[zoneID] = true;
 
-	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.Kalimdor,			0.18, 0.54);
-	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.EasternKingdoms,	0.89, 0.55);
-	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.Pandaria,			0.48, 0.80);
-	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.BrokenIsles,		0.58, 0.40);
-	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.Zandalar,			0.54, 0.62);
-	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.Kultiras,			0.71, 0.50);
-	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.DragonIsles,		0.76, 0.22);
-	AddChildToZone(enumZoneIDs.Azeroth,	enumZoneIDs.KhazAlgar,			0.29, 0.82);
+	local children = C_Map.GetMapChildrenInfo(zoneID);
+	if (not children) then return; end
+	for k, childInfo in ipairs(children) do
+		if (childInfo.mapType <= Enum.UIMapType.Zone) then
+			local isSubZone = mapInfo.mapType == Enum.UIMapType.Zone and childInfo.mapType == Enum.UIMapType.Zone;
+			local minX, maxX, minY, maxY = C_Map.GetMapRectOnMap(childInfo.mapID, zoneID);
+			local x = minX + (maxX - minX) * 0.5;
+			local y = minY + (maxY - minY) * 0.5;
+			if (x ~= 0) then
+				local childData = self:AddMap(childInfo.mapID, expansionID);
+				childData.origin = mapInfo.name;
+				self:AddChildToMap(zoneID, childInfo.mapID, x, y, isSubZone);
+			end
+		end
+	end
 
-	-- General case we just want to avoid scanning
-	MarkZoneForExampansion(-1, enumZoneIDs.Azeroth);
+	return data;
 end
 
-do -- Pandaria
-	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.TimelessIsle,			0.90, 0.68);
-	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.JadeForest,				0.67, 0.52);
-	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.KarasangWilds,			0.53, 0.75);
-	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.ValleyOfTheFourWinds,	0.51, 0.65);
-	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.DreadWastes,			0.35, 0.62);
-	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.ValleyOfEternalBlossom,	0.50, 0.52);
-	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.KunlaiSummit,			0.45, 0.35);
-	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.IsleOfGiants,			0.48, 0.05);
-	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.TownlongSteppes,		0.32, 0.45);
-	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.IsleOfThunder,			0.20, 0.11);
+function mapDatabase:AddChildToMap(zoneID, childZoneID, coordX, coordY, isSubZone, pinClusterData)
+	local zoneData = self.maps[zoneID];
+	if (not zoneData) then return; end;
+	local childData = self.maps[childZoneID] or self:AddMap(childZoneID, zoneData.expansion);
+	if (not childData) then return; end;
 
-	MarkZoneForExampansion(LE_EXPANSION_MISTS_OF_PANDARIA, enumZoneIDs.Pandaria, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_MISTS_OF_PANDARIA, enumZoneIDs.PandariaFlightmap, includeChildren);
+	local data = GetOrCreateTableEntry(zoneData.children, childZoneID);
 
-	MarkZoneAsFlightmap(enumZoneIDs.PandariaFlightmap);
+	if(type(isSubZone) == nil) then
+		isSubZone = data.isSubZone or false;
+	end
+
+	data.x = coordX or data.x or 0;
+	data.y = coordY or data.y or 0;
+	data.isSubZone = isSubZone;
+	data.pinClusterData = pinClusterData or data.pinClusterData;
 end
 
-do -- Warlord of Draenor
-	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.NagrandWoD,				0.24, 0.49);
-	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.FrostfireRidge,			0.34, 0.29);
-	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.Gorgrond,				0.49, 0.21);
-	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.Talador,				0.43, 0.56);
-	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.SpiresOfArak,			0.46, 0.73);
-	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.ShadowmoonValleyWoD,	0.58, 0.67);
-	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.TanaanJungle,			0.58, 0.47);
-	AddChildToZone(enumZoneIDs.Draenor,	enumZoneIDs.Ashran,					0.73, 0.43);
+function mapDatabase:SetMapExpansion(zoneID, expansionID, excludeChildren)
+	local zoneData = self.maps[zoneID] or self:AddMap(zoneID, expansionID);
+	if (not zoneData) then return; end
 
-	MarkZoneForExampansion(LE_EXPANSION_WARLORDS_OF_DRAENOR, enumZoneIDs.Draenor, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_WARLORDS_OF_DRAENOR, enumZoneIDs.DraenorFlightmap, includeChildren);
+	local currentExpansionTable = GetOrCreateTableEntry(self.expansions, zoneData.expansion);
+	currentExpansionTable[zoneID] = nil;
 
-	MarkZoneAsFlightmap(enumZoneIDs.DraenorFlightmap);
+	zoneData.expansion = expansionID;
+
+	local newExpansionTable = GetOrCreateTableEntry(self.expansions, expansionID);
+	newExpansionTable[zoneID] = true;
+	
+	if (not excludeChildren) then
+		for childZoneID in pairs(zoneData.children) do
+			self:SetMapExpansion(childZoneID, expansionID);
+		end
+	end
 end
 
-do -- Legion
-	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Azsuna,			0.33, 0.58);
-	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Suramar,		0.46, 0.45);
-	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Stormheim,		0.60, 0.33);
-	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Highmountain,	0.46, 0.23);
-	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Valsharah,		0.34, 0.33);
-	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.EyeOfAzshara,	0.46, 0.84);
-	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Krokuun,		0.88, 0.14, not isSubZone, CreatePinBoundry(0.81, 0.95, 0.17, 0.36));
-	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.AntoranWastes,	0.88, 0.14, not isSubZone, CreatePinBoundry(0.70, 0.87, 0.13, 0.29));
-	AddChildToZone(enumZoneIDs.BrokenIsles,	enumZoneIDs.Eredath,		0.88, 0.14, not isSubZone, CreatePinBoundry(0.83, 0.97, 0.07, 0.19));
+function mapDatabase:SetPinClusterData(zoneID, childZoneID, pinClusterData, xOverride, yOverride)
+	local zoneData = self.maps[zoneID];
+	local childData = zoneData and zoneData.children[childZoneID]
+	if (not childData) then return; end;
 
-	AddChildToZone(enumZoneIDs.Argus,	enumZoneIDs.Krokuun,		0.61, 0.68, not isSubZone, CreatePinBoundry(0.48, 0.73, 0.55, 0.83));
-	AddChildToZone(enumZoneIDs.Argus,	enumZoneIDs.AntoranWastes,	0.31, 0.51, not isSubZone, CreatePinBoundry(0.19, 0.46, 0.40, 0.70));
-	AddChildToZone(enumZoneIDs.Argus,	enumZoneIDs.Eredath,		0.62, 0.26, not isSubZone, CreatePinBoundry(0.50, 0.75, 0.17, 0.40));
-
-	MarkZoneForExampansion(LE_EXPANSION_LEGION, enumZoneIDs.BrokenIsles, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_LEGION, enumZoneIDs.BrokenIslesFlightmap, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_LEGION, enumZoneIDs.Argus, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_LEGION, enumZoneIDs.ArgusFlightmap, includeChildren);
-
-	MarkZoneAsFlightmap(enumZoneIDs.BrokenIslesFlightmap);
-	MarkZoneAsFlightmap(enumZoneIDs.ArgusFlightmap);
+	childData.pinClusterData = pinClusterData;
+	childData.x = xOverride or childData.x;
+	childData.y = yOverride or childData.y;
 end
 
-do -- Battle of Azertoh
-	AddChildToZone(enumZoneIDs.Zandalar,	enumZoneIDs.Voldun,		0.39, 0.32);
-	AddChildToZone(enumZoneIDs.Zandalar,	enumZoneIDs.Nazmir,		0.57, 0.28);
-	AddChildToZone(enumZoneIDs.Zandalar,	enumZoneIDs.Zuldazar,	0.55, 0.61);
-	AddChildToZone(enumZoneIDs.Zandalar,	enumZoneIDs.Nazjatar,	0.87, 0.15, not isSubZone, CreatePinCircle(0.08, -90, 250));
+-- Temp mapID enum purely for readability
+local enumZoneIDs =
+{
+	Azeroth = 947,
 
-	AddChildToZone(enumZoneIDs.Zuldazar,	enumZoneIDs.Dazaralor,	0.00, 0.00, isSubZone);
+	Northrend = 113,
+	NorthrendFlightmap = 1384,
 
-	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.StormsongValley,	0.55, 0.25);
-	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.Drustvar,			0.36, 0.67);
-	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.TiragardeSound,		0.56, 0.54);
-	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.TolDagor,			0.78, 0.61);
-	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.Mechagon,			0.17, 0.28);
-	AddChildToZone(enumZoneIDs.Kultiras,	enumZoneIDs.Nazjatar,			0.87, 0.15, not isSubZone, CreatePinCircle(0.08, -90, 250));
+	Pandaria = 424,
+	PandariaFlightmap = 989,
+	ValleyOfEternalBlossom = 390,
 
-	AddChildToZone(enumZoneIDs.TiragardeSound,	enumZoneIDs.Boralus,	0.56, 0.54, isSubZone);
+	Draenor = 572,
+	DraenorFlightmap = 990,
 
-	AddChildToZone(enumZoneIDs.Nazjatar,	enumZoneIDs.Zandalar,	0.11, 0.49);
-	AddChildToZone(enumZoneIDs.Nazjatar,	enumZoneIDs.Kultiras,	0.77, 0.75);
+	BrokenIsles = 619,
+	BrokenIslesFlightmap = 993,
+	DalaranLegion = 627,
+	Argus = 905,
+	ArgusFlightmap = 994,
+	Krokuun = 830,
+	AntoranWastes = 885,
+	Eredath = 882,
 
-	AddChildToZone(enumZoneIDs.Kalimdor,	enumZoneIDs.UldumBfA,					0.49, 0.90);
-	AddChildToZone(enumZoneIDs.Pandaria,	enumZoneIDs.ValeOfEternalBlossomBfA,	0.50, 0.52);
+	Zandalar = 875,
+	ZandalarFlightmap = 1011,
+	Kultiras = 876,
+	KultirasFlightmap = 1014,
+	Nazjatar = 1355,
+	NazjatarFlightmap = 1504,
+	UldumBfA = 1527,
+	ValeOfEternalBlossomBfA = 1530,
+	Kalimdor = 12,
+	Darkshore = 62,
+	ArathiHighlands = 14,
 
-	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.Zandalar, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.ZandalarFlightmap, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.Kultiras, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.KultirasFlightmap, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.Nazjatar, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.NazjatarFlightmap, includeChildren);
+	Shadowlands = 1550,
+	ShadowlandsFlightmap = 1647,
+	Oribos = 1670,
+	ZerethMortis = 1970,
 
-	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.UldumBfA);
-	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.ValeOfEternalBlossomBfA);
-	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.ArathiHighlands);
-	MarkZoneForExampansion(LE_EXPANSION_BATTLE_FOR_AZEROTH, enumZoneIDs.Darkshore);
+	DragonIsles = 1978,
+	DragonIslesFlightmap = 2057,
+	ZaralekCavern = 2133,
+	WakingShores = 2022,
+	OhnahranPlains = 2023,
+	EmeraldDream = 2200,
+	Amidrassil = 2239,
+	AzureSpan = 2024,
+	Thaldraszus = 2025,
+	ForgbiddenReach = 2151,
 
-	MarkZoneAsFlightmap(enumZoneIDs.ZandalarFlightmap);
-	MarkZoneAsFlightmap(enumZoneIDs.KultirasFlightmap);
-	MarkZoneAsFlightmap(enumZoneIDs.NazjatarFlightmap);
+	KhazAlgar = 2274,
+	KhazAlgarFlightmap = 2276,
+	IsleOfDorn = 2248,
+	SirenIsle = 2369,
+	Undermine = 2346,
+	Karesh = 2371,
+	KareshFlightmap = 2398,
+
+	QuelThalas = 2537,
+	QuelThalasFlightmap = 2481,
+	Haradar = 2413,
+	VoidstormFlightmap = 2479,
+	Voidstorm = 2405,
+	HaradarFlightmap = 2480,
+	EasternKingdoms = 13,
+}
+
+local isChildZone = true;
+local excludeChildren = true;
+
+-- Add Azeroth as no expansion to get all sub zones
+mapDatabase:SetMapExpansion(enumZoneIDs.Azeroth, LE_EXPANSION_CLASSIC);
+-- Then change just azeroth to no expansion to avoid it ever getting scanned
+mapDatabase:SetMapExpansion(enumZoneIDs.Azeroth, -1, excludeChildren);
+
+do  -- Wrath of the Lich King
+	local expansion = LE_EXPANSION_WRATH_OF_THE_LICH_KING;
+	mapDatabase:SetMapExpansion(enumZoneIDs.Northrend, expansion);
+
+	mapDatabase:AddFlightMap(enumZoneIDs.NorthrendFlightmap, expansion);
 end
 
+do  -- Pandaria
+	local expansion = LE_EXPANSION_MISTS_OF_PANDARIA;
+	mapDatabase:SetMapExpansion(enumZoneIDs.Pandaria, expansion);
+	mapDatabase:SetMapExpansion(enumZoneIDs.ValleyOfEternalBlossom, expansion);
 
-do -- Shadowlands
-	AddChildToZone(enumZoneIDs.Shadowlands,	enumZoneIDs.TheMaw,			0.23, 0.13);
-	AddChildToZone(enumZoneIDs.Shadowlands,	enumZoneIDs.Maldraxxus,		0.62, 0.21);
-	AddChildToZone(enumZoneIDs.Shadowlands,	enumZoneIDs.Revendreth,		0.24, 0.54);
-	AddChildToZone(enumZoneIDs.Shadowlands,	enumZoneIDs.Oribos,			0.47, 0.51);
-	AddChildToZone(enumZoneIDs.Shadowlands,	enumZoneIDs.Bastion,		0.71, 0.57);
-	AddChildToZone(enumZoneIDs.Shadowlands,	enumZoneIDs.Ardenweald,		0.48, 0.80);
-	AddChildToZone(enumZoneIDs.Shadowlands,	enumZoneIDs.ZerethMortis,	0.85, 0.81);
-
-	MarkZoneForExampansion(LE_EXPANSION_SHADOWLANDS, enumZoneIDs.Shadowlands, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_SHADOWLANDS, enumZoneIDs.ShadowlandsFlightmap, includeChildren);
-
-	MarkZoneAsFlightmap(enumZoneIDs.ShadowlandsFlightmap);
+	mapDatabase:AddFlightMap(enumZoneIDs.PandariaFlightmap, expansion);
 end
 
-do -- Dragonflight
-	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.WakingShores,		0.48, 0.35);
-	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.OhnahranPlains,		0.44, 0.56);
-	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.EmeraldDream,		0.31, 0.56);
-	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.Amidrassil,			0.24, 0.58);
-	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.AzureSpan,			0.55, 0.74);
-	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.Thaldraszus,		0.63, 0.51);
-	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.ForgbiddenReach,	0.65, 0.10);
-	AddChildToZone(enumZoneIDs.DragonIsles,	enumZoneIDs.ZaralekCavern,		0.89, 0.85, not isSubZone, CreatePinCircle(0.18, -110, 120));
+do  -- Warlords of Draenor
+	local expansion = LE_EXPANSION_WARLORDS_OF_DRAENOR;
+	mapDatabase:SetMapExpansion(enumZoneIDs.Draenor, expansion);
 
-	AddChildToZone(enumZoneIDs.Thaldraszus,	enumZoneIDs.Valdrakken,		0.00, 0.00,	isSubZone);
-
-	AddChildToZone(enumZoneIDs.ZaralekCavern,	enumZoneIDs.WakingShores,		0.88, 0.84);
-	AddChildToZone(enumZoneIDs.ZaralekCavern,	enumZoneIDs.OhnahranPlains,		0.88, 0.84);
-	AddChildToZone(enumZoneIDs.ZaralekCavern,	enumZoneIDs.EmeraldDream,		0.88, 0.84);
-	AddChildToZone(enumZoneIDs.ZaralekCavern,	enumZoneIDs.Amidrassil,			0.88, 0.84);
-	AddChildToZone(enumZoneIDs.ZaralekCavern,	enumZoneIDs.AzureSpan,			0.88, 0.84);
-	AddChildToZone(enumZoneIDs.ZaralekCavern,	enumZoneIDs.Thaldraszus,		0.88, 0.84);
-	AddChildToZone(enumZoneIDs.ZaralekCavern,	enumZoneIDs.ForgbiddenReach,	0.88, 0.84);
-
-	MarkZoneForExampansion(LE_EXPANSION_DRAGONFLIGHT, enumZoneIDs.DragonIsles, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_DRAGONFLIGHT, enumZoneIDs.DragonIslesFlightmap, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_DRAGONFLIGHT, enumZoneIDs.ZaralekCavern, includeChildren);
-
-	MarkZoneAsFlightmap(enumZoneIDs.DragonIslesFlightmap);
+	mapDatabase:AddFlightMap(enumZoneIDs.DraenorFlightmap, expansion);
 end
 
-do -- War Within
-	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.IsleOfDorn,		0.73, 0.23);
-	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.RingingDeeps,	0.57, 0.58);
-	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.Hallowfall,		0.35, 0.47);
-	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.AzjKahet,		0.46, 0.75);
-	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.Undermine,		0.82, 0.74, not isSubZone, CreatePinCircle(0.09, -80, 250));
-	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.Karesh,			0.18, 0.20, not isSubZone, CreatePinCircle(0.09, -90, 300));
-	AddChildToZone(enumZoneIDs.KhazAlgar,	enumZoneIDs.SirenIsle,		0.73, 0.23);
+do  -- Legion
+	local expansion = LE_EXPANSION_LEGION;
+	mapDatabase:SetMapExpansion(enumZoneIDs.BrokenIsles, expansion);
 
-	AddChildToZone(enumZoneIDs.IsleOfDorn,	enumZoneIDs.SirenIsle,	0.18, 0.18, not isSubZone, CreatePinCircle(0.07, -90));
-	AddChildToZone(enumZoneIDs.IsleOfDorn,	enumZoneIDs.Dornogal,	0.00, 0.00, isSubZone);
+	mapDatabase:AddFlightMap(enumZoneIDs.BrokenIslesFlightmap,	expansion);
+	mapDatabase:AddFlightMap(enumZoneIDs.ArgusFlightmap,		expansion);
 
-	AddChildToZone(enumZoneIDs.Karesh,	enumZoneIDs.Tazavesh,	0.00, 0.00, isSubZone);
-
-	MarkZoneForExampansion(LE_EXPANSION_WAR_WITHIN, enumZoneIDs.KhazAlgar, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_WAR_WITHIN, enumZoneIDs.KhazAlgarFlightmap, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_WAR_WITHIN, enumZoneIDs.KareshFlightmap, includeChildren);
-
-	MarkZoneAsFlightmap(enumZoneIDs.KhazAlgarFlightmap);
-	MarkZoneAsFlightmap(enumZoneIDs.KareshFlightmap);
+	mapDatabase:AddChildToMap(enumZoneIDs.BrokenIsles,	enumZoneIDs.DalaranLegion,	0,		0);
+	mapDatabase:AddChildToMap(enumZoneIDs.BrokenIsles,	enumZoneIDs.Krokuun,		nil,	nil,	not isChildZone, CreatePinBoundry(0.81, 0.95, 0.17, 0.36));
+	mapDatabase:AddChildToMap(enumZoneIDs.BrokenIsles,	enumZoneIDs.AntoranWastes,	nil,	nil,	not isChildZone, CreatePinBoundry(0.70, 0.87, 0.13, 0.29));
+	mapDatabase:AddChildToMap(enumZoneIDs.BrokenIsles,	enumZoneIDs.Eredath,		nil,	nil,	not isChildZone, CreatePinBoundry(0.83, 0.97, 0.07, 0.19));
+	mapDatabase:AddChildToMap(enumZoneIDs.Argus,		enumZoneIDs.Krokuun,		0.61,	0.68,	not isChildZone, CreatePinBoundry(0.48, 0.73, 0.55, 0.83));
+	mapDatabase:AddChildToMap(enumZoneIDs.Argus,		enumZoneIDs.AntoranWastes,	0.31,	0.51,	not isChildZone, CreatePinBoundry(0.19, 0.46, 0.40, 0.70));
+	mapDatabase:AddChildToMap(enumZoneIDs.Argus,		enumZoneIDs.Eredath,		0.62,	0.26,	not isChildZone, CreatePinBoundry(0.50, 0.75, 0.17, 0.40));
 end
 
-do -- Midnight
-	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.IlseOfQuelDanas,	0.26, 0.14);
-	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.EversongWoods,		0.27, 0.53);
-	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.ZulAman,			0.44, 0.71);
-	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.Voidstorm,			0.53, 0.24, not isSubZone, CreatePinCircle(0.54, 90, 30, 0, -0.40));
-	AddChildToZone(enumZoneIDs.QuelThalas,	enumZoneIDs.Haradar,			0.82, 0.17, not isSubZone, CreatePinCircle(0.54, 90, 30, 0, -0.41));
+do  -- Battle for Azeroth
+	local expansion = LE_EXPANSION_BATTLE_FOR_AZEROTH;
+	mapDatabase:SetMapExpansion(enumZoneIDs.Zandalar,					expansion);
+	mapDatabase:SetMapExpansion(enumZoneIDs.Kultiras,					expansion);
+	mapDatabase:SetMapExpansion(enumZoneIDs.Darkshore,					expansion);
+	mapDatabase:SetMapExpansion(enumZoneIDs.ArathiHighlands,			expansion);
+	mapDatabase:SetMapExpansion(enumZoneIDs.ValeOfEternalBlossomBfA,	expansion);
+	mapDatabase:SetMapExpansion(enumZoneIDs.UldumBfA,					expansion);
 
-	AddChildToZone(enumZoneIDs.EversongWoods,	enumZoneIDs.SilvermoonCity,	0.00, 0.00, isSubZone);
-	AddChildToZone(enumZoneIDs.Voidstorm,		enumZoneIDs.SlayersRise,	0.00, 0.00, isSubZone);
-	AddChildToZone(enumZoneIDs.ZulAman,			enumZoneIDs.AtalAman,		0.00, 0.00, isSubZone);
+	mapDatabase:AddFlightMap(enumZoneIDs.ZandalarFlightmap, expansion);
+	mapDatabase:AddFlightMap(enumZoneIDs.KultirasFlightmap, expansion);
+	mapDatabase:AddFlightMap(enumZoneIDs.NazjatarFlightmap, expansion);
 
-	MarkZoneForExampansion(LE_EXPANSION_MIDNIGHT, enumZoneIDs.QuelThalas, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_MIDNIGHT, enumZoneIDs.QuelThalasFlightmap, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_MIDNIGHT, enumZoneIDs.VoidstormFlightmap, includeChildren);
-	MarkZoneForExampansion(LE_EXPANSION_MIDNIGHT, enumZoneIDs.HaradarFlightmap, includeChildren);
+	mapDatabase:AddChildToMap(enumZoneIDs.Pandaria, enumZoneIDs.ValeOfEternalBlossomBfA,	0.50, 0.52);
+	mapDatabase:AddChildToMap(enumZoneIDs.Kalimdor, enumZoneIDs.UldumBfA,					0.49, 0.90);
+	mapDatabase:AddChildToMap(enumZoneIDs.Zandalar, enumZoneIDs.Nazjatar,					0.87, 0.15, not isChildZone, CreatePinCircle(0.09, -90, 250));
+	mapDatabase:AddChildToMap(enumZoneIDs.Kultiras, enumZoneIDs.Nazjatar,					0.87, 0.15, not isChildZone, CreatePinCircle(0.09, -90, 250));
+	mapDatabase:AddChildToMap(enumZoneIDs.Nazjatar, enumZoneIDs.Zandalar,					0.11, 0.49);
+	mapDatabase:AddChildToMap(enumZoneIDs.Nazjatar, enumZoneIDs.Kultiras,					0.77, 0.75);
+end
 
-	MarkZoneAsFlightmap(enumZoneIDs.QuelThalasFlightmap);
-	MarkZoneAsFlightmap(enumZoneIDs.VoidstormFlightmap);
-	MarkZoneAsFlightmap(enumZoneIDs.HaradarFlightmap);
+do  -- Shadowlands
+	local expansion = LE_EXPANSION_SHADOWLANDS;
+	mapDatabase:SetMapExpansion(enumZoneIDs.Shadowlands, expansion);
+
+	mapDatabase:AddFlightMap(enumZoneIDs.ShadowlandsFlightmap, expansion);
+
+	mapDatabase:AddChildToMap(enumZoneIDs.Shadowlands, enumZoneIDs.Oribos,			0.18, 0.18);
+	mapDatabase:AddChildToMap(enumZoneIDs.Shadowlands, enumZoneIDs.ZerethMortis,	0.86, 0.80, not isChildZone, CreatePinCircle(0.09, -90, 270));
+end
+
+do  -- Dragonflight
+	local expansion = LE_EXPANSION_DRAGONFLIGHT;
+	mapDatabase:SetMapExpansion(enumZoneIDs.DragonIsles, expansion);
+
+	mapDatabase:AddFlightMap(enumZoneIDs.DragonIslesFlightmap, expansion);
+
+	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern, enumZoneIDs.WakingShores,		0.88, 0.84);
+	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern, enumZoneIDs.OhnahranPlains,	0.88, 0.84);
+	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern, enumZoneIDs.EmeraldDream,		0.88, 0.84);
+	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern, enumZoneIDs.Amidrassil,		0.88, 0.84);
+	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern, enumZoneIDs.AzureSpan,			0.88, 0.84);
+	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern, enumZoneIDs.Thaldraszus,		0.88, 0.84);
+	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern, enumZoneIDs.ForgbiddenReach,	0.88, 0.84);
+end
+
+do  -- War Within
+	local expansion = LE_EXPANSION_WAR_WITHIN;
+	mapDatabase:SetMapExpansion(enumZoneIDs.KhazAlgar, expansion);
+
+	mapDatabase:AddFlightMap(enumZoneIDs.KhazAlgarFlightmap,	expansion);
+	mapDatabase:AddFlightMap(enumZoneIDs.KareshFlightmap,		expansion);
+
+	mapDatabase:AddChildToMap(enumZoneIDs.IsleOfDorn,	enumZoneIDs.SirenIsle,	0.18,	0.18,	not isChildZone, CreatePinCircle(0.07, -90));
+	mapDatabase:AddChildToMap(enumZoneIDs.KhazAlgar,	enumZoneIDs.SirenIsle,	0.73,	0.23);
+	mapDatabase:AddChildToMap(enumZoneIDs.KhazAlgar,	enumZoneIDs.Undermine,	0.82,	0.74,	not isChildZone, CreatePinCircle(0.09, -80, 250));
+	mapDatabase:AddChildToMap(enumZoneIDs.KhazAlgar,	enumZoneIDs.Karesh,		0.178,	0.195,	not isChildZone, CreatePinCircle(0.09, -90, 300));
+end
+
+do  -- Midnight
+	local expansion = LE_EXPANSION_MIDNIGHT;
+	mapDatabase:SetMapExpansion(enumZoneIDs.QuelThalas, expansion);
+
+	mapDatabase:AddFlightMap(enumZoneIDs.QuelThalasFlightmap,	expansion);
+	mapDatabase:AddFlightMap(enumZoneIDs.HaradarFlightmap,		expansion);
+	mapDatabase:AddFlightMap(enumZoneIDs.VoidstormFlightmap,	expansion);
+
+	mapDatabase:AddChildToMap(enumZoneIDs.EasternKingdoms,	enumZoneIDs.QuelThalas, 0.61, 0.18);
+	mapDatabase:AddChildToMap(enumZoneIDs.QuelThalas,		enumZoneIDs.Voidstorm,	0.53, 0.24, not isChildZone, CreatePinCircle(0.54, 90, 30, 0, -0.40));
+	mapDatabase:AddChildToMap(enumZoneIDs.QuelThalas,		enumZoneIDs.Haradar,	0.82, 0.17, not isChildZone, CreatePinCircle(0.54, 90, 30, 0, -0.41));
+end
+
+function _V:GetZoneData(zoneID)
+	return mapDatabase.maps[zoneID];
+end
+
+function _V:GetZonesOfExpansion(expansion)
+	return mapDatabase.expansions[expansion];
 end
 
 function _V:GetMostRelevantMapCoordinates(zoneID, inZoneID)
@@ -1234,14 +1049,6 @@ function _V:GetMostRelevantMapCoordinates(zoneID, inZoneID)
 		end
 	end
 	return childData, coordZoneID;
-end
-
-function _V:GetZoneData(zoneID)
-	return zoneData[zoneID];
-end
-
-function _V:GetZonesOfExpansion(expansion)
-	return zonesPerExpansion[expansion];
 end
 
 local filterToOfficialCvar = {
