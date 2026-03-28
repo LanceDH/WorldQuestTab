@@ -1169,6 +1169,13 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
 
+		do -- 12.0.10
+			StartVersionCategory("12.0.10");
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed an issue where quests with no faction would be fitlered out incorrectly"
+			});
+		end
+
 		do -- 12.0.09
 			StartVersionCategory("12.0.09");
 			AddSection(ChangelogSections.Fixes, {

@@ -411,8 +411,8 @@ function WQT:PassesFactionFilter(questInfo, checkPrecise)
 	local enumFilterType = _V:GetFilterTypeEnum();
 	local filter = WQT.settings.filters[enumFilterType.faction];
 	local flags = filter.flags
-	local factionNone = filter.None;
-	local factionOther = filter.Other;
+	local factionNone = flags.None;
+	local factionOther = flags.Other;
 	local factionInfo = _V:GetFactionData(questInfo.factionID);
 
 	-- Specific filters (matches all)
