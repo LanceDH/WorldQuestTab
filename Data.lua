@@ -990,13 +990,14 @@ do  -- Dragonflight
 
 	mapDatabase:AddFlightMap(enumZoneIDs.DragonIslesFlightmap, expansion);
 
-	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern, enumZoneIDs.WakingShores,		0.88, 0.84);
-	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern, enumZoneIDs.OhnahranPlains,	0.88, 0.84);
-	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern, enumZoneIDs.EmeraldDream,		0.88, 0.84);
-	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern, enumZoneIDs.Amidrassil,		0.88, 0.84);
-	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern, enumZoneIDs.AzureSpan,			0.88, 0.84);
-	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern, enumZoneIDs.Thaldraszus,		0.88, 0.84);
-	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern, enumZoneIDs.ForgbiddenReach,	0.88, 0.84);
+	mapDatabase:AddChildToMap(enumZoneIDs.DragonIsles,		enumZoneIDs.ZaralekCavern,		0.89, 0.85, not isChildZone, CreatePinCircle(0.18, -110, 120));
+	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern,	enumZoneIDs.WakingShores,		0.88, 0.84);
+	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern,	enumZoneIDs.OhnahranPlains,		0.88, 0.84);
+	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern,	enumZoneIDs.EmeraldDream,		0.88, 0.84);
+	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern,	enumZoneIDs.Amidrassil,			0.88, 0.84);
+	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern,	enumZoneIDs.AzureSpan,			0.88, 0.84);
+	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern,	enumZoneIDs.Thaldraszus,		0.88, 0.84);
+	mapDatabase:AddChildToMap(enumZoneIDs.ZaralekCavern,	enumZoneIDs.ForgbiddenReach,	0.88, 0.84);
 end
 
 do  -- War Within
