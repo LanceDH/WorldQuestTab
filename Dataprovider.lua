@@ -537,7 +537,7 @@ function QuestInfoMixin:UpdateSearchResults(searchString)
 	local titleMatch = string.find(self.title:lower(), searchString);
 	self.searchResults.titleMatch = titleMatch;
 
-	local mapInfo = WQT_Utils:GetCachedMapInfo(self.mapID);
+	local mapInfo = _V:GetCachedMapInfo(self.mapID);
 	if (mapInfo) then
 		local zoneMatch = string.find(mapInfo.name:lower(), searchString);
 		self.searchResults.zoneMatch = zoneMatch;
@@ -931,7 +931,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID, isFlightMap)
 
 	self.latestZoneId = zoneID;
 
-	local currentMapInfo = WQT_Utils:GetCachedMapInfo(zoneID);
+	local currentMapInfo = _V:GetCachedMapInfo(zoneID);
 	if (not currentMapInfo) then return end;
 
 	local zoneQuests = WQT_Utils:GetSetting("general", "zoneQuests");
@@ -942,7 +942,6 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID, isFlightMap)
 		local expansionLevel = WQT_Utils:GetCharacterExpansionLevel();
 		self.zoneLoading.expansion = expansionLevel;
 		self:AddZoneListToBuffer(_V:GetZonesOfExpansion(expansionLevel));
-
 	else
 		local addChildren = zoneQuests ~= enumZoneQuests.zone;
 		if (zoneQuests == enumZoneQuests.expansion) then
@@ -953,7 +952,7 @@ function WQT_DataProvider:LoadQuestsInZone(zoneID, isFlightMap)
 			end
 		elseif (currentMapInfo.mapType == Enum.UIMapType.Continent) then
 			while (currentMapInfo.mapType > Enum.UIMapType.Continent and currentMapInfo.parentMapID and zoneID ~= currentMapInfo.parentMapID) do
-				local parentMapInfo = WQT_Utils:GetCachedMapInfo(currentMapInfo.parentMapID);
+				local parentMapInfo = _V:GetCachedMapInfo(currentMapInfo.parentMapID);
 				if (not parentMapInfo) then
 					break;
 				end

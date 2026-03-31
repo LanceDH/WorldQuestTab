@@ -303,7 +303,7 @@ function WQT_PinDataProvider:PlacePins()
 	end
 	
 	local mapID = parentMapFrame:GetMapID();
-	local mapInfo = WQT_Utils:GetCachedMapInfo(mapID);
+	local mapInfo = _V:GetCachedMapInfo(mapID);
 	if (not mapInfo) then return; end
 	local settingsContinentVisible = WQT_Utils:GetSetting("pin", "continentVisible");
 	local settingsZoneVisible = WQT_Utils:GetSetting("pin", "zoneVisible");

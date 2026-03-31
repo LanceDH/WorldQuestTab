@@ -543,7 +543,6 @@ end
 ----------------------------
 
 local cachedTypeData = {};
-local cachedZoneInfo = {};
 
 local function stringVersionToNumber(s)
 	local a, b, c = strmatch(s, "(%d+)%.(%d+)%.(%d+)");
@@ -586,19 +585,6 @@ function WQT_Utils:GetSetting(...)
 	end;
 	
 	return settings;
-end
-
-function WQT_Utils:GetCachedMapInfo(zoneId)
-	zoneId = zoneId or 0;
-	local zoneInfo = cachedZoneInfo[zoneId];
-	if (not zoneInfo) then
-		zoneInfo = C_Map.GetMapInfo(zoneId);
-		if (zoneInfo and zoneInfo.name) then
-			cachedZoneInfo[zoneId] = zoneInfo;
-		end
-	end
-	
-	return zoneInfo;
 end
 
 function WQT_Utils:GetCachedTypeIconData(questInfo)
@@ -835,7 +821,7 @@ end
 
 -- Climb map parents until the first continent type map it can find.
 function WQT_Utils:GetContinentForMap(mapId) 
-	local info = WQT_Utils:GetCachedMapInfo(mapId);
+	local info = _V:GetCachedMapInfo(mapId);
 	if not info then return mapId; end
 	local parent = info.parentMapID;
 	if not parent or info.mapType <= Enum.UIMapType.Continent then

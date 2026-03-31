@@ -112,7 +112,7 @@ function WQT:AddFunctionDebugToTooltip(tooltip, questInfo, level)
 	AddIndentedDoubleLine(tooltip, "texture", factionInfo.texture, 1, color);
 	AddIndentedDoubleLine(tooltip, "expansion", factionInfo.expansion, 1, color);
 	-- MapInfo
-	local mapInfo = WQT_Utils:GetCachedMapInfo(questInfo.mapID);
+	local mapInfo = _V:GetCachedMapInfo(questInfo.mapID);
 	AddIndentedDoubleLine(tooltip, "mapInfo", "", 0, color);
 	if (mapInfo) then
 		AddIndentedDoubleLine(tooltip, "name", mapInfo.name, 1, color);

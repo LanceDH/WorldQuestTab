@@ -742,48 +742,55 @@ local mapDatabase = {
 	expansions = {};
 };
 
+local isChildZone = true;
+local excludeChildren = true;
+local excludeExpansionID = -1;
+
 function mapDatabase:AddFlightMap(zoneID, expansionID)
-	self:AddMap(zoneID, expansionID, true);
+	local data = self:AddMap(zoneID, expansionID, excludeChildren);
+	if (data) then
+		data.isFlightMap = true;
+	end
+	return data;
 end
 
-function mapDatabase:AddMap(zoneID, expansionID, isFlightmap)
-	if (self.maps[zoneID]) then
-		print("Already have zoneID", zoneID)
-		return;
-	end
+function mapDatabase:AddMap(zoneID, expansionID, excludeChildren)
+	local data = self.maps[zoneID];
+	if (not data) then
+		local mapInfo = C_Map.GetMapInfo(zoneID);
 
-	local mapInfo = C_Map.GetMapInfo(zoneID);
-	if (not mapInfo) then return; end
-	expansionID = expansionID or 0;
+		if (not mapInfo) then
+			return nil;
+		end
+		expansionID = expansionID or 0;
 
-	local name = mapInfo.name;
-	if (isFlightmap) then
-		name = string.format("%s - flightmap", name);
-	end
+		data = {
+			name = mapInfo.name;
+			expansion = expansionID;
+			children = {};
+			mapInfo = mapInfo;
+		};
 
-	local data = {
-		name = mapInfo.name;
-		expansion = expansionID;
-		children = {};
-		mapInfo = mapInfo;
-	};
+		self.maps[zoneID] = data;
+		local epxansionTable = GetOrCreateTableEntry(self.expansions, expansionID);
+		epxansionTable[zoneID] = true;
 
-	self.maps[zoneID] = data;
-	local epxansionTable = GetOrCreateTableEntry(self.expansions, expansionID);
-	epxansionTable[zoneID] = true;
-
-	local children = C_Map.GetMapChildrenInfo(zoneID);
-	if (not children) then return; end
-	for k, childInfo in ipairs(children) do
-		if (childInfo.mapType <= Enum.UIMapType.Zone) then
-			local isSubZone = mapInfo.mapType == Enum.UIMapType.Zone and childInfo.mapType == Enum.UIMapType.Zone;
-			local minX, maxX, minY, maxY = C_Map.GetMapRectOnMap(childInfo.mapID, zoneID);
-			local x = minX + (maxX - minX) * 0.5;
-			local y = minY + (maxY - minY) * 0.5;
-			if (x ~= 0) then
-				local childData = self:AddMap(childInfo.mapID, expansionID);
-				childData.origin = mapInfo.name;
-				self:AddChildToMap(zoneID, childInfo.mapID, x, y, isSubZone);
+		if (not excludeChildren) then
+			local children = C_Map.GetMapChildrenInfo(zoneID);
+			if (children) then
+				for k, childInfo in ipairs(children) do
+					if (childInfo.mapType <= Enum.UIMapType.Zone) then
+						local isSubZone = mapInfo.mapType == Enum.UIMapType.Zone and childInfo.mapType == Enum.UIMapType.Zone;
+						local minX, maxX, minY, maxY = C_Map.GetMapRectOnMap(childInfo.mapID, zoneID);
+						if (minX and minX ~= 0 and minX ~= maxY) then
+							local x = minX + (maxX - minX) * 0.5;
+							local y = minY + (maxY - minY) * 0.5;
+							local childData = self:AddMap(childInfo.mapID, expansionID);
+							childData.origin = mapInfo.name;
+							self:AddChildToMap(zoneID, childInfo.mapID, x, y, isSubZone);
+						end
+					end
+				end
 			end
 		end
 	end
@@ -907,13 +914,10 @@ local enumZoneIDs =
 	EasternKingdoms = 13,
 }
 
-local isChildZone = true;
-local excludeChildren = true;
-
 -- Add Azeroth as no expansion to get all sub zones
 mapDatabase:SetMapExpansion(enumZoneIDs.Azeroth, LE_EXPANSION_CLASSIC);
 -- Then change just azeroth to no expansion to avoid it ever getting scanned
-mapDatabase:SetMapExpansion(enumZoneIDs.Azeroth, -1, excludeChildren);
+mapDatabase:SetMapExpansion(enumZoneIDs.Azeroth, excludeExpansionID, excludeChildren);
 
 do  -- Wrath of the Lich King
 	local expansion = LE_EXPANSION_WRATH_OF_THE_LICH_KING;
@@ -1027,7 +1031,18 @@ do  -- Midnight
 end
 
 function _V:GetZoneData(zoneID)
-	return mapDatabase.maps[zoneID];
+	local data = mapDatabase.maps[zoneID];
+
+	if (data) then
+		return data;
+	end
+
+	return mapDatabase:AddMap(zoneID, excludeExpansionID, excludeChildren);
+end
+
+function _V:GetCachedMapInfo(zoneID)
+	local data = _V:GetZoneData(zoneID);
+	return data and data.mapInfo;
 end
 
 function _V:GetZonesOfExpansion(expansion)
@@ -1042,7 +1057,7 @@ function _V:GetMostRelevantMapCoordinates(zoneID, inZoneID)
 		if (data) then
 			childData = data.children[zoneID];
 			if (not childData) then
-				local mapInfo = WQT_Utils:GetCachedMapInfo(zoneID);
+				local mapInfo = _V:GetCachedMapInfo(zoneID);
 				if (mapInfo and mapInfo.parentMapID and mapInfo.mapType > Enum.UIMapType.Cosmic) then
 					childData, coordZoneID = self:GetMostRelevantMapCoordinates(mapInfo.parentMapID, inZoneID);
 				end

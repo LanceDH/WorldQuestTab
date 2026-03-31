@@ -668,8 +668,8 @@ function WQT:OnInitialize()
 	end
 	do -- zone
 		local func = function(a, b)
-			local mapInfoA = WQT_Utils:GetCachedMapInfo(a.mapID);
-			local mapInfoB = WQT_Utils:GetCachedMapInfo(b.mapID);
+			local mapInfoA = _V:GetCachedMapInfo(a.mapID);
+			local mapInfoB = _V:GetCachedMapInfo(b.mapID);
 			if (not mapInfoA or not mapInfoB) then
 				return mapInfoA;
 			end
@@ -1300,7 +1300,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	local showingZone = false;
 	local zoneName = "";
 	if (shouldShowZone and WQT.settings.list.showZone) then
-		local mapInfo = WQT_Utils:GetCachedMapInfo(questInfo.mapID)
+		local mapInfo = _V:GetCachedMapInfo(questInfo.mapID)
 		if (mapInfo) then
 			showingZone = true;
 			zoneName = mapInfo.name;
@@ -1841,7 +1841,7 @@ function WQT_CoreMixin:ShowWorldmapHighlight(questInfo)
 	local zoneID = questInfo.mapID;
 	local areaId = WorldMapFrame.mapID;
 
-	local mapInfo = WQT_Utils:GetCachedMapInfo(zoneID);
+	local mapInfo = _V:GetCachedMapInfo(zoneID);
 	
 	if (not mapInfo) then return; end;
 	
