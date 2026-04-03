@@ -1175,7 +1175,7 @@ function WQT_SettingsFrameMixin:Init()
 				"Added skinning for ElvUI"
 			});
 			AddSection(ChangelogSections.Fixes, {
-				"Fixed an issue where quests with no faction would be fitlered out incorrectly"
+				"Fixed an issue where quests with no faction would incorrectly be filtered out "
 			});
 		end
 
