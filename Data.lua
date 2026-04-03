@@ -1052,7 +1052,7 @@ end
 function _V:GetMostRelevantMapCoordinates(zoneID, inZoneID)
 	local childData = nil;
 	local coordZoneID = zoneID;
-	if (zoneID ~= inZoneID) then
+	if (zoneID and inZoneID and zoneID ~= inZoneID) then
 		local data = _V:GetZoneData(inZoneID);
 		if (data) then
 			childData = data.children[zoneID];

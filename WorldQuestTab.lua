@@ -1838,6 +1838,8 @@ end
 
 -- Mimics hovering over a zone or continent, based on the zone the map is in
 function WQT_CoreMixin:ShowWorldmapHighlight(questInfo)
+	if (not WorldMapFrame:IsShown()) then return; end
+	
 	local zoneID = questInfo.mapID;
 	local areaId = WorldMapFrame.mapID;
 
