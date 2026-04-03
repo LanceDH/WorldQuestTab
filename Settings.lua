@@ -1171,6 +1171,9 @@ function WQT_SettingsFrameMixin:Init()
 
 		do -- 12.0.10
 			StartVersionCategory("12.0.10");
+			AddSection(ChangelogSections.New, {
+				"Added skinning for ElvUI"
+			});
 			AddSection(ChangelogSections.Fixes, {
 				"Fixed an issue where quests with no faction would be fitlered out incorrectly"
 			});

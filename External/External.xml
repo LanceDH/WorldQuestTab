@@ -6,6 +6,7 @@
 	<Script file="Aurora.lua"/>
 	<Script file="TomTom.lua"/>
 	<Script file="WorldFlightMap.lua"/>
+	<Script file="ElvUI.lua"/>
 	
  </Ui>
  
