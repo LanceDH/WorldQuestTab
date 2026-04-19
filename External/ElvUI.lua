@@ -3,11 +3,23 @@ local addonName, addon = ...
 local WQT = addon.WQT;
 
 local function ApplySkin()
+	-- WindTools has it's own skinning, leave it to them
+	if (C_AddOns.IsAddOnLoaded("ElvUI_WindTools")) then return; end
+
 	local E = unpack(ElvUI);
 	local S = E:GetModule("Skins");
 
 	local blizzardSkins = E.private.skins.blizzard;
 	if (not blizzardSkins.enable) then return; end
+
+	local function HandleButtonWithInside(button, insideX, insideY)
+		local striptTextures = true;
+		local createBackdrop = true;
+		S:HandleButton(button, striptTextures, nil, nil, createBackdrop);
+		if (button.backdrop) then
+			button.backdrop:SetInside(button, insideX, insideY);
+		end
+	end
 
 	if (blizzardSkins.worldmap) then
 		do -- Tab
@@ -186,10 +198,9 @@ local function ApplySkin()
 					frame.collapseTex:Point("RIGHT", -10, 0);
 					UpdateCategoryExpandedTexture(frame, data.data.expanded);
 				elseif (template == "WQT_SettingSubCategoryTemplate") then
-					local striptTextures = true;
-					local createBackdrop = true;
-					S:HandleButton(frame, striptTextures, nil, nil, createBackdrop);
-					frame.backdrop:SetInside(frame, 30, 5);
+					local insideX = 30;
+					local insideY = 5;
+					HandleButtonWithInside(frame, insideX, insideY);
 				elseif (template == "WQT_SettingTextInputTemplate") then
 					S:HandleEditBox(frame.TextBox);
 					frame.TextBox:Point("BOTTOMLEFT", 44, 3);
@@ -226,10 +237,9 @@ local function ApplySkin()
 
 	if (blizzardSkins.taxi) then
 		do -- Flightmap
-			local striptTextures = true;
-			local createBackdrop = true;
-			S:HandleButton(WQT_FlightMapContainerButton, striptTextures, nil, nil, createBackdrop);
-			WQT_FlightMapContainerButton.backdrop:SetInside(WQT_FlightMapContainerButton, 2, 2);
+			local insideX = 2;
+			local insideY = 2;
+			HandleButtonWithInside(WQT_FlightMapContainerButton, insideX, insideY);
 
 			WQT_FlightMapContainerButton.Icon:SetAtlas("Worldquest-icon");
 			WQT_FlightMapContainerButton.Arrow:SetAtlas("common-icon-forwardarrow");

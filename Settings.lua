@@ -1169,13 +1169,20 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
 
+		do -- 12.0.11
+			StartVersionCategory("12.0.11");
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed some potential ElvUI issues if WindTools is also enabled"
+			});
+		end
+
 		do -- 12.0.10
 			StartVersionCategory("12.0.10");
 			AddSection(ChangelogSections.New, {
 				"Added skinning for ElvUI"
 			});
 			AddSection(ChangelogSections.Fixes, {
-				"Fixed an issue where quests with no faction would incorrectly be filtered out "
+				"Fixed an issue where quests with no faction would incorrectly be filtered out"
 			});
 		end
 
