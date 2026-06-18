@@ -1169,6 +1169,13 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
 
+		do -- 12.0.12
+			StartVersionCategory("12.0.12");
+			AddSection(ChangelogSections.Intro, {
+				"Update for patch 12.0.7";
+			});
+		end
+
 		do -- 12.0.11
 			StartVersionCategory("12.0.11");
 			AddSection(ChangelogSections.Fixes, {

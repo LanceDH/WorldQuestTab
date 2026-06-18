@@ -1,9 +1,9 @@
-﻿## Interface: 120001, 120005
+﻿## Interface: 120007
 ## Title: World Quest Tab
 ## Notes: Creates a new quest tab to keep track of world quests.
 ## IconAtlas: Worldquest-icon
 ## Author: LanceDH
-## Version: 12.0.11
+## Version: 12.0.12
 ## SavedVariables: BWQDB
 
 ## Category: Quests
