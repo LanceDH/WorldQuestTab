@@ -44,11 +44,8 @@ local function OnPinRelease(pool, pin)
 end
 
 local function ShouldShowPin(questInfo, mapType, settingsZoneVisible, settingsPinContinent, settingsFilterPins, isFlightMap)
-	-- Don't show if not valid
-	if (not questInfo.isValid) then return false; end
-
 	-- Don't show if filtering and doesn't pass
-	if (settingsFilterPins and not questInfo.passedFilter) then return false; end
+	if (settingsFilterPins and not questInfo.passedFilter and not addon.debug) then return false; end
 	
 	if (isFlightMap) then return true; end
 
@@ -1152,8 +1149,7 @@ function WQT_PinMixin:UpdateVisuals()
 	-- Offsetting the label to leave room for visible mini icons
 	-- Must happen after placement or GetBottom won't work
 	if (labelFrame:IsShown()) then
-		local bottomOffset = buttonFrame:GetIconBottomDifference()
-		RoundToNearestMultiple(bottomOffset, 0);
+		local bottomOffset = buttonFrame:GetIconBottomDifference();
 		bottomOffset = bottomOffset - LABEL_OFFSET;
 		PixelUtil.SetPoint(labelFrame, "TOP", self.Button, "BOTTOM", 0, -bottomOffset);
 	end

@@ -911,6 +911,9 @@ local enumZoneIDs =
 	VoidstormFlightmap = 2479,
 	Voidstorm = 2405,
 	HaradarFlightmap = 2480,
+	Val = 2599,
+	Naigtal = 2600,
+
 	EasternKingdoms = 13,
 }
 
@@ -1026,8 +1029,12 @@ do  -- Midnight
 	mapDatabase:AddFlightMap(enumZoneIDs.VoidstormFlightmap,	expansion);
 
 	mapDatabase:AddChildToMap(enumZoneIDs.EasternKingdoms,	enumZoneIDs.QuelThalas, 0.61, 0.18);
-	mapDatabase:AddChildToMap(enumZoneIDs.QuelThalas,		enumZoneIDs.Voidstorm,	0.53, 0.24, not isChildZone, CreatePinCircle(0.54, 90, 30, 0, -0.40));
-	mapDatabase:AddChildToMap(enumZoneIDs.QuelThalas,		enumZoneIDs.Haradar,	0.82, 0.17, not isChildZone, CreatePinCircle(0.54, 90, 30, 0, -0.41));
+	mapDatabase:AddChildToMap(enumZoneIDs.QuelThalas,		enumZoneIDs.Voidstorm,	0.53, 0.24, not isChildZone,	CreatePinCircle(0.54, 90, 30, 0, -0.40));
+	mapDatabase:AddChildToMap(enumZoneIDs.QuelThalas,		enumZoneIDs.Haradar,	0.82, 0.17, not isChildZone,	CreatePinCircle(0.54, 90, 30, 0, -0.41));
+	mapDatabase:AddChildToMap(enumZoneIDs.QuelThalas,		enumZoneIDs.Val,		0.53, 0.24, not isChildZone,	CreatePinCircle(0.15, 200, 70));
+	mapDatabase:AddChildToMap(enumZoneIDs.QuelThalas,		enumZoneIDs.Naigtal,	0.53, 0.24, not isChildZone,	CreatePinCircle(0.15, -20, 70));
+	mapDatabase:AddChildToMap(enumZoneIDs.Voidstorm,		enumZoneIDs.Val,		0.18, 0.23, isChildZone,		CreatePinCircle(0.1, -90, 230));
+	mapDatabase:AddChildToMap(enumZoneIDs.Voidstorm,		enumZoneIDs.Naigtal,	0.82, 0.32, isChildZone,		CreatePinCircle(0.1, -90, 230));
 end
 
 function _V:GetZoneData(zoneID)

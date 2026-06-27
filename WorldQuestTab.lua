@@ -607,6 +607,9 @@ function WQT:OnInitialize()
 	do -- faction
 		local func = function(a, b)
 			if (a.factionID ~= b.factionID) then
+				if (a.factionID == nil or b.factionID == nil) then
+					return a.factionID ~= nil;
+				end
 				local factionA = _V:GetFactionData(a.factionID);
 				local factionB = _V:GetFactionData(b.factionID);
 				return factionA.name < factionB.name;
@@ -1946,24 +1949,43 @@ function WQT_CoreMixin:OnLoad()
 			end
 		end,
 		self);
-	
-	--
-	-- Function hooks
-	-- 
 
-	-- Update when opening the map
-	WorldMapFrame:HookScript("OnShow", function()
-			-- If emissaryOnly was automaticaly set, turn it off again.
+	EventRegistry:RegisterCallback(
+		"WorldMapOnShow",
+		function()
 			if (WQT_WorldQuestFrame.autoEmisarryId) then
 				WQT_WorldQuestFrame.autoEmisarryId = nil;
 				WQT_ListContainer:UpdateQuestList();
 			end
-		end)
+		end,
+		self);
 
-	-- Go back to quest list when closing map
-	WorldMapFrame:HookScript("OnHide", function()
+	EventRegistry:RegisterCallback(
+		"WorldMapOnHide",
+		function()
 			WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Quests);
-		end)
+		end,
+		self);
+
+	EventRegistry:RegisterCallback(
+		"WorldMapMaximized",
+		function()
+			WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Quests);
+		end,
+		self);
+
+	EventRegistry:RegisterCallback(
+		"WorldMapMinimized",
+		function()
+			WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Quests);
+			local topBar = self:GetQuestListFrame():GetTopBar();
+			topBar:Layout();
+		end,
+		self);
+
+	--
+	-- Function hooks
+	-- 
 		
 	local enumListAnchorType = _V:GetListAnchorTypeEnum();
 	-- Re-anchor list when maxi/minimizing world map

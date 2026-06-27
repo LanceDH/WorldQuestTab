@@ -1169,6 +1169,18 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
 
+		do -- 12.0.13
+			StartVersionCategory("12.0.13");
+			AddSection(ChangelogSections.Changes, {
+				"Adden map pins for Naigtal and Val on the Voidstorm map";
+				"Separated map pins for Naigtal and Val on the Quel'Thalas map";
+				"When sorting by faction, quests with a faction now take priority over quests without";
+			});
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed some visual issues related to minimizing and maximizing the world map"
+			});
+		end
+
 		do -- 12.0.12
 			StartVersionCategory("12.0.12");
 			AddSection(ChangelogSections.Intro, {
