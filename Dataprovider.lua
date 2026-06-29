@@ -632,6 +632,7 @@ function WQT_DataProvider:Init()
 	WQT_CallbackRegistry:RegisterCallback("WQT.SearchUpdated", function() self:RequestFilterUpdate(); end, self);
 	WQT_CallbackRegistry:RegisterCallback("WQT.FiltersUpdated", function() self:RequestFilterUpdate(); end, self);
 	WQT_CallbackRegistry:RegisterCallback("WQT.SortUpdated", function() self:RequestFilterUpdate(); end, self);
+	WQT_CallbackRegistry:RegisterCallback("WQT.DebugToggled", function() self:RequestDataUpdate(); end, self);
 	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
 		function(_, _, tag)
 			if (tag == "ZONE_QUESTS") then

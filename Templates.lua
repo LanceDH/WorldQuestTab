@@ -1047,32 +1047,25 @@ function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 	if (not questInfo or not questInfo.questID) then return end
 	
 	local questID =  questInfo.questID;
-	local isBonus = QuestUtils_IsQuestBonusObjective(questID);
-	local tagInfo = questInfo:GetTagInfo();
-	local isWorldQuest = not isBonus and tagInfo and tagInfo.worldQuestType;
 	local playSound = true;
 	local soundID = SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON;
 	
 	if (button == "LeftButton") then
 		if (IsModifiedClick("QUESTWATCHTOGGLE")) then
 			-- 'Hard' tracking quests with shift
-			if (isWorldQuest) then
-				if (not ChatEdit_TryInsertQuestLinkForQuestID(questID)) then 
-					if (QuestUtils_IsQuestWatched(questID)) then
-						local hardWatched = WQT_Utils:QuestIsWatchedManual(questID);
-						C_QuestLog.RemoveWorldQuestWatch(questID);
-						-- If it wasn't actually hard watched, do so now
-						if (not hardWatched) then
-							C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual);
-							C_SuperTrack.SetSuperTrackedQuestID(questID);
-						end
-					else
+			if (not ChatEdit_TryInsertQuestLinkForQuestID(questID)) then
+				if (QuestUtils_IsQuestWatched(questID)) then
+					local hardWatched = WQT_Utils:QuestIsWatchedManual(questID);
+					C_QuestLog.RemoveWorldQuestWatch(questID);
+					-- If it wasn't actually hard watched, do so now
+					if (not hardWatched) then
 						C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual);
 						C_SuperTrack.SetSuperTrackedQuestID(questID);
 					end
+				else
+					C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual);
+					C_SuperTrack.SetSuperTrackedQuestID(questID);
 				end
-			else
-				playSound = false;
 			end
 		elseif (IsModifiedClick("DRESSUP")) then
 			-- Trying gear with Ctrl
@@ -1084,15 +1077,12 @@ function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 			playSound = false;
 		else
 			-- 'Soft' tracking and jumping map to relevant zone
-			-- Don't track bonus objectives. The object tracker doesn't like it;
-			if (isWorldQuest) then	
-				local hardWatched = WQT_Utils:QuestIsWatchedManual(questID);
-				-- if it was hard watched, keep it that way
-				if (not hardWatched) then
-					C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic);
-				end
-				C_SuperTrack.SetSuperTrackedQuestID(questID);
+			local hardWatched = WQT_Utils:QuestIsWatchedManual(questID);
+			-- if it was hard watched, keep it that way
+			if (not hardWatched) then
+				C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic);
 			end
+			C_SuperTrack.SetSuperTrackedQuestID(questID);
 			if (WorldMapFrame:IsShown()) then
 				local zoneID =  C_TaskQuest.GetQuestZoneID(questID);
 				if (WorldMapFrame:GetMapID() ~= zoneID) then

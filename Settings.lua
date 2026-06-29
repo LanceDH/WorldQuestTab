@@ -1169,10 +1169,21 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
 
+		do -- 12.0.14
+			StartVersionCategory("12.0.14");
+			AddSection(ChangelogSections.Changes, {
+				"Clicking on bonus objectives will now track them like world quests";
+			});
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed unintended pins showing on the map when map pin filtering is turned off";
+				"Fixed an issue with the map tab placement when logging in with the map side panel hidden";
+			});
+		end
+
 		do -- 12.0.13
 			StartVersionCategory("12.0.13");
 			AddSection(ChangelogSections.Changes, {
-				"Adden map pins for Naigtal and Val on the Voidstorm map";
+				"Added map pins for Naigtal and Val on the Voidstorm map";
 				"Separated map pins for Naigtal and Val on the Quel'Thalas map";
 				"When sorting by faction, quests with a faction now take priority over quests without";
 			});

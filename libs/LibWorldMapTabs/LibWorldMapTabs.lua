@@ -17,7 +17,7 @@
 --- CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 --- 
 
-local lib, oldminor = LibStub:NewLibrary('LibWorldMapTabs', 5);
+local lib, oldminor = LibStub:NewLibrary('LibWorldMapTabs', 6);
 
 if not lib then return; end
 
@@ -204,7 +204,7 @@ function lib.internal:OnSetDisplayMode(source, displayMode)
 	end
 end
 
-EventRegistry:RegisterCallback("WorldMapOnShow", function(...) lib.internal:WorldMapOnShow(...); end, lib);
+WorldMapFrame.QuestLog:HookScript("OnShow", function(...) lib.internal:WorldMapOnShow(...); end);
 EventRegistry:RegisterCallback("QuestLog.SetDisplayMode", function(...) lib.internal:OnSetDisplayMode(...); end, lib);
 
 function lib.internal:RegisterTab(tab)

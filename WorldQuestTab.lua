@@ -29,7 +29,7 @@ WQT_PanelID = EnumUtil.MakeEnum("Quests", "Settings");
 local function slashcmd(msg)
 	if (msg == "debug") then
 		addon.debug = not addon.debug;
-		WQT_ListContainer:UpdateQuestList();
+		WQT_CallbackRegistry:TriggerEvent("WQT.DebugToggled", addon.debug);
 		print("WQT: debug", addon.debug and "enabled" or "disabled");
 		return;
 	end
