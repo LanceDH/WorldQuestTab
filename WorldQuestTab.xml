@@ -113,7 +113,11 @@
 		</Layers>
 	</Frame>
 	
-	<Frame name="WQT_RewardDisplayTemplate" inherits="HorizontalLayoutFrame" mixin="WQT_RewardDisplayMixin, WQT_GridLayoutMixin" virtual="true">
+	<Frame name="WQT_RewardDisplayTemplate" inherits="HorizontalLayoutFrame" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_RewardDisplayMixin" source="local"/>
+			<Mixin key="mixins.WQT_GridLayoutMixin" source="local"/>
+		</Mixins>
 		<Size x="32" y="32" />
 		<KeyValues>
 			<KeyValue key="stride" value="2" type="number"/>
@@ -158,7 +162,11 @@
 		</Frames>
 	</Frame>
 	 
-	<Button name="WQT_QuestTemplate" mixin="WQT_ListButtonMixin, WQT_HorizontalFlexLayoutMixin" hidden="true" virtual="true" registerForClicks="LeftButtonUp, RightButtonUp" >
+	<Button name="WQT_QuestTemplate" hidden="true" virtual="true" registerForClicks="LeftButtonUp, RightButtonUp" >
+		<Mixins>
+			<Mixin key="mixins.WQT_ListButtonMixin" source="local"/>
+			<Mixin key="mixins.WQT_HorizontalFlexLayoutMixin" source="local"/>
+		</Mixins>
 		<Size y="38"/>
 		<Anchors>
 			<Anchor point="LEFT" x="0" y="0" />
@@ -207,7 +215,10 @@
 				</Layers>
 			</Frame>
 
-			<Frame parentKey="CenterContent" inherits="BaseLayoutFrameTemplate" mixin="WQT_VerticalFlexLayoutMixin">
+			<Frame parentKey="CenterContent" inherits="BaseLayoutFrameTemplate">
+				<Mixins>
+					<Mixin key="mixins.WQT_VerticalFlexLayoutMixin" source="local"/>
+				</Mixins>
 				<KeyValues>
 					<KeyValue key="layoutIndex" value="2" type="number" />
 					<KeyValue key="flexSize" value="1" type="number" />
@@ -227,7 +238,10 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<Frame parentKey="BottomRow" inherits="BaseLayoutFrameTemplate" mixin="WQT_HorizontalFlexLayoutMixin">
+					<Frame parentKey="BottomRow" inherits="BaseLayoutFrameTemplate">
+						<Mixins>
+							<Mixin key="mixins.WQT_HorizontalFlexLayoutMixin" source="local"/>
+						</Mixins>
 						<KeyValues>
 							<KeyValue key="layoutIndex" value="2" type="number" />
 							<KeyValue key="spacing" value="2" type="number" />
@@ -267,7 +281,10 @@
 				</Frames>
 			</Frame>	
 
-			<Frame parentKey="RightContent" inherits="HorizontalLayoutFrame" mixin="WQT_HorizontalLayoutMixin">
+			<Frame parentKey="RightContent" inherits="HorizontalLayoutFrame">
+				<Mixins>
+					<Mixin key="mixins.WQT_HorizontalLayoutMixin" source="local"/>
+				</Mixins>
 				<KeyValues>
 					<KeyValue key="layoutIndex" value="3" type="number" />
 					<KeyValue key="align" value="center" type="string" />
@@ -402,6 +419,9 @@
 	</Frame>
 
 	<Button Name="WQT_PanelCloseButtonTemplate" virtual="True">
+		<Mixins>
+			<Mixin key="mixins.WQT_PanelCloseButtonMixin" source="local"/>
+		</Mixins>
 		<Size x="15" y="15" />
 		<Anchors>
 			<Anchor point="TOPRIGHT" x="19" y="25" />
@@ -412,27 +432,12 @@
 			</Layer>
 		</Layers>
 		<Scripts>
-			<OnLoad>
-				self:SetFrameLevel(self:GetParent():GetFrameLevel() + 20);
-			</OnLoad>
-			<OnClick>
-				WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Quests);
-				PlaySound(MenuVariants.GetDropdownCloseSoundKit());
-			</OnClick>
-			<OnEnter>
-				self.texture:SetAlpha(1.0);
-			</OnEnter>
-			<OnLeave>
-				self.texture:SetAlpha(0.5);
-			</OnLeave>
-			<OnMouseDown>
-				if self:IsEnabled() then
-					self.texture:AdjustPointsOffset(1, -1);
-				end
-			</OnMouseDown>
-			<OnMouseUp>
-				self.texture:AdjustPointsOffset(-1, 1);
-			</OnMouseUp>
+			<OnLoad method="OnLoad"/>
+			<OnClick method="OnClick"/>
+			<OnEnter method="OnEnter"/>
+			<OnLeave method="OnLeave"/>
+			<OnMouseDown method="OnMouseDown"/>
+			<OnMouseUp method="OnMouseUp"/>
 		</Scripts>
 	</Button>
 
@@ -460,9 +465,15 @@
 	
 	<Frame name="WQT_FlightMapContainer" inherits="WQT_ContainerTemplate" hidden="true" />
 	
-	<Frame name="WQT_WorldMapContainer" inherits="WQT_ContainerTemplate" mixin="WQT_FullscreenMapContainer" parent="WorldMapFrame" hidden="false" enableMouse="true" movable="true">
+	<Frame name="WQT_WorldMapContainer" inherits="WQT_ContainerTemplate" parent="WorldMapFrame" hidden="false" enableMouse="true" movable="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_FullscreenMapContainer" source="local"/>
+		</Mixins>
 		<Frames>
-			<Frame parentKey="DragFrame" mixin="WQT_TooltipMixin" enableMouse="true" movable="true">
+			<Frame parentKey="DragFrame" enableMouse="true" movable="true">
+				<Mixins>
+					<Mixin key="mixins.WQT_TooltipMixin" source="local"/>
+				</Mixins>
 				<HitRectInsets bottom="0" />
 				<Anchors>
 					<Anchor point="TOPLEFT" x="5" y="-3"/>
@@ -474,7 +485,7 @@
 					</OnLoad>
 					<OnDragStart>
 						self:GetParent():OnDragStart();
-						WQT_TooltipMixin.OnLeave(self);
+						self:OnLeave();
 					</OnDragStart>
 					<OnDragStop>
 						self:GetParent():OnDragStop();
@@ -506,7 +517,10 @@
 		</Scripts>
 	</Button>
 	
-	<Button name="WQT_FlightMapContainerButton" mixin="WQT_ContainerButtonMixin" hidden="false">
+	<Button name="WQT_FlightMapContainerButton" hidden="false">
+		<Mixins>
+			<Mixin key="mixins.WQT_ContainerButtonMixin" source="local"/>
+		</Mixins>
 		<Size x="48" y="40"/> 
 		<HitRectInsets left="5" right="5" top="3" bottom="5"/>
 		<KeyValues>
@@ -541,7 +555,10 @@
 		</Scripts>
 	</Button>
 	
-	<Button name="WQT_WorldMapButtonTemplate" mixin="WQT_WorldMapContainerButtonMixin" frameStrata="HIGH" virtual="true">
+	<Button name="WQT_WorldMapButtonTemplate" frameStrata="HIGH" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_WorldMapContainerButtonMixin" source="local"/>
+		</Mixins>
 		<Size x="32" y="32"/>
 		<KeyValues>
 			<KeyValue key="container" value="WQT_WorldMapContainer" type="global" />
@@ -589,7 +606,10 @@
 		</Scripts>
 	</Button>
 	
-	<Frame name="WQT_QuestMapTab" parent="QuestMapFrame" inherits="LargeSideTabButtonTemplate" mixin="WQT_TabButtonMixin">
+	<Frame name="WQT_QuestMapTab" parent="QuestMapFrame" inherits="LargeSideTabButtonTemplate">
+		<Mixins>
+			<Mixin key="mixins.WQT_TabButtonMixin" source="local"/>
+		</Mixins>
 		<KeyValues>
 			<KeyValue key="activeAtlas" value="Worldquest-icon" type="string" />
 			<KeyValue key="inactiveAtlas" value="Worldquest-icon" type="string" />
@@ -601,7 +621,10 @@
 		Main frame
 	-->
 
-	<Frame name="WQT_WorldQuestFrame" mixin="WQT_CoreMixin" parent="QuestMapFrame" enableMouse="true" hidden="false">
+	<Frame name="WQT_WorldQuestFrame" parent="QuestMapFrame" enableMouse="true" hidden="false">
+		<Mixins>
+			<Mixin key="mixins.WQT_CoreMixin" source="local"/>
+		</Mixins>
 		<Size x="308" y="0" />
 		<Anchors>
 			<Anchor point="TOPLEFT" RelativeKey="$parent.ContentsAnchor" y="-29" />
@@ -609,14 +632,17 @@
 		</Anchors>
 		<Frames>
 			<!-- Quest panel -->
-			<Frame name="WQT_ListContainer" parentKey="ScrollFrame" mixin="WQT_ScrollListMixin" parentArray="panels" enableMouse="true" hidden="false">
+			<Frame name="WQT_ListContainer" parentKey="ScrollFrame" parentArray="panels" enableMouse="true" hidden="false">
+				<Mixins>
+					<Mixin key="mixins.WQT_ScrollListMixin" source="local"/>
+				</Mixins>
 				<Size x="286" y="0" />
 				<Anchors>
 					<Anchor point="TOPLEFT" />
 					<Anchor point="BOTTOMRIGHT" />
 				</Anchors>
 				<KeyValues>
-					<KeyValue key="panelID" value="WQT_PanelID.Quests" type="global"/>
+					<KeyValue key="panelID" value="variables.PanelIDEnum.Quests" type="local"/>
 				</KeyValues>
 				<Layers>
 					<Layer level="BACKGROUND">
@@ -630,7 +656,10 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<Frame parentKey="TopBar" mixin="WQT_HorizontalFlexLayoutMixin" setAllPoints="true">
+					<Frame parentKey="TopBar" setAllPoints="true">
+						<Mixins>
+							<Mixin key="mixins.WQT_HorizontalFlexLayoutMixin" source="local"/>
+						</Mixins>
 						<Size y="26" />
 						<Anchors>
 							<Anchor point="LEFT" />
@@ -653,7 +682,7 @@
 								</KeyValues>
 
 								<SwipeTexture file="Interface\Addons\WorldQuestTab\Images\PoIRingBar">
-									<Color r="1" g="0.82" b="0" a="0.7" />
+									<Color r="1" g="0.82" b="0" a="0.6" />
 								</SwipeTexture>
 								<Layers>
 									<Layer level="BACKGROUND">
@@ -690,7 +719,10 @@
 								</KeyValues>
 							</DropdownButton>
 
-							<EditBox parentKey="SearchBox" name="WQTSearch" inherits="SearchBoxTemplate" mixin="WQT_SearchBoxMixin" useParentLevel="true" hidden="true">
+							<EditBox parentKey="SearchBox" name="WQTSearch" inherits="SearchBoxTemplate" useParentLevel="true" hidden="true">
+								<Mixins>
+									<Mixin key="mixins.WQT_SearchBoxMixin" source="local"/>
+								</Mixins>
 								<Size y="20" />
 								<KeyValues>
 									<KeyValue key="layoutIndex" value="4" type="number" />
@@ -703,7 +735,10 @@
 								</Scripts>
 							</EditBox>
 
-							<CheckButton parentKey="SearchToggle" inherits="WowStyle2IconButtonTemplate" mixin="WQT_CheckButtonMixin">
+							<CheckButton parentKey="SearchToggle" inherits="WowStyle2IconButtonTemplate">
+								<Mixins>
+									<Mixin key="mixins.WQT_CheckButtonMixin" source="local"/>
+								</Mixins>
 								<KeyValues>
 									<KeyValue key="layoutIndex" value="5" type="number" />
 									<KeyValue key="align" value="center" type="string" />
@@ -736,7 +771,10 @@
 						</Scripts>
 					</Frame>
 
-					<Button parentKey="SettingsButton" Mixin="WQT_QuestLogSettingsButtonMixin">
+					<Button parentKey="SettingsButton">
+						<Mixins>
+							<Mixin key="mixins.WQT_QuestLogSettingsButtonMixin" source="local"/>
+						</Mixins>
 						<Size x="15" y="16" />
 						<Anchors>
 							<Anchor point="TOPRIGHT" x="19" y="25" />
@@ -758,10 +796,7 @@
 							</Layer>
 						</Layers>
 						<Scripts>
-							<OnClick>
-								WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Settings);
-								PlaySound(MenuVariants.GetDropdownCloseSoundKit());
-							</OnClick>
+							<OnClick Method="OnClick"/>
 							<OnMouseDown Method="OnMouseDown"/>
 							<OnMouseUp Method="OnMouseUp"/>
 							<OnEnable Method="OnEnable"/>
@@ -771,7 +806,10 @@
 
 					<Frame parentKey="BorderFrame" name="WQTBorder" inherits="QuestLogBorderFrameTemplate"/>
 
-					<Frame parentKey="BorderContainer" mixin="WQT_VerticalFlexLayoutMixin" setAllPoints="true">
+					<Frame parentKey="BorderContainer" setAllPoints="true">
+						<Mixins>
+							<Mixin key="mixins.WQT_VerticalFlexLayoutMixin" source="local"/>
+						</Mixins>
 						<KeyValues>
 							<KeyValue key="expand" value="false" type="boolean" />
 						</KeyValues>

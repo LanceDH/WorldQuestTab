@@ -64,7 +64,10 @@
 		Container Buttons and Frames
 	-->
 	
-	<Button name="WQT_ContainerButtonTemplate" mixin="WQT_ContainerButtonMixin" virtual="true">
+	<Button name="WQT_ContainerButtonTemplate" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_ContainerButtonMixin" source="local"/>
+		</Mixins>
 		<Size x="36" y="36"/> 
 		<Layers>
 			<Layer level="BACKGROUND">
@@ -115,7 +118,10 @@
 		<Size x="346" y="506"/>
 	</Frame>
 	
-	<Frame name="WQT_MiniIconTemplate" flattenRenderLayers="true" mixin="WQT_MiniIconMixin" virtual="true">
+	<Frame name="WQT_MiniIconTemplate" flattenRenderLayers="true" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_MiniIconMixin" source="local"/>
+		</Mixins>
 		<Size x="16" y="16" />
 		<Layers>
 			<Layer level="ARTWORK" textureSubLevel="10">

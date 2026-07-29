@@ -14,6 +14,8 @@ local _V = addon.variables;
 
 addon.WQT_Profiles =  {};
 
+addon.mixins = {};
+
 local _L = addon.loca;
 local _playerFaction = UnitFactionGroup("Player");
 
@@ -47,6 +49,9 @@ WQT_CallbackRegistry:OnLoad();
 ------------------------
 -- SHARED
 ------------------------
+
+-- Directly available so it's usable in xml
+_V.PanelIDEnum = EnumUtil.MakeEnum("Quests", "Settings");
 
 local enumListAnchorType = {
 	flight	= 1;
@@ -297,6 +302,7 @@ local factionData = {
 	[2699] =	{ ["expansion"] = LE_EXPANSION_MIDNIGHT, ["texture"] = 7505702 }; -- The Singularity
 	[2704] =	{ ["expansion"] = LE_EXPANSION_MIDNIGHT, ["texture"] = 7505704 }; -- Hara'ti
 	[2710] =	{ ["expansion"] = LE_EXPANSION_MIDNIGHT, ["texture"] = 7505700 }; -- Silvermoon Court
+	[2772] =	{ ["expansion"] = LE_EXPANSION_MIDNIGHT, ["texture"] = 7903180 }; -- Zul'jarra's Forces
 }
 
 -- Add localized faction names
@@ -697,7 +703,8 @@ end
 
 local TWO_PI = PI * 2;
 function PinCircleMixin:NudgeFunction(validPins, canvas)
-	if (#validPins) == 0 then return; end
+	local numPassedPins = #validPins;
+	if (numPassedPins == 0) then return; end
 
 	local sourcePin = validPins[1];
 	local pinSize = sourcePin:GetButton():GetSize();
@@ -711,7 +718,6 @@ function PinCircleMixin:NudgeFunction(validPins, canvas)
 	local pinSizeToWindow = pinSize / canvas:GetParent():GetHeight();
 	local ratio = canvas:GetHeight() / canvas:GetWidth();
 
-	local numPassedPins = #validPins;
 	local distance = self.radius or 0.1;
 	local maxArc = self.maxArc or 360;
 

@@ -1,6 +1,7 @@
 ﻿local addonName, addon = ...
 local WQT = addon.WQT;
 local _V = addon.variables;
+local _M = addon.mixins;
 
 ------------------------
 -- Debug Tooltip
@@ -179,13 +180,13 @@ local function ApplyAlternateState(frame, alternate)
 end
 
 
-WQT_DevMixin = {};
+_M.WQT_DevMixin = {};
 
-function WQT_DevMixin:TAXIMAP_OPENED()
+function _M.WQT_DevMixin:TAXIMAP_OPENED()
 	self.flightMapID:SetText(string.format("FlightMap: %s", FlightMapFrame.mapID or 0));
 end
 
-function WQT_DevMixin:OnShow()
+function _M.WQT_DevMixin:OnShow()
 	self:Layout();
 
 	if (self.initialized) then return; end
@@ -234,10 +235,9 @@ function WQT_DevMixin:OnShow()
 			self.CallbackScrollBox:ScrollToEnd();
 		end
 	end);
-
 end
 
-function WQT_DevMixin:OnUpdate()
+function _M.WQT_DevMixin:OnUpdate()
 	if (not self:IsShown()) then return end;
 
 	if (WorldMapFrame:IsShown()) then
@@ -246,6 +246,20 @@ function WQT_DevMixin:OnUpdate()
 end
 
 
-function WQT_DevMixin:DoDebugThing()
+function _M.WQT_DevMixin:DoDebugThing()
 
 end
+
+local debugFrame = nil;
+
+WQT_CallbackRegistry:RegisterCallback("WQT.DebugUIToggled",
+	function(source)
+
+		if(not debugFrame) then
+			debugFrame = CreateFrame("Frame", "WQT_DevFrame", UIParent, "WQT_DevFrameTemplate");
+			debugFrame:Show();
+			return;
+		else
+			debugFrame:SetShown(not debugFrame:IsShown());
+		end
+	end);

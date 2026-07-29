@@ -1,6 +1,7 @@
 ﻿local addonName, addon = ...
 local WQT = addon.WQT;
 local _V = addon.variables;
+local _M = addon.mixins;
 
 local _pinType = {
 		["zone"] = 1
@@ -596,13 +597,13 @@ end
 -- Pin Label
 ------------------------------------
 
-WQT_PinLabelMixin = {};
+_M.WQT_PinLabelMixin = {};
 
-function WQT_PinLabelMixin:GetLabelText()
+function _M.WQT_PinLabelMixin:GetLabelText()
 	return self.LabelText;
 end
 
-function WQT_PinLabelMixin:UpdateVisuals(questInfo)
+function _M.WQT_PinLabelMixin:UpdateVisuals(questInfo)
 	local scale = WQT_Utils:GetSetting("pin", "labelScale");
 	self:SetScale(scale);
 
@@ -633,7 +634,7 @@ function WQT_PinLabelMixin:UpdateVisuals(questInfo)
 	self:SetShown(showLabel);
 end
 
-function WQT_PinLabelMixin:UpdateTime(timeString, color)
+function _M.WQT_PinLabelMixin:UpdateTime(timeString, color)
 	local labelFontString = self:GetLabelText();
 
 	local enumPinLabel = _V:GetPinLabelEnum();
@@ -651,9 +652,9 @@ end
 -- Pin Icon
 ------------------------------------
 
-WQT_PinButtonMixin = {};
+_M.WQT_PinButtonMixin = {};
 
-function WQT_PinButtonMixin:OnEnter()
+function _M.WQT_PinButtonMixin:OnEnter()
 	self:GetParent():Focus();
 	if (self.questInfo) then
 		WQT_Utils:ShowQuestTooltip(self, self.questInfo);
@@ -665,7 +666,7 @@ function WQT_PinButtonMixin:OnEnter()
 	end
 end
 
-function WQT_PinButtonMixin:OnLeave()
+function _M.WQT_PinButtonMixin:OnLeave()
 	self:GetParent():ClearFocus();
 	WQT_Utils:HideQuestTooltip(self);
 	-- Stop highlight quest in list
@@ -673,51 +674,51 @@ function WQT_PinButtonMixin:OnLeave()
 	WQT_ListContainer:DisplayQuestList();
 end
 
-function WQT_PinButtonMixin:OnClick(button)
+function _M.WQT_PinButtonMixin:OnClick(button)
 	WQT_Utils:HandleQuestClick(self, self.questInfo, button);
 end
 
-function WQT_PinButtonMixin:GetTrackingGlow()
+function _M.WQT_PinButtonMixin:GetTrackingGlow()
 	return self.TrackingGlow;
 end
 
-function WQT_PinButtonMixin:GetIcon()
+function _M.WQT_PinButtonMixin:GetIcon()
 	return self.Icon;
 end
 
-function WQT_PinButtonMixin:GetRingBG()
+function _M.WQT_PinButtonMixin:GetRingBG()
 	return self.RingBG;
 end
 
-function WQT_PinButtonMixin:GetRing()
+function _M.WQT_PinButtonMixin:GetRing()
 	return self.Ring;
 end
 
-function WQT_PinButtonMixin:GetPointer()
+function _M.WQT_PinButtonMixin:GetPointer()
 	return self.Pointer;
 end
 
-function WQT_PinButtonMixin:GetCustomUnderlay()
+function _M.WQT_PinButtonMixin:GetCustomUnderlay()
 	return self.CustomUnderlay;
 end
 
-function WQT_PinButtonMixin:GetCustomTypeIcon()
+function _M.WQT_PinButtonMixin:GetCustomTypeIcon()
 	return self.CustomTypeIcon;
 end
 
-function WQT_PinButtonMixin:GetCustomSelectedGlow()
+function _M.WQT_PinButtonMixin:GetCustomSelectedGlow()
 	return self.CustomSelectedGlow;
 end
 
-function WQT_PinButtonMixin:GetCustomBountyRing()
+function _M.WQT_PinButtonMixin:GetCustomBountyRing()
 	return self.CustomBountyRing;
 end
 
-function WQT_PinButtonMixin:GetMiniPins()
+function _M.WQT_PinButtonMixin:GetMiniPins()
 	return self.pinRoot.miniIcons;
 end
 
-function WQT_PinButtonMixin:PlaceMiniIcons()
+function _M.WQT_PinButtonMixin:PlaceMiniIcons()
 	local icons = self:GetMiniPins();
 	local numIcons = #icons;
 	if (numIcons > 0) then
@@ -735,23 +736,23 @@ function WQT_PinButtonMixin:PlaceMiniIcons()
 	end
 end
 
-function WQT_PinButtonMixin:IterateMiniIcons()
+function _M.WQT_PinButtonMixin:IterateMiniIcons()
 	return ipairs(self:GetMiniPins());
 end
 
-function WQT_PinButtonMixin:AddIcon()
+function _M.WQT_PinButtonMixin:AddIcon()
 	local icon = self.pinRoot:AcquireMiniIcon();
 	icon:SetParent(self);
 	return icon;
 end
 
-function WQT_PinButtonMixin:SetIconsDesaturated(desaturate)
+function _M.WQT_PinButtonMixin:SetIconsDesaturated(desaturate)
 	for k, icon in self:IterateMiniIcons() do
 		icon:SetDesaturated(desaturate);
 	end
 end
 
-function WQT_PinButtonMixin:GetIconBottomDifference()
+function _M.WQT_PinButtonMixin:GetIconBottomDifference()
 	local maxBottomDiff = 2;
 	local selfBottom = self:GetBottom();
 	for k, icon in self:IterateMiniIcons() do
@@ -761,7 +762,7 @@ function WQT_PinButtonMixin:GetIconBottomDifference()
 	return maxBottomDiff;
 end
 
-function WQT_PinButtonMixin:UpdateTime(start, timeLeft, total, color, timeCategory)
+function _M.WQT_PinButtonMixin:UpdateTime(start, timeLeft, total, color, timeCategory)
 	local enumPinColorType = _V:GetPinColorType();
 	if (WQT_Utils:GetSetting("pin", "ringType") ~= enumPinColorType.time) then
 		return;
@@ -803,7 +804,7 @@ end
 
 local CUSTOM_ICONS_PATH = "Interface/Addons/WorldQuestTab/Images/CustomIcons";
 
-function WQT_PinButtonMixin:UpdateVisuals(questInfo)
+function _M.WQT_PinButtonMixin:UpdateVisuals(questInfo)
 	if (not questInfo) then return; end
 
 	local scale = WQT_Utils:GetSetting("pin", "scale");
@@ -1013,48 +1014,48 @@ end
 -- Pin Core
 ------------------------------------
 
-WQT_PinMixin = {};
+_M.WQT_PinMixin = {};
 
-function WQT_PinMixin:ClearTimer()
+function _M.WQT_PinMixin:ClearTimer()
 	if (self.timer) then
 		self.timer:Cancel();
 		self.timer = nil;
 	end
 end
 
-function WQT_PinMixin:GetButton()
+function _M.WQT_PinMixin:GetButton()
 	return self.Button;
 end
 
-function WQT_PinMixin:GetLabel()
+function _M.WQT_PinMixin:GetLabel()
 	return self.Label;
 end
 
-function WQT_PinMixin:GetPing()
+function _M.WQT_PinMixin:GetPing()
 	return self:GetButton().Ping;
 end
 
-function WQT_PinMixin:GetPingStatic()
+function _M.WQT_PinMixin:GetPingStatic()
 	return self:GetButton().PingStatic;
 end
 
-function WQT_PinMixin:GetFadeInAnim()
+function _M.WQT_PinMixin:GetFadeInAnim()
 	return self.fadeInAnim;
 end
 
-function WQT_PinMixin:GetFadeOutAnim()
+function _M.WQT_PinMixin:GetFadeOutAnim()
 	return self.fadeOutAnim;
 end
 
-function WQT_PinMixin:GetRingAnim()
+function _M.WQT_PinMixin:GetRingAnim()
 	return self:GetButton().ringAnim;
 end
 
-function WQT_PinMixin:GetRingAnim2()
+function _M.WQT_PinMixin:GetRingAnim2()
 	return self:GetButton().ringAnim2;
 end
 
-function WQT_PinMixin:Init(dataProvider)
+function _M.WQT_PinMixin:Init(dataProvider)
 	self.dataProvider = dataProvider;
 	self.miniIcons = {};
 	local button = self:GetButton();
@@ -1064,27 +1065,27 @@ function WQT_PinMixin:Init(dataProvider)
 	self.inRangePinsLookup = {};
 end
 
-function WQT_PinMixin:ResetInRangePins()
+function _M.WQT_PinMixin:ResetInRangePins()
 	wipe(self.inRangePinsLookup);
 	wipe(self.inRangePins);
 end
 
-function WQT_PinMixin:AddInRangePin(pin)
+function _M.WQT_PinMixin:AddInRangePin(pin)
 	if (self.inRangePinsLookup[pin]) then return; end
 
 	self.inRangePinsLookup[pin] = true;
 	tinsert(self.inRangePins, pin);
 end
 
-function WQT_PinMixin:GetNumInRangePins()
+function _M.WQT_PinMixin:GetNumInRangePins()
 	return #self.inRangePins;
 end
 
-function WQT_PinMixin:IterateInRangePins()
+function _M.WQT_PinMixin:IterateInRangePins()
 	return ipairs(self.inRangePins);
 end
 
-function WQT_PinMixin:ReleaseMiniIcons()
+function _M.WQT_PinMixin:ReleaseMiniIcons()
 	if (self.miniIcons) then
 		for k, frame in ipairs(self.miniIcons) do
 			self.dataProvider:ReleaseMiniIcon(frame);
@@ -1094,14 +1095,14 @@ function WQT_PinMixin:ReleaseMiniIcons()
 	end
 end
 
-function WQT_PinMixin:AcquireMiniIcon()
+function _M.WQT_PinMixin:AcquireMiniIcon()
 	local icon = self.dataProvider:AcquireMiniIcon();
 	icon:SetParent(self);
 	tinsert(self.miniIcons, icon);
 	return icon;
 end
 
-function WQT_PinMixin:SetupCanvasType(pinType, parentMapFrame, isWatched)
+function _M.WQT_PinMixin:SetupCanvasType(pinType, parentMapFrame, isWatched)
 	self.parentMapFrame = parentMapFrame;
 	self.scaleFactor  = 1;
 	self.startScale  = _pinTypeScales[pinType] or 1;
@@ -1116,7 +1117,7 @@ function WQT_PinMixin:SetupCanvasType(pinType, parentMapFrame, isWatched)
 	end
 end
 
-function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
+function _M.WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	local isWatched = QuestUtils_IsQuestWatched(questInfo.questID);
 	self:SetupCanvasType(pinType, parentMapFrame, isWatched);
 
@@ -1138,7 +1139,7 @@ function WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	WQT_CallbackRegistry:TriggerEvent("WQT.MapPinProvider.PinInitialized", self);
 end
 
-function WQT_PinMixin:UpdateVisuals()
+function _M.WQT_PinMixin:UpdateVisuals()
 	local questInfo = self.questInfo;
 	if (not questInfo:DataIsValid()) then return end;
 
@@ -1154,13 +1155,13 @@ function WQT_PinMixin:UpdateVisuals()
 	-- Offsetting the label to leave room for visible mini icons
 	-- Must happen after placement or GetBottom won't work
 	if (labelFrame:IsShown()) then
-		local bottomOffset = buttonFrame:GetIconBottomDifference();
+		local bottomOffset = buttonFrame:GetIconBottomDifference()
 		bottomOffset = bottomOffset - LABEL_OFFSET;
 		PixelUtil.SetPoint(labelFrame, "TOP", self.Button, "BOTTOM", 0, -bottomOffset);
 	end
 end
 
-function WQT_PinMixin:UpdatePinTime()
+function _M.WQT_PinMixin:UpdatePinTime()
 	local start, total, timeLeft, seconds, color, timeStringShort, timeCategory = WQT_Utils:GetPinTime(self.questInfo);
 	local isDisliked = self.questInfo:IsDisliked();
 
@@ -1185,7 +1186,7 @@ function WQT_PinMixin:UpdatePinTime()
 	end
 end
 
-function WQT_PinMixin:UpdatePlacement(alpha)
+function _M.WQT_PinMixin:UpdatePlacement(alpha)
 	local zoomPercent = self.parentMapFrame:GetCanvasZoomPercent();
 	local parentScaleFactor = 1 / self.parentMapFrame:GetCanvasScale();
 	parentScaleFactor = parentScaleFactor * Lerp(self.startScale, self.endScale, Saturate(self.scaleFactor * zoomPercent));
@@ -1204,7 +1205,7 @@ function WQT_PinMixin:UpdatePlacement(alpha)
 	self.Button:SetFrameLevel(self.baseFrameLevel + self.index);
 end
 
-function WQT_PinMixin:GetAlphas()
+function _M.WQT_PinMixin:GetAlphas()
 	if (self.questInfo:IsDisliked()) then
 		return min(self.startAlpha,0.5), 0.5;
 	end
@@ -1212,7 +1213,7 @@ function WQT_PinMixin:GetAlphas()
 	return self.startAlpha, self.endAlpha;
 end
 
-function WQT_PinMixin:ApplyScaledPosition(manualScale)
+function _M.WQT_PinMixin:ApplyScaledPosition(manualScale)
 	local canvas = self:GetParent();
 	local scale = manualScale or (1 / self.parentMapFrame:GetCanvasScale());
 	local posX, posY = self:GetNudgedPosition();
@@ -1222,7 +1223,7 @@ function WQT_PinMixin:ApplyScaledPosition(manualScale)
 	PixelUtil.SetPoint(self, "CENTER", canvas, "TOPLEFT", posX, posY);
 end
 
-function WQT_PinMixin:Focus(playPing)
+function _M.WQT_PinMixin:Focus(playPing)
 	if (not self.questID) then return; end
 	local parentScaleFactor = 1 / self.parentMapFrame:GetCanvasScale();
 	
@@ -1254,7 +1255,7 @@ function WQT_PinMixin:Focus(playPing)
 	self:UpdatePlacement(1);
 end
 
-function WQT_PinMixin:ClearFocus()
+function _M.WQT_PinMixin:ClearFocus()
 	if (not self.questID) then return; end
 	self:SetAlpha(self.currentAlpha);
 	self:SetScale(self.currentScale);
@@ -1276,7 +1277,7 @@ function WQT_PinMixin:ClearFocus()
 	self:UpdatePlacement();
 end
 
-function WQT_PinMixin:FadeIn()
+function _M.WQT_PinMixin:FadeIn()
 	local fadeInAnim = self:GetFadeInAnim();
 	local fadeOutAnim = self:GetFadeOutAnim();
 	if(fadeOutAnim:IsPlaying()) then fadeOutAnim:Stop(); end
@@ -1290,7 +1291,7 @@ function WQT_PinMixin:FadeIn()
 	end
 end
 
-function WQT_PinMixin:FadeOut()
+function _M.WQT_PinMixin:FadeOut()
 	local fadeInAnim = self:GetFadeInAnim();
 	local fadeOutAnim = self:GetFadeOutAnim();
 	if(fadeInAnim:IsPlaying()) then fadeInAnim:Stop(); end
@@ -1301,16 +1302,16 @@ function WQT_PinMixin:FadeOut()
 	end
 end
 
-function WQT_PinMixin:ResetNudge()
+function _M.WQT_PinMixin:ResetNudge()
 	self.nudgeX = nil;
 	self.nudgeY = nil;
 end
 
-function WQT_PinMixin:GetPosition()
+function _M.WQT_PinMixin:GetPosition()
 	return self.posX, self.posY;
 end
 
-function WQT_PinMixin:GetNudgedPosition()
+function _M.WQT_PinMixin:GetNudgedPosition()
 	if (self.nudgeX and self.nudgeY)then
 		
 		return self.nudgeX, self.nudgeY;
@@ -1318,7 +1319,7 @@ function WQT_PinMixin:GetNudgedPosition()
 	return self:GetPosition();
 end
 
-function WQT_PinMixin:SetNudge(x, y)
+function _M.WQT_PinMixin:SetNudge(x, y)
 	self.nudgeX = x;
 	self.nudgeY = y;
 end

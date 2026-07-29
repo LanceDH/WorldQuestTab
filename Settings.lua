@@ -2,6 +2,7 @@
 local WQT = addon.WQT;
 local _L = addon.loca;
 local _V = addon.variables;
+local _M = addon.mixins;
 local WQT_Profiles = addon.WQT_Profiles;
 
 local SETTING_SPACING = 2;
@@ -9,12 +10,12 @@ local SETTINGS_PADDING_TOP = 5;
 local SETTINGS_PADDING_BOTTOM = 15;
 
 --------------------------------
--- WQT_SettingsBaseMixin
+-- _M.WQT_SettingsBaseMixin
 --------------------------------
 
-WQT_SettingsBaseMixin = {};
+_M.WQT_SettingsBaseMixin = {};
 
-function WQT_SettingsBaseMixin:OnLoad()
+function _M.WQT_SettingsBaseMixin:OnLoad()
 	self.tooltipOffsetY = -self:GetHeight();
 
 
@@ -32,13 +33,13 @@ function WQT_SettingsBaseMixin:OnLoad()
 	self:SetHitRectInsets(0, 0, -topInset, topInset - SETTING_SPACING);
 end
 
-function WQT_SettingsBaseMixin:AnchorTooltip(anchorFrame, anchorType)
+function _M.WQT_SettingsBaseMixin:AnchorTooltip(anchorFrame, anchorType)
 	local offsetX = self.tooltipOffsetX or 0;
 	local offsetY = self.tooltipOffsetY or 0;
 	WQT_ActiveGameTooltip:SetOwner(anchorFrame or self, anchorType or "ANCHOR_RIGHT", offsetX, offsetY);
 end
 
-function WQT_SettingsBaseMixin:OnEnter(anchorFrame, anchorType)
+function _M.WQT_SettingsBaseMixin:OnEnter(anchorFrame, anchorType)
 	local tooltipText = self.tooltip;
 	if (tooltipText) then
 		self:AnchorTooltip(anchorFrame, anchorType);
@@ -57,7 +58,7 @@ function WQT_SettingsBaseMixin:OnEnter(anchorFrame, anchorType)
 	end
 end
 
-function WQT_SettingsBaseMixin:OnLeave()
+function _M.WQT_SettingsBaseMixin:OnLeave()
 	WQT_ActiveGameTooltip:Hide();
 
 	if (self.BgHighlight) then
@@ -65,7 +66,7 @@ function WQT_SettingsBaseMixin:OnLeave()
 	end
 end
 
-function WQT_SettingsBaseMixin:Init(data)
+function _M.WQT_SettingsBaseMixin:Init(data)
 	self.label = data.label;
 	self.tooltip = data.tooltip;
 	self.disabledTooltip = data.disabledTooltip;
@@ -84,7 +85,7 @@ function WQT_SettingsBaseMixin:Init(data)
 	end
 end
 
-function WQT_SettingsBaseMixin:Reset()
+function _M.WQT_SettingsBaseMixin:Reset()
 	self.label = nil;
 	self.tooltip = nil;
 	self.valueChangedFunc = nil;
@@ -93,14 +94,14 @@ function WQT_SettingsBaseMixin:Reset()
 	end
 end
 
-function WQT_SettingsBaseMixin:IsDisabled()
+function _M.WQT_SettingsBaseMixin:IsDisabled()
 	if (type(self.isDisabled) == "function") then
 		return self.isDisabled();
 	end
 	return false;
 end
 
-function WQT_SettingsBaseMixin:OnValueChanged(value, userInput, ...)
+function _M.WQT_SettingsBaseMixin:OnValueChanged(value, userInput, ...)
 	if (userInput) then
 		if (self.valueChangedFunc) then
 			self.valueChangedFunc(value, ...);
@@ -110,7 +111,7 @@ function WQT_SettingsBaseMixin:OnValueChanged(value, userInput, ...)
 	end
 end
 
-function WQT_SettingsBaseMixin:UpdateState()
+function _M.WQT_SettingsBaseMixin:UpdateState()
 	local isDisabled = self:IsDisabled();
 	self:SetDisabled(isDisabled);
 
@@ -119,7 +120,7 @@ function WQT_SettingsBaseMixin:UpdateState()
 	end
 end
 
-function WQT_SettingsBaseMixin:SetDisabled(value)
+function _M.WQT_SettingsBaseMixin:SetDisabled(value)
 	if (self.Label and not self.staticLabelFont) then
 		self.Label:SetFontObject(value and "GameFontDisable" or "GameFontNormal");
 	end
@@ -133,13 +134,13 @@ end
 -- WQT_SettingsQuestListMixin
 --------------------------------
 
-WQT_SettingsQuestListMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+_M.WQT_SettingsQuestListMixin = CreateFromMixins(_M.WQT_SettingsBaseMixin);
 
-function WQT_SettingsQuestListMixin:Init(data)
+function _M.WQT_SettingsQuestListMixin:Init(data)
 	self:UpdateState();
 end
 
-function WQT_SettingsQuestListMixin:OnLoad()
+function _M.WQT_SettingsQuestListMixin:OnLoad()
 	self.Preview:SetEnabledMixin(false);
 
 	-- 74160s == 20h 36m
@@ -166,7 +167,7 @@ function WQT_SettingsQuestListMixin:OnLoad()
 	 end;
 
 	self.Preview.Update = function(frame, questInfo, shouldShowZone)
-		WQT_ListButtonMixin.Update(frame, questInfo, shouldShowZone);
+		_M.WQT_ListButtonMixin.Update(frame, questInfo, shouldShowZone);
 		frame.TrackedBorder:Hide();
 		frame.Highlight:Hide();
 	end;
@@ -236,7 +237,7 @@ function WQT_SettingsQuestListMixin:OnLoad()
 	end
 end
 
-function WQT_SettingsQuestListMixin:UpdateState()
+function _M.WQT_SettingsQuestListMixin:UpdateState()
 	if (not self.dummyQuestInfo) then return; end
 
 	self.Preview:Update(self.dummyQuestInfo, true);
@@ -246,34 +247,34 @@ end
 -- WQT_SettingsCheckboxMixin
 --------------------------------
 
-WQT_SettingsCheckboxMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+_M.WQT_SettingsCheckboxMixin = CreateFromMixins(_M.WQT_SettingsBaseMixin);
 
-function WQT_SettingsCheckboxMixin:OnLoad()
-	WQT_SettingsBaseMixin.OnLoad(self);
+function _M.WQT_SettingsCheckboxMixin:OnLoad()
+	_M.WQT_SettingsBaseMixin.OnLoad(self);
 	self.CheckBox.parent = self;
 	self.DisabledOverlay.parent = self;
 end
 
-function WQT_SettingsCheckboxMixin:Init(data)
-	WQT_SettingsBaseMixin.Init(self, data);
+function _M.WQT_SettingsCheckboxMixin:Init(data)
+	_M.WQT_SettingsBaseMixin.Init(self, data);
 	self.getValueFunc = data.getValueFunc;
 	self:UpdateState();
 end
 
-function WQT_SettingsCheckboxMixin:Reset()
-	WQT_SettingsBaseMixin.Reset(self);
+function _M.WQT_SettingsCheckboxMixin:Reset()
+	_M.WQT_SettingsBaseMixin.Reset(self);
 	self.CheckBox:Enable();
 end
 
-function WQT_SettingsCheckboxMixin:UpdateState()
-	WQT_SettingsBaseMixin.UpdateState(self);
+function _M.WQT_SettingsCheckboxMixin:UpdateState()
+	_M.WQT_SettingsBaseMixin.UpdateState(self);
 	if (self.getValueFunc) then
 		self.CheckBox:SetChecked(self.getValueFunc());
 	end
 end
 
-function WQT_SettingsCheckboxMixin:SetDisabled(value)
-	WQT_SettingsBaseMixin.SetDisabled(self, value);
+function _M.WQT_SettingsCheckboxMixin:SetDisabled(value)
+	_M.WQT_SettingsBaseMixin.SetDisabled(self, value);
 	if (value) then
 		self.CheckBox:Disable();
 	else
@@ -285,10 +286,10 @@ end
 -- WQT_SettingsSliderMixin
 --------------------------------
 
-WQT_SettingsSliderMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+_M.WQT_SettingsSliderMixin = CreateFromMixins(_M.WQT_SettingsBaseMixin);
 
-function WQT_SettingsSliderMixin:OnLoad()
-	WQT_SettingsBaseMixin.OnLoad(self);
+function _M.WQT_SettingsSliderMixin:OnLoad()
+	_M.WQT_SettingsBaseMixin.OnLoad(self);
 
 	self.TextBox.parent = self;
 
@@ -310,8 +311,8 @@ function WQT_SettingsSliderMixin:OnLoad()
 		end, self);
 end
 
-function WQT_SettingsSliderMixin:Init(data)
-	WQT_SettingsBaseMixin.Init(self, data);
+function _M.WQT_SettingsSliderMixin:Init(data)
+	_M.WQT_SettingsBaseMixin.Init(self, data);
 	self.userInteracting = false;
 
 	self.getValueFunc = data.getValueFunc;
@@ -325,19 +326,19 @@ function WQT_SettingsSliderMixin:Init(data)
 	self:UpdateState();
 end
 
-function WQT_SettingsSliderMixin:GetValue()
+function _M.WQT_SettingsSliderMixin:GetValue()
 	if(type(self.getValueFunc) =="function") then
 		return self.getValueFunc();
 	end
 	return self.min or 0;
 end
 
-function WQT_SettingsSliderMixin:Reset()
-	WQT_SettingsBaseMixin.Reset(self);
+function _M.WQT_SettingsSliderMixin:Reset()
+	_M.WQT_SettingsBaseMixin.Reset(self);
 end
 
-function WQT_SettingsSliderMixin:UpdateState()
-	WQT_SettingsBaseMixin.UpdateState(self);
+function _M.WQT_SettingsSliderMixin:UpdateState()
+	_M.WQT_SettingsBaseMixin.UpdateState(self);
 	if (self.getValueFunc) then
 		local currentValue = self.getValueFunc();
 		self.SliderWithSteppers:SetValue(currentValue);
@@ -346,14 +347,14 @@ function WQT_SettingsSliderMixin:UpdateState()
 	end
 end
 
-function WQT_SettingsSliderMixin:SetDisabled(value)
-	WQT_SettingsBaseMixin.SetDisabled(self, value);
+function _M.WQT_SettingsSliderMixin:SetDisabled(value)
+	_M.WQT_SettingsBaseMixin.SetDisabled(self, value);
 	self.SliderWithSteppers:SetEnabled(not value);
 	self.TextBox:SetEnabled(not value);
 	self:UpdateTextBoxText();
 end
 
-function WQT_SettingsSliderMixin:UpdateTextBoxText()
+function _M.WQT_SettingsSliderMixin:UpdateTextBoxText()
 	local currentValue = self:GetValue();
 	local text = RoundToSignificantDigits(currentValue, 2);
 	if (not self.TextBox:IsEnabled()) then
@@ -362,7 +363,7 @@ function WQT_SettingsSliderMixin:UpdateTextBoxText()
 	self.TextBox:SetText(text);
 end
 
-function WQT_SettingsSliderMixin:OnValueChanged(value, userInput)
+function _M.WQT_SettingsSliderMixin:OnValueChanged(value, userInput)
 	-- Prevent non-number input
 	value = tonumber(value);
 	if (not value) then 
@@ -374,7 +375,7 @@ function WQT_SettingsSliderMixin:OnValueChanged(value, userInput)
 	value = RoundToSignificantDigits(value, 2);
 	value = Clamp(value, self.min, self.max);
 	if (userInput and value ~= self.current) then
-		WQT_SettingsBaseMixin.OnValueChanged(self, value, userInput);
+		_M.WQT_SettingsBaseMixin.OnValueChanged(self, value, userInput);
 	end
 end
 
@@ -382,10 +383,10 @@ end
 -- WQT_SettingsColorMixin
 --------------------------------
 
-WQT_SettingsColorMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+_M.WQT_SettingsColorMixin = CreateFromMixins(_M.WQT_SettingsBaseMixin);
 
-function WQT_SettingsColorMixin:OnLoad()
-	WQT_SettingsBaseMixin.OnLoad(self);
+function _M.WQT_SettingsColorMixin:OnLoad()
+	_M.WQT_SettingsBaseMixin.OnLoad(self);
 
 	self.Picker.parent = self;
 
@@ -398,8 +399,8 @@ function WQT_SettingsColorMixin:OnLoad()
 	self.ExampleRing.Ring:Show();
 end
 
-function WQT_SettingsColorMixin:Init(data)
-	WQT_SettingsBaseMixin.Init(self, data);
+function _M.WQT_SettingsColorMixin:Init(data)
+	_M.WQT_SettingsBaseMixin.Init(self, data);
 	self.getValueFunc = data.getValueFunc;
 	self.defaultColor = data.defaultColor;
 	self.colorID = data.colorID;
@@ -407,7 +408,7 @@ function WQT_SettingsColorMixin:Init(data)
 	self:UpdateState();
 end
 
-function WQT_SettingsColorMixin:UpdateState()
+function _M.WQT_SettingsColorMixin:UpdateState()
 	if (self.getValueFunc) then
 		local color = self.getValueFunc(self.colorID);
 		self:SetWidgetRGB(color:GetRGB());
@@ -420,18 +421,18 @@ function WQT_SettingsColorMixin:UpdateState()
 	self:Layout();
 end
 
-function WQT_SettingsColorMixin:SetResetEnabled(enable)
+function _M.WQT_SettingsColorMixin:SetResetEnabled(enable)
 	self.ResetButton:SetShown(enable);
 	self:Layout();
 end
 
-function WQT_SettingsColorMixin:ResetColor(userInput)
+function _M.WQT_SettingsColorMixin:ResetColor(userInput)
 	local r, g, b = self.defaultColor:GetRGB();
 	self:SetWidgetRGB(r, g, b);
 	self:OnValueChanged(self.colorID, userInput, r, g, b);
 end
 
-function WQT_SettingsColorMixin:SetWidgetRGB(r, g, b)
+function _M.WQT_SettingsColorMixin:SetWidgetRGB(r, g, b)
 	self.ExampleText:SetVertexColor(r, g, b);
 	self.ExampleRing.Ring:SetSwipeColor(r, g, b);
 	self.ExampleRing.RingBG:SetVertexColor(r, g, b);
@@ -439,13 +440,13 @@ function WQT_SettingsColorMixin:SetWidgetRGB(r, g, b)
 	self.Picker.Color:SetVertexColor(r, g, b);
 end
 
-function WQT_SettingsColorMixin:UpdateFromPicker()
+function _M.WQT_SettingsColorMixin:UpdateFromPicker()
 	local r, g, b = ColorPickerFrame:GetColorRGB();
 	self:SetWidgetRGB(r, g, b);
 	self:OnValueChanged(self.colorID, true, r, g, b);
 end
 
-function WQT_SettingsColorMixin:StartPicking()
+function _M.WQT_SettingsColorMixin:StartPicking()
 	if (not self.getValueFunc) then return; end
 	
 	local color = self.getValueFunc(self.colorID);
@@ -468,7 +469,7 @@ function WQT_SettingsColorMixin:StartPicking()
 	ColorPickerFrame:SetupColorPickerAndShow(colorInfo);
 end
 
-function WQT_SettingsColorMixin:StopPicking()
+function _M.WQT_SettingsColorMixin:StopPicking()
 	self.Label:Show();
 	self.ExampleText:Hide();
 	self.ExampleRing:Hide();
@@ -479,16 +480,16 @@ end
 -- WQT_SettingsDropDownMixin
 --------------------------------
 
-WQT_SettingsDropDownMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+_M.WQT_SettingsDropDownMixin = CreateFromMixins(_M.WQT_SettingsBaseMixin);
 
-function WQT_SettingsDropDownMixin:OnLoad()
-	WQT_SettingsBaseMixin.OnLoad(self);
+function _M.WQT_SettingsDropDownMixin:OnLoad()
+	_M.WQT_SettingsBaseMixin.OnLoad(self);
 
 	self.Dropdown.parent = self;
 end
 
-function WQT_SettingsDropDownMixin:Init(data)
-	WQT_SettingsBaseMixin.Init(self, data);
+function _M.WQT_SettingsDropDownMixin:Init(data)
+	_M.WQT_SettingsBaseMixin.Init(self, data);
 
 	self.Dropdown.data = data;
 	self.Dropdown:SetupMenu(function(dropdown, rootDescription) self:DropdownSetup(dropdown, rootDescription) end);
@@ -496,12 +497,12 @@ function WQT_SettingsDropDownMixin:Init(data)
 	self:UpdateState();
 end
 
-function WQT_SettingsDropDownMixin:SetDisabled(value)
-	WQT_SettingsBaseMixin.SetDisabled(self, value);
+function _M.WQT_SettingsDropDownMixin:SetDisabled(value)
+	_M.WQT_SettingsBaseMixin.SetDisabled(self, value);
 	self.Dropdown:SetEnabled(not value);
 end
 
-function WQT_SettingsDropDownMixin:DropdownSetup(dropdown, rootDescription)
+function _M.WQT_SettingsDropDownMixin:DropdownSetup(dropdown, rootDescription)
 	local tag = string.format("WQT_SETTINGS_DROPDOWN_%s", dropdown.data.tag);
 	rootDescription:SetTag(tag);
 
@@ -526,8 +527,8 @@ function WQT_SettingsDropDownMixin:DropdownSetup(dropdown, rootDescription)
 	end
 end
 
-function WQT_SettingsDropDownMixin:OnEnter(anchorFrame, anchorType)
-	WQT_SettingsBaseMixin.OnEnter(self, anchorFrame, anchorType);
+function _M.WQT_SettingsDropDownMixin:OnEnter(anchorFrame, anchorType)
+	_M.WQT_SettingsBaseMixin.OnEnter(self, anchorFrame, anchorType);
 
 	local options = self.Dropdown.data.options;
 	if (type(options) ==  "function") then
@@ -549,43 +550,43 @@ end
 --------------------------------
 -- WQT_SettingsButtonMixin
 --------------------------------
-WQT_SettingFunctionalButtonMixin = {};
+_M.WQT_SettingFunctionalButtonMixin = {};
 
-function WQT_SettingFunctionalButtonMixin:OnLoad()
-	WQT_SettingsBaseMixin.OnLoad(self);
+function _M.WQT_SettingFunctionalButtonMixin:OnLoad()
+	_M.WQT_SettingsBaseMixin.OnLoad(self);
 	if (not self.label) then return; end
 	self.Label:SetText(self.label);
 end
 
-function WQT_SettingFunctionalButtonMixin:OnEnter()
+function _M.WQT_SettingFunctionalButtonMixin:OnEnter()
 	if (not self.parent) then return; end
 	self.parent:OnEnter(self.parent);
 end
 
-function WQT_SettingFunctionalButtonMixin:OnLeave()
+function _M.WQT_SettingFunctionalButtonMixin:OnLeave()
 	if (not self.parent) then return; end
 	self.parent:OnLeave();
 end
 
-function WQT_SettingFunctionalButtonMixin:OnMouseDown()
+function _M.WQT_SettingFunctionalButtonMixin:OnMouseDown()
 	self.Label:AdjustPointsOffset(1, -1);
 end
 
-function WQT_SettingFunctionalButtonMixin:OnMouseUp()
+function _M.WQT_SettingFunctionalButtonMixin:OnMouseUp()
 	self.Label:AdjustPointsOffset(-1, 1);
 end
 
 
-WQT_SettingsButtonMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+_M.WQT_SettingsButtonMixin = CreateFromMixins(_M.WQT_SettingsBaseMixin);
 
-function WQT_SettingsButtonMixin:OnLoad()
-	WQT_SettingsBaseMixin.OnLoad(self);
+function _M.WQT_SettingsButtonMixin:OnLoad()
+	_M.WQT_SettingsBaseMixin.OnLoad(self);
 	self.Label = self.Button.Label;
 	self.Button.parent = self;
 end
 
-function WQT_SettingsButtonMixin:SetDisabled(value)
-	WQT_SettingsBaseMixin.SetDisabled(self, value);
+function _M.WQT_SettingsButtonMixin:SetDisabled(value)
+	_M.WQT_SettingsBaseMixin.SetDisabled(self, value);
 	if (value) then
 		self.Button:Disable();
 	else
@@ -593,8 +594,8 @@ function WQT_SettingsButtonMixin:SetDisabled(value)
 	end
 end
 
-function WQT_SettingsButtonMixin:Init(data)
-	WQT_SettingsBaseMixin.Init(self, data);
+function _M.WQT_SettingsButtonMixin:Init(data)
+	_M.WQT_SettingsBaseMixin.Init(self, data);
 	self:UpdateState();
 end
 
@@ -602,10 +603,10 @@ end
 -- WQT_SettingsConfirmButtonMixin
 --------------------------------
 
-WQT_SettingsConfirmButtonMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+_M.WQT_SettingsConfirmButtonMixin = CreateFromMixins(_M.WQT_SettingsBaseMixin);
 
-function WQT_SettingsConfirmButtonMixin:OnLoad()
-	WQT_SettingsBaseMixin.OnLoad(self);
+function _M.WQT_SettingsConfirmButtonMixin:OnLoad()
+	_M.WQT_SettingsBaseMixin.OnLoad(self);
 	self.Label = self.Button.Label;
 
 	self.Button.parent = self;
@@ -625,8 +626,8 @@ function WQT_SettingsConfirmButtonMixin:OnLoad()
 	self:Layout();
 end
 
-function WQT_SettingsConfirmButtonMixin:SetDisabled(value)
-	WQT_SettingsBaseMixin.SetDisabled(self, value);
+function _M.WQT_SettingsConfirmButtonMixin:SetDisabled(value)
+	_M.WQT_SettingsBaseMixin.SetDisabled(self, value);
 	if (value) then
 		self.Button:Disable();
 	else
@@ -634,17 +635,17 @@ function WQT_SettingsConfirmButtonMixin:SetDisabled(value)
 	end
 end
 
-function WQT_SettingsConfirmButtonMixin:Init(data)
-	WQT_SettingsBaseMixin.Init(self, data);
+function _M.WQT_SettingsConfirmButtonMixin:Init(data)
+	_M.WQT_SettingsBaseMixin.Init(self, data);
 	self:SetPickingState(false);
 end
 
-function WQT_SettingsConfirmButtonMixin:OnValueChanged(value, userInput)
+function _M.WQT_SettingsConfirmButtonMixin:OnValueChanged(value, userInput)
 	self:SetPickingState(false);
-	WQT_SettingsBaseMixin.OnValueChanged(self, value, userInput);
+	_M.WQT_SettingsBaseMixin.OnValueChanged(self, value, userInput);
 end
 
-function WQT_SettingsConfirmButtonMixin:SetPickingState(isPicking)
+function _M.WQT_SettingsConfirmButtonMixin:SetPickingState(isPicking)
 	self.isPicking = isPicking;
 
 	self.Button:SetShown(not self.isPicking);
@@ -657,26 +658,26 @@ end
 -- WQT_SettingsTextInputMixin
 --------------------------------
 
-WQT_SettingsTextInputMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+_M.WQT_SettingsTextInputMixin = CreateFromMixins(_M.WQT_SettingsBaseMixin);
 
-function WQT_SettingsTextInputMixin:OnLoad()
-	WQT_SettingsBaseMixin.OnLoad(self);
+function _M.WQT_SettingsTextInputMixin:OnLoad()
+	_M.WQT_SettingsBaseMixin.OnLoad(self);
 
 	self.TextBox.parent = self;
 end
 
-function WQT_SettingsTextInputMixin:Init(data)
-	WQT_SettingsBaseMixin.Init(self, data);
+function _M.WQT_SettingsTextInputMixin:Init(data)
+	_M.WQT_SettingsBaseMixin.Init(self, data);
 	self.getValueFunc = data.getValueFunc;
 	self:UpdateState();
 end
 
-function WQT_SettingsTextInputMixin:Reset()
-	WQT_SettingsBaseMixin.Reset(self);
+function _M.WQT_SettingsTextInputMixin:Reset()
+	_M.WQT_SettingsBaseMixin.Reset(self);
 end
 
-function WQT_SettingsTextInputMixin:UpdateState()
-	WQT_SettingsBaseMixin.UpdateState(self);
+function _M.WQT_SettingsTextInputMixin:UpdateState()
+	_M.WQT_SettingsBaseMixin.UpdateState(self);
 	if (self.getValueFunc) then
 		local currentValue = self.getValueFunc() or "";
 		self.TextBox:SetText(currentValue);
@@ -684,8 +685,8 @@ function WQT_SettingsTextInputMixin:UpdateState()
 	end
 end
 
-function WQT_SettingsTextInputMixin:SetDisabled(value)
-	WQT_SettingsBaseMixin.SetDisabled(self, value);
+function _M.WQT_SettingsTextInputMixin:SetDisabled(value)
+	_M.WQT_SettingsBaseMixin.SetDisabled(self, value);
 	if (value) then
 		self.TextBox:Disable();
 	else
@@ -693,7 +694,7 @@ function WQT_SettingsTextInputMixin:SetDisabled(value)
 	end
 end
 
-function WQT_SettingsTextInputMixin:OnValueChanged(value, userInput)
+function _M.WQT_SettingsTextInputMixin:OnValueChanged(value, userInput)
 	if (not value or value == "") then
 		-- Reset displayed values
 		self:UpdateState();
@@ -701,7 +702,7 @@ function WQT_SettingsTextInputMixin:OnValueChanged(value, userInput)
 	end
 
 	if (userInput and value ~= self.current) then
-		WQT_SettingsBaseMixin.OnValueChanged(self, value, userInput);
+		_M.WQT_SettingsBaseMixin.OnValueChanged(self, value, userInput);
 	end
 	self:UpdateState();
 end
@@ -711,12 +712,12 @@ end
 -- WQT_SettingsTextMixin
 --------------------------------
 
-WQT_SettingsTextMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+_M.WQT_SettingsTextMixin = CreateFromMixins(_M.WQT_SettingsBaseMixin);
 
-function WQT_SettingsTextMixin:Init(data)
+function _M.WQT_SettingsTextMixin:Init(data)
 	-- Force absurd height to make sure we get the correct GetStringHeight after SetText
 	self.Label:SetHeight(200);
-	WQT_SettingsBaseMixin.Init(self, data);
+	_M.WQT_SettingsBaseMixin.Init(self, data);
 	self.Label:SetFontObject(data.font or "GameFontHighlight");
 	local color = data.color or NORMAL_FONT_COLOR;
 	self.Label:SetTextColor(color:GetRGB());
@@ -737,10 +738,10 @@ end
 -- WQT_SettingsCategoryMixin
 --------------------------------
 
-WQT_SettingsCategoryMixin = CreateFromMixins(WQT_SettingsBaseMixin);
+_M.WQT_SettingsCategoryMixin = CreateFromMixins(_M.WQT_SettingsBaseMixin);
 
-function WQT_SettingsCategoryMixin:Init(data)
-	WQT_SettingsBaseMixin.Init(self, data);
+function _M.WQT_SettingsCategoryMixin:Init(data)
+	_M.WQT_SettingsBaseMixin.Init(self, data);
 	self.id = data.id;
 	self.isExpanded = data.expanded;
 	self.settings = {};
@@ -749,8 +750,8 @@ function WQT_SettingsCategoryMixin:Init(data)
 	self:UpdateState();
 end
 
-function WQT_SettingsCategoryMixin:UpdateState()
-	WQT_SettingsBaseMixin.UpdateState(self);
+function _M.WQT_SettingsCategoryMixin:UpdateState()
+	_M.WQT_SettingsBaseMixin.UpdateState(self);
 	if(self.ExpandIcon) then
 		self.ExpandIcon:SetAtlas(self.isExpanded and "UI-QuestTrackerButton-Secondary-Collapse" or "UI-QuestTrackerButton-Secondary-Expand", true);
 	elseif(self.BGRight) then
@@ -758,7 +759,7 @@ function WQT_SettingsCategoryMixin:UpdateState()
 	end
 end
 
-function WQT_SettingsCategoryMixin:SetExpanded(value)
+function _M.WQT_SettingsCategoryMixin:SetExpanded(value)
 	self.isExpanded = value;
 	WQT_CallbackRegistry:TriggerEvent("WQT.Settings.CategoryToggled", self.categoryID, self.isExpanded);
 end
@@ -1037,9 +1038,9 @@ end
 -- WQT_SettingsFrameMixin
 --------------------------------
 
-WQT_SettingsFrameMixin = {};
+_M.WQT_SettingsFrameMixin = {};
 
-function WQT_SettingsFrameMixin:OnLoad()
+function _M.WQT_SettingsFrameMixin:OnLoad()
 	self.TitleText:SetText(SETTINGS);
 
 	self.dataContainer = CreateAndInitFromMixin(WQT_SettingsDataContainerMixin);
@@ -1099,7 +1100,7 @@ local function CreateDropdownOption(id, label, tooltip)
 	return { id = id, label = label, tooltip = tooltip};
 end
 
-function WQT_SettingsFrameMixin:Init()
+function _M.WQT_SettingsFrameMixin:Init()
 	WQT_CallbackRegistry:RegisterCallback("WQT.Settings.CategoryToggled",
 		function(_, categoryID)
 			local foundCategory = self.dataContainer:GetCategoryByID(categoryID);
@@ -1169,6 +1170,13 @@ function WQT_SettingsFrameMixin:Init()
 		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
 
+		do -- 12.1.01
+			StartVersionCategory("12.1.01");
+			AddSection(ChangelogSections.Intro, {
+				"Update for patch 12.1.0";
+			});
+		end
+
 		do -- 12.0.14
 			StartVersionCategory("12.0.14");
 			AddSection(ChangelogSections.Changes, {
@@ -1184,7 +1192,6 @@ function WQT_SettingsFrameMixin:Init()
 			StartVersionCategory("12.0.13");
 			AddSection(ChangelogSections.Changes, {
 				"Added map pins for Naigtal and Val on the Voidstorm map";
-				"Separated map pins for Naigtal and Val on the Quel'Thalas map";
 				"When sorting by faction, quests with a faction now take priority over quests without";
 			});
 			AddSection(ChangelogSections.Fixes, {
@@ -1327,168 +1334,6 @@ function WQT_SettingsFrameMixin:Init()
 				"Fixed item amounts not always showing correct the first time";
 			});
 		end
-
-		do -- 11.2.13
-			StartVersionCategory("11.2.13");
-			AddSection(ChangelogSections.Changes, {
-				"Loca update for zhCN and zhTW";
-			});
-			AddSection(ChangelogSections.Fixes, {
-				"Fixed an error on loging when using the 'Default Tab' setting";
-			});
-		end
-
-		do -- 11.2.12
-			StartVersionCategory("11.2.12");
-			AddSection(ChangelogSections.Fixes, {
-				"Fixed the TomTom Pin option in the right click menu not working";
-				"Fixed TomTom integration not working at all with WindTools enabled";
-			});
-		end
-
-		do -- 11.2.11
-			StartVersionCategory("11.2.11");
-			AddSection(ChangelogSections.Changes, {
-				"Improved map tab compatibility with other addons";
-			});
-		end
-
-		do -- 11.2.10
-			StartVersionCategory("11.2.10");
-			AddSection(ChangelogSections.Intro, {
-				"Update for patch 11.2.7";
-			});
-			AddSection(ChangelogSections.Changes, {
-				"Some optimizations to quest list updating";
-				"Some tweaks to dealing with overlapping pins";
-				"Moved the 'Anima' and 'Conduids' reward filters to the 'Other' category";
-			});
-			AddSection(ChangelogSections.Fixes, {
-				"Fixed some flight maps not showing quests with 'Zone Quests' set to 'Zone Only'";
-				"Made quests in Tazavesh show up on the K'aresh map with 'Zone Quests' set to 'Zone Only'";
-				"Fixed quests not showing in Stranglethron Vale with 'Zone Quests' set to 'Zone Only'";
-				"Fixed quests not showing on the Argus flight map in general";
-				"Fixed an issue with TomTom arrows now always working";
-				"Fixed some taint issues caused by the tab button";
-			});
-		end
-
-		do -- 11.2.09
-			StartVersionCategory("11.2.09");
-			AddSection(ChangelogSections.Changes, {
-				"Reworked the settings menu. Let me know if I broke anything";
-				"Checkbox and color picker settings can now be clicked across their entire size";
-				"Changed the 'Tracking' checkmark on map pins with blizzard's waypoint icon, where a glowing one will indicate if it's your current waypoint";
-				"The quest that is the current waypoint now has a brighter border";
-			});
-		end
-
-		do -- 11.2.08
-			StartVersionCategory("11.2.08");
-			AddSection(ChangelogSections.New, {
-				"Added new setting General - Zone Quests: Choose for zones to only show quests for that zone, include neighbouring zones, or all quests for the related expansion";
-			});
-			AddSection(ChangelogSections.Changes, {
-				"Combined the Always All Quests setting into the new Zone Quests setting";
-				"Re-added an icon to make it easier to spot new or changed settings";
-				"Lowered CPU usage when nothing is going on. Not that it was needed, but might as well.";
-			});
-		end
-
-		do -- 11.2.07
-			StartVersionCategory("11.2.07");
-			AddSection(ChangelogSections.Changes, {
-				"Made the reward quality in the quest list more clear";
-			});
-			AddSection(ChangelogSections.Fixes, {
-				"Fixed the right click menu on map pins not showing";
-			});
-		end
-
-		do -- 11.2.06
-			StartVersionCategory("11.2.06");
-			AddSection(ChangelogSections.New, {
-				"Added an option to Map Pins - Main Icon Type to show the quest's faction icon";
-				"Added an option for the pin label to show the amount of the main quest reward";
-				"Added an option to toggle the text colors of the map pin label";
-			});
-			AddSection(ChangelogSections.Changes, {
-				"Moved the map pin Time Label setting into a dropdown together with the new reward amount setting";
-				"Slightly increased the interaction area of map pins";
-				"Some visual changes to pin labels which seems to have also fixed jittery pin visuals";
-				"Reworked how quests info structured. Easier to maintain and seems to have fixed glitchy quest title positioning";
-			});
-			AddSection(ChangelogSections.Fixes, {
-				"Fixed an issue with the Party Sync feature";
-				"Fixed times in the quest list not properly updating below 1 hour with Expand Times enabled";
-			});
-		end
-
-		do -- 11.2.05
-			StartVersionCategory("11.2.05");
-			AddSection(ChangelogSections.Intro, {
-				"Update for patch 11.2.5";
-			});
-			AddSection(ChangelogSections.Changes, {
-				"Moved the changelog into the settings menu";
-				"Minor tweaks to the visuals of quests in the list";
-			});
-		end
-
-		do -- 11.2.04
-			StartVersionCategory("11.2.04");
-			AddSection(ChangelogSections.Changes, {
-				"Slightly lightened up the visuals of map pins";
-			});
-			AddSection(ChangelogSections.Fixes, {
-				"Fixed a possible error in areas such as Island Expeditions with Always All Quests enabled";
-				"Fixed a possible error with other add-ons adding tabs to the world map";
-			});
-		end
-
-		do -- 11.2.03
-			StartVersionCategory("11.2.03");
-			AddSection(ChangelogSections.New, {
-				"Warband bonus reward icons for both the quest list and map pins (default off)";
-			});
-			AddSection(ChangelogSections.Fixes, {
-				"Fixed tooltip rewards not showing if its appearance isn't collected yet";
-				"Fixed tooltips not showing a message regarding one-time warband bonus reputation";
-				"Fixed a possible error for characters level 70-79";
-				"Fixed some issues with Asian reward amount. Maybe, I can't actually test this myself";
-				"Fixed the zhTW loca just straight up not getting loaded (woops)";
-				"Fixed an error in the settings with Warmode enabled";
-			});
-		end
-
-		do -- 11.2.02
-			StartVersionCategory("11.2.02");
-			AddSection(ChangelogSections.Changes, {
-				"Increased the max rewards in the quest list from 4 to 5";
-			});
-			AddSection(ChangelogSections.Fixes, {
-				"Fixed an issue where some settings wouldn't save between reloads";
-				"Fixed an issue that caused some quests to show up while on the Azeroth map that shouldn't";
-				"Fixed incorrect reward amounts using War Mode";
-				"Fixed item level on relic rewards";
-				"Fixed Zereth Mortis quests not showing while on the Shadowlands map";
-			});
-		end
-
-		do -- 11.2.01
-			StartVersionCategory("11.2.01");
-			AddSection(ChangelogSections.Intro, {
-				"Update for patch 11.2";
-				"Note: It's possible you might not see all quests available in K'aresh unless you are physically inside the zone. This is an issue on Blizzard's end.";
-			});
-			AddSection(ChangelogSections.Changes, {
-				"Made some changes to which quests show up in the list";
-				"Using the Blizzard's map filters will once again affect the pins and quest list";
-			});
-			AddSection(ChangelogSections.Fixes, {
-				"Fixed a possible error with the custom Shadowlands bounty board";
-			});
-		end
 	end -- Changelog
 
 	do -- Profiles
@@ -1571,7 +1416,6 @@ function WQT_SettingsFrameMixin:Init()
 				WQT:UpdateActiveGameTooltip();
 			end);
 			data:MarkAsSuggestReload();
-			data:MarkAsNew(); -- 12.0.0
 		end
 
 		do -- Zone Quests
@@ -1733,7 +1577,6 @@ function WQT_SettingsFrameMixin:Init()
 			data:SetGetValueFunction(function() return WQT.settings.pin.trackingGlow; end);
 			data:SetValueChangedFunction(function(value) WQT.settings.pin.trackingGlow = value; end);
 			data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
-			data:MarkAsNew(); -- 12.0.0
 		end
 
 		do
@@ -1847,7 +1690,6 @@ function WQT_SettingsFrameMixin:Init()
 				data:SetGetValueFunction(function() return WQT.settings.pin.trackingIcon; end);
 				data:SetValueChangedFunction(function(value) WQT.settings.pin.trackingIcon = value; end);
 				data:SetIsDisabledFunction(function() return WQT.settings.pin.disablePoI; end);
-				data:MarkAsNew(); -- 12.0.0
 			end
 
 			do -- Favorite
@@ -1952,7 +1794,7 @@ function WQT_SettingsFrameMixin:Init()
 	end -- Colors
 end
 
-function WQT_SettingsFrameMixin:Reconstruct()
+function _M.WQT_SettingsFrameMixin:Reconstruct()
 	if (not self.dataContainer) then return; end
 
 	local dataProvider = CreateDataProvider();
@@ -1960,6 +1802,6 @@ function WQT_SettingsFrameMixin:Reconstruct()
 	self.ScrollBox:SetDataProvider(dataProvider , ScrollBoxConstants.RetainScrollPosition);
 end
 
-function WQT_SettingsFrameMixin:OnShow()
+function _M.WQT_SettingsFrameMixin:OnShow()
 	self:Reconstruct();
 end

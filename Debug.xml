@@ -68,8 +68,10 @@
 		</Layers>
 	</Frame>
 
-	<Frame name="WQT_DevFrame" parent="UIParent" inherits="VerticalLayoutFrame" mixin="WQT_DevMixin" 
-		movable="true" enableMouse="true" toplevel="true" frameStrata="MEDIUM" hidden="true">
+	<Frame name="WQT_DevFrameTemplate" parent="UIParent" inherits="VerticalLayoutFrame" movable="true" enableMouse="true" toplevel="true" frameStrata="MEDIUM" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_DevMixin" source="local"/>
+		</Mixins>
 		<Size x="200" y="100"/>
 		<Anchors>
 			<Anchor point="CENTER" x="300" />

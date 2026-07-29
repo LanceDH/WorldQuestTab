@@ -4,7 +4,10 @@
 
 	<Script file="CallingsBoard.lua"/>
 	
-	<Button name="WQT_CallingBoardDisplay" mixin="WQT_CallingsBoardDisplayMixin" virtual="true" parentArray="Displays">
+	<Button name="WQT_CallingBoardDisplay" virtual="true" parentArray="Displays">
+		<Mixins>
+			<Mixin key="mixins.WQT_CallingsBoardDisplayMixin" source="local"/>
+		</Mixins>
 		<Size x="50" y="50"/>
 		<Layers>
 		
@@ -84,7 +87,6 @@
 			</Frame>
 		</Frames>
 		
-		
 		<Scripts>
 			<OnEnter method="OnEnter"/>
 			<OnLeave method="OnLeave"/>
@@ -92,7 +94,10 @@
 		</Scripts>
 	</Button>
 
-	<Frame name="WQT_CallingsBoard" mixin="WQT_CallingsBoardMixin" frameStrata="HIGH" hidden="true">
+	<Frame name="WQT_CallingsBoard" frameStrata="HIGH" hidden="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_CallingsBoardMixin" source="local"/>
+		</Mixins>
 		<Size x="180" y="65"/>
 		<HitRectInsets top="-5" right="-5" bottom="5" left="5"/>
 	
