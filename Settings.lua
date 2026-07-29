@@ -10,7 +10,7 @@ local SETTINGS_PADDING_TOP = 5;
 local SETTINGS_PADDING_BOTTOM = 15;
 
 --------------------------------
--- _M.WQT_SettingsBaseMixin
+-- WQT_SettingsBaseMixin
 --------------------------------
 
 _M.WQT_SettingsBaseMixin = {};
@@ -1174,6 +1174,9 @@ function _M.WQT_SettingsFrameMixin:Init()
 			StartVersionCategory("12.1.01");
 			AddSection(ChangelogSections.Intro, {
 				"Update for patch 12.1.0";
+			});
+			AddSection(ChangelogSections.Changes, {
+				"Slightly adjusted the position of the Shadowlands calling board to make room for the new player/cursor coordinates";
 			});
 		end
 

@@ -6,25 +6,25 @@ local _M = addon.mixins;
 local MAX_CALLINGS = 3;
 
 local MAP_ANCHORS = {
-	[1543] = { ["Point"] = "BOTTOMLEFT"}, -- The Maw
-	[1536] = { ["Point"] = "BOTTOMLEFT"}, -- Maldraxxus
-	[1698] = { ["Point"] = "BOTTOMLEFT"}, -- Maldraxxus
-	[1525] = { ["Point"] = "BOTTOMLEFT"}, -- Revendreth
-	[1699] = { ["Point"] = "BOTTOMLEFT"}, -- Revendreth Covenant
-	[1700] = { ["Point"] = "BOTTOMLEFT"}, -- Revendreth Covenant
+	[1543] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- The Maw
+	[1536] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Maldraxxus
+	[1698] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Maldraxxus
+	[1525] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Revendreth
+	[1699] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Revendreth Covenant
+	[1700] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Revendreth Covenant
 	[1670] = { ["Point"] = "BOTTOMRIGHT"}, -- Oribos
 	[1671] = { ["Point"] = "BOTTOMRIGHT"}, -- Oribos
 	[1672] = { ["Point"] = "BOTTOMRIGHT"}, -- Oribos
 	[1673] = { ["Point"] = "BOTTOMRIGHT"}, -- Oribos
-	[1533] = { ["Point"] = "BOTTOMLEFT"}, -- Bastion
-	[1707] = { ["Point"] = "BOTTOMLEFT"}, -- Bastion Covenant
-	[1708] = { ["Point"] = "BOTTOMLEFT"}, -- Bastion Covenant
-	[1565] = { ["Point"] = "BOTTOMLEFT"}, -- Ardenweald
-	[1701] = { ["Point"] = "BOTTOMLEFT"}, -- Ardenweald Covenant
-	[1702] = { ["Point"] = "BOTTOMLEFT"}, -- Ardenweald Covenant
-	[1703] = { ["Point"] = "BOTTOMLEFT"}, -- Ardenweald Covenant
+	[1533] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Bastion
+	[1707] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Bastion Covenant
+	[1708] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Bastion Covenant
+	[1565] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Ardenweald
+	[1701] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Ardenweald Covenant
+	[1702] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Ardenweald Covenant
+	[1703] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Ardenweald Covenant
 	[1550] = { ["Point"] = "BOTTOMLEFT", ["y"] = 80}, -- Shadowlands
-	[1970] = { ["Point"] = "BOTTOMLEFT"}, -- Zereth
+	[1970] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Zereth
 }
 
 local CovenantCallingsEvents = {
