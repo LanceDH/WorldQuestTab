@@ -33,10 +33,11 @@
 			</Layer>
 			
 			<Layer level="ARTWORK">
-				<FontString parentKey="Label" inherits="GameFontHighlightMedium" maxLines="1" justifyH="CENTER">
+				<FontString parentKey="Label" inherits="GameFontHighlightMedium" maxLines="1" justifyH="CENTER" justifyV="MIDDLE">
+					<Size y="24"/>
 					<Anchors>
-						<Anchor point="LEFT" x="30" y="0"/>
-						<Anchor point="RIGHT" x="-30" y="0"/>
+						<Anchor point="LEFT" x="30" y="-1"/>
+						<Anchor point="RIGHT" x="-30" y="-1"/>
 					</Anchors>
 				</FontString>
 			</Layer>
@@ -61,10 +62,9 @@
 			</Layer>
 		</Layers>
 		<Scripts>
-			<OnClick>
-				self:SetExpanded(not self.isExpanded);
-				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-			</OnClick>
+			<OnClick method="OnClick" />
+			<OnMouseDown method="OnMouseDown" />
+			<OnMouseUp method="OnMouseUp" />
 		</Scripts>
 	</Button>
 	
@@ -86,10 +86,11 @@
 				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
-				<FontString parentKey="Label" inherits="GameFontHighlight" maxLines="1" justifyH="CENTER">
+				<FontString parentKey="Label" inherits="GameFontHighlight" maxLines="1" justifyH="CENTER" justifyV="MIDDLE">
+					<Size y="24"/>
 					<Anchors>
-						<Anchor point="LEFT" x="15" y="1"/>
-						<Anchor point="RIGHT" x="-15" y="1"/>
+						<Anchor point="LEFT" x="15" y="0"/>
+						<Anchor point="RIGHT" x="-15" y="0"/>
 					</Anchors>
 				</FontString>
 				<Texture parentKey="ExpandIcon" atlas="friendslist-categorybutton-arrow-right" useAtlasSize="true" desaturated="true">
@@ -118,10 +119,9 @@
 			</Layer>
 		</Layers>
 		<Scripts>
-			<OnClick>
-				self:SetExpanded(not self.isExpanded);
-				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-			</OnClick>
+			<OnClick method="OnClick" />
+			<OnMouseDown method="OnMouseDown" />
+			<OnMouseUp method="OnMouseUp" />
 		</Scripts>
 	</Button>
 

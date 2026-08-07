@@ -752,19 +752,28 @@ end
 
 function _M.WQT_SettingsCategoryMixin:UpdateState()
 	_M.WQT_SettingsBaseMixin.UpdateState(self);
-	if(self.ExpandIcon) then
+	if (self.ExpandIcon) then
 		self.ExpandIcon:SetAtlas(self.isExpanded and "UI-QuestTrackerButton-Secondary-Collapse" or "UI-QuestTrackerButton-Secondary-Expand", true);
-	elseif(self.BGRight) then
+	elseif (self.BGRight) then
 		self.BGRight:SetAtlas(self.isExpanded and "Options_ListExpand_Right_Expanded" or "Options_ListExpand_Right", true);
 	end
 end
 
-function _M.WQT_SettingsCategoryMixin:SetExpanded(value)
-	self.isExpanded = value;
+function _M.WQT_SettingsCategoryMixin:OnClick()
+	self.isExpanded = not self.isExpanded;
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	WQT_CallbackRegistry:TriggerEvent("WQT.Settings.CategoryToggled", self.categoryID, self.isExpanded);
 end
 
+function _M.WQT_SettingsCategoryMixin:OnMouseDown()
+	if (not self.Label) then return end
+	self.Label:AdjustPointsOffset(1, -1);
+end
 
+function _M.WQT_SettingsCategoryMixin:OnMouseUp()
+	if (not self.Label) then return end
+	self.Label:AdjustPointsOffset(-1, 1);
+end
 
 --------------------------------
 -- Data Mixins
@@ -1177,6 +1186,7 @@ function _M.WQT_SettingsFrameMixin:Init()
 			});
 			AddSection(ChangelogSections.Changes, {
 				"Slightly adjusted the position of the Shadowlands calling board to make room for the new player/cursor coordinates";
+				"Labels on settings categories now offset when clicked"
 			});
 		end
 
