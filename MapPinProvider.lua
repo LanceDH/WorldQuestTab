@@ -1133,6 +1133,10 @@ function _M.WQT_PinMixin:Setup(questInfo, index, x, y, pinType, parentMapFrame)
 	self.posY = y;
 	self.baseFrameLevel = PIN_FRAME_LEVEL_BASE;
 
+	-- Required for MapCanvasMixin:IsCanvasMouseFocusOrPinFocus()
+	local buttonFrame = self:GetButton();
+	buttonFrame.owningMap = parentMapFrame;
+
 	self:UpdateVisuals();
 	self:UpdatePinTime();
 
