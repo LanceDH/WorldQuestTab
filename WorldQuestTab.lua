@@ -17,6 +17,7 @@ local WQT = addon.WQT;
 
 local _L = addon.loca;
 local _V = addon.variables;
+local _M = addon.mixins;
 local WQT_Profiles = addon.WQT_Profiles;
 
 local _; -- local trash 
@@ -24,14 +25,18 @@ local _; -- local trash
 local _playerFaction = GetPlayerFactionGroup();
 WQT_ActiveGameTooltip = GameTooltip;
 
-WQT_PanelID = EnumUtil.MakeEnum("Quests", "Settings");
-
 local function slashcmd(msg)
-	if (msg == "debug") then
-		addon.debug = not addon.debug;
-		WQT_CallbackRegistry:TriggerEvent("WQT.DebugToggled", addon.debug);
-		print("WQT: debug", addon.debug and "enabled" or "disabled");
-		return;
+	local parts = {string.split(" ", msg)};
+	if (#parts > 0 and parts[1] == "debug") then
+		if (#parts > 1 and parts[2] == "ui") then
+			WQT_CallbackRegistry:TriggerEvent("WQT.DebugUIToggled");
+			return;
+		else
+			addon.debug = not addon.debug;
+			WQT_CallbackRegistry:TriggerEvent("WQT.DebugToggled", addon.debug);
+			print("WQT: debug", addon.debug and "enabled" or "disabled");
+			return;
+		end
 	end
 end
 
@@ -957,26 +962,31 @@ end
 --
 --------
 
-WQT_QuestLogSettingsButtonMixin = {};
+_M.WQT_QuestLogSettingsButtonMixin = {};
 
-function WQT_QuestLogSettingsButtonMixin:OnMouseDown()
+function _M.WQT_QuestLogSettingsButtonMixin:OnClick()
+	WQT_CallbackRegistry:TriggerEvent("WQT.ChangePanelRequest", _V.PanelIDEnum.Settings);
+	PlaySound(MenuVariants.GetDropdownCloseSoundKit());
+end
+
+function _M.WQT_QuestLogSettingsButtonMixin:OnMouseDown()
 	if(not self.disabled) then
 		self.Icon:AdjustPointsOffset(1, -1);
 	end
 end
 
-function WQT_QuestLogSettingsButtonMixin:OnMouseUp()
+function _M.WQT_QuestLogSettingsButtonMixin:OnMouseUp()
 	if(not self.disabled) then
 		self.Icon:AdjustPointsOffset(-1, 1);
 	end
 end
 
-function WQT_QuestLogSettingsButtonMixin:OnEnable()
+function _M.WQT_QuestLogSettingsButtonMixin:OnEnable()
 	self.disabled = false;
 	self.Icon:SetAlpha(1);
 end
 
-function WQT_QuestLogSettingsButtonMixin:OnDisable()
+function _M.WQT_QuestLogSettingsButtonMixin:OnDisable()
 	self.disabled = true;
 	self.Icon:SetAlpha(0.45);
 end
@@ -985,9 +995,9 @@ end
 -- Search Box Mixin
 ------------------------------------------
 
-WQT_SearchBoxMixin = {};
+_M.WQT_SearchBoxMixin = {};
 
-function WQT_SearchBoxMixin:OnTextChanged()
+function _M.WQT_SearchBoxMixin:OnTextChanged()
 	SearchBoxTemplate_OnTextChanged(self);
 	WQT:SetSearchString(self:GetText());
 end
@@ -996,17 +1006,17 @@ end
 -- World Map Tab Mixin
 ------------------------------------------
 
-WQT_TabButtonMixin = CreateFromMixins(SidePanelTabButtonMixin);
+_M.WQT_TabButtonMixin = CreateFromMixins(SidePanelTabButtonMixin);
 
-function WQT_TabButtonMixin:OnMouseUp(button, upInside)
+function _M.WQT_TabButtonMixin:OnMouseUp(button, upInside)
 	SidePanelTabButtonMixin.OnMouseUp(self, button, upInside);
 
 	if (button == "LeftButton" and upInside) then
-		WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Quests);
+		WQT_CallbackRegistry:TriggerEvent("WQT.ChangePanelRequest", _V.PanelIDEnum.Quests);
 	end
 end
 
-function WQT_TabButtonMixin:SetChecked(checked)
+function _M.WQT_TabButtonMixin:SetChecked(checked)
 	SidePanelTabButtonMixin.SetChecked(self, checked);
 
 	if (checked) then
@@ -1022,15 +1032,15 @@ end
 -- 			REWARDDISPLAY MIXIN			--
 ------------------------------------------
 
-WQT_RewardDisplayMixin = {};
+_M.WQT_RewardDisplayMixin = {};
 
-function WQT_RewardDisplayMixin:GetRewardFrame(index)
+function _M.WQT_RewardDisplayMixin:GetRewardFrame(index)
 	if(index <= 0 or index > #self.rewardFrames) then return nil; end
 
 	return self.rewardFrames[index];
 end
 
-function WQT_RewardDisplayMixin:UpdateRewards(questInfo, warmodeBonus)
+function _M.WQT_RewardDisplayMixin:UpdateRewards(questInfo, warmodeBonus)
 	local layoutChanged = false;
 	local isDisliked = questInfo:IsDisliked();
 	local maxRewardsToShow = min(WQT.settings.list.rewardNumDisplay, #self.rewardFrames);
@@ -1093,59 +1103,59 @@ end
 -- 			LISTBUTTON MIXIN			--
 ------------------------------------------
 
-WQT_ListButtonMixin = {}
+_M.WQT_ListButtonMixin = {}
 
-function WQT_ListButtonMixin:ClearTimer()
+function _M.WQT_ListButtonMixin:ClearTimer()
 	if (self.timer) then
 		self.timer:Cancel();
 		self.timer = nil;
 	end
 end
 
-function WQT_ListButtonMixin:GetTitleFontString()
+function _M.WQT_ListButtonMixin:GetTitleFontString()
 	return self.CenterContent.Title;
 end
 
-function WQT_ListButtonMixin:GetTimeFontString()
+function _M.WQT_ListButtonMixin:GetTimeFontString()
 	return self.CenterContent.BottomRow.Time;
 end
 
-function WQT_ListButtonMixin:GetBottomRow()
+function _M.WQT_ListButtonMixin:GetBottomRow()
 	return self.CenterContent.BottomRow;
 end
 
-function WQT_ListButtonMixin:GetZoneFontString()
+function _M.WQT_ListButtonMixin:GetZoneFontString()
 	return self:GetBottomRow().Extra;
 end
 
-function WQT_ListButtonMixin:GetZoneSeparator()
+function _M.WQT_ListButtonMixin:GetZoneSeparator()
 	return self:GetBottomRow().ZoneSeparator;
 end
 
-function WQT_ListButtonMixin:GetWarbandIcon()
+function _M.WQT_ListButtonMixin:GetWarbandIcon()
 	return self.RightContent.WarbandIcon;
 end
 
-function WQT_ListButtonMixin:GetFactionFrame()
+function _M.WQT_ListButtonMixin:GetFactionFrame()
 	return self.RightContent.Faction;
 end
 
-function WQT_ListButtonMixin:GetRewardsFrame()
+function _M.WQT_ListButtonMixin:GetRewardsFrame()
 	return self.RightContent.Rewards;
 end
 
-function WQT_ListButtonMixin:OnLoad()
+function _M.WQT_ListButtonMixin:OnLoad()
 	self.TrackedBorder:SetFrameLevel(self:GetFrameLevel() + 2);
 	self.Highlight:SetFrameLevel(self:GetFrameLevel() + 2);
 	self:EnableKeyboard(false);
 end
 
-function WQT_ListButtonMixin:OnClick(button)
+function _M.WQT_ListButtonMixin:OnClick(button)
 	WQT_Utils:HandleQuestClick(self, self.questInfo, button);
 end
 
 -- Custom enable/disable
-function WQT_ListButtonMixin:SetEnabledMixin(value)
+function _M.WQT_ListButtonMixin:SetEnabledMixin(value)
 	value = value==nil and true or value;
 	self:SetEnabled(value);
 	self:EnableMouse(value);
@@ -1153,7 +1163,7 @@ function WQT_ListButtonMixin:SetEnabledMixin(value)
 	factionFrame:EnableMouse(value);
 end
 
-function WQT_ListButtonMixin:UpdateTime(...)
+function _M.WQT_ListButtonMixin:UpdateTime(...)
 	self:ClearTimer();
 	if ( not self.questInfo or not self:IsShown() or self.questInfo.seconds == 0) then
 		return false;
@@ -1190,7 +1200,7 @@ function WQT_ListButtonMixin:UpdateTime(...)
 	end
 end
 
-function WQT_ListButtonMixin:OnEnter()
+function _M.WQT_ListButtonMixin:OnEnter()
 	if (not self.questInfo) then return; end
 	self.Highlight:Show();
 	WQT_WorldQuestFrame:ShowWorldmapHighlight(self.questInfo);
@@ -1205,7 +1215,7 @@ function WQT_ListButtonMixin:OnEnter()
 	WQT_CallbackRegistry:TriggerEvent("WQT.QuestListButtonMouseEnter", self.questInfo.questID, isEnter);
 end
 
-function WQT_ListButtonMixin:OnLeave()
+function _M.WQT_ListButtonMixin:OnLeave()
 	self.Highlight:Hide();
 	WQT_WorldQuestFrame:HideWorldmapHighlight();
 	WQT_Utils:HideQuestTooltip(self);
@@ -1221,7 +1231,7 @@ function WQT_ListButtonMixin:OnLeave()
 	WQT_CallbackRegistry:TriggerEvent("WQT.QuestListButtonMouseEnter", self.questInfo.questID, not isEnter);
 end
 
-function WQT_ListButtonMixin:ShowTooltip()
+function _M.WQT_ListButtonMixin:ShowTooltip()
 	local questInfo = self.questInfo;
 	if (not questInfo) then return; end
 	local style = _V:GetTooltipStyle("default");
@@ -1229,7 +1239,7 @@ function WQT_ListButtonMixin:ShowTooltip()
 	WQT_Utils:ShowQuestTooltip(self, questInfo, style, 4, -self:GetHeight());
 end
 
-function WQT_ListButtonMixin:UpdateQuestType(questInfo)
+function _M.WQT_ListButtonMixin:UpdateQuestType(questInfo)
 	local typeFrame = self.Type;
 	local wasShown = typeFrame:IsShown();
 	local shouldShow = WQT.settings.list.typeIcon;
@@ -1269,7 +1279,7 @@ function WQT_ListButtonMixin:UpdateQuestType(questInfo)
 	return needsLayout;
 end
 
-function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
+function _M.WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	if (self.questInfo ~= questInfo) then
 		self.TrackedBorder:Hide();
 		self.Highlight:Hide();
@@ -1388,7 +1398,7 @@ function WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	end
 end
 
-function WQT_ListButtonMixin:FactionOnEnter(frame)
+function _M.WQT_ListButtonMixin:FactionOnEnter(frame)
 	self.Highlight:Show();
 	if (self.questInfo.factionID) then
 		local factionInfo = _V:GetFactionData(self.questInfo.factionID);
@@ -1401,123 +1411,60 @@ end
 -- 			SCROLLLIST MIXIN			--
 ------------------------------------------
 
-WQT_CheckButtonMixin = CreateFromMixins(WowStyle2IconButtonMixin, CallbackRegistryMixin, WQT_TooltipMixin);
+_M.WQT_ScrollListMixin = {};
 
-WQT_CheckButtonMixin:GenerateCallbackEvents(
-	{
-		"OnClick";
-	}
-);
-
-function WQT_CheckButtonMixin:OnLoad()
-	WowStyle2IconButtonMixin.OnLoad(self);
-	CallbackRegistryMixin.OnLoad(self);
-
-	local x, y = 2, -1;
-	self:SetDisplacedRegions(x, y, self.Icon, self.Highlight);
-end
-
-function WQT_CheckButtonMixin:OnButtonStateChanged()
-	local icon = self.normalAtlas;
-	local useAtlasSize = (not self.iconWidth or not self.iconHeight) and TextureKitConstants.UseAtlasSize or TextureKitConstants.IgnoreAtlasSize;
-	local alpha = self:GetIconHighlighted() and 1 or 0.5;
-	alpha = 1;
-	local saturation = self:GetIconHighlighted() and 1 or 0.5;
-	if (self.disabledAtlas) then
-		icon = self:IsEnabled() and self.normalAtlas or self.disabledAtlas;
-	end
-	self.Icon:SetAtlas(icon, useAtlasSize);
-	self.Highlight:SetAtlas(icon, useAtlasSize);
-	self.Icon:SetVertexColor(saturation, saturation, saturation);
-	self.Icon:SetAlpha(alpha);
-	if (not useAtlasSize) then
-		self.Icon:SetSize(self.iconWidth, self.iconHeight);
-		self.Highlight:SetSize(self.iconWidth, self.iconHeight);
-	end
-end
-
-function WQT_CheckButtonMixin:GetIconHighlighted()
-	return self:GetChecked();
-end
-
-function WQT_CheckButtonMixin:OnClick()
-	if (self:GetChecked()) then
-		PlaySound(MenuVariants.GetDropdownOpenSoundKit());
-	else
-		PlaySound(MenuVariants.GetDropdownCloseSoundKit());
-	end
-	self:OnButtonStateChanged();
-	self:TriggerEvent(WQT_CheckButtonMixin.Event.OnClick);
-end
-
-function WQT_CheckButtonMixin:OnEnter()
-	WowStyle2IconButtonMixin.OnEnter(self);
-	WQT_TooltipMixin.OnEnter(self);
-end
-
-function WQT_CheckButtonMixin:OnLeave()
-	WowStyle2IconButtonMixin.OnLeave(self);
-	WQT_TooltipMixin.OnLeave(self);
-end
-
-------------------------------------------
--- 			SCROLLLIST MIXIN			--
-------------------------------------------
-
-WQT_ScrollListMixin = {};
-
-function WQT_ScrollListMixin:GetQuestScrollBox()
+function _M.WQT_ScrollListMixin:GetQuestScrollBox()
 	local borderContainer = self:GetBorderContainer();
 	return borderContainer.QuestScrollBox;
 end
 
-function WQT_ScrollListMixin:GetScrollBar()
+function _M.WQT_ScrollListMixin:GetScrollBar()
 	return self.ScrollBar;
 end
 
-function WQT_ScrollListMixin:GetBorderContainer()
+function _M.WQT_ScrollListMixin:GetBorderContainer()
 	return self.BorderContainer;
 end
 
-function WQT_ScrollListMixin:GetBorderFrame()
+function _M.WQT_ScrollListMixin:GetBorderFrame()
 	return self.BorderFrame;
 end
 
-function WQT_ScrollListMixin:GetFilterBar()
+function _M.WQT_ScrollListMixin:GetFilterBar()
 	local borderContainer = self:GetBorderContainer();
 	return borderContainer.FilterBar;
 end
 
-function WQT_ScrollListMixin:GetTopBar()
+function _M.WQT_ScrollListMixin:GetTopBar()
 	return self.TopBar;
 end
 
-function WQT_ScrollListMixin:GetProgressBar()
+function _M.WQT_ScrollListMixin:GetProgressBar()
 	local topBar = self:GetTopBar();
 	return topBar.ProgressBar;
 end
 
-function WQT_ScrollListMixin:GetFilterDropdown()
+function _M.WQT_ScrollListMixin:GetFilterDropdown()
 	local topBar = self:GetTopBar();
 	return topBar.FilterDropdown;
 end
 
-function WQT_ScrollListMixin:GetSortDropdown()
+function _M.WQT_ScrollListMixin:GetSortDropdown()
 	local topBar = self:GetTopBar();
 	return topBar.SortDropdown;
 end
 
-function WQT_ScrollListMixin:GetSearchToggle()
+function _M.WQT_ScrollListMixin:GetSearchToggle()
 	local topBar = self:GetTopBar();
 	return topBar.SearchToggle;
 end
 
-function WQT_ScrollListMixin:GetSearchBox()
+function _M.WQT_ScrollListMixin:GetSearchBox()
 	local topBar = self:GetTopBar();
 	return topBar.SearchBox;
 end
 
-function WQT_ScrollListMixin:UpdateTopBar()
+function _M.WQT_ScrollListMixin:UpdateTopBar()
 	local searchEnabled = self:GetSearchToggle():GetChecked();
 
 	self:GetSearchBox():SetShown(searchEnabled);
@@ -1526,7 +1473,7 @@ function WQT_ScrollListMixin:UpdateTopBar()
 	self:GetTopBar():Layout();
 end
 
-function WQT_ScrollListMixin:OnLoad()
+function _M.WQT_ScrollListMixin:OnLoad()
 	local paddingTop = 2;
 	local paddingBottom = 4;
 	local paddingLeft = 2;
@@ -1541,7 +1488,7 @@ function WQT_ScrollListMixin:OnLoad()
 	ScrollUtil.InitScrollBoxListWithScrollBar(questScrollBox, scrollBar, view);
 
 	local searchToggle = self:GetSearchToggle();
-	searchToggle:RegisterCallback(WQT_CheckButtonMixin.Event.OnClick, function()
+	searchToggle:RegisterCallback(_M.WQT_CheckButtonMixin.Event.OnClick, function()
 			self:UpdateTopBar();
 			local searchBox = self:GetSearchBox();
 			if (searchToggle:GetChecked()) then
@@ -1595,7 +1542,7 @@ function WQT_ScrollListMixin:OnLoad()
 		self);
 end
 
-function WQT_ScrollListMixin:UpdateFilterDisplay()
+function _M.WQT_ScrollListMixin:UpdateFilterDisplay()
 	local isFiltering = WQT:IsFiltering();
 	local filterBar = self:GetFilterBar();
 	local borderContainer = self:GetBorderContainer();
@@ -1652,7 +1599,7 @@ function WQT_ScrollListMixin:UpdateFilterDisplay()
 	filterBar.Text:SetText(filterFormat:format(numHidden, totalValid, table.concat(filterLabels, ", ")));
 end
 
-function WQT_ScrollListMixin:UpdateQuestList()
+function _M.WQT_ScrollListMixin:UpdateQuestList()
 	local flightShown = (FlightMapFrame and FlightMapFrame:IsShown() or TaxiRouteMap:IsShown() );
 	local worldShown = WorldMapFrame:IsShown();
 	
@@ -1660,7 +1607,7 @@ function WQT_ScrollListMixin:UpdateQuestList()
 	self:DisplayQuestList();
 end
 
-function WQT_ScrollListMixin:DisplayQuestList()
+function _M.WQT_ScrollListMixin:DisplayQuestList()
 	local shouldShowZone = WQT.settings.list.showZone;
 
 	-- New scroll frame
@@ -1679,7 +1626,7 @@ function WQT_ScrollListMixin:DisplayQuestList()
 	self:UpdateFilterDisplay();
 end
 
-function WQT_ScrollListMixin:UpdateBackground()
+function _M.WQT_ScrollListMixin:UpdateBackground()
 	local backgroundAlpha = 1;
 	if (WorldMapFrame:IsShown() and WQT_WorldMapContainer:IsShown()) then
 		backgroundAlpha = 0.75;
@@ -1696,7 +1643,7 @@ function WQT_ScrollListMixin:UpdateBackground()
 	WQT_CallbackRegistry:TriggerEvent("WQT.ScrollList.BackgroundUpdated");
 end
 
-function WQT_ScrollListMixin:ScrollFrameSetEnabled(enabled)
+function _M.WQT_ScrollListMixin:ScrollFrameSetEnabled(enabled)
 	self:EnableMouse(enabled)
 	self:EnableMouse(enabled);
 	self:EnableMouseWheel(enabled);
@@ -1707,10 +1654,501 @@ function WQT_ScrollListMixin:ScrollFrameSetEnabled(enabled)
 end
 
 ------------------------------------------
+-- 				CORE MIXIN				--
+------------------------------------------
+
+_M.WQT_CoreMixin = {};
+
+function _M.WQT_CoreMixin:GetQuestListFrame()
+	return self.ScrollFrame;
+end
+
+-- Mimics hovering over a zone or continent, based on the zone the map is in
+function _M.WQT_CoreMixin:ShowWorldmapHighlight(questInfo)
+	if (not WorldMapFrame:IsShown()) then return; end
+	
+	local zoneID = questInfo.mapID;
+	local areaId = WorldMapFrame.mapID;
+
+	local mapInfo = _V:GetCachedMapInfo(zoneID);
+	
+	if (not mapInfo) then return; end;
+	
+	WorldMapFrame.ScrollContainer:GetMap():TriggerEvent("SetAreaLabel", MAP_AREA_LABEL_TYPE.POI, mapInfo.name);
+	self.resetLabel = true;
+
+	local coords = _V:GetMostRelevantMapCoordinates(zoneID, areaId);
+	if (not coords) then return; end;
+
+	-- Now we cheat by acting like we moved our mouse over the relevant zone
+	WQT_MapZoneHightlight:SetParent(WorldMapFrame.ScrollContainer.Child);
+	WQT_MapZoneHightlight:ClearAllPoints();
+	WQT_MapZoneHightlight:SetPoint("Center", WorldMapFrame.ScrollContainer.Child, 0.5, 0.5);
+	WQT_MapZoneHightlight:SetFrameLevel(2009);
+	local fileDataID, atlasID, texPercentageX, texPercentageY, textureX, textureY, scrollChildX, scrollChildY = C_Map.GetMapHighlightInfoAtPosition(areaId, coords.x, coords.y);
+	if (fileDataID and fileDataID > 0) or (atlasID) then
+		WQT_MapZoneHightlight.Texture:SetTexCoord(0, texPercentageX, 0, texPercentageY);
+		local width = WorldMapFrame.ScrollContainer.Child:GetWidth();
+		local height = WorldMapFrame.ScrollContainer.Child:GetHeight();
+		WQT_MapZoneHightlight.Texture:ClearAllPoints();
+		if (atlasID) then
+			WQT_MapZoneHightlight.Texture:SetAtlas(atlasID, true, "TRILINEAR");
+			scrollChildX = ((scrollChildX + 0.5*textureX) - 0.5) * width;
+			scrollChildY = -((scrollChildY + 0.5*textureY) - 0.5) * height;
+			WQT_MapZoneHightlight.Texture:SetPoint("CENTER", scrollChildX, scrollChildY);
+			WQT_MapZoneHightlight:Show();
+		else
+			WQT_MapZoneHightlight.Texture:SetTexture(fileDataID, nil, nil, "TRILINEAR");
+			textureX = textureX * width;
+			textureY = textureY * height;
+			if textureX > 0 and textureY > 0 then
+				scrollChildX = scrollChildX * width;
+				scrollChildY = -scrollChildY * height;
+				WQT_MapZoneHightlight.Texture:SetWidth(textureX);
+				WQT_MapZoneHightlight.Texture:SetHeight(textureY);
+				WQT_MapZoneHightlight.Texture:SetPoint("TOPLEFT", WQT_MapZoneHightlight:GetParent(), "TOPLEFT", scrollChildX, scrollChildY);
+				WQT_MapZoneHightlight.Texture:SetPoint("CENTER");
+				WQT_MapZoneHightlight:Show();
+			end
+		end
+	end
+end
+
+function _M.WQT_CoreMixin:HideWorldmapHighlight()
+	WQT_MapZoneHightlight:Hide();
+	if (self.resetLabel) then
+		WorldMapFrame.ScrollContainer:GetMap():TriggerEvent("ClearAreaLabel", MAP_AREA_LABEL_TYPE.POI);
+		self.resetLabel = false;
+	end
+end
+
+function _M.WQT_CoreMixin:OnLoad()
+	self.WQT_Utils = WQT_Utils;
+	self.variables = addon.variables;
+	WQT_Profiles:OnLoad();
+
+	-- Quest Dataprovider
+	self.dataProvider = CreateAndInitFromMixin(WQT_DataProvider);
+
+	self.bountyCounterPool = CreateFramePool("FRAME", self, "WQT_BountyCounterTemplate");
+	
+	self:SetFrameLevel(self:GetParent():GetFrameLevel()+4);
+
+	self.ExternalEvents = {};
+	-- Events
+	self:RegisterEvent("PLAYER_REGEN_DISABLED");
+	self:RegisterEvent("PLAYER_REGEN_ENABLED");
+	self:RegisterEvent("PVP_TIMER_UPDATE"); -- Warmode toggle because WAR_MODE_STATUS_UPDATE doesn't seems to fire when toggling warmode
+	self:RegisterEvent("ADDON_LOADED");
+	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
+	self:RegisterEvent("SUPER_TRACKING_CHANGED");
+	self:RegisterEvent("TAXIMAP_OPENED");
+	self:RegisterEvent("PLAYER_LOGOUT");
+
+	self:SetScript("OnEvent", function(self, event, ...)
+			if (self[event]) then 
+				self[event](self, ...);
+			elseif (not self.ExternalEvents[event]) then
+				WQT:DebugPrint("WQT missing function for:",event);
+			end 
+
+			WQT_CallbackRegistry:TriggerEvent("WQT.RegisterdEventTriggered", event, ...);
+		end)
+
+	-- Slashcommands
+	SLASH_WQTSLASH1 = '/wqt';
+	SLASH_WQTSLASH2 = '/worldquesttab';
+	SlashCmdList["WQTSLASH"] = slashcmd
+
+
+	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
+		function(_, categoryID, tag)
+			if (categoryID == "PROFILES") then
+				self:ApplyAllSettings();
+			elseif (tag == "BOUNTY_COUNTER") then
+				self:UpdateBountyCounters();
+				self:RepositionBountyTabs();
+			elseif (tag == "BOUNTY_REWARD") then
+				self:UpdateBountyCounters();
+			end
+		end,
+		self);
+
+	WQT_CallbackRegistry:RegisterCallback("WQT.ChangePanelRequest",
+		function(_, panelID)
+			self:ChangePanel(panelID);
+		end,
+		self);
+
+	EventRegistry:RegisterCallback(
+		"WorldMapOnShow",
+		function()
+			if (WQT_WorldQuestFrame.autoEmisarryId) then
+				WQT_WorldQuestFrame.autoEmisarryId = nil;
+				WQT_ListContainer:UpdateQuestList();
+			end
+		end,
+		self);
+
+	EventRegistry:RegisterCallback(
+		"WorldMapOnHide",
+		function()
+			WQT_WorldQuestFrame:ChangePanel(_V.PanelIDEnum.Quests);
+		end,
+		self);
+
+	EventRegistry:RegisterCallback(
+		"WorldMapMaximized",
+		function()
+			WQT_WorldQuestFrame:ChangePanel(_V.PanelIDEnum.Quests);
+		end,
+		self);
+
+	EventRegistry:RegisterCallback(
+		"WorldMapMinimized",
+		function()
+			WQT_WorldQuestFrame:ChangePanel(_V.PanelIDEnum.Quests);
+			local topBar = self:GetQuestListFrame():GetTopBar();
+			topBar:Layout();
+		end,
+		self);
+
+	--
+	-- Function hooks
+	-- 
+
+	local enumListAnchorType = _V:GetListAnchorTypeEnum();
+	-- Re-anchor list when maxi/minimizing world map
+	hooksecurefunc(WorldMapFrame, "HandleUserActionToggleSelf", function()
+			if not WorldMapFrame:IsShown() then return end
+			local anchor = WorldMapFramePortrait:IsShown() and enumListAnchorType.world or enumListAnchorType.full;
+			WQT_WorldQuestFrame:ChangeAnchorLocation(anchor);
+		end)
+
+	hooksecurefunc(WorldMapFrame, "HandleUserActionToggleQuestLog", function()
+			if not WorldMapFrame:IsShown() then return end
+			local anchor = enumListAnchorType.world;
+			WQT_WorldQuestFrame:ChangeAnchorLocation(anchor);
+		end)
+	
+	hooksecurefunc(WorldMapFrame, "HandleUserActionMinimizeSelf", function()
+			WQT_WorldQuestFrame:ChangeAnchorLocation(enumListAnchorType.world);
+		end)
+		
+	hooksecurefunc(WorldMapFrame, "HandleUserActionMaximizeSelf", function()
+			WQT_WorldQuestFrame:ChangeAnchorLocation(enumListAnchorType.full);
+		end)
+		
+	
+	-- Update our filters when changes are made to the world map filters
+	local worldMapFilter;
+	
+	for k, frame in ipairs(WorldMapFrame.overlayFrames) do
+		for name in pairs(frame) do
+			if (name == "OnSelection") then
+				worldMapFilter = frame;
+				break;
+			end
+		end
+	end
+	if (worldMapFilter) then
+		hooksecurefunc(worldMapFilter, "OnSelection", function()
+				local questListFrame = self:GetQuestListFrame();
+				questListFrame:UpdateQuestList();
+			end);
+		self.worldMapFilter = worldMapFilter;
+	end
+
+	-- Auto emisarry when clicking on one of the buttons
+	local bountyBoard = WQT_Utils:GetOldBountyBoard();
+	hooksecurefunc(bountyBoard, "OnTabClick", function(self, tab)
+		if (not WQT.settings.general.autoEmisarry or tab.isEmpty or WQT.settings.general.emissaryOnly) then return; end
+		WQT_WorldQuestFrame.autoEmisarryId = bountyBoard.bounties[tab.bountyIndex];
+		WQT_ListContainer:UpdateQuestList();
+	end)
+
+	hooksecurefunc(bountyBoard, "RefreshSelectedBounty", function() 
+		if (WQT.settings.general.bountyCounter) then
+			self:UpdateBountyCounters();
+		end
+	end)
+	
+	-- Slight offset the tabs to make room for the counters
+	hooksecurefunc(bountyBoard, "AnchorBountyTab", function(self, tab) 
+		if (not WQT.settings.general.bountyCounter) then return end
+		local point, relativeTo, relativePoint, x, y = tab:GetPoint(1);
+		tab:SetPoint(point, relativeTo, relativePoint, x, y + 2);
+	end)
+
+	-- Auto emisarry when selecting a bounty
+	local activityBoard = WQT_Utils:GetNewBountyBoard();
+	hooksecurefunc(activityBoard, "SetNextMapForSelectedBounty", function()
+		if (not WQT.settings.general.autoEmisarry or WQT.settings.general.emissaryOnly or not activityBoard.selectedBounty) then return; end
+		WQT_WorldQuestFrame.autoEmisarryId = activityBoard.selectedBounty.factionID;
+		WQT_ListContainer:UpdateQuestList();
+	end)
+
+	hooksecurefunc(activityBoard, "SetSelectedBounty", function(source, bountyInfo)
+		if (bountyInfo ~= nil or WQT_WorldQuestFrame.autoEmisarryId == nil) then return; end
+		WQT_WorldQuestFrame.autoEmisarryId = nil;
+		WQT_ListContainer:UpdateQuestList();
+	end)
+	
+	hooksecurefunc("TaskPOI_OnLeave", function(self)
+			if (WQT.settings.pin.disablePoI) then return; end
+			
+			WQT_ListContainer.PoIHoverId = -1;
+			WQT_ListContainer:UpdateQuestList(true);
+			self.notTracked = nil;
+		end)
+end
+
+function _M.WQT_CoreMixin:RegisterEventsForExternal(external)
+	if (not external.GetRequiredEvents or not external.GetName) then return end;
+
+	for k, event in pairs(external:GetRequiredEvents()) do
+		if (self:RegisterEvent(event)) then
+			self.ExternalEvents[event] = true;
+			WQT:DebugPrint("Registered new event", event, "for external", external:GetName());
+		end
+	end
+end
+
+function _M.WQT_CoreMixin:ApplyAllSettings()
+	self:UpdateBountyCounters();
+	self:RepositionBountyTabs();
+	WQT_ListContainer:UpdateQuestList();
+	WQT:Sort_OnClick(nil, WQT.settings.general.sortBy);
+	WQT_WorldMapContainer:LinkSettings(WQT.settings.general.fullScreenContainerPos);
+end
+
+function _M.WQT_CoreMixin:UpdateBountyCounters()
+	self.bountyCounterPool:ReleaseAll();
+	if (not WQT.settings.general.bountyCounter) then return end
+	
+	if (not self.bountyInfo) then
+		self.bountyInfo = {};
+	end
+	
+	local bountyBoard = WQT_Utils:GetOldBountyBoard();
+	for tab, v in bountyBoard.bountyTabPool:EnumerateActive() do
+		self:AddBountyCountersToTab(tab);
+	end
+end
+
+function _M.WQT_CoreMixin:RepositionBountyTabs()
+	local bountyBoard = WQT_Utils:GetOldBountyBoard();
+	for tab, v in bountyBoard.bountyTabPool:EnumerateActive() do
+		bountyBoard:AnchorBountyTab(tab);
+	end
+end
+
+function _M.WQT_CoreMixin:AddBountyCountersToTab(tab)
+	local settingBountyReward = WQT_Utils:GetSetting("general", "bountyReward");
+
+	if (not tab.WQT_Reward) then
+		tab.WQT_Reward = CreateFrame("FRAME", nil, tab, "WQT_MiniIconTemplate");
+		tab.WQT_Reward:SetPoint("CENTER", tab, "TOPRIGHT", -8, -7);
+	end
+	tab.WQT_Reward:Reset();
+	
+	local bountyBoard = WQT_Utils:GetOldBountyBoard();
+	local bountyData = bountyBoard.bounties[tab.bountyIndex];
+	
+	if (bountyData) then
+		local progress, goal = bountyBoard:CalculateBountySubObjectives(bountyData);
+		
+		if (progress == goal) then return end;
+		
+		-- RewardIcon
+		if (settingBountyReward) then
+			local bountyQuestInfo = self.bountyInfo[bountyData.questID];
+			if (not bountyQuestInfo) then
+				bountyQuestInfo = WQT_Utils:QuestCreationFunc();
+				self.bountyInfo[bountyData.questID] = bountyQuestInfo;
+				bountyQuestInfo:Init(bountyData.questID);
+			end
+			bountyQuestInfo:LoadRewards();
+			tab.WQT_Reward:SetupRewardIcon(bountyQuestInfo:GetFirstNoneAzeriteType());
+			tab.WQT_Reward:SetScale(1.38);
+		end
+		
+		-- Counters
+		local offsetAngle = 32;
+		local startAngle = 270;
+		
+		-- position of first counter
+		startAngle = startAngle - offsetAngle * (goal -1) /2
+		
+		for i=1, goal do
+			local counter = self.bountyCounterPool:Acquire();
+
+			local x = cos(startAngle) * 16;
+			local y = sin(startAngle) * 16;
+			counter:SetPoint("CENTER", tab.Icon, "CENTER", x, y);
+			counter:SetParent(tab);
+			counter:Show();
+			
+			-- Light nr of completed
+			if i <= progress then
+				counter.icon:SetTexCoord(0, 0.5, 0, 0.5);
+				counter.icon:SetVertexColor(1, 1, 1, 1);
+				counter.icon:SetDesaturated(false);
+			else
+				counter.icon:SetTexCoord(0, 0.5, 0, 0.5);
+				counter.icon:SetVertexColor(0.75, 0.75, 0.75, 1);
+				counter.icon:SetDesaturated(true);
+			end
+
+			-- Offset next counter
+			startAngle = startAngle + offsetAngle;
+		end
+	end
+	
+end
+
+function _M.WQT_CoreMixin:FilterClearButtonOnClick()
+	if WQT_WorldQuestFrame.autoEmisarryId then
+		WQT_WorldQuestFrame.autoEmisarryId = nil;
+	elseif WQT.settings.general.emissaryOnly then
+		WQT.settings.general.emissaryOnly = false;
+	else
+		for k, filterType in _V:EnumerateFilterTypes() do
+			local default = not WQT.settings.general.preciseFilters;
+			WQT:SetAllFilterTo(filterType, default);
+		end
+
+		_V:EnableAllOfficialCvars();
+
+		local filterButton = WQT_Utils:GetWoldMapFilterButton();
+		if (filterButton) then
+			filterButton:RefreshFilterCounter();
+			filterButton:ValidateResetState();
+		end
+
+		self:GetQuestListFrame():GetSearchBox():SetText("");
+	end
+	
+	WQT.settings.general.showDisliked = true;
+	
+	WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
+end
+
+function _M.WQT_CoreMixin:UnhookEvent(event, func)
+	local list = self.eventHooks[event];
+	if (list) then
+		list[func] = nil;
+	end
+end
+
+function _M.WQT_CoreMixin:ADDON_LOADED(loaded)
+	if (loaded == "Blizzard_FlightMap") then
+		WQT_FlightMapContainer:SetParent(FlightMapFrame);
+		WQT_FlightMapContainer:SetPoint("BOTTOMLEFT", FlightMapFrame, "BOTTOMRIGHT", -7, 0);
+		WQT_FlightMapContainerButton:SetParent(FlightMapFrame);
+		WQT_FlightMapContainerButton:SetAlpha(1);
+		WQT_FlightMapContainerButton:SetPoint("BOTTOMRIGHT", FlightMapFrame, "BOTTOMRIGHT", -8, 8);
+		WQT_FlightMapContainerButton:SetFrameLevel(FlightMapFrame:GetFrameLevel()+2);
+	end
+end
+
+function _M.WQT_CoreMixin:PLAYER_REGEN_DISABLED()
+	WQT.combatLockWarned = false;
+	WQT_ListContainer.SettingsButton:SetEnabled(false)
+	self:ChangePanel(_V.PanelIDEnum.Quests);
+end
+
+function _M.WQT_CoreMixin:PLAYER_REGEN_ENABLED()
+	WQT.combatLockWarned = false;
+	WQT_ListContainer.SettingsButton:SetEnabled(true)
+end
+
+ -- Warmode toggle because WAR_MODE_STATUS_UPDATE doesn't seems to fire when toggling warmode
+function _M.WQT_CoreMixin:PVP_TIMER_UPDATE()
+	local questListFrame = self:GetQuestListFrame();
+	questListFrame:UpdateQuestList();
+end
+
+function _M.WQT_CoreMixin:PLAYER_LOGOUT()
+	WQT_Profiles:ClearDefaultsFromActive();
+end
+
+function _M.WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
+	local questListFrame = self:GetQuestListFrame();
+	questListFrame:DisplayQuestList();
+end
+
+function _M.WQT_CoreMixin:SUPER_TRACKING_CHANGED(...)
+	local questListFrame = self:GetQuestListFrame();
+	questListFrame:DisplayQuestList();
+end
+
+function _M.WQT_CoreMixin:TAXIMAP_OPENED(system)
+	local enumListAnchorType = _V:GetListAnchorTypeEnum();
+	local anchor = system == 2 and enumListAnchorType.flight or enumListAnchorType.taxi;
+	WQT_WorldQuestFrame:ChangeAnchorLocation(anchor);
+end
+
+function _M.WQT_CoreMixin:ChangePanel(panelID)
+	for k, panel in ipairs(self.panels) do
+		panel:SetShown(panel.panelID == panelID);
+	end
+end
+
+function _M.WQT_CoreMixin:ChangeAnchorLocation(anchor)
+	local enumListAnchorType = _V:GetListAnchorTypeEnum();
+	-- Store the original tab for when we come back to the world anchor
+	if (self.anchor == enumListAnchorType.world) then
+		self.tabBeforeAnchor = self.selectedTab;
+	end
+	
+	-- Prevent showing up when the map is minimized
+	if (anchor ~= enumListAnchorType.full) then
+		WQT_WorldMapContainer:Hide();
+	end
+	
+	if (not anchor) then return end
+	
+	self.anchor = anchor;
+
+	WQT_WorldMapContainer:Hide();
+	local showMapContainer = false;
+	WQT.mapButton:SetShown(anchor == enumListAnchorType.full);
+	-- Changing map to full screen doesn't call refresh on the buttons
+	WQT.mapButtonsLib:SetPoints();
+
+	if (anchor == enumListAnchorType.flight) then
+		WQT_WorldQuestFrame:ClearAllPoints(); 
+		WQT_WorldQuestFrame:SetParent(WQT_FlightMapContainer);
+		WQT_WorldQuestFrame:SetPoint("TOPLEFT", WQT_FlightMapContainer, 10, -56);
+		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", WQT_FlightMapContainer, -28, 12);
+	elseif (anchor == enumListAnchorType.taxi) then
+		-- Exists in frame data but no longer used?
+	elseif (anchor == enumListAnchorType.world) then
+		WQT_WorldQuestFrame:ClearAllPoints();
+		WQT_WorldQuestFrame:SetParent(WQT.contentFrame);
+		WQT_WorldQuestFrame:SetPoint("TOPLEFT", WQT.contentFrame, 0, -29);
+		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", WQT.contentFrame, -22, 0);
+	elseif (anchor == enumListAnchorType.full) then
+		WQT_WorldQuestFrame:ClearAllPoints(); 
+		WQT_WorldQuestFrame:SetParent(WQT_WorldMapContainer);
+		WQT_WorldQuestFrame:SetPoint("TOPLEFT", WQT_WorldMapContainer, 14, -56);
+		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", WQT_WorldMapContainer, -28, 12);
+		WQT_WorldMapContainer:ConstrainPosition();
+		showMapContainer = WQT.mapButton.isSelected;
+	end
+
+	WQT_WorldMapContainer:SetShown(showMapContainer);
+
+	WQT_CallbackRegistry:TriggerEvent("WQT.CoreFrame.AnchorUpdated", anchor);
+end
+
+
+------------------------------------------
 -- 		CONSTRAINED CHILD MIXIN		--
 ------------------------------------------
 
-WQT_ConstrainedChildMixin = {}
+local WQT_ConstrainedChildMixin = {}
 
 function WQT_ConstrainedChildMixin:OnLoad(anchor)
 	self.margins = {["left"] = 0, ["right"] = 0, ["top"] = 0, ["bottom"] = 0};
@@ -1829,497 +2267,12 @@ function WQT_ConstrainedChildMixin:ConstrainPosition()
 end
 
 ------------------------------------------
--- 				CORE MIXIN				--
-------------------------------------------
-
-WQT_CoreMixin = {};
-
-
-function WQT_CoreMixin:GetQuestListFrame()
-	return self.ScrollFrame;
-end
-
--- Mimics hovering over a zone or continent, based on the zone the map is in
-function WQT_CoreMixin:ShowWorldmapHighlight(questInfo)
-	if (not WorldMapFrame:IsShown()) then return; end
-	
-	local zoneID = questInfo.mapID;
-	local areaId = WorldMapFrame.mapID;
-
-	local mapInfo = _V:GetCachedMapInfo(zoneID);
-	
-	if (not mapInfo) then return; end;
-	
-	WorldMapFrame.ScrollContainer:GetMap():TriggerEvent("SetAreaLabel", MAP_AREA_LABEL_TYPE.POI, mapInfo.name);
-	self.resetLabel = true;
-
-	local coords = _V:GetMostRelevantMapCoordinates(zoneID, areaId);
-	if (not coords) then return; end;
-
-	-- Now we cheat by acting like we moved our mouse over the relevant zone
-	WQT_MapZoneHightlight:SetParent(WorldMapFrame.ScrollContainer.Child);
-	WQT_MapZoneHightlight:ClearAllPoints();
-	WQT_MapZoneHightlight:SetPoint("Center", WorldMapFrame.ScrollContainer.Child, 0.5, 0.5);
-	WQT_MapZoneHightlight:SetFrameLevel(2009);
-	local fileDataID, atlasID, texPercentageX, texPercentageY, textureX, textureY, scrollChildX, scrollChildY = C_Map.GetMapHighlightInfoAtPosition(areaId, coords.x, coords.y);
-	if (fileDataID and fileDataID > 0) or (atlasID) then
-		WQT_MapZoneHightlight.Texture:SetTexCoord(0, texPercentageX, 0, texPercentageY);
-		local width = WorldMapFrame.ScrollContainer.Child:GetWidth();
-		local height = WorldMapFrame.ScrollContainer.Child:GetHeight();
-		WQT_MapZoneHightlight.Texture:ClearAllPoints();
-		if (atlasID) then
-			WQT_MapZoneHightlight.Texture:SetAtlas(atlasID, true, "TRILINEAR");
-			scrollChildX = ((scrollChildX + 0.5*textureX) - 0.5) * width;
-			scrollChildY = -((scrollChildY + 0.5*textureY) - 0.5) * height;
-			WQT_MapZoneHightlight.Texture:SetPoint("CENTER", scrollChildX, scrollChildY);
-			WQT_MapZoneHightlight:Show();
-		else
-			WQT_MapZoneHightlight.Texture:SetTexture(fileDataID, nil, nil, "TRILINEAR");
-			textureX = textureX * width;
-			textureY = textureY * height;
-			if textureX > 0 and textureY > 0 then
-				scrollChildX = scrollChildX * width;
-				scrollChildY = -scrollChildY * height;
-				WQT_MapZoneHightlight.Texture:SetWidth(textureX);
-				WQT_MapZoneHightlight.Texture:SetHeight(textureY);
-				WQT_MapZoneHightlight.Texture:SetPoint("TOPLEFT", WQT_MapZoneHightlight:GetParent(), "TOPLEFT", scrollChildX, scrollChildY);
-				WQT_MapZoneHightlight.Texture:SetPoint("CENTER");
-				WQT_MapZoneHightlight:Show();
-			end
-		end
-	end
-end
-
-function WQT_CoreMixin:HideWorldmapHighlight()
-	WQT_MapZoneHightlight:Hide();
-	if (self.resetLabel) then
-		WorldMapFrame.ScrollContainer:GetMap():TriggerEvent("ClearAreaLabel", MAP_AREA_LABEL_TYPE.POI);
-		self.resetLabel = false;
-	end
-end
-
-function WQT_CoreMixin:OnLoad()
-	self.WQT_Utils = WQT_Utils;
-	self.variables = addon.variables;
-	WQT_Profiles:OnLoad();
-
-	-- Quest Dataprovider
-	self.dataProvider = CreateAndInitFromMixin(WQT_DataProvider);
-
-	self.bountyCounterPool = CreateFramePool("FRAME", self, "WQT_BountyCounterTemplate");
-	
-	self:SetFrameLevel(self:GetParent():GetFrameLevel()+4);
-
-	self.ExternalEvents = {};
-	-- Events
-	self:RegisterEvent("PLAYER_REGEN_DISABLED");
-	self:RegisterEvent("PLAYER_REGEN_ENABLED");
-	self:RegisterEvent("PVP_TIMER_UPDATE"); -- Warmode toggle because WAR_MODE_STATUS_UPDATE doesn't seems to fire when toggling warmode
-	self:RegisterEvent("ADDON_LOADED");
-	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
-	self:RegisterEvent("SUPER_TRACKING_CHANGED");
-	self:RegisterEvent("TAXIMAP_OPENED");
-	self:RegisterEvent("PLAYER_LOGOUT");
-
-	self:SetScript("OnEvent", function(self, event, ...)
-			if (self[event]) then 
-				self[event](self, ...);
-			elseif (not self.ExternalEvents[event]) then
-				WQT:DebugPrint("WQT missing function for:",event);
-			end 
-
-			WQT_CallbackRegistry:TriggerEvent("WQT.RegisterdEventTriggered", event, ...);
-		end)
-
-	-- Slashcommands
-	SLASH_WQTSLASH1 = '/wqt';
-	SLASH_WQTSLASH2 = '/worldquesttab';
-	SlashCmdList["WQTSLASH"] = slashcmd
-
-
-	WQT_CallbackRegistry:RegisterCallback("WQT.SettingChanged",
-		function(_, categoryID, tag)
-			if (categoryID == "PROFILES") then
-				self:ApplyAllSettings();
-			elseif (tag == "BOUNTY_COUNTER") then
-				self:UpdateBountyCounters();
-				self:RepositionBountyTabs();
-			elseif (tag == "BOUNTY_REWARD") then
-				self:UpdateBountyCounters();
-			end
-		end,
-		self);
-
-	EventRegistry:RegisterCallback(
-		"WorldMapOnShow",
-		function()
-			if (WQT_WorldQuestFrame.autoEmisarryId) then
-				WQT_WorldQuestFrame.autoEmisarryId = nil;
-				WQT_ListContainer:UpdateQuestList();
-			end
-		end,
-		self);
-
-	EventRegistry:RegisterCallback(
-		"WorldMapOnHide",
-		function()
-			WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Quests);
-		end,
-		self);
-
-	EventRegistry:RegisterCallback(
-		"WorldMapMaximized",
-		function()
-			WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Quests);
-		end,
-		self);
-
-	EventRegistry:RegisterCallback(
-		"WorldMapMinimized",
-		function()
-			WQT_WorldQuestFrame:ChangePanel(WQT_PanelID.Quests);
-			local topBar = self:GetQuestListFrame():GetTopBar();
-			topBar:Layout();
-		end,
-		self);
-
-	--
-	-- Function hooks
-	-- 
-		
-	local enumListAnchorType = _V:GetListAnchorTypeEnum();
-	-- Re-anchor list when maxi/minimizing world map
-	hooksecurefunc(WorldMapFrame, "HandleUserActionToggleSelf", function()
-			if not WorldMapFrame:IsShown() then return end
-			local anchor = WorldMapFramePortrait:IsShown() and enumListAnchorType.world or enumListAnchorType.full;
-			WQT_WorldQuestFrame:ChangeAnchorLocation(anchor);
-		end)
-
-	hooksecurefunc(WorldMapFrame, "HandleUserActionToggleQuestLog", function()
-			if not WorldMapFrame:IsShown() then return end
-			local anchor = enumListAnchorType.world;
-			WQT_WorldQuestFrame:ChangeAnchorLocation(anchor);
-		end)
-	
-	hooksecurefunc(WorldMapFrame, "HandleUserActionMinimizeSelf", function()
-			WQT_WorldQuestFrame:ChangeAnchorLocation(enumListAnchorType.world);
-		end)
-		
-	hooksecurefunc(WorldMapFrame, "HandleUserActionMaximizeSelf", function()
-			WQT_WorldQuestFrame:ChangeAnchorLocation(enumListAnchorType.full);
-		end)
-		
-	
-	-- Update our filters when changes are made to the world map filters
-	local worldMapFilter;
-	
-	for k, frame in ipairs(WorldMapFrame.overlayFrames) do
-		for name in pairs(frame) do
-			if (name == "OnSelection") then
-				worldMapFilter = frame;
-				break;
-			end
-		end
-	end
-	if (worldMapFilter) then
-		hooksecurefunc(worldMapFilter, "OnSelection", function()
-				local questListFrame = self:GetQuestListFrame();
-				questListFrame:UpdateQuestList();
-			end);
-		self.worldMapFilter = worldMapFilter;
-	end
-
-	-- Auto emisarry when clicking on one of the buttons
-	local bountyBoard = WQT_Utils:GetOldBountyBoard();
-	hooksecurefunc(bountyBoard, "OnTabClick", function(self, tab)
-		if (not WQT.settings.general.autoEmisarry or tab.isEmpty or WQT.settings.general.emissaryOnly) then return; end
-		WQT_WorldQuestFrame.autoEmisarryId = bountyBoard.bounties[tab.bountyIndex];
-		WQT_ListContainer:UpdateQuestList();
-	end)
-
-	hooksecurefunc(bountyBoard, "RefreshSelectedBounty", function() 
-		if (WQT.settings.general.bountyCounter) then
-			self:UpdateBountyCounters();
-		end
-	end)
-	
-	-- Slight offset the tabs to make room for the counters
-	hooksecurefunc(bountyBoard, "AnchorBountyTab", function(self, tab) 
-		if (not WQT.settings.general.bountyCounter) then return end
-		local point, relativeTo, relativePoint, x, y = tab:GetPoint(1);
-		tab:SetPoint(point, relativeTo, relativePoint, x, y + 2);
-	end)
-
-	-- Auto emisarry when selecting a bounty
-	local activityBoard = WQT_Utils:GetNewBountyBoard();
-	hooksecurefunc(activityBoard, "SetNextMapForSelectedBounty", function()
-		if (not WQT.settings.general.autoEmisarry or WQT.settings.general.emissaryOnly or not activityBoard.selectedBounty) then return; end
-		WQT_WorldQuestFrame.autoEmisarryId = activityBoard.selectedBounty.factionID;
-		WQT_ListContainer:UpdateQuestList();
-	end)
-
-	hooksecurefunc(activityBoard, "SetSelectedBounty", function(source, bountyInfo)
-		if (bountyInfo ~= nil or WQT_WorldQuestFrame.autoEmisarryId == nil) then return; end
-		WQT_WorldQuestFrame.autoEmisarryId = nil;
-		WQT_ListContainer:UpdateQuestList();
-	end)
-	
-	hooksecurefunc("TaskPOI_OnLeave", function(self)
-			if (WQT.settings.pin.disablePoI) then return; end
-			
-			WQT_ListContainer.PoIHoverId = -1;
-			WQT_ListContainer:UpdateQuestList(true);
-			self.notTracked = nil;
-		end)
-end
-
-function WQT_CoreMixin:RegisterEventsForExternal(external)
-	if (not external.GetRequiredEvents or not external.GetName) then return end;
-
-	for k, event in pairs(external:GetRequiredEvents()) do
-		if (self:RegisterEvent(event)) then
-			self.ExternalEvents[event] = true;
-			WQT:DebugPrint("Registered new event", event, "for external", external:GetName());
-		end
-	end
-end
-
-function WQT_CoreMixin:ApplyAllSettings()
-	self:UpdateBountyCounters();
-	self:RepositionBountyTabs();
-	WQT_ListContainer:UpdateQuestList();
-	WQT:Sort_OnClick(nil, WQT.settings.general.sortBy);
-	WQT_WorldMapContainer:LinkSettings(WQT.settings.general.fullScreenContainerPos);
-end
-
-function WQT_CoreMixin:UpdateBountyCounters()
-	self.bountyCounterPool:ReleaseAll();
-	if (not WQT.settings.general.bountyCounter) then return end
-	
-	if (not self.bountyInfo) then
-		self.bountyInfo = {};
-	end
-	
-	local bountyBoard = WQT_Utils:GetOldBountyBoard();
-	for tab, v in bountyBoard.bountyTabPool:EnumerateActive() do
-		self:AddBountyCountersToTab(tab);
-	end
-end
-
-function WQT_CoreMixin:RepositionBountyTabs()
-	local bountyBoard = WQT_Utils:GetOldBountyBoard();
-	for tab, v in bountyBoard.bountyTabPool:EnumerateActive() do
-		bountyBoard:AnchorBountyTab(tab);
-	end
-end
-
-function WQT_CoreMixin:AddBountyCountersToTab(tab)
-	local settingBountyReward = WQT_Utils:GetSetting("general", "bountyReward");
-
-	if (not tab.WQT_Reward) then
-		tab.WQT_Reward = CreateFrame("FRAME", nil, tab, "WQT_MiniIconTemplate");
-		tab.WQT_Reward:SetPoint("CENTER", tab, "TOPRIGHT", -8, -7);
-	end
-	tab.WQT_Reward:Reset();
-	
-	local bountyBoard = WQT_Utils:GetOldBountyBoard();
-	local bountyData = bountyBoard.bounties[tab.bountyIndex];
-	
-	if (bountyData) then
-		local progress, goal = bountyBoard:CalculateBountySubObjectives(bountyData);
-		
-		if (progress == goal) then return end;
-		
-		-- RewardIcon
-		if (settingBountyReward) then
-			local bountyQuestInfo = self.bountyInfo[bountyData.questID];
-			if (not bountyQuestInfo) then
-				bountyQuestInfo = WQT_Utils:QuestCreationFunc();
-				self.bountyInfo[bountyData.questID] = bountyQuestInfo;
-				bountyQuestInfo:Init(bountyData.questID);
-			end
-			bountyQuestInfo:LoadRewards();
-			tab.WQT_Reward:SetupRewardIcon(bountyQuestInfo:GetFirstNoneAzeriteType());
-			tab.WQT_Reward:SetScale(1.38);
-		end
-		
-		-- Counters
-		local offsetAngle = 32;
-		local startAngle = 270;
-		
-		-- position of first counter
-		startAngle = startAngle - offsetAngle * (goal -1) /2
-		
-		for i=1, goal do
-			local counter = self.bountyCounterPool:Acquire();
-
-			local x = cos(startAngle) * 16;
-			local y = sin(startAngle) * 16;
-			counter:SetPoint("CENTER", tab.Icon, "CENTER", x, y);
-			counter:SetParent(tab);
-			counter:Show();
-			
-			-- Light nr of completed
-			if i <= progress then
-				counter.icon:SetTexCoord(0, 0.5, 0, 0.5);
-				counter.icon:SetVertexColor(1, 1, 1, 1);
-				counter.icon:SetDesaturated(false);
-			else
-				counter.icon:SetTexCoord(0, 0.5, 0, 0.5);
-				counter.icon:SetVertexColor(0.75, 0.75, 0.75, 1);
-				counter.icon:SetDesaturated(true);
-			end
-
-			-- Offset next counter
-			startAngle = startAngle + offsetAngle;
-		end
-	end
-	
-end
-
-function WQT_CoreMixin:FilterClearButtonOnClick()
-	if WQT_WorldQuestFrame.autoEmisarryId then
-		WQT_WorldQuestFrame.autoEmisarryId = nil;
-	elseif WQT.settings.general.emissaryOnly then
-		WQT.settings.general.emissaryOnly = false;
-	else
-		for k, filterType in _V:EnumerateFilterTypes() do
-			local default = not WQT.settings.general.preciseFilters;
-			WQT:SetAllFilterTo(filterType, default);
-		end
-
-		_V:EnableAllOfficialCvars();
-
-		local filterButton = WQT_Utils:GetWoldMapFilterButton();
-		if (filterButton) then
-			filterButton:RefreshFilterCounter();
-			filterButton:ValidateResetState();
-		end
-
-		self:GetQuestListFrame():GetSearchBox():SetText("");
-	end
-	
-	WQT.settings.general.showDisliked = true;
-	
-	WQT_CallbackRegistry:TriggerEvent("WQT.FiltersUpdated");
-end
-
-function WQT_CoreMixin:UnhookEvent(event, func)
-	local list = self.eventHooks[event];
-	if (list) then
-		list[func] = nil;
-	end
-end
-
-function WQT_CoreMixin:ADDON_LOADED(loaded)
-	if (loaded == "Blizzard_FlightMap") then
-		WQT_FlightMapContainer:SetParent(FlightMapFrame);
-		WQT_FlightMapContainer:SetPoint("BOTTOMLEFT", FlightMapFrame, "BOTTOMRIGHT", -7, 0);
-		WQT_FlightMapContainerButton:SetParent(FlightMapFrame);
-		WQT_FlightMapContainerButton:SetAlpha(1);
-		WQT_FlightMapContainerButton:SetPoint("BOTTOMRIGHT", FlightMapFrame, "BOTTOMRIGHT", -8, 8);
-		WQT_FlightMapContainerButton:SetFrameLevel(FlightMapFrame:GetFrameLevel()+2);
-	end
-end
-
-function WQT_CoreMixin:PLAYER_REGEN_DISABLED()
-	WQT.combatLockWarned = false;
-	WQT_ListContainer.SettingsButton:SetEnabled(false)
-	self:ChangePanel(WQT_PanelID.Quests);
-end
-
-function WQT_CoreMixin:PLAYER_REGEN_ENABLED()
-	WQT.combatLockWarned = false;
-	WQT_ListContainer.SettingsButton:SetEnabled(true)
-end
-
- -- Warmode toggle because WAR_MODE_STATUS_UPDATE doesn't seems to fire when toggling warmode
-function WQT_CoreMixin:PVP_TIMER_UPDATE()
-	local questListFrame = self:GetQuestListFrame();
-	questListFrame:UpdateQuestList();
-end
-
-function WQT_CoreMixin:PLAYER_LOGOUT()
-	WQT_Profiles:ClearDefaultsFromActive();
-end
-
-function WQT_CoreMixin:QUEST_WATCH_LIST_CHANGED(...)
-	local questListFrame = self:GetQuestListFrame();
-	questListFrame:DisplayQuestList();
-end
-
-function WQT_CoreMixin:SUPER_TRACKING_CHANGED(...)
-	local questListFrame = self:GetQuestListFrame();
-	questListFrame:DisplayQuestList();
-end
-
-function WQT_CoreMixin:TAXIMAP_OPENED(system)
-	local enumListAnchorType = _V:GetListAnchorTypeEnum();
-	local anchor = system == 2 and enumListAnchorType.flight or enumListAnchorType.taxi;
-	WQT_WorldQuestFrame:ChangeAnchorLocation(anchor);
-end
-
-function WQT_CoreMixin:ChangePanel(panelID)
-	for k, panel in ipairs(self.panels) do
-		panel:SetShown(panel.panelID == panelID);
-	end
-end
-
-function WQT_CoreMixin:ChangeAnchorLocation(anchor)
-	local enumListAnchorType = _V:GetListAnchorTypeEnum();
-	-- Store the original tab for when we come back to the world anchor
-	if (self.anchor == enumListAnchorType.world) then
-		self.tabBeforeAnchor = self.selectedTab;
-	end
-	
-	-- Prevent showing up when the map is minimized
-	if (anchor ~= enumListAnchorType.full) then
-		WQT_WorldMapContainer:Hide();
-	end
-	
-	if (not anchor) then return end
-	
-	self.anchor = anchor;
-
-	WQT_WorldMapContainer:Hide();
-	local showMapContainer = false;
-	WQT.mapButton:SetShown(anchor == enumListAnchorType.full);
-	-- Changing map to full screen doesn't call refresh on the buttons
-	WQT.mapButtonsLib:SetPoints();
-
-	if (anchor == enumListAnchorType.flight) then
-		WQT_WorldQuestFrame:ClearAllPoints(); 
-		WQT_WorldQuestFrame:SetParent(WQT_FlightMapContainer);
-		WQT_WorldQuestFrame:SetPoint("TOPLEFT", WQT_FlightMapContainer, 10, -56);
-		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", WQT_FlightMapContainer, -28, 12);
-	elseif (anchor == enumListAnchorType.taxi) then
-		-- Exists in frame data but no longer used?
-	elseif (anchor == enumListAnchorType.world) then
-		WQT_WorldQuestFrame:ClearAllPoints();
-		WQT_WorldQuestFrame:SetParent(WQT.contentFrame);
-		WQT_WorldQuestFrame:SetPoint("TOPLEFT", WQT.contentFrame, 0, -29);
-		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", WQT.contentFrame, -22, 0);
-	elseif (anchor == enumListAnchorType.full) then
-		WQT_WorldQuestFrame:ClearAllPoints(); 
-		WQT_WorldQuestFrame:SetParent(WQT_WorldMapContainer);
-		WQT_WorldQuestFrame:SetPoint("TOPLEFT", WQT_WorldMapContainer, 14, -56);
-		WQT_WorldQuestFrame:SetPoint("BOTTOMRIGHT", WQT_WorldMapContainer, -28, 12);
-		WQT_WorldMapContainer:ConstrainPosition();
-		showMapContainer = WQT.mapButton.isSelected;
-	end
-
-	WQT_WorldMapContainer:SetShown(showMapContainer);
-
-	WQT_CallbackRegistry:TriggerEvent("WQT.CoreFrame.AnchorUpdated", anchor);
-end
-
-------------------------------------------
 -- 		   Full screen container		--
 ------------------------------------------
 
-WQT_FullscreenMapContainer = CreateFromMixins(WQT_ConstrainedChildMixin);
+_M.WQT_FullscreenMapContainer = CreateFromMixins(WQT_ConstrainedChildMixin);
 
-function WQT_FullscreenMapContainer:OnLoad()
+function _M.WQT_FullscreenMapContainer:OnLoad()
 	self:SetParent(WorldMapFrame.ScrollContainer);
 	self:SetPoint("BOTTOMLEFT", WorldMapFrame.ScrollContainer, 0, 0);
 	WQT_ConstrainedChildMixin.OnLoad(self);
@@ -2333,6 +2286,102 @@ function WQT_FullscreenMapContainer:OnLoad()
 	self.DragFrame:SetTooltip(TooltipFunc);
 end
 
-function WQT_FullscreenMapContainer:OnShow()
+function _M.WQT_FullscreenMapContainer:OnShow()
 	WQT_ListContainer:DisplayQuestList();
+end
+
+------------------------------------------
+-- 		  WQT_PanelCloseButtonMixin		--
+------------------------------------------
+
+_M.WQT_PanelCloseButtonMixin = {}
+
+function _M.WQT_PanelCloseButtonMixin:OnLoad()
+	self:SetFrameLevel(self:GetParent():GetFrameLevel() + 20);
+end
+
+function _M.WQT_PanelCloseButtonMixin:OnClick()
+	WQT_CallbackRegistry:TriggerEvent("WQT.ChangePanelRequest", _V.PanelIDEnum.Quests);
+	PlaySound(MenuVariants.GetDropdownCloseSoundKit());
+end
+
+function _M.WQT_PanelCloseButtonMixin:OnEnter()
+	self.texture:SetAlpha(1.0);
+end
+
+function _M.WQT_PanelCloseButtonMixin:OnLeave()
+	self.texture:SetAlpha(0.5);
+end
+
+function _M.WQT_PanelCloseButtonMixin:OnMouseDown()
+	if self:IsEnabled() then
+		self.texture:AdjustPointsOffset(1, -1);
+	end
+end
+
+function _M.WQT_PanelCloseButtonMixin:OnMouseUp()
+	self.texture:AdjustPointsOffset(-1, 1);
+end
+
+------------------------------------------
+-- 		WQT_CheckButtonMixin			--
+------------------------------------------
+
+_M.WQT_CheckButtonMixin = CreateFromMixins(WowStyle2IconButtonMixin, CallbackRegistryMixin, _M.WQT_TooltipMixin);
+
+_M.WQT_CheckButtonMixin:GenerateCallbackEvents(
+	{
+		"OnClick";
+	}
+);
+
+function _M.WQT_CheckButtonMixin:OnLoad()
+	WowStyle2IconButtonMixin.OnLoad(self);
+	CallbackRegistryMixin.OnLoad(self);
+
+	local x, y = 2, -1;
+	self:SetDisplacedRegions(x, y, self.Icon, self.Highlight);
+end
+
+function _M.WQT_CheckButtonMixin:OnButtonStateChanged()
+	local icon = self.normalAtlas;
+	local useAtlasSize = (not self.iconWidth or not self.iconHeight) and TextureKitConstants.UseAtlasSize or TextureKitConstants.IgnoreAtlasSize;
+	local alpha = self:GetIconHighlighted() and 1 or 0.5;
+	alpha = 1;
+	local saturation = self:GetIconHighlighted() and 1 or 0.5;
+	if (self.disabledAtlas) then
+		icon = self:IsEnabled() and self.normalAtlas or self.disabledAtlas;
+	end
+	self.Icon:SetAtlas(icon, useAtlasSize);
+	self.Highlight:SetAtlas(icon, useAtlasSize);
+	self.Icon:SetVertexColor(saturation, saturation, saturation);
+	self.Icon:SetAlpha(alpha);
+	if (not useAtlasSize) then
+		self.Icon:SetSize(self.iconWidth, self.iconHeight);
+		self.Highlight:SetSize(self.iconWidth, self.iconHeight);
+	end
+end
+
+function _M.WQT_CheckButtonMixin:GetIconHighlighted()
+	return self:GetChecked();
+end
+
+function _M.WQT_CheckButtonMixin:OnClick()
+	if (self:GetChecked()) then
+		PlaySound(MenuVariants.GetDropdownOpenSoundKit());
+	else
+		PlaySound(MenuVariants.GetDropdownCloseSoundKit());
+	end
+	self:OnButtonStateChanged();
+	self:TriggerEvent(_M.WQT_CheckButtonMixin.Event.OnClick);
+end
+
+function _M.WQT_CheckButtonMixin:OnEnter()
+	WowStyle2IconButtonMixin.OnEnter(self);
+	_M.WQT_TooltipMixin.OnEnter(self);
+end
+
+function _M.WQT_CheckButtonMixin:OnLeave()
+	WowStyle2IconButtonMixin.OnLeave(self);
+	_M.WQT_TooltipMixin.OnLeave(self);
 end

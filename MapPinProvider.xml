@@ -2,10 +2,16 @@
 
 	<Script file="MapPinProvider.lua" />
 
-	<Frame name="WQT_PinTemplate" mixin="WQT_PinMixin" virtual="true" frameStrata="MEDIUM">
+	<Frame name="WQT_PinTemplate" virtual="true" frameStrata="MEDIUM">
+		<Mixins>
+			<Mixin key="mixins.WQT_PinMixin" source="local"/>
+		</Mixins>
 		<Size x="2" y="2" />
 		<Frames>
-			<Button parentKey="Button" mixin="WQT_PinButtonMixin" flattenRenderLayers="true" frameStrata="MEDIUM" registerForClicks="LeftButtonUp, RightButtonUp">
+			<Button parentKey="Button" flattenRenderLayers="true" frameStrata="MEDIUM" registerForClicks="LeftButtonUp, RightButtonUp">
+				<Mixins>
+					<Mixin key="mixins.WQT_PinButtonMixin" source="local"/>
+				</Mixins>
 				<Size x="25" y="25" />
 				<HitRectInsets left="1" right="1" top="1" bottom="1" />
 				<Anchors>
@@ -141,7 +147,10 @@
 				</Scripts>
 			</Button>
 
-			<Frame parentKey="Label" mixin="WQT_PinLabelMixin" hidden="true">
+			<Frame parentKey="Label" hidden="true">
+				<Mixins>
+					<Mixin key="mixins.WQT_PinLabelMixin" source="local"/>
+				</Mixins>
 				<Size x="1" y="1" />
 				<Anchors>
 					<Anchor point="TOP" relativeKey="$parent.Button" relativePoint="BOTTOM" />

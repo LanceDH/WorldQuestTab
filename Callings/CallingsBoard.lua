@@ -1,29 +1,30 @@
 ﻿local addonName, addon = ...
 local WQT = addon.WQT;
 local _V = addon.variables;
+local _M = addon.mixins;
 
 local MAX_CALLINGS = 3;
 
 local MAP_ANCHORS = {
-	[1543] = { ["Point"] = "BOTTOMLEFT"}, -- The Maw
-	[1536] = { ["Point"] = "BOTTOMLEFT"}, -- Maldraxxus
-	[1698] = { ["Point"] = "BOTTOMLEFT"}, -- Maldraxxus
-	[1525] = { ["Point"] = "BOTTOMLEFT"}, -- Revendreth
-	[1699] = { ["Point"] = "BOTTOMLEFT"}, -- Revendreth Covenant
-	[1700] = { ["Point"] = "BOTTOMLEFT"}, -- Revendreth Covenant
+	[1543] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- The Maw
+	[1536] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Maldraxxus
+	[1698] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Maldraxxus
+	[1525] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Revendreth
+	[1699] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Revendreth Covenant
+	[1700] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Revendreth Covenant
 	[1670] = { ["Point"] = "BOTTOMRIGHT"}, -- Oribos
 	[1671] = { ["Point"] = "BOTTOMRIGHT"}, -- Oribos
 	[1672] = { ["Point"] = "BOTTOMRIGHT"}, -- Oribos
 	[1673] = { ["Point"] = "BOTTOMRIGHT"}, -- Oribos
-	[1533] = { ["Point"] = "BOTTOMLEFT"}, -- Bastion
-	[1707] = { ["Point"] = "BOTTOMLEFT"}, -- Bastion Covenant
-	[1708] = { ["Point"] = "BOTTOMLEFT"}, -- Bastion Covenant
-	[1565] = { ["Point"] = "BOTTOMLEFT"}, -- Ardenweald
-	[1701] = { ["Point"] = "BOTTOMLEFT"}, -- Ardenweald Covenant
-	[1702] = { ["Point"] = "BOTTOMLEFT"}, -- Ardenweald Covenant
-	[1703] = { ["Point"] = "BOTTOMLEFT"}, -- Ardenweald Covenant
+	[1533] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Bastion
+	[1707] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Bastion Covenant
+	[1708] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Bastion Covenant
+	[1565] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Ardenweald
+	[1701] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Ardenweald Covenant
+	[1702] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Ardenweald Covenant
+	[1703] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Ardenweald Covenant
 	[1550] = { ["Point"] = "BOTTOMLEFT", ["y"] = 80}, -- Shadowlands
-	[1970] = { ["Point"] = "BOTTOMLEFT"}, -- Zereth
+	[1970] = { ["Point"] = "BOTTOMLEFT", ["y"] = 24}, -- Zereth
 }
 
 local CovenantCallingsEvents = {
@@ -44,9 +45,9 @@ local function CompareCallings(a, b)
 	return a.timeRemaining < b.timeRemaining;
 end
 
-WQT_CallingsBoardMixin = {};
+_M.WQT_CallingsBoardMixin = {};
 
-function WQT_CallingsBoardMixin:OnLoad()
+function _M.WQT_CallingsBoardMixin:OnLoad()
 	self:SetParent(WorldMapFrame.ScrollContainer);
 	self:SetPoint("BOTTOMLEFT", 15, 15);
 	self:SetFrameStrata("HIGH")
@@ -55,7 +56,7 @@ function WQT_CallingsBoardMixin:OnLoad()
 	
 	for i=1, numDisplays do
 		local display = self.Displays[i];
-		display.miniIcons = CreateAndInitFromMixin(WQT_MiniIconOverlayMixin, display, 270, 20, 40)
+		display.miniIcons = CreateAndInitFromMixin(_M.WQT_MiniIconOverlayMixin, display, 270, 20, 40)
 	end
 
 	FrameUtil.RegisterFrameForEvents(self, CovenantCallingsEvents);
@@ -78,11 +79,11 @@ function WQT_CallingsBoardMixin:OnLoad()
 	self:RequestUpdate();
 end
 
-function WQT_CallingsBoardMixin:RequestUpdate()
+function _M.WQT_CallingsBoardMixin:RequestUpdate()
 	C_CovenantCallings.RequestCallings();
 end
 
-function WQT_CallingsBoardMixin:OnEvent(event, ...)
+function _M.WQT_CallingsBoardMixin:OnEvent(event, ...)
 	if (event == "COVENANT_CALLINGS_UPDATED") then
 		local now = GetTime();
 		if (now - self.lastUpdate > 0.5) then
@@ -109,13 +110,13 @@ function WQT_CallingsBoardMixin:OnEvent(event, ...)
 	end
 end
 
-function WQT_CallingsBoardMixin:OnShow()
+function _M.WQT_CallingsBoardMixin:OnShow()
 	-- Guarantee this thing gets updated whenever it's presented
 	self:Update();
 	self:RequestUpdate();
 end
 
-function WQT_CallingsBoardMixin:Update()
+function _M.WQT_CallingsBoardMixin:Update()
 	self:UpdateCovenant();
 	for k, display in ipairs(self.Displays) do
 		display:Update();
@@ -123,7 +124,7 @@ function WQT_CallingsBoardMixin:Update()
 	self:PlaceDisplays();
 end
 
-function WQT_CallingsBoardMixin:OnMapChanged(mapID)
+function _M.WQT_CallingsBoardMixin:OnMapChanged(mapID)
 	self:UpdateCovenant();
 	local anchorPoint = MAP_ANCHORS[mapID];
 
@@ -145,7 +146,7 @@ function WQT_CallingsBoardMixin:OnMapChanged(mapID)
 	self:UpdateVisibility();
 end
 
-function WQT_CallingsBoardMixin:UpdateCovenant()
+function _M.WQT_CallingsBoardMixin:UpdateCovenant()
 	local covenantID = C_Covenants.GetActiveCovenantID();
 	if (self.covenantID == covenantID) then
 		return;
@@ -163,7 +164,7 @@ function WQT_CallingsBoardMixin:UpdateCovenant()
 	end
 end
 
-function WQT_CallingsBoardMixin:ProcessCallings(callings)
+function _M.WQT_CallingsBoardMixin:ProcessCallings(callings)
 	if (self.isUpdating) then
 		-- 1 Update at a time, ty
 		return;
@@ -193,7 +194,7 @@ function WQT_CallingsBoardMixin:ProcessCallings(callings)
 	self.isUpdating = false;
 end
 
-function WQT_CallingsBoardMixin:PlaceDisplays()
+function _M.WQT_CallingsBoardMixin:PlaceDisplays()
 	local numDisplays = #self.Displays;
 	local numInactive = 0;
 	for i=1, numDisplays do
@@ -212,7 +213,7 @@ function WQT_CallingsBoardMixin:PlaceDisplays()
 	end
 end
 
-function WQT_CallingsBoardMixin:UpdateVisibility()
+function _M.WQT_CallingsBoardMixin:UpdateVisibility()
 	if (not WQT.settings.general.sl_callingsBoard) then
 		-- If we're not welcome, don't show;
 		self:Hide();
@@ -222,7 +223,7 @@ function WQT_CallingsBoardMixin:UpdateVisibility()
 	self:SetShown(self.showOnCurrentMap);
 end
 
-function WQT_CallingsBoardMixin:CalculateUncappedObjectives(calling)
+function _M.WQT_CallingsBoardMixin:CalculateUncappedObjectives(calling)
 	local numCompleted = 0;
 	local numTotal = 0;
 
@@ -246,7 +247,7 @@ function WQT_CallingsBoardMixin:CalculateUncappedObjectives(calling)
 	return numCompleted, numTotal;
 end
 
-function WQT_CallingsBoardMixin:GetQuestData(questID) 
+function _M.WQT_CallingsBoardMixin:GetQuestData(questID) 
 	for k, display in ipairs(self.Displays) do
 		if (display.calling and display.calling.questID == questID) then
 			return display.questInfo, display.calling;
@@ -254,14 +255,14 @@ function WQT_CallingsBoardMixin:GetQuestData(questID)
 	end
 end
 
-WQT_CallingsBoardDisplayMixin = {};
+_M.WQT_CallingsBoardDisplayMixin = {};
 
-function WQT_CallingsBoardDisplayMixin:OnLoad()
+function _M.WQT_CallingsBoardDisplayMixin:OnLoad()
 	self.calling = CovenantCalling_Create();
 	self.timeRemaining = 0;
 end
 
-function WQT_CallingsBoardDisplayMixin:SetCovenant(covenantData)
+function _M.WQT_CallingsBoardDisplayMixin:SetCovenant(covenantData)
 	self.covenantData = covenantData;
 	
 	if(covenantData) then
@@ -291,7 +292,7 @@ function WQT_CallingsBoardDisplayMixin:SetCovenant(covenantData)
 	end
 end
 
-function WQT_CallingsBoardDisplayMixin:Setup(calling, covenantData)
+function _M.WQT_CallingsBoardDisplayMixin:Setup(calling, covenantData)
 	self.calling = calling;
 	self:SetCovenant(covenantData);
 	
@@ -308,7 +309,7 @@ function WQT_CallingsBoardDisplayMixin:Setup(calling, covenantData)
 	self:Update();
 end
 
-function WQT_CallingsBoardDisplayMixin:Update()
+function _M.WQT_CallingsBoardDisplayMixin:Update()
 	if (not self.covenantData) then return; end
 	
 	self.Bang:Hide();
@@ -346,7 +347,7 @@ function WQT_CallingsBoardDisplayMixin:Update()
 	self:UpdateProgress();
 end
 
-function WQT_CallingsBoardDisplayMixin:UpdateProgress()
+function _M.WQT_CallingsBoardDisplayMixin:UpdateProgress()
 	self.miniIcons:Reset();
 	self.BangHighlight:Hide();
 	self.ProgressBar:Hide();
@@ -355,7 +356,7 @@ function WQT_CallingsBoardDisplayMixin:UpdateProgress()
 		return;
 	end
 	
-	local progress, goal = WQT_CallingsBoardMixin:CalculateUncappedObjectives(self.calling);
+	local progress, goal = _M.WQT_CallingsBoardMixin:CalculateUncappedObjectives(self.calling);
 
 	if (progress >= goal) then 
 		self.BangHighlight:Show();
@@ -391,7 +392,7 @@ end
 
 
 
-function WQT_CallingsBoardDisplayMixin:OnEnter()
+function _M.WQT_CallingsBoardDisplayMixin:OnEnter()
 	if (not self.calling) then return; end
 	
 	if (self.calling.isLockedToday) then 
@@ -408,12 +409,12 @@ function WQT_CallingsBoardDisplayMixin:OnEnter()
 	end
 end
 
-function WQT_CallingsBoardDisplayMixin:OnLeave()
+function _M.WQT_CallingsBoardDisplayMixin:OnLeave()
 	self.Highlight:Hide();
 	WQT_Utils:HideQuestTooltip(self);
 end
 
-function WQT_CallingsBoardDisplayMixin:OnClick()
+function _M.WQT_CallingsBoardDisplayMixin:OnClick()
 	if (self.calling.isLockedToday) then return; end
 
 	local openDetails = false;

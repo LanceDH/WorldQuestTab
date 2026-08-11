@@ -2,19 +2,20 @@
 local WQT = addon.WQT;
 local _L = addon.loca;
 local _V = addon.variables;
+local _M = addon.mixins;
 local WQT_Profiles = addon.WQT_Profiles;
 
 --------------------------------
 -- WQT_TooltipMixin
 --------------------------------
 
-WQT_TooltipMixin = {};
+_M.WQT_TooltipMixin = {};
 
-function WQT_TooltipMixin:SetTooltip(func)
+function _M.WQT_TooltipMixin:SetTooltip(func)
 	self.tooltipFunc = func;
 end
 
-function WQT_TooltipMixin:OnEnter()
+function _M.WQT_TooltipMixin:OnEnter()
 	if (self.tooltipFunc) then
 		WQT_ActiveGameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 		self.tooltipFunc(WQT_ActiveGameTooltip);
@@ -22,7 +23,7 @@ function WQT_TooltipMixin:OnEnter()
 	end
 end
 
-function WQT_TooltipMixin:OnLeave()
+function _M.WQT_TooltipMixin:OnLeave()
 	WQT_ActiveGameTooltip:Hide();
 end
 
@@ -30,9 +31,9 @@ end
 -- WQT_MiniIconMixin
 --------------------------------
 
-WQT_MiniIconMixin = {};
+_M.WQT_MiniIconMixin = {};
 
-function WQT_MiniIconMixin:Reset()
+function _M.WQT_MiniIconMixin:Reset()
 	self:Hide();
 	
 	self.Icon:Show();
@@ -62,11 +63,11 @@ function WQT_MiniIconMixin:Reset()
 	self.b = 1;
 end
 
-function WQT_MiniIconMixin:SetIconColor(color)
+function _M.WQT_MiniIconMixin:SetIconColor(color)
 	self:SetIconColorRGBA(color:GetRGB());
 end
 
-function WQT_MiniIconMixin:SetIconColorRGBA(r, g, b, a)
+function _M.WQT_MiniIconMixin:SetIconColorRGBA(r, g, b, a)
 	self.r = r;
 	self.g = g;
 	self.b = b;
@@ -74,12 +75,12 @@ function WQT_MiniIconMixin:SetIconColorRGBA(r, g, b, a)
 	self:Update();
 end
 
-function WQT_MiniIconMixin:SetDesaturated(desaturate)
+function _M.WQT_MiniIconMixin:SetDesaturated(desaturate)
 	self.isDesaturated = desaturate;
 	self:Update();
 end
 
-function WQT_MiniIconMixin:SetIconCoords(left, right, top, bottom)
+function _M.WQT_MiniIconMixin:SetIconCoords(left, right, top, bottom)
 	self.left = left;
 	self.right = right;
 	self.top = top;
@@ -87,24 +88,24 @@ function WQT_MiniIconMixin:SetIconCoords(left, right, top, bottom)
 	self:Update();
 end
 
-function WQT_MiniIconMixin:SetIconScale(scale)
+function _M.WQT_MiniIconMixin:SetIconScale(scale)
 	self.scale = scale;
 	self:Update();
 end
 
-function WQT_MiniIconMixin:SetIconSize(width, height)
+function _M.WQT_MiniIconMixin:SetIconSize(width, height)
 	self.Icon:SetSize(width, height);
 end
 
-function WQT_MiniIconMixin:SetBackgroundScale(scale)
+function _M.WQT_MiniIconMixin:SetBackgroundScale(scale)
 	self.BG:SetScale(scale);
 end
 
-function WQT_MiniIconMixin:SetBackgroundShown(value)
+function _M.WQT_MiniIconMixin:SetBackgroundShown(value)
 	self.BG:SetShown(value);
 end
 
-function WQT_MiniIconMixin:SetupIcon(texture, left, right, top, bottom)
+function _M.WQT_MiniIconMixin:SetupIcon(texture, left, right, top, bottom)
 	self:Reset();
 	
 	if (not texture) then return; end
@@ -119,7 +120,7 @@ function WQT_MiniIconMixin:SetupIcon(texture, left, right, top, bottom)
 	self:Show();
 end
 
-function WQT_MiniIconMixin:SetupRewardIcon(rewardType, subType)
+function _M.WQT_MiniIconMixin:SetupRewardIcon(rewardType, subType)
 	self:Reset();
 	
 	local rewardTypeAtlas = _V:GetRewardIconAtlas(rewardType, subType);
@@ -142,7 +143,7 @@ function WQT_MiniIconMixin:SetupRewardIcon(rewardType, subType)
 	self:Show();
 end
 
-function WQT_MiniIconMixin:Update()
+function _M.WQT_MiniIconMixin:Update()
 	if (self.left) then
 		self.Icon:SetTexture(self.texture);
 		self.Icon:SetTexCoord(self.left, self.right, self.top, self.bottom);
@@ -174,13 +175,13 @@ end
 -- Containers
 ----------------------------
 
-WQT_ContainerButtonMixin = {};
+_M.WQT_ContainerButtonMixin = {};
 
-function WQT_ContainerButtonMixin:OnClick()
+function _M.WQT_ContainerButtonMixin:OnClick()
 	self:SetSelected(not self.isSelected);
 end
 
-function WQT_ContainerButtonMixin:SetSelected(isSelected)
+function _M.WQT_ContainerButtonMixin:SetSelected(isSelected)
 	self.isSelected = isSelected;	
 	if (self.container) then
 		self.container:SetShown(self.isSelected);
@@ -193,7 +194,7 @@ function WQT_ContainerButtonMixin:SetSelected(isSelected)
 	end
 end
 
-function WQT_ContainerButtonMixin:OnMouseDown()
+function _M.WQT_ContainerButtonMixin:OnMouseDown()
 	if (not self.Icons) then return end
 	local offset = self.pressOffset or 2;
 	for k, frame in ipairs(self.Icons) do
@@ -201,7 +202,7 @@ function WQT_ContainerButtonMixin:OnMouseDown()
 	end
 end
 
-function WQT_ContainerButtonMixin:OnMouseUp()
+function _M.WQT_ContainerButtonMixin:OnMouseUp()
 	if (not self.Icons) then return end
 	local offset = self.pressOffset or 2;
 	for k, frame in ipairs(self.Icons) do
@@ -211,27 +212,27 @@ end
 
 local _, addonTitle = C_AddOns.GetAddOnInfo(addonName);
 
-function WQT_ContainerButtonMixin:OnEnter()
+function _M.WQT_ContainerButtonMixin:OnEnter()
 	WQT_ActiveGameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 	WQT_ActiveGameTooltip:SetText(addonTitle);
 	WQT_ActiveGameTooltip:Show();
 end
 
-function WQT_ContainerButtonMixin:OnLeave()
+function _M.WQT_ContainerButtonMixin:OnLeave()
 	WQT_ActiveGameTooltip:Hide();
 end
 
-WQT_WorldMapContainerButtonMixin = CreateFromMixins(WQT_ContainerButtonMixin);
+_M.WQT_WorldMapContainerButtonMixin = CreateFromMixins(_M.WQT_ContainerButtonMixin);
 
-function WQT_WorldMapContainerButtonMixin:Refresh() end
+function _M.WQT_WorldMapContainerButtonMixin:Refresh() end
 
 ----------------------------
 -- WQT_MiniIconOverlayMixin
 ----------------------------
 
-WQT_MiniIconOverlayMixin = {};
+_M.WQT_MiniIconOverlayMixin = {};
 
-function WQT_MiniIconOverlayMixin:Init(anchor, startAngle, distance, spacingAngle)
+function _M.WQT_MiniIconOverlayMixin:Init(anchor, startAngle, distance, spacingAngle)
 	self.miniIconPool = CreateFramePool("FRAME", anchor, "WQT_MiniIconTemplate");
 	self.anchor = anchor;
 	self.startAngle = startAngle or 270;
@@ -240,12 +241,12 @@ function WQT_MiniIconOverlayMixin:Init(anchor, startAngle, distance, spacingAngl
 	self.activeIcons = {};
 end
 
-function WQT_MiniIconOverlayMixin:Reset()
+function _M.WQT_MiniIconOverlayMixin:Reset()
 	self.miniIconPool:ReleaseAll();
 	wipe(self.activeIcons);
 end
 
-function WQT_MiniIconOverlayMixin:Create()
+function _M.WQT_MiniIconOverlayMixin:Create()
 	local icon = self.miniIconPool:Acquire();
 	tinsert(self.activeIcons, icon);
 	icon:Show();
@@ -253,7 +254,7 @@ function WQT_MiniIconOverlayMixin:Create()
 	return icon;
 end
 
-function WQT_MiniIconOverlayMixin:UpdatePlacement()
+function _M.WQT_MiniIconOverlayMixin:UpdatePlacement()
 	local numIcons = self.miniIconPool:GetNumActive();
 	-- Counters
 	local offsetAngle = self.spacingAngle;
@@ -301,23 +302,23 @@ function noTableGetLayoutChildrenMixin:GetLayoutChildren()
 	return children;
 end
 
-WQT_HorizontalLayoutMixin = CreateFromMixins(HorizontalLayoutMixin, noTableGetLayoutChildrenMixin);
+_M.WQT_HorizontalLayoutMixin = CreateFromMixins(HorizontalLayoutMixin, noTableGetLayoutChildrenMixin);
 
 
 -- Arranges children right to left bottom to top with 'stride' children per column
 -- A child's strideSize determines how many spaces it will take up per column
--- This is bare minimum for a for a specific use case
-WQT_GridLayoutMixin = CreateFromMixins(LayoutMixin, noTableGetLayoutChildrenMixin);
+-- This is bare minimum for a specific use case
+_M.WQT_GridLayoutMixin = CreateFromMixins(LayoutMixin, noTableGetLayoutChildrenMixin);
 
-function WQT_GridLayoutMixin:GetChildStrideSize(child)
+function _M.WQT_GridLayoutMixin:GetChildStrideSize(child)
 	return child.strideSize or 1;
 end
 
-function WQT_GridLayoutMixin:GetStride()
+function _M.WQT_GridLayoutMixin:GetStride()
 	return self.stride or 1;
 end
 
-function WQT_GridLayoutMixin:LayoutChildren(children, expandToWidth, expandToHeight)
+function _M.WQT_GridLayoutMixin:LayoutChildren(children, expandToWidth, expandToHeight)
 	local frameLeftPadding, frameRightPadding, frameTopPadding, frameBottomPadding = self:GetPadding();
 	local spacing = self.spacing or 0;
 	local stride = self:GetStride();
@@ -373,9 +374,9 @@ function flexLayoutFrame:GetChildFlexSize(child)
 	return child.flexSize or 0;
 end
 
-WQT_HorizontalFlexLayoutMixin = CreateFromMixins(flexLayoutFrame);
+_M.WQT_HorizontalFlexLayoutMixin = CreateFromMixins(flexLayoutFrame);
 
-function WQT_HorizontalFlexLayoutMixin:LayoutChildren(children, expandToWidth, expandToHeight)
+function _M.WQT_HorizontalFlexLayoutMixin:LayoutChildren(children, expandToWidth, expandToHeight)
 	local frameLeftPadding, frameRightOffset, frameTopPadding, frameBottomPadding = self:GetPadding();
 	local width = self:GetWidth() - frameLeftPadding - frameRightOffset;
 	local height = self:GetHeight() - frameTopPadding - frameBottomPadding;
@@ -456,9 +457,9 @@ end
 
 
 
-WQT_VerticalFlexLayoutMixin = CreateFromMixins(flexLayoutFrame);
+_M.WQT_VerticalFlexLayoutMixin = CreateFromMixins(flexLayoutFrame);
 
-function WQT_VerticalFlexLayoutMixin:LayoutChildren(children, expandToWidth, expandToHeight)
+function _M.WQT_VerticalFlexLayoutMixin:LayoutChildren(children, expandToWidth, expandToHeight)
 	local frameLeftPadding, frameRightPadding, frameTopPadding, frameBottomPadding = self:GetPadding();
 	local width = self:GetWidth() - frameLeftPadding - frameRightPadding;
 	local height = self:GetHeight() - frameTopPadding - frameBottomPadding;
@@ -1083,6 +1084,7 @@ function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 				C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic);
 			end
 			C_SuperTrack.SetSuperTrackedQuestID(questID);
+			
 			if (WorldMapFrame:IsShown()) then
 				local zoneID =  C_TaskQuest.GetQuestZoneID(questID);
 				if (WorldMapFrame:GetMapID() ~= zoneID) then

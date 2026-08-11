@@ -270,7 +270,7 @@ do
 						elseif(C_Item.IsAnimaItemByID(rewardId)) then
 							-- Anima
 							rewardType = WQT_REWARDTYPE.anima;
-							local line, result = GetTooltipLineOfType(tooltipData, Enum.TooltipDataLineType.None, " (%d+) ");
+							local line, result = GetTooltipLineOfType(tooltipData, Enum.TooltipDataLineType.ItemSpellTriggerOnUse, " (%d+) ");
 							local value = tonumber(result);
 							if (value) then
 								numItems = numItems * value;

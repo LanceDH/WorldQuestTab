@@ -4,7 +4,10 @@
 
 	<Script file="Settings.lua"/>
 
-	<Button name="WQT_SettingCategoryTemplate" mixin="WQT_SettingsCategoryMixin" virtual="true">
+	<Button name="WQT_SettingCategoryTemplate" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_SettingsCategoryMixin" source="local"/>
+		</Mixins>
 		<Size y="34"/>	
 		<KeyValues>
 			<KeyValue key="staticLabelFont" value="true" type="boolean"/>
@@ -30,10 +33,11 @@
 			</Layer>
 			
 			<Layer level="ARTWORK">
-				<FontString parentKey="Label" inherits="GameFontHighlightMedium" maxLines="1" justifyH="CENTER">
+				<FontString parentKey="Label" inherits="GameFontHighlightMedium" maxLines="1" justifyH="CENTER" justifyV="MIDDLE">
+					<Size y="24"/>
 					<Anchors>
-						<Anchor point="LEFT" x="30" y="0"/>
-						<Anchor point="RIGHT" x="-30" y="0"/>
+						<Anchor point="LEFT" x="30" y="-1"/>
+						<Anchor point="RIGHT" x="-30" y="-1"/>
 					</Anchors>
 				</FontString>
 			</Layer>
@@ -58,14 +62,16 @@
 			</Layer>
 		</Layers>
 		<Scripts>
-			<OnClick>
-				self:SetExpanded(not self.isExpanded);
-				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-			</OnClick>
+			<OnClick method="OnClick" />
+			<OnMouseDown method="OnMouseDown" />
+			<OnMouseUp method="OnMouseUp" />
 		</Scripts>
 	</Button>
 	
-	<Button name="WQT_SettingSubCategoryTemplate" mixin="WQT_SettingsCategoryMixin" virtual="true">
+	<Button name="WQT_SettingSubCategoryTemplate" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_SettingsCategoryMixin" source="local"/>
+		</Mixins>
 		<Size y="36"/>	
 		<KeyValues>
 			<KeyValue key="staticLabelFont" value="true" type="boolean"/>
@@ -80,10 +86,11 @@
 				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
-				<FontString parentKey="Label" inherits="GameFontHighlight" maxLines="1" justifyH="CENTER">
+				<FontString parentKey="Label" inherits="GameFontHighlight" maxLines="1" justifyH="CENTER" justifyV="MIDDLE">
+					<Size y="24"/>
 					<Anchors>
-						<Anchor point="LEFT" x="15" y="1"/>
-						<Anchor point="RIGHT" x="-15" y="1"/>
+						<Anchor point="LEFT" x="15" y="0"/>
+						<Anchor point="RIGHT" x="-15" y="0"/>
 					</Anchors>
 				</FontString>
 				<Texture parentKey="ExpandIcon" atlas="friendslist-categorybutton-arrow-right" useAtlasSize="true" desaturated="true">
@@ -112,14 +119,16 @@
 			</Layer>
 		</Layers>
 		<Scripts>
-			<OnClick>
-				self:SetExpanded(not self.isExpanded);
-				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-			</OnClick>
+			<OnClick method="OnClick" />
+			<OnMouseDown method="OnMouseDown" />
+			<OnMouseUp method="OnMouseUp" />
 		</Scripts>
 	</Button>
 
-	<Frame name="WQT_SettingsQuestListPreviewTemplate" mixin="WQT_SettingsQuestListMixin" virtual="true">
+	<Frame name="WQT_SettingsQuestListPreviewTemplate" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_SettingsQuestListMixin" source="local"/>
+		</Mixins>
 		<Size y="44"/>	
 		<Layers>
 			<Layer level="BACKGROUND">
@@ -157,7 +166,10 @@
 		</Scripts>
 	</Frame>
 	
-	<Frame name="WQT_SettingsBaseTemplate" mixin="WQT_SettingsBaseMixin" virtual="true">
+	<Frame name="WQT_SettingsBaseTemplate" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_SettingsBaseMixin" source="local"/>
+		</Mixins>
 		<KeyValues>
 			<KeyValue key="tooltipOffsetX" type="number" value="4"/>
 			<KeyValue key="tooltipOffsetY" type="number" value="-20"/>
@@ -215,7 +227,10 @@
 		</Scripts>
 	</Frame>
 
-	<Button name="WQT_SettingCheckboxTemplate" inherits="WQT_SettingsBaseTemplate" mixin="WQT_SettingsCheckboxMixin" virtual="true">
+	<Button name="WQT_SettingCheckboxTemplate" inherits="WQT_SettingsBaseTemplate" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_SettingsCheckboxMixin" source="local"/>
+		</Mixins>
 		<Size y="32"/>	
 		<Frames>
 			<CheckButton parentKey="CheckBox" inherits="WQT_SettingsChildTemplate" enableMouse="false">
@@ -257,7 +272,10 @@
 		</Scripts>
 	</Button>
 	
-	<Frame name="WQT_SettingSliderTemplate" inherits="WQT_SettingsBaseTemplate" mixin="WQT_SettingsSliderMixin" virtual="true">
+	<Frame name="WQT_SettingSliderTemplate" inherits="WQT_SettingsBaseTemplate" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_SettingsSliderMixin" source="local"/>
+		</Mixins>
 		<Size y="49"/>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -302,7 +320,10 @@
 		</Scripts>
 	</Frame>
 	
-	<Frame name="WQT_SettingTextTemplate" mixin="WQT_SettingsTextMixin" virtual="true">
+	<Frame name="WQT_SettingTextTemplate" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_SettingsTextMixin" source="local"/>
+		</Mixins>
 		<Size y="30"/>	
 		<KeyValues>
 			<KeyValue key="staticLabelFont" value="true" type="boolean"/>
@@ -324,7 +345,11 @@
 		</Layers>
 	</Frame>
 	
-	<Button name="WQT_SettingColorTemplate" inherits="WQT_SettingsBaseTemplate, BaseLayoutFrameTemplate" mixin="WQT_SettingsColorMixin, WQT_HorizontalFlexLayoutMixin" virtual="true">
+	<Button name="WQT_SettingColorTemplate" inherits="WQT_SettingsBaseTemplate, BaseLayoutFrameTemplate" virtual="true">
+		<Mixins>
+				<Mixin key="mixins.WQT_SettingsColorMixin" source="local"/>
+				<Mixin key="mixins.WQT_HorizontalFlexLayoutMixin" source="local"/>
+		</Mixins>
 		<Size y="32"/>
 		<KeyValues>
 			<KeyValue key="rightPadding" value="42" type="number" />
@@ -479,7 +504,10 @@
 		</Scripts>
 	</Button>
 	
-	<Frame name="WQT_SettingDropDownTemplate" inherits="WQT_SettingsBaseTemplate" mixin="WQT_SettingsDropDownMixin" virtual="true">
+	<Frame name="WQT_SettingDropDownTemplate" inherits="WQT_SettingsBaseTemplate" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_SettingsDropDownMixin" source="local"/>
+		</Mixins>
 		<Size y="55"/>	
 		<Layers>
 			<Layer level="ARTWORK">
@@ -504,7 +532,10 @@
 		</Scripts>
 	</Frame>
 
-	<Button name="WQT_SettingFunctionButtonTemplate" inherits="UIMenuButtonStretchTemplate" mixin="WQT_SettingFunctionalButtonMixin" virtual="true">
+	<Button name="WQT_SettingFunctionButtonTemplate" inherits="UIMenuButtonStretchTemplate" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_SettingFunctionalButtonMixin" source="local"/>
+		</Mixins>
 		<Size y="28" />
 		<Layers>
 			<Layer level="ARTWORK">
@@ -533,7 +564,10 @@
 		</Scripts>
 	</Button>
 
-	<Frame name="WQT_SettingButtonTemplate" inherits="WQT_SettingsBaseTemplate" mixin="WQT_SettingsButtonMixin" virtual="true">
+	<Frame name="WQT_SettingButtonTemplate" inherits="WQT_SettingsBaseTemplate" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_SettingsButtonMixin" source="local"/>
+		</Mixins>
 		<Size y="34"/>
 		<Frames>
 			<Button parentKey="Button" inherits="WQT_SettingFunctionButtonTemplate">
@@ -556,7 +590,11 @@
 		</Scripts>
 	</Frame>
 	
-	<Frame name="WQT_SettingConfirmButtonTemplate" inherits="WQT_SettingsBaseTemplate, BaseLayoutFrameTemplate" mixin="WQT_SettingsConfirmButtonMixin, WQT_HorizontalFlexLayoutMixin" virtual="true">
+	<Frame name="WQT_SettingConfirmButtonTemplate" inherits="WQT_SettingsBaseTemplate, BaseLayoutFrameTemplate" virtual="true">
+		<Mixins>
+				<Mixin key="mixins.WQT_SettingsConfirmButtonMixin" source="local"/>
+				<Mixin key="mixins.WQT_HorizontalFlexLayoutMixin" source="local"/>
+		</Mixins>
 		<Size y="34"/>
 		<KeyValues>
 			<KeyValue key="rightPadding" value="40" type="number" />
@@ -619,7 +657,10 @@
 		</Scripts>
 	</Frame>
 	
-	<Frame name="WQT_SettingTextInputTemplate" inherits="WQT_SettingsBaseTemplate" mixin="WQT_SettingsTextInputMixin" virtual="true">
+	<Frame name="WQT_SettingTextInputTemplate" inherits="WQT_SettingsBaseTemplate" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_SettingsTextInputMixin" source="local"/>
+		</Mixins>
 		<Size y="50"/>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -678,7 +719,10 @@
 		</Scripts>
 	</Frame>
 
-	<Frame name="WQT_SettingSeparatorTemplate" mixin="WQT_SettingsBaseMixin" virtual="true">
+	<Frame name="WQT_SettingSeparatorTemplate" virtual="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_SettingsBaseMixin" source="local"/>
+		</Mixins>
 		<Size y="12"/>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -697,14 +741,17 @@
 		</Scripts>
 	</Frame>
 
-	<Frame name="WQT_SettingsFrame" parent="WQT_WorldQuestFrame" parentKey="SettingsFrame" mixin="WQT_SettingsFrameMixin" parentArray="panels" hidden="true">
+	<Frame name="WQT_SettingsFrame" parent="WQT_WorldQuestFrame" parentKey="SettingsFrame" parentArray="panels" hidden="true">
+		<Mixins>
+			<Mixin key="mixins.WQT_SettingsFrameMixin" source="local"/>
+		</Mixins>
 		<Size x="257" y="462" />
 		<Anchors>
 			<Anchor point="TOPLEFT" />
 			<Anchor point="BOTTOMRIGHT" />
 		</Anchors>
 		<KeyValues>
-			<KeyValue key="panelID" value="WQT_PanelID.Settings" type="global" />
+			<KeyValue key="panelID" value="variables.PanelIDEnum.Settings" type="local" />
 		</KeyValues>
 		<Layers>
 			<Layer level="BACKGROUND">
