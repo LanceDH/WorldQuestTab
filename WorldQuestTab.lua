@@ -932,6 +932,9 @@ end
 
 
 function WQT:AddExternal(external)
+	-- Toss any external the user doesn't have the addon for
+	if (not C_AddOns.DoesAddOnExist(external:GetName())) then return; end
+
 	if (not self.externals) then
 		self.externals = {};
 	end
