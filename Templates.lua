@@ -1048,78 +1048,93 @@ function WQT_Utils:HandleQuestClick(frame, questInfo, button)
 	if (not questInfo or not questInfo.questID) then return end
 	
 	local questID =  questInfo.questID;
-	local playSound = true;
 	local soundID = SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON;
+
+	local questHandleEnum = _V:GetQuestHandleTypeEnum();
+	local handleType = questHandleEnum.none;
 	
 	if (button == "LeftButton") then
-		if (IsModifiedClick("QUESTWATCHTOGGLE")) then
-			-- 'Hard' tracking quests with shift
-			if (not ChatEdit_TryInsertQuestLinkForQuestID(questID)) then
-				if (QuestUtils_IsQuestWatched(questID)) then
-					local hardWatched = WQT_Utils:QuestIsWatchedManual(questID);
-					C_QuestLog.RemoveWorldQuestWatch(questID);
-					-- If it wasn't actually hard watched, do so now
-					if (not hardWatched) then
-						C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual);
-						C_SuperTrack.SetSuperTrackedQuestID(questID);
-					end
-				else
-					C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual);
-					C_SuperTrack.SetSuperTrackedQuestID(questID);
-				end
-			end
-		elseif (IsModifiedClick("DRESSUP")) then
+		if (IsModifiedClick("DRESSUP")) then
 			-- Trying gear with Ctrl
 			questInfo:TryDressUpReward();
-			playSound = false;
+			soundID = nil;
+			handleType = questHandleEnum.dressup;
 		elseif (IsAltKeyDown()) then
 			-- Favorite
 			WQT_Utils:SetQuestFavorite(questID, not questInfo:IsFavorite());
-			playSound = false;
+			soundID = nil;
+			handleType = questHandleEnum.favorite;
 		else
-			-- 'Soft' tracking and jumping map to relevant zone
-			local hardWatched = WQT_Utils:QuestIsWatchedManual(questID);
-			-- if it was hard watched, keep it that way
-			if (not hardWatched) then
-				C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic);
-			end
-			C_SuperTrack.SetSuperTrackedQuestID(questID);
-			
-			if (WorldMapFrame:IsShown()) then
-				local zoneID =  C_TaskQuest.GetQuestZoneID(questID);
-				if (WorldMapFrame:GetMapID() ~= zoneID) then
-					if(InCombatLockdown()) then
-						if(not WQT.combatLockWarned) then
-							WQT.combatLockWarned = true;
-							print(string.format("|cFFFF5555WQT: %s|r", _L:Get("COMBATLOCK_MAP_CHANGE")));
-						end
+			if (ChatEdit_TryInsertQuestLinkForQuestID(questID)) then
+				-- Link into chat
+				handleType = questHandleEnum.chatInsert;
+			else
+				-- Tracking
+				-- Logic from WorldQuestPinMixin:OnMouseClickAction
+				local watchType = C_QuestLog.GetQuestWatchType(questID);
+				local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID;
+				handleType = questHandleEnum.watched;
+				if (IsModifiedClick("QUESTWATCHTOGGLE")) then
+					if (watchType == Enum.QuestWatchType.Manual or (watchType == Enum.QuestWatchType.Automatic and isSuperTracked)) then
+						soundID = SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF;
+						QuestUtil.UntrackWorldQuest(questID);
 					else
-						C_Map.OpenWorldMap(zoneID);
+						QuestUtil.TrackWorldQuest(questID, Enum.QuestWatchType.Manual);
+					end
+				else
+					if (isSuperTracked) then
+						soundID = SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF;
+						C_SuperTrack.SetSuperTrackedQuestID(0);
+					else
+						if watchType ~= Enum.QuestWatchType.Manual then
+							QuestUtil.TrackWorldQuest(questID, Enum.QuestWatchType.Automatic);
+						end
+
+						C_SuperTrack.SetSuperTrackedQuestID(questID);
+					end
+
+					-- Jump to zone
+					if (WorldMapFrame:IsShown()) then
+						local zoneID = C_TaskQuest.GetQuestZoneID(questID);
+						if (WorldMapFrame:GetMapID() ~= zoneID) then
+							if (InCombatLockdown()) then
+								if (not WQT.combatLockWarned) then
+									WQT.combatLockWarned = true;
+									print(string.format("|cFFFF5555WQT: %s|r", _L:Get("COMBATLOCK_MAP_CHANGE")));
+								end
+							else
+								C_Map.OpenWorldMap(zoneID);
+							end
+						end
 					end
 				end
 			end
 		end
-		
-	
 	elseif (button == "RightButton") then
 		if (IsModifiedClick("STICKYCAMERA")) then
 			-- Set waypoint at location
 			questInfo:SetAsWaypoint();
 			C_SuperTrack.SetSuperTrackedUserWaypoint(true);
 			soundID = SOUNDKIT.UI_MAP_WAYPOINT_CLICK_TO_PLACE;
+			handleType = questHandleEnum.waypoint;
 		elseif(IsAltKeyDown()) then
 			local dislike = not WQT_Utils:QuestIsDisliked(questID);
 			WQT_Utils:SetQuestDisliked(questID, dislike);
 			
-			playSound = false;
+			soundID = nil;
+			handleType = questHandleEnum.dislike;
 		else
 			-- Context menu
 			MenuUtil.CreateContextMenu(frame, QuestContextSetup, questInfo);
 		end
 	end
 
-	if (playSound) then
-		PlaySound(soundID, nil, false);
+	if (soundID ~= nil) then
+		PlaySound(soundID);
+	end
+
+	if (handleType ~= questHandleEnum.none) then
+		WQT_CallbackRegistry:TriggerEvent("WQT.QuestClickHandled", handleType, frame, questInfo, button);
 	end
 end
 
@@ -1143,7 +1158,7 @@ function WQT_Utils:SetQuestDisliked(questID, isDisliked)
 	else
 		soundID = SOUNDKIT.UI_70_ARTIFACT_FORGE_APPEARANCE_APPEARANCE_CHANGE;
 	end
-	PlaySound(soundID, nil, false);
+	PlaySound(soundID);
 end
 
 function WQT_Utils:QuestIsFavorite(questID)
@@ -1166,7 +1181,7 @@ function WQT_Utils:SetQuestFavorite(questID, favorite)
 	else
 		soundID = SOUNDKIT.UI_70_ARTIFACT_FORGE_APPEARANCE_LOCKED;
 	end
-	PlaySound(soundID, nil, false);
+	PlaySound(soundID);
 end
 
 function WQT_Utils:EnsureBountyBoards()

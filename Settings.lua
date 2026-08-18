@@ -1179,6 +1179,14 @@ function _M.WQT_SettingsFrameMixin:Init()
 		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
 
+		do -- 12.1.02
+			StartVersionCategory("12.1.02");
+			AddSection(ChangelogSections.Changes, {
+				"Changed quest tracking to match the behaviour of official map pins";
+				"Compatibility with Zygore Guides";
+			});
+		end
+
 		do -- 12.1.01
 			StartVersionCategory("12.1.01");
 			AddSection(ChangelogSections.Intro, {
