@@ -88,6 +88,13 @@ local function OnQuestWatchChanged(source, questInfo)
 	end
 end
 
+local function OnEventTriggered(source, event, ...)
+	if(event == "QUEST_TURNED_IN") then
+		local questID = ...;
+		RemoveTomTomArrowbyQuestId(questID);
+	end
+end
+
 
 local _defaultSettings = {
 		useTomTom = true;
@@ -98,7 +105,7 @@ local _defaultSettings = {
 local TomTomExternal = CreateAndInitFromMixin(WQT_ExternalMixin, name, _defaultSettings);
 
 function TomTomExternal:GetRequiredEvents()
-	return { "QUEST_WATCH_LIST_CHANGED",  "QUEST_TURNED_IN"};
+	return { "QUEST_TURNED_IN" };
 end
 
 function TomTomExternal:OnLoad()
@@ -134,6 +141,7 @@ function TomTomExternal:OnLoad()
 	-- Add option to quest right click
 	Menu.ModifyMenu("WQT_QUEST_CONTEXTMENU", self:CreateEnabledCheckCall(ModifyContextMenu, "useTomTom"));
 	WQT_CallbackRegistry:RegisterCallback("WQT.QuestWatchChanged", self:CreateEnabledCheckCall(OnQuestWatchChanged, "useTomTom"), self);
+	WQT_CallbackRegistry:RegisterCallback("WQT.RegisterdEventTriggered", self:CreateEnabledCheckCall(OnEventTriggered, "useTomTom"), self);
 end
 
 
