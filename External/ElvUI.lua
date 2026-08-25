@@ -1,10 +1,32 @@
 ﻿local name = "ElvUI";
 local addonName, addon = ...
-local WQT = addon.WQT;
+local _L = addon.loca;
 
-local function ApplySkin()
+local _defaultSettings = {
+		enabled = true;
+	};
+
+local ElvUIExternal = CreateAndInitFromMixin(WQT_ExternalMixin, name, _defaultSettings);
+
+function ElvUIExternal:OnLoad()
 	-- WindTools has it's own skinning, leave it to them
 	if (C_AddOns.IsAddOnLoaded("ElvUI_WindTools")) then return; end
+
+	local settings = self.activeSettings;
+	do
+		local category = self:GenerateSettingsCategory();
+
+		do -- Enable
+			local data = self:GenerateEnableSetting(category);
+			data:SetIsDisabledFunction(function()
+				local E = unpack(ElvUI);
+				local blizzardSkins = E.private.skins.blizzard;
+				return not blizzardSkins.enable or not blizzardSkins.worldmap;
+			end);
+		end
+	end
+
+	if (not settings.enabled) then return; end
 
 	local E = unpack(ElvUI);
 	local S = E:GetModule("Skins");
@@ -43,12 +65,8 @@ local function ApplySkin()
 			tab.SelectedTexture:SetColorTexture(1, 0.82, 0, 0.3);
 			tab.SelectedTexture:SetAllPoints();
 
-			for _, region in next, { tab:GetRegions() } do
-				if (region:IsObjectType("Texture") and region:GetAtlas() == "QuestLog-Tab-side-Glow-hover") then
-					region:SetColorTexture(1, 1, 1, 0.3);
-					region:SetAllPoints();
-				end
-			end
+			tab.HighlightTexture:SetColorTexture(1, 1, 1, 0.3)
+			tab.HighlightTexture:SetAllPoints()
 		end
 
 		do -- QuestScrollframe
@@ -249,15 +267,3 @@ local function ApplySkin()
 		end
 	end
 end
-
-local ElvUIExternal = CreateFromMixins(WQT_ExternalMixin);
-
-function ElvUIExternal:GetName()
-	return name;
-end
-
-function ElvUIExternal:Init()
-	ApplySkin();
-end
-
-WQT:AddExternal(ElvUIExternal);

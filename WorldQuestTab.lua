@@ -875,7 +875,7 @@ function WQT:OnEnable()
 			WQT:DebugPrint("Setting up external load:", name);
 			EventUtil.ContinueOnAddOnLoaded(name, function()
 				WQT:DebugPrint("Initializing external:", name);
-				external:Init(WQT_Utils);
+				external:Load(WQT_Utils);
 				WQT_WorldQuestFrame:RegisterEventsForExternal(external);
 			end);
 		end

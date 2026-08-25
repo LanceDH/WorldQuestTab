@@ -17,15 +17,9 @@ local function ReApplyPinAlphas(source, pin)
 	pin.endAlpha = 1;
 end
 
-local WorldFlightMapExternal = CreateFromMixins(WQT_ExternalMixin);
+local WorldFlightMapExternal = CreateAndInitFromMixin(WQT_ExternalMixin, name);
 
-function WorldFlightMapExternal:GetName()
-	return name;
-end
-
-function WorldFlightMapExternal:Init()
+function WorldFlightMapExternal:OnLoad()
 	WQT_CallbackRegistry:RegisterCallback("WQT.CoreFrame.AnchorUpdated", ReAnchor, self);
 	WQT_CallbackRegistry:RegisterCallback("WQT.MapPinProvider.PinInitialized", ReApplyPinAlphas, self);
 end
-
-WQT:AddExternal(WorldFlightMapExternal);

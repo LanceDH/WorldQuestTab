@@ -202,19 +202,6 @@ function _V:GetTimeRemainingEnum()
 	return enumTimeRemaining;
 end
 
-local enumQuestHandleType = {
-	none		= 0;
-	watched		= 1;
-	dressup		= 2;
-	favorite	= 3;
-	dislike		= 4;
-	waypoint	= 5;
-	chatInsert	= 6;
-}
-function _V:GetQuestHandleTypeEnum()
-	return enumQuestHandleType;
-end
-
 local abriviationNumbers = {
 	{["value"] = 10000000000, ["format"] = _L:Get("NUMBERS_THIRD")};
 	{["value"] = 1000000000, ["format"] = _L:Get("NUMBERS_THIRD"), ["decimal"] = true};

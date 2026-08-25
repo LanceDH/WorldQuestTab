@@ -951,190 +951,170 @@ function WQT_Utils:RegisterExternalSettings(key, defaults)
 	return WQT_Profiles:RegisterExternalSettings(key, defaults);
 end
 
-local function AddInstructionTooltipToDropdownItem(item, text)
-	item:SetOnEnter(function(button)
+do
+	local function AddInstructionTooltipToDropdownItem(item, text)
+		item:SetOnEnter(function(button)
 			WQT_ActiveGameTooltip:SetOwner(button, "ANCHOR_RIGHT");
 			GameTooltip_AddInstructionLine(WQT_ActiveGameTooltip, text);
 			WQT_ActiveGameTooltip:Show();
 		end);
-	
-	item:SetOnLeave(function(button)
+
+		item:SetOnLeave(function(button)
 			WQT_ActiveGameTooltip:Hide();
 		end);
-end
+	end
 
-local function QuestContextSetup(frame, rootDescription, questInfo)
-	rootDescription:SetTag("WQT_QUEST_CONTEXTMENU", questInfo);
-
-	-- Title
-	rootDescription:CreateTitle(questInfo.title);
-
-	-- Tracking here
-	if (questInfo.tagInfo and questInfo.tagInfo.worldQuestType) then
-		local title = ""
-		local func = nil;
-		
+	local function ChangeQuestTracking(questInfo)
 		if (QuestUtils_IsQuestWatched(questInfo.questID)) then
-			title = UNTRACK_QUEST;
-			func = function()
-						C_QuestLog.RemoveWorldQuestWatch(questInfo.questID);
-						if WQT_WorldQuestFrame:GetAlpha() > 0 then 
-							WQT_ListContainer:DisplayQuestList();
-						end
-					end
+			C_QuestLog.RemoveWorldQuestWatch(questInfo.questID);
 		else
-			title = TRACK_QUEST;
-			func = function()
-						C_QuestLog.AddWorldQuestWatch(questInfo.questID, Enum.QuestWatchType.Manual);
-						C_SuperTrack.SetSuperTrackedQuestID(questInfo.questID);
-						if WQT_WorldQuestFrame:GetAlpha() > 0 then 
-							WQT_ListContainer:DisplayQuestList();
-						end
-					end
-		end	
-		local trackBtn = rootDescription:CreateButton(title, func);
+			C_QuestLog.AddWorldQuestWatch(questInfo.questID, Enum.QuestWatchType.Manual);
+			C_SuperTrack.SetSuperTrackedQuestID(questInfo.questID);
+		end
+
+		WQT_CallbackRegistry:TriggerEvent("WQT.QuestWatchChanged", questInfo);
+	end
+
+	local function QuestContextSetup(frame, rootDescription, questInfo)
+		rootDescription:SetTag("WQT_QUEST_CONTEXTMENU", questInfo);
+
+		-- Title
+		rootDescription:CreateTitle(questInfo.title);
+		-- Tracking here
+		local title = QuestUtils_IsQuestWatched(questInfo.questID) and UNTRACK_QUEST or TRACK_QUEST;
+		local trackBtn = rootDescription:CreateButton(title, ChangeQuestTracking, questInfo);
 		AddInstructionTooltipToDropdownItem(trackBtn, _L:Get("SHORTCUT_TRACK"));
+
+		-- 9.0 waypoint
+		local waypointBtn = rootDescription:CreateButton(
+			_L:Get("PLACE_MAP_PIN"),
+			function()
+				questInfo:SetAsWaypoint();
+				C_SuperTrack.SetSuperTrackedUserWaypoint(true);
+			end);
+		AddInstructionTooltipToDropdownItem(waypointBtn, _L:Get("SHORTCUT_WAYPOINT"));
+
+		do -- Favorite
+			local checkbox = rootDescription:CreateCheckbox(
+				PROFESSIONS_FAVORITE,
+				function()
+					return questInfo:IsFavorite();
+				end,
+				function()
+					WQT_Utils:SetQuestFavorite(questInfo.questID, not questInfo:IsFavorite());
+				end
+			);
+			AddInstructionTooltipToDropdownItem(checkbox, _L:Get("SHORTCUT_FAVORITE"));
+		end
+
+		do -- Uninterested
+			local checkbox = rootDescription:CreateCheckbox(
+				_L:Get("UNINTERESTED"),
+				function()
+					return WQT_Utils:QuestIsDisliked(questInfo.questID);
+				end,
+				function()
+					local disliked = WQT_Utils:QuestIsDisliked(questInfo.questID);
+					WQT_Utils:SetQuestDisliked(questInfo.questID, not disliked);
+				end
+			);
+			AddInstructionTooltipToDropdownItem(checkbox, _L:Get("SHORTCUT_DISLIKE"));
+		end
+
+		-- Cancel. apparently a function is required for it to close the menu on click
+		rootDescription:CreateButton(CANCEL, function() end);
 	end
 
-	-- 9.0 waypoint
-	local waypointBtn = rootDescription:CreateButton(
-		_L:Get("PLACE_MAP_PIN"),
-		function()
-			questInfo:SetAsWaypoint();
-			C_SuperTrack.SetSuperTrackedUserWaypoint(true);
-		end);
-	AddInstructionTooltipToDropdownItem(waypointBtn, _L:Get("SHORTCUT_WAYPOINT"));
+	-- Left click		Select / jump to zone
+	-- Shift left		Track
+	-- Ctrl left		Dressup
+	-- Alt left			Favorite
+	-- Right click		Context menu
+	-- Shift right		-
+	-- Ctrl right		Map marker
+	-- Alt right		Dislike
+	function WQT_Utils:HandleQuestClick(frame, questInfo, button)
+		if (not questInfo or not questInfo.questID) then return end
 
-	do -- Favorite
-		local checkbox = rootDescription:CreateCheckbox(
-			PROFESSIONS_FAVORITE,
-			function()
-				return questInfo:IsFavorite();
-			end,
-			function()
-				WQT_Utils:SetQuestFavorite(questInfo.questID, not questInfo:IsFavorite());
-			end
-		);
-		AddInstructionTooltipToDropdownItem(checkbox, _L:Get("SHORTCUT_FAVORITE"));
-	end
+		local questID = questInfo.questID;
+		local soundID = SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON;
 
-	do -- Uninterested
-		local checkbox = rootDescription:CreateCheckbox(
-			_L:Get("UNINTERESTED"),
-			function()
-				return WQT_Utils:QuestIsDisliked(questInfo.questID);
-			end,
-			function()
-				local disliked = WQT_Utils:QuestIsDisliked(questInfo.questID);
-				WQT_Utils:SetQuestDisliked(questInfo.questID, not disliked);
-			end
-		);
-		AddInstructionTooltipToDropdownItem(checkbox, _L:Get("SHORTCUT_DISLIKE"));
-	end
-
-	-- Cancel. apparently a function is required for it to close the menu on click
-	rootDescription:CreateButton(CANCEL, function() end);
-end
-
--- Left click		Select / jump to zone
--- Shift left		Track
--- Ctrl left		Dressup
--- Alt left			Favorite
--- Right click		Context menu
--- Shift right		- 
--- Ctrl right		Map marker
--- Alt right		Dislike
-function WQT_Utils:HandleQuestClick(frame, questInfo, button)
-	if (not questInfo or not questInfo.questID) then return end
-	
-	local questID =  questInfo.questID;
-	local soundID = SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON;
-
-	local questHandleEnum = _V:GetQuestHandleTypeEnum();
-	local handleType = questHandleEnum.none;
-	
-	if (button == "LeftButton") then
-		if (IsModifiedClick("DRESSUP")) then
-			-- Trying gear with Ctrl
-			questInfo:TryDressUpReward();
-			soundID = nil;
-			handleType = questHandleEnum.dressup;
-		elseif (IsAltKeyDown()) then
-			-- Favorite
-			WQT_Utils:SetQuestFavorite(questID, not questInfo:IsFavorite());
-			soundID = nil;
-			handleType = questHandleEnum.favorite;
-		else
-			if (ChatEdit_TryInsertQuestLinkForQuestID(questID)) then
-				-- Link into chat
-				handleType = questHandleEnum.chatInsert;
+		if (button == "LeftButton") then
+			if (IsModifiedClick("DRESSUP")) then
+				-- Trying gear with Ctrl
+				questInfo:TryDressUpReward();
+				soundID = nil;
+			elseif (IsAltKeyDown()) then
+				-- Favorite
+				WQT_Utils:SetQuestFavorite(questID, not questInfo:IsFavorite());
+				soundID = nil;
 			else
-				-- Tracking
-				-- Logic from WorldQuestPinMixin:OnMouseClickAction
-				local watchType = C_QuestLog.GetQuestWatchType(questID);
-				local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID;
-				handleType = questHandleEnum.watched;
-				if (IsModifiedClick("QUESTWATCHTOGGLE")) then
-					if (watchType == Enum.QuestWatchType.Manual or (watchType == Enum.QuestWatchType.Automatic and isSuperTracked)) then
-						soundID = SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF;
-						QuestUtil.UntrackWorldQuest(questID);
-					else
-						QuestUtil.TrackWorldQuest(questID, Enum.QuestWatchType.Manual);
-					end
+				if (ChatEdit_TryInsertQuestLinkForQuestID(questID)) then
+					-- Link into chat
 				else
-					if (isSuperTracked) then
-						soundID = SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF;
-						C_SuperTrack.SetSuperTrackedQuestID(0);
+					-- Tracking
+					-- Logic from WorldQuestPinMixin:OnMouseClickAction
+					local watchType = C_QuestLog.GetQuestWatchType(questID);
+					local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID;
+					if (IsModifiedClick("QUESTWATCHTOGGLE")) then
+						if (watchType == Enum.QuestWatchType.Manual or (watchType == Enum.QuestWatchType.Automatic and isSuperTracked)) then
+							soundID = SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF;
+							QuestUtil.UntrackWorldQuest(questID);
+						else
+							QuestUtil.TrackWorldQuest(questID, Enum.QuestWatchType.Manual);
+						end
 					else
-						if watchType ~= Enum.QuestWatchType.Manual then
-							QuestUtil.TrackWorldQuest(questID, Enum.QuestWatchType.Automatic);
+						if (isSuperTracked) then
+							soundID = SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF;
+							C_SuperTrack.SetSuperTrackedQuestID(0);
+						else
+							if watchType ~= Enum.QuestWatchType.Manual then
+								QuestUtil.TrackWorldQuest(questID, Enum.QuestWatchType.Automatic);
+							end
+
+							C_SuperTrack.SetSuperTrackedQuestID(questID);
 						end
 
-						C_SuperTrack.SetSuperTrackedQuestID(questID);
-					end
-
-					-- Jump to zone
-					if (WorldMapFrame:IsShown()) then
-						local zoneID = C_TaskQuest.GetQuestZoneID(questID);
-						if (WorldMapFrame:GetMapID() ~= zoneID) then
-							if (InCombatLockdown()) then
-								if (not WQT.combatLockWarned) then
-									WQT.combatLockWarned = true;
-									print(string.format("|cFFFF5555WQT: %s|r", _L:Get("COMBATLOCK_MAP_CHANGE")));
+						-- Jump to zone
+						if (WorldMapFrame:IsShown()) then
+							local zoneID = C_TaskQuest.GetQuestZoneID(questID);
+							if (WorldMapFrame:GetMapID() ~= zoneID) then
+								if (InCombatLockdown()) then
+									if (not WQT.combatLockWarned) then
+										WQT.combatLockWarned = true;
+										print(string.format("|cFFFF5555WQT: %s|r", _L:Get("COMBATLOCK_MAP_CHANGE")));
+									end
+								else
+									C_Map.OpenWorldMap(zoneID);
 								end
-							else
-								C_Map.OpenWorldMap(zoneID);
 							end
 						end
 					end
+
+					WQT_CallbackRegistry:TriggerEvent("WQT.QuestWatchChanged", questInfo);
 				end
 			end
-		end
-	elseif (button == "RightButton") then
-		if (IsModifiedClick("STICKYCAMERA")) then
-			-- Set waypoint at location
-			questInfo:SetAsWaypoint();
-			C_SuperTrack.SetSuperTrackedUserWaypoint(true);
-			soundID = SOUNDKIT.UI_MAP_WAYPOINT_CLICK_TO_PLACE;
-			handleType = questHandleEnum.waypoint;
-		elseif(IsAltKeyDown()) then
-			local dislike = not WQT_Utils:QuestIsDisliked(questID);
-			WQT_Utils:SetQuestDisliked(questID, dislike);
-			
-			soundID = nil;
-			handleType = questHandleEnum.dislike;
-		else
-			-- Context menu
-			MenuUtil.CreateContextMenu(frame, QuestContextSetup, questInfo);
-		end
-	end
+		elseif (button == "RightButton") then
+			if (IsModifiedClick("STICKYCAMERA")) then
+				-- Set waypoint at location
+				questInfo:SetAsWaypoint();
+				C_SuperTrack.SetSuperTrackedUserWaypoint(true);
+				soundID = SOUNDKIT.UI_MAP_WAYPOINT_CLICK_TO_PLACE;
+			elseif (IsAltKeyDown()) then
+				local dislike = not WQT_Utils:QuestIsDisliked(questID);
+				WQT_Utils:SetQuestDisliked(questID, dislike);
 
-	if (soundID ~= nil) then
-		PlaySound(soundID);
-	end
+				soundID = nil;
+				handleType = questHandleEnum.dislike;
+			else
+				-- Context menu
+				MenuUtil.CreateContextMenu(frame, QuestContextSetup, questInfo);
+			end
+		end
 
-	if (handleType ~= questHandleEnum.none) then
-		WQT_CallbackRegistry:TriggerEvent("WQT.QuestClickHandled", handleType, frame, questInfo, button);
+		if (soundID ~= nil) then
+			PlaySound(soundID);
+		end
 	end
 end
 

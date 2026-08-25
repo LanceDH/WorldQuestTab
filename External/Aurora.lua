@@ -1,22 +1,15 @@
 ﻿local name = "Aurora";
 local addonName, addon = ...
-local WQT = addon.WQT;
 
 local function BackgroundUpdated()
 	WQT_ListContainer.Background:SetAlpha(0);
 	WQT_SettingsFrame.Background:SetAlpha(0);
 end
 
-local AuroraExternal = CreateFromMixins(WQT_ExternalMixin);
+local AuroraExternal = CreateAndInitFromMixin(WQT_ExternalMixin, name);
 
-function AuroraExternal:GetName()
-	return name;
-end
-
-function AuroraExternal:Init()
+function AuroraExternal:OnLoad()
 	WQT_CallbackRegistry:RegisterCallback("WQT.ScrollList.BackgroundUpdated", BackgroundUpdated, self);
 
 	WQT_FlightMapContainerBg:SetColorTexture(0,0,0,0.75);
 end
-
-WQT:AddExternal(AuroraExternal);

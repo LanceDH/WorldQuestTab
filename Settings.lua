@@ -107,7 +107,7 @@ function _M.WQT_SettingsBaseMixin:OnValueChanged(value, userInput, ...)
 			self.valueChangedFunc(value, ...);
 		end
 
-		WQT_CallbackRegistry:TriggerEvent("WQT.SettingChanged", self.categoryID, self.tag);
+		WQT_CallbackRegistry:TriggerEvent("WQT.SettingChanged", self.categoryID, self.tag, value, ...);
 	end
 end
 
@@ -760,9 +760,7 @@ function _M.WQT_SettingsCategoryMixin:UpdateState()
 end
 
 function _M.WQT_SettingsCategoryMixin:OnClick()
-	self.isExpanded = not self.isExpanded;
-	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-	WQT_CallbackRegistry:TriggerEvent("WQT.Settings.CategoryToggled", self.categoryID, self.isExpanded);
+	self:SetExpanded(not self.isExpanded);
 end
 
 function _M.WQT_SettingsCategoryMixin:OnMouseDown()
@@ -773,6 +771,14 @@ end
 function _M.WQT_SettingsCategoryMixin:OnMouseUp()
 	if (not self.Label) then return end
 	self.Label:AdjustPointsOffset(-1, 1);
+end
+
+-- Mostly because WindTools hooks SetExpanded
+function _M.WQT_SettingsCategoryMixin:SetExpanded(expanded)
+	if (self.isExpanded == expanded) then return; end
+	self.isExpanded = expanded;
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+	WQT_CallbackRegistry:TriggerEvent("WQT.Settings.CategoryToggled", self.categoryID, self.isExpanded);
 end
 
 --------------------------------
@@ -1181,9 +1187,17 @@ function _M.WQT_SettingsFrameMixin:Init()
 
 		do -- 12.1.02
 			StartVersionCategory("12.1.02");
+			AddSection(ChangelogSections.New, {
+				"Added skinning for EllesmereUI";
+				"Added Compatibility with Zygore Guides";
+				"Added a basic 'Enable' setting to addon integrations in case a change on their end starts causing issues";
+			});
 			AddSection(ChangelogSections.Changes, {
 				"Changed quest tracking to match the behaviour of official map pins";
-				"Compatibility with Zygore Guides";
+			});
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed bonus quests not having a track option in the right click menu";
+				"Fixed map tab highlight when using ElvUI";
 			});
 		end
 
