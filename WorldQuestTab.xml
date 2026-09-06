@@ -947,7 +947,10 @@
 			</Frame>
 		</Frames>
 		<Scripts>
-			<OnLoad method="OnLoad"/>
+			<OnLoad>
+				GameTooltipDataMixin.OnLoad(self);
+				self.shoppingTooltips = { WQT_ShoppingTooltip1, WQT_ShoppingTooltip2 };
+			</OnLoad>
 			<OnShow function="GameTooltip_OnShow"/>
 			<OnUpdate function="GameTooltip_OnUpdate"/>
 		</Scripts>

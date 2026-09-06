@@ -1185,6 +1185,16 @@ function _M.WQT_SettingsFrameMixin:Init()
 		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
 
+		do -- 12.1.03
+			StartVersionCategory("12.1.03");
+			AddSection(ChangelogSections.Changes, {
+				"Removed the anti-error tooltip text from the custom tooltip. Guess this is our life now.";
+			});
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed the custom tooltip using official compare tooltips"
+			});
+		end
+
 		do -- 12.1.02
 			StartVersionCategory("12.1.02");
 			AddSection(ChangelogSections.New, {
@@ -1442,9 +1452,7 @@ function _M.WQT_SettingsFrameMixin:Init()
 		end
 
 		do -- Custom Tooltip
-			local label = "Custom Tooltip";
-			local tooltip = "Use a custom tooltip to avoid Blizzard's secret issues, at the cost of compatibility with other add-ons.|nHopefully only a temporary setting until Blizzard fixes their buggy mess.";
-			local data = category:AddCheckbox("CUSTOM_TOOLTIP", label, tooltip);
+			local data = category:AddCheckbox("CUSTOM_TOOLTIP", _L:Get("CUSTOM_TOOLIP"), _L:Get("CUSTOM_TOOLIP_TT"));
 			data:SetGetValueFunction(function() return WQT.settings.general.useCustomTooltip; end);
 			data:SetValueChangedFunction(function(value)
 				WQT.settings.general.useCustomTooltip = value;
