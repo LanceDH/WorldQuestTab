@@ -341,15 +341,6 @@
 								</MaskTexture>
 							</Layer>
 						</Layers>
-						<Scripts>
-							<OnEnter>
-								self:GetParent():GetParent():FactionOnEnter(self);
-							</OnEnter>
-							<OnLeave>
-								self:GetParent():GetParent().Highlight:Hide();
-								WQT_ActiveGameTooltip:Hide();
-							</OnLeave>
-						</Scripts>
 					</Frame>
 				</Frames>
 			</Frame>

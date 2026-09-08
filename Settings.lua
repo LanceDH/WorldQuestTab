@@ -1189,6 +1189,7 @@ function _M.WQT_SettingsFrameMixin:Init()
 			StartVersionCategory("12.1.03");
 			AddSection(ChangelogSections.Changes, {
 				"Removed the anti-error tooltip text from the custom tooltip. Guess this is our life now.";
+				"Removed the separate tooltip on faction icons in the quest list";
 			});
 			AddSection(ChangelogSections.Fixes, {
 				"Fixed the custom tooltip using official compare tooltips"

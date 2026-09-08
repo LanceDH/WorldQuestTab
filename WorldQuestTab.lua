@@ -1401,15 +1401,6 @@ function _M.WQT_ListButtonMixin:Update(questInfo, shouldShowZone)
 	end
 end
 
-function _M.WQT_ListButtonMixin:FactionOnEnter(frame)
-	self.Highlight:Show();
-	if (self.questInfo.factionID) then
-		local factionInfo = _V:GetFactionData(self.questInfo.factionID);
-		WQT_ActiveGameTooltip:SetOwner(frame, "ANCHOR_RIGHT", -5, -10);
-		WQT_ActiveGameTooltip:SetText(factionInfo.name, nil, nil, nil, nil, true);
-	end
-end
-
 ------------------------------------------
 -- 			SCROLLLIST MIXIN			--
 ------------------------------------------
