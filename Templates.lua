@@ -1072,16 +1072,7 @@ do
 						-- Jump to zone
 						if (WorldMapFrame:IsShown()) then
 							local zoneID = C_TaskQuest.GetQuestZoneID(questID);
-							if (WorldMapFrame:GetMapID() ~= zoneID) then
-								if (InCombatLockdown()) then
-									if (not WQT.combatLockWarned) then
-										WQT.combatLockWarned = true;
-										print(string.format("|cFFFF5555WQT: %s|r", _L:Get("COMBATLOCK_MAP_CHANGE")));
-									end
-								else
-									C_Map.OpenWorldMap(zoneID);
-								end
-							end
+							WQT_Utils:OpenMap(zoneID);
 						end
 					end
 
@@ -1099,7 +1090,6 @@ do
 				WQT_Utils:SetQuestDisliked(questID, dislike);
 
 				soundID = nil;
-				handleType = questHandleEnum.dislike;
 			else
 				-- Context menu
 				MenuUtil.CreateContextMenu(frame, QuestContextSetup, questInfo);
@@ -1108,6 +1098,19 @@ do
 
 		if (soundID ~= nil) then
 			PlaySound(soundID);
+		end
+	end
+end
+
+function WQT_Utils:OpenMap(zoneID)
+	if (WorldMapFrame:GetMapID() ~= zoneID) then
+		if (InCombatLockdown()) then
+			if (not WQT.combatLockWarned) then
+				WQT.combatLockWarned = true;
+				print(string.format("|cFFFF5555WQT: %s|r", _L:Get("COMBATLOCK_MAP_CHANGE")));
+			end
+		else
+			C_Map.OpenWorldMap(zoneID);
 		end
 	end
 end

@@ -1185,6 +1185,14 @@ function _M.WQT_SettingsFrameMixin:Init()
 		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
 
+		do -- 12.1.04
+			StartVersionCategory("12.1.04");
+			AddSection(ChangelogSections.Fixes, {
+				"Fixed an error when alt right-clicking to dislike a quest";
+				"Fixed a possible error clicking on the custom boundy board while in combat";
+			});
+		end
+
 		do -- 12.1.03
 			StartVersionCategory("12.1.03");
 			AddSection(ChangelogSections.Changes, {

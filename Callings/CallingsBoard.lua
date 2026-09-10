@@ -428,7 +428,7 @@ function _M.WQT_CallingsBoardDisplayMixin:OnClick()
 	else
 		local mapID = GetQuestUiMapID(self.calling.questID, true);
 		if ( mapID ~= 0 ) then
-			WorldMapFrame:SetMapID(mapID);
+			WQT_Utils:OpenMap(mapID);
 		else
 			OpenWorldMap(C_TaskQuest.GetQuestZoneID(self.calling.questID));
 		end
