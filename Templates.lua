@@ -1019,6 +1019,32 @@ do
 		rootDescription:CreateButton(CANCEL, function() end);
 	end
 
+	-- Copy paste from QuestUtil to with ObjectiveTrackerManager:UpdateAll() removed to avoid errors during combat
+	local lastTrackedQuestID = nil;
+	function TrackWorldQuest(questID, watchType)
+		if C_QuestLog.AddWorldQuestWatch(questID, watchType) then
+			if lastTrackedQuestID and lastTrackedQuestID ~= questID then
+				if C_QuestLog.GetQuestWatchType(lastTrackedQuestID) ~= Enum.QuestWatchType.Manual and watchType == Enum.QuestWatchType.Manual then
+					C_QuestLog.AddWorldQuestWatch(lastTrackedQuestID, Enum.QuestWatchType.Manual); -- Promote to manual watch
+				end
+			end
+			lastTrackedQuestID = questID;
+		end
+
+		if watchType == Enum.QuestWatchType.Automatic then
+			local forceAllowTasks = true;
+			QuestUtil.CheckAutoSuperTrackQuest(questID, forceAllowTasks);
+		end
+	end
+
+	function UntrackWorldQuest(questID)
+		if C_QuestLog.RemoveWorldQuestWatch(questID) then
+			if lastTrackedQuestID == questID then
+				lastTrackedQuestID = nil;
+			end
+		end
+	end
+
 	-- Left click		Select / jump to zone
 	-- Shift left		Track
 	-- Ctrl left		Dressup
@@ -1053,9 +1079,9 @@ do
 					if (IsModifiedClick("QUESTWATCHTOGGLE")) then
 						if (watchType == Enum.QuestWatchType.Manual or (watchType == Enum.QuestWatchType.Automatic and isSuperTracked)) then
 							soundID = SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF;
-							QuestUtil.UntrackWorldQuest(questID);
+							UntrackWorldQuest(questID);
 						else
-							QuestUtil.TrackWorldQuest(questID, Enum.QuestWatchType.Manual);
+							TrackWorldQuest(questID, Enum.QuestWatchType.Manual);
 						end
 					else
 						if (isSuperTracked) then
@@ -1063,7 +1089,7 @@ do
 							C_SuperTrack.SetSuperTrackedQuestID(0);
 						else
 							if watchType ~= Enum.QuestWatchType.Manual then
-								QuestUtil.TrackWorldQuest(questID, Enum.QuestWatchType.Automatic);
+								TrackWorldQuest(questID, Enum.QuestWatchType.Automatic);
 							end
 
 							C_SuperTrack.SetSuperTrackedQuestID(questID);

@@ -1190,6 +1190,7 @@ function _M.WQT_SettingsFrameMixin:Init()
 			AddSection(ChangelogSections.Fixes, {
 				"Fixed an error when alt right-clicking to dislike a quest";
 				"Fixed a possible error clicking on the custom boundy board while in combat";
+				"Potentionally fixed a `ShouldShowMawBuffs` error in the name of WQTab. Fingers crossed.";
 			});
 		end
 
