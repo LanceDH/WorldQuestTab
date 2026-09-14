@@ -387,14 +387,13 @@ function _M.WQT_HorizontalFlexLayoutMixin:LayoutChildren(children, expandToWidth
 	local totalflexSize = 0;
 
 	for i, child in ipairs(children) do
-		if (not self.skipChildLayout and IsLayoutFrame(child)) then
-			child:Layout();
-		end
-
 		local flexSize = self:GetChildFlexSize(child);
 		if (flexSize > 0) then
 			totalflexSize = totalflexSize + self:GetChildFlexSize(child);
 		else
+			if (not self.skipChildLayout and IsLayoutFrame(child)) then
+				child:Layout();
+			end
 			availableFlexSpace = availableFlexSpace - self:GetChildWidth(child);
 		end
 
@@ -469,14 +468,13 @@ function _M.WQT_VerticalFlexLayoutMixin:LayoutChildren(children, expandToWidth, 
 	local totalflexSize = 0;
 
 	for i, child in ipairs(children) do
-		if (not self.skipChildLayout and IsLayoutFrame(child)) then
-			child:Layout();
-		end
-
 		local flexSize = self:GetChildFlexSize(child);
 		if (flexSize > 0) then
 			totalflexSize = totalflexSize + self:GetChildFlexSize(child);
 		else
+			if (not self.skipChildLayout and IsLayoutFrame(child)) then
+				child:Layout();
+			end
 			availableFlexSpace = availableFlexSpace - self:GetChildHeight(child);
 		end
 
@@ -681,37 +679,45 @@ function WQT_Utils:GetQuestTimeString(questInfo, fullString, unabreviated)
 	return timeLeftSeconds, timeString, color, timeStringShort ,timeLeftMinutes, category;
 end
 
-function WQT_Utils:GetPinTime(questInfo)
-	local seconds, _, color, timeStringShort, _, category = WQT_Utils:GetQuestTimeString(questInfo);
-	local start = 0;
-	local timeLeft = seconds;
-	local total = 0;
-	local maxTime, offset;
-	if (timeLeft > 0) then
-		if timeLeft >= 1440*60 then
-			maxTime = 5760*60;
-			offset = -720*60;
-			local tagInfo = questInfo:GetTagInfo();
-			if (timeLeft > maxTime or (tagInfo and tagInfo.isElite and tagInfo.quality == Enum.WorldQuestQuality.Epic)) then
-				maxTime = 1440 * 7*60;
-				offset = 0;
+do
+	local SECONDS_PER_7_DAYS	= SECONDS_PER_DAY * 7;
+	local SECONDS_PER_4_DAYS	= SECONDS_PER_DAY * 4;
+	local SECONDS_PER_12_HOURS	= SECONDS_PER_HOUR * 12;
+	local SECONDS_PER_10_MINS	= SECONDS_PER_MIN * 10;
+	local SECONDS_PER_15_MINS	= SECONDS_PER_MIN * 15;
+	local SECONDS_PER_59_MINS	= SECONDS_PER_MIN * 59;
+
+	function WQT_Utils:GetPinTime(questInfo)
+		local seconds, _, color, timeStringShort, _, category = WQT_Utils:GetQuestTimeString(questInfo);
+		local start = 0;
+		local timeLeft = seconds;
+		local total = 0;
+		
+		if (timeLeft > 0) then
+			local maxTime = SECONDS_PER_15_MINS;
+			local offset = 0;
+			if timeLeft >= SECONDS_PER_DAY then
+				maxTime = SECONDS_PER_4_DAYS;
+				offset = -SECONDS_PER_12_HOURS;
+				local tagInfo = questInfo:GetTagInfo();
+				if (timeLeft > maxTime or (tagInfo and tagInfo.isElite and tagInfo.quality == Enum.WorldQuestQuality.Epic)) then
+					maxTime = SECONDS_PER_7_DAYS;
+					offset = 0;
+				end
+				
+			elseif timeLeft >= SECONDS_PER_59_MINS then --Minute display doesn't start until 59min left
+				maxTime = SECONDS_PER_DAY;
+				offset = SECONDS_PER_HOUR;
+			elseif timeLeft >= SECONDS_PER_15_MINS then
+				maxTime= SECONDS_PER_HOUR;
+				offset = -SECONDS_PER_10_MINS;
 			end
-			
-		elseif timeLeft >= 60*59 then --Minute display doesn't start until 59min left
-			maxTime = 1440*60;
-			offset = 60*60;
-		elseif timeLeft >= 15*60 then
-			maxTime= 60*60;
-			offset = -10*60;
-		else
-			maxTime = 15*60;
-			offset = 0;
+			start = (maxTime - timeLeft);
+			total = (maxTime + offset);
+			timeLeft = (timeLeft + offset);
 		end
-		start = (maxTime - timeLeft);
-		total = (maxTime + offset);
-		timeLeft = (timeLeft + offset);
+		return start, total, timeLeft, seconds, color, timeStringShort, category;
 	end
-	return start, total, timeLeft, seconds, color, timeStringShort, category;
 end
 
 function WQT_Utils:TimeLeftToUpdateTime(timeLeft, showingSecondary)
