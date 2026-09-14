@@ -1189,8 +1189,8 @@ function _M.WQT_SettingsFrameMixin:Init()
 			StartVersionCategory("12.1.04");
 			AddSection(ChangelogSections.Fixes, {
 				"Fixed an error when alt right-clicking to dislike quests";
-				"Fixed a possible error clicking on the custom boundy board while in combat";
-				"Potentionally fixed a `ShouldShowMawBuffs` error in the name of WQTab. Fingers crossed.";
+				"Fixed a possible error clicking on the custom bounty board while in combat";
+				"Potentially fixed a `ShouldShowMawBuffs` error in the name of WQTab. Fingers crossed.";
 				"Some performance improvements to the quest list updating";
 			});
 		end
