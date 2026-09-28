@@ -598,6 +598,13 @@ end
 -- MIXIN
 ----------------------------
 
+local UpdateFlags = {
+	none	= 0;
+	zones	= 1;
+	filters	= 2;
+	rewards	= 4;
+}
+
 WQT_DataProvider = {};
 
 function WQT_DataProvider:Init()
@@ -617,10 +624,10 @@ function WQT_DataProvider:Init()
 	self.ignoreNextLogUpdate = false;
 
 	self.processedQuestList = {};
-	self.shouldUpdateFiltedList = false;
+
+	self.updateFlags = UpdateFlags.none;
 
 	self.zoneLoading = {
-		needsUpdate = false,
 		startTimestamp = 0,
 		remainingZones = {},
 		numRemaining = 0,
@@ -681,32 +688,47 @@ function WQT_DataProvider:OnEvent(event, ...)
 end
 
 function WQT_DataProvider:RequestDataUpdate()
-	self.zoneLoading.needsUpdate = true;
-	self:SetUpdateScript();
+	self:SetUpdateScriptForFlag(UpdateFlags.zones);
 end
 
 function WQT_DataProvider:RequestFilterUpdate()
-	self.shouldUpdateFiltedList = true;
-	self:SetUpdateScript();
+	self:SetUpdateScriptForFlag(UpdateFlags.filters);
 end
 
 function WQT_DataProvider:RequestRewardsUpdate()
-	self.requestedRewardsUpdate = true;
-	self:SetUpdateScript();
+	self:SetUpdateScriptForFlag(UpdateFlags.rewards);
 end
 
-function WQT_DataProvider:SetUpdateScript()
+function WQT_DataProvider:SetUpdateScriptForFlag(flag)
+	self:AddUpdateFlag(flag);
 	if (not self.updateScriptSet) then
 		self.frame:SetScript("OnUpdate", function(...) self:OnUpdate(...); end);
 		self.updateScriptSet = true;
 	end
 end
 
+local setFlags = true;
+function WQT_DataProvider:AddUpdateFlag(flag)
+	self.updateFlags = FlagsUtil.Combine(self.updateFlags, flag, setFlags);
+end
+
+function WQT_DataProvider:RemoveUpdateFlag(flag)
+	self.updateFlags = FlagsUtil.Combine(self.updateFlags, flag, not setFlags);
+end
+
+function WQT_DataProvider:HasUpdateFlag(flag)
+	return FlagsUtil.IsSet(self.updateFlags, flag);
+end
+
+function WQT_DataProvider:HasAnyUpdateFlags()
+	return self.updateFlags ~= UpdateFlags.none;
+end
+
 local MAX_PROCESSING_TIME = 0.005;
-function WQT_DataProvider:OnUpdate(elapsed)
-	if(self.zoneLoading.needsUpdate) then
-		self.zoneLoading.needsUpdate = false;
-		self.requestedRewardsUpdate = false;
+function WQT_DataProvider:OnUpdate()
+	if (self:HasUpdateFlag(UpdateFlags.zones)) then
+		self:RemoveUpdateFlag(UpdateFlags.zones);
+		self:RemoveUpdateFlag(UpdateFlags.rewards);
 
 		local mapIDToLoad = nil;
 		local isFlightMap = false;
@@ -722,9 +744,7 @@ function WQT_DataProvider:OnUpdate(elapsed)
 		end
 	end
 
-	if(self.zoneLoading.numRemaining > 0) then
-
-		local processedCount = 0;
+	if (self.zoneLoading.numRemaining > 0) then
 		local updateStart = GetTimePreciseSec();
 		local timeSpent = 0;
 
@@ -735,7 +755,6 @@ function WQT_DataProvider:OnUpdate(elapsed)
 		for zoneID in pairs(self.zoneLoading.remainingZones) do
 			self.zoneLoading.remainingZones[zoneID] = nil;
 			self.zoneLoading.numRemaining = self.zoneLoading.numRemaining - 1;
-			processedCount = processedCount + 1;
 
 			local taskPOIs = C_TaskQuest.GetQuestsOnMap(zoneID);
 			local numPoIs = taskPOIs and #taskPOIs or 0;
@@ -778,73 +797,60 @@ function WQT_DataProvider:OnUpdate(elapsed)
 					else
 						local addonInfo = questForRemove[questID];
 						questForRemove[questID] = nil;
-						local updateSuccess = false;
 						-- Just always update these
 						addonInfo:UpdateTimeRemaining();
 						addonInfo:UpdateHasWarbandBonus();
 
-						updateSuccess = addonInfo:UpdateTitleAndFaction() or updateSuccess;
+						addonInfo:UpdateTitleAndFaction();
 						-- Quest log update might have been for missing data
 						if (not addonInfo.hasRewardData) then
-							updateSuccess = addonInfo:LoadRewards(true) or updateSuccess;
+							addonInfo:LoadRewards(true);
 						end
 						if (not addonInfo.isValid) then
-							updateSuccess = addonInfo:UpdateValidity() or updateSuccess;
+							addonInfo:UpdateValidity();
 						end
 						if (addonInfo.alwaysHide and MapUtil.ShouldShowTask(apiInfo.mapID, apiInfo)) then
 							-- Have only encountered this once and not been able to replicate to test if this even works
 							addonInfo.alwaysHide = false;
 							WQT:DebugPrint(string.format("Quest alwaysHide updated (%s)", questID));
-							updateSuccess = addonInfo:UpdateValidity() or updateSuccess;
-						end
-						if (updateSuccess) then
-							updated = updated + 1;
+							addonInfo:UpdateValidity();
 						end
 					end
 				end
 			end
 
-			local removed = 0;
 			-- Remove everything still marked for removal
 			for questID, addonInfo in pairs(questForRemove) do
-				removed = removed + 1;
 				self.pool:Release(addonInfo);
 			end
 
-			local added = 0;
 			-- Add all new ones
 			for questID, apiInfo in pairs(questsToAdd) do
-				added = added + 1;
 				local questInfo = self.pool:Acquire();
 				questInfo:Init(apiInfo.questID, apiInfo);
 			end
 
-			WQT:DebugPrint(string.format("Done: %s quests (-%s +%s ~%s)", acceptedCount, removed, added, updated));
-
 			self.zoneLoading.startTimestamp = 0;
 			progress = 0;
 			WQT_CallbackRegistry:TriggerEvent("WQT.DataProvider.QuestsLoaded");
-			self.shouldUpdateFiltedList = true;
+			self:AddUpdateFlag(UpdateFlags.filters);
 		end
 
 		WQT_CallbackRegistry:TriggerEvent("WQT.DataProvider.ProgressUpdated", progress);
-	elseif(self.requestedRewardsUpdate) then
-		self.requestedRewardsUpdate = false;
+	elseif (self:HasUpdateFlag(UpdateFlags.rewards)) then
+		self:RemoveUpdateFlag(UpdateFlags.rewards);
 		for questInfo, v in self.pool:EnumerateActive() do
 			questInfo:LoadRewards(true);
 		end
-		self.shouldUpdateFiltedList = true;
+		self:AddUpdateFlag(UpdateFlags.filters);
 	end
 
-	if (self.shouldUpdateFiltedList) then
-		self.shouldUpdateFiltedList = false;
+	if (self:HasUpdateFlag(UpdateFlags.filters)) then
+		self:RemoveUpdateFlag(UpdateFlags.filters);
 		self:FilterAndSortQuestList();
 	end
 
-	if (not self.zoneLoading.needsUpdate
-		and self.zoneLoading.numRemaining == 0
-		and not self.shouldUpdateFiltedList
-		and not self.requestedRewardsUpdate) then
+	if (not self:HasAnyUpdateFlags() and self.zoneLoading.numRemaining == 0) then
 		self.frame:SetScript("OnUpdate", nil);
 		self.updateScriptSet = false;
 	end
