@@ -2,7 +2,7 @@
 
 	<Script file="MapPinProvider.lua" />
 
-	<Frame name="WQT_PinTemplate" virtual="true" frameStrata="MEDIUM">
+	<Frame name="WQT_PinTemplate" virtual="true" frameStrata="MEDIUM" roundLayoutToNearestPixel="true">
 		<Mixins>
 			<Mixin key="mixins.WQT_PinMixin" source="local"/>
 		</Mixins>
@@ -147,7 +147,7 @@
 				</Scripts>
 			</Button>
 
-			<Frame parentKey="Label" hidden="true">
+			<Frame parentKey="Label" hidden="true" roundLayoutToNearestPixel="true">
 				<Mixins>
 					<Mixin key="mixins.WQT_PinLabelMixin" source="local"/>
 				</Mixins>

@@ -729,7 +729,7 @@ function _M.WQT_PinButtonMixin:PlaceMiniIcons()
 
 			local posX = ICON_CENTER_DISTANCE * cos(angle);
 			local posY = ICON_CENTER_DISTANCE * sin(angle);
-			PixelUtil.SetPoint(iconFrame, "CENTER", self, "CENTER", posX, posY);
+			iconFrame:SetPoint("CENTER", self, "CENTER", posX, posY);
 			iconFrame:Show();
 			angle = angle + ICON_ANGLE_DISTANCE;
 		end
@@ -1161,7 +1161,7 @@ function _M.WQT_PinMixin:UpdateVisuals()
 	if (labelFrame:IsShown()) then
 		local bottomOffset = buttonFrame:GetIconBottomDifference()
 		bottomOffset = bottomOffset - LABEL_OFFSET;
-		PixelUtil.SetPoint(labelFrame, "TOP", self.Button, "BOTTOM", 0, -bottomOffset);
+		labelFrame:SetPoint("TOP", buttonFrame, "BOTTOM", 0, -bottomOffset);
 	end
 end
 
@@ -1224,7 +1224,7 @@ function _M.WQT_PinMixin:ApplyScaledPosition(manualScale)
 	posX = (canvas:GetWidth() * posX)/scale;
 	posY = -(canvas:GetHeight() * posY)/scale;
 	self:ClearAllPoints();
-	PixelUtil.SetPoint(self, "CENTER", canvas, "TOPLEFT", posX, posY);
+	self:SetPoint("CENTER", canvas, "TOPLEFT", posX, posY);
 end
 
 function _M.WQT_PinMixin:Focus(playPing)

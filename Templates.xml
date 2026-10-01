@@ -118,7 +118,7 @@
 		<Size x="346" y="506"/>
 	</Frame>
 	
-	<Frame name="WQT_MiniIconTemplate" flattenRenderLayers="true" virtual="true">
+	<Frame name="WQT_MiniIconTemplate" flattenRenderLayers="true" virtual="true" roundLayoutToNearestPixel="true">
 		<Mixins>
 			<Mixin key="mixins.WQT_MiniIconMixin" source="local"/>
 		</Mixins>
