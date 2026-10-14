@@ -722,8 +722,8 @@ function _M.WQT_PinButtonMixin:PlaceMiniIcons()
 	local icons = self:GetMiniPins();
 	local numIcons = #icons;
 	if (numIcons > 0) then
-		local angle = ICON_ANGLE_START - (ICON_ANGLE_DISTANCE*(numIcons-1))/2
-		local numIcons = min(#icons, ICON_MAX_AMOUNT);
+		local angle = ICON_ANGLE_START - (ICON_ANGLE_DISTANCE * (numIcons - 1)) / 2;
+		numIcons = min(numIcons, ICON_MAX_AMOUNT);
 		for i = 1, numIcons do
 			local iconFrame = icons[i];
 
@@ -762,6 +762,7 @@ function _M.WQT_PinButtonMixin:GetIconBottomDifference()
 	return maxBottomDiff;
 end
 
+local TWO_PI = math.pi * 2.0;
 function _M.WQT_PinButtonMixin:UpdateTime(start, timeLeft, total, color, timeCategory)
 	local enumPinColorType = _V:GetPinColorType();
 	if (WQT_Utils:GetSetting("pin", "ringType") ~= enumPinColorType.time) then
@@ -776,7 +777,7 @@ function _M.WQT_PinButtonMixin:UpdateTime(start, timeLeft, total, color, timeCat
 
 	pointerTexture:SetShown(total > 0);
 	if (total > 0) then
-		pointerTexture:SetRotation((timeLeft) / (total) * 6.2831);
+		pointerTexture:SetRotation((timeLeft) / (total) * TWO_PI);
 		pointerTexture:SetVertexColor(r * 1.1, g * 1.1, b * 1.1);
 		ringCooldown:SetCooldownUNIX(now - start, start + timeLeft);
 	else

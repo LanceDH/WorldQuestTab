@@ -385,6 +385,7 @@ end
 
 _M.WQT_SettingsColorMixin = CreateFromMixins(_M.WQT_SettingsBaseMixin);
 
+local TWO_PI = math.pi * 2.0;
 function _M.WQT_SettingsColorMixin:OnLoad()
 	_M.WQT_SettingsBaseMixin.OnLoad(self);
 
@@ -395,7 +396,7 @@ function _M.WQT_SettingsColorMixin:OnLoad()
 	end);
 
 	CooldownFrame_SetDisplayAsPercentage(self.ExampleRing.Ring, 0.35);
-	self.ExampleRing.Pointer:SetRotation(0.65*6.2831);
+	self.ExampleRing.Pointer:SetRotation(0.65 * TWO_PI);
 	self.ExampleRing.Ring:Show();
 end
 
@@ -1184,6 +1185,13 @@ function _M.WQT_SettingsFrameMixin:Init()
 		-- 	AddSection(ChangelogSections.Changes, { });
 		-- 	AddSection(ChangelogSections.Fixes, { });
 		-- end
+
+		do -- 12.1.05
+			StartVersionCategory("12.1.05");
+			AddSection(ChangelogSections.Intro, {
+				"Update for patch 12.1.5";
+			});
+		end
 
 		do -- 12.1.04
 			StartVersionCategory("12.1.04");

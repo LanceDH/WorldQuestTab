@@ -701,7 +701,7 @@ function PinCircleMixin:Init(radius, startAngle, maxArc, offsetX, offsetY)
 	self.offsetY = offsetY or 0;
 end
 
-local TWO_PI = PI * 2;
+local TWO_PI = math.pi * 2.0;
 function PinCircleMixin:NudgeFunction(validPins, canvas)
 	local numPassedPins = #validPins;
 	if (numPassedPins == 0) then return; end
